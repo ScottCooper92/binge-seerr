@@ -1,0 +1,82 @@
+name: CI
+
+# The gate for this repository, and the trigger for every bot in this directory:
+# bot-review fires on a successful run of this workflow, author-ci-fix on a failed
+# one, and author-conflicts on one completing against main. They match it by NAME,
+# so renaming this workflow silently unhooks all three.
+#
+# One job, deliberately. `./gradlew build` already runs the Kotlin compile, the unit
+# tests, ktlintCheck and Android lint, because the ktlint plugin and AGP both wire
+# themselves into `check` and `build` depends on `check`. Splitting them into
+# separate jobs would buy parallelism this build is far too small to need, and would
+# cost a second required status check to keep in sync with branch protection.
+#
+# Deliberately NO paths-ignore, matching binge-integrations. bot-review requires a
+# SUCCESSFUL run of this workflow against the head, so a skipped run means a PR that
+# is never reviewed. .ai/ holds the rules the bots themselves read, so a docs filter
+# would bypass review on exactly the changes that most need it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # `ready_for_review` is not in the default set, and without it a PR opened as a
+    # draft and later promoted never gets a first run — so bot-review, which only
+    # fires on a run of this workflow completing, never sees it either.
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Per-ref group: a new commit on the same branch/PR cancels its superseded run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Skip while a PR is a draft, so a stack can be opened as drafts and promoted one
+    # at a time without each queued run preempting the last. Push events to main always
+    # run — `pull_request` is null there. A draft therefore reports conclusion
+    # "skipped", which author-ci-fix and bot-review both already treat as "not green".
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    # Generous against a build that currently takes a couple of minutes, so it catches
+    # a hang rather than a slow day. The Android SDK is preinstalled on the runner
+    # image; nothing here installs one.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # JDK 17, matching Binge rather than binge-integrations' 21. The extracted code
+      # targets jvmTarget 17 and AGP 9.3.2 is what Binge builds with, so the toolchain
+      # here is the one the extraction arrives expecting.
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+      # --continue surfaces every failure in one run rather than stopping at the first,
+      # which matters most to author-ci-fix: it gets exactly one repair attempt per
+      # commit, and a log showing only the first of three failures spends that attempt
+      # fixing a third of the problem.
+      - name: Build, test and lint
+        run: ./gradlew build --continue
+
+      # Reports for triaging a red run. Listed explicitly rather than globbing
+      # **/build/reports/ — the greedy glob is fail-OPEN, so every new report type
+      # Gradle and AGP invent silently reappears in the artifact. Both the test reports
+      # and the lint results are named, because a red run here is as likely to be lint
+      # as it is to be a failing test, and author-ci-fix triages from what it can read.
+      - name: Upload reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: build-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/reports/lint-results-*.html
+            **/build/reports/ktlint/**
+          if-no-files-found: ignore
+          retention-days: 1

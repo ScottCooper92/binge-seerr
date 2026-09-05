@@ -1,0 +1,18 @@
+# Build outputs
+build/
+.gradle/
+.kotlin/
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.DS_Store
+
+# Signing — never commit keystores or their credentials
+keystore.properties
+*.jks
+*.keystore
+
+# Claude Code tooling
+.claude/settings.local.json
