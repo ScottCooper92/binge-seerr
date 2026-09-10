@@ -1,0 +1,52 @@
+# Design-system files copied from Binge, and where each came from.
+#
+# WHY THIS FILE EXISTS. Binge and this app share UI so the two look like one product, and the
+# sharing is done by COPYING rather than by a shared module. That is a deliberate trade: a
+# submodule is a lot of machinery for the ~23 files one companion needs, and this repository is
+# meant to be readable standalone by someone writing their own companion. The cost is drift, and
+# this file is what keeps drift visible instead of silent.
+#
+# It also makes the decision reversible. If a second or third companion app appears, the same
+# ~23 files get copied again and the arithmetic flips toward a shared repo. Promoting to one is
+# then a scripted move over this manifest rather than archaeology across two histories.
+#
+# FORMAT: four tab-separated columns, one row per copied file.
+#
+#   path-here            Path in THIS repository.
+#   path-in-binge        Path in ScottCooper92/Binge the file was copied from.
+#   binge-commit         The Binge commit copied at. Full SHA — an abbreviation stops resolving
+#                        as history grows.
+#   sha256               Digest of Binge's file AT THAT COMMIT, not of the local copy. This is
+#                        the discriminator: a differing digest means Binge has moved on since,
+#                        which is exactly the question worth asking. The local copy is expected
+#                        to diverge and its digest would answer nothing.
+#
+# HOW IT IS CHECKED. Binge's `shared-design-system` skill can verify automatically — this
+# repository is public, so Binge reads it unauthenticated. The reverse does not work: Binge is
+# private, so nothing running in THIS repository's CI can read it. The skill here records
+# divergence rather than resolving it, and says so rather than assuming the two match.
+#
+# Adding a row is a decision, not bookkeeping: it says this file is UX that should stay
+# consistent across apps. A file that is genuinely this app's own does not belong here.
+
+# path-here	path-in-binge	binge-commit	sha256
+
+# --- Nothing is copied yet. ---
+#
+# This app is a skeleton with no UI; the copy happens when the Seerr surfaces are extracted
+# (roadmap stage 4 / Binge#1785). The manifest and its skills land first so the copy is recorded
+# as it happens rather than reconstructed afterwards.
+#
+# Measured candidates, from the transitive closure of what the in-tree Seerr UI imports
+# (Binge#2427). Approximate — resolved by symbol name, so a few may be over-matches:
+#
+#   AdaptiveLayout.kt  Dimens.kt  FoldPosture.kt  NavOverlay.kt  MediaAvailabilityUi.kt*
+#   theme/BingeShapes.kt  theme/ExpressiveTheme.kt  modifier/SelectionLift.kt
+#   component/: BingeTopBar BingeMediumTopBar BingeBottomSheet BingeSnackbarHost
+#               BingeFilterChipRow ExpressiveIconButton TextEntrySurface AccountSettingsGroup
+#               AccountActionSnackbarHandler* CarouselSkeleton EpisodeListRow MediaCard
+#               MediaPagingGrid HeroCarousel RequestDownloadEta
+#
+#   * coupled to Binge's core:domain types and cannot be copied as-is. Both are integration-shaped
+#     (MediaAvailability, AccountActionEvent), so they want the contract's generated types rather
+#     than Binge's — which is the SDK's job (Binge#1786), not this manifest's.
