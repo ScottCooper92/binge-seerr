@@ -16,5 +16,5 @@ object SeerrCompanion {
      * so this is the one fact about the contract that belongs in the companion rather than in
      * the generated stubs, and it wants a single place to change.
      */
-    const val REQUEST_CONTRACT_VERSION: Int = 1
+        const val REQUEST_CONTRACT_VERSION: Int = 1
 }
