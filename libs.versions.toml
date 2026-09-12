@@ -18,6 +18,9 @@ ktlint = "14.2.0"
 # in-process transport the tests use has to be the same release or the two disagree on internals.
 grpc = "1.68.1"
 kotlinxCoroutines = "1.11.0"
+# KSP is the Hilt compiler's host; the pair is the one Binge builds with at this Kotlin.
+ksp = "2.3.11"
+hilt = "2.60.1"
 kotlinxSerializationJson = "1.11.0"
 retrofit = "3.0.0"
 okhttp = "5.4.0"
@@ -38,6 +41,8 @@ binge-integration-contracts = { module = "io.github.scottcooper92:contracts" }
 binge-integration-sdk = { module = "io.github.scottcooper92:sdk" }
 # Version-less for the same reason: resolves to the included binge-design-system build.
 binge-designsystem = { module = "com.binge:designsystem" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 grpc-inprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
@@ -62,3 +67,5 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

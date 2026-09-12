@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.theme.BingeExpressiveTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.github.scottcooper92.binge.seerr.ui.SetupScreen
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 
@@ -15,10 +16,9 @@ import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
  * user does with Seerr happens in Binge, through the exported Service — this app is the
  * credentials' home, not a second client. It wears Binge's theme so the two read as one product.
  */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val viewModel: SetupViewModel by viewModels {
-        SetupViewModel.Factory((application as SeerrApp).connection)
-    }
+    private val viewModel: SetupViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

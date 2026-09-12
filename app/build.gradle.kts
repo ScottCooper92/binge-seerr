@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
     alias(libs.plugins.ktlint)
 }
 
@@ -50,6 +52,8 @@ dependencies {
     implementation(libs.binge.integration.sdk)
     implementation(libs.binge.integration.contracts)
     implementation(libs.binge.designsystem)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit)
