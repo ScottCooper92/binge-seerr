@@ -13,6 +13,7 @@ import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import javax.inject.Singleton
 
@@ -34,12 +35,18 @@ object SeerrModule {
 
     @Provides
     @Singleton
-    fun apiFactory(): SeerrApiFactory = SeerrApiFactory(logRequests = BuildConfig.DEBUG)
+    fun healthMonitor(): SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor()
+
+    @Provides
+    @Singleton
+    fun apiFactory(health: SeerrConnectionHealthMonitor): SeerrApiFactory =
+        SeerrApiFactory(logRequests = BuildConfig.DEBUG, health = health)
 
     @Provides
     @Singleton
     fun connection(
         store: CredentialStore,
         apis: SeerrApiFactory,
-    ): SeerrConnection = SeerrConnection(store, apis)
+        health: SeerrConnectionHealthMonitor,
+    ): SeerrConnection = SeerrConnection(store, apis, health)
 }
