@@ -102,6 +102,7 @@ class SeerrConnection(
     suspend fun disconnect() {
         userLock.withLock { cachedUser = null }
         store.clear()
+        apis.evict()
     }
 
     /**

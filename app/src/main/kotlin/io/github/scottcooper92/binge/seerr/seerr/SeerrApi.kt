@@ -236,7 +236,7 @@ data class SeerrRequestResultDto(
 @Serializable
 data class SeerrCreateIssueBody(
     @SerialName("mediaId") val mediaId: Int,
-    @SerialName("issueType") val issueType: Int,
+    @SerialName("issueType") val issueType: SeerrIssueTypeCode,
     @SerialName("message") val message: String,
 )
 
