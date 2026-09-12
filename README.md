@@ -10,12 +10,14 @@ REQUEST v1 against a [Seerr](https://overseerr.dev) instance.
 
 ## Status
 
-**Pre-alpha, and the extraction has not happened yet.**
+**Pre-alpha, at contract parity.**
 
-What is here is a skeleton: one module, a placeholder object and a unit test. It
-exists so the build and the agent workflows are wired before the code arrives.
-Roadmap stage 4 in binge-integrations is the extraction of Binge's in-tree Seerr
-integration into this repository. Treat anything here as scaffolding until then.
+The app connects to a Seerr, Jellyseerr or Overseerr server (API key, or a Jellyfin,
+Emby or local account) and serves every REQUEST v1 operation to Binge over gRPC on
+Binder, built on the SDK from binge-integrations. The capability set Binge sees is
+derived from the signed-in user's permissions. Not yet released: Binge's release
+signing certificate is not yet published in the SDK, so a release build of this app
+admits no host until it is.
 
 ## Why this repository is public
 
@@ -32,7 +34,11 @@ and it needs to be one of those rather than a private arrangement.
 
 ## Building
 
+The contracts and the SDK come from binge-integrations as source, through a git submodule
+and a Gradle composite build, so clone with submodules:
+
 ```sh
+git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 ./gradlew build
 ```
 

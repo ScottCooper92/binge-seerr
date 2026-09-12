@@ -15,11 +15,15 @@ The contracts live in that repository and are authoritative there. **Nothing in 
 repository defines a contract.** A change to the wire format is a PR against
 binge-integrations, and this repository consumes the result.
 
-Status is pre-alpha, and more specifically: **the extraction has not happened yet.**
-What is here is a skeleton — one module, a placeholder object and a unit test —
-that exists so the build and the agent workflows are wired before the code arrives.
-Roadmap stage 4 in binge-integrations is the extraction of Binge's in-tree Seerr
-integration into this repository. Treat any code here as scaffolding until then.
+Status is pre-alpha, at contract parity: the exported Service serves every REQUEST v1
+operation against the connected server, the setup screen is the only UI, and the
+capability set is derived from the signed-in user's permissions. Binge's in-tree
+Seerr integration is what this replaces (roadmap stage 4 in binge-integrations).
+
+The contracts and the SDK are consumed as source: `binge-integrations/` is a git
+submodule and `settings.gradle.kts` includes it as a composite build. `.gitmodules`
+is an agent-governed path, so an author bot's commit can revert a change to it —
+bump the submodule in a commit of its own, and check the pin after any bot push.
 
 ## The one rule everything else serves
 
@@ -61,8 +65,12 @@ rather than a private arrangement.
 - Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 17.
 - AGP 9.3.2, `compileSdk` 37, `minSdk` 26, `targetSdk` 36 — matching Binge, so the
   extraction is a code move rather than a toolchain negotiation.
-- There is no `org.jetbrains.kotlin.android` plugin. AGP 9 has built-in Kotlin
-  support and rejects it. See the comment in `libs.versions.toml`.
+- The `org.jetbrains.kotlin.android` plugin is declared `apply false` in the root
+  build and never applied. AGP 9 has built-in Kotlin support and rejects the plugin
+  being applied, but compiles with whichever Kotlin Gradle plugin is on the build
+  classpath, and the declaration is what puts 2.4.10 there — the version the included
+  binge-integrations build compiles the contracts and SDK with. See the comment in
+  `libs.versions.toml`.
 - The version catalog is `libs.versions.toml` at the repository root, not under
   `gradle/`, matching Binge so a version bump applies the same way to both.
 - Tests are JUnit 4, matching what the extracted code brings with it. Scope Gradle
