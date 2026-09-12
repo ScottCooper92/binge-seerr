@@ -15,15 +15,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +39,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.BingeTopBar
@@ -62,6 +71,8 @@ class IssueDetailActions(
     val onDropOutbox: (Long) -> Unit,
     val onEditComment: (Int, String) -> Unit,
     val onDeleteComment: (Int) -> Unit,
+    val onToggleStatus: () -> Unit,
+    val onDeleteIssue: () -> Unit,
 )
 
 /**
@@ -78,24 +89,40 @@ fun IssueDetailScreen(
     val resources = LocalResources.current
     LaunchedEffect(events) {
         events.collectLatest { event ->
+            if (event == IssueDetailEvent.IssueDeleted) {
+                actions.onBack()
+                return@collectLatest
+            }
             snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(
                 message =
                     when (event) {
                         IssueDetailEvent.CommentEdited -> resources.getString(R.string.issue_comment_edited)
                         IssueDetailEvent.CommentDeleted -> resources.getString(R.string.issue_comment_deleted)
+                        IssueDetailEvent.IssueResolved -> resources.getString(R.string.issue_resolved)
+                        IssueDetailEvent.IssueReopened -> resources.getString(R.string.issue_reopened)
+                        IssueDetailEvent.IssueDeleted -> return@collectLatest
                         is IssueDetailEvent.Failed -> resources.getString(event.error.messageRes())
                     },
                 kind = if (event is IssueDetailEvent.Failed) SnackbarMessageKind.Error else SnackbarMessageKind.Confirmation,
             )
         }
     }
+    var managing by rememberSaveable { mutableStateOf(false) }
+    val ready = state as? IssueDetailUiState.Ready
     Scaffold(
         snackbarHost = { BingeSnackbarHost(snackbarHostState) },
         topBar = {
             BingeTopBar(
-                title = (state as? IssueDetailUiState.Ready)?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
+                title = ready?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
                 onBack = actions.onBack,
+                actions = {
+                    if (ready != null) {
+                        IconButton(onClick = { managing = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.issue_manage_cd))
+                        }
+                    }
+                },
             )
         },
     ) { padding ->
@@ -106,6 +133,13 @@ fun IssueDetailScreen(
                 is IssueDetailUiState.Ready -> Ready(state, actions)
             }
         }
+    }
+    if (managing && ready != null) {
+        IssueManageSheet(
+            detail = ready.detail,
+            onDeleteIssue = actions.onDeleteIssue,
+            onDismiss = { managing = false },
+        )
     }
 }
 
@@ -144,7 +178,28 @@ private fun Ready(
                 modifier = Modifier.padding(horizontal = inset).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
             )
         }
-        if (detail.canComment) ComposerBar(onClick = { modals.composing = true }, inset = inset)
+        if (detail.canComment || detail.canResolve) {
+            ActionBar(
+                detail = detail,
+                action = state.action,
+                onAddComment = { modals.composing = true },
+                onToggleStatus = { modals.confirmingStatus = true },
+                inset = inset,
+            )
+        }
+    }
+    if (modals.confirmingStatus) {
+        val resolving = detail.item.status == IssueStatus.Open
+        BingeConfirmDialog(
+            title = stringResource(if (resolving) R.string.issue_resolve_confirm_title else R.string.issue_reopen_confirm_title),
+            message = stringResource(if (resolving) R.string.issue_resolve_confirm_message else R.string.issue_reopen_confirm_message),
+            confirmLabel = stringResource(if (resolving) R.string.issue_action_resolve else R.string.issue_action_reopen),
+            onConfirm = {
+                modals.confirmingStatus = false
+                actions.onToggleStatus()
+            },
+            onDismiss = { modals.confirmingStatus = false },
+        )
     }
     IssueModals(state, actions, modals)
 }
@@ -211,31 +266,61 @@ private fun IssueHeader(
     }
 }
 
-/** A pinned "Add a comment" field that opens the composer. */
+/**
+ * The pinned bar: a field that opens the composer, and Resolve or Reopen, each only where the user
+ * may. A status change in flight spins its button and holds the field, so the two cannot race.
+ */
 @Composable
-private fun ComposerBar(
-    onClick: () -> Unit,
-    inset: androidx.compose.ui.unit.Dp,
+private fun ActionBar(
+    detail: IssueDetail,
+    action: IssueAction,
+    onAddComment: () -> Unit,
+    onToggleStatus: () -> Unit,
+    inset: Dp,
 ) {
+    val idle = action == IssueAction.None
     Column(Modifier.fillMaxWidth()) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = inset, vertical = dimensionResource(DesR.dimen.padding_s))
-                    .clip(BingeShapes.Pill)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                    .border(dimensionResource(DesR.dimen.hairline_thickness), MaterialTheme.colorScheme.outlineVariant, BingeShapes.Pill)
-                    .clickable(onClick = onClick)
-                    .padding(dimensionResource(DesR.dimen.padding_m)),
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = inset, vertical = dimensionResource(DesR.dimen.padding_s)),
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_gap)),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(R.string.issue_comment_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (detail.canComment) ComposerField(onClick = onAddComment, enabled = idle, modifier = Modifier.weight(1f))
+            if (detail.canResolve) {
+                val resolving = detail.item.status == IssueStatus.Open
+                BingeOutlinedButton(
+                    label = stringResource(if (resolving) R.string.issue_action_resolve else R.string.issue_action_reopen),
+                    onClick = onToggleStatus,
+                    enabled = idle,
+                    loading = action == IssueAction.UpdatingStatus,
+                    modifier = if (detail.canComment) Modifier else Modifier.weight(1f),
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun ComposerField(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .clip(BingeShapes.Pill)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .border(dimensionResource(DesR.dimen.hairline_thickness), MaterialTheme.colorScheme.outlineVariant, BingeShapes.Pill)
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        Text(
+            text = stringResource(R.string.issue_comment_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

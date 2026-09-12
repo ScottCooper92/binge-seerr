@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.FakeIssueStore
+import io.github.scottcooper92.binge.seerr.data.IssueEntity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
@@ -42,6 +44,7 @@ class IssueDetailViewModelTest {
     private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
     private val viewModels = ViewModelStore()
     private var stores = 0
+    private val cache = FakeIssueStore()
 
     @Before
     fun setUp() {
@@ -105,7 +108,7 @@ class IssueDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false),
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = IssueDetailViewModel(connection, TitleCache(), 31)
+        val vm = IssueDetailViewModel(connection, TitleCache(), cache, 31)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -209,6 +212,65 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `resolving moves the cached row with the page, and deleting removes both and pops`() =
+        runTest {
+            server(ADMIN)
+            // The server's answer to the reload after each write is the state the write put it in.
+            responses["POST /api/v1/issue/31/resolved"] = {
+                serve("GET /api/v1/issue/31", issueJson().replace("\"status\":1", "\"status\":2"))
+                json("{}")
+            }
+            responses["POST /api/v1/issue/31/open"] = {
+                serve("GET /api/v1/issue/31", issueJson())
+                json("{}")
+            }
+            serve("DELETE /api/v1/issue/31", "{}")
+            cache.refresh("open:added", listOf(cachedRow(31, "Open"), cachedRow(32, "Open")), nextSkip = null)
+            val vm = viewModel()
+            assertTrue(vm.awaitReady().detail.canResolve)
+
+            vm.toggleStatus()
+            assertEquals(IssueDetailEvent.IssueResolved, vm.events.first())
+            assertEquals("Resolved", cache.rows.first { it.id == 31 }.status)
+            assertEquals("Open", cache.rows.first { it.id == 32 }.status)
+
+            vm.awaitReady { it.action == IssueAction.None && it.detail.item.status == IssueStatus.Resolved }
+            vm.toggleStatus()
+            assertEquals(IssueDetailEvent.IssueReopened, vm.events.first())
+            assertEquals("Open", cache.rows.first { it.id == 31 }.status)
+
+            vm.awaitReady { it.action == IssueAction.None }
+            vm.deleteIssue()
+            assertEquals(IssueDetailEvent.IssueDeleted, vm.events.first())
+            assertEquals(listOf(32), cache.rows.map { it.id })
+            assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/issue/31" })
+        }
+
+    private fun cachedRow(
+        id: Int,
+        status: String,
+    ) = IssueEntity(
+        listKey = "open:added",
+        id = id,
+        tmdbId = 100,
+        mediaType = "Movie",
+        title = "Heat",
+        posterUrl = null,
+        year = "1995",
+        issueType = "Audio",
+        status = status,
+        reportedBy = "ana",
+        reportedById = 8,
+        commentCount = 1,
+        createdAtMillis = null,
+        updatedAtMillis = null,
+        problem = null,
+        problemSeason = null,
+        problemEpisode = null,
+        orderIndex = id,
+    )
+
+    @Test
     fun `a reporter may comment on their own issue and act on their own comment only`() =
         runTest {
             server(CREATE_ISSUES, userId = 8)
@@ -218,13 +280,20 @@ class IssueDetailViewModelTest {
 
             assertTrue(detail.canComment)
             assertFalse(detail.canManage)
+            assertTrue(detail.canResolve)
+            assertTrue(detail.canDelete)
             assertTrue(detail.report?.isMine == true)
             assertTrue(detail.canActOn(checkNotNull(detail.report)))
             assertFalse(detail.canActOn(detail.comments.single()))
 
             server(CREATE_ISSUES, userId = 9)
-            assertFalse(viewModel().awaitReady().detail.canComment)
+            val stranger = viewModel().awaitReady().detail
+            assertFalse(stranger.canComment)
+            assertFalse(stranger.canResolve)
+            assertFalse(stranger.canDelete)
         }
+
+    private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext

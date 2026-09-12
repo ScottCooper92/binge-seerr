@@ -248,6 +248,18 @@ interface SeerrApi {
         @Path("issueId") issueId: Int,
     ): SeerrIssueDto
 
+    /** [status] is `open` or `resolved`: the server's own route shape. */
+    @POST("api/v1/issue/{issueId}/{status}")
+    suspend fun setIssueStatus(
+        @Path("issueId") issueId: Int,
+        @Path("status") status: String,
+    )
+
+    @DELETE("api/v1/issue/{issueId}")
+    suspend fun deleteIssue(
+        @Path("issueId") issueId: Int,
+    )
+
     /** Answers with the updated issue, whose newest comment is the one just posted. */
     @POST("api/v1/issue/{issueId}/comment")
     suspend fun commentOnIssue(
