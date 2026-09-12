@@ -9,6 +9,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.theme.BingeExpressiveTheme
+import com.binge.integration.sdk.BingeHosts
+import com.binge.integration.sdk.HandOffPolicy
 import com.binge.integration.sdk.toAdvancedRequest
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestScreen
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
@@ -16,9 +18,10 @@ import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestViewModel
 
 /**
  * The Activity behind `CAPABILITY_ADVANCED_OPTIONS`: Binge starts it for a result with a title,
- * this app shows its own picker and submits, and answers `RESULT_OK` once it has. It is a screen
- * the user sees and confirms, so the caller check the exported Service needs has no counterpart
- * here: nothing is served to the caller but a result code. A hand-off that names no title finishes.
+ * this app shows its own picker and submits, and answers `RESULT_OK` once it has. Exported and
+ * resolvable by action, so it checks its caller the way the Service does before it reads the
+ * extras — debug-permissive, pinned in release — and a hand-off from anyone else, or one that
+ * names no title, finishes cancelled.
  */
 class AdvancedRequestActivity : ComponentActivity() {
     private val viewModel: AdvancedRequestViewModel by viewModels {
@@ -27,7 +30,7 @@ class AdvancedRequestActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (intent.toAdvancedRequest() == null) {
+        if (!callerPolicy().permits(callingPackage) || intent.toAdvancedRequest() == null) {
             setResult(RESULT_CANCELED)
             finish()
             return
@@ -55,5 +58,12 @@ class AdvancedRequestActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    private fun callerPolicy() =
+        if (BuildConfig.DEBUG) HandOffPolicy.anyCaller(TAG) else HandOffPolicy.pinned(this, listOf(BingeHosts.release))
+
+    private companion object {
+        const val TAG = "SeerrCompanion"
     }
 }
