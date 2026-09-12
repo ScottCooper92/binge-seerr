@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -273,6 +274,33 @@ interface SeerrApi {
     suspend fun unlinkJellyfinAccount(
         @Path("userId") userId: Int,
     )
+
+    /** Creates a local account with the server's default permissions. 409 when the email is taken. `MANAGE_USERS`. */
+    @POST("api/v1/user")
+    suspend fun createUser(
+        @Body body: SeerrCreateUserBody,
+    ): SeerrUserDto
+
+    /** The media server's accounts to offer for import. `MANAGE_USERS`. */
+    @GET("api/v1/settings/plex/users")
+    suspend fun plexUsers(): List<SeerrPlexUserDto>
+
+    @GET("api/v1/settings/jellyfin/users")
+    suspend fun jellyfinUsers(): List<SeerrJellyfinUserDto>
+
+    /**
+     * Imports the listed accounts; one already known is refreshed rather than duplicated. The
+     * Jellyseerr lineage answers `{createdUsers, refreshedUsers}`, Overseerr the created list alone.
+     */
+    @POST("api/v1/user/import-from-plex")
+    suspend fun importFromPlex(
+        @Body body: SeerrImportPlexBody,
+    ): JsonElement
+
+    @POST("api/v1/user/import-from-jellyfin")
+    suspend fun importFromJellyfin(
+        @Body body: SeerrImportJellyfinBody,
+    ): List<SeerrUserDto>
 
     /** Replaces the permission bitmask of every user in [body], the web client's bulk edit. */
     @PUT("api/v1/user")

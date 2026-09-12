@@ -111,14 +111,14 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /blocklist/collection/{collectionId}` | Add collection to blocklist | — | v3.2.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `DELETE /blocklist/{tmdbId}` | Remove media from blocklist | — | v3.0.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `GET /blocklist/{tmdbId}` | Get media from blocklist | — | v3.0.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
-| `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 |  | Import users from the media server. |
-| `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 |  | Import users from the media server. |
+| `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 | yes | The import picker on a Jellyfin or Emby server, filtered here to accounts not yet imported. |
+| `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 | yes | The import picker on a Plex server; the server filters the known accounts. |
 | `GET /user` | Get all users | v1.0.0 | v1.0.0 | yes | The hub's count; the users browser, cached in Room and refreshed on open. |
-| `POST /user` | Create new user | v1.0.0 | v1.0.0 |  |  |
+| `POST /user` | Create new user | v1.0.0 | v1.0.0 | yes | Create a local user from the users browser. |
 | `PUT /user` | Update batch of users | v1.18.0 | v1.0.0 | yes | The users browser's bulk permission edit. |
-| `POST /user/import-from-jellyfin` | Import all users from Jellyfin | — | v1.1.0 |  |  |
-| `POST /user/import-from-plex` | Import all users from Plex | v1.12.0 | v1.0.0 |  |  |
-| `GET /user/jellyfin/{jellyfinUserId}` | Get user by Jellyfin user ID | — | v3.3.0 |  |  |
+| `POST /user/import-from-jellyfin` | Import all users from Jellyfin | — | v1.1.0 | yes | The import picker. |
+| `POST /user/import-from-plex` | Import all users from Plex | v1.12.0 | v1.0.0 | yes | The import picker. |
+| `GET /user/jellyfin/{jellyfinUserId}` | Get user by Jellyfin user ID | — | v3.3.0 |  | Not needed: the picker filters against the user list, which carries `jellyfinUserId`. |
 | `DELETE /user/{userId}` | Delete user by ID | v1.0.0 | v1.0.0 | yes | The user page's actions, behind a confirm, under the server's own guard. |
 | `GET /user/{userId}` | Get user by ID | v1.0.0 | v1.0.0 | yes | The user page. |
 | `PUT /user/{userId}` | Update a user by user ID | v1.0.0 | v1.0.0 |  |  |

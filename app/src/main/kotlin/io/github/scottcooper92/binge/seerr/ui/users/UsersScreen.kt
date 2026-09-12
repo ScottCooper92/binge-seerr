@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +47,7 @@ class UsersActions(
     val onTogglePermission: (ManageablePermission) -> Unit,
     val onApplyBulkEdit: () -> Unit,
     val onCancelBulkEdit: () -> Unit,
+    val admission: UserAdmissionActions,
 )
 
 /**
@@ -70,6 +72,21 @@ fun UsersScreen(
                 is UsersEvent.PermissionsSaved ->
                     snackbarHostState.showSnackbar(
                         message = resources.getQuantityString(R.plurals.users_permissions_saved, event.count, event.count),
+                        kind = SnackbarMessageKind.Confirmation,
+                    )
+                is UsersEvent.UserCreated ->
+                    snackbarHostState.showSnackbar(
+                        message = resources.getString(R.string.users_created, event.name),
+                        kind = SnackbarMessageKind.Confirmation,
+                    )
+                is UsersEvent.UsersImported ->
+                    snackbarHostState.showSnackbar(
+                        message =
+                            if (event.count == 0) {
+                                resources.getString(R.string.users_imported_none)
+                            } else {
+                                resources.getQuantityString(R.plurals.users_imported, event.count, event.count)
+                            },
                         kind = SnackbarMessageKind.Confirmation,
                     )
                 is UsersEvent.Failed ->
@@ -101,6 +118,13 @@ fun UsersScreen(
                             Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.users_clear_selection_cd))
                         }
                     } else if (ready != null) {
+                        if (ready.canAdmit) {
+                            // One way in skips the choice: a server with no media server can only create.
+                            val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
+                            IconButton(onClick = onAdd) {
+                                Icon(Icons.Filled.PersonAdd, contentDescription = stringResource(R.string.users_add_cd))
+                            }
+                        }
                         IconButton(onClick = { showSort = true }) {
                             Icon(Icons.Filled.SwapVert, contentDescription = stringResource(R.string.requests_sort_cd))
                         }
@@ -134,6 +158,7 @@ fun UsersScreen(
             onDismiss = { showSort = false },
         )
     }
+    ready?.let { UserAdmissionSheets(state = it, actions = actions.admission) }
     ready?.edit?.let { edit ->
         PermissionsEditorSheet(
             offered = ready.offered,
