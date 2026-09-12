@@ -34,6 +34,10 @@ class KeystoreSecretCipher : SecretCipher {
     override fun decrypt(ciphertext: String): String? =
         try {
             val blob = Base64.decode(ciphertext, Base64.NO_WRAP)
+            if (blob.size < IV_LENGTH) {
+                Log.e(TAG, "Stored secret is shorter than an IV; treating as absent")
+                return null
+            }
             val iv = blob.copyOfRange(0, IV_LENGTH)
             val payload = blob.copyOfRange(IV_LENGTH, blob.size)
             val cipher = Cipher.getInstance(TRANSFORMATION)
