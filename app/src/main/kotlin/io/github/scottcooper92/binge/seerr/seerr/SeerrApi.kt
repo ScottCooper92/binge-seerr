@@ -199,6 +199,81 @@ interface SeerrApi {
         @Path("userId") userId: Int,
     )
 
+    @GET("api/v1/user/{userId}/settings/main")
+    suspend fun userMainSettings(
+        @Path("userId") userId: Int,
+    ): SeerrUserMainSettingsDto
+
+    @POST("api/v1/user/{userId}/settings/main")
+    suspend fun updateUserMainSettings(
+        @Path("userId") userId: Int,
+        @Body body: SeerrUserMainSettingsDto,
+    ): SeerrUserMainSettingsDto
+
+    @GET("api/v1/user/{userId}/settings/password")
+    suspend fun userPasswordInfo(
+        @Path("userId") userId: Int,
+    ): SeerrUserPasswordInfoDto
+
+    @POST("api/v1/user/{userId}/settings/password")
+    suspend fun updateUserPassword(
+        @Path("userId") userId: Int,
+        @Body body: SeerrUserPasswordBody,
+    )
+
+    @GET("api/v1/user/{userId}/settings/notifications")
+    suspend fun userNotificationSettings(
+        @Path("userId") userId: Int,
+    ): SeerrUserNotificationSettingsDto
+
+    @POST("api/v1/user/{userId}/settings/notifications")
+    suspend fun updateUserNotificationSettings(
+        @Path("userId") userId: Int,
+        @Body body: SeerrUserNotificationSettingsDto,
+    ): SeerrUserNotificationSettingsDto
+
+    @GET("api/v1/user/{userId}/settings/permissions")
+    suspend fun userPermissions(
+        @Path("userId") userId: Int,
+    ): SeerrUserPermissionsDto
+
+    @POST("api/v1/user/{userId}/settings/permissions")
+    suspend fun updateUserPermissions(
+        @Path("userId") userId: Int,
+        @Body body: SeerrUserPermissionsBody,
+    ): SeerrUserPermissionsDto
+
+    /** Jellyseerr 2.4+: links a plex.tv account, by the token the PIN flow minted. */
+    @POST("api/v1/user/{userId}/settings/linked-accounts/plex")
+    suspend fun linkPlexAccount(
+        @Path("userId") userId: Int,
+        @Body body: SeerrLinkPlexBody,
+    )
+
+    @DELETE("api/v1/user/{userId}/settings/linked-accounts/plex")
+    suspend fun unlinkPlexAccount(
+        @Path("userId") userId: Int,
+    )
+
+    /** Jellyseerr 2.4+: links a Jellyfin or Emby account by its credentials. */
+    @POST("api/v1/user/{userId}/settings/linked-accounts/jellyfin")
+    suspend fun linkJellyfinAccount(
+        @Path("userId") userId: Int,
+        @Body body: SeerrLinkJellyfinBody,
+    )
+
+    /** Seerr 3.4+: links the Jellyfin account that approved a Quick Connect code. */
+    @POST("api/v1/user/{userId}/settings/linked-accounts/jellyfin/quickconnect")
+    suspend fun linkJellyfinQuickConnect(
+        @Path("userId") userId: Int,
+        @Body body: SeerrLinkQuickConnectBody,
+    )
+
+    @DELETE("api/v1/user/{userId}/settings/linked-accounts/jellyfin")
+    suspend fun unlinkJellyfinAccount(
+        @Path("userId") userId: Int,
+    )
+
     /** Replaces the permission bitmask of every user in [body], the web client's bulk edit. */
     @PUT("api/v1/user")
     suspend fun bulkUpdateUsers(
@@ -406,6 +481,9 @@ data class SeerrUserDto(
     /** Seerr's `UserType`: 1 Plex, 2 local, 3 Jellyfin, 4 Emby. */
     @SerialName("userType") val userType: Int? = null,
     @SerialName("createdAt") val createdAt: String? = null,
+    /** The linked accounts, where the server has them: a plex.tv id, a Jellyfin or Emby user id. */
+    @SerialName("plexId") val plexId: Int? = null,
+    @SerialName("jellyfinUserId") val jellyfinUserId: String? = null,
 )
 
 @Serializable

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +79,7 @@ class UserDetailActions(
     val onBack: () -> Unit,
     val onRetry: () -> Unit,
     val onOpenRequest: (RequestItem) -> Unit,
+    val onOpenSettings: () -> Unit,
     val onDeleteUser: () -> Unit,
 )
 
@@ -136,10 +138,13 @@ fun UserDetailScreen(
         }
     }
     if (managing && ready != null) {
-        UserActionsSheet(detail = ready.detail, deleting = ready.deleting, onDeleteUser = actions.onDeleteUser, onDismiss = {
-            managing =
-                false
-        })
+        UserActionsSheet(
+            detail = ready.detail,
+            deleting = ready.deleting,
+            onOpenSettings = actions.onOpenSettings,
+            onDeleteUser = actions.onDeleteUser,
+            onDismiss = { managing = false },
+        )
     }
 }
 
@@ -279,11 +284,12 @@ private fun TitleCarousel(
     }
 }
 
-/** The page's overflow: the user on the server, and, where the guard allows, deleting them behind a confirm. */
+/** The page's overflow: their settings and the user on the server, and, where the guard allows, deleting them behind a confirm. */
 @Composable
 private fun UserActionsSheet(
     detail: UserDetail,
     deleting: Boolean,
+    onOpenSettings: () -> Unit,
     onDeleteUser: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -291,6 +297,12 @@ private fun UserActionsSheet(
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     BingeBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
+            if (detail.canEditSettings) {
+                ActionRow(Icons.Filled.Settings, stringResource(R.string.user_settings_title)) {
+                    onDismiss()
+                    onOpenSettings()
+                }
+            }
             ActionRow(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.request_open_web)) {
                 onDismiss()
                 context.openInBrowser(detail.webUrl)

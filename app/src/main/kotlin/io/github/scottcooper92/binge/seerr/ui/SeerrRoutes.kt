@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
+import io.github.scottcooper92.binge.seerr.ui.users.settings.UserSettingsPage
 import kotlinx.serialization.Serializable
 
 /**
@@ -40,6 +41,19 @@ data object UsersRoute : SeerrRoute
 @Serializable
 data class UserDetailRoute(
     val userId: Int,
+) : SeerrRoute
+
+/** One user's settings: the index of the pages this viewer may open. */
+@Serializable
+data class UserSettingsRoute(
+    val userId: Int,
+) : SeerrRoute
+
+/** One of a user's settings pages. */
+@Serializable
+data class UserSettingsPageRoute(
+    val userId: Int,
+    val page: UserSettingsPage,
 ) : SeerrRoute
 
 /** One request as a page. */
