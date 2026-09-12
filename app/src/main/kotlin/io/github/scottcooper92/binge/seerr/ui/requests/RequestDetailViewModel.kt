@@ -13,6 +13,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
+import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
@@ -128,7 +129,7 @@ class RequestDetailViewModel
                     mediaId = dto.media.id,
                     canReportIssue = profile.await().hasIssues && permissions.await().canCreateIssues && dto.media.id != null,
                     webUrl = connection.current().baseUrl + dto.media.mediaType + "/" + dto.media.tmdbId,
-                    mediaServerUrl = dto.media.mediaUrl,
+                    mediaServerUrl = dto.media.mediaUrl?.takeIf { it.isWebUrl() },
                 )
             }
 
