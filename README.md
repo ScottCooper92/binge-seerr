@@ -10,13 +10,14 @@ REQUEST v1 against a [Seerr](https://overseerr.dev) instance.
 
 ## Status
 
-**Pre-alpha, and the extraction is in progress.**
+**Pre-alpha, at contract parity.**
 
-The exported Service exists and serves the REQUEST v1 handshake over gRPC on Binder,
-built on the SDK from binge-integrations. No Seerr server can be connected yet, so it
-declares no capabilities and answers every request with `UNAUTHENTICATED`. Roadmap
-stage 4 in binge-integrations — the extraction of Binge's in-tree Seerr integration
-into this repository — is what fills it in.
+The app connects to a Seerr, Jellyseerr or Overseerr server (API key, or a Jellyfin,
+Emby or local account) and serves every REQUEST v1 operation to Binge over gRPC on
+Binder, built on the SDK from binge-integrations. The capability set Binge sees is
+derived from the signed-in user's permissions. Not yet released: Binge's release
+signing certificate is not yet published in the SDK, so a release build of this app
+admits no host until it is.
 
 ## Why this repository is public
 
