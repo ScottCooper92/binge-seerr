@@ -187,6 +187,7 @@ fun SeerrPermissions.toCapabilities(): Set<Capability> =
     buildSet {
         add(Capability.CAPABILITY_OBSERVE_STATUS)
         if (canRequest4k) add(Capability.CAPABILITY_REQUEST_4K)
+        if (canRequestAdvanced) add(Capability.CAPABILITY_ADVANCED_OPTIONS)
         if (canRequest) add(Capability.CAPABILITY_CANCEL)
         if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
         if (canCreateIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
