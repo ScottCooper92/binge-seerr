@@ -36,6 +36,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueTypeCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
@@ -57,9 +58,10 @@ private const val HTTP_CONFLICT = 409
 /**
  * REQUEST v1, served against the connected Seerr server.
  *
- * Capabilities come from the signed-in user's permission bitmask, so the host offers exactly what
- * this user may do. Every failure leaves as a gRPC status code (`SeerrErrors.kt`), and every gated
- * rpc re-checks its capability rather than trusting the host to have honoured the handshake.
+ * Capabilities come from the signed-in user's permission bitmask narrowed by what the server has
+ * (its lineage and version, `SeerrServerProfile`), so the host offers exactly what this user may
+ * do on this server. Every failure leaves as a gRPC status code (`SeerrErrors.kt`), and every
+ * gated rpc re-checks its capability rather than trusting the host to have honoured the handshake.
  */
 class SeerrRequestService(
     private val connection: SeerrConnection,
@@ -71,10 +73,10 @@ class SeerrRequestService(
 
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
         statusCatching {
-            val credentials = connection.current()
+            val profile = connection.profile()
             handshakeResponse(
-                capabilities = permissions().toCapabilities(),
-                providerName = credentials.variant.displayName,
+                capabilities = permissions().toCapabilities(profile),
+                providerName = profile.variant.displayName,
                 integrationVersionName = versionName,
             )
         }
@@ -152,7 +154,8 @@ class SeerrRequestService(
 
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated(Capability.CAPABILITY_BLOCK) {
-            connection.api().addToBlocklist(SeerrAddToBlocklistBody(request.media.tmdbId, request.media.seerrMediaType(), request.title))
+            val body = SeerrAddToBlocklistBody(request.media.tmdbId, request.media.seerrMediaType(), request.title)
+            connection.api().addToBlocklist(connection.profile().blocklistPath, body)
             BlockTitleResponse.getDefaultInstance()
         }
 
@@ -166,7 +169,7 @@ class SeerrRequestService(
                 .details(media)
                 .mediaInfo
                 .toRequestStatus(clock())
-        return status.toBuilder().addAllAllowedActions(permissions.allowedActions(status)).build()
+        return status.toBuilder().addAllAllowedActions(permissions.allowedActions(status, connection.profile())).build()
     }
 
     private suspend fun <T> gated(
@@ -174,7 +177,7 @@ class SeerrRequestService(
         block: suspend () -> T,
     ): T =
         statusCatching {
-            permissions().toCapabilities().requireDeclared(capability)
+            permissions().toCapabilities(connection.profile()).requireDeclared(capability)
             block()
         }
 
@@ -183,16 +186,20 @@ class SeerrRequestService(
     }
 }
 
-/** Seerr's permissions as the contract's capability set — the handshake is derived, never hand-listed. */
-fun SeerrPermissions.toCapabilities(): Set<Capability> =
+/**
+ * Seerr's permissions as the contract's capability set — the handshake is derived, never
+ * hand-listed — narrowed by the server: a blocklist the lineage lacks, or issues an Overseerr is
+ * too old for, are not offered however the user's bits read, since the server answers them 404.
+ */
+fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability> =
     buildSet {
         add(Capability.CAPABILITY_OBSERVE_STATUS)
         if (canRequest4k) add(Capability.CAPABILITY_REQUEST_4K)
         if (canRequestAdvanced) add(Capability.CAPABILITY_ADVANCED_OPTIONS)
         if (canRequest) add(Capability.CAPABILITY_CANCEL)
         if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
-        if (canCreateIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
-        if (canManageBlocklist) add(Capability.CAPABILITY_BLOCK)
+        if (canCreateIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
+        if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
     }
 
 /**
@@ -200,8 +207,11 @@ fun SeerrPermissions.toCapabilities(): Set<Capability> =
  * pending request to decide, retry only with a failed one, a report only against something
  * available, a cancel only with something to cancel.
  */
-fun SeerrPermissions.allowedActions(status: RequestStatus): List<Capability> {
-    val declared = toCapabilities()
+fun SeerrPermissions.allowedActions(
+    status: RequestStatus,
+    profile: SeerrServerProfile,
+): List<Capability> {
+    val declared = toCapabilities(profile)
     val states = status.requestsList.map { it.state }
     val reportable =
         status.availability == Availability.AVAILABILITY_AVAILABLE ||
