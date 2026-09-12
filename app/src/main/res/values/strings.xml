@@ -45,13 +45,53 @@
     <string name="link_waiting">Waiting for approval…</string>
     <string name="link_cancel">Cancel</string>
 
-    <string name="connected_title">Connected to %1$s</string>
-    <string name="connected_server_label">Server</string>
-    <string name="connected_access_label">Access</string>
-    <string name="connected_as_api_key">Using the server\'s API key</string>
-    <string name="connected_as_user">Signed in as a user</string>
     <string name="connected_hint">Open Binge and allow this app under Account → Integrations. Requests you make there go to this server.</string>
-    <string name="connected_disconnect">Disconnect</string>
+
+    <string name="hub_health_connected">Connected</string>
+    <string name="hub_update_available">Update available</string>
+    <!-- Format-only: a value the server did not report. -->
+    <string name="hub_stat_placeholder" translatable="false">—</string>
+    <!-- Format-only: the dot between a size and a time. -->
+    <string name="hub_meta_separator" translatable="false"> · </string>
+    <string name="hub_stat_pending">Pending</string>
+    <string name="hub_role_admin">Admin</string>
+    <string name="hub_role_user">User</string>
+    <string name="hub_quota_title">Request quota</string>
+    <string name="hub_quota_movies">Movies</string>
+    <string name="hub_quota_tv">TV</string>
+    <string name="hub_quota_unlimited">Unlimited</string>
+    <plurals name="hub_quota_remaining">
+        <item quantity="one">%1$d of %2$d left</item>
+        <item quantity="other">%1$d of %2$d left</item>
+    </plurals>
+    <plurals name="hub_quota_period">
+        <item quantity="one">Every day</item>
+        <item quantity="other">Every %1$d days</item>
+    </plurals>
+    <string name="hub_downloading_now">Downloading now (%1$d)</string>
+    <string name="hub_download_untitled">Untitled</string>
+    <string name="hub_manage">Manage</string>
+    <string name="hub_section_requests">Requests</string>
+    <string name="hub_section_requests_desc">Approve, decline and track</string>
+    <string name="hub_section_issues">Issues</string>
+    <string name="hub_section_issues_desc">Reports from your users</string>
+    <string name="hub_section_users">Users</string>
+    <string name="hub_section_users_desc">Roles, quotas and permissions</string>
+    <string name="hub_section_blocklist">Blocklist</string>
+    <string name="hub_section_blocklist_desc">Titles hidden from requests</string>
+    <string name="hub_section_settings">Settings</string>
+    <string name="hub_section_settings_desc">Services, notifications and jobs</string>
+    <string name="section_coming_soon">This section arrives with a later phase.</string>
+    <string name="hub_retry">Retry</string>
+    <string name="hub_disconnect">Disconnect</string>
+    <string name="hub_disconnect_confirm_title">Disconnect?</string>
+    <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
+    <string name="hub_unreachable_headline">Can\'t reach your server</string>
+    <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and retry.</string>
+    <string name="hub_unauthorized_headline">Reconnect needed</string>
+    <string name="hub_unauthorized_body">The server rejected the saved sign-in. Disconnect and sign in again.</string>
+    <string name="hub_couldnt_load_headline">Still connecting…</string>
+    <string name="hub_couldnt_load_body">The server answered but the dashboard could not load yet. This can happen on first launch while the connection settles. Retrying automatically.</string>
 
     <string name="advanced_title">Request with options</string>
     <string name="advanced_intro">Choose where this title goes. Each choice opens on what a plain request would use.</string>

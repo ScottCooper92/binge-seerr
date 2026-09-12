@@ -86,8 +86,8 @@ sealed interface SetupUiState {
         val notice: SetupNotice?,
     ) : SetupUiState
 
+    /** The credentials landed; the home swaps to the hub on the next frame. */
     data class Connected(
         val credentials: SeerrCredentials,
-        val isDisconnecting: Boolean,
     ) : SetupUiState
 }
