@@ -172,10 +172,10 @@ private fun UserDetailContent(
             }
         }
         detail.watch?.takeIf { it.recentlyWatched.isNotEmpty() }?.let { watch ->
-            item { TitleCarousel(stringResource(R.string.user_recently_watched), watch.recentlyWatched, detail.webUrl) }
+            item { TitleCarousel(stringResource(R.string.user_recently_watched), watch.recentlyWatched, detail.serverUrl) }
         }
         if (detail.watchlist.isNotEmpty()) {
-            item { TitleCarousel(stringResource(R.string.user_watchlist), detail.watchlist, detail.webUrl) }
+            item { TitleCarousel(stringResource(R.string.user_watchlist), detail.watchlist, detail.serverUrl) }
         }
         item { SectionHeader(title = stringResource(R.string.hub_section_requests)) }
         items(count = requests.itemCount, key = requests.itemKey { it.id }) { index ->
@@ -252,10 +252,9 @@ private fun ProfileHeader(
 private fun TitleCarousel(
     title: String,
     items: List<TitleCardItem>,
-    webUrl: String,
+    serverRoot: String,
 ) {
     val context = LocalContext.current
-    val serverRoot = webUrl.substringBefore("users/")
     MediaCarousel(title = title, items = items, itemKey = { it.mediaType.name + it.tmdbId }, onMoreClick = null) { item ->
         MediaCard(
             posterUrl = item.posterUrl,

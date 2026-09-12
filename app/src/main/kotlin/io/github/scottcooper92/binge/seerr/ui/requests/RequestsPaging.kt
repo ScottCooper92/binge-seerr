@@ -91,18 +91,21 @@ class RequestsPagingSource(
     }
 }
 
+/** Null for a media type this app does not render. */
+fun String.toRequestMediaTypeOrNull(): RequestMediaType? =
+    when (this) {
+        MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
+        MEDIA_TYPE_TV -> RequestMediaType.Tv
+        else -> null
+    }
+
 /** Null for a request whose media type this app does not render; there is nothing to show. */
 suspend fun SeerrRequestDto.toRequestItem(
     api: SeerrApi,
     hydrate: suspend (SeerrApi, String, Int) -> HydratedTitle?,
     nowMillis: Long,
 ): RequestItem? {
-    val mediaType =
-        when (media.mediaType) {
-            MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
-            MEDIA_TYPE_TV -> RequestMediaType.Tv
-            else -> return null
-        }
+    val mediaType = media.mediaType.toRequestMediaTypeOrNull() ?: return null
     val details = hydrate(api, media.mediaType, media.tmdbId)
     val statuses = if (is4k) media.downloadStatus4k else media.downloadStatus
     return RequestItem(

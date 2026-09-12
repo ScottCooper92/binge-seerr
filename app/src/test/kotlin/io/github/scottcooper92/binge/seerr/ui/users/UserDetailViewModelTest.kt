@@ -155,6 +155,17 @@ class UserDetailViewModelTest {
         }
 
     @Test
+    fun `a user with no name to show falls back to its id rather than crashing the page`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            serve("GET /api/v1/user/8", """{"id":8,"permissions":$REQUEST}""")
+
+            val detail = viewModel().awaitReady().detail
+
+            assertEquals("#8", detail.item.name)
+        }
+
+    @Test
     fun `a page without watch data or a watchlist still shows, and the delete guard follows the server's rules`() =
         runTest {
             server(viewerId = 8, permissions = MANAGE_USERS)

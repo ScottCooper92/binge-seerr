@@ -35,6 +35,8 @@ data class UserDetail(
     val watchlist: List<TitleCardItem>,
     val isSelf: Boolean,
     val canDelete: Boolean,
+    /** The server's own root, for a carousel card that opens a title there. */
+    val serverUrl: String,
     /** The user in the server's web client. */
     val webUrl: String,
 )
