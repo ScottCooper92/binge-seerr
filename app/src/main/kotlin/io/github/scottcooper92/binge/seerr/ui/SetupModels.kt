@@ -5,10 +5,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 
 /** Why an attempt failed, as the setup form shows it. */
-enum class SetupError { InvalidUrl, Rejected, Unreachable, Unknown, LinkExpired }
+enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, Unknown, LinkExpired }
 
 /** Something that went right and wants saying: the only one so far is the reset email. */
-enum class SetupNotice { ResetEmailSent }
+enum class SetupNotice { ResetEmailSent, }
 
 /**
  * The server the address step found. The modes are the profile's, in the order the form offers

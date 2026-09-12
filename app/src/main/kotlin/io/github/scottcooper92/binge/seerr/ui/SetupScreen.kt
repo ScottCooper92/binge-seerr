@@ -97,6 +97,7 @@ private fun ConnectedPanel(
 internal fun SetupError.messageRes(): Int =
     when (this) {
         SetupError.InvalidUrl -> R.string.setup_error_invalid_url
+        SetupError.NotSeerr -> R.string.setup_error_not_seerr
         SetupError.Rejected -> R.string.setup_error_rejected
         SetupError.Unreachable -> R.string.setup_error_unreachable
         SetupError.Unknown -> R.string.setup_error_unknown

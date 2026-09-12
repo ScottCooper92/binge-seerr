@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
+import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -42,6 +43,11 @@ class NoSessionCookieException : IllegalStateException("Seerr login returned no 
 
 /** No server is connected: the code the contract's `UNAUTHENTICATED` is mapped from. */
 class NotConnectedException : IllegalStateException("No Seerr server is connected")
+
+/** The address answered, but not as a Seerr server: neither profile call came back as one. */
+class NotSeerrServerException(
+    cause: Throwable,
+) : IllegalStateException("The address did not answer as a Seerr server", cause)
 
 /** The Quick Connect code was not approved on the Jellyfin server before it expired. */
 class QuickConnectExpiredException : IllegalStateException("The Quick Connect code expired before it was approved")
@@ -129,7 +135,10 @@ class SeerrConnection(
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
         return runCatching {
             apis.anonymous(baseUrl) { api ->
-                val profile = api.inspectProfile(SeerrVariant.Unknown).getOrThrow()
+                val profile =
+                    api.inspectProfile(SeerrVariant.Unknown).getOrElse { failure ->
+                        throw if (failure is IOException) failure else NotSeerrServerException(failure)
+                    }
                 val backdrops = runCatching { api.backdrops() }.getOrDefault(emptyList())
                 SeerrServerPreview(baseUrl, profile, backdrops.map { it.toTmdbBackdropUrl() })
             }

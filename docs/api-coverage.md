@@ -35,7 +35,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /auth/local` | Sign in using a local account | v1.17.0 | v1.0.0 | yes | In place today. |
 | `GET /auth/me` | Get logged-in user | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
 | `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service already makes; never a page. |
-| `GET /settings/public` | Get public settings | v1.0.0 | v1.0.0 |  | Server profile: variant, version, media server, sign-in modes, permissions. |
+| `GET /settings/public` | Get public settings | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
 | `GET /status` | Get Seerr status | v1.15.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
 | `GET /tv/{tvId}` | Get TV details | v1.0.0 | v1.0.0 | yes | The status lookup the Service already makes; never a page. |
 
@@ -43,14 +43,14 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 
 | Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
 |---|---|---|---|---|---|
-| `POST /auth/jellyfin/quickconnect/authenticate` | Authenticate with Quick Connect | — | v3.4.0 |  | Quick Connect sign-in, Seerr 3.4+. |
-| `GET /auth/jellyfin/quickconnect/check` | Check Quick Connect authorization status | — | v3.4.0 |  | Quick Connect sign-in, Seerr 3.4+. |
-| `POST /auth/jellyfin/quickconnect/initiate` | Initiate Jellyfin Quick Connect | — | v3.4.0 |  | Quick Connect sign-in, Seerr 3.4+. |
-| `POST /auth/logout` | Sign out and clear session cookie | v1.20.0 | v1.0.0 |  | Disconnect ends the server session too, not only the local one. |
-| `POST /auth/plex` | Sign in using a Plex token | v1.20.0 | v1.0.0 |  | Plex sign-in over the plex.tv PIN flow, then this call with the token. |
-| `POST /auth/reset-password` | Send a reset password email | v1.20.0 | v1.0.0 |  | Forgot-password from the sign-in form (local accounts, email agent on). |
+| `POST /auth/jellyfin/quickconnect/authenticate` | Authenticate with Quick Connect | — | v3.4.0 | yes | Quick Connect sign-in, Seerr 3.4+. |
+| `GET /auth/jellyfin/quickconnect/check` | Check Quick Connect authorization status | — | v3.4.0 | yes | Quick Connect sign-in, Seerr 3.4+. |
+| `POST /auth/jellyfin/quickconnect/initiate` | Initiate Jellyfin Quick Connect | — | v3.4.0 | yes | Quick Connect sign-in, Seerr 3.4+. |
+| `POST /auth/logout` | Sign out and clear session cookie | v1.20.0 | v1.0.0 | yes | Disconnect ends the server session too, not only the local one. |
+| `POST /auth/plex` | Sign in using a Plex token | v1.20.0 | v1.0.0 | yes | Plex sign-in over the plex.tv PIN flow, then this call with the token. |
+| `POST /auth/reset-password` | Send a reset password email | v1.20.0 | v1.0.0 | yes | Forgot-password from the sign-in form (local accounts, email agent on). |
 | `POST /auth/reset-password/{guid}` | Reset the password for a user | v1.20.0 | v1.0.0 |  | Forgot-password from the sign-in form (local accounts, email agent on). |
-| `GET /backdrops` | Get backdrops of trending items | v1.27.0 | v1.1.0 |  | Artwork behind the sign-in form. |
+| `GET /backdrops` | Get backdrops of trending items | v1.27.0 | v1.1.0 | yes | Artwork behind the sign-in form. |
 | `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 |  | Hub counts; also the browsers' filter chips. |
 | `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 |  | Hub counts; also the browsers' filter chips. |
 | `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 |  | Versions and totals on the hub and in Settings. |

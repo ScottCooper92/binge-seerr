@@ -58,7 +58,11 @@ internal fun SetupLinkSheet(
             )
             Text(link.code, style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace)
             BingeLoadingIndicator()
-            Text(stringResource(R.string.link_waiting), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.link_waiting),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             if (link is LinkFlow.Plex) {
                 BingeFilledButton(
                     label = stringResource(R.string.link_plex_open),

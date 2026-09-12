@@ -50,10 +50,18 @@ internal fun SetupSignInStep(
             ModeChips(state.server, state.form.mode) { mode -> actions.onEditForm { copy(mode = mode) } }
             ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset)
             state.error?.let { error ->
-                Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(error.messageRes()),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
             state.notice?.let { notice ->
-                Text(stringResource(notice.messageRes()), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(notice.messageRes()),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
             BingeFilledButton(
                 label = stringResource(state.form.mode.submitLabelRes()),

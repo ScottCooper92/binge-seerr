@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.InvalidServerUrlException
+import io.github.scottcooper92.binge.seerr.auth.NotSeerrServerException
 import io.github.scottcooper92.binge.seerr.auth.PlexPinExpiredException
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.QuickConnectExpiredException
@@ -101,7 +102,8 @@ class SetupViewModel
             draft.update { it.copy(server = null, form = SignInForm(), error = null, notice = null) }
         }
 
-        fun editForm(transform: SignInForm.() -> SignInForm) = draft.update { it.copy(form = it.form.transform(), error = null, notice = null) }
+        fun editForm(transform: SignInForm.() -> SignInForm) =
+            draft.update { it.copy(form = it.form.transform(), error = null, notice = null) }
 
         fun connect() {
             val current = draft.value
@@ -240,10 +242,11 @@ private fun SeerrServerPreview.toSetupServer(): SetupServer {
     )
 }
 
-/** A malformed address and an expired code are the form's own cases; a 401 or 403 is the credentials; the rest is the server or the network. */
+/** The address's own cases first, then an expired code; a 401 or 403 is the credentials; the rest is the server or the network. */
 private fun Throwable.toSetupError(): SetupError =
     when (this) {
         is InvalidServerUrlException -> SetupError.InvalidUrl
+        is NotSeerrServerException -> SetupError.NotSeerr
         is PlexPinExpiredException, is QuickConnectExpiredException -> SetupError.LinkExpired
         else ->
             when (toSeerrError()) {
