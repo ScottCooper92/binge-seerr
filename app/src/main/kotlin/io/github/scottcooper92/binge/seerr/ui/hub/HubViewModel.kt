@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -36,8 +37,12 @@ class HubViewModel
         private val isProbing = MutableStateFlow(false)
         private val screenVisible = MutableStateFlow(false)
 
+        /** Bumped by a manual/auto re-check and by the connection itself changing underneath this instance. */
+        private val reloadTrigger: Flow<Unit> =
+            combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, _ -> Unit }
+
         private val server: Flow<HubServer?> =
-            recheckTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }
+            reloadTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }
 
         private val health: Flow<ConnectionHealth> =
             combine(connection.health, isProbing) { health, probing ->
@@ -45,7 +50,7 @@ class HubViewModel
             }
 
         private val overview: Flow<HubOverview> =
-            recheckTrigger.flatMapLatest {
+            reloadTrigger.flatMapLatest {
                 flow {
                     emit(HubOverview())
                     emit(loader.load())
