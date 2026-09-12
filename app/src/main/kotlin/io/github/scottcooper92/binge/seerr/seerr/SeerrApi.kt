@@ -1,0 +1,256 @@
+package io.github.scottcooper92.binge.seerr.seerr
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+
+/**
+ * The slice of Seerr's `/api/v1` this companion needs: who we are, what a title's state is, and
+ * the writes the REQUEST contract maps onto. A 2xx from `auth/me` confirms both reachability and
+ * that the credentials are accepted; the `movie`/`tv` lookups (keyed by TMDB id) carry `mediaInfo`
+ * only when the server already tracks the title.
+ */
+interface SeerrApi {
+    @GET("api/v1/auth/me")
+    suspend fun authenticatedUser(): SeerrUserDto
+
+    /** Logs in with a Jellyfin/Emby account; the response sets the `connect.sid` session cookie. */
+    @POST("api/v1/auth/jellyfin")
+    suspend fun logInWithJellyfin(
+        @Body body: SeerrJellyfinLoginBody,
+    ): SeerrUserDto
+
+    /** Logs in with a local (email + password) account; sets the `connect.sid` cookie. */
+    @POST("api/v1/auth/local")
+    suspend fun logInWithLocal(
+        @Body body: SeerrLocalLoginBody,
+    ): SeerrUserDto
+
+    /** Unauthenticated: the server's version, which is how its fork is told apart. */
+    @GET("api/v1/status")
+    suspend fun status(): SeerrStatusDto
+
+    @GET("api/v1/movie/{tmdbId}")
+    suspend fun movieDetails(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrMediaDetailsDto
+
+    @GET("api/v1/tv/{tmdbId}")
+    suspend fun tvDetails(
+        @Path("tmdbId") tmdbId: Int,
+    ): SeerrMediaDetailsDto
+
+    /**
+     * The raw [Response], because the STATUS CODE carries meaning the body cannot: a 202 means the
+     * server took the call and created nothing, since every season was already covered. It is a
+     * 2xx, so nothing throws, and every field of [SeerrRequestResultDto] is optional, so the 202's
+     * `{"message": ...}` body parses cleanly into an empty result.
+     */
+    @POST("api/v1/request")
+    suspend fun requestMedia(
+        @Body body: SeerrRequestBody,
+    ): Response<SeerrRequestResultDto>
+
+    @DELETE("api/v1/request/{requestId}")
+    suspend fun deleteRequest(
+        @Path("requestId") requestId: Int,
+    )
+
+    @POST("api/v1/request/{requestId}/approve")
+    suspend fun approveRequest(
+        @Path("requestId") requestId: Int,
+    )
+
+    @POST("api/v1/request/{requestId}/decline")
+    suspend fun declineRequest(
+        @Path("requestId") requestId: Int,
+    )
+
+    @POST("api/v1/request/{requestId}/retry")
+    suspend fun retryRequest(
+        @Path("requestId") requestId: Int,
+    )
+
+    @POST("api/v1/issue")
+    suspend fun createIssue(
+        @Body body: SeerrCreateIssueBody,
+    )
+
+    @POST("api/v1/blocklist")
+    suspend fun addToBlocklist(
+        @Body body: SeerrAddToBlocklistBody,
+    )
+}
+
+/**
+ * Seerr's `MediaStatus` enum, a plain int on the wire. Typed so it cannot be confused with
+ * [SeerrRequestStatusCode], which shares the same raw range.
+ */
+@JvmInline
+@Serializable
+value class SeerrMediaStatusCode(
+    val raw: Int,
+) {
+    companion object {
+        val Pending = SeerrMediaStatusCode(2)
+        val Processing = SeerrMediaStatusCode(3)
+        val PartiallyAvailable = SeerrMediaStatusCode(4)
+        val Available = SeerrMediaStatusCode(5)
+        val Blocklisted = SeerrMediaStatusCode(6)
+    }
+}
+
+/**
+ * Seerr's `MediaRequestStatus` enum. It runs past Declined: an auto-approved request that finishes
+ * downloading lands on Completed (5), and a fulfilment that errors lands on Failed (4).
+ */
+@JvmInline
+@Serializable
+value class SeerrRequestStatusCode(
+    val raw: Int,
+) {
+    companion object {
+        val Approved = SeerrRequestStatusCode(2)
+        val Declined = SeerrRequestStatusCode(3)
+        val Failed = SeerrRequestStatusCode(4)
+        val Completed = SeerrRequestStatusCode(5)
+    }
+}
+
+/** Seerr's `IssueType` enum: 1 video, 2 audio, 3 subtitles, 4 other. */
+@JvmInline
+@Serializable
+value class SeerrIssueTypeCode(
+    val raw: Int,
+) {
+    companion object {
+        val Video = SeerrIssueTypeCode(1)
+        val Audio = SeerrIssueTypeCode(2)
+        val Subtitles = SeerrIssueTypeCode(3)
+        val Other = SeerrIssueTypeCode(4)
+    }
+}
+
+@Serializable
+data class SeerrUserDto(
+    @SerialName("id") val id: Int,
+    @SerialName("displayName") val displayName: String? = null,
+    @SerialName("email") val email: String? = null,
+    /** The user's permission bitmask, which is what the handshake's capability set is decoded from. */
+    @SerialName("permissions") val permissions: Int? = null,
+)
+
+@Serializable
+data class SeerrJellyfinLoginBody(
+    @SerialName("username") val username: String,
+    @SerialName("password") val password: String,
+)
+
+@Serializable
+data class SeerrLocalLoginBody(
+    @SerialName("email") val email: String,
+    @SerialName("password") val password: String,
+)
+
+@Serializable
+data class SeerrStatusDto(
+    @SerialName("version") val version: String? = null,
+)
+
+/**
+ * A media request. The advanced-option overrides are omitted when absent, so a plain request posts
+ * exactly as one and the server applies its per-instance defaults.
+ */
+@Serializable
+data class SeerrRequestBody(
+    @SerialName("mediaType") val mediaType: String,
+    @SerialName("mediaId") val mediaId: Int,
+    @SerialName("seasons") val seasons: List<Int>? = null,
+    @SerialName("is4k") val is4k: Boolean = false,
+)
+
+@Serializable
+data class SeerrRequestResultDto(
+    @SerialName("id") val id: Int? = null,
+)
+
+/**
+ * Body for `POST issue`. [mediaId] is the server's INTERNAL media id (a title's `mediaInfo.id`),
+ * not the TMDB id — the server can only attach an issue to a title it already tracks.
+ */
+@Serializable
+data class SeerrCreateIssueBody(
+    @SerialName("mediaId") val mediaId: Int,
+    @SerialName("issueType") val issueType: Int,
+    @SerialName("message") val message: String,
+)
+
+@Serializable
+data class SeerrAddToBlocklistBody(
+    @SerialName("tmdbId") val tmdbId: Int,
+    @SerialName("mediaType") val mediaType: String,
+    @SerialName("title") val title: String,
+)
+
+/** A title lookup; [mediaInfo] is absent when the title is not known to the server. */
+@Serializable
+data class SeerrMediaDetailsDto(
+    @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,
+)
+
+@Serializable
+data class SeerrMediaInfoDto(
+    /** The server's internal media id — the issue endpoint keys on this, not the TMDB id. */
+    @SerialName("id") val id: Int? = null,
+    @SerialName("status") val status: SeerrMediaStatusCode? = null,
+    @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
+    @SerialName("downloadStatus") val downloadStatus: List<SeerrDownloadStatusDto> = emptyList(),
+    @SerialName("requests") val requests: List<SeerrRequestSummaryDto> = emptyList(),
+    /** Link to the title in the media server's web UI; [mediaUrl] is general, the others server-specific. */
+    @SerialName("mediaUrl") val mediaUrl: String? = null,
+    @SerialName("jellyfinMediaUrl") val jellyfinMediaUrl: String? = null,
+    @SerialName("plexUrl") val plexUrl: String? = null,
+)
+
+@Serializable
+data class SeerrRequestSummaryDto(
+    @SerialName("id") val id: Int,
+    @SerialName("status") val status: SeerrRequestStatusCode? = null,
+    @SerialName("createdAt") val createdAt: String? = null,
+    @SerialName("requestedBy") val requestedBy: SeerrRequestUserDto? = null,
+    /** The seasons this request covers; empty for movie requests. */
+    @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
+)
+
+/** Whichever of these the server filled in names the requester. */
+@Serializable
+data class SeerrRequestUserDto(
+    @SerialName("displayName") val displayName: String? = null,
+    @SerialName("username") val username: String? = null,
+    @SerialName("email") val email: String? = null,
+)
+
+@Serializable
+data class SeerrSeasonStatusDto(
+    @SerialName("seasonNumber") val seasonNumber: Int,
+    @SerialName("status") val status: SeerrMediaStatusCode? = null,
+)
+
+/** A single in-flight download from the *arr backend. Sizes are bytes, read as Double to tolerate either form. */
+@Serializable
+data class SeerrDownloadStatusDto(
+    @SerialName("title") val title: String? = null,
+    @SerialName("size") val size: Double? = null,
+    @SerialName("sizeLeft") val sizeLeft: Double? = null,
+    /** ISO timestamp the backend expects the download to finish. */
+    @SerialName("estimatedCompletionTime") val estimatedCompletionTime: String? = null,
+    /** Remaining time as the *arr queue reports it: `hh:mm:ss`, or `d.hh:mm:ss` beyond a day. */
+    @SerialName("timeLeft") val timeLeft: String? = null,
+    /** The *arr queue status, e.g. `downloading`, `queued`, `delay`, `paused`; absent on older servers. */
+    @SerialName("status") val status: String? = null,
+)
