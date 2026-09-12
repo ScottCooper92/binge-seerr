@@ -243,6 +243,29 @@ interface SeerrApi {
         @Path("mediaId") mediaId: Int,
     ): SeerrWatchDataDto
 
+    @GET("api/v1/issue/{issueId}")
+    suspend fun issue(
+        @Path("issueId") issueId: Int,
+    ): SeerrIssueDto
+
+    /** Answers with the updated issue, whose newest comment is the one just posted. */
+    @POST("api/v1/issue/{issueId}/comment")
+    suspend fun commentOnIssue(
+        @Path("issueId") issueId: Int,
+        @Body body: SeerrIssueCommentBody,
+    ): SeerrIssueDto
+
+    @PUT("api/v1/issueComment/{commentId}")
+    suspend fun editIssueComment(
+        @Path("commentId") commentId: Int,
+        @Body body: SeerrIssueCommentBody,
+    )
+
+    @DELETE("api/v1/issueComment/{commentId}")
+    suspend fun deleteIssueComment(
+        @Path("commentId") commentId: Int,
+    )
+
     @POST("api/v1/issue")
     suspend fun createIssue(
         @Body body: SeerrCreateIssueBody,
@@ -466,6 +489,11 @@ data class SeerrRequestResultDto(
  * not the TMDB id — the server can only attach an issue to a title it already tracks.
  */
 @Serializable
+data class SeerrIssueCommentBody(
+    @SerialName("message") val message: String,
+)
+
+@Serializable
 data class SeerrCreateIssueBody(
     @SerialName("mediaId") val mediaId: Int,
     @SerialName("issueType") val issueType: SeerrIssueTypeCode,
@@ -535,6 +563,8 @@ data class SeerrRequestUserDto(
     @SerialName("displayName") val displayName: String? = null,
     @SerialName("username") val username: String? = null,
     @SerialName("email") val email: String? = null,
+    /** The author's bitmask, present on a comment's user; what an Admin tag on a comment reads. */
+    @SerialName("permissions") val permissions: Int? = null,
 )
 
 @Serializable

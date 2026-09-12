@@ -5,7 +5,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,9 +19,11 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailActions
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailScreen
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesActions
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesScreen
-import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.EditRequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.ListRefresh
@@ -80,7 +81,10 @@ fun SeerrNavHost(
                     RequestsEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(RequestDetailRoute(id)) })
                 }
                 entry<RequestDetailRoute> { route -> RequestDetailEntry(route.requestId, onBack = { backStack.removeLastOrNull() }) }
-                entry<IssuesRoute> { IssuesEntry(onBack = { backStack.removeLastOrNull() }) }
+                entry<IssuesRoute> {
+                    IssuesEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
+                }
+                entry<IssueDetailRoute> { route -> IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }) }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
                 }
@@ -205,14 +209,13 @@ private fun RequestsEntry(
     )
 }
 
-/** Until the issue page lands, a row opens the issue in the server's web client. */
 @Composable
 private fun IssuesEntry(
     onBack: () -> Unit,
+    onOpen: (Int) -> Unit,
     viewModel: IssuesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     // The chip counts refetch on arrival, so a resolve elsewhere shows without a poll.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
@@ -226,7 +229,33 @@ private fun IssuesEntry(
                 onBack = onBack,
                 onFilterChange = viewModel::setFilter,
                 onSortChange = viewModel::setSort,
-                onOpen = { item -> (state as? IssuesUiState.Ready)?.scope?.webUrl(item)?.let(context::openInBrowser) },
+                onOpen = { item -> onOpen(item.id) },
+            ),
+    )
+}
+
+@Composable
+private fun IssueDetailEntry(
+    issueId: Int,
+    onBack: () -> Unit,
+    viewModel: IssueDetailViewModel =
+        hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    IssueDetailScreen(
+        state = state,
+        events = viewModel.events,
+        actions =
+            IssueDetailActions(
+                onBack = onBack,
+                onRetry = viewModel::reload,
+                onDraftChange = viewModel::setDraft,
+                onPostComment = viewModel::postComment,
+                onRetryOutbox = viewModel::retryOutbox,
+                onEditOutbox = viewModel::editOutbox,
+                onDropOutbox = viewModel::dropOutbox,
+                onEditComment = viewModel::editComment,
+                onDeleteComment = viewModel::deleteComment,
             ),
     )
 }
