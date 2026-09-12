@@ -472,6 +472,7 @@ data class SeerrRequestSummaryDto(
 /** Whichever of these the server filled in names the requester. */
 @Serializable
 data class SeerrRequestUserDto(
+    @SerialName("id") val id: Int? = null,
     @SerialName("displayName") val displayName: String? = null,
     @SerialName("username") val username: String? = null,
     @SerialName("email") val email: String? = null,

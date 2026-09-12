@@ -2,18 +2,40 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
+
+private const val ADMIN = 2
+private const val REQUEST = 32
+private const val MANAGE_BLOCKLIST = 1 shl 28
 
 class RequestMappingsTest {
     private fun item(
         status: SeerrRequestStatusCode? = null,
         mediaStatus: SeerrMediaStatusCode? = null,
         download: RequestDownload? = null,
-    ) = RequestItem(1, 1, RequestMediaType.Movie, null, null, null, null, null, status, mediaStatus, download, emptyList(), false)
+    ) = RequestItem(
+        id = 1,
+        tmdbId = 1,
+        mediaType = RequestMediaType.Movie,
+        title = null,
+        posterUrl = null,
+        year = null,
+        requestedBy = null,
+        requestedById = null,
+        requestedAtMillis = null,
+        status = status,
+        mediaStatus = mediaStatus,
+        download = download,
+        seasonNumbers = emptyList(),
+        is4k = false,
+    )
 
     @Test
     fun `the row's chip is the decision, then the outcome, then the bare state`() {
@@ -53,5 +75,36 @@ class RequestMappingsTest {
         assertEquals(1, counts.countFor(RequestFilter.Processing))
         assertNull(counts.countFor(RequestFilter.Failed))
         assertNull(counts.countFor(RequestFilter.Unavailable))
+    }
+
+    @Test
+    fun `a moderator may decide a pending request and retry a failed one, while a requester may only remove their own pending one`() {
+        val moderator = ModerationScope(SeerrPermissions.fromBits(ADMIN), currentUserId = 1, hasBlocklist = true)
+        val requester = ModerationScope(SeerrPermissions.fromBits(REQUEST), currentUserId = 7, hasBlocklist = true)
+        val pending = item(SeerrRequestStatusCode(1)).copy(requestedById = 7)
+        val failed = item(SeerrRequestStatusCode.Failed).copy(requestedById = 7)
+
+        assertEquals(
+            RequestActions(canApprove = true, canDecline = true, canRetry = false, canRemove = true, canBlock = true),
+            pending.actions(moderator),
+        )
+        assertEquals(
+            RequestActions(canApprove = false, canDecline = false, canRetry = true, canRemove = true, canBlock = true),
+            failed.actions(moderator),
+        )
+        assertEquals(RequestActions(canRemove = true), pending.actions(requester))
+        assertFalse(failed.actions(requester).any)
+        assertFalse(pending.copy(requestedById = 8).actions(requester).any)
+    }
+
+    @Test
+    fun `blocking needs the lineage's blocklist and the permission, and never a title already blocked`() {
+        val blocker = ModerationScope(SeerrPermissions.fromBits(REQUEST or MANAGE_BLOCKLIST), currentUserId = 7, hasBlocklist = true)
+        val pending = item(SeerrRequestStatusCode(1)).copy(requestedById = 7)
+
+        assertTrue(pending.actions(blocker).canBlock)
+        assertFalse(pending.actions(blocker.copy(hasBlocklist = false)).canBlock)
+        assertFalse(pending.copy(mediaStatus = SeerrMediaStatusCode.Blocklisted).actions(blocker).canBlock)
+        assertFalse(pending.actions(ModerationScope(SeerrPermissions.fromBits(ADMIN), 1, hasBlocklist = false)).canBlock)
     }
 }

@@ -105,7 +105,7 @@ class RequestsViewModelTest {
             server(ADMIN)
             val vm = viewModel()
 
-            val ready = vm.awaitReady { it.counts != null && it.permissions.canManageRequests }
+            val ready = vm.awaitReady { it.counts != null && it.scope.permissions.canManageRequests }
             assertEquals(RequestCounts(total = 3, pending = 1, approved = 2, processing = 1, available = 1), ready.counts)
 
             val rows = vm.requests(RequestFilter.All).asSnapshot()
@@ -132,7 +132,11 @@ class RequestsViewModelTest {
             val list = received.last { it.url.encodedPath == "/api/v1/request" }.url
             assertEquals("7", list.queryParameter("requestedBy"))
             assertEquals("pending", list.queryParameter("filter"))
-            assertTrue(!vm.awaitReady { true }.permissions.canManageRequests)
+            assertTrue(
+                !vm
+                    .awaitReady { true }
+                    .scope.permissions.canManageRequests,
+            )
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

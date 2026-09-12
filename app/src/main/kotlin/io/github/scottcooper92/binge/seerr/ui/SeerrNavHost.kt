@@ -19,8 +19,10 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsScreen
@@ -127,12 +129,19 @@ private fun RequestDetailEntry(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     RequestDetailScreen(
         state = state,
+        events = viewModel.moderation.events,
         actions =
             RequestDetailActions(
                 onBack = onBack,
                 onRetry = viewModel::reload,
                 onReportIssue = viewModel::reportIssue,
                 onDismissReport = viewModel::dismissReport,
+                onApprove = { viewModel.moderation.approve(requestId) },
+                onRetryRequest = { viewModel.moderation.retry(requestId) },
+                onDecline = { block ->
+                    (state as? RequestDetailUiState.Ready)?.let { viewModel.moderation.decline(it.detail.item, block) }
+                },
+                onRemove = { block -> (state as? RequestDetailUiState.Ready)?.let { viewModel.moderation.remove(it.detail.item, block) } },
             ),
     )
 }
@@ -152,12 +161,20 @@ private fun RequestsEntry(
     RequestsScreen(
         state = state,
         requestsFor = viewModel::requests,
+        events = viewModel.moderation.events,
+        refresh = ListRefresh(viewModel.listVersion, viewModel::shouldRefresh),
         actions =
             RequestsActions(
                 onBack = onBack,
                 onFilterChange = viewModel::setFilter,
                 onSortChange = viewModel::setSort,
                 onOpen = { item -> onOpen(item.id) },
+                onOpenActions = viewModel::openActions,
+                onDismissActions = viewModel::dismissActions,
+                onApprove = viewModel.moderation::approve,
+                onRetry = viewModel.moderation::retry,
+                onDecline = viewModel.moderation::decline,
+                onRemove = viewModel.moderation::remove,
             ),
     )
 }

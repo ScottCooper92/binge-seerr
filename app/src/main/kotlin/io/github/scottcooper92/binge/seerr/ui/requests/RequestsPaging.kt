@@ -113,6 +113,7 @@ suspend fun SeerrRequestDto.toRequestItem(
         posterUrl = details?.posterUrl,
         year = details?.year,
         requestedBy = requestedBy?.displayString(),
+        requestedById = requestedBy?.id,
         requestedAtMillis = createdAt?.toEpochMillisOrNull(),
         status = status,
         mediaStatus = media.status,

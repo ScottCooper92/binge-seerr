@@ -44,12 +44,15 @@ class RequestDetailViewModel
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
         val uiState: StateFlow<RequestDetailUiState> = state.asStateFlow()
 
+        /** A moderation reloads the page, so the chip and the history show the server's new answer. */
+        val moderation = RequestModeration(scope = viewModelScope, connection = connection, onModerated = ::reload)
+
         init {
             reload()
         }
 
         fun reload() {
-            state.value = RequestDetailUiState.Loading
+            if (state.value !is RequestDetailUiState.Ready) state.value = RequestDetailUiState.Loading
             viewModelScope.launch {
                 state.value =
                     runCatching { load() }
@@ -101,6 +104,14 @@ class RequestDetailViewModel
                 val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
                 RequestDetail(
                     item = item,
+                    actions =
+                        item.actions(
+                            ModerationScope(
+                                permissions.await(),
+                                currentUserId = connection.authenticatedUser().id,
+                                hasBlocklist = profile.await().hasBlocklist,
+                            ),
+                        ),
                     backdropUrl = detailsDto?.backdropPath?.toTmdbBackdropUrl(),
                     overview = detailsDto?.overview?.takeIf { it.isNotBlank() },
                     modifiedBy =
