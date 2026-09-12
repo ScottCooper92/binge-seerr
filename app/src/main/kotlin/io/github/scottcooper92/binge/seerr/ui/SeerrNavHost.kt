@@ -43,7 +43,6 @@ fun SeerrNavHost(
         entryProvider =
             entryProvider {
                 entry<HomeRoute> { HomeEntry(onOpenSection = { section -> backStack.add(SectionRoute(section)) }) }
-                entry<SetupRoute> { SetupEntry() }
                 entry<SectionRoute> { route ->
                     EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
                 }
