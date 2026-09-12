@@ -3,34 +3,23 @@ package io.github.scottcooper92.binge.seerr
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.rememberNavBackStack
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.scottcooper92.binge.seerr.ui.SetupScreen
-import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
+import io.github.scottcooper92.binge.seerr.ui.SeerrNavHost
+import io.github.scottcooper92.binge.seerr.ui.SetupRoute
 
 /**
- * The companion's own UI: connect a server, see what is connected, disconnect. Everything else a
- * user does with Seerr happens in Binge, through the exported Service — this app is the
- * credentials' home, not a second client. It wears Binge's theme so the two read as one product.
+ * The app's own UI, one Navigation 3 host wearing Binge's theme so the two read as one product.
+ * Setup is the start destination; the screens a standalone client needs (#26) push above it.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val viewModel: SetupViewModel by viewModels()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             BingeExpressiveTheme {
-                val state by viewModel.uiState.collectAsStateWithLifecycle()
-                SetupScreen(
-                    state = state,
-                    onEdit = viewModel::edit,
-                    onConnect = viewModel::connect,
-                    onDisconnect = viewModel::disconnect,
-                )
+                SeerrNavHost(backStack = rememberNavBackStack(SetupRoute))
             }
         }
     }
