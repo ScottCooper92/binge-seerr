@@ -146,7 +146,7 @@ class SeerrRequestService(
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
         gated(Capability.CAPABILITY_REPORT_ISSUE) {
             val mediaId = mediaIds.mediaRecordId(request.media)
-            connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType().raw, request.message))
+            connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))
             ReportIssueResponse.getDefaultInstance()
         }
 
