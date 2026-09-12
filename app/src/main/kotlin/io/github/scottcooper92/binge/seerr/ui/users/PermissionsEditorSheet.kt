@@ -60,6 +60,8 @@ internal fun PermissionsEditorContent(
     onToggle: (ManageablePermission) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Toggles shown but not flippable: what the viewer may not grant. */
+    locked: Set<ManageablePermission> = emptySet(),
 ) {
     Column(
         modifier = modifier.fillMaxWidth().padding(bottom = dimensionResource(DesR.dimen.padding_l)),
@@ -87,7 +89,7 @@ internal fun PermissionsEditorContent(
                     PermissionRow(
                         label = stringResource(permission.labelRes()),
                         checked = permission in selected || implied,
-                        enabled = !saving && !implied,
+                        enabled = !saving && !implied && permission !in locked,
                         onToggle = { onToggle(permission) },
                     )
                 }

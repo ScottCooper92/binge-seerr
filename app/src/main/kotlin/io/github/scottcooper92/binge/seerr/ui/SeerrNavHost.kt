@@ -101,7 +101,18 @@ fun SeerrNavHost(
                         route.userId,
                         onBack = { backStack.removeLastOrNull() },
                         onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
+                        onOpenSettings = { backStack.add(UserSettingsRoute(route.userId)) },
                     )
+                }
+                entry<UserSettingsRoute> { route ->
+                    UserSettingsEntry(
+                        route.userId,
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenPage = { page -> backStack.add(UserSettingsPageRoute(route.userId, page)) },
+                    )
+                }
+                entry<UserSettingsPageRoute> { route ->
+                    UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
                 }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
@@ -314,6 +325,7 @@ private fun UserDetailEntry(
     userId: Int,
     onBack: () -> Unit,
     onOpenRequest: (Int) -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: UserDetailViewModel =
         hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(creationCallback = { factory -> factory.create(userId) }),
 ) {
@@ -327,6 +339,7 @@ private fun UserDetailEntry(
                 onBack = onBack,
                 onRetry = viewModel::reload,
                 onOpenRequest = { item -> onOpenRequest(item.id) },
+                onOpenSettings = onOpenSettings,
                 onDeleteUser = viewModel::deleteUser,
             ),
     )

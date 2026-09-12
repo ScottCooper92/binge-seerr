@@ -131,6 +131,7 @@ class UserDetailViewModel
                     watch = watch.await()?.let { UserWatch(playCount = it.playCount, recentlyWatched = recent.mapNotNull(cards::get)) },
                     watchlist = listed.mapNotNull(cards::get),
                     isSelf = viewerDto?.id == userId,
+                    canEditSettings = viewerDto?.id == userId || permissions.canManageUsers,
                     canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
                     webUrl = connection.current().baseUrl + "users/" + userId,
                 )
