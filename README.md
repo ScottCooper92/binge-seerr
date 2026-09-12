@@ -34,8 +34,9 @@ and it needs to be one of those rather than a private arrangement.
 
 ## Building
 
-The contracts and the SDK come from binge-integrations as source, through a git submodule
-and a Gradle composite build, so clone with submodules:
+The contracts and the SDK come from binge-integrations as source, and the theme and components
+the screen wears from binge-design-system, both through a git submodule and a Gradle composite
+build, so clone with submodules:
 
 ```sh
 git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr

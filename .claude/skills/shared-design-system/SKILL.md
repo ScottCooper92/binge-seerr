@@ -1,72 +1,35 @@
 ---
 name: shared-design-system
-description: Use when editing, adding or removing any file listed in design-system-provenance.tsv — the UI copied from Binge so the two apps look like one product. Also use when copying a new file across from Binge, or when asked whether this app's UI has drifted from Binge's.
+description: Use when changing anything under this app's ui/ package or the design-system submodule — the UI is built from the design system Binge and the companions share, so a change may belong there, and a change there reaches this app only through a submodule bump. Also use when asked whether this app's UI has drifted from Binge's.
 ---
 
-# Shared design-system files
+# The design system is a shared repository
 
-Some of this app's UI is **copied from Binge** rather than written here, so a user moving between
-the two apps sees one product. `design-system-provenance.tsv` at the repository root is the record
-of which files those are and where each came from.
+This app's screen is built from
+[binge-design-system](https://github.com/ScottCooper92/binge-design-system), checked out at
+`design-system/` as a git submodule and included as a composite build (`com.binge:designsystem`,
+package `com.binge.designsystem`). The theme, the components and the dp tokens come from there;
+this repository holds only what is this app's own — its strings, its screen, its ViewModel.
 
-Copying was chosen over a shared module deliberately: a submodule is a lot of machinery for the
-~23 files one companion needs, and this repository is meant to be readable standalone by someone
-writing their own companion. The cost is drift. This skill is how drift stays visible.
+That replaces the copying an earlier `design-system-provenance.tsv` recorded. Nothing is copied
+any more, so there is no drift to track: the submodule pin says exactly which design system this
+app was built against.
 
-## If you changed a file listed in the manifest
+## Which side a change belongs on
 
-**Divergence is allowed. Silent divergence is not.**
+- **A component, a token, the theme** — a PR on binge-design-system. Its one rule is that a
+  component there may not know what Binge's data looks like, and this app is the proof: if it
+  needs something a companion could not use, it does not belong there.
+- **Then bump the submodule here in a commit of its own.** `.gitmodules` and the pin are
+  agent-governed paths, so an author bot's commit can revert them — check the pin after any bot
+  push, exactly as for `binge-integrations/`.
+- **The screen itself** — an ordinary change here. Reach for a design-system component before
+  writing chrome, and for its `padding_*` tokens (`import com.binge.designsystem.R as DesR`)
+  before adding a dimen of your own. A dimen this repository declares is a sign the component
+  it sizes wants to be shared.
 
-You do not need permission to change a copied file — this app's needs are not Binge's, and forcing
-them to stay byte-identical would be worse than letting them differ. What you must do is say so:
+## Versions
 
-1. Say in the PR body that the file is manifest-listed and what you changed about it.
-2. Say whether the change is **this app's own** (a fit for something Binge does not have) or a
-   **general improvement** that Binge would want too.
-3. If it is the second, file an issue on Binge rather than assuming someone will notice. A fix
-   made here and not there is the exact failure this manifest exists to surface.
-
-Do **not** update the `binge-commit` or `sha256` columns for an edit made here. Those describe
-where the file came FROM, not what it has become. Rewriting them to match a local edit erases the
-one fact the row carries.
-
-## If you are copying a NEW file across from Binge
-
-Add a row. Four tab-separated columns, and the digest is of **Binge's** file at the commit copied
-from, not of the local copy:
-
-```sh
-# from a Binge checkout, at the commit you are copying
-git rev-parse HEAD
-git show HEAD:core/designsystem/src/main/kotlin/.../Foo.kt | sha256sum
-```
-
-Adding a row is a decision, not bookkeeping. It says this file is UX that should stay consistent
-across apps. A file that is genuinely this app's own does not belong in the manifest at all — and
-a file added without a row is invisible to every check on both sides.
-
-## Checking whether Binge has moved on
-
-**You probably cannot do this from here, and should not pretend otherwise.**
-
-Binge is a private repository. Nothing running in this repository's CI can read it, and an
-unauthenticated fetch returns 404 rather than anything you can act on. The check runs from the
-Binge side, where this repository is public and readable — see Binge's skill of the same name.
-
-From a local machine that has both checked out, compare directly:
-
-```sh
-# in the Binge checkout
-git show <binge-commit>:<path-in-binge> | sha256sum   # should equal the manifest's sha256
-git show HEAD:<path-in-binge> | sha256sum             # differs => Binge has moved on since
-```
-
-If you cannot reach Binge, **say that** rather than reporting the files as in sync. "I could not
-check" and "they match" are different answers and only one of them is true.
-
-## Two files that cannot simply be copied
-
-`MediaAvailabilityUi.kt` and `AccountActionSnackbarHandler.kt` are coupled to Binge's
-`core:domain` types. Both are integration-shaped — they render request state — so what they want
-is the contract's generated types, not Binge's internal ones. That is the SDK's job
-(ScottCooper92/Binge#1786), not something to solve by copying a domain model across.
+A consumer that includes a build has to agree with it on Compose and AGP, and this one pins
+`material3` ahead of the BOM to the version the design system pins. A bump there is a bump in
+`libs.versions.toml` here, in the same submodule-bump commit.
