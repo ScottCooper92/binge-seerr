@@ -105,7 +105,7 @@ fun IssueDetailScreen(
             when (state) {
                 IssueDetailUiState.Loading -> LoadingScreen()
                 is IssueDetailUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
-                is IssueDetailUiState.Ready -> Ready(state, actions)
+                is IssueDetailUiState.Ready -> Ready(state, events, actions)
             }
         }
     }
@@ -115,6 +115,7 @@ fun IssueDetailScreen(
 @Composable
 private fun Ready(
     state: IssueDetailUiState.Ready,
+    events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
 ) {
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
@@ -158,7 +159,7 @@ private fun Ready(
         }
         if (detail.canComment) ComposerBar(onClick = { modals.composing = true }, inset = inset)
     }
-    IssueModals(state, actions, modals)
+    IssueModals(state, events, actions, modals)
 }
 
 /** The title it is about: poster, title, what it affects, and the type and state; tapping opens the server's page. */
@@ -254,10 +255,18 @@ private fun ComposerBar(
 @Composable
 private fun IssueModals(
     state: IssueDetailUiState.Ready,
+    events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
     modals: IssueModalState,
 ) {
     val detail = state.detail
+    // A save only actually lands on this event, never on the draft matching the server text: that's also
+    // true the instant the sheet opens, before anything has been submitted.
+    LaunchedEffect(events) {
+        events.collectLatest { event ->
+            if (event == IssueDetailEvent.CommentEdited) modals.editingCommentId = null
+        }
+    }
     if (modals.composing) {
         CommentComposerSheet(
             draft = state.draft,
@@ -283,21 +292,15 @@ private fun IssueModals(
     }
     modals.editingCommentId?.let { commentId ->
         val original = (listOfNotNull(detail.report) + detail.comments).firstOrNull { it.id == commentId }?.message.orEmpty()
-        // The sheet closes when the edit lands: the reloaded text matches the draft and nothing is in flight.
-        val landed = state.commentAction == CommentAction.None && original.trim() == modals.editDraft.trim() && original.isNotEmpty()
-        if (landed) {
-            modals.editingCommentId = null
-        } else {
-            EditCommentSheet(
-                title = stringResource(if (commentId == detail.report?.id) R.string.issue_edit_report else R.string.issue_edit_comment),
-                draft = modals.editDraft,
-                original = original,
-                isSaving = state.commentAction == CommentAction.Editing(commentId),
-                onDraftChange = { modals.editDraft = it },
-                onSubmit = { actions.onEditComment(commentId, modals.editDraft) },
-                onDismiss = { modals.editingCommentId = null },
-            )
-        }
+        EditCommentSheet(
+            title = stringResource(if (commentId == detail.report?.id) R.string.issue_edit_report else R.string.issue_edit_comment),
+            draft = modals.editDraft,
+            original = original,
+            isSaving = state.commentAction == CommentAction.Editing(commentId),
+            onDraftChange = { modals.editDraft = it },
+            onSubmit = { actions.onEditComment(commentId, modals.editDraft) },
+            onDismiss = { modals.editingCommentId = null },
+        )
     }
     modals.deletingCommentId?.let { commentId ->
         DeleteCommentDialog(
