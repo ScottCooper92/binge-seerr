@@ -73,12 +73,15 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.androidx.browser)
+    implementation(libs.paging.runtime)
+    implementation(libs.paging.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.paging.testing)
     // The generated service is driven over an in-process channel: the whole contract, no device.
     testImplementation(libs.grpc.inprocess)
 }

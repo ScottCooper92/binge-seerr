@@ -83,6 +83,35 @@
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="section_coming_soon">This section arrives with a later phase.</string>
 
+    <string name="requests_filter_all">All</string>
+    <string name="requests_filter_pending">Pending</string>
+    <string name="requests_filter_approved">Approved</string>
+    <string name="requests_filter_processing">Downloading</string>
+    <string name="requests_filter_available">Available</string>
+    <string name="requests_filter_unavailable">Unavailable</string>
+    <string name="requests_filter_failed">Failed</string>
+    <string name="requests_empty_all">No requests on your server yet.</string>
+    <string name="requests_empty_pending">No requests waiting for approval.</string>
+    <string name="requests_empty_approved">No approved requests.</string>
+    <string name="requests_empty_processing">Nothing downloading right now.</string>
+    <string name="requests_empty_available">No requested titles are available yet.</string>
+    <string name="requests_empty_unavailable">Everything requested is available.</string>
+    <string name="requests_empty_failed">No failed requests.</string>
+    <string name="requests_sort_title">Sort by</string>
+    <string name="requests_sort_added">Most recent</string>
+    <string name="requests_sort_modified">Recently updated</string>
+    <string name="requests_sort_cd">Change sort order</string>
+    <string name="requests_requester_unknown">Someone</string>
+    <string name="requests_reconnect">The server rejected the saved sign-in. Go back to reconnect.</string>
+    <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
+    <string name="request_state_queued">Queued</string>
+    <string name="media_type_movie">Movie</string>
+    <string name="media_type_tv">TV show</string>
+    <plurals name="requests_seasons">
+        <item quantity="one">Season %1$s</item>
+        <item quantity="other">Seasons %1$s</item>
+    </plurals>
+
     <string name="settings_group_connection">Connection</string>
     <string name="settings_server">Server</string>
     <string name="settings_signed_in_as">Signed in as</string>

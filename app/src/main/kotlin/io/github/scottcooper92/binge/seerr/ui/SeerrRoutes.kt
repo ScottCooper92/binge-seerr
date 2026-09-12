@@ -18,6 +18,10 @@ data object HomeRoute : SeerrRoute
 @Serializable
 data object SetupRoute : SeerrRoute
 
+/** The requests browser. */
+@Serializable
+data object RequestsRoute : SeerrRoute
+
 /** Settings: the connection and the admin's read-only view of the server. */
 @Serializable
 data object SettingsRoute : SeerrRoute
