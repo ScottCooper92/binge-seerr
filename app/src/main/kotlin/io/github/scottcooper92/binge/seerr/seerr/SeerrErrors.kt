@@ -39,11 +39,15 @@ private fun HttpException.httpStatus(): Status =
         else -> Status.INVALID_ARGUMENT
     }
 
-/** Seerr's only signal for a quota breach is the word in its 403 body. */
+/**
+ * Seerr's only signal for a quota breach is the word in its 403 body. A body that fails to read
+ * is treated as not mentioning quota, same as a missing or empty one — this runs inside
+ * [toStatusException] itself, so a raw [IOException] here would escape [statusCatching] uncaught
+ * rather than become the [Status] the contract expects.
+ */
 private fun HttpException.mentionsQuota(): Boolean =
-    response()
-        ?.errorBody()
-        ?.string()
+    runCatching { response()?.errorBody()?.string() }
+        .getOrNull()
         .orEmpty()
         .contains("quota", ignoreCase = true)
 
