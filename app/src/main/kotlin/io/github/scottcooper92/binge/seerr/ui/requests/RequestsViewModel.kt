@@ -53,9 +53,9 @@ class RequestsViewModel
          */
         private val scope: StateFlow<ListScope?> =
             flow {
-                val user = runCatching { connection.authenticatedUser() }.getOrNull()
+                val user = runCatching { connection.authenticatedUser() }.getOrNull() ?: return@flow
                 val permissions = user.toPermissions()
-                emit(ListScope(permissions, requestedBy = user?.id?.takeUnless { permissions.canViewRequests }))
+                emit(ListScope(permissions, requestedBy = user.id.takeUnless { permissions.canViewRequests }))
             }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
         private val streams: Map<RequestFilter, Flow<PagingData<RequestItem>>> =
