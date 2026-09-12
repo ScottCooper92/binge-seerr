@@ -35,6 +35,12 @@ sealed interface ModerationEvent {
 
     data object RemovedButBlockFailed : ModerationEvent
 
+    data object MediaStatusSet : ModerationEvent
+
+    data object MediaCleared : ModerationEvent
+
+    data object MediaFilesDeleted : ModerationEvent
+
     data class Failed(
         val error: SeerrError,
     ) : ModerationEvent
@@ -65,6 +71,25 @@ class RequestModeration(
         requestId: Int,
         body: SeerrEditRequestBody,
     ) = moderate(requestId, ModerationEvent.Edited) { connection.api().editRequest(it, body) }
+
+    fun setMediaStatus(
+        requestId: Int,
+        mediaId: Int,
+        status: MediaStatusChoice,
+        is4k: Boolean,
+    ) = moderate(requestId, ModerationEvent.MediaStatusSet) { connection.api().setMediaStatus(mediaId, status.path, is4k) }
+
+    /** The server removes every request for the title along with its record, this one included. */
+    fun clearMedia(
+        requestId: Int,
+        mediaId: Int,
+    ) = moderate(requestId, ModerationEvent.MediaCleared) { connection.api().deleteMedia(mediaId) }
+
+    fun deleteMediaFiles(
+        requestId: Int,
+        mediaId: Int,
+        is4k: Boolean,
+    ) = moderate(requestId, ModerationEvent.MediaFilesDeleted) { connection.api().deleteMediaFiles(mediaId, is4k) }
 
     fun decline(
         item: RequestItem,

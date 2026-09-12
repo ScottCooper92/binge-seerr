@@ -308,6 +308,51 @@ class RequestDetailViewModelTest {
             assertFalse(viewModel().awaitReady().detail.canEdit)
         }
 
+    @Test
+    fun `a moderator manages the media record, with watch data where the server has it, and a plain user only reads it`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/media/900/watch_data",
+                """{"data":{"playCount":12,"playCount7Days":2,"playCount30Days":5,"users":[{"displayName":"Scott"},{"username":"ana"}]}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            serve("/api/v1/media/900/file", "{}")
+            serve("/api/v1/media/900", "{}")
+            val vm = viewModel()
+            val media = checkNotNull(vm.awaitReady().detail.media)
+
+            assertEquals(900, media.mediaId)
+            assertTrue(media.isTv)
+            assertTrue(media.canSetStatus)
+            assertTrue(media.canClearData)
+            assertTrue(media.canDeleteFiles)
+            val standard = media.instances.single()
+            assertFalse(standard.is4k)
+            assertEquals(SeerrMediaStatusCode.PartiallyAvailable, standard.status)
+            assertEquals(WatchStats(12, 2, 5, listOf("Scott", "ana")), standard.watch)
+
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
+            vm.moderation.events.first { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            vm.moderation.events.first { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.clearMedia(11, 900)
+            vm.moderation.events.first { it == ModerationEvent.MediaCleared }
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("false", status.url.queryParameter("is4k"))
+            val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
+            assertEquals("false", files.url.queryParameter("is4k"))
+            assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900" })
+
+            serve("/api/v1/auth/me", """{"id":8,"permissions":$REQUEST}""")
+            val watchReads = received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" }
+            val plain = checkNotNull(viewModel().awaitReady().detail.media)
+            assertFalse(plain.canManage)
+            assertNull(plain.instances.single().watch)
+            assertEquals(watchReads, received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" })
+        }
+
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
 

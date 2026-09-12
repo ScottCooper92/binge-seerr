@@ -66,10 +66,10 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 
 | Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
 |---|---|---|---|---|---|
-| `DELETE /media/{mediaId}` | Delete media item | v1.0.0 | v1.0.0 |  | Manage the media record from a request or issue page: status, clear data, delete files, watch data. |
-| `DELETE /media/{mediaId}/file` | Delete media file | — | v1.5.0 |  | Manage the media record from a request or issue page: status, clear data, delete files, watch data. |
-| `GET /media/{mediaId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 |  | Manage the media record from a request or issue page: status, clear data, delete files, watch data. |
-| `POST /media/{mediaId}/{status}` | Update media status | v1.20.0 | v1.0.0 |  | Manage the media record from a request or issue page: status, clear data, delete files, watch data. |
+| `DELETE /media/{mediaId}` | Delete media item | v1.0.0 | v1.0.0 | yes | Clear data on the request page's Manage media sheet. |
+| `DELETE /media/{mediaId}/file` | Delete media file | — | v1.5.0 | yes | Delete files on the request page's Manage media sheet, Jellyseerr 1.5+. |
+| `GET /media/{mediaId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | Watch data on the request page's Manage media sheet, for admins, where Tautulli answers. |
+| `POST /media/{mediaId}/{status}` | Update media status | v1.20.0 | v1.0.0 | yes | Mark as on the request page's Manage media sheet, per instance. |
 | `GET /request` | Get all requests | v1.0.0 | v1.0.0 | yes |  |
 | `POST /request` | Create new request | v1.0.0 | v1.0.0 | yes |  |
 | `DELETE /request/{requestId}` | Delete request | v1.0.0 | v1.0.0 | yes |  |

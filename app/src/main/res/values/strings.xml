@@ -142,6 +142,28 @@
     <string name="request_edited">Request updated</string>
     <string name="request_edit_title">Edit request</string>
     <string name="request_edit_save">Save changes</string>
+    <string name="media_manage">Manage media</string>
+    <string name="media_instance_standard">Standard</string>
+    <string name="media_mark_as">Mark as</string>
+    <string name="media_state_unknown">Unknown</string>
+    <string name="media_open_radarr">Open in Radarr</string>
+    <string name="media_open_sonarr">Open in Sonarr</string>
+    <string name="media_watch_title">Watch data</string>
+    <string name="media_watch_plays">%1$d plays · %2$d in the last 7 days · %3$d in the last 30 days</string>
+    <string name="media_watch_users">Watched by %1$s</string>
+    <string name="media_clear_data">Clear data</string>
+    <string name="media_clear_confirm_title">Clear media data?</string>
+    <string name="media_clear_confirm_message">The server forgets this title: its status and every request for it. Anyone can request it again.</string>
+    <string name="media_delete_files">Delete files</string>
+    <string name="media_delete_files_confirm_title">Delete the files?</string>
+    <string name="media_delete_files_confirm_message">The downloaded files are removed from the download client, and the title is marked unknown.</string>
+    <string name="media_delete_files_second_title">Delete from %1$s?</string>
+    <string name="media_delete_files_second_message">%1$s deletes the files from disk. This cannot be undone.</string>
+    <string name="media_client_radarr" translatable="false">Radarr</string>
+    <string name="media_client_sonarr" translatable="false">Sonarr</string>
+    <string name="media_status_set">Media status updated</string>
+    <string name="media_cleared">Media data cleared</string>
+    <string name="media_files_deleted">Files deleted</string>
     <string name="request_declined">Request declined</string>
     <string name="request_declined_and_blocked">Request declined and title blocked</string>
     <string name="request_declined_block_failed">Declined, but the title could not be blocked</string>

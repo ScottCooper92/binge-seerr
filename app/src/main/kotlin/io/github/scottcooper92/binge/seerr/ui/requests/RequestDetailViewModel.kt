@@ -9,9 +9,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
+import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchDataDto
+import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchStatsDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -116,6 +121,15 @@ class RequestDetailViewModel
                         }.getOrNull()
                     }
                 val destination = async { dto.destination(api) }
+                val watch =
+                    async {
+                        val mediaId = dto.media.id
+                        if (mediaId != null && permissions.await().isAdmin && profile.await().hasWatchData) {
+                            runCatching { api.watchData(mediaId) }.getOrNull()
+                        } else {
+                            null
+                        }
+                    }
                 val detailsDto = details.await()
                 val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
                 val scope =
@@ -160,9 +174,39 @@ class RequestDetailViewModel
                     mediaId = dto.media.id,
                     canReportIssue = profile.await().hasIssues && permissions.await().canCreateIssues && dto.media.id != null,
                     webUrl = connection.current().baseUrl + dto.media.mediaType + "/" + dto.media.tmdbId,
-                    mediaServerUrl = dto.media.mediaUrl,
+                    mediaServerUrl = if (dto.is4k) dto.media.mediaUrl4k ?: dto.media.mediaUrl else dto.media.mediaUrl,
+                    serviceUrl = if (dto.is4k) dto.media.serviceUrl4k ?: dto.media.serviceUrl else dto.media.serviceUrl,
+                    media = dto.mediaRecord(scope.permissions, profile.await(), watch.await()),
                 )
             }
+
+        /** The 4K instance is listed only where the server holds one, or the request itself is 4K. */
+        private fun SeerrRequestDto.mediaRecord(
+            permissions: SeerrPermissions,
+            profile: SeerrServerProfile,
+            watch: SeerrWatchDataDto?,
+        ): MediaRecord? {
+            val mediaId = media.id ?: return null
+            val has4k = is4k || (media.status4k != null && media.status4k != SeerrMediaStatusCode.Unknown)
+            return MediaRecord(
+                mediaId = mediaId,
+                isTv = media.mediaType != MEDIA_TYPE_MOVIE,
+                instances =
+                    listOfNotNull(
+                        MediaInstance(false, media.status, media.serviceUrl, media.mediaUrl, watch?.data?.toWatchStats()),
+                        MediaInstance(
+                            true,
+                            media.status4k,
+                            media.serviceUrl4k,
+                            media.mediaUrl4k,
+                            watch?.data4k?.toWatchStats(),
+                        ).takeIf { has4k },
+                    ),
+                canSetStatus = permissions.canManageRequests,
+                canClearData = permissions.canManageRequests,
+                canDeleteFiles = permissions.canManageRequests && profile.hasDeleteMediaFiles,
+            )
+        }
 
         /** The service lists name the ids the request carries; a service the admin removed leaves the id unnamed. */
         private suspend fun SeerrRequestDto.destination(api: SeerrApi): RequestDestination? {
@@ -198,6 +242,14 @@ private fun io.github.scottcooper92.binge.seerr.seerr.SeerrDownloadStatusDto.fra
     val left = sizeLeft ?: return 0f
     return if (total > 0.0) ((total - left) / total).toFloat().coerceIn(0f, 1f) else 0f
 }
+
+private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
+    WatchStats(
+        playCount = playCount,
+        playCount7Days = playCount7Days,
+        playCount30Days = playCount30Days,
+        users = users.mapNotNull { user -> listOfNotNull(user.displayName, user.username).firstOrNull { it.isNotBlank() } },
+    )
 
 private fun String.toEpochMillisOrNull(): Long? =
     runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()

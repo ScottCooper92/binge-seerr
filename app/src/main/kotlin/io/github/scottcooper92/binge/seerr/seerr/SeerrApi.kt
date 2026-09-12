@@ -206,6 +206,33 @@ interface SeerrApi {
         @Path("requestId") requestId: Int,
     )
 
+    /** Marks the media record; [status] is one of [SeerrMediaStatusChoice]'s paths, per instance. */
+    @POST("api/v1/media/{mediaId}/{status}")
+    suspend fun setMediaStatus(
+        @Path("mediaId") mediaId: Int,
+        @Path("status") status: String,
+        @Query("is4k") is4k: Boolean,
+    )
+
+    /** Clears the server's record of a title, and every request for it with it. */
+    @DELETE("api/v1/media/{mediaId}")
+    suspend fun deleteMedia(
+        @Path("mediaId") mediaId: Int,
+    )
+
+    /** Deletes the downloaded files from Radarr or Sonarr; Jellyseerr 1.5 and later. */
+    @DELETE("api/v1/media/{mediaId}/file")
+    suspend fun deleteMediaFiles(
+        @Path("mediaId") mediaId: Int,
+        @Query("is4k") is4k: Boolean,
+    )
+
+    /** Tautulli play counts; the server answers 404 where Tautulli is not configured. */
+    @GET("api/v1/media/{mediaId}/watch_data")
+    suspend fun watchData(
+        @Path("mediaId") mediaId: Int,
+    ): SeerrWatchDataDto
+
     @POST("api/v1/issue")
     suspend fun createIssue(
         @Body body: SeerrCreateIssueBody,
@@ -229,6 +256,7 @@ value class SeerrMediaStatusCode(
     val raw: Int,
 ) {
     companion object {
+        val Unknown = SeerrMediaStatusCode(1)
         val Pending = SeerrMediaStatusCode(2)
         val Processing = SeerrMediaStatusCode(3)
         val PartiallyAvailable = SeerrMediaStatusCode(4)

@@ -75,6 +75,49 @@ data class EditState(
         get() = !saving && destination?.loadingChoices != true && (seasons.isEmpty() || seasons.any { it.selected && !it.locked })
 }
 
+/** The states the server lets a moderator mark a media record with, by the path it takes. */
+enum class MediaStatusChoice(
+    val path: String,
+    val code: SeerrMediaStatusCode,
+) {
+    Available("available", SeerrMediaStatusCode.Available),
+    PartiallyAvailable("partial", SeerrMediaStatusCode.PartiallyAvailable),
+    Processing("processing", SeerrMediaStatusCode.Processing),
+    Pending("pending", SeerrMediaStatusCode.Pending),
+    Unknown("unknown", SeerrMediaStatusCode.Unknown),
+}
+
+data class WatchStats(
+    val playCount: Int,
+    val playCount7Days: Int,
+    val playCount30Days: Int,
+    val users: List<String>,
+)
+
+/** One instance of a title on the server: the standard one, or the 4K one where the server has it. */
+data class MediaInstance(
+    val is4k: Boolean,
+    val status: SeerrMediaStatusCode?,
+    val serviceUrl: String?,
+    val mediaServerUrl: String?,
+    val watch: WatchStats?,
+)
+
+/**
+ * The server's record of the request's title, and what the connected user may do to it: mark its
+ * state, clear it (which takes every request for it), or delete its files from the download client.
+ */
+data class MediaRecord(
+    val mediaId: Int,
+    val isTv: Boolean,
+    val instances: List<MediaInstance>,
+    val canSetStatus: Boolean,
+    val canClearData: Boolean,
+    val canDeleteFiles: Boolean,
+) {
+    val canManage: Boolean get() = canSetStatus || canClearData || canDeleteFiles || instances.any { it.watch != null }
+}
+
 data class RequestDetail(
     val item: RequestItem,
     val actions: RequestActions,
@@ -95,6 +138,10 @@ data class RequestDetail(
     /** The title in the server's web client, for the hand-off until Binge's own arrives. */
     val webUrl: String,
     val mediaServerUrl: String?,
+    /** The title in Radarr or Sonarr, where the server knows it. */
+    val serviceUrl: String?,
+    /** Null for a title the server no longer tracks. */
+    val media: MediaRecord?,
 )
 
 sealed interface IssueReport {
