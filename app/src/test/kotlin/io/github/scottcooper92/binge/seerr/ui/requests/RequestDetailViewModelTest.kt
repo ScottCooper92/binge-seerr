@@ -377,6 +377,50 @@ class RequestDetailViewModelTest {
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900" })
         }
 
+    @Test
+    fun `a request with a 4K record lists both instances, and moderation targets the one asked for`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+                   "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"status4k":5,
+                     "mediaUrl":"https://jellyfin.example.com/item/1","mediaUrl4k":"https://jellyfin.example.com/item/1-4k",
+                     "serviceUrl4k":"https://sonarr.example.com/1-4k",
+                     "downloadStatus":[{"title":"Severance.S02","size":1000,"sizeLeft":250,"status":"downloading","timeLeft":"00:10:00"}]}}""",
+            )
+            serve(
+                "/api/v1/media/900/watch_data",
+                """{"data":{"playCount":12,"playCount7Days":2,"playCount30Days":5,"users":[]},
+                    "data4k":{"playCount":3,"playCount7Days":1,"playCount30Days":2,"users":[]}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            serve("/api/v1/media/900/file", "{}")
+            val vm = viewModel()
+            val media = checkNotNull(vm.awaitReady().detail.media)
+
+            val (standard, fourK) = media.instances
+            assertEquals(2, media.instances.size)
+            assertFalse(standard.is4k)
+            assertTrue(fourK.is4k)
+            assertEquals(SeerrMediaStatusCode.Available, fourK.status)
+            assertEquals("https://sonarr.example.com/1-4k", fourK.serviceUrl)
+            assertEquals("https://jellyfin.example.com/item/1-4k", fourK.mediaServerUrl)
+            assertEquals(WatchStats(3, 1, 2, emptyList()), fourK.watch)
+
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = true)
+            vm.moderation.events.first { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = true)
+            vm.moderation.events.first { it == ModerationEvent.MediaFilesDeleted }
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("true", status.url.queryParameter("is4k"))
+            val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
+            assertEquals("true", files.url.queryParameter("is4k"))
+        }
+
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
 
