@@ -277,6 +277,17 @@
     <string name="permission_create_issues">Report issues</string>
     <string name="permission_manage_blocklist">Manage blocklist</string>
     <string name="permission_view_blocklist">View blocklist</string>
+    <string name="user_detail_title">User</string>
+    <string name="user_actions_cd">User actions</string>
+    <string name="user_joined">Joined</string>
+    <string name="user_plays">Plays</string>
+    <string name="user_permissions_title">Permissions</string>
+    <string name="user_recently_watched">Recently watched</string>
+    <string name="user_watchlist">Watchlist</string>
+    <string name="user_no_requests">No requests yet.</string>
+    <string name="user_delete">Delete user</string>
+    <string name="user_delete_confirm_title">Delete %1$s?</string>
+    <string name="user_delete_confirm_message">The account and its requests are removed from the server. This cannot be undone.</string>
     <string name="media_type_tv">TV show</string>
     <plurals name="requests_seasons">
         <item quantity="one">Season %1$s</item>

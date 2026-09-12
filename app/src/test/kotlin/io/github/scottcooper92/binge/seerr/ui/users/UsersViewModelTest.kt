@@ -102,9 +102,8 @@ class UsersViewModelTest {
     fun `the list reads through the cache in the chosen order, and the jellyseerr lineage offers the blocklist toggles`() =
         runTest {
             val vm = viewModel()
-            val ready = vm.awaitReady { it.baseUrl != null }
+            val ready = vm.awaitReady { ManageablePermission.ViewBlocklist in it.offered }
             assertTrue(ManageablePermission.ViewBlocklist in ready.offered)
-            assertEquals(seerr.url("/").toString(), ready.baseUrl)
 
             val rows = vm.users.asSnapshot()
 

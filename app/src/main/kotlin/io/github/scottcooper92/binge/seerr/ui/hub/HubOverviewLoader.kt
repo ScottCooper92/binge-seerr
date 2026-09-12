@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaBucketDto
+import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
@@ -57,7 +58,7 @@ class HubOverviewLoader
             val permissions = userDto.toPermissions()
             return coroutineScope {
                 val quota =
-                    async { runCatching { api.userQuota(userDto.id).let { HubQuota(it.movie.toBucket(), it.tv.toBucket()) } }.getOrNull() }
+                    async { runCatching { api.userQuota(userDto.id).toHubQuota() }.getOrNull() }
                 val requests = async { runCatching { api.requestCount() }.getOrNull() }
                 val issues =
                     async {
@@ -146,10 +147,13 @@ private fun Throwable?.toUserLoad(): HubUserLoad =
 
 private fun SeerrUserDto.toAccount(isAdmin: Boolean): HubAccount =
     HubAccount(
+        id = id,
         name = listOfNotNull(displayName, username, email?.substringBefore('@')).firstOrNull { it.isNotBlank() } ?: "#$id",
         isAdmin = isAdmin,
         avatarUrl = avatar?.takeIf { it.startsWith("http") },
     )
+
+internal fun SeerrQuotaDto.toHubQuota(): HubQuota = HubQuota(movie.toBucket(), tv.toBucket())
 
 /** A bucket with no limit is unlimited, which is no bucket at all. */
 private fun SeerrQuotaBucketDto?.toBucket(): HubQuotaBucket? {

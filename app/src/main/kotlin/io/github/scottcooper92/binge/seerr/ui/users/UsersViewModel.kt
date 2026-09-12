@@ -33,10 +33,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** What the browser needs once per connection: which toggles the server offers, and where a row opens. */
+/** What the browser needs once per connection: which toggles the server offers. */
 private data class UsersScope(
     val jellyseerrLineage: Boolean = false,
-    val baseUrl: String? = null,
 )
 
 /**
@@ -62,8 +61,7 @@ class UsersViewModel
         private val scope: Flow<UsersScope> =
             flow {
                 val profile = runCatching { connection.profile() }.getOrNull()
-                val baseUrl = runCatching { connection.current().baseUrl }.getOrNull()
-                emit(UsersScope(jellyseerrLineage = profile?.hasBlocklist == true, baseUrl = baseUrl))
+                emit(UsersScope(jellyseerrLineage = profile?.hasBlocklist == true))
             }.stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
 
         val users: Flow<PagingData<UserItem>> =
@@ -86,7 +84,6 @@ class UsersViewModel
                     selection = selection,
                     edit = edit,
                     offered = ManageablePermission.offered(scope.jellyseerrLineage),
-                    baseUrl = scope.baseUrl,
                 )
             }.stateIn(viewModelScope, SharingStarted.Lazily, UsersUiState.Loading)
 
