@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The artwork band above the sign-in form; the server's name sits on its lower edge. -->
+    <dimen name="setup_backdrop_height">220dp</dimen>
+</resources>

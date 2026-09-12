@@ -99,6 +99,23 @@ class SeerrApiFactory(
         }
     }
 
+    /**
+     * A throwaway client with no credentials at all, for the calls a server answers before
+     * sign-in: its profile, its artwork, a Quick Connect code, a password reset. HEADERS logging
+     * for the same reason as [login]: a reset body carries the address.
+     */
+    suspend fun <T> anonymous(
+        baseUrl: String,
+        block: suspend (SeerrApi) -> T,
+    ): T {
+        val client = OkHttpClient.Builder().finish(HttpLoggingInterceptor.Level.HEADERS)
+        return try {
+            block(retrofit(baseUrl, client))
+        } finally {
+            client.release()
+        }
+    }
+
     private fun OkHttpClient.Builder.finish(debugLevel: HttpLoggingInterceptor.Level): OkHttpClient =
         addNetworkInterceptor(loggingInterceptor(debugLevel))
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
