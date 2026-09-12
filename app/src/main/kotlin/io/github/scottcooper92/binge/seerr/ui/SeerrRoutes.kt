@@ -22,6 +22,12 @@ data object SetupRoute : SeerrRoute
 @Serializable
 data object RequestsRoute : SeerrRoute
 
+/** One request as a page. */
+@Serializable
+data class RequestDetailRoute(
+    val requestId: Int,
+) : SeerrRoute
+
 /** Settings: the connection and the admin's read-only view of the server. */
 @Serializable
 data object SettingsRoute : SeerrRoute
