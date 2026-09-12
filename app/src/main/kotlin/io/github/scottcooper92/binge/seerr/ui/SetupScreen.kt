@@ -63,7 +63,11 @@ private fun SetupForm(
     val form = state.form
     val spacing = dimensionResource(DesR.dimen.padding_m)
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(spacing),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
         Text(stringResource(R.string.setup_intro), style = MaterialTheme.typography.bodyMedium)
@@ -140,7 +144,10 @@ private fun ConnectedPanel(
     onDisconnect: () -> Unit,
 ) {
     val spacing = dimensionResource(DesR.dimen.padding_m)
-    Column(modifier = Modifier.fillMaxSize().padding(spacing), verticalArrangement = Arrangement.spacedBy(spacing)) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+    ) {
         Text(stringResource(R.string.connected_title, credentials.variant.displayName), style = MaterialTheme.typography.titleMedium)
         InfoRow(label = stringResource(R.string.connected_server_label), value = credentials.baseUrl)
         InfoRow(
