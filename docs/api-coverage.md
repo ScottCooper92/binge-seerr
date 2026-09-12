@@ -53,13 +53,13 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /backdrops` | Get backdrops of trending items | v1.27.0 | v1.1.0 | yes | Artwork behind the sign-in form. |
 | `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 | yes | Hub counts; also the browsers' filter chips. |
 | `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips. |
-| `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 |  | Versions and totals on the hub and in Settings. |
-| `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
-| `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
-| `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 |  | Agent status on the hub; editing is Phase 8. |
-| `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 |  | Agent status on the hub; editing is Phase 8. |
-| `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
-| `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
+| `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub and in Settings. |
+| `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
+| `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
+| `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
+| `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
+| `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
+| `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
 | `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub; per user in Phase 4. |
 
 ### Phase 2 — requests

@@ -18,21 +18,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
@@ -154,28 +149,4 @@ private fun ConnectionProblem(
             }
         },
     )
-}
-
-/** Disconnecting drops the saved server, so it asks first. */
-@Composable
-private fun DisconnectButton(onDisconnect: () -> Unit) {
-    var confirming by rememberSaveable { mutableStateOf(false) }
-    BingeOutlinedButton(
-        label = stringResource(R.string.hub_disconnect),
-        onClick = { confirming = true },
-        modifier = Modifier.fillMaxWidth(),
-    )
-    if (confirming) {
-        BingeConfirmDialog(
-            title = stringResource(R.string.hub_disconnect_confirm_title),
-            message = stringResource(R.string.hub_disconnect_confirm_message),
-            confirmLabel = stringResource(R.string.hub_disconnect),
-            destructive = true,
-            onConfirm = {
-                confirming = false
-                onDisconnect()
-            },
-            onDismiss = { confirming = false },
-        )
-    }
 }

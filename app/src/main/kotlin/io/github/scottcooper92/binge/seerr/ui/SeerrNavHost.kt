@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -18,6 +19,9 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 
@@ -42,8 +46,18 @@ fun SeerrNavHost(
             ),
         entryProvider =
             entryProvider {
-                entry<HomeRoute> { HomeEntry(onOpenSection = { section -> backStack.add(SectionRoute(section)) }) }
+                entry<HomeRoute> {
+                    HomeEntry(
+                        onOpenSection = { section ->
+                            backStack.add(if (section == HubSection.Settings) SettingsRoute else SectionRoute(section))
+                        },
+                    )
+                }
                 entry<SetupRoute> { SetupEntry() }
+                entry<SettingsRoute> {
+                    SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
+                }
+                entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
                 entry<SectionRoute> { route ->
                     EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
                 }
@@ -88,20 +102,66 @@ private fun HubEntry(
 }
 
 @Composable
-private fun SetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
+private fun SettingsEntry(
+    onBack: () -> Unit,
+    onEditConnection: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    SetupScreen(
+    // Refetched on every arrival, so returning from Edit connection shows the new server.
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
+    SettingsScreen(
         state = state,
         actions =
-            SetupActions(
-                onEditAddress = viewModel::editAddress,
-                onInspect = viewModel::inspect,
-                onChangeServer = viewModel::changeServer,
-                onEditForm = viewModel::editForm,
-                onConnect = viewModel::connect,
-                onPlexLaunched = viewModel::plexLaunched,
-                onCancelLink = viewModel::cancelLink,
-                onRequestPasswordReset = viewModel::requestPasswordReset,
+            SettingsActions(
+                onBack = onBack,
+                onEditConnection = onEditConnection,
+                // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
+                onDisconnect = {
+                    viewModel.disconnect()
+                    onBack()
+                },
             ),
     )
 }
+
+/**
+ * The setup form on the live connection, prefilled with its address. The connection stays in
+ * place until new credentials are saved, so a rejected edit changes nothing; success pops.
+ */
+@Composable
+private fun EditConnectionEntry(
+    onDone: () -> Unit,
+    viewModel: SetupViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) { viewModel.beginEdit() }
+    LaunchedEffect(state) { if (state is SetupUiState.Connected) onDone() }
+    SetupScreen(
+        state = state,
+        actions = viewModel.actions(),
+        title = stringResource(R.string.settings_edit_connection),
+        onBack = onDone,
+    )
+}
+
+@Composable
+private fun SetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    SetupScreen(state = state, actions = viewModel.actions())
+}
+
+private fun SetupViewModel.actions(): SetupActions =
+    SetupActions(
+        onEditAddress = ::editAddress,
+        onInspect = ::inspect,
+        onChangeServer = ::changeServer,
+        onEditForm = ::editForm,
+        onConnect = ::connect,
+        onPlexLaunched = ::plexLaunched,
+        onCancelLink = ::cancelLink,
+        onRequestPasswordReset = ::requestPasswordReset,
+    )

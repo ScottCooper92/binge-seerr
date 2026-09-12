@@ -150,6 +150,28 @@ interface SeerrApi {
         @Query("take") take: Int = 1,
     ): SeerrCountProbeDto
 
+    /** The admin-only settings reads; `ADMIN`, or `MANAGE_SETTINGS` on the Jellyseerr lineage. */
+    @GET("api/v1/settings/main")
+    suspend fun mainSettings(): SeerrMainSettingsDto
+
+    @GET("api/v1/settings/about")
+    suspend fun about(): SeerrAboutDto
+
+    @GET("api/v1/settings/jobs")
+    suspend fun jobs(): List<SeerrJobDto>
+
+    @GET("api/v1/settings/radarr")
+    suspend fun radarrSettings(): List<SeerrServiceSettingsDto>
+
+    @GET("api/v1/settings/sonarr")
+    suspend fun sonarrSettings(): List<SeerrServiceSettingsDto>
+
+    @GET("api/v1/settings/notifications/email")
+    suspend fun emailAgent(): SeerrNotificationAgentDto
+
+    @GET("api/v1/settings/notifications/discord")
+    suspend fun discordAgent(): SeerrNotificationAgentDto
+
     @DELETE("api/v1/request/{requestId}")
     suspend fun deleteRequest(
         @Path("requestId") requestId: Int,

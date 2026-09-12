@@ -6,6 +6,7 @@ private const val PERMISSION_MANAGE_SETTINGS = 1 shl 2
 private const val PERMISSION_MANAGE_USERS = 1 shl 3
 private const val PERMISSION_MANAGE_REQUESTS = 1 shl 4
 private const val PERMISSION_REQUEST = 1 shl 5
+private const val PERMISSION_AUTO_APPROVE = 1 shl 7
 private const val PERMISSION_REQUEST_4K = 1 shl 10
 private const val PERMISSION_REQUEST_4K_MOVIE = 1 shl 11
 private const val PERMISSION_REQUEST_4K_TV = 1 shl 12
@@ -73,3 +74,25 @@ data class SeerrPermissions(
 }
 
 fun SeerrUserDto?.toPermissions(): SeerrPermissions = SeerrPermissions.fromBits(this?.permissions)
+
+/** What a new user may do, read off the server's `defaultPermissions` bitmask. */
+enum class SeerrDefaultAccess {
+    NoRequests,
+    RequestWithApproval,
+    AutoApprove,
+    ;
+
+    companion object {
+        fun fromBits(bits: Int?): SeerrDefaultAccess {
+            val value = bits ?: 0
+            val isAdmin = value and PERMISSION_ADMIN != 0
+
+            fun granted(bit: Int) = isAdmin || value and bit != 0
+            return when {
+                !granted(PERMISSION_REQUEST) && !granted(PERMISSION_REQUEST_4K) -> NoRequests
+                granted(PERMISSION_AUTO_APPROVE) -> AutoApprove
+                else -> RequestWithApproval
+            }
+        }
+    }
+}

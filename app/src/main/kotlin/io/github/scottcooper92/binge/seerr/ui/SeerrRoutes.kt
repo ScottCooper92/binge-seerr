@@ -18,7 +18,15 @@ data object HomeRoute : SeerrRoute
 @Serializable
 data object SetupRoute : SeerrRoute
 
-/** One of the hub's manage sections; its screen arrives with its phase. */
+/** Settings: the connection and the admin's read-only view of the server. */
+@Serializable
+data object SettingsRoute : SeerrRoute
+
+/** The setup form on the live connection; pops itself once new credentials are saved. */
+@Serializable
+data object EditConnectionRoute : SeerrRoute
+
+/** One of the hub's manage sections whose screen arrives with a later phase. */
 @Serializable
 data class SectionRoute(
     val section: HubSection,
