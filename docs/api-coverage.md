@@ -113,9 +113,9 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /blocklist/{tmdbId}` | Get media from blocklist | — | v3.0.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 |  | Import users from the media server. |
 | `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 |  | Import users from the media server. |
-| `GET /user` | Get all users | v1.0.0 | v1.0.0 | yes |  |
+| `GET /user` | Get all users | v1.0.0 | v1.0.0 | yes | The hub's count; the users browser, cached in Room and refreshed on open. |
 | `POST /user` | Create new user | v1.0.0 | v1.0.0 |  |  |
-| `PUT /user` | Update batch of users | v1.18.0 | v1.0.0 |  |  |
+| `PUT /user` | Update batch of users | v1.18.0 | v1.0.0 | yes | The users browser's bulk permission edit. |
 | `POST /user/import-from-jellyfin` | Import all users from Jellyfin | — | v1.1.0 |  |  |
 | `POST /user/import-from-plex` | Import all users from Plex | v1.12.0 | v1.0.0 |  |  |
 | `GET /user/jellyfin/{jellyfinUserId}` | Get user by Jellyfin user ID | — | v3.3.0 |  |  |

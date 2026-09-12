@@ -229,6 +229,54 @@
     <string name="issue_delete_confirm_message">The report and every comment on it are removed from the server.</string>
     <string name="issue_resolved">Issue resolved</string>
     <string name="issue_reopened">Issue reopened</string>
+    <string name="users_sort_created">Newest</string>
+    <string name="users_sort_updated">Recently updated</string>
+    <string name="users_sort_name">Name</string>
+    <string name="users_sort_requests">Most requests</string>
+    <string name="users_empty">No users on your server yet.</string>
+    <string name="users_select_cd">Select user</string>
+    <string name="users_clear_selection_cd">Clear selection</string>
+    <string name="users_edit_permissions">Edit permissions</string>
+    <string name="users_edit_permissions_save">Apply</string>
+    <plurals name="users_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="users_edit_permissions_title">
+        <item quantity="one">Permissions for %1$d user</item>
+        <item quantity="other">Permissions for %1$d users</item>
+    </plurals>
+    <plurals name="users_permissions_saved">
+        <item quantity="one">Permissions updated for %1$d user</item>
+        <item quantity="other">Permissions updated for %1$d users</item>
+    </plurals>
+    <plurals name="users_request_count">
+        <item quantity="one">%1$d request</item>
+        <item quantity="other">%1$d requests</item>
+    </plurals>
+    <string name="user_origin_plex" translatable="false">Plex</string>
+    <string name="user_origin_jellyfin" translatable="false">Jellyfin</string>
+    <string name="user_origin_emby" translatable="false">Emby</string>
+    <string name="user_origin_local">Local account</string>
+    <string name="permission_group_administration">Administration</string>
+    <string name="permission_group_requests">Requests</string>
+    <string name="permission_group_issues">Issues</string>
+    <string name="permission_group_blocklist">Blocklist</string>
+    <string name="permission_admin">Admin</string>
+    <string name="permission_manage_settings">Manage settings</string>
+    <string name="permission_manage_users">Manage users</string>
+    <string name="permission_manage_requests">Manage requests</string>
+    <string name="permission_view_requests">View requests</string>
+    <string name="permission_request">Request</string>
+    <string name="permission_request_4k">Request 4K</string>
+    <string name="permission_request_advanced">Advanced requests</string>
+    <string name="permission_auto_approve">Auto-approve</string>
+    <string name="permission_auto_approve_4k">Auto-approve 4K</string>
+    <string name="permission_manage_issues">Manage issues</string>
+    <string name="permission_view_issues">View issues</string>
+    <string name="permission_create_issues">Report issues</string>
+    <string name="permission_manage_blocklist">Manage blocklist</string>
+    <string name="permission_view_blocklist">View blocklist</string>
     <string name="media_type_tv">TV show</string>
     <plurals name="requests_seasons">
         <item quantity="one">Season %1$s</item>

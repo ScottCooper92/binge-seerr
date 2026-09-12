@@ -64,11 +64,13 @@ class IssuesRemoteMediator(
                         .awaitAll()
                         .filterNotNull()
                 }
-            val totalPages = page.pageInfo.pages.takeIf { it > 0 } ?: (skip / ISSUES_PAGE_SIZE + 1)
-            val endReached = skip / ISSUES_PAGE_SIZE + 1 >= totalPages
-            val nextSkip = if (endReached) null else skip + ISSUES_PAGE_SIZE
-            if (loadType == LoadType.REFRESH) store.refresh(query.listKey, rows, nextSkip) else store.append(query.listKey, rows, nextSkip)
-            MediatorResult.Success(endOfPaginationReached = endReached)
+            val cursor = pageCursorAfter(skip, ISSUES_PAGE_SIZE, page.pageInfo.pages)
+            if (loadType == LoadType.REFRESH) {
+                store.refresh(query.listKey, rows, cursor.nextSkip)
+            } else {
+                store.append(query.listKey, rows, cursor.nextSkip)
+            }
+            MediatorResult.Success(endOfPaginationReached = cursor.endReached)
         } catch (e: CancellationException) {
             throw e
         } catch (
