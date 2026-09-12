@@ -65,8 +65,12 @@ rather than a private arrangement.
 - Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 17.
 - AGP 9.3.2, `compileSdk` 37, `minSdk` 26, `targetSdk` 36 — matching Binge, so the
   extraction is a code move rather than a toolchain negotiation.
-- There is no `org.jetbrains.kotlin.android` plugin. AGP 9 has built-in Kotlin
-  support and rejects it. See the comment in `libs.versions.toml`.
+- The `org.jetbrains.kotlin.android` plugin is declared `apply false` in the root
+  build and never applied. AGP 9 has built-in Kotlin support and rejects the plugin
+  being applied, but compiles with whichever Kotlin Gradle plugin is on the build
+  classpath, and the declaration is what puts 2.4.10 there — the version the included
+  binge-integrations build compiles the contracts and SDK with. See the comment in
+  `libs.versions.toml`.
 - The version catalog is `libs.versions.toml` at the repository root, not under
   `gradle/`, matching Binge so a version bump applies the same way to both.
 - Tests are JUnit 4, matching what the extracted code brings with it. Scope Gradle
