@@ -484,15 +484,15 @@ data class SeerrRequestResultDto(
     @SerialName("id") val id: Int? = null,
 )
 
-/**
- * Body for `POST issue`. [mediaId] is the server's INTERNAL media id (a title's `mediaInfo.id`),
- * not the TMDB id — the server can only attach an issue to a title it already tracks.
- */
 @Serializable
 data class SeerrIssueCommentBody(
     @SerialName("message") val message: String,
 )
 
+/**
+ * Body for `POST issue`. [mediaId] is the server's INTERNAL media id (a title's `mediaInfo.id`),
+ * not the TMDB id — the server can only attach an issue to a title it already tracks.
+ */
 @Serializable
 data class SeerrCreateIssueBody(
     @SerialName("mediaId") val mediaId: Int,
