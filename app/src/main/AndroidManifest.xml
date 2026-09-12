@@ -10,6 +10,7 @@
         warns when an http:// address names a PUBLIC host, which is the case that actually leaks.
     -->
     <application
+        android:name=".SeerrApp"
         android:allowBackup="false"
         android:icon="@drawable/ic_companion"
         android:label="@string/companion_name"

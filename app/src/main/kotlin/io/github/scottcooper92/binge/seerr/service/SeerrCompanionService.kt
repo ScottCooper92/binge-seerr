@@ -4,6 +4,7 @@ import com.binge.integration.sdk.BingeHosts
 import com.binge.integration.sdk.HostPolicy
 import com.binge.integration.sdk.IntegrationService
 import io.github.scottcooper92.binge.seerr.BuildConfig
+import io.github.scottcooper92.binge.seerr.SeerrApp
 import io.grpc.BindableService
 import io.grpc.binder.SecurityPolicy
 
@@ -12,7 +13,8 @@ import io.grpc.binder.SecurityPolicy
  * SDK's; what is this app's is which contracts it serves and who it lets in.
  */
 class SeerrCompanionService : IntegrationService() {
-    override fun services(): List<BindableService> = listOf(SeerrRequestService(BuildConfig.VERSION_NAME))
+    override fun services(): List<BindableService> =
+        listOf(SeerrRequestService((application as SeerrApp).connection, BuildConfig.VERSION_NAME))
 
     /**
      * Debug builds admit any caller, because a debug Binge is signed with its developer's own key
