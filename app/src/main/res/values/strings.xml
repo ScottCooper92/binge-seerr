@@ -26,4 +26,18 @@
     <string name="connected_as_user">Signed in as a user</string>
     <string name="connected_hint">Open Binge and allow this app under Account → Integrations. Requests you make there go to this server.</string>
     <string name="connected_disconnect">Disconnect</string>
+
+    <string name="advanced_title">Request with options</string>
+    <string name="advanced_intro">Choose where this title goes. Each choice opens on what a plain request would use.</string>
+    <string name="advanced_server">Server</string>
+    <string name="advanced_profile">Quality profile</string>
+    <string name="advanced_root_folder">Root folder</string>
+    <string name="advanced_submit">Request</string>
+    <string name="advanced_open_setup">Open setup</string>
+    <string name="advanced_close">Close</string>
+    <string name="advanced_error_not_connected">Connect a server in this app first.</string>
+    <string name="advanced_error_no_servers">The server has no download service set up for this kind of title.</string>
+    <string name="advanced_error_rejected">The server rejected the request.</string>
+    <string name="advanced_error_unreachable">The server could not be reached.</string>
+    <string name="advanced_error_unknown">The server answered with an error.</string>
 </resources>

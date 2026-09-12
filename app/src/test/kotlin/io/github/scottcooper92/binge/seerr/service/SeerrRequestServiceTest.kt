@@ -124,8 +124,7 @@ class SeerrRequestServiceTest {
             val response = connected(permissions = ADMIN).handshake(HandshakeRequest.getDefaultInstance())
 
             assertEquals(
-                Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
-                    Capability.CAPABILITY_ADVANCED_OPTIONS,
+                Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED,
                 response.capabilitiesList.toSet(),
             )
         }

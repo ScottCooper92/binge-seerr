@@ -28,6 +28,24 @@
         </activity>
 
         <!--
+            The hand-off behind CAPABILITY_ADVANCED_OPTIONS. Binge resolves it by this action and
+            this package (the DEFAULT category is what makes an implicit Intent resolve to it) and
+            starts it for a result. exported="true" makes it reachable by every app, so the
+            Activity checks its caller with the SDK's HandOffPolicy before it reads the extras,
+            as the Service below does with HostPolicy.
+        -->
+        <activity
+            android:name=".AdvancedRequestActivity"
+            android:exported="true"
+            android:label="@string/advanced_title"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="com.binge.integration.ADVANCED_REQUEST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
             exported="true" is the integration surface: the host reaches this Service with
             bindService, and what guards it is the caller policy in SeerrCompanionService, not the
             manifest. android:process is deliberately absent so the Service runs under this app's
