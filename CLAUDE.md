@@ -15,10 +15,10 @@ The contracts live in that repository and are authoritative there. **Nothing in 
 repository defines a contract.** A change to the wire format is a PR against
 binge-integrations, and this repository consumes the result.
 
-Status is pre-alpha, and more specifically: **the extraction is in progress.** The
-exported Service and its REQUEST v1 handshake are here, built on the SDK; the Seerr
-client, the stored session and the eight operations are being ported from Binge's
-in-tree integration (roadmap stage 4 in binge-integrations).
+Status is pre-alpha, at contract parity: the exported Service serves every REQUEST v1
+operation against the connected server, the setup screen is the only UI, and the
+capability set is derived from the signed-in user's permissions. Binge's in-tree
+Seerr integration is what this replaces (roadmap stage 4 in binge-integrations).
 
 The contracts and the SDK are consumed as source: `binge-integrations/` is a git
 submodule and `settings.gradle.kts` includes it as a composite build. `.gitmodules`

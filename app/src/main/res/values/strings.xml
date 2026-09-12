@@ -2,4 +2,27 @@
 <resources>
     <!-- A brand name, shown by the host as this integration's label. Never translated. -->
     <string name="companion_name" translatable="false">Seerr</string>
+
+    <string name="setup_intro">Connect your Seerr, Jellyseerr or Overseerr server. Binge will find this app and, once you allow it there, request titles through it.</string>
+    <string name="setup_server_url">Server address</string>
+    <string name="setup_insecure_warning">This address uses plain HTTP on a public host. Your key or password will cross the network unencrypted.</string>
+    <string name="setup_mode_api_key">API key</string>
+    <string name="setup_mode_jellyfin">Jellyfin or Emby account</string>
+    <string name="setup_mode_local">Local account</string>
+    <string name="setup_api_key">API key</string>
+    <string name="setup_username">Username</string>
+    <string name="setup_email">Email</string>
+    <string name="setup_password">Password</string>
+    <string name="setup_connect">Connect</string>
+    <string name="setup_connecting">Connecting…</string>
+    <string name="setup_error_invalid_url">That is not a server address.</string>
+    <string name="setup_error_rejected">The server rejected the credentials.</string>
+    <string name="setup_error_unreachable">The server could not be reached.</string>
+    <string name="setup_error_unknown">The server answered with an error.</string>
+
+    <string name="connected_title">Connected to %1$s</string>
+    <string name="connected_as_api_key">Using the server\'s API key</string>
+    <string name="connected_as_user">Signed in as a user</string>
+    <string name="connected_hint">Open Binge and allow this app under Account → Integrations. Requests you make there go to this server.</string>
+    <string name="connected_disconnect">Disconnect</string>
 </resources>
