@@ -48,6 +48,17 @@ class SeerrApiFactory(
             }
         }
 
+    /**
+     * Drops the cached service and releases its pool. Disconnecting clears the credentials, and a
+     * pool held for a server the user has left is a pool held for nothing.
+     */
+    fun evict() {
+        synchronized(this) {
+            cached?.client?.release()
+            cached = null
+        }
+    }
+
     /** A throwaway service for probing candidate credentials, released when [block] returns. */
     suspend fun <T> probe(
         baseUrl: String,
