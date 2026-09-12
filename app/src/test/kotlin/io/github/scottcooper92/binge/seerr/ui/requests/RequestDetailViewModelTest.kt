@@ -355,6 +355,14 @@ class RequestDetailViewModelTest {
             assertEquals(SeerrMediaStatusCode.PartiallyAvailable, standard.status)
             assertEquals(WatchStats(12, 2, 5, listOf("Scott", "ana")), standard.watch)
 
+            // The admin's page is idle once loaded, so a plain user's open must not add a watch-data read.
+            serve("/api/v1/auth/me", """{"id":8,"permissions":$REQUEST}""")
+            val plain = checkNotNull(viewModel().awaitReady().detail.media)
+            assertFalse(plain.canManage)
+            assertNull(plain.instances.single().watch)
+            assertEquals(1, received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" })
+            serve("/api/v1/auth/me", """{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
+
             vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
             vm.moderation.events.first { it == ModerationEvent.MediaStatusSet }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
@@ -367,13 +375,6 @@ class RequestDetailViewModelTest {
             val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
             assertEquals("false", files.url.queryParameter("is4k"))
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900" })
-
-            serve("/api/v1/auth/me", """{"id":8,"permissions":$REQUEST}""")
-            val watchReads = received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" }
-            val plain = checkNotNull(viewModel().awaitReady().detail.media)
-            assertFalse(plain.canManage)
-            assertNull(plain.instances.single().watch)
-            assertEquals(watchReads, received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" })
         }
 
     private object PlainCipher : SecretCipher {
