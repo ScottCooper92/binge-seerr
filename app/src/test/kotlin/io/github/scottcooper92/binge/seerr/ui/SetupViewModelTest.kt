@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
@@ -46,30 +47,37 @@ class SetupViewModelTest {
     private val seerr = MockWebServer().apply { start() }
     private val plex = MockWebServer().apply { start() }
 
+    /** Every ViewModel goes in here and is cleared on teardown, so no link poll outlives its test. */
+    private val viewModels = ViewModelStore()
+
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
     @After
     fun tearDown() {
+        viewModels.clear()
         Dispatchers.resetMain()
         seerr.close()
         plex.close()
     }
 
+    private lateinit var connection: SeerrConnection
+
     /** The state is shared WhileSubscribed, so a collector is kept open for the test's life. */
     private fun TestScope.viewModel(): SetupViewModel {
+        connection =
+            SeerrConnection(
+                store =
+                    CredentialStore(
+                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
+                        PlainCipher,
+                    ),
+                apis = SeerrApiFactory(logRequests = false),
+                quickConnectPollInterval = 10.milliseconds,
+            )
         val vm =
             SetupViewModel(
-                connection =
-                    SeerrConnection(
-                        store =
-                            CredentialStore(
-                                PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
-                                PlainCipher,
-                            ),
-                        apis = SeerrApiFactory(logRequests = false),
-                        quickConnectPollInterval = 10.milliseconds,
-                    ),
+                connection = connection,
                 plex =
                     PlexPinFlow(
                         identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
@@ -77,6 +85,7 @@ class SetupViewModelTest {
                         pollInterval = 10.milliseconds,
                     ),
             )
+        viewModels.put("setup", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
@@ -205,7 +214,7 @@ class SetupViewModelTest {
 
             assertEquals(SeerrVariant.Seerr, vm.awaitConnected().credentials.variant)
 
-            vm.disconnect()
+            connection.disconnect()
 
             val back = vm.awaitSignIn()
             assertEquals("", back.form.apiKey)

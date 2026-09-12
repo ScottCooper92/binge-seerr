@@ -19,9 +19,15 @@ fun String.normaliseBaseUrl(): String {
 }
 
 private const val TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280"
+private const val TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w342"
 
 /** A TMDB `backdrop_path` (`/abc.jpg`), as `GET backdrops` returns them, to the image URL at sign-in width. */
-fun String.toTmdbBackdropUrl(): String = TMDB_BACKDROP_BASE + (if (startsWith("/")) this else "/$this")
+fun String.toTmdbBackdropUrl(): String = TMDB_BACKDROP_BASE + withLeadingSlash()
+
+/** A TMDB `posterPath`, as a title lookup returns it, to the image URL at row and card width. */
+fun String.toTmdbPosterUrl(): String = TMDB_POSTER_BASE + withLeadingSlash()
+
+private fun String.withLeadingSlash(): String = if (startsWith("/")) this else "/$this"
 
 /** Whether [this] parses as a base URL once normalised — the check a setup screen makes before connecting. */
 fun String.isValidBaseUrl(): Boolean = normaliseBaseUrl().toHttpUrlOrNull() != null

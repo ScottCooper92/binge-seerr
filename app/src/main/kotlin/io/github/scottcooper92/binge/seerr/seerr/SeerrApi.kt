@@ -115,6 +115,41 @@ interface SeerrApi {
         @Path("serverId") serverId: Int,
     ): SeerrServerDetailsDto
 
+    /** A page of requests; [filter] is one of Seerr's own (`all`, `pending`, `processing`, `available`, `failed`). */
+    @GET("api/v1/request")
+    suspend fun requests(
+        @Query("take") take: Int,
+        @Query("skip") skip: Int = 0,
+        @Query("filter") filter: String = "all",
+        @Query("sort") sort: String = "added",
+    ): SeerrRequestsPageDto
+
+    @GET("api/v1/request/count")
+    suspend fun requestCount(): SeerrRequestCountDto
+
+    /** Only where [SeerrServerProfile.hasCounts]: Overseerr grew it at 1.30. */
+    @GET("api/v1/issue/count")
+    suspend fun issueCount(): SeerrIssueCountDto
+
+    /** A user's own quota, or any user's with `MANAGE_USERS`. */
+    @GET("api/v1/user/{userId}/quota")
+    suspend fun userQuota(
+        @Path("userId") userId: Int,
+    ): SeerrQuotaDto
+
+    /** `MANAGE_USERS` only; read with `take=1` for the total on its `pageInfo`. */
+    @GET("api/v1/user")
+    suspend fun userCountProbe(
+        @Query("take") take: Int = 1,
+    ): SeerrCountProbeDto
+
+    /** [path] is [SeerrServerProfile.blocklistPath]; needs `VIEW_BLOCKLIST` or `MANAGE_BLOCKLIST`. */
+    @GET("api/v1/{path}")
+    suspend fun blocklistCountProbe(
+        @Path("path") path: String,
+        @Query("take") take: Int = 1,
+    ): SeerrCountProbeDto
+
     @DELETE("api/v1/request/{requestId}")
     suspend fun deleteRequest(
         @Path("requestId") requestId: Int,
@@ -201,7 +236,10 @@ value class SeerrIssueTypeCode(
 data class SeerrUserDto(
     @SerialName("id") val id: Int,
     @SerialName("displayName") val displayName: String? = null,
+    @SerialName("username") val username: String? = null,
     @SerialName("email") val email: String? = null,
+    @SerialName("avatar") val avatar: String? = null,
+    @SerialName("requestCount") val requestCount: Int? = null,
     /** The user's permission bitmask, which is what the handshake's capability set is decoded from. */
     @SerialName("permissions") val permissions: Int? = null,
 )
@@ -345,11 +383,26 @@ data class SeerrAddToBlocklistBody(
     @SerialName("title") val title: String,
 )
 
-/** A title lookup; [mediaInfo] is absent when the title is not known to the server. */
+/**
+ * A title lookup; [mediaInfo] is absent when the title is not known to the server. A movie carries
+ * [title] and [releaseDate], a show [name] and [firstAirDate]; [posterPath] is a TMDB path.
+ */
 @Serializable
 data class SeerrMediaDetailsDto(
     @SerialName("mediaInfo") val mediaInfo: SeerrMediaInfoDto? = null,
-)
+    @SerialName("title") val title: String? = null,
+    @SerialName("name") val name: String? = null,
+    @SerialName("posterPath") val posterPath: String? = null,
+    @SerialName("releaseDate") val releaseDate: String? = null,
+    @SerialName("firstAirDate") val firstAirDate: String? = null,
+) {
+    val displayTitle: String? get() = title ?: name
+
+    val year: String? get() = (releaseDate ?: firstAirDate)?.take(YEAR_LENGTH)?.takeIf { it.length == YEAR_LENGTH }
+}
+
+/** A `yyyy-mm-dd` date's year; a serializable class cannot hide this in a private companion. */
+private const val YEAR_LENGTH = 4
 
 @Serializable
 data class SeerrMediaInfoDto(

@@ -2,4 +2,14 @@
 <resources>
     <!-- The artwork band above the sign-in form; the server's name sits on its lower edge. -->
     <dimen name="setup_backdrop_height">220dp</dimen>
+    <!-- The hub's dashboard cards and the downloading strip. -->
+    <dimen name="hub_card_section_spacing">14dp</dimen>
+    <dimen name="hub_server_card_logo">40dp</dimen>
+    <dimen name="hub_stat_divider_height">28dp</dimen>
+    <dimen name="hub_quota_meter_spacing">10dp</dimen>
+    <dimen name="hub_quota_meter_line_spacing">5dp</dimen>
+    <dimen name="hub_download_card_width">248dp</dimen>
+    <dimen name="hub_download_card_poster_width">52dp</dimen>
+    <dimen name="hub_download_card_text_spacing">5dp</dimen>
+    <dimen name="hub_download_strip_spacing">10dp</dimen>
 </resources>

@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
+import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import kotlinx.serialization.Serializable
 
 /**
@@ -9,6 +10,16 @@ import kotlinx.serialization.Serializable
  */
 sealed interface SeerrRoute : NavKey
 
-/** Connect a server, or see and disconnect the connected one. The start destination. */
+/** The start destination: the hub when a server is connected, setup when none is. */
+@Serializable
+data object HomeRoute : SeerrRoute
+
+/** Connect a server. Reached from the hub's Disconnect, or as the home while nothing is saved. */
 @Serializable
 data object SetupRoute : SeerrRoute
+
+/** One of the hub's manage sections; its screen arrives with its phase. */
+@Serializable
+data class SectionRoute(
+    val section: HubSection,
+) : SeerrRoute

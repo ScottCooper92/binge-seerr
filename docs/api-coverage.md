@@ -51,8 +51,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /auth/reset-password` | Send a reset password email | v1.20.0 | v1.0.0 | yes | Forgot-password from the sign-in form (local accounts, email agent on). |
 | `POST /auth/reset-password/{guid}` | Reset the password for a user | v1.20.0 | v1.0.0 |  | Forgot-password from the sign-in form (local accounts, email agent on). |
 | `GET /backdrops` | Get backdrops of trending items | v1.27.0 | v1.1.0 | yes | Artwork behind the sign-in form. |
-| `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 |  | Hub counts; also the browsers' filter chips. |
-| `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 |  | Hub counts; also the browsers' filter chips. |
+| `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 | yes | Hub counts; also the browsers' filter chips. |
+| `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips. |
 | `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 |  | Versions and totals on the hub and in Settings. |
 | `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
 | `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
@@ -60,7 +60,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 |  | Agent status on the hub; editing is Phase 8. |
 | `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
 | `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 |  | Read-only Settings summary; the writes are Phase 8. |
-| `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 |  | The signed-in user's quota on the hub; per user in Phase 4. |
+| `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub; per user in Phase 4. |
 
 ### Phase 2 — requests
 
@@ -70,7 +70,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `DELETE /media/{mediaId}/file` | Delete media file | — | v1.5.0 |  | Manage the media record from a request or issue page: status, clear data, delete files, watch data. |
 | `GET /media/{mediaId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 |  | Manage the media record from a request or issue page: status, clear data, delete files, watch data. |
 | `POST /media/{mediaId}/{status}` | Update media status | v1.20.0 | v1.0.0 |  | Manage the media record from a request or issue page: status, clear data, delete files, watch data. |
-| `GET /request` | Get all requests | v1.0.0 | v1.0.0 |  |  |
+| `GET /request` | Get all requests | v1.0.0 | v1.0.0 | yes |  |
 | `POST /request` | Create new request | v1.0.0 | v1.0.0 | yes |  |
 | `DELETE /request/{requestId}` | Delete request | v1.0.0 | v1.0.0 | yes |  |
 | `GET /request/{requestId}` | Get MediaRequest | v1.0.0 | v1.0.0 |  |  |
@@ -105,7 +105,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /blacklist` | Add media to blocklist | — | v2.0.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `DELETE /blacklist/{tmdbId}` | Remove media from blocklist | — | v2.0.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `GET /blacklist/{tmdbId}` | Get media from blocklist | — | v2.1.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
-| `GET /blocklist` | Returns blocklisted items | — | v3.0.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
+| `GET /blocklist` | Returns blocklisted items | — | v3.0.0 | yes | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `POST /blocklist` | Add media to blocklist | — | v3.0.0 | yes | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `DELETE /blocklist/collection/{collectionId}` | Remove collection from blocklist | — | v3.2.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `POST /blocklist/collection/{collectionId}` | Add collection to blocklist | — | v3.2.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
@@ -113,7 +113,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /blocklist/{tmdbId}` | Get media from blocklist | — | v3.0.0 |  | `/blacklist` on Jellyseerr 2.x, `/blocklist` from Seerr 3.0; never on Overseerr. |
 | `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 |  | Import users from the media server. |
 | `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 |  | Import users from the media server. |
-| `GET /user` | Get all users | v1.0.0 | v1.0.0 |  |  |
+| `GET /user` | Get all users | v1.0.0 | v1.0.0 | yes |  |
 | `POST /user` | Create new user | v1.0.0 | v1.0.0 |  |  |
 | `PUT /user` | Update batch of users | v1.18.0 | v1.0.0 |  |  |
 | `POST /user/import-from-jellyfin` | Import all users from Jellyfin | — | v1.1.0 |  |  |

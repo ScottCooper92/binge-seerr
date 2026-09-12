@@ -60,7 +60,7 @@ class SetupViewModel
             combine(connection.credentials, draft) { saved, draft ->
                 val server = draft.server
                 when {
-                    saved != null -> SetupUiState.Connected(saved, isDisconnecting = draft.busy)
+                    saved != null -> SetupUiState.Connected(saved)
                     server == null ->
                         SetupUiState.Address(
                             serverUrl = draft.serverUrl,
@@ -139,15 +139,6 @@ class SetupViewModel
                     .requestPasswordReset(server.baseUrl, current.form.email.trim())
                     .onSuccess { draft.update { it.copy(notice = SetupNotice.ResetEmailSent) } }
                     .onFailure { failure -> draft.update { it.copy(error = failure.toSetupError()) } }
-                draft.update { it.copy(busy = false) }
-            }
-        }
-
-        fun disconnect() {
-            if (draft.value.busy) return
-            draft.update { it.copy(busy = true) }
-            viewModelScope.launch {
-                connection.disconnect()
                 draft.update { it.copy(busy = false) }
             }
         }
