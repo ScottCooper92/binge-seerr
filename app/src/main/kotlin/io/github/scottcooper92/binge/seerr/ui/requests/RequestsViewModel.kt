@@ -32,8 +32,10 @@ private data class ListScope(
 
 /**
  * The requests browser. One cached paging stream per filter, so switching chips keeps each list's
- * rows; every stream re-queries when the sort changes. The chip counts refetch on a filter change
- * and on the screen becoming visible, holding the previous totals while a fetch is in flight.
+ * rows; every stream re-queries when the sort changes. The chip counts and the resolved scope both
+ * refetch on the screen becoming visible (the counts also on a filter change), holding the previous
+ * value while a fetch is in flight — so a transient `auth/me` failure on entry isn't a permanent
+ * stuck spinner, it self-corrects the next time the screen becomes visible.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -45,18 +47,26 @@ class RequestsViewModel
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
-        private val countsRefresh = MutableStateFlow(0)
+        private val refreshTrigger = MutableStateFlow(0)
 
         /**
-         * Resolved once per connection: the user's permissions decide whether the list is theirs alone.
-         * Null until resolved, so nothing downstream acts on a guessed, all-permissive scope.
+         * The user's permissions decide whether the list is theirs alone. Re-resolved on becoming
+         * visible; null while unresolved (including after a failed re-resolve), so nothing downstream
+         * acts on a guessed, all-permissive scope.
          */
         private val scope: StateFlow<ListScope?> =
-            flow {
-                val user = runCatching { connection.authenticatedUser() }.getOrNull() ?: return@flow
-                val permissions = user.toPermissions()
-                emit(ListScope(permissions, requestedBy = user.id.takeUnless { permissions.canViewRequests }))
-            }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+            refreshTrigger
+                .flatMapLatest {
+                    flow {
+                        val user = runCatching { connection.authenticatedUser() }.getOrNull()
+                        emit(
+                            user?.let { resolved ->
+                                val permissions = resolved.toPermissions()
+                                ListScope(permissions, requestedBy = resolved.id.takeUnless { permissions.canViewRequests })
+                            },
+                        )
+                    }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
         private val streams: Map<RequestFilter, Flow<PagingData<RequestItem>>> =
             RequestFilter.entries.associateWith { filter ->
@@ -77,7 +87,7 @@ class RequestsViewModel
         fun requests(filter: RequestFilter): Flow<PagingData<RequestItem>> = streams.getValue(filter)
 
         private val counts: Flow<RequestCounts?> =
-            combine(selectedFilter, countsRefresh) { _, _ -> }
+            combine(selectedFilter, refreshTrigger) { _, _ -> }
                 .flatMapLatest {
                     flow {
                         emit(
@@ -105,8 +115,8 @@ class RequestsViewModel
             selectedSort.value = sort
         }
 
-        /** The counts are low-velocity totals: refetched on entry, never polled. */
+        /** The counts and the scope are low-velocity: refetched on entry, never polled. */
         fun setScreenVisible(visible: Boolean) {
-            if (visible) countsRefresh.value++
+            if (visible) refreshTrigger.value++
         }
     }

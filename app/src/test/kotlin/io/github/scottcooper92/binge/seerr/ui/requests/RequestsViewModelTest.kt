@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -28,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -133,6 +135,57 @@ class RequestsViewModelTest {
             assertEquals("7", list.queryParameter("requestedBy"))
             assertEquals("pending", list.queryParameter("filter"))
             assertTrue(!vm.awaitReady { true }.permissions.canManageRequests)
+        }
+
+    @Test
+    fun `a transient auth failure resolves once the screen becomes visible again`() =
+        runTest {
+            val authShouldFail = AtomicBoolean(false)
+            val authFailed = CompletableDeferred<Unit>()
+            seerr.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        received += request
+                        return when (request.url.encodedPath) {
+                            "/api/v1/auth/me" ->
+                                if (authShouldFail.get()) {
+                                    MockResponse(code = 500).also { authFailed.complete(Unit) }
+                                } else {
+                                    json("""{"id":7,"displayName":"Scott","permissions":$REQUEST}""")
+                                }
+                            "/api/v1/status" -> json("""{"version":"3.1.0"}""")
+                            "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                            "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
+                            else -> MockResponse(code = 404)
+                        }
+                    }
+                }
+
+            val connection =
+                SeerrConnection(
+                    store =
+                        CredentialStore(
+                            PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
+                            PlainCipher,
+                        ),
+                    apis = SeerrApiFactory(logRequests = false),
+                )
+            connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            // Fail only the ViewModel's own resolve, not the connect() probe above.
+            authShouldFail.set(true)
+            val vm = RequestsViewModel(connection, TitleCache())
+            viewModels.put("requests", vm)
+            backgroundScope.launch { vm.uiState.collect {} }
+
+            authFailed.await()
+            assertEquals(RequestsUiState.Loading, vm.uiState.value)
+
+            authShouldFail.set(false)
+            vm.setScreenVisible(true)
+
+            val ready = vm.awaitReady { it.counts != null }
+            assertTrue(!ready.permissions.canManageRequests)
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
