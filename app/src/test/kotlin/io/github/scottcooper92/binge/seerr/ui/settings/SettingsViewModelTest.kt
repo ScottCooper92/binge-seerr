@@ -157,6 +157,18 @@ class SettingsViewModelTest {
         }
 
     @Test
+    fun `a refused Radarr read still yields Sonarr's rows`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/settings/radarr"] = { MockResponse(code = 500) }
+            val vm = viewModel()
+
+            val ready = vm.awaitReady { it.config?.services != null }
+
+            assertEquals(listOf("https://sonarr.example.com"), checkNotNull(ready.config?.services).map { it.url })
+        }
+
+    @Test
     fun `a plain user gets the connection and server but no configuration, and no settings call is made`() =
         runTest {
             server(REQUEST)

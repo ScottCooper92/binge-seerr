@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 
 /** How the app is signed in, as the Connection group names it. */
@@ -20,7 +19,6 @@ data class ServerSummary(
     val versionLabel: String?,
     val updateAvailable: Boolean,
     val commitsBehind: Int,
-    val mediaServer: SeerrMediaServer,
 )
 
 enum class ServiceType { Radarr, Sonarr }
