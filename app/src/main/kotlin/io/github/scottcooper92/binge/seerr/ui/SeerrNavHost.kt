@@ -5,7 +5,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,9 +40,11 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.users.UserDetailActions
+import io.github.scottcooper92.binge.seerr.ui.users.UserDetailScreen
+import io.github.scottcooper92.binge.seerr.ui.users.UserDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.UsersActions
 import io.github.scottcooper92.binge.seerr.ui.users.UsersScreen
-import io.github.scottcooper92.binge.seerr.ui.users.UsersUiState
 import io.github.scottcooper92.binge.seerr.ui.users.UsersViewModel
 
 /**
@@ -69,6 +70,7 @@ fun SeerrNavHost(
             entryProvider {
                 entry<HomeRoute> {
                     HomeEntry(
+                        onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
                         onOpenSection = { section ->
                             backStack.add(
                                 when (section) {
@@ -91,7 +93,16 @@ fun SeerrNavHost(
                     IssuesEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
                 }
                 entry<IssueDetailRoute> { route -> IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }) }
-                entry<UsersRoute> { UsersEntry(onBack = { backStack.removeLastOrNull() }) }
+                entry<UsersRoute> {
+                    UsersEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(UserDetailRoute(id)) })
+                }
+                entry<UserDetailRoute> { route ->
+                    UserDetailEntry(
+                        route.userId,
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
+                    )
+                }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
                 }
@@ -107,19 +118,21 @@ fun SeerrNavHost(
 @Composable
 private fun HomeEntry(
     onOpenSection: (HubSection) -> Unit,
+    onOpenAccount: (Int) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val connected by viewModel.isConnected.collectAsStateWithLifecycle()
     when (connected) {
         null -> LoadingScreen()
         false -> SetupEntry()
-        true -> HubEntry(onOpenSection)
+        true -> HubEntry(onOpenSection, onOpenAccount)
     }
 }
 
 @Composable
 private fun HubEntry(
     onOpenSection: (HubSection) -> Unit,
+    onOpenAccount: (Int) -> Unit,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -133,6 +146,7 @@ private fun HubEntry(
         actions =
             HubActions(
                 onOpenSection = onOpenSection,
+                onOpenAccount = onOpenAccount,
                 onRetry = viewModel::recheck,
                 onDisconnect = viewModel::disconnect,
             ),
@@ -269,14 +283,13 @@ private fun IssueDetailEntry(
     )
 }
 
-/** Until the user page lands, a row opens the user in the server's web client. */
 @Composable
 private fun UsersEntry(
     onBack: () -> Unit,
+    onOpen: (Int) -> Unit,
     viewModel: UsersViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     UsersScreen(
         state = state,
         users = viewModel.users,
@@ -285,13 +298,36 @@ private fun UsersEntry(
             UsersActions(
                 onBack = onBack,
                 onSortChange = viewModel::setSort,
-                onOpen = { item -> (state as? UsersUiState.Ready)?.baseUrl?.let { context.openInBrowser(it + "users/" + item.id) } },
+                onOpen = { item -> onOpen(item.id) },
                 onToggleSelected = { item -> viewModel.toggleSelected(item.id) },
                 onClearSelection = viewModel::clearSelection,
                 onStartBulkEdit = viewModel::startBulkEdit,
                 onTogglePermission = viewModel::togglePermission,
                 onApplyBulkEdit = viewModel::applyBulkEdit,
                 onCancelBulkEdit = viewModel::cancelBulkEdit,
+            ),
+    )
+}
+
+@Composable
+private fun UserDetailEntry(
+    userId: Int,
+    onBack: () -> Unit,
+    onOpenRequest: (Int) -> Unit,
+    viewModel: UserDetailViewModel =
+        hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(creationCallback = { factory -> factory.create(userId) }),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    UserDetailScreen(
+        state = state,
+        requests = viewModel.requests,
+        events = viewModel.events,
+        actions =
+            UserDetailActions(
+                onBack = onBack,
+                onRetry = viewModel::reload,
+                onOpenRequest = { item -> onOpenRequest(item.id) },
+                onDeleteUser = viewModel::deleteUser,
             ),
     )
 }

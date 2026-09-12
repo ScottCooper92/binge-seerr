@@ -60,7 +60,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
 | `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
 | `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
-| `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub; per user in Phase 4. |
+| `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub, and any user's on their page. |
 
 ### Phase 2 — requests
 
@@ -119,10 +119,10 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /user/import-from-jellyfin` | Import all users from Jellyfin | — | v1.1.0 |  |  |
 | `POST /user/import-from-plex` | Import all users from Plex | v1.12.0 | v1.0.0 |  |  |
 | `GET /user/jellyfin/{jellyfinUserId}` | Get user by Jellyfin user ID | — | v3.3.0 |  |  |
-| `DELETE /user/{userId}` | Delete user by ID | v1.0.0 | v1.0.0 |  |  |
-| `GET /user/{userId}` | Get user by ID | v1.0.0 | v1.0.0 |  |  |
+| `DELETE /user/{userId}` | Delete user by ID | v1.0.0 | v1.0.0 | yes | The user page's actions, behind a confirm, under the server's own guard. |
+| `GET /user/{userId}` | Get user by ID | v1.0.0 | v1.0.0 | yes | The user page. |
 | `PUT /user/{userId}` | Update a user by user ID | v1.0.0 | v1.0.0 |  |  |
-| `GET /user/{userId}/requests` | Get requests for a specific user | v1.20.0 | v1.0.0 |  |  |
+| `GET /user/{userId}/requests` | Get requests for a specific user | v1.20.0 | v1.0.0 | yes | The user page's requests, paged. |
 | `DELETE /user/{userId}/settings/linked-accounts/jellyfin` | Remove the linked Jellyfin account for a user | — | v2.4.0 |  |  |
 | `POST /user/{userId}/settings/linked-accounts/jellyfin` | Link the provided Jellyfin account to the current user | — | v2.4.0 |  |  |
 | `POST /user/{userId}/settings/linked-accounts/jellyfin/quickconnect` | Link Jellyfin/Emby account with Quick Connect | — | v3.4.0 |  |  |
@@ -136,8 +136,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /user/{userId}/settings/password` | Update password for a user | v1.20.0 | v1.0.0 |  |  |
 | `GET /user/{userId}/settings/permissions` | Get permission settings for a user | v1.20.0 | v1.0.0 |  |  |
 | `POST /user/{userId}/settings/permissions` | Update permission settings for a user | v1.20.0 | v1.0.0 |  |  |
-| `GET /user/{userId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 |  |  |
-| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 |  |  |
+| `GET /user/{userId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | The user page, where the server returns it. |
+| `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page, where the server returns it. |
 
 ### Phase 8 — server administration
 

@@ -133,7 +133,7 @@ class HubViewModelTest {
             assertEquals("3.4.0", ready.server.versionLabel)
             assertTrue(ready.server.updateAvailable)
             assertEquals(ConnectionHealth.Healthy, ready.health)
-            assertEquals(HubAccount(name = "Scott", isAdmin = true, avatarUrl = null), ready.overview.account)
+            assertEquals(HubAccount(id = 1, name = "Scott", isAdmin = true, avatarUrl = null), ready.overview.account)
             assertEquals(HubQuota(movie = HubQuotaBucket(limit = 10, remaining = 7, days = 7), tv = null), ready.overview.quota)
             assertEquals(8, ready.overview.movieRequestCount)
             assertEquals(2, ready.overview.pendingRequestCount)
@@ -160,7 +160,7 @@ class HubViewModelTest {
             assertNull(ready.overview.userCount)
             assertNull(ready.overview.blocklistCount)
             assertNull(ready.overview.openIssueCount)
-            assertEquals(HubAccount(name = "Scott", isAdmin = false, avatarUrl = null), ready.overview.account)
+            assertEquals(HubAccount(id = 1, name = "Scott", isAdmin = false, avatarUrl = null), ready.overview.account)
         }
 
     /** The connection is made while the server is healthy; the hub then opens on a server that has turned. */

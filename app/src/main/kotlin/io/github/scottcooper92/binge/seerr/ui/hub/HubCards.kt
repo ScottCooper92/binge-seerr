@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -153,8 +154,9 @@ internal fun AccountCard(
     account: HubAccount,
     quota: HubQuota?,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
-    HubCard(modifier) {
+    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = account.name,
@@ -177,7 +179,7 @@ internal fun AccountCard(
 }
 
 @Composable
-private fun QuotaSection(quota: HubQuota) {
+internal fun QuotaSection(quota: HubQuota) {
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.hub_quota_meter_spacing))) {
         Text(
             stringResource(R.string.hub_quota_title),

@@ -50,8 +50,6 @@ sealed interface UsersUiState {
         val edit: BulkEdit?,
         /** The toggles the editor offers: the blocklist ones only on the Jellyseerr lineage. */
         val offered: List<ManageablePermission>,
-        /** Where a row opens until the user page lands. */
-        val baseUrl: String?,
     ) : UsersUiState
 }
 
