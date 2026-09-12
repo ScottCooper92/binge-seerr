@@ -16,9 +16,10 @@ repository defines a contract.** A change to the wire format is a PR against
 binge-integrations, and this repository consumes the result.
 
 Status is pre-alpha, at contract parity: the exported Service serves every REQUEST v1
-operation against the connected server, the setup screen is the only UI, and the
-capability set is derived from the signed-in user's permissions. Binge's in-tree
-Seerr integration is what this replaces (roadmap stage 4 in binge-integrations).
+operation against the connected server, the capability set is derived from the
+signed-in user's permissions, and the UI is two screens — setup, and the advanced
+request picker Binge hands a title to (`AdvancedRequestActivity`, the SDK's hand-off).
+This replaced Binge's in-tree Seerr integration (roadmap stage 4 in binge-integrations).
 
 The contracts and the SDK are consumed as source: `binge-integrations/` is a git
 submodule and `settings.gradle.kts` includes it as a composite build. So is the
