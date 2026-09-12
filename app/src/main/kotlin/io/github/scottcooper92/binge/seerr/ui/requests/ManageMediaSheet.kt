@@ -33,7 +33,7 @@ class ManageMediaActions(
 )
 
 /** Which destructive step is awaiting its confirmation; deleting files asks twice, the second time naming the client. */
-private sealed interface Confirm {
+private sealed interface Confirm : java.io.Serializable {
     data object Clear : Confirm
 
     data class DeleteFiles(
