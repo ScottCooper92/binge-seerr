@@ -84,7 +84,8 @@ class RequestDetailViewModel
             coroutineScope {
                 val api = connection.api()
                 val profile = async { connection.profile() }
-                val permissions = async { runCatching { connection.authenticatedUser() }.getOrNull().toPermissions() }
+                val user = async { runCatching { connection.authenticatedUser() }.getOrNull() }
+                val permissions = async { user.await().toPermissions() }
                 val dto = api.request(requestId)
                 val item = checkNotNull(dto.toRequestItem(api, titles::get, System.currentTimeMillis())) { "Unrenderable media type" }
                 val details =
@@ -108,7 +109,7 @@ class RequestDetailViewModel
                         item.actions(
                             ModerationScope(
                                 permissions.await(),
-                                currentUserId = connection.authenticatedUser().id,
+                                currentUserId = user.await()?.id,
                                 hasBlocklist = profile.await().hasBlocklist,
                             ),
                         ),

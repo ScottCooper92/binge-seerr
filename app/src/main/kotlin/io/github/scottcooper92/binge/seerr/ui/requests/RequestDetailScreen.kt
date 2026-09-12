@@ -175,20 +175,25 @@ private fun Ready(
             SectionHeader(title = stringResource(R.string.request_downloads))
             detail.downloads.forEach { download -> DownloadRow(download) }
         }
-        Column(modifier = Modifier.padding(inset), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            if (detail.actions.any) {
-                BingeFilledButton(
-                    label = stringResource(R.string.request_actions_cd),
-                    onClick = { moderating = true },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            if (detail.canReportIssue) {
-                BingeOutlinedButton(
-                    label = stringResource(R.string.issue_report_title),
-                    onClick = { reporting = true },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+        if (detail.actions.any || detail.canReportIssue) {
+            Column(
+                modifier = Modifier.padding(inset),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            ) {
+                if (detail.actions.any) {
+                    BingeFilledButton(
+                        label = stringResource(R.string.request_actions_cd),
+                        onClick = { moderating = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (detail.canReportIssue) {
+                    BingeOutlinedButton(
+                        label = stringResource(R.string.issue_report_title),
+                        onClick = { reporting = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }
