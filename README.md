@@ -45,7 +45,8 @@ git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 
 That is the whole gate: Kotlin compile, unit tests, `ktlintCheck` and Android lint.
 JDK 17, AGP 9.3.2, `compileSdk` 37, `minSdk` 26 — matching Binge, so the extraction
-is a code move rather than a toolchain negotiation.
+is a code move rather than a toolchain negotiation. The object graph is Hilt's, through
+KSP, at the versions Binge pins; the wiring is one module, `di/SeerrModule.kt`.
 
 ## Conventions
 

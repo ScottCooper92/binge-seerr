@@ -12,6 +12,8 @@ import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.binge.integration.sdk.BingeHosts
 import com.binge.integration.sdk.HandOffPolicy
 import com.binge.integration.sdk.toAdvancedRequest
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestScreen
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestViewModel
@@ -23,10 +25,15 @@ import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestViewModel
  * extras — debug-permissive, pinned in release — and a hand-off from anyone else, or one that
  * names no title, finishes cancelled.
  */
+@AndroidEntryPoint
 class AdvancedRequestActivity : ComponentActivity() {
-    private val viewModel: AdvancedRequestViewModel by viewModels {
-        AdvancedRequestViewModel.Factory((application as SeerrApp).connection, checkNotNull(intent.toAdvancedRequest()))
-    }
+    private val viewModel: AdvancedRequestViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<AdvancedRequestViewModel.Factory> {
+                it.create(checkNotNull(intent.toAdvancedRequest()))
+            }
+        },
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
