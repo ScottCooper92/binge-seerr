@@ -75,8 +75,12 @@ class RequestDetailViewModel
             }
         }
 
+        /** A dismiss while a send is in flight only hides the sheet; it must not clear [IssueReport.Sending], or reopening it loses [reportIssue]'s re-entrancy guard and lets a second POST fire. */
         fun dismissReport() =
-            state.update { current -> (current as? RequestDetailUiState.Ready)?.copy(report = IssueReport.Idle) ?: current }
+            state.update { current ->
+                val ready = current as? RequestDetailUiState.Ready ?: return@update current
+                if (ready.report == IssueReport.Sending) ready else ready.copy(report = IssueReport.Idle)
+            }
 
         private suspend fun load(): RequestDetail =
             coroutineScope {

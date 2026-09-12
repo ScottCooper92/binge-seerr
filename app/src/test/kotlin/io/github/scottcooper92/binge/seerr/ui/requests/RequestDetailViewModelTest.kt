@@ -185,6 +185,24 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `dismissing the report sheet mid-send keeps it Sending, so a re-opened send does not duplicate the POST`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
+
+            vm.dismissReport()
+            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
+
+            vm.reportIssue(IssueType.Subtitles, "Missing subs again")
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+            assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
+        }
+
+    @Test
     fun `a request the server no longer has reads as not found, and one whose destination is gone still shows`() =
         runTest {
             server(ADMIN)
