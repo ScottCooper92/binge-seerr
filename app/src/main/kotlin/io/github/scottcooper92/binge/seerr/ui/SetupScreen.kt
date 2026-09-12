@@ -10,16 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,12 +22,20 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeLoadingIndicator
+import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeTopBar
+import com.binge.designsystem.component.InfoRow
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import com.binge.designsystem.R as DesR
 
-/** The one screen: the saved connection, or the form to make one. */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * The one screen: the saved connection, or the form to make one. Built from the shared design
+ * system's components and tokens, so it reads as part of Binge rather than a second app.
+ */
 @Composable
 fun SetupScreen(
     state: SetupUiState,
@@ -40,10 +43,10 @@ fun SetupScreen(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.companion_name)) }) }) { padding ->
+    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.companion_name)) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (state) {
-                SetupUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                SetupUiState.Loading -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center))
                 is SetupUiState.Disconnected -> SetupForm(state, onEdit, onConnect)
                 is SetupUiState.Connected -> ConnectedPanel(state.credentials, state.isDisconnecting, onDisconnect)
             }
@@ -58,9 +61,13 @@ private fun SetupForm(
     onConnect: () -> Unit,
 ) {
     val form = state.form
-    val spacing = dimensionResource(R.dimen.setup_spacing)
+    val spacing = dimensionResource(DesR.dimen.padding_m)
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(spacing),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
         Text(stringResource(R.string.setup_intro), style = MaterialTheme.typography.bodyMedium)
@@ -79,7 +86,7 @@ private fun SetupForm(
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
             AuthMode.entries.forEach { mode ->
                 FilterChip(
                     selected = form.mode == mode,
@@ -120,9 +127,13 @@ private fun SetupForm(
         state.error?.let { error ->
             Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
         }
-        Button(onClick = onConnect, enabled = form.canSubmit && !state.isConnecting, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(if (state.isConnecting) R.string.setup_connecting else R.string.setup_connect))
-        }
+        BingeFilledButton(
+            label = stringResource(R.string.setup_connect),
+            onClick = onConnect,
+            enabled = form.canSubmit && !state.isConnecting,
+            loading = state.isConnecting,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -132,23 +143,31 @@ private fun ConnectedPanel(
     isDisconnecting: Boolean,
     onDisconnect: () -> Unit,
 ) {
-    val spacing = dimensionResource(R.dimen.setup_spacing)
-    Column(modifier = Modifier.fillMaxSize().padding(spacing), verticalArrangement = Arrangement.spacedBy(spacing)) {
+    val spacing = dimensionResource(DesR.dimen.padding_m)
+    Column(
+        modifier = Modifier.fillMaxSize().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+    ) {
         Text(stringResource(R.string.connected_title, credentials.variant.displayName), style = MaterialTheme.typography.titleMedium)
-        Text(credentials.baseUrl, style = MaterialTheme.typography.bodyMedium)
-        Text(
-            stringResource(
-                when (credentials.auth) {
-                    is SeerrAuth.ApiKey -> R.string.connected_as_api_key
-                    is SeerrAuth.Session -> R.string.connected_as_user
-                },
-            ),
-            style = MaterialTheme.typography.bodySmall,
+        InfoRow(label = stringResource(R.string.connected_server_label), value = credentials.baseUrl)
+        InfoRow(
+            label = stringResource(R.string.connected_access_label),
+            value =
+                stringResource(
+                    when (credentials.auth) {
+                        is SeerrAuth.ApiKey -> R.string.connected_as_api_key
+                        is SeerrAuth.Session -> R.string.connected_as_user
+                    },
+                ),
         )
         Text(stringResource(R.string.connected_hint), style = MaterialTheme.typography.bodyMedium)
-        OutlinedButton(onClick = onDisconnect, enabled = !isDisconnecting, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.connected_disconnect))
-        }
+        BingeOutlinedButton(
+            label = stringResource(R.string.connected_disconnect),
+            onClick = onDisconnect,
+            enabled = !isDisconnecting,
+            loading = isDisconnecting,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

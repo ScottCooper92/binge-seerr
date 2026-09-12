@@ -1,3 +1,6 @@
 [submodule "binge-integrations"]
 	path = binge-integrations
 	url = https://github.com/ScottCooper92/binge-integrations
+[submodule "design-system"]
+	path = design-system
+	url = https://github.com/ScottCooper92/binge-design-system.git

@@ -23,6 +23,10 @@ retrofit = "3.0.0"
 okhttp = "5.4.0"
 datastore = "1.2.1"
 composeBom = "2026.08.00"
+# Pinned ahead of the BOM to the version binge-design-system pins: its expressive theme reads
+# material3 APIs the BOM's stable line does not have, and a consumer that includes that build has
+# to agree with it or resolution silently picks one of the two.
+material3 = "1.5.0-alpha27"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 
@@ -32,6 +36,8 @@ junit = { module = "junit:junit", version.ref = "junit" }
 # Version-less on purpose: both resolve to projects of the included binge-integrations build.
 binge-integration-contracts = { module = "io.github.scottcooper92:contracts" }
 binge-integration-sdk = { module = "io.github.scottcooper92:sdk" }
+# Version-less for the same reason: resolves to the included binge-design-system build.
+binge-designsystem = { module = "com.binge:designsystem" }
 grpc-inprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
@@ -44,7 +50,7 @@ datastore-preferences = { module = "androidx.datastore:datastore-preferences", v
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
-compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }

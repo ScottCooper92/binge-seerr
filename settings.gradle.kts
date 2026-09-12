@@ -40,4 +40,14 @@ rootProject.name = "binge-seerr"
 // substitutes `io.github.scottcooper92:contracts` and `:sdk` with the included build's projects.
 includeBuild("binge-integrations")
 
+// The shared design system arrives the same way (Binge#2427): the theme and the components this
+// app's screen wears come from binge-design-system as source, so a user moving between Binge and
+// this app sees one product without this app depending on Binge. Gradle substitutes
+// `com.binge:designsystem` with the included build's project.
+includeBuild("design-system") {
+    dependencySubstitution {
+        substitute(module("com.binge:designsystem")).using(project(":designsystem"))
+    }
+}
+
 include(":app")

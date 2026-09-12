@@ -21,9 +21,12 @@ capability set is derived from the signed-in user's permissions. Binge's in-tree
 Seerr integration is what this replaces (roadmap stage 4 in binge-integrations).
 
 The contracts and the SDK are consumed as source: `binge-integrations/` is a git
-submodule and `settings.gradle.kts` includes it as a composite build. `.gitmodules`
-is an agent-governed path, so an author bot's commit can revert a change to it —
-bump the submodule in a commit of its own, and check the pin after any bot push.
+submodule and `settings.gradle.kts` includes it as a composite build. So is the
+shared design system, `design-system/` (binge-design-system): the screen is built
+from its theme and components, which is what makes this app read as part of Binge
+without depending on it. `.gitmodules` is an agent-governed path, so an author
+bot's commit can revert a change to it — bump a submodule in a commit of its own,
+and check both pins after any bot push.
 
 ## The one rule everything else serves
 
