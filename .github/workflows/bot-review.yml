@@ -5,8 +5,10 @@ name: Bot review
 # PUBLIC repository, and the reference companion app: what lands on main is read
 # and copied by people writing their own companions. `./gradlew build` cannot
 # check the thing that makes this repository worth anything - whether the example
-# is one worth following - which is why auto_merge is off. Turn it on when the
-# extraction has landed and the review has a track record here.
+# is one worth following - so auto_merge stayed off until the extraction had
+# landed and the review had a track record here. It has both now (#12 through
+# #19 were reviewed on this wiring), so an approved, green PR lands on its own.
+# `hold` still withholds the merge on any PR that needs a human.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -35,7 +37,7 @@ jobs:
     uses: ScottCooper92/binge-ci/.github/workflows/bot-review.yml@v1
     with:
       dispatch_pr: ${{ inputs.pr }}
-      auto_merge: false
+      auto_merge: true
       gated_checks: ktlint or Android lint
       # ci.yml here declares no paths-ignore - deliberately, since bot-review needs a
       # successful run against the head and a skipped run is a PR that is never
