@@ -31,9 +31,13 @@ interface SeerrApi {
         @Body body: SeerrLocalLoginBody,
     ): SeerrUserDto
 
-    /** Unauthenticated: the server's version, which is how its fork is told apart. */
+    /** Unauthenticated: the server's version, which is how its fork is told apart, and its update state. */
     @GET("api/v1/status")
     suspend fun status(): SeerrStatusDto
+
+    /** Unauthenticated: what the administrator turned on, as the sign-in page reads it. */
+    @GET("api/v1/settings/public")
+    suspend fun publicSettings(): SeerrPublicSettings
 
     @GET("api/v1/movie/{tmdbId}")
     suspend fun movieDetails(
@@ -99,8 +103,10 @@ interface SeerrApi {
         @Body body: SeerrCreateIssueBody,
     )
 
-    @POST("api/v1/blocklist")
+    /** [path] is [SeerrServerProfile.blocklistPath]: `blacklist` on Jellyseerr 2.x, `blocklist` from Seerr 3.0. */
+    @POST("api/v1/{path}")
     suspend fun addToBlocklist(
+        @Path("path") path: String,
         @Body body: SeerrAddToBlocklistBody,
     )
 }
@@ -178,6 +184,35 @@ data class SeerrLocalLoginBody(
 @Serializable
 data class SeerrStatusDto(
     @SerialName("version") val version: String? = null,
+    @SerialName("commitTag") val commitTag: String? = null,
+    @SerialName("updateAvailable") val updateAvailable: Boolean = false,
+    @SerialName("commitsBehind") val commitsBehind: Int = 0,
+)
+
+/**
+ * `GET settings/public`: the configuration the server shows before sign-in. Every field defaults,
+ * because Overseerr lacks the Jellyseerr lineage's (`mediaServerType`, `mediaServerLogin`,
+ * `hideRequested`) and a missing one must read as "not this server's", never as a parse failure.
+ */
+@Serializable
+data class SeerrPublicSettings(
+    @SerialName("applicationTitle") val applicationTitle: String? = null,
+    @SerialName("applicationUrl") val applicationUrl: String? = null,
+    @SerialName("localLogin") val localLogin: Boolean = true,
+    @SerialName("mediaServerLogin") val mediaServerLogin: Boolean = true,
+    @SerialName("mediaServerType") val mediaServerType: Int? = null,
+    @SerialName("jellyfinExternalHost") val jellyfinExternalHost: String? = null,
+    @SerialName("jellyfinServerName") val jellyfinServerName: String? = null,
+    @SerialName("movie4kEnabled") val movie4kEnabled: Boolean = false,
+    @SerialName("series4kEnabled") val series4kEnabled: Boolean = false,
+    @SerialName("partialRequestsEnabled") val partialRequestsEnabled: Boolean = true,
+    @SerialName("enableSpecialEpisodes") val enableSpecialEpisodes: Boolean = false,
+    @SerialName("hideAvailable") val hideAvailable: Boolean = false,
+    @SerialName("hideRequested") val hideRequested: Boolean = false,
+    @SerialName("emailEnabled") val emailEnabled: Boolean = false,
+    @SerialName("newPlexLogin") val newPlexLogin: Boolean = true,
+    @SerialName("versionCheck") val versionCheck: Boolean = true,
+    @SerialName("locale") val locale: String? = null,
 )
 
 /**
