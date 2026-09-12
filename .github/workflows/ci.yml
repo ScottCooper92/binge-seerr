@@ -45,7 +45,11 @@ jobs:
     # image; nothing here installs one.
     timeout-minutes: 30
     steps:
+      # The contracts and SDK are a submodule (see settings.gradle.kts); without this the
+      # included build is an empty directory and Gradle fails at settings evaluation.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
 
       # JDK 17, matching Binge rather than binge-integrations' 21. The extracted code
       # targets jvmTarget 17 and AGP 9.3.2 is what Binge builds with, so the toolchain

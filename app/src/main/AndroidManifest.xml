@@ -1,9 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
         android:allowBackup="false"
-        android:label="Binge Seerr"
-        android:supportsRtl="true" />
+        android:icon="@drawable/ic_companion"
+        android:label="@string/companion_name"
+        android:supportsRtl="true"
+        tools:ignore="GoogleAppIndexingWarning">
+
+        <!--
+            exported="true" is the integration surface: the host reaches this Service with
+            bindService, and what guards it is the caller policy in SeerrCompanionService, not the
+            manifest. android:process is deliberately absent so the Service runs under this app's
+            own uid, which is what the host's certificate check verifies.
+
+            The meta-data is read by the host WITHOUT binding, so it can list this app and decide
+            whether the two can parse each other before any process of ours starts. The keys are
+            CompanionManifest's; a typo here reads as "declares no contract".
+        -->
+        <service
+            android:name=".service.SeerrCompanionService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.binge.integration.REQUEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.binge.integration.name"
+                android:value="@string/companion_name" />
+            <meta-data
+                android:name="com.binge.integration.icon"
+                android:resource="@drawable/ic_companion" />
+            <meta-data
+                android:name="com.binge.integration.majors"
+                android:value="1" />
+        </service>
+    </application>
 
 </manifest>

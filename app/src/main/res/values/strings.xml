@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A brand name, shown by the host as this integration's label. Never translated. -->
+    <string name="companion_name" translatable="false">Seerr</string>
+</resources>

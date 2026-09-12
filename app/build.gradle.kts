@@ -15,6 +15,10 @@ android {
         versionName = "0.1.0"
     }
 
+    // BuildConfig.DEBUG selects the caller policy: any caller on a debug build, the pinned Binge
+    // certificate on release. A flag a user could flip must never make that choice.
+    buildFeatures { buildConfig = true }
+
     buildTypes {
         release {
             // No shrinking yet. The APK cost after R8 is something roadmap stage 3 measures,
@@ -38,5 +42,11 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.binge.integration.sdk)
+    implementation(libs.binge.integration.contracts)
+
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    // The generated service is driven over an in-process channel: the whole contract, no device.
+    testImplementation(libs.grpc.inprocess)
 }

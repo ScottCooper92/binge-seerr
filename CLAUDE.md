@@ -15,11 +15,15 @@ The contracts live in that repository and are authoritative there. **Nothing in 
 repository defines a contract.** A change to the wire format is a PR against
 binge-integrations, and this repository consumes the result.
 
-Status is pre-alpha, and more specifically: **the extraction has not happened yet.**
-What is here is a skeleton — one module, a placeholder object and a unit test —
-that exists so the build and the agent workflows are wired before the code arrives.
-Roadmap stage 4 in binge-integrations is the extraction of Binge's in-tree Seerr
-integration into this repository. Treat any code here as scaffolding until then.
+Status is pre-alpha, and more specifically: **the extraction is in progress.** The
+exported Service and its REQUEST v1 handshake are here, built on the SDK; the Seerr
+client, the stored session and the eight operations are being ported from Binge's
+in-tree integration (roadmap stage 4 in binge-integrations).
+
+The contracts and the SDK are consumed as source: `binge-integrations/` is a git
+submodule and `settings.gradle.kts` includes it as a composite build. `.gitmodules`
+is an agent-governed path, so an author bot's commit can revert a change to it —
+bump the submodule in a commit of its own, and check the pin after any bot push.
 
 ## The one rule everything else serves
 

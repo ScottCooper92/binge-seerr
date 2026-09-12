@@ -16,3 +16,6 @@ keystore.properties
 
 # Claude Code tooling
 .claude/settings.local.json
+
+# Heap dumps the daemon writes on OutOfMemoryError (gradle.properties asks for them)
+*.hprof
