@@ -22,6 +22,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
   keyword and watchlist calls: this app is the companion and an admin console, not a discovery
   client, and a title opens in Binge or the web client (#26, and the closed #34). Web push, which
   is the PWA's transport. And the first-run wizard, which stays the web client's.
+- Phase 9 (#36) is closed and deferred: one server done well comes first, and nothing in Phases 0
+  to 8 depends on more than one.
 
 ## Endpoints
 
