@@ -7,16 +7,17 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
-import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
+import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,6 @@ class RequestDetailViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
-        private val titles: TitleCache,
         @Assisted private val requestId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
@@ -84,13 +84,10 @@ class RequestDetailViewModel
                 val profile = async { connection.profile() }
                 val permissions = async { runCatching { connection.authenticatedUser() }.getOrNull().toPermissions() }
                 val dto = api.request(requestId)
-                val item = checkNotNull(dto.toRequestItem(api, titles::get, System.currentTimeMillis())) { "Unrenderable media type" }
                 val details =
                     async {
                         runCatching {
-                            if (dto.media.mediaType ==
-                                MEDIA_TYPE_MOVIE
-                            ) {
+                            if (dto.media.mediaType == MEDIA_TYPE_MOVIE) {
                                 api.movieDetails(dto.media.tmdbId)
                             } else {
                                 api.tvDetails(dto.media.tmdbId)
@@ -99,6 +96,11 @@ class RequestDetailViewModel
                     }
                 val destination = async { dto.destination(api) }
                 val detailsDto = details.await()
+                val hydrated = detailsDto?.let { HydratedTitle(it.displayTitle, it.posterPath?.toTmdbPosterUrl(), it.year) }
+                val item =
+                    checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
+                        "Unrenderable media type"
+                    }
                 val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
                 RequestDetail(
                     item = item,

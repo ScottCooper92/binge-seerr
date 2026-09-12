@@ -9,7 +9,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
-import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -111,7 +110,7 @@ class RequestDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false),
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = RequestDetailViewModel(connection, TitleCache(), requestId)
+        val vm = RequestDetailViewModel(connection, requestId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
