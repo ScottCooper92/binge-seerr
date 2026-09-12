@@ -33,6 +33,13 @@ import org.junit.rules.TemporaryFolder
 
 private const val ADMIN = 2
 
+/** A real bit the editor does not manage (`PERMISSION_REQUEST_4K_MOVIE`), to prove a save preserves it. */
+private const val UNMANAGED_4K_MOVIE_BIT = 1 shl 11
+
+/** Ana's permissions as the server already has them: two managed bits plus one the editor never shows. */
+private val ANA_INITIAL =
+    ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit or UNMANAGED_4K_MOVIE_BIT
+
 /** The browser over a real connection into a path-scripted Seerr, paging through the fake cache; Main is real-time. */
 class UsersViewModelTest {
     @get:Rule
@@ -58,7 +65,7 @@ class UsersViewModelTest {
                             json(
                                 """{"pageInfo":{"pages":1,"results":2},"results":[
                                    {"id":7,"displayName":"Scott","permissions":2,"userType":3,"requestCount":12},
-                                   {"id":8,"displayName":"Ana","email":"ana@example.com","permissions":32,"userType":3,"requestCount":3}]}""",
+                                   {"id":8,"displayName":"Ana","email":"ana@example.com","permissions":$ANA_INITIAL,"userType":3,"requestCount":3}]}""",
                             )
                         "PUT /api/v1/user" -> json("[]")
                         else -> MockResponse(code = 404)
@@ -121,7 +128,7 @@ class UsersViewModelTest {
         }
 
     @Test
-    fun `a bulk edit writes one permission set to every selected user and moves their cached rows`() =
+    fun `a bulk edit seeds from the selection's current permissions and preserves what it does not manage`() =
         runTest {
             val vm = viewModel()
             vm.awaitReady()
@@ -132,11 +139,17 @@ class UsersViewModelTest {
             vm.toggleSelected(7)
             assertEquals(setOf(8), vm.awaitReady { it.selection == setOf(8) }.selection)
             vm.startBulkEdit()
-            vm.togglePermission(ManageablePermission.Request)
-            vm.togglePermission(ManageablePermission.ManageIssues)
             assertEquals(
                 setOf(ManageablePermission.Request, ManageablePermission.ManageIssues),
-                vm.awaitReady { it.edit?.selected?.size == 2 }.edit?.selected,
+                vm.awaitReady { it.edit?.selected?.isNotEmpty() == true }.edit?.selected,
+            )
+
+            // Ticking only the one new permission must not drop Request/ManageIssues, which the sheet
+            // already showed as granted, nor the 4K-movie bit the editor never shows at all.
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            assertEquals(
+                setOf(ManageablePermission.Request, ManageablePermission.ManageIssues, ManageablePermission.CreateIssues),
+                vm.awaitReady { it.edit?.selected?.size == 3 }.edit?.selected,
             )
 
             vm.applyBulkEdit()
@@ -148,15 +161,13 @@ class UsersViewModelTest {
                     .body
                     ?.utf8()
                     .orEmpty()
+            val expected = ANA_INITIAL or ManageablePermission.CreateIssues.bit
             assertTrue(put, put.contains("\"ids\":[8]"))
-            assertTrue(put, put.contains("\"permissions\":${ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit}"))
+            assertTrue(put, put.contains("\"permissions\":$expected"))
             val settled = vm.awaitReady { it.edit == null }
             assertTrue(settled.selection.isEmpty())
             assertNull(settled.edit)
-            assertEquals(
-                ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit,
-                cache.rows.first { it.id == 8 }.permissions,
-            )
+            assertEquals(expected, cache.rows.first { it.id == 8 }.permissions)
             assertEquals(ADMIN, cache.rows.first { it.id == 7 }.permissions)
         }
 

@@ -100,10 +100,22 @@ class UsersViewModel
             selection.value = emptySet()
         }
 
-        /** Opens the editor on nothing granted: the set written is the whole new set for everyone selected. */
+        /**
+         * Opens the editor seeded from what the selection already has — the union of every selected
+         * user's decoded permissions — so a save that re-ticks nothing still preserves them, rather
+         * than opening blank and writing an empty set over whatever they had.
+         */
         fun startBulkEdit() {
-            if (selection.value.isEmpty() || edit.value != null) return
-            edit.value = BulkEdit()
+            val ids = selection.value.toList()
+            if (ids.isEmpty() || edit.value != null) return
+            edit.value = BulkEdit(saving = true)
+            viewModelScope.launch {
+                val selected =
+                    store.permissionsFor(ids).fold(emptySet<ManageablePermission>()) { acc, bitmask ->
+                        acc + ManageablePermission.decode(bitmask)
+                    }
+                edit.value = BulkEdit(selected = selected)
+            }
         }
 
         fun togglePermission(permission: ManageablePermission) =
@@ -132,9 +144,12 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
-            val permissions = ManageablePermission.apply(0, current.selected)
             viewModelScope.launch {
                 runCatching {
+                    // OR'd across the selection: a bit unmanaged by the editor survives if any selected user had it,
+                    // since one write applies the same resulting bitmask to everyone chosen.
+                    val baseline = store.permissionsFor(ids).fold(0) { acc, bitmask -> acc or bitmask }
+                    val permissions = ManageablePermission.apply(baseline, current.selected)
                     connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = ids, permissions = permissions))
                     store.updatePermissions(ids, permissions)
                 }.onSuccess {

@@ -20,6 +20,10 @@ interface UserDao {
         permissions: Int,
     )
 
+    /** The raw bitmask cached for each of [ids], one per cached order — duplicates for a user are harmless to an OR-fold. */
+    @Query("SELECT permissions FROM users WHERE id IN (:ids)")
+    suspend fun permissionsFor(ids: List<Int>): List<Int>
+
     @Query("DELETE FROM users WHERE id = :id")
     suspend fun delete(id: Int)
 
