@@ -58,6 +58,8 @@ class RequestDetailActions(
     val onRetryRequest: () -> Unit,
     val onDecline: (Boolean) -> Unit,
     val onRemove: (Boolean) -> Unit,
+    val onStartEdit: () -> Unit,
+    val edit: EditRequestActions,
 )
 
 /**
@@ -183,6 +185,13 @@ private fun Ready(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            if (detail.canEdit) {
+                BingeOutlinedButton(
+                    label = stringResource(R.string.request_edit_title),
+                    onClick = actions.onStartEdit,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             if (detail.canReportIssue) {
                 BingeOutlinedButton(
                     label = stringResource(R.string.issue_report_title),
@@ -203,6 +212,7 @@ private fun Ready(
             onDismiss = { moderating = false },
         )
     }
+    state.edit?.let { edit -> EditRequestSheet(item = item, edit = edit, actions = actions.edit) }
     if (reporting) {
         ReportIssueSheet(
             report = state.report,

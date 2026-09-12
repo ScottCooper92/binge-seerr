@@ -200,6 +200,114 @@ class RequestDetailViewModelTest {
             assertNull(responses["/api/v1/request/99"])
         }
 
+    /** The request pending, requested by user 8, and its show with two more seasons: one the server has, one another request covers. */
+    private fun editable() {
+        serve(
+            "/api/v1/request/11",
+            """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+               "serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+               "seasons":[{"seasonNumber":1,"status":2},{"seasonNumber":2,"status":2}],
+               "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":2}}""",
+        )
+        serve(
+            "/api/v1/tv/200",
+            """{"name":"Severance","firstAirDate":"2022-02-18",
+            "mediaInfo":{"id":900,"status":4,"seasons":[{"seasonNumber":3,"status":5}],
+              "requests":[{"id":11,"status":1,"seasons":[{"seasonNumber":1},{"seasonNumber":2}]},{"id":12,"status":2,"seasons":[{"seasonNumber":5}]}]},
+            "seasons":[{"seasonNumber":0,"name":"Specials","episodeCount":3},{"seasonNumber":1,"name":"Season 1","episodeCount":9},
+              {"seasonNumber":2,"name":"Season 2","episodeCount":10},{"seasonNumber":3,"name":"Season 3","episodeCount":8},
+              {"seasonNumber":4,"name":"Season 4","episodeCount":0},{"seasonNumber":5,"name":"Season 5","episodeCount":6}]}""",
+        )
+        serve(
+            "/api/v1/service/sonarr/1",
+            """{"server":{"id":1,"name":"Sonarr"},"profiles":[{"id":4,"name":"HD-1080p"},{"id":6,"name":"Any"}],
+               "rootFolders":[{"id":1,"path":"/tv"},{"id":2,"path":"/kids"}],"tags":[{"id":2,"label":"family"},{"id":3,"label":"kids"}]}""",
+        )
+    }
+
+    @Test
+    fun `the editor ticks the request's seasons, locks the ones held elsewhere, and saves the new set with the destination`() =
+        runTest {
+            server(ADMIN)
+            editable()
+            val vm = viewModel()
+            assertTrue(vm.awaitReady().detail.canEdit)
+
+            vm.startEdit()
+            val opened = vm.awaitReady { it.edit?.destination?.loadingChoices == false }
+            val edit = checkNotNull(opened.edit)
+            assertEquals(
+                listOf(
+                    SeasonChoice(1, "Season 1", 9, selected = true),
+                    SeasonChoice(2, "Season 2", 10, selected = true),
+                    SeasonChoice(3, "Season 3", 8, selected = false, heldStatus = SeerrMediaStatusCode.Available),
+                    SeasonChoice(5, "Season 5", 6, selected = false, heldStatus = SeerrMediaStatusCode.Pending),
+                ),
+                edit.seasons,
+            )
+            val destination = checkNotNull(edit.destination)
+            assertEquals(1, destination.serverId)
+            assertEquals(4, destination.profileId)
+            assertEquals("/tv", destination.rootFolder)
+            assertEquals(listOf("/tv", "/kids"), destination.rootFolders)
+            assertEquals(setOf(2), destination.tagIds)
+
+            vm.editor.toggleSeason(2)
+            vm.editor.toggleSeason(3)
+            vm.editor.toggleTag(3)
+            vm.editor.selectProfile(6)
+            vm.editor.selectRootFolder("/kids")
+            val changed =
+                checkNotNull(
+                    vm
+                        .awaitReady {
+                            it.edit
+                                ?.seasons
+                                ?.get(1)
+                                ?.selected == false
+                        }.edit,
+                )
+            assertTrue(changed.seasons[2].locked)
+            assertTrue(changed.canSave)
+
+            vm.editor.save()
+
+            vm.awaitReady { it.edit == null }
+            val put = received.last { it.method == "PUT" && it.url.encodedPath == "/api/v1/request/11" }
+            val body = put.body?.utf8().orEmpty()
+            assertTrue(body, body.contains("\"mediaType\":\"tv\""))
+            assertTrue(body, body.contains("\"seasons\":[1]"))
+            assertTrue(body, body.contains("\"serverId\":1"))
+            assertTrue(body, body.contains("\"profileId\":6"))
+            assertTrue(body, body.contains("\"rootFolder\":\"/kids\""))
+            assertTrue(body, body.contains("\"tags\":[2,3]"))
+        }
+
+    @Test
+    fun `a requester without advanced requests edits only the seasons of their own pending request`() =
+        runTest {
+            server(REQUEST)
+            editable()
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":$REQUEST}""")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+            assertTrue(detail.canEdit)
+            assertFalse(detail.canEditDestination)
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit != null }.edit)
+            assertNull(edit.destination)
+            vm.editor.toggleSeason(1)
+            vm.editor.toggleSeason(2)
+            assertFalse(checkNotNull(vm.awaitReady { it.edit?.seasons?.none { s -> s.selected } == true }.edit).canSave)
+            vm.editor.cancel()
+            assertNull(vm.awaitReady { it.edit == null }.edit)
+            assertTrue(received.none { it.method == "PUT" })
+
+            serve("/api/v1/auth/me", """{"id":9,"displayName":"Other","permissions":$REQUEST}""")
+            assertFalse(viewModel().awaitReady().detail.canEdit)
+        }
+
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
 

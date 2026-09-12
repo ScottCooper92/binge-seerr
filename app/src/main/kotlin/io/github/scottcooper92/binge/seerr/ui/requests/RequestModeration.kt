@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +20,8 @@ sealed interface ModerationEvent {
     data object Approved : ModerationEvent
 
     data object Retried : ModerationEvent
+
+    data object Edited : ModerationEvent
 
     data object Declined : ModerationEvent
 
@@ -57,6 +60,11 @@ class RequestModeration(
     fun approve(requestId: Int) = moderate(requestId, ModerationEvent.Approved) { connection.api().approveRequest(it) }
 
     fun retry(requestId: Int) = moderate(requestId, ModerationEvent.Retried) { connection.api().retryRequest(it) }
+
+    fun edit(
+        requestId: Int,
+        body: SeerrEditRequestBody,
+    ) = moderate(requestId, ModerationEvent.Edited) { connection.api().editRequest(it, body) }
 
     fun decline(
         item: RequestItem,
