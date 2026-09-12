@@ -307,6 +307,107 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a 4K request's season lock reads the 4K status and 4K siblings, not the SD ones`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+                   "is4k":true,"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":2}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":2}}""",
+            )
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":2,"status4k":4,
+                  "seasons":[{"seasonNumber":3,"status":5,"status4k":2},{"seasonNumber":4,"status":2,"status4k":5}],
+                  "requests":[{"id":11,"status":1,"is4k":true,"seasons":[{"seasonNumber":1}]},
+                    {"id":12,"status":2,"is4k":false,"seasons":[{"seasonNumber":3}]},
+                    {"id":13,"status":2,"is4k":true,"seasons":[{"seasonNumber":4}]}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":3,"name":"Season 3","episodeCount":8},
+                  {"seasonNumber":4,"name":"Season 4","episodeCount":7}]}""",
+            )
+            serve(
+                "/api/v1/service/sonarr/1",
+                """{"server":{"id":1,"name":"Sonarr"},"profiles":[{"id":4,"name":"HD-1080p"}],"rootFolders":[],"tags":[{"id":2,"label":"family"}]}""",
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit?.destination?.loadingChoices == false }.edit)
+
+            assertEquals(
+                listOf(
+                    SeasonChoice(1, "Season 1", 9, selected = true),
+                    // SD status4k unset for season 3, so a 4K edit does not read it as available.
+                    SeasonChoice(3, "Season 3", 8, selected = false),
+                    // 4K-available, and covered by a 4K sibling request; neither should lock it off an SD basis.
+                    SeasonChoice(4, "Season 4", 7, selected = false, heldStatus = SeerrMediaStatusCode.Available),
+                ),
+                edit.seasons,
+            )
+        }
+
+    @Test
+    fun `a season blocked only by a failed sibling request is not locked`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+                   "serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":2}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":2}}""",
+            )
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":2,
+                  "requests":[{"id":11,"status":1,"seasons":[{"seasonNumber":1}]},{"id":12,"status":4,"seasons":[{"seasonNumber":5}]}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":5,"name":"Season 5","episodeCount":6}]}""",
+            )
+            serve(
+                "/api/v1/service/sonarr/1",
+                """{"server":{"id":1,"name":"Sonarr"},"profiles":[{"id":4,"name":"HD-1080p"}],"rootFolders":[],"tags":[{"id":2,"label":"family"}]}""",
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit?.destination?.loadingChoices == false }.edit)
+
+            assertEquals(
+                listOf(
+                    SeasonChoice(1, "Season 1", 9, selected = true),
+                    SeasonChoice(5, "Season 5", 6, selected = false),
+                ),
+                edit.seasons,
+            )
+        }
+
+    @Test
+    fun `a failed show-detail fetch leaves the editor's seasons unknown, not saveable, and the save omits seasons`() =
+        runTest {
+            server(ADMIN)
+            editable()
+            responses.remove("/api/v1/tv/200")
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit != null }.edit)
+
+            assertTrue(edit.seasons.isEmpty())
+            assertTrue(edit.seasonsUnknown)
+            assertFalse(edit.canSave)
+
+            vm.editor.save()
+            assertTrue(received.none { it.method == "PUT" })
+        }
+
+    @Test
     fun `a requester without advanced requests edits only the seasons of their own pending request`() =
         runTest {
             server(REQUEST)
