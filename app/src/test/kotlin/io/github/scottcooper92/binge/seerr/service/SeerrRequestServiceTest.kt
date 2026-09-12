@@ -67,20 +67,25 @@ class SeerrRequestServiceTest {
             .setTmdbId(603)
             .build()
 
-    private fun connected(permissions: Int = ADMIN): RequestServiceGrpcKt.RequestServiceCoroutineStub {
+    private fun connected(
+        permissions: Int = ADMIN,
+        version: String = "2.7.0",
+    ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
             CredentialStore(
                 dataStore = PreferenceDataStoreFactory.create { folder.newFile("creds.preferences_pb") },
                 cipher = PlainCipher,
             )
-        runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.Jellyseerr)) }
+        runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.fromVersion(version))) }
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false))
+        seerr.enqueue(json("""{"version":"$version"}"""))
+        seerr.enqueue(json("""{"initialized":true}"""))
         seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
         val stub = serve(SeerrRequestService(connection, versionName = "0.1.0-test", clock = { 0L }, observeIntervalMillis = 1))
-        // One handshake up front consumes the `auth/me` answer and caches the user, so each test's
-        // recorded requests are its own rather than starting with the permission lookup.
+        // One handshake up front consumes the profile's two answers and `auth/me` and caches all
+        // three, so each test's recorded requests are its own rather than starting with lookups.
         runBlocking { stub.handshake(HandshakeRequest.getDefaultInstance()) }
-        seerr.takeRequest()
+        repeat(3) { seerr.takeRequest() }
         return stub
     }
 
@@ -127,6 +132,50 @@ class SeerrRequestServiceTest {
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED,
                 response.capabilitiesList.toSet(),
             )
+        }
+
+    @Test
+    fun `overseerr has no blocklist, so an admin there is not offered the block capability`() =
+        runTest {
+            val response = connected(permissions = ADMIN, version = "1.33.2").handshake(HandshakeRequest.getDefaultInstance())
+
+            assertEquals("Overseerr", response.providerName)
+            assertFalse(Capability.CAPABILITY_BLOCK in response.capabilitiesList)
+            assertTrue(Capability.CAPABILITY_REPORT_ISSUE in response.capabilitiesList)
+        }
+
+    @Test
+    fun `a block posts to blacklist on jellyseerr 2`() =
+        runTest {
+            val stub = connected(version = "2.7.0")
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.blockTitle(
+                BlockTitleRequest
+                    .newBuilder()
+                    .setMedia(movie)
+                    .setTitle("The Matrix")
+                    .build(),
+            )
+
+            assertEquals("/api/v1/blacklist", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `a block posts to blocklist from seerr 3`() =
+        runTest {
+            val stub = connected(version = "3.1.0")
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.blockTitle(
+                BlockTitleRequest
+                    .newBuilder()
+                    .setMedia(movie)
+                    .setTitle("The Matrix")
+                    .build(),
+            )
+
+            assertEquals("/api/v1/blocklist", seerr.takeRequest().url.encodedPath)
         }
 
     @Test
