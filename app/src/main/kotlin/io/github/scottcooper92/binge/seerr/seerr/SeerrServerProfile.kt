@@ -9,6 +9,8 @@ data class SeerrVersion(
     override fun compareTo(other: SeerrVersion): Int =
         compareValuesBy(this, other, SeerrVersion::major, SeerrVersion::minor, SeerrVersion::patch)
 
+    val label: String get() = "$major.$minor.$patch"
+
     companion object {
         fun parse(raw: String?): SeerrVersion? {
             val parts = raw?.trim()?.removePrefix("v")?.split('.') ?: return null
@@ -144,15 +146,22 @@ data class SeerrServerProfile(
 
 /**
  * Reads the profile off the live server. `/status` and `/settings/public` are both unauthenticated
- * and both best-effort: a failed `/status` leaves the lineage to the settings or to [fallback], and
- * failed settings leave their defaults, so a profile is always produced for a server that connected.
+ * and each best-effort: a failed `/status` leaves the lineage to the settings or to [fallback], and
+ * failed settings leave their defaults. The failure is the `/status` one, and only when neither
+ * call answered: that is the setup form's "not a Seerr server, or not reachable".
  */
-suspend fun SeerrApi.readProfile(fallback: SeerrVariant): SeerrServerProfile {
-    val status = runCatching { status() }.getOrNull()
+suspend fun SeerrApi.inspectProfile(fallback: SeerrVariant): Result<SeerrServerProfile> {
+    val status = runCatching { status() }
     val settings = runCatching { publicSettings() }.getOrNull()
+    val statusDto = status.getOrNull()
     return when {
-        status != null -> SeerrServerProfile.from(status, settings ?: SeerrPublicSettings())
-        settings?.mediaServerType != null -> SeerrServerProfile.from(SeerrStatusDto(), settings)
-        else -> SeerrServerProfile.unknown(fallback).copy(settings = settings ?: SeerrPublicSettings())
+        statusDto != null -> Result.success(SeerrServerProfile.from(statusDto, settings ?: SeerrPublicSettings()))
+        settings?.mediaServerType != null -> Result.success(SeerrServerProfile.from(SeerrStatusDto(), settings))
+        settings != null -> Result.success(SeerrServerProfile.unknown(fallback).copy(settings = settings))
+        else -> Result.failure(status.exceptionOrNull() ?: IllegalStateException("No status"))
     }
 }
+
+/** [inspectProfile] for a server that already connected: a profile is always produced, at the lineage's latest. */
+suspend fun SeerrApi.readProfile(fallback: SeerrVariant): SeerrServerProfile =
+    inspectProfile(fallback).getOrElse { SeerrServerProfile.unknown(fallback) }

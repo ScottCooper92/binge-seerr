@@ -21,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import retrofit2.HttpException
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Connecting, logging in and the cached user, against a real HTTP server on the JVM. */
 class SeerrConnectionTest {
@@ -208,6 +209,163 @@ class SeerrConnectionTest {
 
             sut.disconnect()
             assertEquals(SeerrConnectionHealth.NotConnected, sut.health.value)
+        }
+
+    @Test
+    fun `inspecting an address reads its profile and artwork with no credentials`() =
+        runTest {
+            server.enqueue(json("""{"version":"3.4.0"}"""))
+            server.enqueue(json("""{"mediaServerType":2,"jellyfinServerName":"Home"}"""))
+            server.enqueue(json("""["/one.jpg","/two.jpg"]"""))
+            val sut = connection(backgroundScope)
+
+            val preview = sut.inspect(server.url("/").host + ":" + server.port).getOrThrow()
+
+            assertEquals(baseUrl, preview.baseUrl)
+            assertEquals(SeerrVersion(3, 4, 0), preview.profile.version)
+            assertTrue(preview.profile.hasQuickConnect)
+            assertEquals(
+                listOf("https://image.tmdb.org/t/p/w1280/one.jpg", "https://image.tmdb.org/t/p/w1280/two.jpg"),
+                preview.backdropUrls,
+            )
+            repeat(3) { assertNull(server.takeRequest().headers["X-Api-Key"]) }
+            assertNull(sut.credentials.first())
+        }
+
+    @Test
+    fun `an address that answers neither profile call is not a Seerr server, and one that is down is unreachable`() =
+        runTest {
+            server.enqueue(MockResponse(code = 404))
+            server.enqueue(MockResponse(code = 404))
+            val sut = connection(backgroundScope)
+
+            assertTrue(sut.inspect(baseUrl).exceptionOrNull() is NotSeerrServerException)
+            assertEquals(2, server.requestCount)
+
+            server.close()
+
+            assertTrue(sut.inspect(baseUrl).exceptionOrNull() is java.io.IOException)
+        }
+
+    @Test
+    fun `quick connect polls the code until it is approved, then signs in as that user`() =
+        runTest {
+            server.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
+            server.enqueue(json("""{"authenticated":false}"""))
+            server.enqueue(json("""{"authenticated":true}"""))
+            server.enqueue(json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/")))
+            server.enqueue(json("""{"version":"3.4.0"}"""))
+            server.enqueue(json("""{"mediaServerType":2}"""))
+            val sut =
+                SeerrConnection(
+                    store =
+                        CredentialStore(
+                            PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("qc.preferences_pb") },
+                            ReversingCipher,
+                        ),
+                    apis = SeerrApiFactory(logRequests = false),
+                    quickConnectPollInterval = 10.milliseconds,
+                )
+
+            val session = sut.startQuickConnect(baseUrl).getOrThrow()
+            val saved = sut.finishQuickConnect(baseUrl, session).getOrThrow()
+
+            assertEquals("123456", session.code)
+            assertEquals(SeerrAuth.Session("qc", userId = 7), saved.auth)
+            assertEquals("/api/v1/auth/jellyfin/quickconnect/initiate", server.takeRequest().url.encodedPath)
+            val check = server.takeRequest()
+            assertEquals("/api/v1/auth/jellyfin/quickconnect/check", check.url.encodedPath)
+            assertEquals("abcdef12", check.url.queryParameter("secret"))
+            server.takeRequest()
+            val authenticate = server.takeRequest()
+            assertEquals("/api/v1/auth/jellyfin/quickconnect/authenticate", authenticate.url.encodedPath)
+            assertTrue(
+                authenticate.body
+                    ?.utf8()
+                    .orEmpty()
+                    .contains("\"secret\":\"abcdef12\""),
+            )
+        }
+
+    @Test
+    fun `a quick connect code the server has forgotten is expired`() =
+        runTest {
+            server.enqueue(MockResponse(code = 404))
+            val sut = connection(backgroundScope)
+
+            val result = sut.finishQuickConnect(baseUrl, SeerrQuickConnect(code = "123456", secret = "abcdef12"))
+
+            assertTrue(result.exceptionOrNull() is QuickConnectExpiredException)
+            assertNull(sut.credentials.first())
+        }
+
+    @Test
+    fun `a plex token signs in and keeps the session`() =
+        runTest {
+            server.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
+            server.enqueue(json("""{"version":"1.33.2"}"""))
+            server.enqueue(json("""{"localLogin":true}"""))
+            val sut = connection(backgroundScope)
+
+            val saved = sut.logInWithPlex(baseUrl, "tok3n").getOrThrow()
+
+            assertEquals(SeerrAuth.Session("plx", userId = 9), saved.auth)
+            assertEquals(SeerrVariant.Overseerr, saved.variant)
+            val login = server.takeRequest()
+            assertEquals("/api/v1/auth/plex", login.url.encodedPath)
+            assertTrue(
+                login.body
+                    ?.utf8()
+                    .orEmpty()
+                    .contains("\"authToken\":\"tok3n\""),
+            )
+        }
+
+    @Test
+    fun `a password reset posts the address without credentials`() =
+        runTest {
+            server.enqueue(json("""{"status":"ok"}"""))
+            val sut = connection(backgroundScope)
+
+            sut.requestPasswordReset(baseUrl, "s@example.com").getOrThrow()
+
+            val reset = server.takeRequest()
+            assertEquals("/api/v1/auth/reset-password", reset.url.encodedPath)
+            assertTrue(
+                reset.body
+                    ?.utf8()
+                    .orEmpty()
+                    .contains("\"email\":\"s@example.com\""),
+            )
+            assertNull(reset.headers["X-Api-Key"])
+        }
+
+    @Test
+    fun `disconnecting a session sign-in ends it on the server first, and a key connection posts nothing`() =
+        runTest {
+            server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
+            server.enqueue(json("""{"version":"3.1.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueue(json("""{"status":"ok"}"""))
+            val sut = connection(backgroundScope)
+            sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+            repeat(3) { server.takeRequest() }
+
+            sut.disconnect()
+
+            val logout = server.takeRequest()
+            assertEquals("/api/v1/auth/logout", logout.url.encodedPath)
+            assertEquals("connect.sid=s3ss10n", logout.headers["Cookie"])
+            assertNull(sut.credentials.first())
+
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueue(json("""{"version":"3.1.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            sut.disconnect()
+
+            assertEquals(7, server.requestCount)
         }
 
     @Test

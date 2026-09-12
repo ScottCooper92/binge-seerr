@@ -8,6 +8,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * The slice of Seerr's `/api/v1` this companion needs: who we are, what a title's state is, and
@@ -30,6 +31,42 @@ interface SeerrApi {
     suspend fun logInWithLocal(
         @Body body: SeerrLocalLoginBody,
     ): SeerrUserDto
+
+    /** Logs in with a plex.tv token from the PIN flow; sets the `connect.sid` cookie. */
+    @POST("api/v1/auth/plex")
+    suspend fun logInWithPlex(
+        @Body body: SeerrPlexLoginBody,
+    ): SeerrUserDto
+
+    /** Seerr 3.4+, Jellyfin only: a code the user approves on their Jellyfin, and the secret this app polls with. */
+    @POST("api/v1/auth/jellyfin/quickconnect/initiate")
+    suspend fun initiateQuickConnect(): SeerrQuickConnectDto
+
+    /** A 404 means the code expired unapproved. */
+    @GET("api/v1/auth/jellyfin/quickconnect/check")
+    suspend fun checkQuickConnect(
+        @Query("secret") secret: String,
+    ): SeerrQuickConnectCheckDto
+
+    /** Once approved: signs in as the approving Jellyfin user and sets the `connect.sid` cookie. */
+    @POST("api/v1/auth/jellyfin/quickconnect/authenticate")
+    suspend fun authenticateQuickConnect(
+        @Body body: SeerrQuickConnectSecretBody,
+    ): SeerrUserDto
+
+    /** Ends the server-side session behind the `connect.sid` cookie. */
+    @POST("api/v1/auth/logout")
+    suspend fun logOut()
+
+    /** Unauthenticated: emails a reset link if the address belongs to a local account; answers 200 either way. */
+    @POST("api/v1/auth/reset-password")
+    suspend fun requestPasswordReset(
+        @Body body: SeerrPasswordResetBody,
+    )
+
+    /** Unauthenticated: TMDB backdrop paths of this week's trending titles, the sign-in page's artwork. */
+    @GET("api/v1/backdrops")
+    suspend fun backdrops(): List<String>
 
     /** Unauthenticated: the server's version, which is how its fork is told apart, and its update state. */
     @GET("api/v1/status")
@@ -179,6 +216,32 @@ data class SeerrJellyfinLoginBody(
 data class SeerrLocalLoginBody(
     @SerialName("email") val email: String,
     @SerialName("password") val password: String,
+)
+
+@Serializable
+data class SeerrPlexLoginBody(
+    @SerialName("authToken") val authToken: String,
+)
+
+@Serializable
+data class SeerrQuickConnectDto(
+    @SerialName("code") val code: String,
+    @SerialName("secret") val secret: String,
+)
+
+@Serializable
+data class SeerrQuickConnectCheckDto(
+    @SerialName("authenticated") val authenticated: Boolean = false,
+)
+
+@Serializable
+data class SeerrQuickConnectSecretBody(
+    @SerialName("secret") val secret: String,
+)
+
+@Serializable
+data class SeerrPasswordResetBody(
+    @SerialName("email") val email: String,
 )
 
 @Serializable

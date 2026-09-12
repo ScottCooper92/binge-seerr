@@ -43,8 +43,17 @@ private fun SetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SetupScreen(
         state = state,
-        onEdit = viewModel::edit,
-        onConnect = viewModel::connect,
-        onDisconnect = viewModel::disconnect,
+        actions =
+            SetupActions(
+                onEditAddress = viewModel::editAddress,
+                onInspect = viewModel::inspect,
+                onChangeServer = viewModel::changeServer,
+                onEditForm = viewModel::editForm,
+                onConnect = viewModel::connect,
+                onPlexLaunched = viewModel::plexLaunched,
+                onCancelLink = viewModel::cancelLink,
+                onRequestPasswordReset = viewModel::requestPasswordReset,
+                onDisconnect = viewModel::disconnect,
+            ),
     )
 }

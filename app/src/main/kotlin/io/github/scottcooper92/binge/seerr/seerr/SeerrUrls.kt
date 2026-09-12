@@ -18,6 +18,11 @@ fun String.normaliseBaseUrl(): String {
     return if (withScheme.endsWith("/")) withScheme else "$withScheme/"
 }
 
+private const val TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280"
+
+/** A TMDB `backdrop_path` (`/abc.jpg`), as `GET backdrops` returns them, to the image URL at sign-in width. */
+fun String.toTmdbBackdropUrl(): String = TMDB_BACKDROP_BASE + (if (startsWith("/")) this else "/$this")
+
 /** Whether [this] parses as a base URL once normalised — the check a setup screen makes before connecting. */
 fun String.isValidBaseUrl(): Boolean = normaliseBaseUrl().toHttpUrlOrNull() != null
 
