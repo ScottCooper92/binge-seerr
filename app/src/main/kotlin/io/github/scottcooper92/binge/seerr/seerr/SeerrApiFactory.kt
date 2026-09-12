@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthReporter
 import kotlinx.serialization.json.Json
 import okhttp3.Cookie
 import okhttp3.CookieJar
@@ -22,6 +23,8 @@ import java.util.concurrent.TimeUnit
  */
 class SeerrApiFactory(
     private val logRequests: Boolean,
+    /** Fed by the cached client only: a probe's candidate credentials never speak for the saved server. */
+    private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
 ) {
     /** `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null. */
     private val json =
@@ -43,7 +46,12 @@ class SeerrApiFactory(
                 current.api
             } else {
                 current?.client?.release()
-                val client = OkHttpClient.Builder().applyAuth(auth, baseUrl).finish(HttpLoggingInterceptor.Level.BODY)
+                val client =
+                    OkHttpClient
+                        .Builder()
+                        .addInterceptor(SeerrHealthInterceptor(health))
+                        .applyAuth(auth, baseUrl)
+                        .finish(HttpLoggingInterceptor.Level.BODY)
                 CachedApi(baseUrl, auth, client, retrofit(baseUrl, client)).also { cached = it }.api
             }
         }

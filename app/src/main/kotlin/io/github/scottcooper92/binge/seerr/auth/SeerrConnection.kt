@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,8 +37,12 @@ class NotConnectedException : IllegalStateException("No Seerr server is connecte
 class SeerrConnection(
     private val store: CredentialStore,
     private val apis: SeerrApiFactory,
+    private val healthMonitor: SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor(),
 ) {
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
+
+    /** Live health of the saved server, fed by every call the cached client makes. */
+    val health: StateFlow<SeerrConnectionHealth> get() = healthMonitor.health
 
     private val userLock = Mutex()
     private var cachedUser: Pair<SeerrCredentials, SeerrUserDto>? = null
@@ -103,6 +108,7 @@ class SeerrConnection(
         userLock.withLock { cachedUser = null }
         store.clear()
         apis.evict()
+        healthMonitor.reset()
     }
 
     /**
@@ -121,6 +127,7 @@ class SeerrConnection(
         val credentials = SeerrCredentials(baseUrl, auth, variant)
         if (!store.save(credentials)) throw CredentialsSaveException()
         userLock.withLock { cachedUser = null }
+        healthMonitor.onConnected()
         return credentials
     }
 }
