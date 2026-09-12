@@ -16,6 +16,15 @@ class SeerrPermissionsTest {
         assertTrue(permissions.canManageBlocklist)
         assertTrue(permissions.canCreateIssues)
         assertTrue(permissions.canRequestAdvanced)
+        assertTrue(permissions.canManageSettings)
+        assertTrue(permissions.canViewBlocklist)
+    }
+
+    @Test
+    fun `managing the blocklist implies viewing it`() {
+        assertTrue(SeerrPermissions.fromBits(1 shl 28).canViewBlocklist)
+        assertFalse(SeerrPermissions.fromBits(1 shl 30).canManageBlocklist)
+        assertTrue(SeerrPermissions.fromBits(1 shl 30).canViewBlocklist)
     }
 
     @Test

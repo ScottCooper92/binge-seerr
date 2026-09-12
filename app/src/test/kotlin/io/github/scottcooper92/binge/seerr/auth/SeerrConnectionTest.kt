@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.SeerrVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -13,6 +14,7 @@ import mockwebserver3.MockWebServer
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -46,6 +48,7 @@ class SeerrConnectionTest {
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
             server.enqueue(json("""{"version":"2.7.0"}"""))
+            server.enqueue(json("""{"initialized":true,"localLogin":false}"""))
             val sut = connection(backgroundScope)
 
             val result = sut.connect(baseUrl, SeerrAuth.ApiKey("k3y"))
@@ -54,6 +57,42 @@ class SeerrConnectionTest {
             assertEquals(SeerrVariant.Jellyseerr, saved.variant)
             assertEquals(saved, sut.credentials.first())
             assertEquals("k3y", server.takeRequest().headers["X-Api-Key"])
+            // The profile read on connect is the connection's: no further request serves it.
+            val profile = sut.profile()
+            assertEquals(3, server.requestCount)
+            assertEquals(SeerrVersion(2, 7, 0), profile.version)
+            assertFalse(profile.settings.localLogin)
+        }
+
+    @Test
+    fun `a server that answers neither profile call is profiled as its recorded lineage, at its latest`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueue(MockResponse(code = 503))
+            server.enqueue(MockResponse(code = 503))
+            val sut = connection(backgroundScope)
+
+            val saved = sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            assertEquals(SeerrVariant.Unknown, saved.variant)
+            assertNull(sut.profile().version)
+        }
+
+    @Test
+    fun `refreshing the profile re-reads the server`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueue(json("""{"version":"2.7.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
+            val sut = connection(backgroundScope)
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            server.enqueue(json("""{"version":"3.0.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
+
+            val refreshed = sut.refreshProfile()
+
+            assertEquals(SeerrVersion(3, 0, 0), refreshed.version)
+            assertEquals(5, server.requestCount)
         }
 
     @Test
@@ -84,6 +123,7 @@ class SeerrConnectionTest {
         runTest {
             server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/; HttpOnly")))
             server.enqueue(json("""{"version":"3.1.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
             val sut = connection(backgroundScope)
 
             val saved = sut.logIn(baseUrl, SeerrLoginRequest.Jellyfin("scott", "pw")).getOrThrow()
@@ -117,17 +157,18 @@ class SeerrConnectionTest {
         runTest {
             server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
             server.enqueue(json("""{"version":"3.1.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
             server.enqueue(json("""{"id":42,"permissions":32}"""))
             val sut = connection(backgroundScope)
             sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
-            repeat(2) { server.takeRequest() }
+            repeat(3) { server.takeRequest() }
 
             val first = sut.authenticatedUser()
             val second = sut.authenticatedUser()
 
             assertEquals(32, first.permissions)
             assertEquals(first, second)
-            assertEquals(3, server.requestCount)
+            assertEquals(4, server.requestCount)
             assertEquals("connect.sid=s3ss10n", server.takeRequest().headers["Cookie"])
         }
 
@@ -144,6 +185,7 @@ class SeerrConnectionTest {
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
             server.enqueue(json("""{"version":"3.1.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
             val monitor = SeerrConnectionHealthMonitor()
             val sut =
                 SeerrConnection(
@@ -173,6 +215,7 @@ class SeerrConnectionTest {
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
             server.enqueue(json("""{"version":"3.1.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
             val sut = connection(backgroundScope)
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
 

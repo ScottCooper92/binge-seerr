@@ -7,10 +7,12 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJellyfinLoginBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLocalLoginBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
+import io.github.scottcooper92.binge.seerr.seerr.readProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -46,6 +48,7 @@ class SeerrConnection(
 
     private val userLock = Mutex()
     private var cachedUser: Pair<SeerrCredentials, SeerrUserDto>? = null
+    private var cachedProfile: Pair<SeerrCredentials, SeerrServerProfile>? = null
 
     /** The API for the saved server, or [NotConnectedException] when nothing is saved. */
     suspend fun api(): SeerrApi {
@@ -67,6 +70,24 @@ class SeerrConnection(
             cachedUser?.takeIf { it.first == saved }?.second
                 ?: apis.cached(saved.baseUrl, saved.auth).authenticatedUser().also { cachedUser = saved to it }
         }
+    }
+
+    /**
+     * What the saved server is and can do, served from cache while the credentials are unchanged.
+     * A server that answers neither call is profiled as the lineage the credentials recorded, at
+     * its latest, so a transient failure hides nothing; [refreshProfile] re-reads after an upgrade.
+     */
+    suspend fun profile(): SeerrServerProfile {
+        val saved = current()
+        return userLock.withLock {
+            cachedProfile?.takeIf { it.first == saved }?.second
+                ?: apis.cached(saved.baseUrl, saved.auth).readProfile(saved.variant).also { cachedProfile = saved to it }
+        }
+    }
+
+    suspend fun refreshProfile(): SeerrServerProfile {
+        userLock.withLock { cachedProfile = null }
+        return profile()
     }
 
     /**
@@ -105,7 +126,10 @@ class SeerrConnection(
     }
 
     suspend fun disconnect() {
-        userLock.withLock { cachedUser = null }
+        userLock.withLock {
+            cachedUser = null
+            cachedProfile = null
+        }
         store.clear()
         apis.evict()
         healthMonitor.reset()
@@ -114,19 +138,19 @@ class SeerrConnection(
     /**
      * Best-effort fork detection rides along: the provider name the host shows follows the server
      * the user actually connected to, and an unreachable `/status` brands neutrally rather than
-     * failing a connect that just succeeded.
+     * failing a connect that just succeeded. The profile read here is cached for the connection.
      */
     private suspend fun persist(
         baseUrl: String,
         auth: SeerrAuth,
     ): SeerrCredentials {
-        val variant =
-            runCatching { apis.probe(baseUrl, auth) { it.status().version } }
-                .map(SeerrVariant::fromVersion)
-                .getOrDefault(SeerrVariant.Unknown)
-        val credentials = SeerrCredentials(baseUrl, auth, variant)
+        val profile = apis.probe(baseUrl, auth) { it.readProfile(SeerrVariant.Unknown) }
+        val credentials = SeerrCredentials(baseUrl, auth, profile.variant)
         if (!store.save(credentials)) throw CredentialsSaveException()
-        userLock.withLock { cachedUser = null }
+        userLock.withLock {
+            cachedUser = null
+            cachedProfile = credentials to profile
+        }
         healthMonitor.onConnected()
         return credentials
     }
