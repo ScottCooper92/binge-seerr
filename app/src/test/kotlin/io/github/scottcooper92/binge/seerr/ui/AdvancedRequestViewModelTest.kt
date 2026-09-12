@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import mockwebserver3.MockResponse
@@ -56,9 +55,12 @@ class AdvancedRequestViewModelTest {
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
+    /**
+     * Main is set on every setup and never reset: a callback still in flight at teardown would
+     * otherwise dispatch into the unset window and be reported into whichever test runs next.
+     */
     @After
     fun tearDown() {
-        Dispatchers.resetMain()
         seerr.close()
     }
 
