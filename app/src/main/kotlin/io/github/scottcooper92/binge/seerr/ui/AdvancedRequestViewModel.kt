@@ -9,22 +9,22 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
 import io.github.scottcooper92.binge.seerr.seerr.forRequest
 import io.github.scottcooper92.binge.seerr.seerr.preferred
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
+import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
-import java.io.IOException
 
 /** Why the picker cannot open, or why a submit failed, as the screen shows it. */
 enum class AdvancedRequestError { NotConnected, NoServers, Rejected, Unreachable, Unknown }
@@ -209,21 +209,11 @@ class AdvancedRequestViewModel
         }
     }
 
-/** No saved server is its own case; a 401/403 is the credentials or the permission; the rest is the server or the network. */
+/** No saved server is its own case; a 401 or 403 is the credentials or the permission; the rest is the server or the network. */
 private fun Throwable.toAdvancedRequestError(): AdvancedRequestError =
-    when (this) {
-        is NotConnectedException -> AdvancedRequestError.NotConnected
-        is HttpException ->
-            if (code() == HTTP_UNAUTHORIZED ||
-                code() == HTTP_FORBIDDEN
-            ) {
-                AdvancedRequestError.Rejected
-            } else {
-                AdvancedRequestError.Unknown
-            }
-        is IOException -> AdvancedRequestError.Unreachable
+    when (toSeerrError()) {
+        SeerrError.NotConnected -> AdvancedRequestError.NotConnected
+        SeerrError.Unauthorized, SeerrError.Forbidden, SeerrError.Quota -> AdvancedRequestError.Rejected
+        SeerrError.Unreachable -> AdvancedRequestError.Unreachable
         else -> AdvancedRequestError.Unknown
     }
-
-private const val HTTP_UNAUTHORIZED = 401
-private const val HTTP_FORBIDDEN = 403

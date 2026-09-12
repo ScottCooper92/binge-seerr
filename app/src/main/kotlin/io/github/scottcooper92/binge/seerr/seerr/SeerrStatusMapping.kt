@@ -108,7 +108,8 @@ private fun List<SeerrDownloadStatusDto>.downloadState(fraction: Float): Downloa
         else -> DownloadState.DOWNLOAD_STATE_QUEUED
     }
 
-private fun List<SeerrDownloadStatusDto>.etaMinutes(nowMillis: Long): Int? =
+/** The slowest active download's remaining whole minutes, or null when nothing reports one. */
+fun List<SeerrDownloadStatusDto>.etaMinutes(nowMillis: Long): Int? =
     mapNotNull { it.remainingMillis(nowMillis) }
         .maxOrNull()
         ?.takeIf { it > 0 }

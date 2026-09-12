@@ -7,16 +7,16 @@ import io.github.scottcooper92.binge.seerr.auth.InvalidServerUrlException
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.isInsecurePublicUrl
+import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 import javax.inject.Inject
 
 /** How the user authenticates on the setup form. */
@@ -131,14 +131,14 @@ class SetupViewModel
         }
     }
 
-/** A 401/403 is the credentials; anything HTTP-shaped otherwise is still a server that answered. */
+/** A malformed address is the form's own case; a 401 or 403 is the credentials; the rest is the server or the network. */
 private fun Throwable.toSetupError(): SetupError =
-    when (this) {
-        is InvalidServerUrlException -> SetupError.InvalidUrl
-        is HttpException -> if (code() == HTTP_UNAUTHORIZED || code() == HTTP_FORBIDDEN) SetupError.Rejected else SetupError.Unknown
-        is IOException -> SetupError.Unreachable
-        else -> SetupError.Unknown
+    when {
+        this is InvalidServerUrlException -> SetupError.InvalidUrl
+        else ->
+            when (toSeerrError()) {
+                SeerrError.Unauthorized, SeerrError.Forbidden -> SetupError.Rejected
+                SeerrError.Unreachable -> SetupError.Unreachable
+                else -> SetupError.Unknown
+            }
     }
-
-private const val HTTP_UNAUTHORIZED = 401
-private const val HTTP_FORBIDDEN = 403

@@ -45,4 +45,18 @@ class SeerrErrorsTest {
         assertEquals(Status.Code.INVALID_ARGUMENT, codeOf(http(422)))
         assertEquals(Status.Code.INTERNAL, codeOf(IllegalStateException("bug")))
     }
+
+    /** The screens' classification reads the same facts as the contract's, so the two never disagree. */
+    @Test
+    fun `the app's own classification mirrors the contract's`() {
+        assertEquals(SeerrError.NotConnected, NotConnectedException().toSeerrError())
+        assertEquals(SeerrError.Unauthorized, http(401).toSeerrError())
+        assertEquals(SeerrError.Forbidden, http(403, """{"message":"You do not have permission"}""").toSeerrError())
+        assertEquals(SeerrError.Quota, http(403, """{"message":"Movie Quota exceeded"}""").toSeerrError())
+        assertEquals(SeerrError.NotFound, http(404).toSeerrError())
+        assertEquals(SeerrError.Server, http(502).toSeerrError())
+        assertEquals(SeerrError.Rejected, http(422).toSeerrError())
+        assertEquals(SeerrError.Unreachable, SocketTimeoutException("timeout").toSeerrError())
+        assertEquals(SeerrError.Unknown, IllegalStateException("bug").toSeerrError())
+    }
 }
