@@ -1,22 +1,23 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
 /** Seerr permission bits (server/lib/permissions.ts); ADMIN implies every permission. */
-private const val PERMISSION_ADMIN = 2
-private const val PERMISSION_MANAGE_SETTINGS = 1 shl 2
-private const val PERMISSION_MANAGE_USERS = 1 shl 3
-private const val PERMISSION_MANAGE_REQUESTS = 1 shl 4
-private const val PERMISSION_REQUEST = 1 shl 5
-private const val PERMISSION_AUTO_APPROVE = 1 shl 7
-private const val PERMISSION_REQUEST_4K = 1 shl 10
-private const val PERMISSION_REQUEST_4K_MOVIE = 1 shl 11
-private const val PERMISSION_REQUEST_4K_TV = 1 shl 12
-private const val PERMISSION_REQUEST_ADVANCED = 1 shl 13
-private const val PERMISSION_REQUEST_VIEW = 1 shl 14
-private const val PERMISSION_MANAGE_ISSUES = 1 shl 20
-private const val PERMISSION_VIEW_ISSUES = 1 shl 21
-private const val PERMISSION_CREATE_ISSUES = 1 shl 22
-private const val PERMISSION_MANAGE_BLOCKLIST = 1 shl 28
-private const val PERMISSION_VIEW_BLOCKLIST = 1 shl 30
+internal const val PERMISSION_ADMIN = 2
+internal const val PERMISSION_MANAGE_SETTINGS = 1 shl 2
+internal const val PERMISSION_MANAGE_USERS = 1 shl 3
+internal const val PERMISSION_MANAGE_REQUESTS = 1 shl 4
+internal const val PERMISSION_REQUEST = 1 shl 5
+internal const val PERMISSION_AUTO_APPROVE = 1 shl 7
+internal const val PERMISSION_REQUEST_4K = 1 shl 10
+internal const val PERMISSION_REQUEST_4K_MOVIE = 1 shl 11
+internal const val PERMISSION_REQUEST_4K_TV = 1 shl 12
+internal const val PERMISSION_REQUEST_ADVANCED = 1 shl 13
+internal const val PERMISSION_REQUEST_VIEW = 1 shl 14
+internal const val PERMISSION_AUTO_APPROVE_4K = 1 shl 15
+internal const val PERMISSION_MANAGE_ISSUES = 1 shl 20
+internal const val PERMISSION_VIEW_ISSUES = 1 shl 21
+internal const val PERMISSION_CREATE_ISSUES = 1 shl 22
+internal const val PERMISSION_MANAGE_BLOCKLIST = 1 shl 28
+internal const val PERMISSION_VIEW_BLOCKLIST = 1 shl 30
 
 /**
  * What the connected user may do, decoded from their permission bitmask. This is what the

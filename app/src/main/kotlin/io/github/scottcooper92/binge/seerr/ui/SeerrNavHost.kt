@@ -5,6 +5,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +41,10 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.users.UsersActions
+import io.github.scottcooper92.binge.seerr.ui.users.UsersScreen
+import io.github.scottcooper92.binge.seerr.ui.users.UsersUiState
+import io.github.scottcooper92.binge.seerr.ui.users.UsersViewModel
 
 /**
  * The one [NavDisplay]. Every screen is an entry here; the ViewModel-store decorator gives each
@@ -69,6 +74,7 @@ fun SeerrNavHost(
                                 when (section) {
                                     HubSection.Requests -> RequestsRoute
                                     HubSection.Issues -> IssuesRoute
+                                    HubSection.Users -> UsersRoute
                                     HubSection.Settings -> SettingsRoute
                                     else -> SectionRoute(section)
                                 },
@@ -85,6 +91,7 @@ fun SeerrNavHost(
                     IssuesEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
                 }
                 entry<IssueDetailRoute> { route -> IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }) }
+                entry<UsersRoute> { UsersEntry(onBack = { backStack.removeLastOrNull() }) }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
                 }
@@ -258,6 +265,33 @@ private fun IssueDetailEntry(
                 onDeleteComment = viewModel::deleteComment,
                 onToggleStatus = viewModel::toggleStatus,
                 onDeleteIssue = viewModel::deleteIssue,
+            ),
+    )
+}
+
+/** Until the user page lands, a row opens the user in the server's web client. */
+@Composable
+private fun UsersEntry(
+    onBack: () -> Unit,
+    viewModel: UsersViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    UsersScreen(
+        state = state,
+        users = viewModel.users,
+        events = viewModel.events,
+        actions =
+            UsersActions(
+                onBack = onBack,
+                onSortChange = viewModel::setSort,
+                onOpen = { item -> (state as? UsersUiState.Ready)?.baseUrl?.let { context.openInBrowser(it + "users/" + item.id) } },
+                onToggleSelected = { item -> viewModel.toggleSelected(item.id) },
+                onClearSelection = viewModel::clearSelection,
+                onStartBulkEdit = viewModel::startBulkEdit,
+                onTogglePermission = viewModel::togglePermission,
+                onApplyBulkEdit = viewModel::applyBulkEdit,
+                onCancelBulkEdit = viewModel::cancelBulkEdit,
             ),
     )
 }

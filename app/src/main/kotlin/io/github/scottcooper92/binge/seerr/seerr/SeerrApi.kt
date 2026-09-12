@@ -160,6 +160,20 @@ interface SeerrApi {
         @Query("take") take: Int = 1,
     ): SeerrCountProbeDto
 
+    /** A page of users; [sort] is `created`, `updated`, `requests` or `displayname`. `MANAGE_USERS`. */
+    @GET("api/v1/user")
+    suspend fun users(
+        @Query("take") take: Int,
+        @Query("skip") skip: Int = 0,
+        @Query("sort") sort: String = "created",
+    ): SeerrUserPageDto
+
+    /** Replaces the permission bitmask of every user in [body], the web client's bulk edit. */
+    @PUT("api/v1/user")
+    suspend fun bulkUpdateUsers(
+        @Body body: SeerrBulkUsersBody,
+    ): List<SeerrUserDto>
+
     /** [path] is [SeerrServerProfile.blocklistPath]; needs `VIEW_BLOCKLIST` or `MANAGE_BLOCKLIST`. */
     @GET("api/v1/{path}")
     suspend fun blocklistCountProbe(
@@ -342,16 +356,38 @@ value class SeerrIssueTypeCode(
     }
 }
 
+/**
+ * A user as `auth/me`, the user list and `user/{id}` serve one: the login names per account
+ * kind, the bitmask, and the [userType] that says which server the account is on.
+ */
 @Serializable
 data class SeerrUserDto(
     @SerialName("id") val id: Int,
     @SerialName("displayName") val displayName: String? = null,
     @SerialName("username") val username: String? = null,
+    @SerialName("plexUsername") val plexUsername: String? = null,
+    @SerialName("jellyfinUsername") val jellyfinUsername: String? = null,
     @SerialName("email") val email: String? = null,
     @SerialName("avatar") val avatar: String? = null,
     @SerialName("requestCount") val requestCount: Int? = null,
     /** The user's permission bitmask, which is what the handshake's capability set is decoded from. */
     @SerialName("permissions") val permissions: Int? = null,
+    /** Seerr's `UserType`: 1 Plex, 2 local, 3 Jellyfin, 4 Emby. */
+    @SerialName("userType") val userType: Int? = null,
+    @SerialName("createdAt") val createdAt: String? = null,
+)
+
+@Serializable
+data class SeerrUserPageDto(
+    @SerialName("pageInfo") val pageInfo: SeerrPageInfoDto = SeerrPageInfoDto(),
+    @SerialName("results") val results: List<SeerrUserDto> = emptyList(),
+)
+
+/** `PUT user`: one bitmask written to every listed user. */
+@Serializable
+data class SeerrBulkUsersBody(
+    @SerialName("ids") val ids: List<Int>,
+    @SerialName("permissions") val permissions: Int,
 )
 
 @Serializable
