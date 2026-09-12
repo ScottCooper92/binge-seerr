@@ -28,6 +28,14 @@ class SeerrPermissionsTest {
     }
 
     @Test
+    fun `managing requests implies viewing them, but a plain requester may not`() {
+        assertTrue(SeerrPermissions.fromBits(1 shl 14).canViewRequests)
+        assertFalse(SeerrPermissions.fromBits(1 shl 5).canViewRequests)
+        assertTrue(SeerrPermissions.fromBits(1 shl 4).canManageRequests)
+        assertTrue(SeerrPermissions.fromBits(1 shl 4).canViewRequests)
+    }
+
+    @Test
     fun `the 4k umbrella grants both media types, the per-type bit only its own`() {
         assertTrue(SeerrPermissions.fromBits(1 shl 10).canRequest4kTv)
         assertTrue(SeerrPermissions.fromBits(1 shl 10).canRequest4kMovie)

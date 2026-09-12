@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
@@ -46,17 +47,20 @@ class RequestsViewModel
         private val selectedSort = MutableStateFlow(RequestSort.Added)
         private val countsRefresh = MutableStateFlow(0)
 
-        /** Resolved once per connection: the user's permissions decide whether the list is theirs alone. */
-        private val scope: Flow<ListScope> =
+        /**
+         * Resolved once per connection: the user's permissions decide whether the list is theirs alone.
+         * Null until resolved, so nothing downstream acts on a guessed, all-permissive scope.
+         */
+        private val scope: StateFlow<ListScope?> =
             flow {
                 val user = runCatching { connection.authenticatedUser() }.getOrNull()
                 val permissions = user.toPermissions()
                 emit(ListScope(permissions, requestedBy = user?.id?.takeUnless { permissions.canViewRequests }))
-            }.stateIn(viewModelScope, SharingStarted.Lazily, ListScope(SeerrPermissions(), requestedBy = null))
+            }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
         private val streams: Map<RequestFilter, Flow<PagingData<RequestItem>>> =
             RequestFilter.entries.associateWith { filter ->
-                combine(selectedSort, scope) { sort, scope -> sort to scope }
+                combine(selectedSort, scope.filterNotNull()) { sort, scope -> sort to scope }
                     .flatMapLatest { (sort, scope) ->
                         Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
                             RequestsPagingSource(
@@ -86,7 +90,11 @@ class RequestsViewModel
 
         val uiState: StateFlow<RequestsUiState> =
             combine(selectedFilter, selectedSort, counts, scope) { filter, sort, counts, scope ->
-                RequestsUiState.Ready(filter = filter, sort = sort, counts = counts, permissions = scope.permissions)
+                if (scope == null) {
+                    RequestsUiState.Loading
+                } else {
+                    RequestsUiState.Ready(filter = filter, sort = sort, counts = counts, permissions = scope.permissions)
+                }
             }.stateIn(viewModelScope, SharingStarted.Lazily, RequestsUiState.Loading)
 
         fun setFilter(filter: RequestFilter) {
