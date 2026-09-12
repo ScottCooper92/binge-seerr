@@ -180,6 +180,20 @@
     <string name="issue_type_audio">Audio</string>
     <string name="issue_type_subtitles">Subtitles</string>
     <string name="issue_type_other">Other</string>
+    <string name="issues_filter_open">Open</string>
+    <string name="issues_filter_resolved">Resolved</string>
+    <string name="issues_filter_all">All</string>
+    <string name="issues_empty_open">No open issues. Nothing needs your attention.</string>
+    <string name="issues_empty_resolved">No resolved issues yet.</string>
+    <string name="issues_empty_all">No issues have been reported on your server.</string>
+    <string name="issues_refresh_failed">Showing the last known issues. Tap to refresh.</string>
+    <string name="issue_state_open">Open</string>
+    <string name="issue_state_resolved">Resolved</string>
+    <string name="issue_affected_episode">Season %1$d, episode %2$d</string>
+    <plurals name="issue_comments">
+        <item quantity="one">%1$d comment</item>
+        <item quantity="other">%1$d comments</item>
+    </plurals>
     <string name="media_type_tv">TV show</string>
     <plurals name="requests_seasons">
         <item quantity="one">Season %1$s</item>

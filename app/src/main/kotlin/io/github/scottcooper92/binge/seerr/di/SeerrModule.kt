@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.room.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,6 +18,9 @@ import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
+import io.github.scottcooper92.binge.seerr.data.IssueStore
+import io.github.scottcooper92.binge.seerr.data.IssuesDatabase
+import io.github.scottcooper92.binge.seerr.data.RoomIssueStore
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import javax.inject.Singleton
@@ -72,9 +76,21 @@ object SeerrModule {
 
     @Provides
     @Singleton
+    fun issuesDatabase(
+        @ApplicationContext context: Context,
+    ): IssuesDatabase = Room.databaseBuilder(context, IssuesDatabase::class.java, "seerr_issues.db").build()
+
+    @Provides
+    @Singleton
+    fun issueStore(db: IssuesDatabase): IssueStore = RoomIssueStore(db)
+
+    /** The caches keyed to one server are cleared when the server changes, so nothing of the last one shows. */
+    @Provides
+    @Singleton
     fun connection(
         store: CredentialStore,
         apis: SeerrApiFactory,
         health: SeerrConnectionHealthMonitor,
-    ): SeerrConnection = SeerrConnection(store, apis, health)
+        issues: IssueStore,
+    ): SeerrConnection = SeerrConnection(store, apis, health, onServerChanged = { issues.clearAll() })
 }

@@ -138,6 +138,16 @@ interface SeerrApi {
     @GET("api/v1/issue/count")
     suspend fun issueCount(): SeerrIssueCountDto
 
+    /** A page of issues; [filter] is `all`, `open` or `resolved`, [sort] `added` or `modified`. */
+    @GET("api/v1/issue")
+    suspend fun issues(
+        @Query("take") take: Int,
+        @Query("skip") skip: Int = 0,
+        @Query("filter") filter: String = "all",
+        @Query("sort") sort: String = "added",
+        @Query("requestedBy") requestedBy: Int? = null,
+    ): SeerrIssuePageDto
+
     /** A user's own quota, or any user's with `MANAGE_USERS`. */
     @GET("api/v1/user/{userId}/quota")
     suspend fun userQuota(

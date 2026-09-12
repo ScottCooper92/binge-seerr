@@ -87,7 +87,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 
 | Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
 |---|---|---|---|---|---|
-| `GET /issue` | Get all issues | v1.28.0 | v1.1.0 |  |  |
+| `GET /issue` | Get all issues | v1.28.0 | v1.1.0 | yes | The issues browser, cached in Room and refreshed on open. |
 | `POST /issue` | Create new issue | v1.28.0 | v1.1.0 | yes |  |
 | `DELETE /issue/{issueId}` | Delete issue | v1.28.0 | v1.1.0 |  |  |
 | `GET /issue/{issueId}` | Get issue | v1.28.0 | v1.1.0 |  |  |

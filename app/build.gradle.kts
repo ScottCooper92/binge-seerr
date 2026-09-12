@@ -4,7 +4,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
+}
+
+// The exported schema is committed: a change to a table is a migration decision made in review.
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 android {
@@ -75,6 +81,9 @@ dependencies {
     implementation(libs.androidx.browser)
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
+    implementation(libs.room.runtime)
+    implementation(libs.room.paging)
+    ksp(libs.room.compiler)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
