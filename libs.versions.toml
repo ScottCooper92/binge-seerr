@@ -21,6 +21,8 @@ kotlinxCoroutines = "1.11.0"
 # KSP is the Hilt compiler's host; the pair is the one Binge builds with at this Kotlin.
 ksp = "2.3.11"
 hilt = "2.60.1"
+androidxHilt = "1.4.0"
+navigation3 = "1.1.7"
 kotlinxSerializationJson = "1.11.0"
 retrofit = "3.0.0"
 okhttp = "5.4.0"
@@ -43,6 +45,10 @@ binge-integration-sdk = { module = "io.github.scottcooper92:sdk" }
 binge-designsystem = { module = "com.binge:designsystem" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
+hilt-lifecycle-viewmodel-compose = { module = "androidx.hilt:hilt-lifecycle-viewmodel-compose", version.ref = "androidxHilt" }
+navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
+navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
+lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
 grpc-inprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
