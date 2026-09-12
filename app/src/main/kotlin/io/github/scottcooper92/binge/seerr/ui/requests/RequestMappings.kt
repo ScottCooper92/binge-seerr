@@ -74,7 +74,7 @@ fun RequestItem.statusChip(): RequestRowChip =
  * removal where the lineage has a blocklist and the user may manage it.
  */
 fun RequestItem.actions(scope: ModerationScope): RequestActions {
-    val pending = status == null || status == SeerrRequestStatusCode(PENDING_STATUS)
+    val pending = status == null || status == SeerrRequestStatusCode.Pending
     val moderator = scope.permissions.canManageRequests
     val own = requestedById != null && requestedById == scope.currentUserId
     return RequestActions(
@@ -85,5 +85,3 @@ fun RequestItem.actions(scope: ModerationScope): RequestActions {
         canBlock = scope.hasBlocklist && scope.permissions.canManageBlocklist && mediaStatus != SeerrMediaStatusCode.Blocklisted,
     )
 }
-
-private const val PENDING_STATUS = 1

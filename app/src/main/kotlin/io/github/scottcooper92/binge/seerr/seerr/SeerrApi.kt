@@ -239,6 +239,7 @@ value class SeerrRequestStatusCode(
     val raw: Int,
 ) {
     companion object {
+        val Pending = SeerrRequestStatusCode(1)
         val Approved = SeerrRequestStatusCode(2)
         val Declined = SeerrRequestStatusCode(3)
         val Failed = SeerrRequestStatusCode(4)
