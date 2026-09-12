@@ -1,8 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -109,6 +111,7 @@ fun IssueDetailScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Ready(
     state: IssueDetailUiState.Ready,
@@ -129,8 +132,17 @@ private fun Ready(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .then(if (detail.canActOn(report)) Modifier.clickable { modals.openEdit(report) } else Modifier)
-                            .padding(horizontal = inset),
+                            .then(
+                                if (detail.canActOn(report)) {
+                                    Modifier.combinedClickable(
+                                        onClick = { modals.openEdit(report) },
+                                        onLongClick = { modals.actingOnCommentId = report.id },
+                                        onLongClickLabel = stringResource(R.string.issue_comment_actions_cd),
+                                    )
+                                } else {
+                                    Modifier
+                                },
+                            ).padding(horizontal = inset),
                 )
             }
             SectionHeader(title = stringResource(R.string.issue_comments_title))
