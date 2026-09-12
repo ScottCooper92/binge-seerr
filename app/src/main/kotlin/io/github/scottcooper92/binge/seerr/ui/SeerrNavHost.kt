@@ -256,6 +256,8 @@ private fun IssueDetailEntry(
                 onDropOutbox = viewModel::dropOutbox,
                 onEditComment = viewModel::editComment,
                 onDeleteComment = viewModel::deleteComment,
+                onToggleStatus = viewModel::toggleStatus,
+                onDeleteIssue = viewModel::deleteIssue,
             ),
     )
 }
