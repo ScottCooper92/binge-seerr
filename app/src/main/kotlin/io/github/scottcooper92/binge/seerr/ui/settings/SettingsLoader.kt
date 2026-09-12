@@ -47,7 +47,6 @@ class SettingsLoader
                 versionLabel = profile.version?.label,
                 updateAvailable = profile.updateAvailable || profile.commitsBehind > 0,
                 commitsBehind = profile.commitsBehind,
-                mediaServer = profile.mediaServer,
             )
         }
 
@@ -62,21 +61,29 @@ class SettingsLoader
                 val jobs = async { runCatching { api.jobs() }.getOrNull() }
                 val email = async { runCatching { api.emailAgent().enabled }.getOrNull() }
                 val discord = async { runCatching { api.discordAgent().enabled }.getOrNull() }
-                val services = async { runCatching { api.services() }.getOrNull() }
+                val radarr = async { runCatching { api.radarrServices() }.getOrNull() }
+                val sonarr = async { runCatching { api.sonarrServices() }.getOrNull() }
                 val mainDto = main.await()
                 ServerConfig(
                     general = mainDto?.toGeneral(),
                     requestPolicy = mainDto?.toRequestPolicy(),
                     agents = agents(email.await(), discord.await()),
                     system = system(about.await(), jobs.await()),
-                    services = services.await(),
+                    services = services(radarr.await(), sonarr.await()),
                 )
             }
         }
 
-        private suspend fun SeerrApi.services(): List<ServerService> =
-            radarrSettings().map { it.toService(ServiceType.Radarr) } + sonarrSettings().map { it.toService(ServiceType.Sonarr) }
+        private suspend fun SeerrApi.radarrServices(): List<ServerService> = radarrSettings().map { it.toService(ServiceType.Radarr) }
+
+        private suspend fun SeerrApi.sonarrServices(): List<ServerService> = sonarrSettings().map { it.toService(ServiceType.Sonarr) }
     }
+
+/** Null when both fetches failed; otherwise the services from whichever succeeded. */
+private fun services(
+    radarr: List<ServerService>?,
+    sonarr: List<ServerService>?,
+): List<ServerService>? = if (radarr == null && sonarr == null) null else radarr.orEmpty() + sonarr.orEmpty()
 
 internal fun SeerrMainSettingsDto.toGeneral(): GeneralSettings =
     GeneralSettings(

@@ -100,7 +100,7 @@ class RequestDetailViewModelTest {
         serve("/api/v1/issue", """{"id":5}""")
     }
 
-    private suspend fun TestScope.viewModel(requestId: Int = 11): RequestDetailViewModel {
+    private suspend fun TestScope.connection(): SeerrConnection {
         val connection =
             SeerrConnection(
                 store =
@@ -111,11 +111,20 @@ class RequestDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false),
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        return connection
+    }
+
+    private fun TestScope.viewModel(
+        connection: SeerrConnection,
+        requestId: Int = 11,
+    ): RequestDetailViewModel {
         val vm = RequestDetailViewModel(connection, TitleCache(), requestId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
+
+    private suspend fun TestScope.viewModel(requestId: Int = 11): RequestDetailViewModel = viewModel(connection(), requestId)
 
     private suspend fun RequestDetailViewModel.awaitReady(
         match: (RequestDetailUiState.Ready) -> Boolean = {
@@ -183,6 +192,20 @@ class RequestDetailViewModelTest {
                 }
             val plain = viewModel()
             assertFalse(plain.awaitReady().detail.canReportIssue)
+        }
+
+    @Test
+    fun `a request still shows, with no actions offered, when the user lookup used for moderation fails`() =
+        runTest {
+            server(ADMIN)
+            val connection = connection()
+            responses["/api/v1/auth/me"] = { MockResponse(code = 500) }
+            val vm = viewModel(connection)
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(RequestActions(), detail.actions)
+            assertFalse(detail.canReportIssue)
         }
 
     @Test
