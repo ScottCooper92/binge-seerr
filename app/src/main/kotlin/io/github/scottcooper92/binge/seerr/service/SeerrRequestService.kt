@@ -45,6 +45,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
 
 /** Seerr returns 202 Accepted when there was nothing left to request, and created nothing. */
@@ -115,7 +116,7 @@ class SeerrRequestService(
                 delay(observeIntervalMillis)
             }
         }.distinctUntilChanged()
-            .let { statuses -> flow { statuses.collect { emit(ObserveStatusResponse.newBuilder().setStatus(it).build()) } } }
+            .map { ObserveStatusResponse.newBuilder().setStatus(it).build() }
 
     override suspend fun cancelRequest(request: CancelRequestRequest): CancelRequestResponse =
         gated(Capability.CAPABILITY_CANCEL) {
