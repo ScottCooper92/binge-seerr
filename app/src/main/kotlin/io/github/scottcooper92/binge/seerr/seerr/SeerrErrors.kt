@@ -12,6 +12,39 @@ private const val HTTP_NOT_FOUND = 404
 private const val HTTP_SERVER_ERROR_MIN = 500
 
 /**
+ * Why a call to the server failed, as the app's own screens classify it. The gRPC mapping below
+ * and this one read the same facts, so the Service and a screen never disagree about a failure:
+ * a 401 is the session, a 403 is a permission unless the body names a quota, a 404 is the title,
+ * transport and 5xx are the server or the network, and anything else is a rejection on the merits.
+ */
+enum class SeerrError {
+    NotConnected,
+    Unauthorized,
+    Forbidden,
+    Quota,
+    NotFound,
+    Unreachable,
+    Server,
+    Rejected,
+    Unknown,
+}
+
+fun Throwable.toSeerrError(): SeerrError =
+    when (this) {
+        is NotConnectedException -> SeerrError.NotConnected
+        is HttpException ->
+            when {
+                code() == HTTP_UNAUTHORIZED -> SeerrError.Unauthorized
+                code() == HTTP_FORBIDDEN -> if (mentionsQuota()) SeerrError.Quota else SeerrError.Forbidden
+                code() == HTTP_NOT_FOUND -> SeerrError.NotFound
+                code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
+                else -> SeerrError.Rejected
+            }
+        is IOException -> SeerrError.Unreachable
+        else -> SeerrError.Unknown
+    }
+
+/**
  * Seerr's failures as the contract's gRPC status codes — the whole error model on this side,
  * because a response message never carries an error field.
  *

@@ -86,4 +86,16 @@ class SeerrStatusMappingTest {
         assertEquals(ApprovalState.APPROVAL_STATE_PENDING, SeerrRequestStatusCode(99).toApprovalState())
         assertEquals(ApprovalState.APPROVAL_STATE_FAILED, SeerrRequestStatusCode.Failed.toApprovalState())
     }
+
+    @Test
+    fun `the eta is the slowest active download's remaining minutes, rounded up`() {
+        val downloads =
+            listOf(
+                SeerrDownloadStatusDto(estimatedCompletionTime = "2023-11-14T22:40:30Z"),
+                SeerrDownloadStatusDto(timeLeft = "00:05:00"),
+            )
+
+        assertEquals(28, downloads.etaMinutes(NOW))
+        assertEquals(null, emptyList<SeerrDownloadStatusDto>().etaMinutes(NOW))
+    }
 }

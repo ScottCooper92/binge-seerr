@@ -40,4 +40,44 @@
     <string name="advanced_error_rejected">The server rejected the request.</string>
     <string name="advanced_error_unreachable">The server could not be reached.</string>
     <string name="advanced_error_unknown">The server answered with an error.</string>
+
+    <string name="state_empty_title">Nothing here yet</string>
+    <string name="action_try_again">Try again</string>
+    <string name="state_error_not_connected_title">No server connected</string>
+    <string name="state_error_not_connected_message">Connect a server to see this.</string>
+    <string name="state_error_unauthorized_title">Signed out</string>
+    <string name="state_error_unauthorized_message">The server rejected the saved sign-in. Connect again.</string>
+    <string name="state_error_forbidden_title">Not allowed</string>
+    <string name="state_error_forbidden_message">Your account does not have permission for this.</string>
+    <string name="state_error_quota_title">Quota reached</string>
+    <string name="state_error_quota_message">You have used up your request quota for now.</string>
+    <string name="state_error_not_found_title">Not found</string>
+    <string name="state_error_not_found_message">The server has nothing by that name.</string>
+    <string name="state_error_unreachable_title">Can\'t reach the server</string>
+    <string name="state_error_unreachable_message">Check the connection and try again.</string>
+    <string name="state_error_server_title">Server error</string>
+    <string name="state_error_server_message">The server answered with an error. Try again in a moment.</string>
+    <string name="state_error_rejected_title">Request refused</string>
+    <string name="state_error_rejected_message">The server would not accept that.</string>
+    <string name="state_error_unknown_title">Something went wrong</string>
+    <string name="state_error_unknown_message">Try again.</string>
+
+    <string name="request_state_pending">Pending</string>
+    <string name="request_state_approved">Approved</string>
+    <string name="request_state_completed">Completed</string>
+    <string name="request_state_declined">Declined</string>
+    <string name="request_state_failed">Failed</string>
+    <string name="media_state_processing">Downloading</string>
+    <string name="media_state_partially_available">Partly available</string>
+    <string name="media_state_available">Available</string>
+    <string name="media_state_blocklisted">Blocked</string>
+
+    <plurals name="download_eta_minutes">
+        <item quantity="one">About %1$d min left</item>
+        <item quantity="other">About %1$d min left</item>
+    </plurals>
+    <plurals name="download_eta_hours">
+        <item quantity="one">About %1$d hr left</item>
+        <item quantity="other">About %1$d hr left</item>
+    </plurals>
 </resources>
