@@ -1,7 +1,7 @@
 # binge-seerr
 
 An Android admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
-companion app for [Binge](https://github.com/ScottCooper92/Binge).
+companion app for [Binge](https://github.com/ScottCooper92).
 
 ## For the person running a server
 
@@ -66,8 +66,7 @@ The pieces to read, in order:
 4. `AdvancedRequestActivity.kt`: the SDK's hand-off, the Activity Binge starts with a title so the
    companion can show its own request options.
 
-The platform's decisions are in Binge's
-[`docs/integration-platform-architecture.md`](https://github.com/ScottCooper92/Binge/blob/master/docs/integration-platform-architecture.md)
+The platform's decisions are in Binge's `docs/integration-platform-architecture.md`
 and the wire contract in binge-integrations' `contracts/`; this app's own roadmap is
 [#26](https://github.com/ScottCooper92/binge-seerr/issues/26).
 
