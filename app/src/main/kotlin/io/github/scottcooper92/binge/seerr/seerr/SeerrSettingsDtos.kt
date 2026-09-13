@@ -152,6 +152,7 @@ data class SeerrServiceSettingsDto(
     @SerialName("enableSeasonFolders") val enableSeasonFolders: Boolean? = null,
     @SerialName("activeLanguageProfileId") val activeLanguageProfileId: Int? = null,
     @SerialName("activeAnimeLanguageProfileId") val activeAnimeLanguageProfileId: Int? = null,
+    @SerialName("monitorNewItems") val monitorNewItems: String? = null,
 )
 
 /** `POST settings/{radarr,sonarr}/test`: the address and key to reach the instance with. */

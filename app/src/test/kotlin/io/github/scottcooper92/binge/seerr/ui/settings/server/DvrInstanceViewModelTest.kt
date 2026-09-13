@@ -6,7 +6,9 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -39,7 +41,7 @@ private const val SONARR =
     """[{"id":3,"name":"Main","hostname":"sonarr.local","port":8989,"apiKey":"s-key","useSsl":false,
          "activeProfileId":5,"activeProfileName":"HD","activeDirectory":"/tv","tags":[9],"is4k":false,"isDefault":true,
          "seriesType":"standard","animeSeriesType":"anime","activeAnimeProfileId":5,"activeAnimeDirectory":"/anime",
-         "animeTags":[],"enableSeasonFolders":true,"activeLanguageProfileId":1}]"""
+         "animeTags":[],"enableSeasonFolders":true,"activeLanguageProfileId":1,"monitorNewItems":"none"}]"""
 
 class DvrInstanceViewModelTest {
     @get:Rule
@@ -133,10 +135,14 @@ class DvrInstanceViewModelTest {
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
             vm.test()
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
             vm.extras.first { it.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
+            // `events` has no replay, so subscribe before saving rather than after: subscribing
+            // afterwards can miss the save's own event, or catch `test()`'s notice arriving late.
+            val saved = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first { it is EditorEvent.Saved } }
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first { it == EditorEvent.Saved })
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/radarr")).jsonObject
             assertEquals("6", sent.getValue("activeProfileId").jsonPrimitive.content)
@@ -175,11 +181,86 @@ class DvrInstanceViewModelTest {
             assertEquals(1, seerr.count("POST", "/api/v1/settings/sonarr/test"))
 
             vm.edit { it.copy(seasonFolders = false) }
+            // `events` has no replay, so subscribe before saving rather than after: subscribing
+            // afterwards can miss the save's own event, or catch `test()`'s notice arriving late.
+            val saved = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first { it is EditorEvent.Saved } }
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("false", sent.getValue("enableSeasonFolders").jsonPrimitive.content)
             assertEquals("HD", sent.getValue("activeAnimeProfileName").jsonPrimitive.content)
+            assertEquals("none", sent.getValue("monitorNewItems").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a new sonarr defaults to monitoring all new seasons, matching the web client`() =
+        runTest {
+            seerr.serve(
+                "POST /api/v1/settings/sonarr",
+                SONARR.trim().removePrefix("[").removeSuffix("]"),
+            )
+            val vm = viewModel(ServiceType.Sonarr, id = null)
+            assertEquals("all", vm.awaitReady().draft.monitorNewItems)
+
+            vm.edit { it.copy(name = "Main", host = "sonarr.local", apiKey = "s-key") }
+            vm.test()
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
+            vm.extras.first { it.choices != null }
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/sonarr")).jsonObject
+            assertEquals("all", sent.getValue("monitorNewItems").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `saving an unrelated edit when the load-time test failed keeps the stored profile names`() =
+        runTest {
+            val recordWithAnimeName =
+                SONARR.trim().removePrefix("[").removeSuffix("]").replace(
+                    "\"activeAnimeProfileId\":5,",
+                    "\"activeAnimeProfileId\":5,\"activeAnimeProfileName\":\"HD\",",
+                )
+            seerr.serve("GET /api/v1/settings/sonarr", "[$recordWithAnimeName]")
+            seerr.serve("POST /api/v1/settings/sonarr/test", "{}", code = 500)
+            seerr.serve("PUT /api/v1/settings/sonarr/3", recordWithAnimeName)
+            val vm = viewModel(ServiceType.Sonarr, id = 3)
+            val ready = vm.awaitReady()
+            assertNull(vm.extras.first().choices)
+
+            vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
+            assertTrue(vm.awaitReady().draft.valid)
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
+            assertEquals("HD", sent.getValue("activeProfileName").jsonPrimitive.content)
+            assertEquals("HD", sent.getValue("activeAnimeProfileName").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a stale profile, folder or tag from a deleted destination is dropped by the load-time test, not just a manual one`() =
+        runTest {
+            val staleRecord =
+                SONARR.trim().removePrefix("[").removeSuffix("]").replace(
+                    "\"activeProfileId\":5,\"activeProfileName\":\"HD\",\"activeDirectory\":\"/tv\",\"tags\":[9],",
+                    "\"activeProfileId\":99,\"activeProfileName\":\"Deleted\",\"activeDirectory\":\"/deleted\",\"tags\":[42],",
+                )
+            seerr.serve("GET /api/v1/settings/sonarr", "[$staleRecord]")
+            seerr.serve("PUT /api/v1/settings/sonarr/3", staleRecord)
+            val vm = viewModel(ServiceType.Sonarr, id = 3)
+            val ready = vm.awaitReady()
+            assertEquals(5, ready.draft.profileId)
+            assertEquals("/tv", ready.draft.rootFolder)
+            assertTrue(ready.draft.tagIds.isEmpty())
+            assertFalse(ready.dirty)
+
+            vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
+            assertEquals("5", sent.getValue("activeProfileId").jsonPrimitive.content)
+            assertEquals("/tv", sent.getValue("activeDirectory").jsonPrimitive.content)
         }
 
     @Test
