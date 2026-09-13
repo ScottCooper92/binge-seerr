@@ -54,6 +54,7 @@ internal class FakeNotifier : SeerrNotifier {
 }
 
 internal class FakeScheduler : NotificationScheduler {
+    /** Copy-on-write: the planner's own coroutine appends while a test's polling loop reads. */
     val calls = CopyOnWriteArrayList<String>()
     val nextRun = MutableStateFlow<Long?>(null)
 

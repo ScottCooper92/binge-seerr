@@ -155,7 +155,7 @@ class MediaServerViewModelTest {
             )
 
             vm.setLibraryEnabled("2", true)
-            val extras = vm.extras.first { it.libraries.all { library -> library.enabled } }
+            val extras = vm.extras.first { it.libraries.all { library -> library.enabled } && it.busyLibraryIds.isEmpty() }
 
             assertEquals(1, seerr.count("PUT", "/api/v1/settings/plex/library/2"))
             val read = seerr.received.last { it.url.encodedPath == "/api/v1/settings/plex/library" }
