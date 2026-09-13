@@ -85,25 +85,33 @@ class MediaServerViewModel
             if (id in extrasState.value.busyLibraryIds) return
             extrasState.update { it.copy(busyLibraryIds = it.busyLibraryIds + id) }
             viewModelScope.launch {
-                runCatching {
-                    val api = connection.api()
-                    orOnNotFound(
-                        newer = {
-                            api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).let { updated ->
-                                replace(updated)
-                            }
-                        },
-                        released = {
-                            val enabledIds =
-                                extrasState.value.libraries
-                                    .filter { if (it.id == id) enabled else it.enabled }
-                                    .map { it.id }
-                            api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
-                        },
+                val result =
+                    runCatching {
+                        val api = connection.api()
+                        orOnNotFound(
+                            newer = {
+                                api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).let { updated ->
+                                    replace(updated)
+                                }
+                            },
+                            released = {
+                                val enabledIds =
+                                    extrasState.value.libraries
+                                        .filter { if (it.id == id) enabled else it.enabled }
+                                        .map { it.id }
+                                api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
+                            },
+                        )
+                    }
+                result.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                // Libraries and busyLibraryIds must land in the same emission: a collector observing
+                // libraries updated but the id still busy (or vice versa) is an inconsistent state.
+                extrasState.update {
+                    it.copy(
+                        libraries = result.getOrNull()?.map { dto -> dto.toLibrary() } ?: it.libraries,
+                        busyLibraryIds = it.busyLibraryIds - id,
                     )
-                }.onSuccess { libraries -> setLibraries(libraries) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
-                extrasState.update { it.copy(busyLibraryIds = it.busyLibraryIds - id) }
+                }
             }
         }
 
