@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
@@ -328,6 +329,7 @@ internal fun systemRows(
     system: SystemInfo,
     onOpenJobs: () -> Unit,
     onOpenCache: () -> Unit,
+    onOpenLogs: () -> Unit,
 ): List<SettingsRow> =
     listOf(
         SettingsRow(
@@ -364,6 +366,13 @@ internal fun systemRows(
             label = stringResource(R.string.server_settings_cache),
             detail = stringResource(R.string.server_settings_cache_caption),
             onClick = onOpenCache,
+        ) +
+        SettingsRow(
+            icon = Icons.Filled.Article,
+            iconTint = BingeSentiment.Neutral.fill(),
+            label = stringResource(R.string.server_settings_logs),
+            detail = stringResource(R.string.server_settings_logs_caption),
+            onClick = onOpenLogs,
         )
 
 internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off

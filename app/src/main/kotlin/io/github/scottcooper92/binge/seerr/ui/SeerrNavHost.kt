@@ -154,6 +154,7 @@ fun SeerrNavHost(
                         onOpenMetadata = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Metadata)) },
                         onOpenJobs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Jobs)) },
                         onOpenCache = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Cache)) },
+                        onOpenLogs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Logs)) },
                     )
                 }
                 entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
@@ -441,6 +442,7 @@ private fun SettingsEntry(
     onOpenMetadata: () -> Unit,
     onOpenJobs: () -> Unit,
     onOpenCache: () -> Unit,
+    onOpenLogs: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -466,6 +468,7 @@ private fun SettingsEntry(
                 onOpenMetadata = onOpenMetadata,
                 onOpenJobs = onOpenJobs,
                 onOpenCache = onOpenCache,
+                onOpenLogs = onOpenLogs,
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
