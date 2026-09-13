@@ -229,6 +229,31 @@ class DvrInstanceViewModelTest {
         }
 
     @Test
+    fun `a stale profile, folder or tag from a deleted destination is dropped by the load-time test, not just a manual one`() =
+        runTest {
+            val staleRecord =
+                SONARR.trim().removePrefix("[").removeSuffix("]").replace(
+                    "\"activeProfileId\":5,\"activeProfileName\":\"HD\",\"activeDirectory\":\"/tv\",\"tags\":[9],",
+                    "\"activeProfileId\":99,\"activeProfileName\":\"Deleted\",\"activeDirectory\":\"/deleted\",\"tags\":[42],",
+                )
+            seerr.serve("GET /api/v1/settings/sonarr", "[$staleRecord]")
+            seerr.serve("PUT /api/v1/settings/sonarr/3", staleRecord)
+            val vm = viewModel(ServiceType.Sonarr, id = 3)
+            val ready = vm.awaitReady()
+            assertEquals(5, ready.draft.profileId)
+            assertEquals("/tv", ready.draft.rootFolder)
+            assertTrue(ready.draft.tagIds.isEmpty())
+            assertFalse(ready.dirty)
+
+            vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
+            assertEquals("5", sent.getValue("activeProfileId").jsonPrimitive.content)
+            assertEquals("/tv", sent.getValue("activeDirectory").jsonPrimitive.content)
+        }
+
+    @Test
     fun `deleting an instance removes it and reports the page done`() =
         runTest {
             seerr.serve("DELETE /api/v1/settings/sonarr/3")
