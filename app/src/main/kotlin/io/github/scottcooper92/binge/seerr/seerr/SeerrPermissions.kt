@@ -11,6 +11,7 @@ private const val PERMISSION_REQUEST_4K = 1 shl 10
 private const val PERMISSION_REQUEST_4K_MOVIE = 1 shl 11
 private const val PERMISSION_REQUEST_4K_TV = 1 shl 12
 private const val PERMISSION_REQUEST_ADVANCED = 1 shl 13
+private const val PERMISSION_REQUEST_VIEW = 1 shl 14
 private const val PERMISSION_MANAGE_ISSUES = 1 shl 20
 private const val PERMISSION_VIEW_ISSUES = 1 shl 21
 private const val PERMISSION_CREATE_ISSUES = 1 shl 22
@@ -29,6 +30,8 @@ data class SeerrPermissions(
     val canRequest4kTv: Boolean = false,
     val canRequestAdvanced: Boolean = false,
     val canManageRequests: Boolean = false,
+    /** `REQUEST_VIEW`: others' requests; without it or `MANAGE_REQUESTS` the list is the user's own. */
+    val canViewRequests: Boolean = false,
     val canManageBlocklist: Boolean = false,
     val canCreateIssues: Boolean = false,
     val canManageIssues: Boolean = false,
@@ -61,6 +64,7 @@ data class SeerrPermissions(
                 canRequest4kTv = request4k || granted(PERMISSION_REQUEST_4K_TV),
                 canRequestAdvanced = granted(PERMISSION_REQUEST_ADVANCED),
                 canManageRequests = granted(PERMISSION_MANAGE_REQUESTS),
+                canViewRequests = granted(PERMISSION_REQUEST_VIEW) || granted(PERMISSION_MANAGE_REQUESTS),
                 canManageBlocklist = granted(PERMISSION_MANAGE_BLOCKLIST),
                 canCreateIssues = granted(PERMISSION_CREATE_ISSUES),
                 canManageIssues = granted(PERMISSION_MANAGE_ISSUES),

@@ -122,6 +122,7 @@ interface SeerrApi {
         @Query("skip") skip: Int = 0,
         @Query("filter") filter: String = "all",
         @Query("sort") sort: String = "added",
+        @Query("requestedBy") requestedBy: Int? = null,
     ): SeerrRequestsPageDto
 
     @GET("api/v1/request/count")

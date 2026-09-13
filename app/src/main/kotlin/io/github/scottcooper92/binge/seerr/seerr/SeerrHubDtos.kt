@@ -41,6 +41,7 @@ data class SeerrRequestMediaDto(
     @SerialName("tmdbId") val tmdbId: Int,
     @SerialName("mediaType") val mediaType: String,
     @SerialName("status") val status: SeerrMediaStatusCode? = null,
+    @SerialName("status4k") val status4k: SeerrMediaStatusCode? = null,
     @SerialName("downloadStatus") val downloadStatus: List<SeerrDownloadStatusDto> = emptyList(),
     @SerialName("downloadStatus4k") val downloadStatus4k: List<SeerrDownloadStatusDto> = emptyList(),
 )

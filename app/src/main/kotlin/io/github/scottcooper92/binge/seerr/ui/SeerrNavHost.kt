@@ -19,6 +19,9 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestsActions
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestsScreen
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
@@ -49,10 +52,17 @@ fun SeerrNavHost(
                 entry<HomeRoute> {
                     HomeEntry(
                         onOpenSection = { section ->
-                            backStack.add(if (section == HubSection.Settings) SettingsRoute else SectionRoute(section))
+                            backStack.add(
+                                when (section) {
+                                    HubSection.Requests -> RequestsRoute
+                                    HubSection.Settings -> SettingsRoute
+                                    else -> SectionRoute(section)
+                                },
+                            )
                         },
                     )
                 }
+                entry<RequestsRoute> { RequestsEntry(onBack = { backStack.removeLastOrNull() }) }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
                 }
@@ -96,6 +106,31 @@ private fun HubEntry(
                 onOpenSection = onOpenSection,
                 onRetry = viewModel::recheck,
                 onDisconnect = viewModel::disconnect,
+            ),
+    )
+}
+
+@Composable
+private fun RequestsEntry(
+    onBack: () -> Unit,
+    viewModel: RequestsViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The chip counts refetch on arrival, so a moderation elsewhere shows without a poll.
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
+    RequestsScreen(
+        state = state,
+        requestsFor = viewModel::requests,
+        actions =
+            RequestsActions(
+                onBack = onBack,
+                onFilterChange = viewModel::setFilter,
+                onSortChange = viewModel::setSort,
+                // The request page arrives with the next phase; until then a row is read-only.
+                onOpen = {},
             ),
     )
 }
