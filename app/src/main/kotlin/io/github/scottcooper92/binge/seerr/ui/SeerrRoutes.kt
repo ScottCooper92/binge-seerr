@@ -29,6 +29,10 @@ data class IssueDetailRoute(
     val issueId: Int,
 ) : SeerrRoute
 
+/** The blocklist browser. */
+@Serializable
+data object BlocklistRoute : SeerrRoute
+
 /** The users browser. */
 @Serializable
 data object UsersRoute : SeerrRoute
