@@ -399,6 +399,9 @@ interface SeerrApi {
     @GET("api/v1/settings/about")
     suspend fun about(): SeerrAboutDto
 
+    @GET("api/v1/status/appdata")
+    suspend fun appData(): SeerrAppDataDto
+
     @GET("api/v1/settings/jobs")
     suspend fun jobs(): List<SeerrJobDto>
 

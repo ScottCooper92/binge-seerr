@@ -82,6 +82,16 @@ data class SeerrAboutDto(
     @SerialName("version") val version: String? = null,
     @SerialName("totalRequests") val totalRequests: Int? = null,
     @SerialName("totalMediaItems") val totalMediaItems: Int? = null,
+    @SerialName("tz") val tz: String? = null,
+    @SerialName("appDataPath") val appDataPath: String? = null,
+)
+
+/** `GET status/appdata`: whether the config directory is a mounted volume, and on the Jellyseerr lineage whether it is writable. */
+@Serializable
+data class SeerrAppDataDto(
+    @SerialName("appData") val appData: Boolean = true,
+    @SerialName("appDataPath") val appDataPath: String? = null,
+    @SerialName("appDataPermissions") val appDataPermissions: Boolean? = null,
 )
 
 /** One scheduled job (`GET settings/jobs`); [nextExecutionTime] is an ISO timestamp. */

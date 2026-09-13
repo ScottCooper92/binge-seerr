@@ -20,6 +20,7 @@ enum class ServerSettingsPage {
     Jobs,
     Cache,
     Logs,
+    About,
 }
 
 /**

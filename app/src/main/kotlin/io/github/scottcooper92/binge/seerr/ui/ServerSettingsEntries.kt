@@ -8,7 +8,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
+import io.github.scottcooper92.binge.seerr.ui.settings.server.AboutScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.AboutViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ApiKeyActions
@@ -68,6 +71,12 @@ internal fun ServerSettingsPageEntry(
     onOpenSlider: (Int?) -> Unit,
 ) {
     when (page) {
+        ServerSettingsPage.About -> {
+            val viewModel = hiltViewModel<AboutViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val context = LocalContext.current
+            AboutScreen(state = state, onBack = onBack, onRetry = viewModel::reload, onOpenUrl = { url -> context.openInBrowser(url) })
+        }
         ServerSettingsPage.Logs -> {
             val viewModel = hiltViewModel<LogsViewModel>()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
