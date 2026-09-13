@@ -6,8 +6,8 @@ import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.REQUEST
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,6 +31,9 @@ private const val USER_PAGE =
 /** Adding users through the browser: the local-account form, and the import picker over the media server's accounts. */
 class UserAdmissionTest {
     @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @get:Rule
     val folder = TemporaryFolder()
 
     private val seerr = ScriptedSeerr(folder)
@@ -40,7 +42,6 @@ class UserAdmissionTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
         seerr.viewer(id = 7, permissions = ADMIN, settings = """{"mediaServerType":2,"emailEnabled":true,"applicationUrl":"https://s"}""")
         seerr.serve("GET /api/v1/user", USER_PAGE)
