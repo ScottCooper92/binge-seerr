@@ -52,7 +52,7 @@ maintainer's decision; see the README.
 > device. The app talks to the server you entered and to nothing else, except plex.tv if you choose
 > to sign in with Plex. No analytics, no adverts, no accounts of its own.
 >
-> Open source, under an MIT licence: github.com/ScottCooper92/binge-seerr.
+> Open source, under the Apache 2.0 licence: github.com/ScottCooper92/binge-seerr.
 
 (1,712 characters)
 

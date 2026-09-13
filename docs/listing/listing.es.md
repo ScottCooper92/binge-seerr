@@ -50,4 +50,4 @@
 > sale del dispositivo. La app habla con el servidor que introdujiste y con nada más, salvo plex.tv
 > si eliges iniciar sesión con Plex. Sin analíticas, sin anuncios, sin cuentas propias.
 >
-> Código abierto, con licencia MIT: github.com/ScottCooper92/binge-seerr.
+> Código abierto, con licencia Apache 2.0: github.com/ScottCooper92/binge-seerr.
