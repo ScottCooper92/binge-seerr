@@ -218,6 +218,55 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `two outbox entries sending identical text concurrently are not both matched to the same server comment`() =
+        runTest {
+            server(ADMIN)
+            val firstPostReceived = CompletableDeferred<Unit>()
+            val releaseFirstPost = CountDownLatch(1)
+            var postCount = 0
+            responses["POST /api/v1/issue/31/comment"] = {
+                val n = ++postCount
+                if (n == 1) {
+                    firstPostReceived.complete(Unit)
+                    releaseFirstPost.await()
+                }
+                MockResponse(
+                    code = 200,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body =
+                        issueJson(
+                            comments =
+                                """[{"id":1,"message":"Audio out of sync"},
+                                   {"id":9,"message":"hi","user":{"id":7}},
+                                   {"id":10,"message":"hi","user":{"id":7}}]""",
+                        ),
+                )
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.setDraft("hi")
+            vm.postComment()
+            vm.awaitReady { it.outbox.singleOrNull()?.state == SendState.Sending }
+            firstPostReceived.await()
+
+            vm.setDraft("hi")
+            vm.postComment()
+            val secondLanded = vm.awaitReady { it.outbox.size == 1 && it.detail.comments.any { c -> c.id == 9 || c.id == 10 } }
+            assertEquals(1, secondLanded.detail.comments.count { it.id == 9 || it.id == 10 })
+
+            releaseFirstPost.countDown()
+            val bothLanded = vm.awaitReady { it.outbox.isEmpty() }
+            assertEquals(
+                setOf(9, 10),
+                bothLanded.detail.comments
+                    .filter { it.id == 9 || it.id == 10 }
+                    .map { it.id }
+                    .toSet(),
+            )
+        }
+
+    @Test
     fun `editing a pending comment mid-send cancels the original post so only the edit lands`() =
         runTest {
             server(ADMIN)

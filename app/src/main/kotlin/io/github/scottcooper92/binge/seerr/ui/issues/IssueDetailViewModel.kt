@@ -170,31 +170,41 @@ class IssueDetailViewModel
 
         /**
          * The confirmed comment is resolved by diffing the post's answer against what this issue's
-         * comments looked like just before the request went out, then matching on author: the newest id
-         * alone can't be trusted, because another comment on the same issue - another user's, another
-         * device's, or a second outbox entry that lands first - can arrive between this request and its
-         * response and outrank it.
+         * comments look like right when this confirmation is applied, not a snapshot taken before the
+         * request went out: a sibling outbox entry that lands first is folded into `detail.comments`
+         * before this one resolves, so it's already "known" and can't be reclaimed here even when both
+         * entries sent identical text. The newest id alone can't be trusted either, because another
+         * comment on the same issue - another user's, another device's, or a second outbox entry - can
+         * arrive between this request and its response and outrank it.
          */
         private suspend fun send(
             localId: Long,
             message: String,
         ) {
-            val knownIds =
-                ready()?.detail?.let { detail -> setOfNotNull(detail.report?.id) + detail.comments.map { it.id } }.orEmpty()
             runCatching {
                 val issue = connection.api().commentOnIssue(issueId, SeerrIssueCommentBody(message))
                 val user = runCatching { connection.authenticatedUser() }.getOrNull()
-                val candidates = issue.comments.filter { it.id !in knownIds && it.message == message }
-                val confirmedDto = user?.let { u -> candidates.firstOrNull { it.user?.id == u.id } } ?: candidates.minByOrNull { it.id }
-                confirmedDto?.toIssueComment(user?.id) ?: error("No comment on the answer")
-            }.onSuccess { confirmed ->
+                issue to user
+            }.onSuccess { (issue, user) ->
                 outboxJobs.remove(localId)
+                var matched = false
                 updateReady { ready ->
-                    ready.copy(
-                        detail = ready.detail.copy(comments = ready.detail.comments + confirmed.copy(isMine = true)),
-                        outbox = ready.outbox.filterNot { it.localId == localId },
-                    )
+                    val knownIds = setOfNotNull(ready.detail.report?.id) + ready.detail.comments.map { it.id }
+                    val candidates = issue.comments.filter { it.id !in knownIds && it.message == message }
+                    val confirmedDto =
+                        user?.let { u -> candidates.firstOrNull { it.user?.id == u.id } } ?: candidates.minByOrNull { it.id }
+                    val confirmed = confirmedDto?.toIssueComment(user?.id)
+                    if (confirmed == null) {
+                        ready
+                    } else {
+                        matched = true
+                        ready.copy(
+                            detail = ready.detail.copy(comments = ready.detail.comments + confirmed.copy(isMine = true)),
+                            outbox = ready.outbox.filterNot { it.localId == localId },
+                        )
+                    }
                 }
+                if (!matched) updateOutbox(localId) { it.copy(state = SendState.Failed(retryable = true)) }
             }.onFailure { failure ->
                 // A cancellation means this send was superseded by an edit or a drop, not that it failed:
                 // that entry's outbox state (or its removal) is already handled by whatever cancelled it.
