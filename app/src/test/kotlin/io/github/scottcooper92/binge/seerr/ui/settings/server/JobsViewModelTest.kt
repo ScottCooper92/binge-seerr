@@ -113,6 +113,9 @@ class JobsViewModelTest {
             val failed = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first() }
             vm.cancel("download-sync")
             assertTrue(failed.await() is EditorEvent.Failed)
-            assertTrue(vm.awaitReady().busyIds.isEmpty())
+            // Awaited, not sampled: reading `uiState.value` here asserts on whatever the state
+            // happens to be at this line, which passes or fails on scheduling rather than on the
+            // behaviour. The ViewModel releases the job before emitting, so this settles.
+            vm.uiState.first { it is JobsUiState.Ready && it.busyIds.isEmpty() }
         }
 }
