@@ -166,7 +166,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /settings/jobs/{jobId}/cancel` | Cancel a specific job | v1.20.0 | v1.0.0 | yes | Cancel on a running job, on the jobs page. |
 | `POST /settings/jobs/{jobId}/run` | Invoke a specific job | v1.20.0 | v1.0.0 | yes | Run now on the jobs page. |
 | `POST /settings/jobs/{jobId}/schedule` | Modify job schedule | v1.27.0 | v1.1.0 | yes | The schedule dialog on the jobs page: the presets or a cron of the admin's own. |
-| `GET /settings/logs` | Returns logs | v1.22.0 | v1.0.0 |  |  |
+| `GET /settings/logs` | Returns logs | v1.22.0 | v1.0.0 | yes | The logs page: paged, with the level filter and the search. |
 | `POST /settings/main` | Update main settings | v1.0.0 | v1.0.0 | yes | The general settings form, and the default permissions page (which sends only those bits). |
 | `POST /settings/main/regenerate` | Get main settings with newly-generated API key | v1.20.0 | v1.0.0 | yes | Regenerate on the general settings page; an API-key session reconnects with the new key. |
 | `GET /settings/metadatas` | Get Metadata settings | — | v3.0.0 | yes | The metadata page. |

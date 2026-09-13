@@ -423,6 +423,15 @@ interface SeerrApi {
     @GET("api/v1/settings/cache")
     suspend fun caches(): SeerrCacheDto
 
+    /** The server log, newest first; [filter] is the lowest level shown, [search] a substring of the message or label. */
+    @GET("api/v1/settings/logs")
+    suspend fun logs(
+        @Query("take") take: Int,
+        @Query("skip") skip: Int,
+        @Query("filter") filter: String,
+        @Query("search") search: String? = null,
+    ): JsonElement
+
     @POST("api/v1/settings/cache/{cacheId}/flush")
     suspend fun flushCache(
         @Path("cacheId") cacheId: String,
