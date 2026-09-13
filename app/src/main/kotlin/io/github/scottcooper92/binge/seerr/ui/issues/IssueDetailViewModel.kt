@@ -136,7 +136,7 @@ class IssueDetailViewModel
         ) {
             val ready = ready() ?: return
             val trimmed = message.trim()
-            if (trimmed.isEmpty() || ready.commentAction != CommentAction.None) return
+            if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Editing(commentId))
             viewModelScope.launch {
                 runCatching { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
@@ -155,7 +155,7 @@ class IssueDetailViewModel
         /** Resolves an open issue or reopens a resolved one; the cached row moves with it, so the browser agrees at once. */
         fun toggleStatus() {
             val ready = ready() ?: return
-            if (ready.action != IssueAction.None || !ready.detail.canResolve) return
+            if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canResolve) return
             val resolving = ready.detail.item.status == IssueStatus.Open
             state.value = ready.copy(action = IssueAction.UpdatingStatus)
             viewModelScope.launch {
@@ -163,8 +163,11 @@ class IssueDetailViewModel
                     connection.api().setIssueStatus(issueId, if (resolving) STATUS_RESOLVED else STATUS_OPEN)
                     store.updateStatus(issueId, (if (resolving) IssueStatus.Resolved else IssueStatus.Open).name)
                 }.onSuccess {
-                    reloadAfterWrite()
-                    eventFlow.emit(if (resolving) IssueDetailEvent.IssueResolved else IssueDetailEvent.IssueReopened)
+                    val reloadFailure = reloadAfterWrite()
+                    eventFlow.emit(
+                        reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) }
+                            ?: (if (resolving) IssueDetailEvent.IssueResolved else IssueDetailEvent.IssueReopened),
+                    )
                 }.onFailure { failure ->
                     updateReady { it.copy(action = IssueAction.None) }
                     eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
@@ -175,7 +178,7 @@ class IssueDetailViewModel
         /** Removes the report and its whole thread; the page has nothing left to show, so it pops. */
         fun deleteIssue() {
             val ready = ready() ?: return
-            if (ready.action != IssueAction.None || !ready.detail.canDelete) return
+            if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canDelete) return
             state.value = ready.copy(action = IssueAction.Deleting)
             viewModelScope.launch {
                 runCatching {
@@ -191,7 +194,7 @@ class IssueDetailViewModel
 
         fun deleteComment(commentId: Int) {
             val ready = ready() ?: return
-            if (ready.commentAction != CommentAction.None) return
+            if (ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Deleting(commentId))
             viewModelScope.launch {
                 runCatching { connection.api().deleteIssueComment(commentId) }

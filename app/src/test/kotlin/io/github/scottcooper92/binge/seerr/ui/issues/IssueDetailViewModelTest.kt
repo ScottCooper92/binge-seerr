@@ -426,6 +426,29 @@ class IssueDetailViewModelTest {
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/issue/31" })
         }
 
+    @Test
+    fun `a status change that succeeds but fails to reload reports failure, not success, leaving the stale status`() =
+        runTest {
+            server(ADMIN)
+            serve("POST /api/v1/issue/31/resolved", "{}")
+            var issueCalls = 0
+            responses["GET /api/v1/issue/31"] = {
+                if (++issueCalls == 1) {
+                    MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = issueJson())
+                } else {
+                    MockResponse(code = 503)
+                }
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.toggleStatus()
+
+            assertTrue(vm.events.first() is IssueDetailEvent.Failed)
+            val ready = vm.awaitReady { it.action == IssueAction.None }
+            assertEquals(IssueStatus.Open, ready.detail.item.status)
+        }
+
     private fun cachedRow(
         id: Int,
         status: String,
