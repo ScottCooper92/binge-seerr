@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
+import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
@@ -89,16 +90,7 @@ class RequestDetailViewModel
                 val profile = async { connection.profile() }
                 val permissions = async { runCatching { connection.authenticatedUser() }.getOrNull().toPermissions() }
                 val dto = api.request(requestId)
-                val details =
-                    async {
-                        runCatching {
-                            if (dto.media.mediaType == MEDIA_TYPE_MOVIE) {
-                                api.movieDetails(dto.media.tmdbId)
-                            } else {
-                                api.tvDetails(dto.media.tmdbId)
-                            }
-                        }.getOrNull()
-                    }
+                val details = async { runCatching { api.details(dto.media.mediaType, dto.media.tmdbId) }.getOrNull() }
                 val destination = async { dto.destination(api) }
                 val detailsDto = details.await()
                 val hydrated = detailsDto?.let { HydratedTitle(it.displayTitle, it.posterPath?.toTmdbPosterUrl(), it.year) }
