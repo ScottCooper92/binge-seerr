@@ -4,20 +4,21 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
+import io.github.scottcooper92.binge.seerr.seerr.SeerrDownloadStatusDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
-import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestUserDto
+import io.github.scottcooper92.binge.seerr.seerr.displayString
+import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
+import io.github.scottcooper92.binge.seerr.seerr.isDownloading
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.time.Instant
-import java.time.OffsetDateTime
 
 const val REQUESTS_PAGE_SIZE = 20
 private const val MEDIA_TYPE_MOVIE = "movie"
 private const val MEDIA_TYPE_TV = "tv"
-private const val STATUS_DOWNLOADING = "downloading"
 
 /** One fetched page; [totalPages] is null when the server sends no `pageInfo`, which reads as the last page. */
 data class OffsetPage<T>(
@@ -91,18 +92,21 @@ class RequestsPagingSource(
     }
 }
 
+/** Null for a media type this app does not render. */
+fun String.toRequestMediaTypeOrNull(): RequestMediaType? =
+    when (this) {
+        MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
+        MEDIA_TYPE_TV -> RequestMediaType.Tv
+        else -> null
+    }
+
 /** Null for a request whose media type this app does not render; there is nothing to show. */
 suspend fun SeerrRequestDto.toRequestItem(
     api: SeerrApi,
     hydrate: suspend (SeerrApi, String, Int) -> HydratedTitle?,
     nowMillis: Long,
 ): RequestItem? {
-    val mediaType =
-        when (media.mediaType) {
-            MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
-            MEDIA_TYPE_TV -> RequestMediaType.Tv
-            else -> return null
-        }
+    val mediaType = media.mediaType.toRequestMediaTypeOrNull() ?: return null
     val details = hydrate(api, media.mediaType, media.tmdbId)
     val statuses = if (is4k) media.downloadStatus4k else media.downloadStatus
     return RequestItem(
@@ -116,31 +120,15 @@ suspend fun SeerrRequestDto.toRequestItem(
         requestedById = requestedBy?.id,
         requestedAtMillis = createdAt?.toEpochMillisOrNull(),
         status = status,
-        mediaStatus = media.status,
+        mediaStatus = if (is4k) media.status4k else media.status,
         download = statuses.toDownload(nowMillis),
         seasonNumbers = seasons.map { it.seasonNumber },
         is4k = is4k,
     )
 }
 
-private fun List<io.github.scottcooper92.binge.seerr.seerr.SeerrDownloadStatusDto>.toDownload(nowMillis: Long): RequestDownload? {
+private fun List<SeerrDownloadStatusDto>.toDownload(nowMillis: Long): RequestDownload? {
     if (isEmpty()) return null
-    val totalSize = sumOf { it.size ?: 0.0 }
-    val totalLeft = sumOf { it.sizeLeft ?: 0.0 }
-    val fraction = if (totalSize > 0.0) ((totalSize - totalLeft) / totalSize).toFloat().coerceIn(0f, 1f) else 0f
-    val downloading =
-        when {
-            any { it.status?.equals(STATUS_DOWNLOADING, ignoreCase = true) == true } -> true
-            any { it.status != null } -> false
-            else -> fraction > 0f
-        }
-    return RequestDownload(fraction = fraction, etaMinutes = etaMinutes(nowMillis), downloading = downloading)
+    val fraction = downloadFraction()
+    return RequestDownload(fraction = fraction, etaMinutes = etaMinutes(nowMillis), downloading = isDownloading(fraction))
 }
-
-/** Email is a last resort and masked to its local part. */
-private fun SeerrRequestUserDto.displayString(): String? =
-    listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() } ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
-
-private fun String.toEpochMillisOrNull(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-        ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()
