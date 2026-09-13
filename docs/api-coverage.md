@@ -156,13 +156,13 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/discover/reset` | Reset all discover sliders | v1.32.0 | v1.4.0 |  |  |
 | `DELETE /settings/discover/{sliderId}` | Delete slider by ID | v1.32.0 | v1.4.0 |  |  |
 | `PUT /settings/discover/{sliderId}` | Update a single slider | v1.32.0 | v1.4.0 |  |  |
-| `GET /settings/jellyfin` | Get Jellyfin settings | — | v1.0.0 |  |  |
-| `POST /settings/jellyfin` | Update Jellyfin settings | — | v1.0.0 |  |  |
-| `GET /settings/jellyfin/library` | Get Jellyfin libraries | — | v1.0.0 |  |  |
-| `POST /settings/jellyfin/library/sync` | Sync Jellyfin libraries | — | develop |  |  |
-| `PUT /settings/jellyfin/library/{libraryId}` | Update a single Jellyfin library | — | develop |  |  |
-| `GET /settings/jellyfin/sync` | Get status of full Jellyfin library sync | — | v1.0.0 |  |  |
-| `POST /settings/jellyfin/sync` | Start full Jellyfin library sync | — | v1.0.0 |  |  |
+| `GET /settings/jellyfin` | Get Jellyfin settings | — | v1.0.0 | yes | The media-server page on a Jellyfin or Emby server. |
+| `POST /settings/jellyfin` | Update Jellyfin settings | — | v1.0.0 | yes | The media-server page's save. |
+| `GET /settings/jellyfin/library` | Get Jellyfin libraries | — | v1.0.0 | yes | Library toggles (`enable=`) and re-read (`sync=`) on a released server. |
+| `POST /settings/jellyfin/library/sync` | Sync Jellyfin libraries | — | develop | yes | Tried first for a library re-read; a 404 falls back to the `GET`. |
+| `PUT /settings/jellyfin/library/{libraryId}` | Update a single Jellyfin library | — | develop | yes | Tried first for a library toggle; a 404 falls back to the `GET`. |
+| `GET /settings/jellyfin/sync` | Get status of full Jellyfin library sync | — | v1.0.0 | yes | The scan's progress, polled while it runs. |
+| `POST /settings/jellyfin/sync` | Start full Jellyfin library sync | — | v1.0.0 | yes | Start and cancel the scan. |
 | `POST /settings/jobs/{jobId}/cancel` | Cancel a specific job | v1.20.0 | v1.0.0 |  |  |
 | `POST /settings/jobs/{jobId}/run` | Invoke a specific job | v1.20.0 | v1.0.0 |  |  |
 | `POST /settings/jobs/{jobId}/schedule` | Modify job schedule | v1.27.0 | v1.1.0 |  |  |
@@ -206,14 +206,14 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/notifications/webpush` | Get Web Push notification settings | v1.24.0 | v1.0.0 |  |  |
 | `POST /settings/notifications/webpush` | Update Web Push notification settings | v1.24.0 | v1.0.0 |  |  |
 | `POST /settings/notifications/webpush/test` | Test Web Push settings | v1.24.0 | v1.0.0 |  |  |
-| `GET /settings/plex` | Get Plex settings | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/plex` | Update Plex settings | v1.0.0 | v1.0.0 |  |  |
-| `GET /settings/plex/devices/servers` | Gets the user's available Plex servers | v1.18.0 | v1.0.0 |  |  |
-| `GET /settings/plex/library` | Get Plex libraries | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/plex/library/sync` | Sync Plex libraries | — | develop |  |  |
-| `PUT /settings/plex/library/{libraryId}` | Update a single Plex library | — | develop |  |  |
-| `GET /settings/plex/sync` | Get status of full Plex library scan | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/plex/sync` | Start full Plex library scan | v1.20.0 | v1.0.0 |  |  |
+| `GET /settings/plex` | Get Plex settings | v1.0.0 | v1.0.0 | yes | The media-server page on a Plex server. |
+| `POST /settings/plex` | Update Plex settings | v1.0.0 | v1.0.0 | yes | The media-server page's save. |
+| `GET /settings/plex/devices/servers` | Gets the user's available Plex servers | v1.18.0 | v1.0.0 | yes | The server picker on the media-server page. |
+| `GET /settings/plex/library` | Get Plex libraries | v1.0.0 | v1.0.0 | yes | Library toggles (`enable=`) and re-read (`sync=`) on a released server. |
+| `POST /settings/plex/library/sync` | Sync Plex libraries | — | develop | yes | Tried first for a library re-read; a 404 falls back to the `GET`. |
+| `PUT /settings/plex/library/{libraryId}` | Update a single Plex library | — | develop | yes | Tried first for a library toggle; a 404 falls back to the `GET`. |
+| `GET /settings/plex/sync` | Get status of full Plex library scan | v1.0.0 | v1.0.0 | yes | The scan's progress, polled while it runs. |
+| `POST /settings/plex/sync` | Start full Plex library scan | v1.20.0 | v1.0.0 | yes | Start and cancel the scan. |
 | `POST /settings/radarr` | Create Radarr instance | v1.0.0 | v1.0.0 |  |  |
 | `POST /settings/radarr/test` | Test Radarr configuration | v1.0.0 | v1.0.0 |  |  |
 | `DELETE /settings/radarr/{radarrId}` | Delete Radarr instance | v1.0.0 | v1.0.0 |  |  |
@@ -223,8 +223,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /settings/sonarr/test` | Test Sonarr configuration | v1.0.0 | v1.0.0 |  |  |
 | `DELETE /settings/sonarr/{sonarrId}` | Delete Sonarr instance | v1.0.0 | v1.0.0 |  |  |
 | `PUT /settings/sonarr/{sonarrId}` | Update Sonarr instance | v1.0.0 | v1.0.0 |  |  |
-| `GET /settings/tautulli` | Get Tautulli settings | v1.29.0 | v1.1.0 |  |  |
-| `POST /settings/tautulli` | Update Tautulli settings | v1.29.0 | v1.1.0 |  |  |
+| `GET /settings/tautulli` | Get Tautulli settings | v1.29.0 | v1.1.0 | yes | The Tautulli page, beside a Plex server. |
+| `POST /settings/tautulli` | Update Tautulli settings | v1.29.0 | v1.1.0 | yes | The Tautulli page's save. |
 | `GET /status/appdata` | Get application data volume status | v1.19.0 | v1.0.0 |  | Config-volume health, shown with About. |
 
 ### Not planned

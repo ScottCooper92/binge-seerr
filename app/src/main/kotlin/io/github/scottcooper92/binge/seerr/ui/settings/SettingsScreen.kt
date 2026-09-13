@@ -26,6 +26,7 @@ class SettingsActions(
     val onBack: () -> Unit,
     val onEditConnection: () -> Unit,
     val onOpenServerSettings: () -> Unit,
+    val onOpenMediaServer: () -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
     val onDisconnect: () -> Unit,
@@ -59,6 +60,11 @@ private fun SettingsContent(
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Group(stringResource(R.string.settings_group_connection), connectionRows(state.connection, state.server, actions.onEditConnection))
         config?.general?.let { Group(stringResource(R.string.settings_group_general), generalRows(it, actions.onOpenServerSettings)) }
+        if (config !=
+            null
+        ) {
+            Group(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server, actions.onOpenMediaServer))
+        }
         config?.services?.takeIf { it.isNotEmpty() }?.let { Group(stringResource(R.string.settings_group_services), serviceRows(it)) }
         config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
         state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }

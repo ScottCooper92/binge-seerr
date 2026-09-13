@@ -134,6 +134,7 @@ fun SeerrNavHost(
                         onBack = { backStack.removeLastOrNull() },
                         onEditConnection = { backStack.add(EditConnectionRoute) },
                         onOpenServerSettings = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.General)) },
+                        onOpenMediaServer = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.MediaServer)) },
                     )
                 }
                 entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
@@ -411,6 +412,7 @@ private fun SettingsEntry(
     onBack: () -> Unit,
     onEditConnection: () -> Unit,
     onOpenServerSettings: () -> Unit,
+    onOpenMediaServer: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -426,6 +428,7 @@ private fun SettingsEntry(
                 onBack = onBack,
                 onEditConnection = onEditConnection,
                 onOpenServerSettings = onOpenServerSettings,
+                onOpenMediaServer = onOpenMediaServer,
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.

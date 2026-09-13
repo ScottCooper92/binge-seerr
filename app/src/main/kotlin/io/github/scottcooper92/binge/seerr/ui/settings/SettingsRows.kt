@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -25,6 +26,7 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
@@ -87,6 +89,29 @@ private fun ServerSummary.versionDetail(): String {
         else -> edition
     }
 }
+
+/** The media server the admin connected, and the way into its page: address, libraries and scans. */
+@Composable
+internal fun mediaServerRows(
+    server: ServerSummary,
+    onOpen: () -> Unit,
+): List<SettingsRow> =
+    listOf(
+        SettingsRow(
+            icon = Icons.Filled.Storage,
+            iconTint = BingeSentiment.Info.fill(),
+            label =
+                stringResource(
+                    when (server.mediaServer) {
+                        SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
+                        SeerrMediaServer.Emby -> R.string.user_origin_emby
+                        SeerrMediaServer.Plex, SeerrMediaServer.NotConfigured -> R.string.user_origin_plex
+                    },
+                ),
+            detail = stringResource(R.string.server_settings_media_server_caption),
+            onClick = onOpen,
+        ),
+    )
 
 /** The general settings as read, and first the way into editing them: the page owns every field, these rows only summarise. */
 @Composable
