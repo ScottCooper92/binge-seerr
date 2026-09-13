@@ -48,6 +48,7 @@ class SettingsLoader
                 versionLabel = profile.version?.label,
                 updateAvailable = profile.updateAvailable || profile.commitsBehind > 0,
                 commitsBehind = profile.commitsBehind,
+                mediaServer = profile.mediaServer,
             )
         }
 
