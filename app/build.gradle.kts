@@ -23,6 +23,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        // The device lane's tests take the object graph from Hilt, so the runner swaps in Hilt's test
+        // Application; it is the only instrumentation this app runs.
+        testInstrumentationRunner = "io.github.scottcooper92.binge.seerr.SeerrHiltTestRunner"
     }
 
     // BuildConfig.DEBUG selects the caller policy: any caller on a debug build, the pinned Binge
@@ -33,11 +36,19 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Opt-in (`-PminifyDebug`) minified debug build: the one the device lane runs, so a keep
+            // rule that goes stale fails there rather than on a user. BuildConfig.DEBUG stays true, which
+            // is what lets the smoke test bind as a caller. Off by default: it would slow the dev loop.
+            if (project.hasProperty("minifyDebug")) {
+                optimization { enable = true }
+            }
+        }
         release {
-            // No shrinking yet. The APK cost after R8 is something roadmap stage 3 measures,
-            // so turning it on before there is anything to shrink would report a number that
-            // means nothing.
-            isMinifyEnabled = false
+            // One switch for code shrinking, resource shrinking and the default Android keep rules;
+            // this app's own rules are the `keepRules` source set. Must stay identical to the
+            // minifyDebug block above, or the lane stops proving what release ships.
+            optimization { enable = true }
         }
     }
 
@@ -57,6 +68,18 @@ android {
         // out of dimensionResource and stringResource, so they need the merged resources on the
         // unit-test classpath.
         unitTests.isIncludeAndroidResources = true
+
+        managedDevices {
+            localDevices {
+                // The device lane's emulator (#86), driven by device-smoke.yml and never by ci.yml.
+                // aosp-atd is headless and carries no Google APIs, which the smoke does not need.
+                create("smokeAtdApi34") {
+                    device = "Pixel 6"
+                    apiLevel = 34
+                    systemImageSource = "aosp-atd"
+                }
+            }
+        }
     }
 }
 
@@ -112,4 +135,13 @@ dependencies {
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)
+
+    // The device lane (#86): one instrumentation test that binds the exported Service over a real
+    // Binder on the minified build and completes a handshake and a status call against a mock server.
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
+    androidTestImplementation(libs.okhttp.mockwebserver)
 }
