@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeBottomSheet
@@ -23,6 +25,7 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeOutlinedButton
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
+import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import com.binge.designsystem.R as DesR
 
@@ -33,7 +36,7 @@ class ManageMediaActions(
 )
 
 /** Which destructive step is awaiting its confirmation; deleting files asks twice, the second time naming the client. */
-private sealed interface Confirm {
+private sealed interface Confirm : java.io.Serializable {
     data object Clear : Confirm
 
     data class DeleteFiles(
@@ -164,6 +167,23 @@ private fun MediaInstanceSection(
                 modifier = Modifier.weight(1f),
             )
             instance.status?.let { MediaStateChip(status = it) }
+        }
+        if (instance.mediaServerUrl != null || instance.serviceUrl != null) {
+            val context = LocalContext.current
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+                instance.mediaServerUrl?.let { url ->
+                    BingeOutlinedButton(
+                        label = stringResource(R.string.request_open_media_server),
+                        onClick = { context.openInBrowser(url) },
+                    )
+                }
+                instance.serviceUrl?.let { url ->
+                    BingeOutlinedButton(
+                        label = stringResource(if (media.isTv) R.string.media_open_sonarr else R.string.media_open_radarr),
+                        onClick = { context.openInBrowser(url) },
+                    )
+                }
+            }
         }
         if (media.canSetStatus) {
             ChoicePicker(
