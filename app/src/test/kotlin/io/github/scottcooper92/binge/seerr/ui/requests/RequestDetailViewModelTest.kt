@@ -152,6 +152,23 @@ class RequestDetailViewModelTest {
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
         }
 
+    /** The hub reads a size with no remaining bytes as complete; the page shares its helper, so it must agree. */
+    @Test
+    fun `a download reporting a size but no remaining bytes reads as complete`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,
+                   "downloadStatus":[{"title":"Severance.S02","size":1000}]}}""",
+            )
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(1f, detail.downloads.single().fraction)
+        }
+
     @Test
     fun `reporting an issue posts against the server's media id, and a plain user without the permission is not offered it`() =
         runTest {

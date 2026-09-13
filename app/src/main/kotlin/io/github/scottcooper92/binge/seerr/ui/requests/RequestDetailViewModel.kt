@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
+import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -127,7 +128,7 @@ class RequestDetailViewModel
                         statuses.map { status ->
                             DetailDownload(
                                 title = status.title,
-                                fraction = status.fraction(),
+                                fraction = listOf(status).downloadFraction(),
                                 totalBytes = status.size?.toLong()?.takeIf { it > 0 },
                                 etaMinutes = listOf(status).etaMinutes(System.currentTimeMillis()),
                             )
@@ -167,12 +168,6 @@ class RequestDetailViewModel
             fun create(requestId: Int): RequestDetailViewModel
         }
     }
-
-private fun io.github.scottcooper92.binge.seerr.seerr.SeerrDownloadStatusDto.fraction(): Float {
-    val total = size ?: return 0f
-    val left = sizeLeft ?: return 0f
-    return if (total > 0.0) ((total - left) / total).toFloat().coerceIn(0f, 1f) else 0f
-}
 
 private fun String.toEpochMillisOrNull(): Long? =
     runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
