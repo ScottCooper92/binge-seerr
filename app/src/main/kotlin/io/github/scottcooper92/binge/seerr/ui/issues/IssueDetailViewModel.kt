@@ -168,15 +168,25 @@ class IssueDetailViewModel
             }
         }
 
-        /** The confirmed comment is the newest on the issue the post answers with; it replaces the pending row. */
+        /**
+         * The confirmed comment is resolved by diffing the post's answer against what this issue's
+         * comments looked like just before the request went out, then matching on author: the newest id
+         * alone can't be trusted, because another comment on the same issue - another user's, another
+         * device's, or a second outbox entry that lands first - can arrive between this request and its
+         * response and outrank it.
+         */
         private suspend fun send(
             localId: Long,
             message: String,
         ) {
+            val knownIds =
+                ready()?.detail?.let { detail -> setOfNotNull(detail.report?.id) + detail.comments.map { it.id } }.orEmpty()
             runCatching {
                 val issue = connection.api().commentOnIssue(issueId, SeerrIssueCommentBody(message))
                 val user = runCatching { connection.authenticatedUser() }.getOrNull()
-                issue.comments.maxByOrNull { it.id }?.toIssueComment(user?.id) ?: error("No comment on the answer")
+                val candidates = issue.comments.filter { it.id !in knownIds && it.message == message }
+                val confirmedDto = user?.let { u -> candidates.firstOrNull { it.user?.id == u.id } } ?: candidates.minByOrNull { it.id }
+                confirmedDto?.toIssueComment(user?.id) ?: error("No comment on the answer")
             }.onSuccess { confirmed ->
                 outboxJobs.remove(localId)
                 updateReady { ready ->

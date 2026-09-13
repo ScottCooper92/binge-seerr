@@ -192,6 +192,32 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `a comment landing on the same issue while a post is in flight is not mistaken for the one just posted`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "POST /api/v1/issue/31/comment",
+                issueJson(
+                    comments =
+                        """[{"id":1,"message":"Audio out of sync"},{"id":2,"message":"Same here"},
+                           {"id":5,"message":"On it","user":{"id":7,"displayName":"Scott"}},
+                           {"id":6,"message":"Unrelated","user":{"id":9,"displayName":"bo"}}]""",
+                ),
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.setDraft("On it")
+            vm.postComment()
+
+            val confirmed = vm.awaitReady { it.outbox.isEmpty() && it.detail.comments.any { c -> c.id == 5 } }
+            assertFalse(confirmed.detail.comments.any { it.id == 6 })
+            val mine = confirmed.detail.comments.last()
+            assertEquals("On it", mine.message)
+            assertTrue(mine.isMine)
+        }
+
+    @Test
     fun `editing a pending comment mid-send cancels the original post so only the edit lands`() =
         runTest {
             server(ADMIN)
@@ -213,7 +239,8 @@ class IssueDetailViewModelTest {
                         issueJson(
                             comments =
                                 """[{"id":1,"message":"Audio out of sync"},
-                                   {"id":${if (n == 1) 9 else 10},"message":"x","user":{"id":7}}]""",
+                                   {"id":${if (n == 1) 9 else 10},"message":"${if (n == 1) "original" else "edited"}",
+                                   "user":{"id":7}}]""",
                         ),
                 )
             }

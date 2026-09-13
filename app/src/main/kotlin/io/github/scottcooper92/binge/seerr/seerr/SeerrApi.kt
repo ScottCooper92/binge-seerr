@@ -248,7 +248,11 @@ interface SeerrApi {
         @Path("issueId") issueId: Int,
     ): SeerrIssueDto
 
-    /** Answers with the updated issue, whose newest comment is the one just posted. */
+    /**
+     * Answers with the updated issue, which includes the newly posted comment among [SeerrIssueDto.comments] -
+     * but not necessarily as the one with the highest id, since another comment on the same issue can land
+     * between this request and its response.
+     */
     @POST("api/v1/issue/{issueId}/comment")
     suspend fun commentOnIssue(
         @Path("issueId") issueId: Int,
