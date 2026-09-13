@@ -261,7 +261,8 @@ class IssueDetailViewModel
         private suspend fun reloadAfterWrite(): Throwable? {
             val result = runCatching { load() }
             updateReady { ready ->
-                result.getOrNull()
+                result
+                    .getOrNull()
                     ?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None, action = IssueAction.None) }
                     ?: ready.copy(commentAction = CommentAction.None, action = IssueAction.None)
             }
