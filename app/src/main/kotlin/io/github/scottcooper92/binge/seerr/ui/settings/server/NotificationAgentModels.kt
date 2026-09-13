@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPushoverSoundDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -176,7 +177,11 @@ internal fun SeerrNotificationAgentDto.toForm(agent: ServerAgent): AgentForm =
         raw = options,
     )
 
-/** The known options overlay what the server sent, each typed as the server stores it; a blank one is sent as empty. */
+/**
+ * The known options overlay what the server sent, each typed as the server stores it; a blank one
+ * is sent as empty, except a [OptionKind.Number] one, which has no empty-string reading and is
+ * sent as `null` instead — required ones can't reach here unparsed, [AgentForm.valid] blocks that.
+ */
 internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
     SeerrNotificationAgentDto(
         enabled = enabled,
@@ -189,7 +194,7 @@ internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
                         option.key to
                             when (option.kind) {
                                 OptionKind.Switch -> JsonPrimitive(value.toBoolean())
-                                OptionKind.Number -> value.trim().toIntOrNull()?.let(::JsonPrimitive) ?: JsonPrimitive("")
+                                OptionKind.Number -> value.trim().toIntOrNull()?.let(::JsonPrimitive) ?: JsonNull
                                 else -> JsonPrimitive(if (option == AgentOption.WebhookJsonPayload) value.encodePayload() else value.trim())
                             }
                     },

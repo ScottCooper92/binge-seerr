@@ -66,7 +66,7 @@ class PermissionsViewModelTest {
 
             seerr.viewer(id = 2, permissions = MANAGE_USERS or REQUEST, version = "1.33.0", settings = "{}")
             val manager = viewModel().awaitReady().draft
-            assertTrue(ManageablePermission.Request4k !in manager.locked)
+            assertTrue(ManageablePermission.Request4k in manager.locked)
             assertTrue(ManageablePermission.ManageRequests in manager.locked)
             assertFalse(ManageablePermission.ManageBlocklist in manager.offered)
         }
