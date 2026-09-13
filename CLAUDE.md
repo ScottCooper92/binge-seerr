@@ -110,12 +110,13 @@ to design; the server's API is versioned by release because it is not.
 
 ## Gates
 
-CI runs `./gradlew build`. That is the whole gate, and it covers five things, all of
+CI runs `./gradlew build`. That is the whole gate, and it covers six things, all of
 which turn the build red:
 
 - Kotlin compilation.
 - The unit tests (`:app:test`).
 - `ktlintCheck` — the ktlint plugin wires itself into `check`.
+- `detekt` — static analysis of the Kotlin itself, which ktlint and Android lint do not do.
 - **Android lint** (`:app:lint`) — AGP wires this into `check` too. It is easy to
   forget it is running until it fails, because nothing in the repository names it. The
   translation checks are pinned to error there: a locale is complete or it does not exist, so
@@ -123,17 +124,33 @@ which turn the build red:
 - `checkTranslationStaleness` — a reworded English string whose translation was not re-read.
   Fix or re-read the translation it names, then `./gradlew updateTranslationHashes`.
 
-`build` depends on `check`, which is what pulls the last four in. The device lane
+`build` depends on `check`, which is what pulls the last five in. The device lane
 (`device-smoke.yml`) is not part of it: it runs on `main`, weekly and on request, and proves the
 release keep rules across a real Binder.
 
-There is no detekt, no coverage floor, no screenshot suite and no `buf` in this
-repository, so do not look for one and do not report a finding as though one had
-caught it.
+There is no coverage floor, no screenshot suite and no `buf` in this repository, so do
+not look for one and do not report a finding as though one had caught it.
+
+### detekt
+
+Config is the root `detekt.yml`, with `buildUponDefaultConfig = true`, so it records only
+deviations from detekt's defaults. It is Binge's config minus everything that does not transfer:
+the custom `binge:` ruleset lives in an unpublished module there and cannot be depended on from
+here (binge-integrations#39), and the community Compose ruleset is tuned per-file to Binge's own
+composables, so adopting it is a measurement pass rather than a port.
+
+detekt runs on production `src/main` only, and **with type resolution** — the compile classpath is
+wired onto the task in `app/build.gradle.kts`. Without that classpath `UnsafeCallOnNullableType`,
+the `!!` ban, loads and silently never fires, so leave that wiring alone.
+
+`detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
+**zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or
+argued with in review. Paying it down is #165.
 
 **Never silence a gate instead of fixing it.** Do not add a ktlint baseline, do not
 add `ktlint` disable comments to make a file pass, do not add a `lint-baseline.xml`,
-do not set `abortOnError = false`, and do not exclude a source set from `check`.
+do not set `abortOnError = false`, do not exclude a source set from `check`, and do not
+add to `detekt-baseline.xml`.
 Formatting failures are the cheapest class of failure to fix properly. A lint
 baseline is worse than it looks: it silences the finding permanently and silently,
 in a repository whose whole purpose is to be copied.

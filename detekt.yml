@@ -1,0 +1,205 @@
+# Shared detekt config for this repository. `buildUponDefaultConfig = true` is set in
+# app/build.gradle.kts, so this file records only DEVIATIONS from detekt's defaults - it is not a
+# full ruleset dump.
+#
+# Ported from Binge's detekt.yml, which is where the tuning was done and where the reasoning in the
+# comments below comes from. Two things are deliberately NOT carried across:
+#
+#   - The custom `binge:` ruleset (FileLength, the comment gates). It lives in an unpublished
+#     module in Binge and is loaded by project path, so it cannot be depended on from here;
+#     copying the source would fork a live ruleset. See binge-integrations#39.
+#   - The community Compose ruleset, io.nlopez.compose.rules. Binge runs it, but its config there
+#     is tuned per-file to Binge's own code - an allowlist naming BingeNavHost, a CompositionLocal
+#     list, a dozen rules off for reasons that name Binge composables. Adopting it here is a
+#     measurement pass over this codebase, not a port.
+#
+# Formatting is ktlint's job. detekt's `formatting` ruleset ships in the separate detekt-formatting
+# artifact, which is deliberately not on the classpath, so it never loads. MaxLineLength and
+# WildcardImport overlap ktlint's own rules and are off so the two cannot double-report.
+
+build:
+  maxIssues: 0
+
+complexity:
+  # Captures genuine complexity hotspots ktlint cannot see. Thresholds are tuned UP from detekt's
+  # defaults and Composables are exempted where the rule double-counts Compose's structural
+  # `when`/nesting as logic, so routine UI does not flood the findings. The structural rules
+  # (LongParameterList / LongMethod / TooManyFunctions / CognitiveComplexMethod) are
+  # Compose-calibrated — a large screen composable with a dozen nav lambdas is idiomatic, not a
+  # smell — while keeping a real cap so genuine bloat still flags. See each rule below.
+  CyclomaticComplexMethod:
+    # @Composable UI is `when`/branch heavy by construction (one arm per state, per filter
+    # section, per nav destination); that branching isn't logic complexity, so exempt it and
+    # let the rule flag genuinely-branchy non-UI logic. ignoreSimpleWhenEntries stops a flat
+    # state `when` (each arm a single expression) from counting every arm.
+    ignoreSimpleWhenEntries: true
+    ignoreAnnotated: ['Composable']
+  CognitiveComplexMethod:
+    active: true
+    # Above detekt's default (15): cognitive complexity penalises nesting, and Compose layout
+    # nesting (Column/Row/Box scopes) inflates the score structurally. Raised 20 -> 25 in Binge#674 to
+    # clear the dozen @Composable findings deferred from Binge#676 — Compose's structural scope nesting
+    # reads as cognitive load to the rule — while still flagging the deeply-nested logic outliers.
+    threshold: 25
+  NestedBlockDepth:
+    active: true
+    # Above detekt's default (4): Compose composition nests scopes structurally. 5 flags genuine
+    # over-nesting without tripping ordinary layout/`if`-inside-`forEach` UI code.
+    threshold: 5
+  LongParameterList:
+    # Well above detekt's defaults (6 / 7): a top-level screen composable threads one lambda per
+    # navigation destination (MovieDetailScreen has ~12), which is idiomatic Compose, not a smell.
+    # ignoreDefaultParameters drops the trailing `modifier = Modifier` / optional callbacks from
+    # the count, so only required wiring is measured. 12 / 16 still caps genuine bloat — a plain
+    # function or constructor past these is asking for a parameter object (Binge#674).
+    functionThreshold: 12
+    constructorThreshold: 16
+    ignoreDefaultParameters: true
+  LongMethod:
+    # Above detekt's default (60): a screen composable's body is a flat tree of child composables
+    # (one call per section/row/state arm), so line count tracks UI surface, not branching logic.
+    # 90 clears the idiomatic screen bodies while still flagging the genuinely-overgrown method
+    # that should be decomposed by concern — the runtime mirror of the 400-line FileLength gate.
+    threshold: 90
+  TooManyFunctions:
+    # Above detekt's default (11): a feature screen file legitimately hosts the entry composable
+    # plus its focused private children (content / empty / error / row builders) — many small
+    # functions, by the Composable-hierarchy convention, not a god class. 16 clears that idiom
+    # while still flagging a file/class that has genuinely accreted too many responsibilities.
+    #
+    # The excluded files are API surfaces where the method count *is* the contract: a Retrofit
+    # service declares one function per endpoint, and a repository interface (with its 1:1 impl)
+    # one per operation. Splitting them by arbitrary grouping scatters a single coherent API for no
+    # readability gain — the same reasoning that permanently accepts the FileLength entry for the
+    # TMDB Retrofit service. Accepted as config rather than baseline entries so the baseline stays a
+    # record of real debt (Binge#674).
+    # An API surface where the method count IS the contract - one function per Seerr endpoint -
+    # rather than a class that has accreted responsibilities. Config rather than a baseline entry,
+    # so the baseline stays a record of real debt.
+    excludes:
+      - '**/SeerrApi.kt'
+    thresholdInFiles: 16
+    thresholdInClasses: 16
+    thresholdInInterfaces: 16
+    thresholdInObjects: 16
+    thresholdInEnums: 16
+
+potential-bugs:
+  # The `!!` ban. Requires type resolution — app/build.gradle.kts wires the compile classpath
+  # onto the detekt task so the run analyses with types. Without that classpath the rule loads
+  # and silently never fires, which is the one way this port can look right and be wrong.
+  UnsafeCallOnNullableType:
+    active: true
+  # Off, as in Binge. Wiring type resolution for UnsafeCallOnNullableType also activates these
+  # two, which nothing here asked for — and UnreachableCode is known to mis-resolve Android
+  # platform types and call live code dead (measured in binge-integrations#38).
+  UnreachableCode:
+    active: false
+  UnnecessarySafeCall:
+    active: false
+
+coroutines:
+  # High-value for a Flow-heavy app. SleepInsteadOfDelay and SuspendFunWithFlowReturnType are
+  # detekt-default-active and already pass.
+  InjectDispatcher:
+    # A Hilt @Provides IS the injection point - naming a dispatcher there is what the rule wants,
+    # not what it is warning about - so the one production site, `applicationScope()`, is exempted
+    # by annotation rather than baselined. Note the issue's premise was wrong: this repository does
+    # name a dispatcher in production today.
+    ignoreAnnotated: ['Provides']
+    # Preventive: nothing in production here hardcodes a dispatcher today, so this is a no-op on
+    # day one. It is on so that stays true — an SDK consumer that hardcodes Dispatchers.IO is one
+    # its own tests cannot control.
+    active: true
+  RedundantSuspendModifier:
+    # Off: only ever false-positives here — detekt's type resolution mishandles inline suspend
+    # lambdas (Flow.first/withContext/collectLatest/suspendCancellableCoroutine), flagging needed
+    # `suspend` modifiers as redundant (each verified in Binge via compile failure).
+    active: false
+
+exceptions:
+  # This codebase maps failures onto gRPC status codes for the host, and leans on
+  # `runCatching { … }.getOrNull()` in a number of places. A swallowed exception there becomes a
+  # wrong status on the wire, which a companion author has to debug from the far side of a Binder
+  # call. An intentional best-effort boundary takes a local @Suppress with a one-line reason
+  # rather than a baseline entry.
+  SwallowedException:
+    active: true
+  TooGenericExceptionCaught:
+    active: true
+
+naming:
+  # Off. It counts top-level CLASSES, and a screen file here holds composable functions plus one
+  # `*Actions` holder - so it reads `HubScreen.kt` as "a file whose single declaration is
+  # HubActions" and asks for a rename that would name the file after its least important member.
+  # 28 of its 31 findings are exactly that shape, and a new one arrives with every new screen, so
+  # baselining it would be a growing list of entries that are not debt.
+  MatchingDeclarationName:
+    active: false
+  FunctionNaming:
+    # @Composable functions are PascalCase by Compose convention, which the default
+    # lowerCamelCase pattern flags on every UI function. Exempt them (the canonical
+    # detekt-for-Compose setting) rather than baselining hundreds of false positives.
+    ignoreAnnotated: ['Composable']
+  NoNameShadowing:
+    active: false
+
+style:
+  ReturnCount:
+    active: true
+    # excludeGuardClauses is the substantive change, not the count: a run of leading
+    # `if (!precondition) return Ok` lines is a readability win, and detekt's default of 2 total
+    # returns punishes exactly that shape (a checker with four preconditions, say).
+    # Guard clauses are excluded; the remaining budget covers a mid-function error exit
+    # (`getOrElse { return failure }`) plus the happy-path return.
+    max: 3
+    excludeGuardClauses: true
+  # Tuned to flag genuine inline magic numbers in real logic (delay(5000), if (n > 7))
+  # while leaving declarations, named arguments, enums, annotations and preview tooling alone —
+  # those carry their own name/context, so a literal there isn't "magic". buildUponDefaultConfig
+  # keeps detekt's defaults (ignoreNumbers -1/0/1/2, ignoreHashCodeFunction, ignoreNamedArgument,
+  # ignoreConstantDeclaration, ignoreCompanionObjectPropertyDeclaration); the keys below are the
+  # deviations from those defaults.
+  MagicNumber:
+    active: true
+    excludes: ['**/*PreviewData.kt']
+    ignoreNumbers: ['-1', '0', '1', '2']
+    ignoreHashCodeFunction: true
+    ignoreAnnotation: true
+    ignoreNamedArgument: true
+    ignoreEnums: true
+    ignorePropertyDeclaration: true
+    ignoreConstantDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreLocalVariableDeclaration: true
+  # Gates the CLAUDE.md "No // TODO/FIXME — open a GitHub Issue" rule (Binge#406). A comment scan,
+  # so no type resolution needed; TODO()/FIXME() stdlib function calls are not comments and
+  # are never flagged. Bare markers (no trailing colon) are matched too, so `// TODO` is caught.
+  ForbiddenComment:
+    active: true
+    comments:
+      - reason: 'Track deferred work in a GitHub Issue, not a TODO comment (CLAUDE.md).'
+        value: 'TODO'
+      - reason: 'Track deferred work in a GitHub Issue, not a FIXME comment (CLAUDE.md).'
+        value: 'FIXME'
+      - reason: 'STOPSHIP markers must be resolved before shipping; open a GitHub Issue instead.'
+        value: 'STOPSHIP'
+  MaxLineLength:
+    active: false
+  WildcardImport:
+    active: false
+  # An abstract class with no abstract members and no constructor is better as a concrete class
+  # or an interface. Lives under `style` in detekt's taxonomy but belongs to the complexity
+  # hygiene above. Hilt @Binds
+  # modules MUST be `abstract class` (a @Binds method has to be abstract and so must its owner) —
+  # that's a framework requirement, not a smell, so exempt @Module to avoid false positives.
+  UnnecessaryAbstractClass:
+    active: true
+    ignoreAnnotated: ['Module']
+  UseOrEmpty:
+    active: false
+  UnusedPrivateMember:
+    # @Preview composables are invoked by the Compose tooling, not by app code, so
+    # detekt sees them as unused. Exempt preview annotations (false positives), the
+    # same idea as the FunctionNaming Composable exemption above.
+    ignoreAnnotated: ['Preview', 'PreviewParameter']

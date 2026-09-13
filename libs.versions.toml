@@ -16,6 +16,7 @@ junit = "4.13.2"
 # The version binge-design-system pins; the TV focus tests drive a real D-pad on the JVM with it.
 robolectric = "4.16.1"
 ktlint = "14.2.0"
+detekt = "1.23.8"
 # Must agree with binge-integrations' catalog: the SDK brings grpc-binder at its version, and the
 # in-process transport the tests use has to be the same release or the two disagree on internals.
 grpc = "1.68.1"
@@ -102,6 +103,7 @@ compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

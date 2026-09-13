@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CognitiveComplexMethod:OverrideRuleScreen.kt$@Composable fun OverrideRuleScreen( state: EditorUiState&lt;OverrideRuleForm&gt;, extras: OverrideRuleExtras, events: Flow&lt;EditorEvent&gt;, actions: EditorActions&lt;OverrideRuleForm&gt;, ruleActions: OverrideRuleActions, )</ID>
+    <ID>CognitiveComplexMethod:RequestActionsSheet.kt$@Composable internal fun RequestActionsContent( item: RequestItem, actions: RequestActions, blockTitle: Boolean, onBlockTitleChange: (Boolean) -&gt; Unit, onApprove: () -&gt; Unit, onRetry: () -&gt; Unit, onDecline: () -&gt; Unit, onRemove: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>CognitiveComplexMethod:RequestDetailScreen.kt$@Composable private fun Ready( state: RequestDetailUiState.Ready, actions: RequestDetailActions, )</ID>
+    <ID>CognitiveComplexMethod:TvRequestActionsSheet.kt$@Composable internal fun TvRequestActionsSheet( item: RequestItem, actions: RequestActions, sheetActions: TvRequestSheetActions, modifier: Modifier = Modifier, )</ID>
+    <ID>CognitiveComplexMethod:UsersScreen.kt$@Composable fun UsersScreen( state: UsersUiState, users: Flow&lt;PagingData&lt;UserItem&gt;&gt;, events: Flow&lt;UsersEvent&gt;, actions: UsersActions, )</ID>
+    <ID>ComplexCondition:RequestDetailScreen.kt$detail.actions.any || detail.media?.canManage == true || detail.canEdit || detail.canReportIssue</ID>
+    <ID>ComplexCondition:RequestDetailScreen.kt$it == ModerationEvent.Removed || it == ModerationEvent.RemovedAndBlocked || it == ModerationEvent.RemovedButBlockFailed || it == ModerationEvent.MediaCleared</ID>
+    <ID>ComplexCondition:UserSettingsViewModel.kt$localSignIn &amp;&amp; (isSelf || !target.isAdmin || permissions.isAdmin)</ID>
+    <ID>CyclomaticComplexMethod:RequestDetailViewModel.kt$RequestDetailViewModel$private suspend fun load(): RequestDetail</ID>
+    <ID>LongMethod:RequestDetailScreen.kt$@Composable private fun Ready( state: RequestDetailUiState.Ready, actions: RequestDetailActions, )</ID>
+    <ID>LongMethod:SeerrNavHost.kt$@Composable fun SeerrNavHost( backStack: NavBackStack&lt;NavKey&gt;, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:ServerSettingsEntries.kt$@Composable internal fun ServerSettingsPageEntry( page: ServerSettingsPage, onBack: () -&gt; Unit, onOpenPage: (ServerSettingsPage) -&gt; Unit, onOpenInstance: (ServiceType, Int?) -&gt; Unit, onOpenRule: (Int?) -&gt; Unit, onOpenAgent: (ServerAgent) -&gt; Unit, onOpenSlider: (Int?) -&gt; Unit, )</ID>
+    <ID>LongMethod:UsersScreen.kt$@Composable fun UsersScreen( state: UsersUiState, users: Flow&lt;PagingData&lt;UserItem&gt;&gt;, events: Flow&lt;UsersEvent&gt;, actions: UsersActions, )</ID>
+    <ID>LongParameterList:SeerrNavHost.kt$( onBack: () -&gt; Unit, onEditConnection: () -&gt; Unit, onOpenServerSettings: () -&gt; Unit, onOpenMediaServer: () -&gt; Unit, onOpenServices: () -&gt; Unit, onOpenInstance: (ServiceType, Int) -&gt; Unit, onOpenAgents: () -&gt; Unit, onOpenAgent: (ServerAgent) -&gt; Unit, onOpenSliders: () -&gt; Unit, onOpenNetwork: () -&gt; Unit, onOpenMetadata: () -&gt; Unit, onOpenJobs: () -&gt; Unit, onOpenCache: () -&gt; Unit, onOpenLogs: () -&gt; Unit, onOpenAbout: () -&gt; Unit, viewModel: SettingsViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:SettingsScreen.kt$SettingsActions$( val onBack: () -&gt; Unit, val onEditConnection: () -&gt; Unit, val onOpenServerSettings: () -&gt; Unit, val onOpenMediaServer: () -&gt; Unit, val onOpenServices: () -&gt; Unit, val onOpenInstance: (ServiceType, Int) -&gt; Unit, val onOpenAgents: () -&gt; Unit, val onOpenSliders: () -&gt; Unit, val onOpenNetwork: () -&gt; Unit, val onOpenMetadata: () -&gt; Unit, val onOpenJobs: () -&gt; Unit, val onOpenCache: () -&gt; Unit, val onOpenLogs: () -&gt; Unit, val onOpenAbout: () -&gt; Unit, val onOpenAgent: (ServerAgent) -&gt; Unit, val onToggleSignal: (NotificationSignal, Boolean) -&gt; Unit, val onNotificationAccessChanged: () -&gt; Unit, val onDisconnect: () -&gt; Unit, )</ID>
+    <ID>LoopWithTooManyJumpStatements:MediaServerViewModel.kt$MediaServerViewModel$while</ID>
+    <ID>MagicNumber:SeerrStatusMapping.kt$1000</ID>
+    <ID>MagicNumber:SeerrStatusMapping.kt$24</ID>
+    <ID>MagicNumber:SeerrStatusMapping.kt$60</ID>
+    <ID>MagicNumber:TvPreviews.kt$10</ID>
+    <ID>MagicNumber:TvPreviews.kt$20</ID>
+    <ID>ReturnCount:SeerrStatusMapping.kt$private fun String.parseTimeLeftMillis(): Long?</ID>
+    <ID>ThrowsCount:PlexPinFlow.kt$PlexPinFlow$suspend fun awaitToken(pin: PlexPin): String</ID>
+    <ID>TooGenericExceptionCaught:LinkedAccountsViewModel.kt$LinkedAccountsViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RequestsPaging.kt$OffsetPagingSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SeerrConnection.kt$SeerrConnection$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SeerrErrors.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SetupViewModel.kt$SetupViewModel$e: Exception</ID>
+    <ID>TooManyFunctions:IssueDetailViewModel.kt$IssueDetailViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:RequestEditor.kt$RequestEditor</ID>
+    <ID>TooManyFunctions:SeerrConnection.kt$SeerrConnection</ID>
+    <ID>TooManyFunctions:SeerrRequestService.kt$SeerrRequestService : RequestServiceCoroutineImplBase</ID>
+    <ID>TooManyFunctions:TvBoardPreviews.kt$io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPreviews.kt</ID>
+    <ID>TooManyFunctions:TvPreviews.kt$io.github.scottcooper92.binge.seerr.ui.tv.TvPreviews.kt</ID>
+    <ID>UnusedPrivateMember:UserAdmission.kt$private fun SeerrJellyfinUserDto.toCandidate(): ImportCandidate</ID>
+    <ID>UnusedPrivateMember:UserAdmission.kt$private fun SeerrPlexUserDto.toCandidate(): ImportCandidate</ID>
+  </CurrentIssues>
+</SmellBaseline>
