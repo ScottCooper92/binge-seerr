@@ -77,9 +77,6 @@ data class ScheduledJob(
 )
 
 data class SystemInfo(
-    val version: String?,
-    val totalRequests: Int?,
-    val totalMediaItems: Int?,
     val jobs: List<ScheduledJob>,
 )
 

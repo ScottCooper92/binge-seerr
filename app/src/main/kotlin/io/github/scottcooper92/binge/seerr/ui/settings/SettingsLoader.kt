@@ -72,7 +72,6 @@ class SettingsLoader
             val api = runCatching { connection.api() }.getOrNull() ?: return null
             return coroutineScope {
                 val main = async { runCatching { api.mainSettings() }.getOrNull() }
-                val about = async { runCatching { api.about() }.getOrNull() }
                 val jobs = async { runCatching { api.jobs() }.getOrNull() }
                 val email = async { runCatching { api.notificationAgent("email").enabled }.getOrNull() }
                 val discord = async { runCatching { api.notificationAgent("discord").enabled }.getOrNull() }
@@ -91,7 +90,7 @@ class SettingsLoader
                         },
                     requestPolicy = mainDto?.toRequestPolicy(),
                     agents = agents(email.await(), discord.await()),
-                    system = system(about.await(), jobs.await()),
+                    system = system(jobs.await()),
                     services = services(radarr.await(), sonarr.await()),
                 )
             }
@@ -134,17 +133,9 @@ private fun agents(
     discord: Boolean?,
 ): NotificationAgents? = if (email == null && discord == null) null else NotificationAgents(email, discord)
 
-private fun system(
-    about: io.github.scottcooper92.binge.seerr.seerr.SeerrAboutDto?,
-    jobs: List<SeerrJobDto>?,
-): SystemInfo? {
-    if (about == null && jobs == null) return null
-    return SystemInfo(
-        version = about?.version?.takeIf { it.isNotBlank() },
-        totalRequests = about?.totalRequests,
-        totalMediaItems = about?.totalMediaItems,
-        jobs = jobs.orEmpty().map { it.toJob() },
-    )
+private fun system(jobs: List<SeerrJobDto>?): SystemInfo? {
+    if (jobs == null) return null
+    return SystemInfo(jobs = jobs.map { it.toJob() })
 }
 
 private fun SeerrJobDto.toJob(): ScheduledJob =
