@@ -329,6 +329,73 @@ interface SeerrApi {
     @POST("api/v1/settings/main/regenerate")
     suspend fun regenerateApiKey(): SeerrMainSettingsDto
 
+    @GET("api/v1/settings/plex")
+    suspend fun plexSettings(): SeerrPlexSettingsDto
+
+    /** Reaches the Plex server with the body before saving it; a server that does not answer is a 500. */
+    @POST("api/v1/settings/plex")
+    suspend fun updatePlexSettings(
+        @Body body: SeerrPlexSettingsBody,
+    ): SeerrPlexSettingsDto
+
+    /** The admin's own Plex servers from plex.tv, each connection already tested by the server. */
+    @GET("api/v1/settings/plex/devices/servers")
+    suspend fun plexServers(): List<SeerrPlexDeviceDto>
+
+    @GET("api/v1/settings/jellyfin")
+    suspend fun jellyfinSettings(): SeerrJellyfinSettingsDto
+
+    @POST("api/v1/settings/jellyfin")
+    suspend fun updateJellyfinSettings(
+        @Body body: SeerrJellyfinSettingsBody,
+    ): SeerrJellyfinSettingsDto
+
+    /**
+     * The libraries of [server] (`plex` or `jellyfin`). On a released server [enable] is how they are
+     * turned on — the comma-joined ids of every enabled one — and [sync] re-reads them from the
+     * media server first; `develop` moved both to [setLibraryEnabled] and [syncLibraries].
+     */
+    @GET("api/v1/settings/{server}/library")
+    suspend fun mediaLibraries(
+        @Path("server") server: String,
+        @Query("enable") enable: String? = null,
+        @Query("sync") sync: Boolean? = null,
+    ): List<SeerrLibraryDto>
+
+    /** `develop` only; a released server answers 404 and [mediaLibraries] with `enable` is the way. */
+    @PUT("api/v1/settings/{server}/library/{libraryId}")
+    suspend fun setLibraryEnabled(
+        @Path("server") server: String,
+        @Path("libraryId") libraryId: String,
+        @Body body: SeerrLibraryEnabledBody,
+    ): SeerrLibraryDto
+
+    /** `develop` only; a released server answers 404 and [mediaLibraries] with `sync` is the way. */
+    @POST("api/v1/settings/{server}/library/sync")
+    suspend fun syncLibraries(
+        @Path("server") server: String,
+    ): List<SeerrLibraryDto>
+
+    @GET("api/v1/settings/{server}/sync")
+    suspend fun scanStatus(
+        @Path("server") server: String,
+    ): SeerrScanStatusDto
+
+    @POST("api/v1/settings/{server}/sync")
+    suspend fun scan(
+        @Path("server") server: String,
+        @Body body: SeerrScanCommandBody,
+    ): SeerrScanStatusDto
+
+    @GET("api/v1/settings/tautulli")
+    suspend fun tautulliSettings(): SeerrTautulliSettingsDto
+
+    /** Reaches Tautulli with the body before saving it; one below 2.9 or unreachable is a 500. */
+    @POST("api/v1/settings/tautulli")
+    suspend fun updateTautulliSettings(
+        @Body body: SeerrTautulliSettingsDto,
+    ): SeerrTautulliSettingsDto
+
     @GET("api/v1/settings/about")
     suspend fun about(): SeerrAboutDto
 

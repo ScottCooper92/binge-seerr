@@ -9,9 +9,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ApiKeyActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerGeneralScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerGeneralViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
+import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PermissionsSettingsScreen
@@ -43,6 +48,33 @@ internal fun ServerSettingsPageEntry(
                     ),
                 onOpenDefaultPermissions = { onOpenPage(ServerSettingsPage.DefaultPermissions) },
             )
+        }
+        ServerSettingsPage.MediaServer -> {
+            val viewModel = hiltViewModel<MediaServerViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val extras by viewModel.extras.collectAsStateWithLifecycle()
+            MediaServerScreen(
+                state = state,
+                extras = extras,
+                events = viewModel.events,
+                actions = viewModel.editorActions(onBack),
+                serverActions =
+                    MediaServerActions(
+                        onSetLibraryEnabled = viewModel::setLibraryEnabled,
+                        onSyncLibraries = viewModel::syncLibraries,
+                        onStartScan = viewModel::startScan,
+                        onCancelScan = viewModel::cancelScan,
+                        onOpenServerPicker = viewModel::openServerPicker,
+                        onCloseServerPicker = viewModel::closeServerPicker,
+                        onChooseConnection = viewModel::chooseConnection,
+                        onOpenTautulli = { onOpenPage(ServerSettingsPage.Tautulli) },
+                    ),
+            )
+        }
+        ServerSettingsPage.Tautulli -> {
+            val viewModel = hiltViewModel<TautulliViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            TautulliScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
         }
         ServerSettingsPage.DefaultPermissions -> {
             val viewModel = hiltViewModel<DefaultPermissionsViewModel>()
