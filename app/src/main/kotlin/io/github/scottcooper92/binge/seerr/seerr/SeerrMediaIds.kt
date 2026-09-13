@@ -38,6 +38,9 @@ fun MediaId.seerrMediaType(): String =
             throw StatusException(Status.INVALID_ARGUMENT.withDescription("media_type must be movie or tv"))
     }
 
+/** True when a Seerr media-type string — [SeerrRequestMediaDto.mediaType] and its like — names a TV show. */
+fun String.isSeerrTv(): Boolean = this == SEERR_MEDIA_TYPE_TV
+
 /** The title lookup for [media]: the movie or the TV endpoint, both carrying `mediaInfo`. */
 suspend fun SeerrApi.details(media: MediaId): SeerrMediaDetailsDto =
     when (media.seerrMediaType()) {

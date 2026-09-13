@@ -47,6 +47,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.details
+import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -168,7 +169,7 @@ class SeerrRequestService(
             if (request.seasonNumbersList.isEmpty()) throw invalidArgument("a request covers at least one season")
             val api = connection.api()
             val current = api.request(request.requestId)
-            if (current.media.mediaType != SEERR_MEDIA_TYPE_TV) throw invalidArgument("only a TV request has seasons to edit")
+            if (!current.media.mediaType.isSeerrTv()) throw invalidArgument("only a TV request has seasons to edit")
             val body =
                 SeerrEditRequestBody(
                     mediaType = current.media.mediaType,
@@ -262,7 +263,6 @@ class SeerrRequestService(
 
         /** Coarser than a title's status: the host holds this stream open for as long as it runs. */
         const val ATTENTION_INTERVAL_MILLIS = 60_000L
-        const val SEERR_MEDIA_TYPE_TV = "tv"
     }
 }
 
