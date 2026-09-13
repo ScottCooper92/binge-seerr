@@ -158,6 +158,8 @@ private fun ModeFields(
                 onValueChange = { value -> onEdit { copy(username = value) } },
                 label = { Text(stringResource(R.string.setup_username)) },
                 singleLine = true,
+                // A plain text field is autocorrected, and a rewritten username fails sign-in with no visible cause.
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
                 modifier = Modifier.fillMaxWidth(),
             )
             SecretField(form.password, stringResource(R.string.setup_password)) { value -> onEdit { copy(password = value) } }

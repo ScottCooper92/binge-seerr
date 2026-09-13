@@ -183,6 +183,7 @@ private fun TvModeFields(
                 value = form.username,
                 onValueChange = { value -> onEdit { copy(username = value) } },
                 label = stringResource(R.string.setup_username),
+                autoCorrect = false,
                 initiallyFocused = credentialFocused,
             )
             TvPasswordField(form, onEdit)
