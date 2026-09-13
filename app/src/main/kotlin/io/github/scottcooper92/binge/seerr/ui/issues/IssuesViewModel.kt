@@ -54,7 +54,7 @@ class IssuesViewModel
         private val countsRefresh = MutableStateFlow(0)
         private val actionItem = MutableStateFlow<IssueItem?>(null)
         private val actingState = MutableStateFlow<Set<Int>>(emptySet())
-        private val eventFlow = MutableSharedFlow<IssueListEvent>()
+        private val eventFlow = MutableSharedFlow<IssueListEvent>(extraBufferCapacity = 1)
 
         /** The outcome of each row action, once. */
         val events: Flow<IssueListEvent> = eventFlow.asSharedFlow()
@@ -153,12 +153,13 @@ class IssuesViewModel
             if (item.id in actingState.value) return
             actingState.update { it + item.id }
             viewModelScope.launch {
-                runCatching { write() }
+                val result = runCatching { write() }
+                actingState.update { it - item.id }
+                result
                     .onSuccess {
                         countsRefresh.value++
                         eventFlow.emit(success)
                     }.onFailure { failure -> eventFlow.emit(IssueListEvent.Failed(failure.toSeerrError())) }
-                actingState.update { it - item.id }
             }
         }
 
