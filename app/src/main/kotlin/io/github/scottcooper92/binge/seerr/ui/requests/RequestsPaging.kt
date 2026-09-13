@@ -116,7 +116,7 @@ suspend fun SeerrRequestDto.toRequestItem(
         requestedBy = requestedBy?.displayString(),
         requestedAtMillis = createdAt?.toEpochMillisOrNull(),
         status = status,
-        mediaStatus = media.status,
+        mediaStatus = if (is4k) media.status4k else media.status,
         download = statuses.toDownload(nowMillis),
         seasonNumbers = seasons.map { it.seasonNumber },
         is4k = is4k,
