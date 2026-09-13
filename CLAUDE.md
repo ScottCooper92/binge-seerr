@@ -110,7 +110,7 @@ to design; the server's API is versioned by release because it is not.
 
 ## Gates
 
-CI runs `./gradlew build`. That is the whole gate, and it covers six things, all of
+CI runs `./gradlew build`. That is the whole gate, and it covers seven things, all of
 which turn the build red:
 
 - Kotlin compilation.
@@ -123,13 +123,14 @@ which turn the build red:
   an English string added without its Spanish is a red build.
 - `checkTranslationStaleness` — a reworded English string whose translation was not re-read.
   Fix or re-read the translation it names, then `./gradlew updateTranslationHashes`.
+- `koverVerify` — line coverage below the floor.
 
-`build` depends on `check`, which is what pulls the last five in. The device lane
+`build` depends on `check`, which is what pulls the last six in. The device lane
 (`device-smoke.yml`) is not part of it: it runs on `main`, weekly and on request, and proves the
 release keep rules across a real Binder.
 
-There is no coverage floor, no screenshot suite and no `buf` in this repository, so do
-not look for one and do not report a finding as though one had caught it.
+There is no screenshot suite and no `buf` in this repository, so do not look for one and
+do not report a finding as though one had caught it.
 
 ### detekt
 
@@ -146,6 +147,21 @@ the `!!` ban, loads and silently never fires, so leave that wiring alone.
 `detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or
 argued with in review. Paying it down is #165.
+
+### Coverage
+
+`koverVerify` holds `:app` to **78% of lines**, a number measured (the suite was at 80.3%) rather
+than inherited — Binge's 70 comes from its own per-module layout, and this is one module holding
+ViewModels, the Seerr client, the stores and the exported service together.
+
+What is excluded is generated code and Android entry points: Hilt's graph and the whole `di`
+package, Room's `*_Impl*` including the inner classes it emits, `*ComposableSingletons*`,
+`*PreviewData*`, the two Activities and the Application class, and every `@Composable` by
+annotation — UI appearance is not a line-coverage question. Nothing is excluded for merely lacking
+tests, and the patterns match fully-qualified names, so each needs its leading `*`.
+
+The weak spots the figure is honest about are `ui/state` and `ui/tv`. Cover them and raise the
+floor; do not lower it.
 
 **Never silence a gate instead of fixing it.** Do not add a ktlint baseline, do not
 add `ktlint` disable comments to make a file pass, do not add a `lint-baseline.xml`,

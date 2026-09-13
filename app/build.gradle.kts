@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 // The exported schema is committed: a change to a table is a migration decision made in review.
@@ -280,5 +281,51 @@ kotlin.target.compilations.configureEach {
     }
     tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
         classpath.from(classpathFiles, outputClasses)
+    }
+}
+
+// The gate measures logic: ViewModels, the Seerr client and its error mapping, the stores, the
+// mappers and the exported service. Everything excluded below is either generated or an Android
+// entry point with nothing a JVM unit test can reach - never a class that simply lacks tests.
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    // Hilt's generated graph. The patterns match fully-qualified names, so each
+                    // needs a leading `*`, and this app's providers generate `<Module>_<Name>Factory`
+                    // rather than a bare `_Factory` - hence the whole `di` package rather than a
+                    // name pattern that would silently match none of them. `SeerrModule` itself is
+                    // hand-written, but it is wiring: every function returns a constructed object.
+                    "*_HiltModules*",
+                    "*_MembersInjector*",
+                    "*Hilt_*",
+                    "hilt_aggregated_deps.*",
+                    "io.github.scottcooper92.binge.seerr.di.*",
+                    // Room's generated DAO and database implementations, including the inner
+                    // classes it emits for paging sources and open delegates - which is why this
+                    // is `*_Impl*` and not `*_Impl`.
+                    "*_Impl*",
+                    "*ComposableSingletons*",
+                    "*PreviewData*",
+                    // The Android entry points: an Activity's onCreate and the Application class.
+                    // Their content is `setContent { … }` and Hilt's own initialisation.
+                    "io.github.scottcooper92.binge.seerr.MainActivity*",
+                    "io.github.scottcooper92.binge.seerr.AdvancedRequestActivity*",
+                    "io.github.scottcooper92.binge.seerr.SeerrApp",
+                )
+                annotatedBy("androidx.compose.runtime.Composable")
+            }
+        }
+        // 78, measured: the suite sits at 80.3% today. Chosen rather than inherited - Binge's 70
+        // is derived from its own per-module layout, and this is one module holding ViewModels,
+        // the client, the stores and the service together. The ~2 points of headroom are about
+        // 180 lines, so a feature landing without tests trips this and a class or two that is
+        // genuinely awkward to reach does not. Ratchet it up as ui/state and ui/tv are covered.
+        verify {
+            rule {
+                minBound(78)
+            }
+        }
     }
 }
