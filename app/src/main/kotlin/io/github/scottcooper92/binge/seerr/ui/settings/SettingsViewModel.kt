@@ -68,7 +68,7 @@ class SettingsViewModel
                 offered?.let {
                     NotificationSettings(
                         offered = it,
-                        enabled = enabled,
+                        enabled = enabled.filterTo(mutableSetOf()) { signal -> signal in it },
                         blocked = !notifier.canPost(),
                         lastRunMillis = last,
                         nextRunMillis = next,

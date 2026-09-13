@@ -221,6 +221,22 @@ class SettingsViewModelTest {
         }
 
     @Test
+    fun `a signal left enabled in prefs from before a permission downgrade is not reported as enabled`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+            vm.awaitReady { it.notifications != null }
+            prefs.setEnabled(NotificationSignal.PendingRequests, true)
+
+            val ready = vm.awaitReady { it.notifications != null }
+            val notifications = checkNotNull(ready.notifications)
+
+            assertTrue(NotificationSignal.PendingRequests !in notifications.offered)
+            assertTrue(notifications.enabled.isEmpty())
+            assertTrue(notifications.enabled.none { it == NotificationSignal.PendingRequests })
+        }
+
+    @Test
     fun `a moderator is offered the feeds too`() =
         runTest {
             server(ADMIN)

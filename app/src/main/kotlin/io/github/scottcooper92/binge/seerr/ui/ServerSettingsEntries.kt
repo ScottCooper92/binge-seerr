@@ -12,7 +12,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ApiKeyActions
-import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSliderScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSliderViewModel
@@ -42,6 +41,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.PermissionsSettingsScreen
 
 /** The server-settings entries of [SeerrNavHost]: one screen per page, each over its own editor. */
 @Composable
@@ -148,11 +148,13 @@ internal fun ServerSettingsPageEntry(
         ServerSettingsPage.DefaultPermissions -> {
             val viewModel = hiltViewModel<DefaultPermissionsViewModel>()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-            DefaultPermissionsScreen(
+            PermissionsSettingsScreen(
                 state = state,
                 events = viewModel.events,
                 actions = viewModel.editorActions(onBack),
                 onToggle = viewModel::toggle,
+                titleRes = R.string.server_settings_default_permissions,
+                leadRes = R.string.server_settings_default_permissions_lead,
             )
         }
     }

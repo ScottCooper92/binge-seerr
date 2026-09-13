@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -136,6 +137,25 @@ class NotificationAgentViewModelTest {
             assertFalse(vm.awaitReady().draft.valid)
             vm.save()
             assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
+        }
+
+    @Test
+    fun `an optional number option left blank is sent as null, not an empty string`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/notifications/ntfy",
+                """{"enabled":false,"types":0,"options":{"url":"","topic":"","priority":5}}""",
+            )
+            seerr.serve("POST /api/v1/settings/notifications/ntfy", """{"enabled":false,"types":0,"options":{}}""")
+            val vm = viewModel(ServerAgent.Ntfy)
+            assertEquals("5", vm.awaitReady().draft.option(AgentOption.NtfyPriority))
+
+            vm.setOption(AgentOption.NtfyPriority, "")
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/ntfy")).jsonObject
+            assertEquals(JsonNull, sent.getValue("options").jsonObject.getValue("priority"))
         }
 
     @Test
