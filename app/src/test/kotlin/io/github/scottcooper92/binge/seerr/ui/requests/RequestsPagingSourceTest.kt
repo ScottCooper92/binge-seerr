@@ -18,6 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
 
 private const val PAGE_JSON = """
 {
@@ -36,7 +37,7 @@ private const val PAGE_JSON = """
 /** The request list over real sockets: page arithmetic, concurrent titling, degradation and the query the server sees. */
 class RequestsPagingSourceTest {
     private val server = MockWebServer()
-    private val received = mutableListOf<RecordedRequest>()
+    private val received = CopyOnWriteArrayList<RecordedRequest>()
     private var movieResponse: () -> MockResponse = {
         json(
             """{ "title": "Heat", "posterPath": "/heat.jpg", "releaseDate": "1995-12-15" }""",

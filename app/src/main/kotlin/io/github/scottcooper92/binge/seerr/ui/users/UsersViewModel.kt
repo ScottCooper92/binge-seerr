@@ -15,6 +15,8 @@ import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.data.UsersRemoteMediator
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBulkUsersBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
+import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -23,19 +25,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** What the browser needs once per connection: which toggles the server offers. */
+/** What the browser needs once per connection: which toggles the server offers, and what the viewer may add. */
 private data class UsersScope(
     val jellyseerrLineage: Boolean = false,
+    val canAdmit: Boolean = false,
+    val importSource: UserOrigin? = null,
+    val canGeneratePassword: Boolean = false,
 )
 
 /**
@@ -56,16 +62,37 @@ class UsersViewModel
         private val edit = MutableStateFlow<BulkEdit?>(null)
 
         private val eventFlow = MutableSharedFlow<UsersEvent>(extraBufferCapacity = 1)
-        val events: SharedFlow<UsersEvent> = eventFlow.asSharedFlow()
+
+        /** Refreshes the list through the mediator: a new user is on the server, not in the cache. */
+        private val listVersion = MutableStateFlow(0)
+
+        val admission = UserAdmission(scope = viewModelScope, connection = connection) { listVersion.update { it + 1 } }
+
+        val events: SharedFlow<UsersEvent> = merge(eventFlow, admission.events).shareIn(viewModelScope, SharingStarted.Lazily)
 
         private val scope: Flow<UsersScope> =
             flow {
                 val profile = runCatching { connection.profile() }.getOrNull()
-                emit(UsersScope(jellyseerrLineage = profile?.hasBlocklist == true))
+                val viewer = runCatching { connection.authenticatedUser() }.getOrNull()
+                val settings = profile?.settings
+                emit(
+                    UsersScope(
+                        jellyseerrLineage = profile?.hasBlocklist == true,
+                        canAdmit = viewer.toPermissions().canManageUsers,
+                        importSource =
+                            when (profile?.mediaServer) {
+                                SeerrMediaServer.Plex -> UserOrigin.Plex
+                                SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
+                                SeerrMediaServer.Emby -> UserOrigin.Emby
+                                SeerrMediaServer.NotConfigured, null -> null
+                            },
+                        canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
+                    ),
+                )
             }.stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
 
         val users: Flow<PagingData<UserItem>> =
-            selectedSort
+            combine(selectedSort, listVersion) { sort, _ -> sort }
                 .flatMapLatest { sort ->
                     Pager(
                         config = PagingConfig(pageSize = USERS_PAGE_SIZE),
@@ -78,12 +105,16 @@ class UsersViewModel
                 .cachedIn(viewModelScope)
 
         val uiState: StateFlow<UsersUiState> =
-            combine(selectedSort, selection, edit, scope) { sort, selection, edit, scope ->
+            combine(selectedSort, selection, edit, scope, admission.state) { sort, selection, edit, scope, admission ->
                 UsersUiState.Ready(
                     sort = sort,
                     selection = selection,
                     edit = edit,
                     offered = ManageablePermission.offered(scope.jellyseerrLineage),
+                    canAdmit = scope.canAdmit,
+                    importSource = scope.importSource,
+                    canGeneratePassword = scope.canGeneratePassword,
+                    admission = admission,
                 )
             }.stateIn(viewModelScope, SharingStarted.Lazily, UsersUiState.Loading)
 

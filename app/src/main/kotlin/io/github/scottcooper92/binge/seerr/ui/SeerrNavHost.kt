@@ -40,11 +40,13 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.users.UserAdmissionActions
 import io.github.scottcooper92.binge.seerr.ui.users.UserDetailActions
 import io.github.scottcooper92.binge.seerr.ui.users.UserDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.users.UserDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.UsersActions
 import io.github.scottcooper92.binge.seerr.ui.users.UsersScreen
+import io.github.scottcooper92.binge.seerr.ui.users.UsersUiState
 import io.github.scottcooper92.binge.seerr.ui.users.UsersViewModel
 
 /**
@@ -316,6 +318,20 @@ private fun UsersEntry(
                 onTogglePermission = viewModel::togglePermission,
                 onApplyBulkEdit = viewModel::applyBulkEdit,
                 onCancelBulkEdit = viewModel::cancelBulkEdit,
+                admission =
+                    UserAdmissionActions(
+                        onStart = viewModel.admission::start,
+                        onCancel = viewModel.admission::cancel,
+                        onStartCreate = {
+                            viewModel.admission.startCreate((state as? UsersUiState.Ready)?.canGeneratePassword == true)
+                        },
+                        onEditDraft = viewModel.admission::editDraft,
+                        onCreate = viewModel.admission::create,
+                        onStartImport = viewModel.admission::startImport,
+                        onToggleCandidate = viewModel.admission::toggleCandidate,
+                        onSelectAllCandidates = viewModel.admission::selectAllCandidates,
+                        onImport = viewModel.admission::import,
+                    ),
             ),
     )
 }

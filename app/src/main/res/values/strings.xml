@@ -238,6 +238,29 @@
     <string name="users_clear_selection_cd">Clear selection</string>
     <string name="users_edit_permissions">Edit permissions</string>
     <string name="users_edit_permissions_save">Apply</string>
+    <string name="users_add_cd">Add users</string>
+    <string name="users_add_create">Create a local user</string>
+    <string name="users_add_create_desc">Signs in with an email and password</string>
+    <string name="users_add_import">Import from %1$s</string>
+    <string name="users_add_import_desc">Accounts on the media server that are not here yet</string>
+    <string name="users_create_title">New user</string>
+    <string name="users_create_generate">Email a generated password</string>
+    <string name="users_create_generate_unavailable">Needs the application URL and email notifications set up on the server.</string>
+    <string name="users_create_submit">Create</string>
+    <string name="users_created">%1$s created</string>
+    <string name="users_import_select_all">Select all</string>
+    <string name="users_import_select_none">Clear</string>
+    <string name="users_import_empty">Every account is already here.</string>
+    <string name="users_import_failed">The accounts could not be read from the media server.</string>
+    <string name="users_imported_none">Nothing new to import; the existing accounts were refreshed.</string>
+    <plurals name="users_import_submit">
+        <item quantity="one">Import %1$d user</item>
+        <item quantity="other">Import %1$d users</item>
+    </plurals>
+    <plurals name="users_imported">
+        <item quantity="one">%1$d user imported</item>
+        <item quantity="other">%1$d users imported</item>
+    </plurals>
     <plurals name="users_selected">
         <item quantity="one">%1$d selected</item>
         <item quantity="other">%1$d selected</item>

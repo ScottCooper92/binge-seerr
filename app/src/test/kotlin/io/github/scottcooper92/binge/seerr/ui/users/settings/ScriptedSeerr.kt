@@ -13,6 +13,7 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -30,7 +31,7 @@ internal class ScriptedSeerr(
     private val folder: TemporaryFolder,
 ) {
     val server = MockWebServer()
-    val received = mutableListOf<RecordedRequest>()
+    val received = CopyOnWriteArrayList<RecordedRequest>()
     private val responses = mutableMapOf<String, () -> MockResponse>()
     private var stores = 0
 
