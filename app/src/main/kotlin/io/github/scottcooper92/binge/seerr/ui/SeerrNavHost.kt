@@ -19,6 +19,9 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailActions
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsScreen
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
@@ -62,7 +65,10 @@ fun SeerrNavHost(
                         },
                     )
                 }
-                entry<RequestsRoute> { RequestsEntry(onBack = { backStack.removeLastOrNull() }) }
+                entry<RequestsRoute> {
+                    RequestsEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(RequestDetailRoute(id)) })
+                }
+                entry<RequestDetailRoute> { route -> RequestDetailEntry(route.requestId, onBack = { backStack.removeLastOrNull() }) }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
                 }
@@ -111,8 +117,29 @@ private fun HubEntry(
 }
 
 @Composable
+private fun RequestDetailEntry(
+    requestId: Int,
+    onBack: () -> Unit,
+    viewModel: RequestDetailViewModel =
+        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    RequestDetailScreen(
+        state = state,
+        actions =
+            RequestDetailActions(
+                onBack = onBack,
+                onRetry = viewModel::reload,
+                onReportIssue = viewModel::reportIssue,
+                onDismissReport = viewModel::dismissReport,
+            ),
+    )
+}
+
+@Composable
 private fun RequestsEntry(
     onBack: () -> Unit,
+    onOpen: (Int) -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -129,8 +156,7 @@ private fun RequestsEntry(
                 onBack = onBack,
                 onFilterChange = viewModel::setFilter,
                 onSortChange = viewModel::setSort,
-                // The request page arrives with the next phase; until then a row is read-only.
-                onOpen = {},
+                onOpen = { item -> onOpen(item.id) },
             ),
     )
 }

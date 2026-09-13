@@ -125,6 +125,11 @@ interface SeerrApi {
         @Query("requestedBy") requestedBy: Int? = null,
     ): SeerrRequestsPageDto
 
+    @GET("api/v1/request/{requestId}")
+    suspend fun request(
+        @Path("requestId") requestId: Int,
+    ): SeerrRequestDto
+
     @GET("api/v1/request/count")
     suspend fun requestCount(): SeerrRequestCountDto
 
@@ -367,8 +372,17 @@ data class SeerrServerDto(
 
 @Serializable
 data class SeerrServerDetailsDto(
+    /** The instance itself, as far as its name; every field optional so an older shape still parses. */
+    @SerialName("server") val server: SeerrServerRefDto? = null,
     @SerialName("profiles") val profiles: List<SeerrProfileDto> = emptyList(),
     @SerialName("rootFolders") val rootFolders: List<SeerrRootFolderDto> = emptyList(),
+    @SerialName("tags") val tags: List<SeerrTagDto> = emptyList(),
+)
+
+@Serializable
+data class SeerrServerRefDto(
+    @SerialName("id") val id: Int? = null,
+    @SerialName("name") val name: String? = null,
 )
 
 @Serializable
@@ -416,8 +430,12 @@ data class SeerrMediaDetailsDto(
     @SerialName("title") val title: String? = null,
     @SerialName("name") val name: String? = null,
     @SerialName("posterPath") val posterPath: String? = null,
+    @SerialName("backdropPath") val backdropPath: String? = null,
+    @SerialName("overview") val overview: String? = null,
     @SerialName("releaseDate") val releaseDate: String? = null,
     @SerialName("firstAirDate") val firstAirDate: String? = null,
+    /** A show's seasons as TMDB lists them; specials are season 0. */
+    @SerialName("seasons") val seasons: List<SeerrSeasonDto> = emptyList(),
 ) {
     val displayTitle: String? get() = title ?: name
 
@@ -457,6 +475,14 @@ data class SeerrRequestUserDto(
     @SerialName("displayName") val displayName: String? = null,
     @SerialName("username") val username: String? = null,
     @SerialName("email") val email: String? = null,
+)
+
+@Serializable
+data class SeerrSeasonDto(
+    @SerialName("seasonNumber") val seasonNumber: Int,
+    @SerialName("name") val name: String? = null,
+    @SerialName("episodeCount") val episodeCount: Int = 0,
+    @SerialName("airDate") val airDate: String? = null,
 )
 
 @Serializable
