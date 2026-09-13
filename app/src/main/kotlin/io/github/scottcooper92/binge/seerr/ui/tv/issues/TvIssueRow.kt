@@ -43,7 +43,8 @@ private const val ACTING_ALPHA = 0.5f
 
 /** Closing, reopening and deleting from the row: a manager's, or the reporter's on their own issue — the page's rule. */
 internal fun IssueItem.canBeActedOn(scope: IssueListScope): Boolean =
-    scope.permissions.canManageIssues || (reportedById != null && reportedById == scope.currentUserId)
+    scope.permissions.canManageIssues ||
+        (scope.permissions.canCreateIssues && reportedById != null && reportedById == scope.currentUserId)
 
 /**
  * One issue as a focusable row: poster, title, what kind of problem and where in the show, the opening

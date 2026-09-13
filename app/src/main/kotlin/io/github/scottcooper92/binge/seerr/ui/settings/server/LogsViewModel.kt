@@ -9,23 +9,29 @@ import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 private const val REFRESH_MILLIS = 10_000L
+private const val SEARCH_DEBOUNCE_MS = 300L
 
 /**
  * The logs page: the level and the search are the query, paged from the top; while the list is
  * at the top it is re-read on an interval, so the newest lines arrive on their own.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class LogsViewModel
     @Inject
@@ -39,11 +45,15 @@ class LogsViewModel
 
         internal var refreshMillis = REFRESH_MILLIS
 
+        /** A blank query needs no debounce, so the first page is not held back. */
+        private val query: Flow<String> =
+            state.map { it.search }.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }.distinctUntilChanged()
+
         val entries: Flow<PagingData<LogEntry>> =
-            state
-                .flatMapLatest { query ->
+            combine(state.map { it.level }.distinctUntilChanged(), query) { level, search -> level to search }
+                .flatMapLatest { (level, search) ->
                     Pager(config = PagingConfig(pageSize = LOGS_PAGE_SIZE)) {
-                        LogsPagingSource(api = connection::api, level = query.level, search = query.search)
+                        LogsPagingSource(api = connection::api, level = level, search = search)
                     }.flow
                 }.cachedIn(viewModelScope)
 

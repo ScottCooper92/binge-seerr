@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
@@ -132,23 +135,35 @@ private fun ColumnScope.TvHubDashboard(
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_stat_tile_gap))) {
-        TvStatTile(
-            value = overview.pendingRequestCount?.toString() ?: placeholder,
-            label = stringResource(R.string.hub_stat_pending),
-            onClick = actions.onOpenRequests,
-            initiallyFocused = initialFocusedTile == TILE_PENDING,
-        )
-        TvStatTile(value = overview.movieRequestCount?.toString() ?: placeholder, label = stringResource(R.string.hub_quota_movies))
-        TvStatTile(value = overview.tvRequestCount?.toString() ?: placeholder, label = stringResource(R.string.hub_quota_tv))
-        TvStatTile(value = overview.userCount?.toString() ?: placeholder, label = stringResource(R.string.hub_section_users))
-        if (overview.hasIssues && overview.permissions.canSeeIssues) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_stat_tile_gap)),
+        contentPadding = PaddingValues(end = dimensionResource(TvR.dimen.tv_overscan_horizontal)),
+    ) {
+        item {
             TvStatTile(
-                value = overview.openIssueCount?.toString() ?: placeholder,
-                label = stringResource(R.string.tv_hub_stat_open_issues),
-                onClick = actions.onOpenIssues,
-                initiallyFocused = initialFocusedTile == TILE_ISSUES,
+                value = overview.pendingRequestCount?.toString() ?: placeholder,
+                label = stringResource(R.string.hub_stat_pending),
+                onClick = actions.onOpenRequests,
+                initiallyFocused = initialFocusedTile == TILE_PENDING,
             )
+        }
+        item {
+            TvStatTile(value = overview.movieRequestCount?.toString() ?: placeholder, label = stringResource(R.string.hub_quota_movies))
+        }
+        item { TvStatTile(value = overview.tvRequestCount?.toString() ?: placeholder, label = stringResource(R.string.hub_quota_tv)) }
+        item {
+            TvStatTile(value = overview.userCount?.toString() ?: placeholder, label = stringResource(R.string.hub_section_users))
+        }
+        if (overview.hasIssues && overview.permissions.canSeeIssues) {
+            item {
+                TvStatTile(
+                    value = overview.openIssueCount?.toString() ?: placeholder,
+                    label = stringResource(R.string.tv_hub_stat_open_issues),
+                    onClick = actions.onOpenIssues,
+                    initiallyFocused = initialFocusedTile == TILE_ISSUES,
+                )
+            }
         }
     }
     if (state.downloading.isNotEmpty()) {
@@ -157,8 +172,12 @@ private fun ColumnScope.TvHubDashboard(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_stat_tile_gap))) {
-            state.downloading.take(DOWNLOAD_STRIP_MAX).forEach { TvDownloadCard(it) }
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_stat_tile_gap)),
+            contentPadding = PaddingValues(end = dimensionResource(TvR.dimen.tv_overscan_horizontal)),
+        ) {
+            items(state.downloading.take(DOWNLOAD_STRIP_MAX), key = { it.requestId }) { TvDownloadCard(it) }
         }
     }
     Spacer(modifier = Modifier.weight(1f))

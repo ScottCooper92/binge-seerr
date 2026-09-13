@@ -112,7 +112,7 @@ private fun TvRequestsEntry(
     }
     TvRequestsBoard(
         state = state,
-        rows = lazyItems.toRows(),
+        rows = lazyItems.toRows { it.id },
         events = viewModel.moderation.events,
         actions =
             TvRequestsActions(
@@ -143,7 +143,7 @@ private fun TvIssuesEntry(
     val lazyItems = ready?.let { viewModel.issues(it.filter).collectAsLazyPagingItems() }
     TvIssuesBoard(
         state = state,
-        rows = lazyItems.toRows(),
+        rows = lazyItems.toRows { it.id },
         events = viewModel.events,
         actions =
             TvIssuesActions(
@@ -189,12 +189,12 @@ private fun TvEditConnectionOverlay(
 }
 
 /** The pager's count, accessor and load states, in the form the boards take; empty while there is no pager. */
-private fun <T : Any> LazyPagingItems<T>?.toRows(): TvPagedRows<T> {
+private fun <T : Any> LazyPagingItems<T>?.toRows(keyOf: (T) -> Any): TvPagedRows<T> {
     if (this == null) return TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Loading)
     return TvPagedRows(
         count = itemCount,
         at = { index -> this[index] },
-        itemKey = itemKey { it.hashCode() },
+        itemKey = itemKey(keyOf),
         refresh = loadState.refresh.toPhase(),
         append = loadState.append.toPhase(),
     )

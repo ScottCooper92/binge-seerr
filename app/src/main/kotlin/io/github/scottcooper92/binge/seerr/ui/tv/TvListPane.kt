@@ -47,12 +47,16 @@ import com.binge.designsystem.tv.R as TvR
 private const val LIST_WEIGHT = 0.34f
 private const val PANE_WEIGHT = 0.66f
 
-/** One option in a row's pane: a label, a tick when current, and the call that commits it. */
+/**
+ * One option in a row's pane: a label, a tick when current, and the call that commits it.
+ * [focusRequester] is set when an overlay this option opens needs to hand focus back to it on close.
+ */
 @Immutable
 internal data class TvPaneOption(
     val label: String,
     val selected: Boolean = false,
     val onSelect: () -> Unit = {},
+    val focusRequester: FocusRequester? = null,
 )
 
 /**
@@ -247,6 +251,7 @@ private fun TvPane(
                             selected = option.selected,
                             onSelect = option.onSelect,
                             initiallyFocused = option.label == initialFocusedOptionLabel,
+                            modifier = option.focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier,
                         )
                     }
                 }

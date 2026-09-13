@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobScheduleBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -67,7 +68,7 @@ class JobsViewModel
         private fun act(
             id: String,
             noticeRes: Int? = null,
-            call: suspend (io.github.scottcooper92.binge.seerr.seerr.SeerrApi) -> SeerrJobDto,
+            call: suspend (SeerrApi) -> SeerrJobDto,
         ) {
             val ready = state.value as? JobsUiState.Ready ?: return
             if (id in ready.busyIds) return

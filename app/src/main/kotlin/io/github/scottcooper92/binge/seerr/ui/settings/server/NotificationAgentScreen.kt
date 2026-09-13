@@ -115,7 +115,7 @@ private fun OptionFields(
                         } else {
                             null
                         },
-                    isError = draft.enabled && option.required && draft.option(option).isBlank(),
+                    isError = draft.enabled && option.required && !option.satisfiedBy(draft.option(option)),
                 ) { value -> actions.onSetOption(option, value) }
         }
     }

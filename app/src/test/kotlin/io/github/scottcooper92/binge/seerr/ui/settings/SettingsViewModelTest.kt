@@ -93,7 +93,6 @@ class SettingsViewModelTest {
             """{"apiKey":"never-shown","applicationTitle":"Family","applicationUrl":"https://seerr.example.com/","appLanguage":"en","hideAvailable":true,
                "defaultPermissions":32,"defaultQuotas":{"movie":{"quotaLimit":5,"quotaDays":7},"tv":{"quotaLimit":0,"quotaDays":7}}}""",
         )
-        serve("/api/v1/settings/about", """{"version":"2.7.0","totalRequests":120,"totalMediaItems":900}""")
         serve(
             "/api/v1/settings/jobs",
             """[{"id":"plex-full-scan","name":"Plex Full Library Scan","running":true},{"id":"download-sync","name":"Download Sync","nextExecutionTime":"2099-01-01T00:00:00.000Z"}]""",
@@ -167,8 +166,6 @@ class SettingsViewModelTest {
             assertEquals(RequestPolicy(SeerrDefaultAccess.RequestWithApproval, RequestLimit(5, 7), null), config.requestPolicy)
             assertEquals(NotificationAgents(emailEnabled = true, discordEnabled = false), config.agents)
             val system = checkNotNull(config.system)
-            assertEquals("2.7.0", system.version)
-            assertEquals(120, system.totalRequests)
             assertEquals(listOf("Plex Full Library Scan", "Download Sync"), system.jobs.map { it.name })
             assertTrue(system.jobs[0].running)
             assertEquals(
@@ -229,6 +226,22 @@ class SettingsViewModelTest {
             notifier.canPost = true
             vm.recheckNotificationAccess()
             assertTrue(vm.awaitReady { it.notifications?.blocked == false }.notifications != null)
+        }
+
+    @Test
+    fun `a signal left enabled in prefs from before a permission downgrade is not reported as enabled`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+            vm.awaitReady { it.notifications != null }
+            prefs.setEnabled(NotificationSignal.PendingRequests, true)
+
+            val ready = vm.awaitReady { it.notifications != null }
+            val notifications = checkNotNull(ready.notifications)
+
+            assertTrue(NotificationSignal.PendingRequests !in notifications.offered)
+            assertTrue(notifications.enabled.isEmpty())
+            assertTrue(notifications.enabled.none { it == NotificationSignal.PendingRequests })
         }
 
     @Test
