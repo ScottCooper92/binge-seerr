@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.notifications.FakeNotifier
+import io.github.scottcooper92.binge.seerr.notifications.FakeScheduler
+import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
+import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
@@ -42,6 +46,9 @@ class SettingsViewModelTest {
     private val responses = mutableMapOf<String, () -> MockResponse>()
     private val viewModels = ViewModelStore()
     private lateinit var connection: SeerrConnection
+    private lateinit var prefs: NotificationPrefs
+    private val scheduler = FakeScheduler()
+    private val notifier = FakeNotifier()
 
     @Before
     fun setUp() {
@@ -120,7 +127,8 @@ class SettingsViewModelTest {
         } else {
             connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
         }
-        val vm = SettingsViewModel(connection, SettingsLoader(connection))
+        prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
+        val vm = SettingsViewModel(connection, SettingsLoader(connection), prefs, scheduler, notifier)
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -183,6 +191,41 @@ class SettingsViewModelTest {
             responses["/api/v1/settings/main"] = { error("A restricted user must not read the settings") }
             vm.setScreenVisible(true)
             assertNull(vm.awaitReady { it.connection.userName != null }.config)
+        }
+
+    @Test
+    fun `the poll's toggles are offered by permission, written to the prefs, and read with the blocked state and the schedule`() =
+        runTest {
+            server(REQUEST)
+            notifier.canPost = false
+            scheduler.nextRun.value = 4_000L
+            val vm = viewModel(session = true)
+
+            val offered = checkNotNull(vm.awaitReady { it.notifications != null }.notifications)
+            assertEquals(
+                listOf(NotificationSignal.RequestAvailable, NotificationSignal.RequestApproved, NotificationSignal.RequestDeclined),
+                offered.offered,
+            )
+            assertTrue(offered.enabled.isEmpty())
+            assertTrue(offered.blocked)
+            assertEquals(4_000L, offered.nextRunMillis)
+
+            vm.setSignal(NotificationSignal.RequestApproved, true)
+            val on = checkNotNull(vm.awaitReady { it.notifications?.enabled?.isNotEmpty() == true }.notifications)
+            assertEquals(setOf(NotificationSignal.RequestApproved), on.enabled)
+            assertTrue(prefs.isEnabled(NotificationSignal.RequestApproved))
+
+            notifier.canPost = true
+            vm.recheckNotificationAccess()
+            assertTrue(vm.awaitReady { it.notifications?.blocked == false }.notifications != null)
+        }
+
+    @Test
+    fun `a moderator is offered the feeds too`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            assertEquals(NotificationSignal.entries, checkNotNull(vm.awaitReady { it.notifications != null }.notifications).offered)
         }
 
     private object PlainCipher : SecretCipher {

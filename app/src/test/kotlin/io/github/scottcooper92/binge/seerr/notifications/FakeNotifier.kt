@@ -2,6 +2,8 @@ package io.github.scottcooper92.binge.seerr.notifications
 
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /** Records what the poll would have shown. */
 internal class FakeNotifier : SeerrNotifier {
@@ -52,6 +54,7 @@ internal class FakeNotifier : SeerrNotifier {
 
 internal class FakeScheduler : NotificationScheduler {
     val calls = mutableListOf<String>()
+    val nextRun = MutableStateFlow<Long?>(null)
 
     override fun schedule() {
         calls += "schedule"
@@ -60,4 +63,6 @@ internal class FakeScheduler : NotificationScheduler {
     override fun cancel() {
         calls += "cancel"
     }
+
+    override fun nextRunMillis(): Flow<Long?> = nextRun
 }
