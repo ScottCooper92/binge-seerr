@@ -7,12 +7,11 @@ import io.github.scottcooper92.binge.seerr.seerr.PlexPinDto
 import io.github.scottcooper92.binge.seerr.seerr.PlexTvApi
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,6 +24,9 @@ import org.junit.rules.TemporaryFolder
 import kotlin.time.Duration.Companion.milliseconds
 
 class LinkedAccountsViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @get:Rule
     val folder = TemporaryFolder()
 
@@ -42,7 +44,6 @@ class LinkedAccountsViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
         seerr.viewer(id = 8, permissions = REQUEST)
         seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","jellyfinUsername":"ana","jellyfinUserId":"j-1","userType":3}""")
