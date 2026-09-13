@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -119,6 +120,7 @@ internal fun mediaServerRows(
 internal fun generalRows(
     general: GeneralSettings,
     onEdit: () -> Unit,
+    onOpenSliders: () -> Unit,
 ): List<SettingsRow> {
     val context = LocalContext.current
     return listOfNotNull(
@@ -153,6 +155,17 @@ internal fun generalRows(
                 detail = stringResource(onOffRes(hidden)),
                 clickable = false,
             )
+        },
+        if (general.discoverSliders) {
+            SettingsRow(
+                icon = Icons.Filled.ViewCarousel,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_sliders),
+                detail = stringResource(R.string.server_settings_sliders_caption),
+                onClick = onOpenSliders,
+            )
+        } else {
+            null
         },
     )
 }

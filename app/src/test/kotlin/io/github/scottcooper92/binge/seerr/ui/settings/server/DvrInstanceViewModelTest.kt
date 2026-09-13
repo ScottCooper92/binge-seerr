@@ -136,7 +136,7 @@ class DvrInstanceViewModelTest {
             vm.extras.first { it.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, vm.events.first { it == EditorEvent.Saved })
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/radarr")).jsonObject
             assertEquals("6", sent.getValue("activeProfileId").jsonPrimitive.content)
@@ -144,6 +144,8 @@ class DvrInstanceViewModelTest {
             assertEquals("/movies-4k", sent.getValue("activeDirectory").jsonPrimitive.content)
             assertEquals(listOf("2"), sent.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
             assertEquals("inCinemas", sent.getValue("minimumAvailability").jsonPrimitive.content)
+            assertEquals("false", sent.getValue("useSsl").jsonPrimitive.content)
+            assertEquals("false", sent.getValue("isDefault").jsonPrimitive.content)
             assertNull(sent["seriesType"])
             val ready = vm.awaitReady()
             assertEquals(7, ready.saved.id)

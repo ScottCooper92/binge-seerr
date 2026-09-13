@@ -455,6 +455,36 @@ interface SeerrApi {
         @Path("ruleId") ruleId: Int,
     ): SeerrOverrideRuleDto
 
+    /** The discover sliders in the order the web client shows them, Overseerr 1.32 and the Jellyseerr lineage from 1.4. */
+    @GET("api/v1/settings/discover")
+    suspend fun discoverSliders(): List<SeerrDiscoverSliderDto>
+
+    /** Replaces the whole list: the order, and each slider's enabled state. */
+    @POST("api/v1/settings/discover")
+    suspend fun updateDiscoverSliders(
+        @Body body: List<SeerrDiscoverSliderDto>,
+    ): List<SeerrDiscoverSliderDto>
+
+    @POST("api/v1/settings/discover/add")
+    suspend fun addDiscoverSlider(
+        @Body body: SeerrDiscoverSliderBody,
+    ): SeerrDiscoverSliderDto
+
+    @PUT("api/v1/settings/discover/{sliderId}")
+    suspend fun updateDiscoverSlider(
+        @Path("sliderId") sliderId: Int,
+        @Body body: SeerrDiscoverSliderBody,
+    ): SeerrDiscoverSliderDto
+
+    @DELETE("api/v1/settings/discover/{sliderId}")
+    suspend fun deleteDiscoverSlider(
+        @Path("sliderId") sliderId: Int,
+    ): SeerrDiscoverSliderDto
+
+    /** Puts the built-in sliders back in their default order and drops the custom ones. */
+    @GET("api/v1/settings/discover/reset")
+    suspend fun resetDiscoverSliders(): Response<Unit>
+
     /** One notification agent's settings; [agent] is the server's segment (`email`, `discord`, …). */
     @GET("api/v1/settings/notifications/{agent}")
     suspend fun notificationAgent(

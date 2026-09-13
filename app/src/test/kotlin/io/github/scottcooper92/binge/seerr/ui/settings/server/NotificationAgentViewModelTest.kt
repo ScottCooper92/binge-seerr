@@ -122,6 +122,9 @@ class NotificationAgentViewModelTest {
             assertTrue(vm.awaitReady().draft.valid)
             vm.save()
             assertEquals(EditorEvent.Saved, vm.events.first())
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email")).jsonObject
+            assertEquals("false", sent.getValue("enabled").jsonPrimitive.content)
+            assertEquals("6", sent.getValue("types").jsonPrimitive.content)
         }
 
     @Test

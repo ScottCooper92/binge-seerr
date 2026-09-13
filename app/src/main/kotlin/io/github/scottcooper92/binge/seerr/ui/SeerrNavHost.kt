@@ -133,8 +133,10 @@ fun SeerrNavHost(
                         onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
                         onOpenRule = { id -> backStack.add(OverrideRuleRoute(id)) },
                         onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
+                        onOpenSlider = { id -> backStack.add(DiscoverSliderRoute(id)) },
                     )
                 }
+                entry<DiscoverSliderRoute> { route -> DiscoverSliderEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
                 entry<NotificationAgentRoute> { route -> NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
                 entry<DvrInstanceRoute> { route -> DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
                 entry<OverrideRuleRoute> { route -> OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
@@ -148,6 +150,7 @@ fun SeerrNavHost(
                         onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
                         onOpenAgents = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.NotificationAgents)) },
                         onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
+                        onOpenSliders = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.DiscoverSliders)) },
                     )
                 }
                 entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
@@ -430,6 +433,7 @@ private fun SettingsEntry(
     onOpenInstance: (ServiceType, Int) -> Unit,
     onOpenAgents: () -> Unit,
     onOpenAgent: (ServerAgent) -> Unit,
+    onOpenSliders: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -450,6 +454,7 @@ private fun SettingsEntry(
                 onOpenInstance = onOpenInstance,
                 onOpenAgents = onOpenAgents,
                 onOpenAgent = onOpenAgent,
+                onOpenSliders = onOpenSliders,
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
