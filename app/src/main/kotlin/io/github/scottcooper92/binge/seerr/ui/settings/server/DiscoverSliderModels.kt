@@ -83,8 +83,15 @@ internal fun SeerrDiscoverSliderDto.toSlider(): DiscoverSlider? {
 internal fun DiscoverSlider.toDto(): SeerrDiscoverSliderDto =
     SeerrDiscoverSliderDto(id = id, type = typeCode, title = title, isBuiltIn = builtIn, enabled = enabled, data = data)
 
-internal fun SeerrDiscoverSliderDto.toForm(): SliderForm =
-    SliderForm(id = id, type = SliderType.fromCode(type) ?: SliderType.MovieKeyword, title = title.orEmpty(), data = data.orEmpty())
+/**
+ * Fails for a slider whose type this app does not recognize: the editor has no way to show it, and
+ * falling back to a known kind would, on the next unrelated edit, save that wrong kind over the
+ * server's real one.
+ */
+internal fun SeerrDiscoverSliderDto.toForm(): SliderForm {
+    val sliderType = SliderType.fromCode(type) ?: throw NoSuchElementException("slider type $type")
+    return SliderForm(id = id, type = sliderType, title = title.orEmpty(), data = data.orEmpty())
+}
 
 internal fun SliderForm.toBody(): SeerrDiscoverSliderBody =
     SeerrDiscoverSliderBody(title = title.trim(), type = type.code, data = data.trim())
