@@ -157,4 +157,22 @@ class OverrideRuleViewModelTest {
             vm.delete()
             assertEquals(true, vm.deleted.first { it })
         }
+
+    @Test
+    fun `deleting a just-created rule uses the id the server just assigned, not the still-null constructor id`() =
+        runTest {
+            seerr.serve("POST /api/v1/overrideRule", """{"id":12,"radarrServiceId":1}""")
+            seerr.serve("DELETE /api/v1/overrideRule/12")
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectInstance(vm.extras.first { it.instances.isNotEmpty() }.instances[0])
+            vm.extras.first { it.choices != null }
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(12, vm.awaitReady().saved.id)
+
+            vm.delete()
+            assertEquals(true, vm.deleted.first { it })
+            assertEquals(1, seerr.count("DELETE", "/api/v1/overrideRule/12"))
+        }
 }
