@@ -59,7 +59,8 @@ android {
 
     // The release keystore is never in the repository: the values come from keystore.properties at
     // the root (gitignored) for a local signed build, or from the environment in release.yml.
-    // Without them a release build falls back to the debug key, so it still builds everywhere.
+    // Without them the release build type gets no signing config at all, so it still builds
+    // everywhere, but the output is an unsigned APK/bundle rather than a debug-signed one.
     val keystoreProperties =
         Properties().apply {
             val file = rootDir.resolve("keystore.properties")

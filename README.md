@@ -66,8 +66,10 @@ other `RELEASE_*` environment variables, takes the version name from the tag and
 from the run number, checks the bundle is release-signed and shrunk, and attaches it with the R8
 mapping to a GitHub Release. A local signed build reads the same four `RELEASE_*` values — with
 `RELEASE_STORE_FILE` pointing directly at the keystore file, since there is no decoding step
-locally — from a gitignored `keystore.properties` at the root; without them a release build signs
-with the debug key. The store listing, privacy policy and data-safety answers live under
+locally — from a gitignored `keystore.properties` at the root; without them the release build
+type gets no signing config at all, so a local `assembleRelease`/`bundleRelease` still succeeds
+but produces an unsigned artifact, not a debug-signed one. The store listing, privacy policy and
+data-safety answers live under
 `docs/listing/`, reviewed like code.
 
 ## Locales
