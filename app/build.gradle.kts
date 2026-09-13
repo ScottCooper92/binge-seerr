@@ -35,8 +35,30 @@ android {
         compose = true
     }
 
+    // Generates the locale config from the values-<lang> directories present, so Android 13+ offers
+    // this app in the per-app language picker and adding a locale is one directory.
+    androidResources { generateLocaleConfig = true }
+
+    // A locale is complete or it does not exist: the alternative is not English, it is Android's
+    // per-string fallback rendering half a screen in each. Adding an English string means adding
+    // its translation in the same change.
+    lint {
+        error +=
+            setOf(
+                "MissingTranslation",
+                "ExtraTranslation",
+                "MissingQuantity",
+                "UnusedQuantity",
+                "StringFormatMatches",
+                "StringFormatCount",
+            )
+    }
+
     buildTypes {
         debug {
+            // en-XA lengthens and accents every string, ar-XB mirrors the layout: truncation and RTL
+            // bugs found with no translation written. Debug only; they must never ship.
+            isPseudoLocalesEnabled = true
             // Opt-in (`-PminifyDebug`) minified debug build: the one the device lane runs, so a keep
             // rule that goes stale fails there rather than on a user. BuildConfig.DEBUG stays true, which
             // is what lets the smoke test bind as a caller. Off by default: it would slow the dev loop.
@@ -82,6 +104,35 @@ android {
         }
     }
 }
+
+// A reworded English string is the one translation drift lint cannot see, so the hash of every
+// translated source string is committed at the repo root and `check` fails when one moves. Fix or
+// re-read the translation it names, then re-stamp with `updateTranslationHashes`.
+val translatedStringFiles =
+    fileTree(projectDir) {
+        include("src/*/res/values/strings.xml", "src/*/res/values-*/strings.xml")
+    }
+val translationHashes = rootProject.layout.projectDirectory.file("translation-hashes.txt")
+
+tasks.register<CheckTranslationStalenessTask>("checkTranslationStaleness") {
+    group = "verification"
+    description = "Checks that no translated source string changed without its translations being re-confirmed."
+    stringFiles.from(translatedStringFiles)
+    hashFile.set(translationHashes)
+    repoRoot.set(rootProject.layout.projectDirectory)
+    rewrite.set(false)
+}
+
+tasks.register<CheckTranslationStalenessTask>("updateTranslationHashes") {
+    group = "verification"
+    description = "Re-stamps translation-hashes.txt after the named translations have been re-read."
+    stringFiles.from(translatedStringFiles)
+    hashFile.set(translationHashes)
+    repoRoot.set(rootProject.layout.projectDirectory)
+    rewrite.set(true)
+}
+
+tasks.named("check") { dependsOn("checkTranslationStaleness") }
 
 dependencies {
     implementation(libs.androidx.core.ktx)

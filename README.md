@@ -56,6 +56,18 @@ minified build (`-PminifyDebug`, the same rules as release): it binds the export
 completes a handshake and a status call. It runs on a push to `main` that touches what could
 change its answer, weekly, and on request.
 
+## Locales
+
+`values/` is British English, declared as `en-GB` in `app/src/main/res/resources.properties`, and
+Spanish ships beside it in `values-es/`. A locale is complete or it does not exist: the lint checks
+for a missing or extra translation, a missing CLDR quantity and a placeholder that drifted are
+pinned to error, so adding an English string means adding its Spanish in the same change. The one
+drift lint cannot see, a reworded English string, is caught by `checkTranslationStaleness` (part
+of `check`), which compares each translated source string against the hash committed in
+`translation-hashes.txt`; re-read the translation it names, fix it if it no longer matches, then
+re-stamp with `./gradlew updateTranslationHashes`. Debug builds also carry the `en-XA` and `ar-XB`
+pseudolocales for truncation and mirroring checks before any translation is written.
+
 ## Conventions
 
 `CLAUDE.md` holds the repository's conventions and is read from `main` by the agent
