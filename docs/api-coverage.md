@@ -90,12 +90,12 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /issue` | Get all issues | v1.28.0 | v1.1.0 | yes | The issues browser, cached in Room and refreshed on open. |
 | `POST /issue` | Create new issue | v1.28.0 | v1.1.0 | yes |  |
 | `DELETE /issue/{issueId}` | Delete issue | v1.28.0 | v1.1.0 |  |  |
-| `GET /issue/{issueId}` | Get issue | v1.28.0 | v1.1.0 |  |  |
-| `POST /issue/{issueId}/comment` | Create a comment | v1.28.0 | v1.1.0 |  |  |
+| `GET /issue/{issueId}` | Get issue | v1.28.0 | v1.1.0 | yes | The issue page. |
+| `POST /issue/{issueId}/comment` | Create a comment | v1.28.0 | v1.1.0 | yes | The issue page's composer, through the outbox. |
 | `POST /issue/{issueId}/{status}` | Update an issue's status | v1.28.0 | v1.1.0 |  |  |
-| `DELETE /issueComment/{commentId}` | Delete issue comment | v1.28.0 | v1.1.0 |  |  |
+| `DELETE /issueComment/{commentId}` | Delete issue comment | v1.28.0 | v1.1.0 | yes | The issue page: own comments, or any as a manager. |
 | `GET /issueComment/{commentId}` | Get issue comment | v1.28.0 | v1.1.0 |  |  |
-| `PUT /issueComment/{commentId}` | Update issue comment | v1.28.0 | v1.1.0 |  |  |
+| `PUT /issueComment/{commentId}` | Update issue comment | v1.28.0 | v1.1.0 | yes | The issue page: own comments, or any as a manager. |
 
 ### Phase 4 — users and blocklist
 

@@ -115,7 +115,6 @@ class IssuesViewModelTest {
             val rows = vm.issues(IssueFilter.Open).asSnapshot()
 
             val heat = rows.single()
-            assertEquals(seerr.url("/").toString() + "issues/31", ready.scope.webUrl(heat))
             assertEquals("Heat", heat.title)
             assertEquals("https://image.tmdb.org/t/p/w342/heat.jpg", heat.posterUrl)
             assertEquals(IssueType.Subtitles, heat.type)

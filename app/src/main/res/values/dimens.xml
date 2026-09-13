@@ -12,4 +12,7 @@
     <dimen name="hub_download_card_poster_width">52dp</dimen>
     <dimen name="hub_download_card_text_spacing">5dp</dimen>
     <dimen name="hub_download_strip_spacing">10dp</dimen>
+    <dimen name="issue_bubble_corner">16dp</dimen>
+    <dimen name="issue_bubble_pointer_corner">4dp</dimen>
+    <dimen name="issue_send_indicator_size">16dp</dimen>
 </resources>

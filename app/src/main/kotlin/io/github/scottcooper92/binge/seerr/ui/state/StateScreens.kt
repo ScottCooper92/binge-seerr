@@ -168,7 +168,7 @@ private fun SeerrError.titleRes(): Int =
         SeerrError.Unknown -> R.string.state_error_unknown_title
     }
 
-private fun SeerrError.messageRes(): Int =
+internal fun SeerrError.messageRes(): Int =
     when (this) {
         SeerrError.NotConnected -> R.string.state_error_not_connected_message
         SeerrError.Unauthorized -> R.string.state_error_unauthorized_message
