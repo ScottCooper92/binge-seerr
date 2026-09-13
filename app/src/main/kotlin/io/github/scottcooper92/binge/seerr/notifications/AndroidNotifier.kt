@@ -10,7 +10,9 @@ import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.DeepLinks
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 
@@ -19,7 +21,7 @@ private const val CONNECTION_NOTIFICATION_ID = 4203
 /**
  * Posts what the poll found. A batch posts under its signal's tag with the batch's newest id, so
  * it adds to an earlier untapped batch rather than replacing it; the system bundles them once
- * several pile up. Every notification opens the app; the page it opens arrives with Phase 5.3.
+ * several pile up. A batch of one opens its page; a larger one, the list it belongs to.
  */
 class AndroidNotifier(
     private val context: Context,
@@ -55,6 +57,7 @@ class AndroidNotifier(
             channel = NotificationChannelKind.Connection,
             title = context.getString(R.string.notif_connection_title),
             body = context.getString(R.string.notif_connection_body),
+            link = DeepLinks.reconnect(),
         )
 
     override fun cancelConnectionProblem() = NotificationManagerCompat.from(context).cancel(CONNECTION_NOTIFICATION_ID)
@@ -71,16 +74,17 @@ class AndroidNotifier(
         titles: List<String>,
     ) {
         val batchId = ids.maxOrNull() ?: return
+        val body =
+            summaryLine(titles, ids.size) { first, others ->
+                context.resources.getQuantityString(R.plurals.notif_and_more, others, first, others)
+            }
         post(
             id = batchId,
             tag = signal.key,
             channel = signal.channel,
             title = context.resources.getQuantityString(signal.titleRes, ids.size, ids.size),
-            body =
-                summaryLine(
-                    titles,
-                    ids.size,
-                ) { first, others -> context.resources.getQuantityString(R.plurals.notif_and_more, others, first, others) },
+            body = body,
+            link = signal.deepLink(ids),
         )
     }
 
@@ -92,6 +96,7 @@ class AndroidNotifier(
         channel: NotificationChannelKind,
         title: String,
         body: String?,
+        link: String,
     ) {
         if (!canPost()) return
         ensureChannel(channel)
@@ -102,14 +107,17 @@ class AndroidNotifier(
                 .setContentTitle(title)
                 .setPriority(channel.priority)
                 .setAutoCancel(true)
-                .setContentIntent(openApp(id))
+                .setContentIntent(openApp(id, link))
         if (body != null) builder.setContentText(body)
         NotificationManagerCompat.from(context).notify(tag, id, builder.build())
     }
 
-    /** The notification id doubles as the request code, so each keeps its own intent. */
-    private fun openApp(id: Int): PendingIntent? {
-        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
+    /** The app's launch intent carrying the link; the notification id doubles as the request code, so each keeps its own. */
+    private fun openApp(
+        id: Int,
+        link: String,
+    ): PendingIntent? {
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply { data = link.toUri() } ?: return null
         return PendingIntent.getActivity(context, id, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 

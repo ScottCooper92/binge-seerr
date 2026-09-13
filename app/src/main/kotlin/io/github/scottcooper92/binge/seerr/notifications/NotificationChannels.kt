@@ -5,6 +5,7 @@ import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.DeepLinks
 
 /**
  * The channels: one per kind of activity, so a moderator can mute the feeds and keep their own
@@ -70,6 +71,19 @@ val NotificationSignal.titleRes: Int
             NotificationSignal.RequestApproved -> R.plurals.notif_requests_approved
             NotificationSignal.RequestDeclined -> R.plurals.notif_requests_declined
         }
+
+/** Where a batch's tap lands: the one page for a single item, the list it belongs to for several. */
+fun NotificationSignal.deepLink(ids: List<Int>): String {
+    val only = ids.singleOrNull()
+    return when (this) {
+        NotificationSignal.OpenIssues -> only?.let(DeepLinks::issue) ?: DeepLinks.issues()
+        NotificationSignal.PendingRequests,
+        NotificationSignal.RequestAvailable,
+        NotificationSignal.RequestApproved,
+        NotificationSignal.RequestDeclined,
+        -> only?.let(DeepLinks::request) ?: DeepLinks.requests()
+    }
+}
 
 /** "Heat" for one, "Heat and 2 more" for several, null when no title resolved and the count stands alone. */
 fun summaryLine(

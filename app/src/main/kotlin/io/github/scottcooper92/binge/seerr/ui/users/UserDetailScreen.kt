@@ -64,6 +64,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.QuotaSection
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
+import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
@@ -252,7 +253,7 @@ private fun ProfileHeader(
     }
 }
 
-/** A carousel of titles; each card opens the title on the server, which has the page this app does not. */
+/** A carousel of titles; each card opens the title in Binge, or on the server where Binge is not installed. */
 @Composable
 private fun TitleCarousel(
     title: String,
@@ -269,17 +270,8 @@ private fun TitleCarousel(
                     ?: stringResource(if (item.mediaType == RequestMediaType.Tv) R.string.media_type_tv else R.string.media_type_movie),
             rating = null,
             onClick = {
-                context.openInBrowser(
-                    serverRoot + (
-                        if (item.mediaType ==
-                            RequestMediaType.Tv
-                        ) {
-                            "tv/"
-                        } else {
-                            "movie/"
-                        }
-                    ) + item.tmdbId,
-                )
+                val path = if (item.mediaType == RequestMediaType.Tv) "tv/" else "movie/"
+                context.openTitle(item.mediaType, item.tmdbId, serverRoot + path + item.tmdbId)
             },
         )
     }

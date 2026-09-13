@@ -41,6 +41,7 @@ import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
+import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
@@ -242,7 +243,7 @@ private fun OpenLinks(detail: RequestDetail) {
     val context = LocalContext.current
     val links =
         listOfNotNull(
-            R.string.request_open_web to detail.webUrl,
+            R.string.request_open_title to null,
             detail.mediaServerUrl?.let { R.string.request_open_media_server to it },
             detail.serviceUrl?.let {
                 (
@@ -262,7 +263,13 @@ private fun OpenLinks(detail: RequestDetail) {
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         links.forEach { (labelRes, url) ->
-            BingeOutlinedButton(label = stringResource(labelRes), onClick = { context.openInBrowser(url) })
+            BingeOutlinedButton(
+                label = stringResource(labelRes),
+                // The title itself hands off to Binge where it is installed; the rest are the server's own links.
+                onClick = {
+                    url?.let(context::openInBrowser) ?: context.openTitle(detail.item.mediaType, detail.item.tmdbId, detail.webUrl)
+                },
+            )
         }
     }
 }

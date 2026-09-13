@@ -76,6 +76,7 @@ fun SeerrNavHost(
                 entry<HomeRoute> {
                     HomeEntry(
                         onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
+                        onReconnect = { backStack.add(EditConnectionRoute) },
                         onOpenSection = { section ->
                             backStack.add(
                                 when (section) {
@@ -137,13 +138,14 @@ fun SeerrNavHost(
 private fun HomeEntry(
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
+    onReconnect: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val connected by viewModel.isConnected.collectAsStateWithLifecycle()
     when (connected) {
         null -> LoadingScreen()
         false -> SetupEntry()
-        true -> HubEntry(onOpenSection, onOpenAccount)
+        true -> HubEntry(onOpenSection, onOpenAccount, onReconnect)
     }
 }
 
@@ -151,6 +153,7 @@ private fun HomeEntry(
 private fun HubEntry(
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
+    onReconnect: () -> Unit,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -166,6 +169,7 @@ private fun HubEntry(
                 onOpenSection = onOpenSection,
                 onOpenAccount = onOpenAccount,
                 onRetry = viewModel::recheck,
+                onReconnect = onReconnect,
                 onDisconnect = viewModel::disconnect,
             ),
     )
