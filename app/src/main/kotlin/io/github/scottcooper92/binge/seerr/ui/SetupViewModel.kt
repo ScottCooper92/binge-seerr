@@ -28,9 +28,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val HTTP_UNAUTHORIZED = 401
-private const val HTTP_FORBIDDEN = 403
-
 /** The form offers the media server's own sign-in first and the admin key last. */
 private val MODE_ORDER =
     listOf(

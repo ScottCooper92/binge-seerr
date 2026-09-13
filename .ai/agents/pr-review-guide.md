@@ -8,8 +8,9 @@ importantly, how hard to press.
 ## 1. What CI has already decided
 
 CI is green on the head under review before a review starts. That means
-`./gradlew build` compiled the Kotlin, ran `:app:test`, passed `ktlintCheck`, and
-passed Android `lint`.
+`./gradlew build` compiled the Kotlin, ran `:app:test`, passed `ktlintCheck`, passed
+`detekt` with zero new violations against `detekt-baseline.xml`, and passed Android
+`lint`.
 
 Do not re-report anything in that set. A finding that says "this is badly
 formatted" or "lint would flag this" on a green head is wrong, and saying it costs

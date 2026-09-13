@@ -8,21 +8,22 @@ CI is one job:
 
 | Job | Runs |
 | --- | --- |
-| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, Android `lint` |
+| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint` |
 
-The last two arrive through `check`, which `build` depends on. Nothing in the
+The last three arrive through `check`, which `build` depends on. Nothing in the
 repository names them, so a red run whose log ends in a lint report is still the
 `build` job, not a second gate that appeared from somewhere.
 
-There is no detekt, no coverage floor, no screenshot suite and no `buf` here. If the
-log shows a failure that is not in the table below, that is a **stop**, not an
-invitation to improvise.
+There is no coverage floor, no screenshot suite and no `buf` here. If the log shows
+a failure that is not in the table below, that is a **stop**, not an invitation to
+improvise.
 
 ## The table
 
 | Failure | Why | Fix |
 | --- | --- | --- |
 | `ktlintMainSourceSetCheck` / `ktlintTestSourceSetCheck` reports formatting | Style rule | Fix the formatting. `./gradlew ktlintFormat` fixes most of it mechanically; read the diff it produces rather than committing it blind. **Never** add a baseline or a disable comment |
+| `detekt` reports a new finding | Static analysis the ktlint/lint pair does not do, gated at zero new violations against `detekt-baseline.xml` | Fix the code the finding describes, or argue it in review if it is a false positive. **Never** add to `detekt-baseline.xml` to make it pass |
 | Android `lint` reports an error-severity issue | AGP's own checks, wired into `check` | Fix the code the issue describes. **Never** add `lint-baseline.xml`, `abortOnError = false`, or a `lintOptions` disable for the rule. A baseline in this repository is silently copied by everyone who reads it |
 | Android `lint` reports `NewApi` | Code uses an API above `minSdk` 26 | Guard it with a version check or use the AndroidX-compatible call. Raising `minSdk` to make it pass is a **stop** — that is a product decision and it narrows who can install the companion |
 | Kotlin compile error | Ordinary | Fix it. If a symbol from the contract stubs "does not exist", the app and the contract version it builds against disagree — fix the app, and if the contract is genuinely wrong that is a PR against binge-integrations, not a change here |
@@ -40,6 +41,7 @@ Run only what failed, scoped:
 
 ```sh
 ./gradlew :app:ktlintCheck
+./gradlew :app:detekt
 ./gradlew :app:lintDebug
 ./gradlew :app:test
 ```
@@ -48,7 +50,7 @@ Do not run the full gate. CI does that on push.
 
 ## Never
 
-- Add a ktlint baseline, a `lint-baseline.xml`, or a disable comment for either.
+- Add a ktlint baseline, a `lint-baseline.xml`, an entry to `detekt-baseline.xml`, or a disable comment for any of them.
 - Set `abortOnError = false` or otherwise stop lint from failing the build.
 - Exclude a source set from `check`.
 - Raise `minSdk`, or change `compileSdk`, to make a failure go away.

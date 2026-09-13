@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
 }
 
 // The exported schema is committed: a change to a table is a migration decision made in review.
@@ -225,4 +226,59 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.android.compiler)
     androidTestImplementation(libs.okhttp.mockwebserver)
+}
+
+// detekt is pinned to production `src/main`: a test's shape is not the app's, and Binge pins the
+// same way. *PreviewData.kt is preview tooling rather than logic, so it is dropped too.
+detekt {
+    config.setFrom(layout.settingsDirectory.file("detekt.yml"))
+    baseline = layout.settingsDirectory.file("detekt-baseline.xml").asFile
+    buildUponDefaultConfig = true
+    parallel = true
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    setSource(
+        fileTree("src/main") {
+            include("**/*.kt")
+            exclude("**/*PreviewData.kt")
+        },
+    )
+    jvmTarget = "17"
+    reports {
+        xml.required.set(false)
+        txt.required.set(false)
+        sarif.required.set(false)
+        md.required.set(false)
+    }
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
+    setSource(
+        fileTree("src/main") {
+            include("**/*.kt")
+            exclude("**/*PreviewData.kt")
+        },
+    )
+    jvmTarget = "17"
+}
+
+// UnsafeCallOnNullableType - the `!!` ban - needs type resolution, and a detekt task carries no
+// classpath by default, so without this the rule loads and silently never fires. `libraries` is the
+// compile task's already-variant-resolved classpath; resolving compileDependencyFiles directly trips
+// AGP 9 variant ambiguity. configureEach rather than a lookup, because the Android variant
+// compilations do not exist yet when the Kotlin plugin applies.
+kotlin.target.compilations.configureEach {
+    if (name != "debug") return@configureEach
+    val classpathFiles =
+        compileTaskProvider.map {
+            (it as org.jetbrains.kotlin.gradle.tasks.KotlinCompileTool).libraries
+        }
+    val outputClasses = output.classesDirs
+    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+        classpath.from(classpathFiles, outputClasses)
+    }
+    tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
+        classpath.from(classpathFiles, outputClasses)
+    }
 }
