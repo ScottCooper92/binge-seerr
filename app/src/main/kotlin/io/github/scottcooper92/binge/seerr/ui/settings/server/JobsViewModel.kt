@@ -74,12 +74,15 @@ class JobsViewModel
             if (id in ready.busyIds) return
             state.value = ready.copy(busyIds = ready.busyIds + id)
             viewModelScope.launch {
-                runCatching { call(connection.api()).toServerJob() }
-                    .onSuccess { updated ->
-                        setJobs(jobs().map { if (it.id == updated.id) updated else it })
-                        noticeRes?.let { eventFlow.emit(EditorEvent.Notice(it)) }
-                    }.onFailure { failure -> eventFlow.emit(EditorEvent.Failed(failure.toSeerrError())) }
+                val outcome = runCatching { call(connection.api()).toServerJob() }
+                outcome.onSuccess { updated -> setJobs(jobs().map { if (it.id == updated.id) updated else it }) }
+                // Before the event, not after it: a terminal event is this action's last observable
+                // effect, so anything reacting to one sees the job already released rather than a
+                // state that still says busy for however long the emitting coroutine takes to resume.
                 state.update { current -> (current as? JobsUiState.Ready)?.copy(busyIds = current.busyIds - id) ?: current }
+                outcome
+                    .onSuccess { noticeRes?.let { eventFlow.emit(EditorEvent.Notice(it)) } }
+                    .onFailure { failure -> eventFlow.emit(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
 
