@@ -7,11 +7,14 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.REQUEST
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,6 +24,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private const val USER_PAGE =
     """{"pageInfo":{"pages":1,"results":1},"results":[{"id":7,"displayName":"Scott","permissions":2,"jellyfinUserId":"j-7"}]}"""
@@ -91,6 +96,17 @@ class UserAdmissionTest {
             assertEquals("""{"email":"ana@example.com","username":"ana","password":"longenough"}""", seerr.body("POST", "/api/v1/user"))
             assertNull(vm.awaitReady().admission)
             vm.users.asSnapshot()
+
+            // The refresh is a new Pager generation, and `cachedIn` can hand a fresh subscriber the
+            // PREVIOUS generation's loaded data before the new one reaches its cache slot - so the
+            // read lands shortly after the snapshot rather than during it. Sampling the count once
+            // caught that window about a quarter of the time. Real time, because Main here is
+            // Dispatchers.Unconfined and the load runs on OkHttp's threads, not the test scheduler.
+            withContext(Dispatchers.Default) {
+                withTimeout(5.seconds) {
+                    while (seerr.count("GET", "/api/v1/user") <= listReads) delay(10.milliseconds)
+                }
+            }
             assertTrue(seerr.count("GET", "/api/v1/user") > listReads)
 
             vm.admission.startCreate(canGeneratePassword = true)
