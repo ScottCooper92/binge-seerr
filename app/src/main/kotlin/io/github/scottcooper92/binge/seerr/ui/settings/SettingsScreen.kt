@@ -27,6 +27,8 @@ class SettingsActions(
     val onEditConnection: () -> Unit,
     val onOpenServerSettings: () -> Unit,
     val onOpenMediaServer: () -> Unit,
+    val onOpenServices: () -> Unit,
+    val onOpenInstance: (ServiceType, Int) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
     val onDisconnect: () -> Unit,
@@ -65,7 +67,9 @@ private fun SettingsContent(
         ) {
             Group(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server, actions.onOpenMediaServer))
         }
-        config?.services?.takeIf { it.isNotEmpty() }?.let { Group(stringResource(R.string.settings_group_services), serviceRows(it)) }
+        config?.services?.let {
+            Group(stringResource(R.string.settings_group_services), serviceRows(it, actions.onOpenServices, actions.onOpenInstance))
+        }
         config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
         state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
         config?.agents?.let { Group(stringResource(R.string.settings_group_notifications), agentRows(it)) }

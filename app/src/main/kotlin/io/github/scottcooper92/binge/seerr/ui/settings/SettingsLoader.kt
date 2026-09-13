@@ -153,6 +153,7 @@ private fun String.toEpochMillisOrNull(): Long? =
 
 internal fun SeerrServiceSettingsDto.toService(type: ServiceType): ServerService =
     ServerService(
+        id = id,
         name = name?.takeIf { it.isNotBlank() } ?: type.name,
         type = type,
         url = browsableUrl(),

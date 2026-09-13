@@ -156,20 +156,35 @@ internal fun generalRows(
     )
 }
 
+/** Each instance opens its own editor; first, the way to the services page, where one is added and the rules live. */
 @Composable
-internal fun serviceRows(services: List<ServerService>): List<SettingsRow> {
+internal fun serviceRows(
+    services: List<ServerService>,
+    onOpenServices: () -> Unit,
+    onOpenInstance: (ServiceType, Int) -> Unit,
+): List<SettingsRow> {
     val context = LocalContext.current
-    return services.map { service ->
-        val url = service.url?.takeIf { it.isWebUrl() }
+    val manage =
         SettingsRow(
-            icon = if (service.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv,
+            icon = Icons.Filled.Tune,
             iconTint = BingeSentiment.Info.fill(),
-            label = service.label(),
-            detail = service.detail(),
-            clickable = url != null,
-            onClick = { url?.let { context.openInBrowser(it) } },
+            label = stringResource(R.string.server_settings_services_manage),
+            detail = stringResource(R.string.server_settings_services_manage_caption),
+            onClick = onOpenServices,
         )
-    }
+    return listOf(manage) +
+        services.map { service ->
+            val url = service.url?.takeIf { it.isWebUrl() }
+            val id = service.id
+            SettingsRow(
+                icon = if (service.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv,
+                iconTint = BingeSentiment.Info.fill(),
+                label = service.label(),
+                detail = service.detail(),
+                clickable = id != null || url != null,
+                onClick = { if (id != null) onOpenInstance(service.type, id) else url?.let { context.openInBrowser(it) } },
+            )
+        }
 }
 
 @Composable

@@ -58,8 +58,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | The Settings summary, and the general settings form. |
 | `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
 | `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
-| `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
-| `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
+| `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 | yes | The Settings summary, the services page and the instance editor. |
+| `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 | yes | The Settings summary, the services page and the instance editor. |
 | `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub, and any user's on their page. |
 
 ### Phase 2 — requests
@@ -143,10 +143,10 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 
 | Endpoint | What it does | Overseerr since | Jellyseerr / Seerr since | Today | Note |
 |---|---|---|---|---|---|
-| `GET /overrideRule` | Get override rules | — | v2.2.0 |  | Settings › Services › override rules, Jellyseerr 2.2+. |
-| `POST /overrideRule` | Create override rule | — | v2.2.0 |  | Settings › Services › override rules, Jellyseerr 2.2+. |
-| `DELETE /overrideRule/{ruleId}` | Delete override rule by ID | — | v2.2.0 |  | Settings › Services › override rules, Jellyseerr 2.2+. |
-| `PUT /overrideRule/{ruleId}` | Update override rule | — | v2.2.0 |  | Settings › Services › override rules, Jellyseerr 2.2+. |
+| `GET /overrideRule` | Get override rules | — | v2.2.0 | yes | The services page's rules, Jellyseerr 2.2+. |
+| `POST /overrideRule` | Create override rule | — | v2.2.0 | yes | The rule editor. |
+| `DELETE /overrideRule/{ruleId}` | Delete override rule by ID | — | v2.2.0 | yes | The rule editor's delete. |
+| `PUT /overrideRule/{ruleId}` | Update override rule | — | v2.2.0 | yes | The rule editor. |
 | `GET /settings/cache` | Get a list of active caches | v1.19.0 | v1.0.0 |  |  |
 | `POST /settings/cache/dns/{dnsEntry}/flush` | Flush a specific DNS cache entry | — | v3.0.0 |  |  |
 | `POST /settings/cache/{cacheId}/flush` | Flush a specific cache | v1.20.0 | v1.0.0 |  |  |
@@ -214,15 +214,15 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `PUT /settings/plex/library/{libraryId}` | Update a single Plex library | — | develop | yes | Tried first for a library toggle; a 404 falls back to the `GET`. |
 | `GET /settings/plex/sync` | Get status of full Plex library scan | v1.0.0 | v1.0.0 | yes | The scan's progress, polled while it runs. |
 | `POST /settings/plex/sync` | Start full Plex library scan | v1.20.0 | v1.0.0 | yes | Start and cancel the scan. |
-| `POST /settings/radarr` | Create Radarr instance | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/radarr/test` | Test Radarr configuration | v1.0.0 | v1.0.0 |  |  |
-| `DELETE /settings/radarr/{radarrId}` | Delete Radarr instance | v1.0.0 | v1.0.0 |  |  |
-| `PUT /settings/radarr/{radarrId}` | Update Radarr instance | v1.0.0 | v1.0.0 |  |  |
+| `POST /settings/radarr` | Create Radarr instance | v1.0.0 | v1.0.0 | yes | The instance editor, new. |
+| `POST /settings/radarr/test` | Test Radarr configuration | v1.0.0 | v1.0.0 | yes | The instance editor's test, which fills the destination pickers; also the rule editor's. |
+| `DELETE /settings/radarr/{radarrId}` | Delete Radarr instance | v1.0.0 | v1.0.0 | yes | The instance editor's delete. |
+| `PUT /settings/radarr/{radarrId}` | Update Radarr instance | v1.0.0 | v1.0.0 | yes | The instance editor, existing. |
 | `GET /settings/radarr/{radarrId}/profiles` | Get available Radarr profiles | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/sonarr` | Create Sonarr instance | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/sonarr/test` | Test Sonarr configuration | v1.0.0 | v1.0.0 |  |  |
-| `DELETE /settings/sonarr/{sonarrId}` | Delete Sonarr instance | v1.0.0 | v1.0.0 |  |  |
-| `PUT /settings/sonarr/{sonarrId}` | Update Sonarr instance | v1.0.0 | v1.0.0 |  |  |
+| `POST /settings/sonarr` | Create Sonarr instance | v1.0.0 | v1.0.0 | yes | The instance editor, new. |
+| `POST /settings/sonarr/test` | Test Sonarr configuration | v1.0.0 | v1.0.0 | yes | The instance editor's test, which fills the destination pickers; also the rule editor's. |
+| `DELETE /settings/sonarr/{sonarrId}` | Delete Sonarr instance | v1.0.0 | v1.0.0 | yes | The instance editor's delete. |
+| `PUT /settings/sonarr/{sonarrId}` | Update Sonarr instance | v1.0.0 | v1.0.0 | yes | The instance editor, existing. |
 | `GET /settings/tautulli` | Get Tautulli settings | v1.29.0 | v1.1.0 | yes | The Tautulli page, beside a Plex server. |
 | `POST /settings/tautulli` | Update Tautulli settings | v1.29.0 | v1.1.0 | yes | The Tautulli page's save. |
 | `GET /status/appdata` | Get application data volume status | v1.19.0 | v1.0.0 |  | Config-volume health, shown with About. |
