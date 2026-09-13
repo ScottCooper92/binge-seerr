@@ -6,9 +6,12 @@ import com.binge.integration.contracts.request.v1.Availability
 import com.binge.integration.contracts.request.v1.BlockTitleRequest
 import com.binge.integration.contracts.request.v1.CancelRequestRequest
 import com.binge.integration.contracts.request.v1.Capability
+import com.binge.integration.contracts.request.v1.EditRequestRequest
+import com.binge.integration.contracts.request.v1.GetAttentionRequest
 import com.binge.integration.contracts.request.v1.GetStatusRequest
 import com.binge.integration.contracts.request.v1.HandshakeRequest
 import com.binge.integration.contracts.request.v1.IssueType
+import com.binge.integration.contracts.request.v1.ObserveAttentionRequest
 import com.binge.integration.contracts.request.v1.ObserveStatusRequest
 import com.binge.integration.contracts.request.v1.ReportIssueRequest
 import com.binge.integration.contracts.request.v1.RequestServiceGrpcKt
@@ -81,7 +84,16 @@ class SeerrRequestServiceTest {
         seerr.enqueue(json("""{"version":"$version"}"""))
         seerr.enqueue(json("""{"initialized":true}"""))
         seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
-        val stub = serve(SeerrRequestService(connection, versionName = "0.1.0-test", clock = { 0L }, observeIntervalMillis = 1))
+        val stub =
+            serve(
+                SeerrRequestService(
+                    connection,
+                    versionName = "0.1.0-test",
+                    clock = { 0L },
+                    observeIntervalMillis = 1,
+                    attentionIntervalMillis = 1,
+                ),
+            )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
         // three, so each test's recorded requests are its own rather than starting with lookups.
         runBlocking { stub.handshake(HandshakeRequest.getDefaultInstance()) }
@@ -118,7 +130,13 @@ class SeerrRequestServiceTest {
 
             assertEquals("Jellyseerr", response.providerName)
             assertEquals(
-                setOf(Capability.CAPABILITY_OBSERVE_STATUS, Capability.CAPABILITY_CANCEL, Capability.CAPABILITY_REPORT_ISSUE),
+                setOf(
+                    Capability.CAPABILITY_OBSERVE_STATUS,
+                    Capability.CAPABILITY_ATTENTION,
+                    Capability.CAPABILITY_CANCEL,
+                    Capability.CAPABILITY_EDIT_SEASONS,
+                    Capability.CAPABILITY_REPORT_ISSUE,
+                ),
                 response.capabilitiesList.toSet(),
             )
         }
@@ -368,6 +386,117 @@ class SeerrRequestServiceTest {
                 listOf(Availability.AVAILABILITY_PENDING, Availability.AVAILABILITY_PROCESSING),
                 seen.map { it.status.availability },
             )
+        }
+
+    @Test
+    fun `attention counts what waits on a moderator, from both endpoints`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(json("""{"total":9,"pending":3}"""))
+            seerr.enqueue(json("""{"total":4,"open":2}"""))
+
+            val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention
+
+            assertEquals(5, attention.pendingCount)
+            assertFalse(attention.needsReconnect)
+            assertEquals(listOf("/api/v1/request/count", "/api/v1/issue/count"), List(2) { seerr.takeRequest().url.encodedPath })
+        }
+
+    @Test
+    fun `a plain requester has nothing waiting on them, and the server is not asked`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            val before = seerr.requestCount
+
+            val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention
+
+            assertEquals(0, attention.pendingCount)
+            assertFalse(attention.needsReconnect)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    /** A rejected session on a connected server is the contract's flag, not a failure: only this app can mend it. */
+    @Test
+    fun `a rejected session reads as needs_reconnect`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(MockResponse(code = 401))
+
+            val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention
+
+            assertTrue(attention.needsReconnect)
+            assertEquals(0, attention.pendingCount)
+        }
+
+    @Test
+    fun `observe pushes attention only when it changes`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            repeat(2) {
+                seerr.enqueue(json("""{"pending":1}"""))
+                seerr.enqueue(json("""{"open":0}"""))
+            }
+            seerr.enqueue(json("""{"pending":1}"""))
+            seerr.enqueue(json("""{"open":4}"""))
+
+            val seen = stub.observeAttention(ObserveAttentionRequest.getDefaultInstance()).take(2).toList()
+
+            assertEquals(listOf(1, 5), seen.map { it.attention.pendingCount })
+        }
+
+    @Test
+    fun `an edit sends the request's own media type with the new season set`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(json("""{"id":7,"is4k":true,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+
+            stub.editRequest(
+                EditRequestRequest
+                    .newBuilder()
+                    .setRequestId(7)
+                    .addAllSeasonNumbers(listOf(1, 3))
+                    .build(),
+            )
+
+            val read = seerr.takeRequest()
+            assertEquals("GET", read.method)
+            assertEquals("/api/v1/request/7", read.url.encodedPath)
+            val update = seerr.takeRequest()
+            assertEquals("PUT", update.method)
+            assertEquals("/api/v1/request/7", update.url.encodedPath)
+            val body = update.body?.utf8().orEmpty()
+            assertTrue(body, """"mediaType":"tv"""" in body)
+            assertTrue(body, """"seasons":[1,3]""" in body)
+            assertTrue(body, """"is4k":true""" in body)
+        }
+
+    @Test
+    fun `an edit with no seasons, or of a movie, is INVALID_ARGUMENT`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code { editRequest(EditRequestRequest.newBuilder().setRequestId(7).build()) },
+            )
+            assertEquals(before, seerr.requestCount)
+
+            seerr.enqueue(json("""{"id":8,"media":{"tmdbId":603,"mediaType":"movie"}}"""))
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code {
+                    editRequest(
+                        EditRequestRequest
+                            .newBuilder()
+                            .setRequestId(8)
+                            .addSeasonNumbers(1)
+                            .build(),
+                    )
+                },
+            )
+            assertEquals(before + 1, seerr.requestCount)
         }
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.status(media: MediaId): Status.Code =

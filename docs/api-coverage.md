@@ -51,8 +51,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /auth/reset-password` | Send a reset password email | v1.20.0 | v1.0.0 | yes | Forgot-password from the sign-in form (local accounts, email agent on). |
 | `POST /auth/reset-password/{guid}` | Reset the password for a user | v1.20.0 | v1.0.0 |  | Forgot-password from the sign-in form (local accounts, email agent on). |
 | `GET /backdrops` | Get backdrops of trending items | v1.27.0 | v1.1.0 | yes | Artwork behind the sign-in form. |
-| `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 | yes | Hub counts; also the browsers' filter chips. |
-| `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips. |
+| `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 | yes | Hub counts; also the browsers' filter chips, and the open count in the host's attention badge. |
+| `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips, and the pending count in the host's attention badge. |
 | `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub and in Settings. |
 | `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
 | `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
@@ -74,7 +74,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /request` | Create new request | v1.0.0 | v1.0.0 | yes |  |
 | `DELETE /request/{requestId}` | Delete request | v1.0.0 | v1.0.0 | yes |  |
 | `GET /request/{requestId}` | Get MediaRequest | v1.0.0 | v1.0.0 | yes | The request page. |
-| `PUT /request/{requestId}` | Update MediaRequest | v1.17.0 | v1.0.0 | yes | Edit request: the season set and, with `REQUEST_ADVANCED`, the destination. |
+| `PUT /request/{requestId}` | Update MediaRequest | v1.17.0 | v1.0.0 | yes | Edit request: the season set and, with `REQUEST_ADVANCED`, the destination; also the host's `EditRequest`. |
 | `POST /request/{requestId}/retry` | Retry failed request | v1.14.0 | v1.0.0 | yes |  |
 | `POST /request/{requestId}/{status}` | Update a request's status | v1.20.0 | v1.0.0 | yes |  |
 | `GET /service/radarr` | Get non-sensitive Radarr server list | v1.17.0 | v1.0.0 | yes | Advanced picker (in place) and the edit-request modal. |
