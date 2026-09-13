@@ -150,12 +150,12 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/cache` | Get a list of active caches | v1.19.0 | v1.0.0 |  |  |
 | `POST /settings/cache/dns/{dnsEntry}/flush` | Flush a specific DNS cache entry | — | v3.0.0 |  |  |
 | `POST /settings/cache/{cacheId}/flush` | Flush a specific cache | v1.20.0 | v1.0.0 |  |  |
-| `GET /settings/discover` | Get all discover sliders | v1.32.0 | v1.4.0 |  |  |
-| `POST /settings/discover` | Batch update all sliders. | v1.32.0 | v1.4.0 |  |  |
-| `POST /settings/discover/add` | Add a new slider | v1.32.0 | v1.4.0 |  |  |
-| `GET /settings/discover/reset` | Reset all discover sliders | v1.32.0 | v1.4.0 |  |  |
-| `DELETE /settings/discover/{sliderId}` | Delete slider by ID | v1.32.0 | v1.4.0 |  |  |
-| `PUT /settings/discover/{sliderId}` | Update a single slider | v1.32.0 | v1.4.0 |  |  |
+| `GET /settings/discover` | Get all discover sliders | v1.32.0 | v1.4.0 | yes | The slider list. |
+| `POST /settings/discover` | Batch update all sliders. | v1.32.0 | v1.4.0 | yes | Save on the slider list: the order and each switch, as one batch. |
+| `POST /settings/discover/add` | Add a new slider | v1.32.0 | v1.4.0 | yes | Add a custom slider, on its own page. |
+| `GET /settings/discover/reset` | Reset all discover sliders | v1.32.0 | v1.4.0 | yes | Reset to defaults on the slider list, behind a confirmation. |
+| `DELETE /settings/discover/{sliderId}` | Delete slider by ID | v1.32.0 | v1.4.0 | yes | Delete on a custom slider's page. |
+| `PUT /settings/discover/{sliderId}` | Update a single slider | v1.32.0 | v1.4.0 | yes | Save on a custom slider's page. |
 | `GET /settings/jellyfin` | Get Jellyfin settings | — | v1.0.0 | yes | The media-server page on a Jellyfin or Emby server. |
 | `POST /settings/jellyfin` | Update Jellyfin settings | — | v1.0.0 | yes | The media-server page's save. |
 | `GET /settings/jellyfin/library` | Get Jellyfin libraries | — | v1.0.0 | yes | Library toggles (`enable=`) and re-read (`sync=`) on a released server. |

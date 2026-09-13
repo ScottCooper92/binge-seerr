@@ -150,6 +150,8 @@ class DvrInstanceViewModelTest {
             assertEquals("/movies-4k", sent.getValue("activeDirectory").jsonPrimitive.content)
             assertEquals(listOf("2"), sent.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
             assertEquals("inCinemas", sent.getValue("minimumAvailability").jsonPrimitive.content)
+            assertEquals("false", sent.getValue("useSsl").jsonPrimitive.content)
+            assertEquals("false", sent.getValue("isDefault").jsonPrimitive.content)
             assertNull(sent["seriesType"])
             val ready = vm.awaitReady()
             assertEquals(7, ready.saved.id)

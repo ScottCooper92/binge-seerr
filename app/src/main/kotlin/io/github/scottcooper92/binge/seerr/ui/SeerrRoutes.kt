@@ -76,6 +76,12 @@ data class DvrInstanceRoute(
     val id: Int?,
 ) : SeerrRoute
 
+/** One custom discover slider; a null [id] is a new one. */
+@Serializable
+data class DiscoverSliderRoute(
+    val id: Int?,
+) : SeerrRoute
+
 /** One notification agent's settings page. */
 @Serializable
 data class NotificationAgentRoute(

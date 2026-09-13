@@ -43,6 +43,8 @@ data class GeneralSettings(
     val applicationUrl: String?,
     val displayLanguage: String?,
     val hideAvailable: Boolean?,
+    /** Whether the server has discover sliders to edit: Overseerr 1.32, and the Jellyseerr lineage from 1.4. */
+    val discoverSliders: Boolean = false,
 )
 
 /** [count] requests per [days]-day window; the server's global default for one media type. */

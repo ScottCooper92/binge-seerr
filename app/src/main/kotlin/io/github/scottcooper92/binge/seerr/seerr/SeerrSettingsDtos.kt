@@ -1,5 +1,7 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -98,11 +100,12 @@ data class SeerrJobDto(
  * are kept as the object the server sent, since each agent has its own set and a server may carry
  * one this app does not show; an edit overlays the known keys and sends the rest back unchanged.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SeerrNotificationAgentDto(
-    @SerialName("enabled") val enabled: Boolean = false,
-    @SerialName("types") val types: Int = 0,
-    @SerialName("options") val options: JsonObject = JsonObject(emptyMap()),
+    @EncodeDefault @SerialName("enabled") val enabled: Boolean = false,
+    @EncodeDefault @SerialName("types") val types: Int = 0,
+    @EncodeDefault @SerialName("options") val options: JsonObject = JsonObject(emptyMap()),
 )
 
 /** One Pushover sound (`GET settings/notifications/pushover/sounds`). */
@@ -119,6 +122,7 @@ data class SeerrPushoverSoundDto(
  * destination, the season folders and the language profile (Sonarr 3 only). Every field defaults so
  * a Sonarr record parses as a Radarr one where the reader does not care.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SeerrServiceSettingsDto(
     @SerialName("id") val id: Int? = null,
@@ -126,18 +130,18 @@ data class SeerrServiceSettingsDto(
     @SerialName("hostname") val hostname: String? = null,
     @SerialName("port") val port: Int? = null,
     @SerialName("apiKey") val apiKey: String? = null,
-    @SerialName("useSsl") val useSsl: Boolean = false,
+    @EncodeDefault @SerialName("useSsl") val useSsl: Boolean = false,
     @SerialName("baseUrl") val baseUrl: String? = null,
     @SerialName("activeProfileId") val activeProfileId: Int? = null,
     @SerialName("activeProfileName") val activeProfileName: String? = null,
     @SerialName("activeDirectory") val activeDirectory: String? = null,
-    @SerialName("tags") val tags: List<Int> = emptyList(),
-    @SerialName("is4k") val is4k: Boolean = false,
-    @SerialName("isDefault") val isDefault: Boolean = false,
+    @EncodeDefault @SerialName("tags") val tags: List<Int> = emptyList(),
+    @EncodeDefault @SerialName("is4k") val is4k: Boolean = false,
+    @EncodeDefault @SerialName("isDefault") val isDefault: Boolean = false,
     @SerialName("externalUrl") val externalUrl: String? = null,
-    @SerialName("syncEnabled") val syncEnabled: Boolean = false,
-    @SerialName("preventSearch") val preventSearch: Boolean = false,
-    @SerialName("tagRequests") val tagRequests: Boolean = false,
+    @EncodeDefault @SerialName("syncEnabled") val syncEnabled: Boolean = false,
+    @EncodeDefault @SerialName("preventSearch") val preventSearch: Boolean = false,
+    @EncodeDefault @SerialName("tagRequests") val tagRequests: Boolean = false,
     @SerialName("minimumAvailability") val minimumAvailability: String? = null,
     @SerialName("seriesType") val seriesType: String? = null,
     @SerialName("animeSeriesType") val animeSeriesType: String? = null,
@@ -188,4 +192,28 @@ data class SeerrOverrideRuleDto(
     @SerialName("profileId") val profileId: Int? = null,
     @SerialName("rootFolder") val rootFolder: String? = null,
     @SerialName("tags") val tags: String? = null,
+)
+
+/**
+ * One discover slider (`settings/discover`): the web client's Discover row, built-in or the
+ * admin's own. [type] is the server's `DiscoverSliderType` number; [data] is what a custom slider
+ * queries — ids, a code or a search — in the shape the web client stores.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class SeerrDiscoverSliderDto(
+    @SerialName("id") val id: Int? = null,
+    @SerialName("type") val type: Int,
+    @SerialName("title") val title: String? = null,
+    @EncodeDefault @SerialName("isBuiltIn") val isBuiltIn: Boolean = false,
+    @EncodeDefault @SerialName("enabled") val enabled: Boolean = true,
+    @SerialName("data") val data: String? = null,
+)
+
+/** `POST settings/discover/add` and `PUT settings/discover/{id}`: a custom slider's title, type and data. */
+@Serializable
+data class SeerrDiscoverSliderBody(
+    @SerialName("title") val title: String,
+    @SerialName("type") val type: Int,
+    @SerialName("data") val data: String,
 )

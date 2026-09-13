@@ -68,12 +68,15 @@ class NotificationAgentViewModel
             if (extrasState.value.testing) return
             extrasState.update { it.copy(testing = true) }
             viewModelScope.launch {
-                runCatching {
-                    val response = connection.api().testNotificationAgent(agent.segment, draft.toDto())
-                    if (!response.isSuccessful) throw HttpException(response)
-                }.onSuccess { notify(EditorEvent.Notice(R.string.server_settings_agent_tested)) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                val outcome =
+                    runCatching {
+                        val response = connection.api().testNotificationAgent(agent.segment, draft.toDto())
+                        if (!response.isSuccessful) throw HttpException(response)
+                    }
                 extrasState.update { it.copy(testing = false) }
+                outcome
+                    .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_agent_tested)) }
+                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
 
