@@ -437,6 +437,37 @@ interface SeerrApi {
         @Path("path") path: String,
         @Body body: SeerrAddToBlocklistBody,
     )
+
+    /**
+     * The blocklist, newest first; `VIEW_BLOCKLIST` or `MANAGE_BLOCKLIST`. [filter] is `manual` or
+     * `blocklistedTags` on Seerr 3.x; a server without it ignores the parameter and lists everything.
+     */
+    @GET("api/v1/{path}")
+    suspend fun blocklist(
+        @Path("path") path: String,
+        @Query("take") take: Int,
+        @Query("skip") skip: Int = 0,
+        @Query("filter") filter: String? = null,
+        @Query("search") search: String? = null,
+    ): SeerrBlocklistPageDto
+
+    /** Keyed by TMDB id, not the entry's own; `MANAGE_BLOCKLIST`. */
+    @DELETE("api/v1/{path}/{tmdbId}")
+    suspend fun removeFromBlocklist(
+        @Path("path") path: String,
+        @Path("tmdbId") tmdbId: Int,
+    )
+
+    /** Seerr 3.2+: blocks or unblocks every movie of a TMDB collection at once; `MANAGE_BLOCKLIST`. */
+    @POST("api/v1/blocklist/collection/{collectionId}")
+    suspend fun blockCollection(
+        @Path("collectionId") collectionId: Int,
+    )
+
+    @DELETE("api/v1/blocklist/collection/{collectionId}")
+    suspend fun unblockCollection(
+        @Path("collectionId") collectionId: Int,
+    )
 }
 
 /**

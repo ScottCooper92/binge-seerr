@@ -71,6 +71,9 @@ data class SeerrServerProfile(
 
     val canBlockCollections: Boolean get() = jellyseerrLineage && atLeast(3, 2)
 
+    /** Tag-driven blocking, and with it the list's `filter`, came with the rename at Seerr 3.0. */
+    val hasBlocklistFilters: Boolean get() = jellyseerrLineage && atLeast(3, 0)
+
     /** Overseerr grew issues at 1.28 and their counts at 1.30; the Jellyseerr lineage always had both. */
     val hasIssues: Boolean get() = jellyseerrLineage || atLeast(1, 28)
 

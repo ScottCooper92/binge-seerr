@@ -15,6 +15,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistActions
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistScreen
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistViewModel
 import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
@@ -79,6 +82,7 @@ fun SeerrNavHost(
                                     HubSection.Requests -> RequestsRoute
                                     HubSection.Issues -> IssuesRoute
                                     HubSection.Users -> UsersRoute
+                                    HubSection.Blocklist -> BlocklistRoute
                                     HubSection.Settings -> SettingsRoute
                                     else -> SectionRoute(section)
                                 },
@@ -95,6 +99,7 @@ fun SeerrNavHost(
                     IssuesEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
                 }
                 entry<IssueDetailRoute> { route -> IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }) }
+                entry<BlocklistRoute> { BlocklistEntry(onBack = { backStack.removeLastOrNull() }) }
                 entry<UsersRoute> {
                     UsersEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(UserDetailRoute(id)) })
                 }
@@ -292,6 +297,31 @@ private fun IssueDetailEntry(
                 onDeleteComment = viewModel::deleteComment,
                 onToggleStatus = viewModel::toggleStatus,
                 onDeleteIssue = viewModel::deleteIssue,
+            ),
+    )
+}
+
+@Composable
+private fun BlocklistEntry(
+    onBack: () -> Unit,
+    viewModel: BlocklistViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The chip counts refetch on arrival, so a block elsewhere shows without a poll.
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
+    BlocklistScreen(
+        state = state,
+        items = viewModel.items,
+        events = viewModel.events,
+        actions =
+            BlocklistActions(
+                onBack = onBack,
+                onFilterChange = viewModel::setFilter,
+                onSearchChange = viewModel::setSearch,
+                onRemove = viewModel::remove,
             ),
     )
 }
