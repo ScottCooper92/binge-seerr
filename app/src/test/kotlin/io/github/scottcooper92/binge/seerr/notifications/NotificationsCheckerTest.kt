@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.notifications
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.REQUEST
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
@@ -17,6 +18,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 private const val MANAGE_ISSUES = 1 shl 20
+private const val OWN_REQUESTS = "/api/v1/user/7/requests"
 
 private fun requestsPage(
     ids: List<Int>,
@@ -26,8 +28,11 @@ private fun requestsPage(
         """{"id":$id,"status":1,"media":{"tmdbId":${100 + id},"mediaType":"movie","status":2}}"""
     }
 
-private fun ownRequests(vararg rows: Pair<Int, String>): String =
-    rows.joinToString(",", prefix = """{"pageInfo":{"pages":1,"results":${rows.size}},"results":[""", postfix = "]}") { (id, state) ->
+private fun ownRequests(
+    vararg rows: Pair<Int, String>,
+    pages: Int = 1,
+): String =
+    rows.joinToString(",", prefix = """{"pageInfo":{"pages":$pages,"results":${rows.size}},"results":[""", postfix = "]}") { (id, state) ->
         """{"id":$id,$state,"media":{"tmdbId":${100 + id},"mediaType":"movie"${state.substringAfter("|", "")}}}"""
             .replace("|", "")
     }
@@ -160,6 +165,35 @@ class NotificationsCheckerTest {
             seerr.serve("GET /api/v1/user/7/requests", ownRequests(2 to """"status":2"""))
             checker.check()
             assertEquals(listOf(listOf(2), listOf(2)), notifier.approved)
+        }
+
+    @Test
+    fun `an own request behind the newest page still has its approval seen`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            val newest = ownRequests(3 to """"status":1""", 2 to """"status":1""", pages = 2)
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, listOf(newest, ownRequests(1 to """"status":1""", pages = 2)))
+
+            checker.check()
+            assertEquals(emptySet<Int>(), prefs.notifiedIds(NotificationSignal.RequestApproved))
+            assertEquals(2, seerr.count("GET", OWN_REQUESTS))
+
+            // Approved where it already sits, behind the newest page: read as one page it is invisible.
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, listOf(newest, ownRequests(1 to """"status":2""", pages = 2)))
+            checker.check()
+            assertEquals(listOf(listOf(1)), notifier.approved)
+        }
+
+    @Test
+    fun `a history the server answers in one page costs one call`() =
+        runTest {
+            val checker = checker(prefs(), NotificationSignal.RequestApproved)
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(2 to """"status":1""", 1 to """"status":2"""))
+
+            checker.check()
+
+            assertEquals(1, seerr.count("GET", OWN_REQUESTS))
         }
 
     @Test

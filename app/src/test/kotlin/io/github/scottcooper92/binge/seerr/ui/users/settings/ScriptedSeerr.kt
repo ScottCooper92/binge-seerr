@@ -22,6 +22,8 @@ internal const val MANAGE_USERS = 1 shl 3
 internal const val MANAGE_REQUESTS = 1 shl 4
 internal const val REQUEST = 1 shl 5
 
+private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
+
 /**
  * A path-scripted Seerr for the settings pages: each `METHOD path` answers with the body last
  * served for it, so a test can switch a record after a write. Main is set once per test and
@@ -32,7 +34,7 @@ internal class ScriptedSeerr(
 ) {
     val server = MockWebServer()
     val received = CopyOnWriteArrayList<RecordedRequest>()
-    private val responses = mutableMapOf<String, () -> MockResponse>()
+    private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
     private var stores = 0
 
     fun start() {
@@ -40,7 +42,7 @@ internal class ScriptedSeerr(
             object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     received += request
-                    return responses[request.method + " " + request.url.encodedPath]?.invoke() ?: MockResponse(code = 404)
+                    return responses[request.method + " " + request.url.encodedPath]?.invoke(request) ?: MockResponse(code = 404)
                 }
             }
         server.start()
@@ -54,6 +56,19 @@ internal class ScriptedSeerr(
         code: Int = 200,
     ) {
         responses[key] = { MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
+    }
+
+    /** Answers an offset-paged endpoint: the body for the page the request's `skip` lands in. */
+    fun servePages(
+        key: String,
+        pageSize: Int,
+        bodies: List<String>,
+    ) {
+        responses[key] = { request ->
+            val page = (request.url.queryParameter("skip")?.toIntOrNull() ?: 0) / pageSize
+            val body = bodies.getOrElse(page) { EMPTY_PAGE }
+            MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+        }
     }
 
     fun remove(key: String) {
