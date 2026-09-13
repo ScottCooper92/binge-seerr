@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 @Stable
 internal class IssueModalState {
     var composing by mutableStateOf(false)
+    var confirmingStatus by mutableStateOf(false)
     var actingOnCommentId by mutableStateOf<Int?>(null)
     var editingCommentId by mutableStateOf<Int?>(null)
     var editDraft by mutableStateOf("")
@@ -35,6 +36,7 @@ internal class IssueModalState {
 
     companion object {
         private const val KEY_COMPOSING = "composing"
+        private const val KEY_CONFIRMING_STATUS = "confirmingStatus"
         private const val KEY_ACTING = "acting"
         private const val KEY_EDITING = "editing"
         private const val KEY_EDIT_DRAFT = "editDraft"
@@ -48,6 +50,7 @@ internal class IssueModalState {
                 save = { state ->
                     mapOf(
                         KEY_COMPOSING to state.composing,
+                        KEY_CONFIRMING_STATUS to state.confirmingStatus,
                         KEY_ACTING to state.actingOnCommentId,
                         KEY_EDITING to state.editingCommentId,
                         KEY_EDIT_DRAFT to state.editDraft,
@@ -60,6 +63,7 @@ internal class IssueModalState {
                 restore = { saved ->
                     IssueModalState().apply {
                         composing = saved[KEY_COMPOSING] as Boolean
+                        confirmingStatus = saved[KEY_CONFIRMING_STATUS] as Boolean
                         actingOnCommentId = saved[KEY_ACTING] as Int?
                         editingCommentId = saved[KEY_EDITING] as Int?
                         editDraft = saved[KEY_EDIT_DRAFT] as String

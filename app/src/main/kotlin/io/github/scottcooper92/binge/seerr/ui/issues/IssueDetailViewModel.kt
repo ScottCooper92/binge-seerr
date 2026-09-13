@@ -7,6 +7,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
@@ -41,6 +42,7 @@ class IssueDetailViewModel
     constructor(
         private val connection: SeerrConnection,
         private val titles: TitleCache,
+        private val store: IssueStore,
         @Assisted private val issueId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<IssueDetailUiState>(IssueDetailUiState.Loading)
@@ -134,7 +136,7 @@ class IssueDetailViewModel
         ) {
             val ready = ready() ?: return
             val trimmed = message.trim()
-            if (trimmed.isEmpty() || ready.commentAction != CommentAction.None) return
+            if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Editing(commentId))
             viewModelScope.launch {
                 runCatching { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
@@ -150,9 +152,49 @@ class IssueDetailViewModel
             }
         }
 
+        /** Resolves an open issue or reopens a resolved one; the cached row moves with it, so the browser agrees at once. */
+        fun toggleStatus() {
+            val ready = ready() ?: return
+            if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canResolve) return
+            val resolving = ready.detail.item.status == IssueStatus.Open
+            state.value = ready.copy(action = IssueAction.UpdatingStatus)
+            viewModelScope.launch {
+                runCatching {
+                    connection.api().setIssueStatus(issueId, if (resolving) STATUS_RESOLVED else STATUS_OPEN)
+                    store.updateStatus(issueId, (if (resolving) IssueStatus.Resolved else IssueStatus.Open).name)
+                }.onSuccess {
+                    val reloadFailure = reloadAfterWrite()
+                    eventFlow.emit(
+                        reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) }
+                            ?: (if (resolving) IssueDetailEvent.IssueResolved else IssueDetailEvent.IssueReopened),
+                    )
+                }.onFailure { failure ->
+                    updateReady { it.copy(action = IssueAction.None) }
+                    eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
+                }
+            }
+        }
+
+        /** Removes the report and its whole thread; the page has nothing left to show, so it pops. */
+        fun deleteIssue() {
+            val ready = ready() ?: return
+            if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canDelete) return
+            state.value = ready.copy(action = IssueAction.Deleting)
+            viewModelScope.launch {
+                runCatching {
+                    connection.api().deleteIssue(issueId)
+                    store.delete(issueId)
+                }.onSuccess { eventFlow.emit(IssueDetailEvent.IssueDeleted) }
+                    .onFailure { failure ->
+                        updateReady { it.copy(action = IssueAction.None) }
+                        eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
+                    }
+            }
+        }
+
         fun deleteComment(commentId: Int) {
             val ready = ready() ?: return
-            if (ready.commentAction != CommentAction.None) return
+            if (ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Deleting(commentId))
             viewModelScope.launch {
                 runCatching { connection.api().deleteIssueComment(commentId) }
@@ -222,8 +264,10 @@ class IssueDetailViewModel
         private suspend fun reloadAfterWrite(): Throwable? {
             val result = runCatching { load() }
             updateReady { ready ->
-                result.getOrNull()?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None) }
-                    ?: ready.copy(commentAction = CommentAction.None)
+                result
+                    .getOrNull()
+                    ?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None, action = IssueAction.None) }
+                    ?: ready.copy(commentAction = CommentAction.None, action = IssueAction.None)
             }
             return result.exceptionOrNull()
         }
@@ -251,6 +295,8 @@ class IssueDetailViewModel
                 comments = comments.drop(1),
                 canComment = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
                 canManage = permissions.canManageIssues,
+                canResolve = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
+                canDelete = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
                 webUrl = baseUrl + "issues/" + id,
                 mediaServerUrl = media?.mediaUrl?.takeIf { it.isWebUrl() },
                 serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },
@@ -275,6 +321,9 @@ class IssueDetailViewModel
             fun create(issueId: Int): IssueDetailViewModel
         }
     }
+
+private const val STATUS_OPEN = "open"
+private const val STATUS_RESOLVED = "resolved"
 
 private fun io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentDto.toIssueComment(currentUserId: Int?): IssueComment =
     IssueComment(

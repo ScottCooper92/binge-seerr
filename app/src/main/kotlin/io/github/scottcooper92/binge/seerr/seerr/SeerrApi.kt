@@ -248,6 +248,18 @@ interface SeerrApi {
         @Path("issueId") issueId: Int,
     ): SeerrIssueDto
 
+    /** [status] is `open` or `resolved`: the server's own route shape. */
+    @POST("api/v1/issue/{issueId}/{status}")
+    suspend fun setIssueStatus(
+        @Path("issueId") issueId: Int,
+        @Path("status") status: String,
+    )
+
+    @DELETE("api/v1/issue/{issueId}")
+    suspend fun deleteIssue(
+        @Path("issueId") issueId: Int,
+    )
+
     /**
      * Answers with the updated issue, which includes the newly posted comment among [SeerrIssueDto.comments] -
      * but not necessarily as the one with the highest id, since another comment on the same issue can land

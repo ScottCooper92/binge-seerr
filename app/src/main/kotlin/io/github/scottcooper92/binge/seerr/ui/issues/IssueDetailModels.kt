@@ -23,6 +23,9 @@ data class IssueDetail(
     val comments: List<IssueComment>,
     val canComment: Boolean,
     val canManage: Boolean,
+    /** Closing, reopening and deleting: a manager's, or the reporter's on their own issue. */
+    val canResolve: Boolean,
+    val canDelete: Boolean,
     /** The issue in the server's web client, for the hand-off. */
     val webUrl: String,
     val mediaServerUrl: String?,
@@ -87,6 +90,9 @@ sealed interface CommentAction {
     ) : CommentAction
 }
 
+/** The one issue-level write in flight, so a second tap is swallowed and the control spins. */
+enum class IssueAction { None, UpdatingStatus, Deleting }
+
 sealed interface IssueDetailUiState {
     data object Loading : IssueDetailUiState
 
@@ -95,6 +101,7 @@ sealed interface IssueDetailUiState {
         val draft: String = "",
         val outbox: List<OutboxComment> = emptyList(),
         val commentAction: CommentAction = CommentAction.None,
+        val action: IssueAction = IssueAction.None,
     ) : IssueDetailUiState {
         val thread: List<ThreadEntry>
             get() = detail.comments.map { ThreadEntry.Server(it) } + outbox.map { ThreadEntry.Pending(it) }
@@ -110,6 +117,13 @@ sealed interface IssueDetailEvent {
     data object CommentEdited : IssueDetailEvent
 
     data object CommentDeleted : IssueDetailEvent
+
+    data object IssueResolved : IssueDetailEvent
+
+    data object IssueReopened : IssueDetailEvent
+
+    /** The issue is gone, so the page pops rather than reporting over a surface it is leaving. */
+    data object IssueDeleted : IssueDetailEvent
 
     data class Failed(
         val error: SeerrError,
