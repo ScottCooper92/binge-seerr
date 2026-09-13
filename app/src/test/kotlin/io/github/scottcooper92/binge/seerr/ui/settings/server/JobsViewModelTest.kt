@@ -5,7 +5,9 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -98,15 +100,19 @@ class JobsViewModelTest {
             seerr.serve("POST /api/v1/settings/jobs/download-sync/schedule", job("download-sync", running = false))
             val vm = viewModel()
             vm.awaitReady()
+            // `events` has no replay and nothing else collects it, so an event emitted before
+            // `first()` subscribes is dropped and the await never completes. Subscribe first.
+            val scheduled = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first() }
             vm.schedule("download-sync", MINUTE_PRESETS.first { it.every == 15 }.cron)
-            assertEquals(EditorEvent.Notice(R.string.server_settings_job_scheduled), vm.events.first())
+            assertEquals(EditorEvent.Notice(R.string.server_settings_job_scheduled), scheduled.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/jobs/download-sync/schedule")).jsonObject
             assertEquals("0 */15 * * * *", sent.getValue("schedule").jsonPrimitive.content)
             assertEquals("0 0 0 */7 * *", HOUR_PRESETS.last().cron)
 
             seerr.serve("POST /api/v1/settings/jobs/download-sync/cancel", """{"message":"not running"}""", code = 400)
+            val failed = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first() }
             vm.cancel("download-sync")
-            assertTrue(vm.events.first() is EditorEvent.Failed)
+            assertTrue(failed.await() is EditorEvent.Failed)
             assertTrue(vm.awaitReady().busyIds.isEmpty())
         }
 }

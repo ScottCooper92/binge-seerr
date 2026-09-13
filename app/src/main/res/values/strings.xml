@@ -614,6 +614,22 @@
     <string name="server_settings_network">Network</string>
     <string name="server_settings_jobs">Scheduled jobs</string>
     <string name="server_settings_logs">Logs</string>
+    <string name="server_settings_about_version">Version</string>
+    <string name="server_settings_about_update">Update available</string>
+    <string name="server_settings_about_behind">%1$d commits behind</string>
+    <string name="server_settings_about_up_to_date">Up to date</string>
+    <string name="server_settings_about_release_notes">Release notes</string>
+    <string name="server_settings_about_commit">Commit</string>
+    <string name="server_settings_about_total_requests">Requests</string>
+    <string name="server_settings_about_total_media">Titles</string>
+    <string name="server_settings_about_timezone">Time zone</string>
+    <string name="server_settings_about_data_directory">Data directory</string>
+    <string name="server_settings_about_data_not_mounted">%1$s is not a mounted volume, so the configuration is lost when the container is recreated</string>
+    <string name="server_settings_about_data_not_writable">%1$s is not writable by the server</string>
+    <string name="server_settings_about_support">Support</string>
+    <string name="server_settings_about_docs">Documentation</string>
+    <string name="server_settings_about_discord" translatable="false">Discord</string>
+    <string name="server_settings_about_github" translatable="false">GitHub</string>
     <string name="server_settings_logs_caption">The server\'s own log, filtered and searched</string>
     <string name="server_settings_logs_search">Search the log</string>
     <string name="server_settings_logs_empty">Nothing logged at this level</string>
@@ -759,9 +775,8 @@
     <string name="server_settings_agent_json_payload_hint">The template the server fills; {{notification_type}}, {{subject}} and the other variables are replaced when it sends</string>
     <string name="settings_group_system">System</string>
     <string name="settings_about">About</string>
+    <string name="settings_about_caption">Edition, totals and support links</string>
     <string name="settings_about_version">Version %1$s</string>
-    <string name="settings_about_requests">%1$d requests</string>
-    <string name="settings_about_media">%1$d titles</string>
     <string name="settings_job_running">Running now</string>
     <string name="settings_job_next_run">Next run %1$s</string>
     <string name="hub_retry">Retry</string>

@@ -53,7 +53,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /backdrops` | Get backdrops of trending items | v1.27.0 | v1.1.0 | yes | Artwork behind the sign-in form. |
 | `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 | yes | Hub counts; also the browsers' filter chips, and the open count in the host's attention badge. |
 | `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips, and the pending count in the host's attention badge. |
-| `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub and in Settings. |
+| `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub, and the about page. |
 | `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | The hub's system group, and the jobs page. |
 | `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | The Settings summary, and the general settings form. |
 | `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
@@ -225,7 +225,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `PUT /settings/sonarr/{sonarrId}` | Update Sonarr instance | v1.0.0 | v1.0.0 | yes | The instance editor, existing. |
 | `GET /settings/tautulli` | Get Tautulli settings | v1.29.0 | v1.1.0 | yes | The Tautulli page, beside a Plex server. |
 | `POST /settings/tautulli` | Update Tautulli settings | v1.29.0 | v1.1.0 | yes | The Tautulli page's save. |
-| `GET /status/appdata` | Get application data volume status | v1.19.0 | v1.0.0 |  | Config-volume health, shown with About. |
+| `GET /status/appdata` | Get application data volume status | v1.19.0 | v1.0.0 | yes | The data directory on the about page, with the warning where it is not a mounted volume. |
 
 ### Not planned
 
