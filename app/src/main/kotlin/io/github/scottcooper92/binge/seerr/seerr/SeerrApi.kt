@@ -455,6 +455,30 @@ interface SeerrApi {
         @Path("ruleId") ruleId: Int,
     ): SeerrOverrideRuleDto
 
+    /** The network settings, Jellyseerr 2.4+. */
+    @GET("api/v1/settings/network")
+    suspend fun networkSettings(): SeerrNetworkSettingsDto
+
+    @POST("api/v1/settings/network")
+    suspend fun updateNetworkSettings(
+        @Body body: SeerrNetworkSettingsDto,
+    ): SeerrNetworkSettingsDto
+
+    /** The metadata providers, Seerr 3.0+. */
+    @GET("api/v1/settings/metadatas")
+    suspend fun metadataSettings(): SeerrMetadataSettingsDto
+
+    @PUT("api/v1/settings/metadatas")
+    suspend fun updateMetadataSettings(
+        @Body body: SeerrMetadataSettingsDto,
+    ): SeerrMetadataSettingsDto
+
+    /** Reaches the chosen providers; a failure is a status code, success a message. */
+    @POST("api/v1/settings/metadatas/test")
+    suspend fun testMetadataProviders(
+        @Body body: SeerrMetadataTestBody,
+    ): SeerrMessageDto
+
     /** The discover sliders in the order the web client shows them, Overseerr 1.32 and the Jellyseerr lineage from 1.4. */
     @GET("api/v1/settings/discover")
     suspend fun discoverSliders(): List<SeerrDiscoverSliderDto>

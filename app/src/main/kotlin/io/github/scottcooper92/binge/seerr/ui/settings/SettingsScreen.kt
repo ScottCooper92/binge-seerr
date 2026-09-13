@@ -32,6 +32,8 @@ class SettingsActions(
     val onOpenInstance: (ServiceType, Int) -> Unit,
     val onOpenAgents: () -> Unit,
     val onOpenSliders: () -> Unit,
+    val onOpenNetwork: () -> Unit,
+    val onOpenMetadata: () -> Unit,
     val onOpenAgent: (ServerAgent) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
@@ -66,7 +68,10 @@ private fun SettingsContent(
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Group(stringResource(R.string.settings_group_connection), connectionRows(state.connection, state.server, actions.onEditConnection))
         config?.general?.let {
-            Group(stringResource(R.string.settings_group_general), generalRows(it, actions.onOpenServerSettings, actions.onOpenSliders))
+            Group(
+                stringResource(R.string.settings_group_general),
+                generalRows(it, actions.onOpenServerSettings, actions.onOpenSliders, actions.onOpenNetwork, actions.onOpenMetadata),
+            )
         }
         if (config !=
             null

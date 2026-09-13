@@ -216,3 +216,64 @@ data class SeerrDiscoverSliderBody(
     @SerialName("type") val type: Int,
     @SerialName("data") val data: String,
 )
+
+/**
+ * The network settings (`settings/network`, Jellyseerr 2.4+). Jellyseerr carries the two switches;
+ * Seerr 3 adds the IPv4 preference, the outbound proxy and the DNS cache. A block the server did not
+ * send stays null and is left out of the form and the body alike.
+ */
+@Serializable
+data class SeerrNetworkSettingsDto(
+    @SerialName("csrfProtection") val csrfProtection: Boolean? = null,
+    @SerialName("trustProxy") val trustProxy: Boolean? = null,
+    @SerialName("forceIpv4First") val forceIpv4First: Boolean? = null,
+    @SerialName("proxy") val proxy: SeerrProxySettingsDto? = null,
+    @SerialName("dnsCache") val dnsCache: SeerrDnsCacheSettingsDto? = null,
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class SeerrProxySettingsDto(
+    @EncodeDefault @SerialName("enabled") val enabled: Boolean = false,
+    @EncodeDefault @SerialName("hostname") val hostname: String = "",
+    @EncodeDefault @SerialName("port") val port: Int = 8080,
+    @EncodeDefault @SerialName("useSsl") val useSsl: Boolean = false,
+    @EncodeDefault @SerialName("user") val user: String = "",
+    @EncodeDefault @SerialName("password") val password: String = "",
+    @EncodeDefault @SerialName("bypassFilter") val bypassFilter: String = "",
+    @EncodeDefault @SerialName("bypassLocalAddresses") val bypassLocalAddresses: Boolean = true,
+)
+
+/** The DNS cache: on or off, and the TTL bounds it forces (`-1` for none). */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class SeerrDnsCacheSettingsDto(
+    @EncodeDefault @SerialName("enabled") val enabled: Boolean = false,
+    @EncodeDefault @SerialName("forceMinTtl") val forceMinTtl: Int = 0,
+    @EncodeDefault @SerialName("forceMaxTtl") val forceMaxTtl: Int = -1,
+)
+
+/** The metadata providers (`settings/metadatas`, Seerr 3.0+): which of TMDB and TVDB serves series and anime. */
+@Serializable
+data class SeerrMetadataSettingsDto(
+    @SerialName("settings") val settings: SeerrMetadataProvidersDto = SeerrMetadataProvidersDto(),
+)
+
+@Serializable
+data class SeerrMetadataProvidersDto(
+    @SerialName("tv") val tv: String? = null,
+    @SerialName("anime") val anime: String? = null,
+)
+
+/** `POST settings/metadatas/test`: which providers to reach. */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class SeerrMetadataTestBody(
+    @EncodeDefault @SerialName("tmdb") val tmdb: Boolean = false,
+    @EncodeDefault @SerialName("tvdb") val tvdb: Boolean = false,
+)
+
+@Serializable
+data class SeerrMessageDto(
+    @SerialName("message") val message: String? = null,
+)
