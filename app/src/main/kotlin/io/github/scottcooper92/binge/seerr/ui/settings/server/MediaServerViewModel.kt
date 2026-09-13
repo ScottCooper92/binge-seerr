@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
-import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryEnabledBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanCommandBody
@@ -18,6 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 import javax.inject.Inject
 
@@ -45,6 +46,15 @@ class MediaServerViewModel
 
         private var kind = MediaServerKind.Plex
         private var scanPoll: Job? = null
+
+        /**
+         * Serializes the released-server fallback's library writes. That path sends the whole
+         * enabled set computed from local state, so two toggles racing each other would each
+         * compute from a snapshot that is missing the other's change and the one that lands
+         * last on the server would silently drop it; this makes the second wait for the first
+         * to finish and fold into local state before it reads that state.
+         */
+        private val libraryWriteMutex = Mutex()
 
         init {
             reload()
@@ -85,25 +95,45 @@ class MediaServerViewModel
             if (id in extrasState.value.busyLibraryIds) return
             extrasState.update { it.copy(busyLibraryIds = it.busyLibraryIds + id) }
             viewModelScope.launch {
-                runCatching {
-                    val api = connection.api()
-                    orOnNotFound(
-                        newer = {
-                            api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).let { updated ->
-                                replace(updated)
-                            }
-                        },
-                        released = {
-                            val enabledIds =
-                                extrasState.value.libraries
-                                    .filter { if (it.id == id) enabled else it.enabled }
-                                    .map { it.id }
-                            api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
-                        },
+                val result =
+                    runCatching {
+                        val api = connection.api()
+                        orOnNotFound(
+                            newer = {
+                                api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).let { updated ->
+                                    replace(updated)
+                                }
+                            },
+                            released = {
+                                libraryWriteMutex.withLock {
+                                    val enabledIds =
+                                        extrasState.value.libraries
+                                            .filter { if (it.id == id) enabled else it.enabled }
+                                            .map { it.id }
+                                    val libraries = api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
+                                    // Folded into local state before the lock is released, so the next
+                                    // waiting toggle computes its enabled set from this one's result
+                                    // rather than the snapshot from before it landed.
+                                    extrasState.update {
+                                        it.copy(
+                                            libraries = libraries.map { dto -> dto.toLibrary() },
+                                            busyLibraryIds = it.busyLibraryIds - id,
+                                        )
+                                    }
+                                    libraries
+                                }
+                            },
+                        )
+                    }
+                result.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                // Libraries and busyLibraryIds must land in the same emission: a collector observing
+                // libraries updated but the id still busy (or vice versa) is an inconsistent state.
+                extrasState.update {
+                    it.copy(
+                        libraries = result.getOrNull()?.map { dto -> dto.toLibrary() } ?: it.libraries,
+                        busyLibraryIds = it.busyLibraryIds - id,
                     )
-                }.onSuccess { libraries -> setLibraries(libraries) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
-                extrasState.update { it.copy(busyLibraryIds = it.busyLibraryIds - id) }
+                }
             }
         }
 
@@ -191,7 +221,7 @@ class MediaServerViewModel
                 ) {
                     updated
                 } else {
-                    SeerrLibraryDto(library.id, library.name, library.enabled, null, library.lastScanMillis)
+                    SeerrLibraryDto(library.id, library.name, library.enabled, library.type.toSeerrType(), library.lastScanMillis)
                 }
             }
 
@@ -209,6 +239,3 @@ class MediaServerViewModel
             const val SCAN_POLL_MILLIS = 2_000L
         }
     }
-
-/** For [MediaServerViewModel.load]'s two branches to share one call shape. */
-private inline fun <T> SeerrApi.let(block: (SeerrApi) -> T): T = block(this)
