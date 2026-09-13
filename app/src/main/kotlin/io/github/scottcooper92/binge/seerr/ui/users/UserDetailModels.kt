@@ -34,6 +34,8 @@ data class UserDetail(
     val watch: UserWatch?,
     val watchlist: List<TitleCardItem>,
     val isSelf: Boolean,
+    /** The server opens a user's settings to the user and to a manager. */
+    val canEditSettings: Boolean,
     val canDelete: Boolean,
     /** The server's own root, for a carousel card that opens a title there. */
     val serverUrl: String,

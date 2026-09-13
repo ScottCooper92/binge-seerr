@@ -198,11 +198,27 @@ class SeerrConnection(
     ): Result<SeerrCredentials> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
+        return awaitQuickConnect(baseUrl, session).mapCatching {
+            logInForSession(baseUrl) { api -> api.authenticateQuickConnect(SeerrQuickConnectSecretBody(session.secret)) }.getOrThrow()
+        }
+    }
+
+    /**
+     * Polls until the user approves the code on Jellyfin, and nothing more: the caller decides
+     * whether the approval signs in ([finishQuickConnect]) or links the account to the signed-in
+     * user. A 404 from the check is Jellyfin having expired the code, [QuickConnectExpiredException].
+     */
+    suspend fun awaitQuickConnect(
+        rawBaseUrl: String,
+        session: SeerrQuickConnect,
+    ): Result<Unit> {
+        if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
+        val baseUrl = rawBaseUrl.normaliseBaseUrl()
         return try {
             apis.anonymous(baseUrl) { api ->
                 while (!api.checkQuickConnectApproved(session.secret)) delay(quickConnectPollInterval)
             }
-            logInForSession(baseUrl) { api -> api.authenticateQuickConnect(SeerrQuickConnectSecretBody(session.secret)) }
+            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

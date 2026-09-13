@@ -123,19 +123,19 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /user/{userId}` | Get user by ID | v1.0.0 | v1.0.0 | yes | The user page. |
 | `PUT /user/{userId}` | Update a user by user ID | v1.0.0 | v1.0.0 |  |  |
 | `GET /user/{userId}/requests` | Get requests for a specific user | v1.20.0 | v1.0.0 | yes | The user page's requests, paged. |
-| `DELETE /user/{userId}/settings/linked-accounts/jellyfin` | Remove the linked Jellyfin account for a user | — | v2.4.0 |  |  |
-| `POST /user/{userId}/settings/linked-accounts/jellyfin` | Link the provided Jellyfin account to the current user | — | v2.4.0 |  |  |
-| `POST /user/{userId}/settings/linked-accounts/jellyfin/quickconnect` | Link Jellyfin/Emby account with Quick Connect | — | v3.4.0 |  |  |
-| `DELETE /user/{userId}/settings/linked-accounts/plex` | Remove the linked Plex account for a user | — | v2.4.0 |  |  |
-| `POST /user/{userId}/settings/linked-accounts/plex` | Link the provided Plex account to the current user | — | v2.4.0 |  |  |
-| `GET /user/{userId}/settings/main` | Get general settings for a user | v1.20.0 | v1.0.0 |  |  |
-| `POST /user/{userId}/settings/main` | Update general settings for a user | v1.20.0 | v1.0.0 |  |  |
-| `GET /user/{userId}/settings/notifications` | Get notification settings for a user | v1.20.0 | v1.0.0 |  |  |
-| `POST /user/{userId}/settings/notifications` | Update notification settings for a user | v1.20.0 | v1.0.0 |  |  |
-| `GET /user/{userId}/settings/password` | Get password page informatiom | v1.20.0 | v1.0.0 |  |  |
-| `POST /user/{userId}/settings/password` | Update password for a user | v1.20.0 | v1.0.0 |  |  |
-| `GET /user/{userId}/settings/permissions` | Get permission settings for a user | v1.20.0 | v1.0.0 |  |  |
-| `POST /user/{userId}/settings/permissions` | Update permission settings for a user | v1.20.0 | v1.0.0 |  |  |
+| `DELETE /user/{userId}/settings/linked-accounts/jellyfin` | Remove the linked Jellyfin account for a user | — | v2.4.0 | yes | The user's own linked accounts page. |
+| `POST /user/{userId}/settings/linked-accounts/jellyfin` | Link the provided Jellyfin account to the current user | — | v2.4.0 | yes | The user's own linked accounts page, by credentials. |
+| `POST /user/{userId}/settings/linked-accounts/jellyfin/quickconnect` | Link Jellyfin/Emby account with Quick Connect | — | v3.4.0 | yes | The user's own linked accounts page, by an approved Quick Connect code. |
+| `DELETE /user/{userId}/settings/linked-accounts/plex` | Remove the linked Plex account for a user | — | v2.4.0 | yes | The user's own linked accounts page. |
+| `POST /user/{userId}/settings/linked-accounts/plex` | Link the provided Plex account to the current user | — | v2.4.0 | yes | The user's own linked accounts page, by the PIN flow's token. |
+| `GET /user/{userId}/settings/main` | Get general settings for a user | v1.20.0 | v1.0.0 | yes | The user's general settings page. |
+| `POST /user/{userId}/settings/main` | Update general settings for a user | v1.20.0 | v1.0.0 | yes | The user's general settings page. |
+| `GET /user/{userId}/settings/notifications` | Get notification settings for a user | v1.20.0 | v1.0.0 | yes | The user's notifications page. |
+| `POST /user/{userId}/settings/notifications` | Update notification settings for a user | v1.20.0 | v1.0.0 | yes | The user's notifications page. |
+| `GET /user/{userId}/settings/password` | Get password page informatiom | v1.20.0 | v1.0.0 | yes | The user's password page. |
+| `POST /user/{userId}/settings/password` | Update password for a user | v1.20.0 | v1.0.0 | yes | The user's password page. |
+| `GET /user/{userId}/settings/permissions` | Get permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page. |
+| `POST /user/{userId}/settings/permissions` | Update permission settings for a user | v1.20.0 | v1.0.0 | yes | The user's permissions page; the cached browser row follows. |
 | `GET /user/{userId}/watch_data` | Get watch data | v1.29.0 | v1.1.0 | yes | The user page, where the server returns it. |
 | `GET /user/{userId}/watchlist` | Get the Plex watchlist for a specific user | v1.30.0 | v1.2.0 | yes | The user page, where the server returns it. |
 
