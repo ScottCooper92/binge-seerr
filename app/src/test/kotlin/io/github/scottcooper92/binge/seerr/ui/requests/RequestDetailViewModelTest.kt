@@ -9,7 +9,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
-import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -118,7 +117,7 @@ class RequestDetailViewModelTest {
         connection: SeerrConnection,
         requestId: Int = 11,
     ): RequestDetailViewModel {
-        val vm = RequestDetailViewModel(connection, TitleCache(), requestId)
+        val vm = RequestDetailViewModel(connection, requestId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -160,6 +159,23 @@ class RequestDetailViewModelTest {
             assertTrue(detail.canReportIssue)
             assertEquals(seerr.url("/").toString() + "tv/200", detail.webUrl)
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
+        }
+
+    /** The hub reads a size with no remaining bytes as complete; the page shares its helper, so it must agree. */
+    @Test
+    fun `a download reporting a size but no remaining bytes reads as complete`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,
+                   "downloadStatus":[{"title":"Severance.S02","size":1000}]}}""",
+            )
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(1f, detail.downloads.single().fraction)
         }
 
     @Test
@@ -206,6 +222,24 @@ class RequestDetailViewModelTest {
 
             assertEquals(RequestActions(), detail.actions)
             assertFalse(detail.canReportIssue)
+        }
+
+    @Test
+    fun `dismissing the report sheet mid-send keeps it Sending, so a re-opened send does not duplicate the POST`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
+
+            vm.dismissReport()
+            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
+
+            vm.reportIssue(IssueType.Subtitles, "Missing subs again")
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+            assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
         }
 
     @Test

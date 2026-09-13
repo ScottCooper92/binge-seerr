@@ -67,7 +67,6 @@ fun SeerrNavHost(
                         },
                     )
                 }
-                entry<SetupRoute> { SetupEntry() }
                 entry<RequestsRoute> {
                     RequestsEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(RequestDetailRoute(id)) })
                 }
