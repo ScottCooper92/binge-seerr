@@ -25,6 +25,7 @@ data class HubServer(
 
 /** The connected user for the account card: their name, whether they administer the server, and their quota. */
 data class HubAccount(
+    val id: Int,
     val name: String,
     val isAdmin: Boolean,
     val avatarUrl: String?,

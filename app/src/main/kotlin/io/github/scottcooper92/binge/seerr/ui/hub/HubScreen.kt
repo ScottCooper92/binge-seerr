@@ -34,6 +34,7 @@ import com.binge.designsystem.R as DesR
 
 class HubActions(
     val onOpenSection: (HubSection) -> Unit,
+    val onOpenAccount: (userId: Int) -> Unit,
     val onRetry: () -> Unit,
     val onDisconnect: () -> Unit,
 )
@@ -69,7 +70,9 @@ private fun Dashboard(
 ) {
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         ServerCard(server = state.server, overview = state.overview)
-        state.overview.account?.let { account -> AccountCard(account = account, quota = state.overview.quota) }
+        state.overview.account?.let { account ->
+            AccountCard(account = account, quota = state.overview.quota, onClick = { actions.onOpenAccount(account.id) })
+        }
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
             DownloadingStrip(state.downloading)

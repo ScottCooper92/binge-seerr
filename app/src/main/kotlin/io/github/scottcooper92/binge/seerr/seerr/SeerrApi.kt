@@ -168,6 +168,37 @@ interface SeerrApi {
         @Query("sort") sort: String = "created",
     ): SeerrUserPageDto
 
+    /** One user's full profile: a user's own, or any with `MANAGE_USERS`. */
+    @GET("api/v1/user/{userId}")
+    suspend fun user(
+        @Path("userId") userId: Int,
+    ): SeerrUserDto
+
+    @GET("api/v1/user/{userId}/requests")
+    suspend fun userRequests(
+        @Path("userId") userId: Int,
+        @Query("take") take: Int,
+        @Query("skip") skip: Int = 0,
+    ): SeerrRequestsPageDto
+
+    /** Tautulli's plays; the server answers 404 where Tautulli is not configured. `ADMIN`. */
+    @GET("api/v1/user/{userId}/watch_data")
+    suspend fun userWatchData(
+        @Path("userId") userId: Int,
+    ): SeerrUserWatchDataDto
+
+    /** The media server's watchlist for the user: their own, or `WATCHLIST_VIEW` for another's. */
+    @GET("api/v1/user/{userId}/watchlist")
+    suspend fun userWatchlist(
+        @Path("userId") userId: Int,
+        @Query("page") page: Int = 1,
+    ): SeerrWatchlistPageDto
+
+    @DELETE("api/v1/user/{userId}")
+    suspend fun deleteUser(
+        @Path("userId") userId: Int,
+    )
+
     /** Replaces the permission bitmask of every user in [body], the web client's bulk edit. */
     @PUT("api/v1/user")
     suspend fun bulkUpdateUsers(

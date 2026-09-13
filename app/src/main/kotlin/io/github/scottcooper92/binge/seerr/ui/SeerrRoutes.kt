@@ -32,6 +32,12 @@ data class IssueDetailRoute(
 @Serializable
 data object UsersRoute : SeerrRoute
 
+/** One user as a page. */
+@Serializable
+data class UserDetailRoute(
+    val userId: Int,
+) : SeerrRoute
+
 /** One request as a page. */
 @Serializable
 data class RequestDetailRoute(
