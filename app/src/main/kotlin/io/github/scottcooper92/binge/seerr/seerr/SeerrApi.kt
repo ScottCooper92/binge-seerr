@@ -319,6 +319,16 @@ interface SeerrApi {
     @GET("api/v1/settings/main")
     suspend fun mainSettings(): SeerrMainSettingsDto
 
+    /** Merges the body over the server's main settings and answers with the whole record. */
+    @POST("api/v1/settings/main")
+    suspend fun updateMainSettings(
+        @Body body: SeerrMainSettingsUpdateBody,
+    ): SeerrMainSettingsDto
+
+    /** Replaces the server's API key; the old one stops working at once. Answers with the whole record. */
+    @POST("api/v1/settings/main/regenerate")
+    suspend fun regenerateApiKey(): SeerrMainSettingsDto
+
     @GET("api/v1/settings/about")
     suspend fun about(): SeerrAboutDto
 

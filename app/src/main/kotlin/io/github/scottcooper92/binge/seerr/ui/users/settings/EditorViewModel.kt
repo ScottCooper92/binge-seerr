@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -35,6 +36,11 @@ sealed interface EditorEvent {
 
     data class Failed(
         val error: SeerrError,
+    ) : EditorEvent
+
+    /** An action beside the form succeeded; [messageRes] says which. */
+    data class Notice(
+        @StringRes val messageRes: Int,
     ) : EditorEvent
 }
 
@@ -90,4 +96,7 @@ abstract class EditorViewModel<T> : ViewModel() {
     }
 
     protected fun ready(): EditorUiState.Ready<T>? = state.value as? EditorUiState.Ready<T>
+
+    /** For a page's own actions beside the form, which report through the same snackbar as a save. */
+    protected suspend fun notify(event: EditorEvent) = eventFlow.emit(event)
 }

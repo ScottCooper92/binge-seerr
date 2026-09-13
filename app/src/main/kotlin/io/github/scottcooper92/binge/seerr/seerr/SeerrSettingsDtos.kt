@@ -4,17 +4,60 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * `GET settings/main`, admin-only. The API key the server returns beside these is deliberately not
- * a field: nothing here should hold it, let alone show it.
+ * `GET settings/main`, admin-only, and what `POST settings/main` and `settings/main/regenerate`
+ * answer with. Every field defaults because the two lineages disagree on which exist: Overseerr
+ * has one `region` and the proxy switches, the Jellyseerr lineage split the region in two and
+ * added the streaming and special-episode ones. [apiKey] is here only for the general settings
+ * page, which shows it behind a reveal; nothing else reads it.
  */
 @Serializable
 data class SeerrMainSettingsDto(
+    @SerialName("apiKey") val apiKey: String? = null,
     @SerialName("applicationTitle") val applicationTitle: String? = null,
     @SerialName("applicationUrl") val applicationUrl: String? = null,
     @SerialName("appLanguage") val appLanguage: String? = null,
+    @SerialName("locale") val locale: String? = null,
+    @SerialName("region") val region: String? = null,
+    @SerialName("discoverRegion") val discoverRegion: String? = null,
+    @SerialName("streamingRegion") val streamingRegion: String? = null,
+    @SerialName("originalLanguage") val originalLanguage: String? = null,
     @SerialName("hideAvailable") val hideAvailable: Boolean? = null,
+    @SerialName("hideRequested") val hideRequested: Boolean? = null,
+    @SerialName("partialRequestsEnabled") val partialRequestsEnabled: Boolean? = null,
+    @SerialName("enableSpecialEpisodes") val enableSpecialEpisodes: Boolean? = null,
+    @SerialName("versionCheck") val versionCheck: Boolean? = null,
+    @SerialName("cacheImages") val cacheImages: Boolean? = null,
+    @SerialName("youtubeUrl") val youtubeUrl: String? = null,
+    @SerialName("trustProxy") val trustProxy: Boolean? = null,
+    @SerialName("csrfProtection") val csrfProtection: Boolean? = null,
     @SerialName("defaultPermissions") val defaultPermissions: Int? = null,
     @SerialName("defaultQuotas") val defaultQuotas: SeerrDefaultQuotasDto? = null,
+)
+
+/**
+ * `POST settings/main`: the server merges what is sent over what it holds, so a body carries only
+ * the fields a page edits and a null is omitted rather than written. The API key is never sent;
+ * only `settings/main/regenerate` changes it.
+ */
+@Serializable
+data class SeerrMainSettingsUpdateBody(
+    @SerialName("applicationTitle") val applicationTitle: String? = null,
+    @SerialName("applicationUrl") val applicationUrl: String? = null,
+    @SerialName("locale") val locale: String? = null,
+    @SerialName("region") val region: String? = null,
+    @SerialName("discoverRegion") val discoverRegion: String? = null,
+    @SerialName("streamingRegion") val streamingRegion: String? = null,
+    @SerialName("originalLanguage") val originalLanguage: String? = null,
+    @SerialName("hideAvailable") val hideAvailable: Boolean? = null,
+    @SerialName("hideRequested") val hideRequested: Boolean? = null,
+    @SerialName("partialRequestsEnabled") val partialRequestsEnabled: Boolean? = null,
+    @SerialName("enableSpecialEpisodes") val enableSpecialEpisodes: Boolean? = null,
+    @SerialName("versionCheck") val versionCheck: Boolean? = null,
+    @SerialName("cacheImages") val cacheImages: Boolean? = null,
+    @SerialName("youtubeUrl") val youtubeUrl: String? = null,
+    @SerialName("trustProxy") val trustProxy: Boolean? = null,
+    @SerialName("csrfProtection") val csrfProtection: Boolean? = null,
+    @SerialName("defaultPermissions") val defaultPermissions: Int? = null,
 )
 
 @Serializable
