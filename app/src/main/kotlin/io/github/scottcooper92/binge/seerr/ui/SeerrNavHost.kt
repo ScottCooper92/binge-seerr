@@ -53,7 +53,6 @@ fun SeerrNavHost(
                         },
                     )
                 }
-                entry<SetupRoute> { SetupEntry() }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
                 }
