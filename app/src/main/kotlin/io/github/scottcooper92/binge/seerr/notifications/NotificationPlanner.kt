@@ -40,10 +40,8 @@ class NotificationPlanner
         }
 
         private fun apply(plan: Plan) {
-            when {
-                !plan.connected -> notifier.cancelActivity()
-                !plan.paused -> notifier.cancelConnectionProblem()
-            }
+            if (!plan.connected) notifier.cancelActivity()
+            if (!plan.paused) notifier.cancelConnectionProblem()
             if (plan.connected && plan.enabled && !plan.paused) scheduler.schedule() else scheduler.cancel()
         }
 

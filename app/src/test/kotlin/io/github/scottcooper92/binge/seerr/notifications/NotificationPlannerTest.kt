@@ -48,6 +48,11 @@ class NotificationPlannerTest {
             withTimeout(WAIT_MILLIS) { while (scheduler.calls.lastOrNull() != expected) delay(POLL_MILLIS) }
         }
 
+    private suspend fun awaitConnectionProblemCancels(expected: Int) =
+        withContext(Dispatchers.Default) {
+            withTimeout(WAIT_MILLIS) { while (notifier.connectionProblemCancels != expected) delay(POLL_MILLIS) }
+        }
+
     @Test
     fun `scheduled while connected with a signal on, cancelled otherwise, and re-armed by new credentials`() =
         runTest {
@@ -95,5 +100,28 @@ class NotificationPlannerTest {
             awaitLastCall("schedule")
             assertFalse(prefs.pausedForAuthFailure.first())
             assertEquals(cancelsWhilePaused, notifier.connectionProblemCancels - 1)
+        }
+
+    @Test
+    fun `disconnecting while paused for an auth failure still cancels the connection-problem notice`() =
+        runTest {
+            val prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") })
+            val connection = seerr.connection(this, onServerChanged = { prefs.forgetServer() })
+            NotificationPlanner(connection, prefs, scheduler, notifier, backgroundScope).start()
+            awaitLastCall("cancel")
+
+            prefs.setEnabled(NotificationSignal.PendingRequests, true)
+            awaitLastCall("schedule")
+
+            PollReactor(notifier, scheduler, prefs).react(CheckResult.AuthFailure)
+            awaitLastCall("cancel")
+            assertEquals(1, notifier.connectionProblems)
+            val cancelsWhilePaused = notifier.connectionProblemCancels
+
+            // Disconnecting while still paused: `connected` and `paused` both flip, and the stuck
+            // "sign in again" notice must be cancelled even though `!plan.connected` is also true.
+            connection.disconnect()
+            awaitConnectionProblemCancels(cancelsWhilePaused + 1)
+            assertTrue(notifier.activityCancels >= 1)
         }
 }
