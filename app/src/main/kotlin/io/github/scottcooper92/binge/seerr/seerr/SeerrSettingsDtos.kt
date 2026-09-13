@@ -4,6 +4,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -276,4 +277,70 @@ data class SeerrMetadataTestBody(
 @Serializable
 data class SeerrMessageDto(
     @SerialName("message") val message: String? = null,
+)
+
+/** `POST settings/jobs/{id}/schedule`: a six-field cron expression, seconds first. */
+@Serializable
+data class SeerrJobScheduleBody(
+    @SerialName("schedule") val schedule: String,
+)
+
+/**
+ * The caches (`GET settings/cache`): the API caches with their hit and miss counts, the image
+ * caches by name (`tmdb`, and `avatar` on the Jellyseerr lineage), and on Seerr 3 the DNS cache.
+ * The DNS entries are kept as sent: the server keys them by hostname, and the shape is read leniently.
+ */
+@Serializable
+data class SeerrCacheDto(
+    @SerialName("apiCaches") val apiCaches: List<SeerrApiCacheDto> = emptyList(),
+    @SerialName("imageCache") val imageCache: Map<String, SeerrImageCacheDto> = emptyMap(),
+    @SerialName("dnsCache") val dnsCache: SeerrDnsCacheDto? = null,
+)
+
+@Serializable
+data class SeerrApiCacheDto(
+    @SerialName("id") val id: String,
+    @SerialName("name") val name: String? = null,
+    @SerialName("stats") val stats: SeerrCacheStatsDto = SeerrCacheStatsDto(),
+)
+
+@Serializable
+data class SeerrCacheStatsDto(
+    @SerialName("hits") val hits: Long = 0,
+    @SerialName("misses") val misses: Long = 0,
+    @SerialName("keys") val keys: Long = 0,
+    @SerialName("ksize") val ksize: Long = 0,
+    @SerialName("vsize") val vsize: Long = 0,
+)
+
+@Serializable
+data class SeerrImageCacheDto(
+    @SerialName("size") val size: Long = 0,
+    @SerialName("imageCount") val imageCount: Long = 0,
+)
+
+@Serializable
+data class SeerrDnsCacheDto(
+    @SerialName("stats") val stats: SeerrDnsCacheStatsDto = SeerrDnsCacheStatsDto(),
+    @SerialName("entries") val entries: JsonElement? = null,
+)
+
+@Serializable
+data class SeerrDnsCacheStatsDto(
+    @SerialName("size") val size: Long = 0,
+    @SerialName("maxSize") val maxSize: Long = 0,
+    @SerialName("hits") val hits: Long = 0,
+    @SerialName("misses") val misses: Long = 0,
+    @SerialName("failures") val failures: Long = 0,
+)
+
+/** One DNS cache entry; the hostname is the key it was sent under. */
+@Serializable
+data class SeerrDnsEntryDto(
+    @SerialName("hostname") val hostname: String? = null,
+    @SerialName("activeAddress") val activeAddress: String? = null,
+    @SerialName("family") val family: Int? = null,
+    @SerialName("ttl") val ttl: Long? = null,
+    @SerialName("hits") val hits: Long = 0,
+    @SerialName("misses") val misses: Long = 0,
 )

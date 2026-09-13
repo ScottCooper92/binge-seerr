@@ -12,6 +12,9 @@ import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ApiKeyActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSliderScreen
@@ -20,6 +23,9 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersScr
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DvrInstanceScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DvrInstanceViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerViewModel
@@ -59,6 +65,37 @@ internal fun ServerSettingsPageEntry(
     onOpenSlider: (Int?) -> Unit,
 ) {
     when (page) {
+        ServerSettingsPage.Jobs -> {
+            val viewModel = hiltViewModel<JobsViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            JobsScreen(
+                state = state,
+                events = viewModel.events,
+                actions =
+                    JobsActions(
+                        onBack = onBack,
+                        onRetry = viewModel::reload,
+                        onRun = viewModel::run,
+                        onCancel = viewModel::cancel,
+                        onSchedule = viewModel::schedule,
+                    ),
+            )
+        }
+        ServerSettingsPage.Cache -> {
+            val viewModel = hiltViewModel<CacheViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            CacheScreen(
+                state = state,
+                events = viewModel.events,
+                actions =
+                    CacheActions(
+                        onBack = onBack,
+                        onRetry = viewModel::reload,
+                        onFlush = viewModel::flush,
+                        onFlushDnsEntry = viewModel::flushDnsEntry,
+                    ),
+            )
+        }
         ServerSettingsPage.Network -> {
             val viewModel = hiltViewModel<NetworkViewModel>()
             val state by viewModel.uiState.collectAsStateWithLifecycle()

@@ -322,9 +322,13 @@ private fun agentRow(
         onClick = onClick,
     )
 
-/** About first, then every scheduled job with its next run; a running job says so. */
+/** About first, then every scheduled job with its next run — a running job says so — and the caches; the jobs and caches open their pages. */
 @Composable
-internal fun systemRows(system: SystemInfo): List<SettingsRow> =
+internal fun systemRows(
+    system: SystemInfo,
+    onOpenJobs: () -> Unit,
+    onOpenCache: () -> Unit,
+): List<SettingsRow> =
     listOf(
         SettingsRow(
             icon = Icons.Filled.Public,
@@ -351,9 +355,16 @@ internal fun systemRows(system: SystemInfo): List<SettingsRow> =
                             formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
                                 ?: stringResource(R.string.settings_value_unknown)
                     },
-                clickable = false,
+                onClick = onOpenJobs,
             )
-        }
+        } +
+        SettingsRow(
+            icon = Icons.Filled.Storage,
+            iconTint = BingeSentiment.Neutral.fill(),
+            label = stringResource(R.string.server_settings_cache),
+            detail = stringResource(R.string.server_settings_cache_caption),
+            onClick = onOpenCache,
+        )
 
 internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off
 
