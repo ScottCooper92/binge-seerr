@@ -6,8 +6,12 @@ import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.REQUEST
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -80,6 +84,11 @@ class UserAdmissionTest {
             vm.users.asSnapshot()
             val listReads = seerr.count("GET", "/api/v1/user")
 
+            // `cachedIn` loads a generation only while something is collecting it, so the refresh
+            // needs a subscriber held across the create: snapshotting `users` afterwards races the
+            // shared flow's replay and, when it loses, reads the old generation and drives nothing.
+            val refreshed = async(start = CoroutineStart.UNDISPATCHED) { vm.users.drop(1).first() }
+
             vm.admission.startCreate(canGeneratePassword = true)
             vm.admission.editDraft { it.copy(email = "ana", username = "ana") }
             vm.admission.create()
@@ -90,7 +99,8 @@ class UserAdmissionTest {
             assertEquals(UsersEvent.UserCreated("Ana"), vm.events.first())
             assertEquals("""{"email":"ana@example.com","username":"ana","password":"longenough"}""", seerr.body("POST", "/api/v1/user"))
             assertNull(vm.awaitReady().admission)
-            vm.users.asSnapshot()
+
+            flowOf(refreshed.await()).asSnapshot()
             assertTrue(seerr.count("GET", "/api/v1/user") > listReads)
 
             vm.admission.startCreate(canGeneratePassword = true)

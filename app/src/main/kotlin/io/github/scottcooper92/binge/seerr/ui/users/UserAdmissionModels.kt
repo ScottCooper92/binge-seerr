@@ -1,5 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.users
 
+import io.github.scottcooper92.binge.seerr.ui.users.settings.PasswordSettings
+
 /** A local account being created. The web client requires both names; the server would take the email alone. */
 data class CreateUserDraft(
     val email: String = "",
@@ -10,11 +12,10 @@ data class CreateUserDraft(
     val canGeneratePassword: Boolean = false,
 ) {
     val valid: Boolean
-        get() = email.contains('@') && username.isNotBlank() && (generatePassword || password.length >= MIN_PASSWORD_LENGTH)
-
-    companion object {
-        const val MIN_PASSWORD_LENGTH = 8
-    }
+        get() =
+            email.contains('@') &&
+                username.isNotBlank() &&
+                (generatePassword || password.length >= PasswordSettings.MIN_PASSWORD_LENGTH)
 }
 
 /** One media-server account offered for import: what to show, and the id the import takes. */

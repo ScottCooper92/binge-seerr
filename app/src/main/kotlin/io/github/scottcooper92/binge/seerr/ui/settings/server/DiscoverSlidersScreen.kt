@@ -86,12 +86,13 @@ private fun SliderRow(
     enabled: Boolean,
     actions: SlidersActions,
 ) {
+    val editable = !slider.builtIn && slider.type != null
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .then(if (slider.builtIn) Modifier else Modifier.clickable(enabled = enabled) { actions.onOpenSlider(slider.id) }),
+                .then(if (editable) Modifier.clickable(enabled = enabled) { actions.onOpenSlider(slider.id) } else Modifier),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
