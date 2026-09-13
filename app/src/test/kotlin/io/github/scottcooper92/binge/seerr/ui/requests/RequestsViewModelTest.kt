@@ -189,7 +189,7 @@ class RequestsViewModelTest {
             vm.setScreenVisible(true)
 
             val ready = vm.awaitReady { it.counts != null }
-            assertTrue(!ready.permissions.canManageRequests)
+            assertTrue(!ready.scope.permissions.canManageRequests)
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
