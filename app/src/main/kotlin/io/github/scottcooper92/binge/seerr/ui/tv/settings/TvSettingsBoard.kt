@@ -11,11 +11,14 @@ import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
@@ -66,7 +69,16 @@ internal fun TvSettingsBoard(
     var confirmingDisconnect by rememberSaveable { mutableStateOf(false) }
     // Saved so a return to Settings resumes where the user was rather than snapping back to the top.
     var focusedKey by rememberSaveable { mutableStateOf(initialFocusedKey) }
-    val groups = tvSettingGroups(ready, onEditConnection = onEditConnection, onDisconnect = { confirmingDisconnect = true })
+    // The Disconnect option that opened the confirm sheet, so the closer has somewhere to hand focus back to.
+    val disconnectFocus = remember { FocusRequester() }
+    val closer = rememberTvOverlayCloser(restoreTo = disconnectFocus, onClose = { confirmingDisconnect = false })
+    val groups =
+        tvSettingGroups(
+            ready,
+            onEditConnection = onEditConnection,
+            onDisconnect = { confirmingDisconnect = true },
+            disconnectFocus = disconnectFocus,
+        )
     val describedKey = focusedKey?.takeIf { key -> groups.any { group -> group.rows.any { it.key == key } } } ?: KEY_SERVER
     Box(modifier = modifier.fillMaxSize()) {
         TvListPaneBoard(
@@ -78,13 +90,16 @@ internal fun TvSettingsBoard(
             initialFocusedOptionLabel = initialFocusedOptionLabel,
         )
         if (confirmingDisconnect) {
-            TvActionSheet(onDismiss = { confirmingDisconnect = false }) { entryFocus ->
+            TvActionSheet(onDismiss = closer::close) { entryFocus ->
                 TvActionSheetConfirm(
                     title = stringResource(R.string.hub_disconnect_confirm_title),
                     message = stringResource(R.string.hub_disconnect_confirm_message),
                     confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),
-                    onConfirm = onDisconnect,
-                    onCancel = { confirmingDisconnect = false },
+                    onConfirm = {
+                        onDisconnect()
+                        closer.close()
+                    },
+                    onCancel = closer::close,
                     entryFocus = entryFocus,
                 )
             }
@@ -97,6 +112,7 @@ private fun tvSettingGroups(
     state: SettingsUiState.Ready,
     onEditConnection: () -> Unit,
     onDisconnect: () -> Unit,
+    disconnectFocus: FocusRequester,
 ): List<TvPaneGroup> {
     val config = state.config
     val readOnly = stringResource(R.string.tv_settings_read_only_note)
@@ -104,7 +120,7 @@ private fun tvSettingGroups(
         add(
             TvPaneGroup(
                 stringResource(R.string.settings_group_connection),
-                connectionRows(state.connection, state.server, onEditConnection, onDisconnect),
+                connectionRows(state.connection, state.server, onEditConnection, onDisconnect, disconnectFocus),
             ),
         )
         config?.general?.let {
@@ -143,6 +159,7 @@ private fun connectionRows(
     server: ServerSummary,
     onEditConnection: () -> Unit,
     onDisconnect: () -> Unit,
+    disconnectFocus: FocusRequester,
 ): List<TvPaneRow> =
     listOf(
         TvPaneRow(key = KEY_SERVER, label = stringResource(R.string.settings_server), body = connection.baseUrl, icon = Icons.Filled.Link),
@@ -173,7 +190,14 @@ private fun connectionRows(
             key = KEY_DISCONNECT,
             label = stringResource(R.string.hub_disconnect),
             body = stringResource(R.string.hub_disconnect_confirm_message),
-            options = listOf(TvPaneOption(label = stringResource(R.string.hub_disconnect), onSelect = onDisconnect)),
+            options =
+                listOf(
+                    TvPaneOption(
+                        label = stringResource(R.string.hub_disconnect),
+                        onSelect = onDisconnect,
+                        focusRequester = disconnectFocus,
+                    ),
+                ),
             icon = Icons.Filled.PowerSettingsNew,
         ),
     )
