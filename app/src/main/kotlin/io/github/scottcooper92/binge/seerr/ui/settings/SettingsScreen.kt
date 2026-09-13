@@ -70,7 +70,10 @@ private fun SettingsContent(
 ) {
     val config = state.config
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Group(stringResource(R.string.settings_group_connection), connectionRows(state.connection, state.server, actions.onEditConnection))
+        Group(
+            stringResource(R.string.settings_group_connection),
+            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenAbout),
+        )
         config?.general?.let {
             Group(
                 stringResource(R.string.settings_group_general),
@@ -93,7 +96,7 @@ private fun SettingsContent(
         config?.system?.let {
             Group(
                 stringResource(R.string.settings_group_system),
-                systemRows(it, actions.onOpenJobs, actions.onOpenCache, actions.onOpenLogs, actions.onOpenAbout),
+                systemRows(it, actions.onOpenJobs, actions.onOpenCache, actions.onOpenLogs),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

@@ -35,12 +35,16 @@ import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import java.util.Locale
 
-/** The Connection group: the server (opens in the browser), who is signed in, the version, and the way to edit. */
+/**
+ * The Connection group: the server (opens in the browser), who is signed in, the version, the way
+ * into About - open to every signed-in user, admin or not - and the way to edit.
+ */
 @Composable
 internal fun connectionRows(
     connection: ConnectionSummary,
     server: ServerSummary,
     onEditConnection: () -> Unit,
+    onOpenAbout: () -> Unit,
 ): List<SettingsRow> {
     val context = LocalContext.current
     return listOf(
@@ -70,6 +74,13 @@ internal fun connectionRows(
             detail = server.versionDetail(),
             clickable = server.updateAvailable,
             onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
+        ),
+        SettingsRow(
+            icon = Icons.Filled.Public,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_about),
+            detail = stringResource(R.string.settings_about_caption),
+            onClick = onOpenAbout,
         ),
         SettingsRow(
             icon = Icons.Filled.Edit,
@@ -323,44 +334,29 @@ private fun agentRow(
         onClick = onClick,
     )
 
-/** About first, then every scheduled job with its next run — a running job says so — and the caches; the jobs and caches open their pages. */
+/** Every scheduled job with its next run — a running job says so — and the caches; the jobs and caches open their pages. */
 @Composable
 internal fun systemRows(
     system: SystemInfo,
     onOpenJobs: () -> Unit,
     onOpenCache: () -> Unit,
     onOpenLogs: () -> Unit,
-    onOpenAbout: () -> Unit,
 ): List<SettingsRow> =
-    listOf(
+    system.jobs.map { job ->
         SettingsRow(
-            icon = Icons.Filled.Public,
+            icon = Icons.Filled.Cached,
             iconTint = BingeSentiment.Neutral.fill(),
-            label = stringResource(R.string.settings_about),
+            label = job.name,
             detail =
-                listOfNotNull(
-                    system.version?.let { stringResource(R.string.settings_about_version, it) },
-                    system.totalRequests?.let { stringResource(R.string.settings_about_requests, it) },
-                    system.totalMediaItems?.let { stringResource(R.string.settings_about_media, it) },
-                ).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty { stringResource(R.string.settings_value_unknown) },
-            onClick = onOpenAbout,
-        ),
-    ) +
-        system.jobs.map { job ->
-            SettingsRow(
-                icon = Icons.Filled.Cached,
-                iconTint = BingeSentiment.Neutral.fill(),
-                label = job.name,
-                detail =
-                    when {
-                        job.running -> stringResource(R.string.settings_job_running)
-                        else ->
-                            formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
-                                ?: stringResource(R.string.settings_value_unknown)
-                    },
-                onClick = onOpenJobs,
-            )
-        } +
+                when {
+                    job.running -> stringResource(R.string.settings_job_running)
+                    else ->
+                        formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
+                            ?: stringResource(R.string.settings_value_unknown)
+                },
+            onClick = onOpenJobs,
+        )
+    } +
         SettingsRow(
             icon = Icons.Filled.Storage,
             iconTint = BingeSentiment.Neutral.fill(),
