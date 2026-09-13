@@ -845,4 +845,18 @@
         <item quantity="one">About %1$d hr left</item>
         <item quantity="other">About %1$d hr left</item>
     </plurals>
+
+    <!-- The television surface: setup and the advanced picker, driven from a remote. -->
+    <string name="tv_setup_headline">Connect a server</string>
+    <string name="tv_setup_address_body">Type the address of your Seerr, Jellyseerr or Overseerr server. Press the centre button on a field to bring up the keyboard.</string>
+    <string name="tv_setup_checking">Checking the server…</string>
+    <string name="tv_setup_sign_in_body">Sign in with an API key or an account typed on the remote. Plex and Quick Connect sign-in are on the phone app for now.</string>
+    <string name="tv_setup_mode_title">Sign in with</string>
+    <string name="tv_setup_no_typed_modes">This server only offers sign-ins that finish on another device. Connect it from the phone app.</string>
+    <string name="tv_setup_connecting">Connecting…</string>
+    <string name="tv_home_connected_headline">Connected</string>
+    <string name="tv_home_connected_body">%1$s is connected. Request titles from Binge; this app\'s own screens arrive on TV in a later release.</string>
+    <string name="tv_home_disconnect">Disconnect</string>
+    <string name="tv_loading">Loading…</string>
+    <string name="tv_advanced_submitting">Sending the request…</string>
 </resources>

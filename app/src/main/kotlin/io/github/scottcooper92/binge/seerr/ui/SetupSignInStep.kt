@@ -186,7 +186,7 @@ private fun SecretField(
 
 /** The Jellyfin/Emby chip carries the server's own name where the admin set one. */
 @Composable
-private fun SeerrSignInMode.label(server: SetupServer): String =
+internal fun SeerrSignInMode.label(server: SetupServer): String =
     when (this) {
         SeerrSignInMode.ApiKey -> stringResource(R.string.setup_mode_api_key)
         SeerrSignInMode.Local -> stringResource(R.string.setup_mode_local)
@@ -196,7 +196,7 @@ private fun SeerrSignInMode.label(server: SetupServer): String =
         SeerrSignInMode.QuickConnect -> stringResource(R.string.setup_mode_quick_connect)
     }
 
-private fun SeerrSignInMode.submitLabelRes(): Int =
+internal fun SeerrSignInMode.submitLabelRes(): Int =
     when (this) {
         SeerrSignInMode.Plex -> R.string.setup_sign_in_plex
         SeerrSignInMode.QuickConnect -> R.string.setup_start_quick_connect
@@ -204,7 +204,7 @@ private fun SeerrSignInMode.submitLabelRes(): Int =
         SeerrSignInMode.Local, SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> R.string.setup_sign_in
     }
 
-private fun SetupNotice.messageRes(): Int =
+internal fun SetupNotice.messageRes(): Int =
     when (this) {
         SetupNotice.ResetEmailSent -> R.string.setup_reset_email_sent
     }

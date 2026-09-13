@@ -142,7 +142,7 @@ private fun FailurePanel(
     }
 }
 
-private fun AdvancedRequestError.messageRes(): Int =
+internal fun AdvancedRequestError.messageRes(): Int =
     when (this) {
         AdvancedRequestError.NotConnected -> R.string.advanced_error_not_connected
         AdvancedRequestError.NoServers -> R.string.advanced_error_no_servers
