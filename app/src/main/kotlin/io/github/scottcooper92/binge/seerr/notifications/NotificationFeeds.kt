@@ -20,7 +20,7 @@ private const val FILTER_PENDING = "pending"
 private const val FILTER_OPEN = "open"
 private const val SORT_ADDED = "added"
 
-/** A backlog wider than this is announced as its newest pages; the older tail is still in the app. */
+/** How far back any of the poll's reads walks; past it the older rows are not seen, but are in the app. */
 private const val MAX_FEED_PAGES = 5
 
 /**
@@ -56,10 +56,22 @@ class NotificationFeeds
             return fresh.titled { it.toIssueItem(api, titles::get) }
         }
 
-        /** The user's own newest requests, untitled: the caller decides which changed state before titling. */
+        /**
+         * The user's own requests, untitled: the caller decides which changed state before titling.
+         *
+         * Paged, and unlike a feed not against a cursor. A feed is append-only, so what is new is at
+         * the front and a cursor can stop the walk; a request instead changes state where it already
+         * sits in a list ordered newest-first. Read as one page, a request awaiting approval slides
+         * out of view as the user makes others and its approval is then never seen (#127). The walk
+         * stops at the server's last page, so a short history still costs one call.
+         */
         suspend fun ownRequests(): List<SeerrRequestDto> {
             val userId = connection.authenticatedUser().id
-            return connection.api().userRequests(userId = userId, take = REQUESTS_PAGE_SIZE).results
+            val api = connection.api()
+            return collectRows({ it.id }) { skip ->
+                val page = api.userRequests(userId = userId, take = REQUESTS_PAGE_SIZE, skip = skip)
+                page.results to page.pageInfo
+            }
         }
 
         suspend fun titled(rows: List<SeerrRequestDto>): List<RequestItem> {
@@ -70,29 +82,40 @@ class NotificationFeeds
         private suspend fun <D, T : Any> List<D>.titled(map: suspend (D) -> T?): List<T> =
             coroutineScope { map { row -> async { map(row) } }.awaitAll().filterNotNull() }
 
-        /**
-         * Stops at a row already seen, the last page, or the page cap. Offset paging can show a
-         * boundary row twice when the list shifts between fetches, so the rows are deduplicated by id.
-         */
+        /** A seed run answers the newest page; after that, the rows past the cursor, up to a seen one. */
         private suspend fun <D> collectFreshRows(
             sinceId: Int?,
             idOf: (D) -> Int,
             fetchPage: suspend (skip: Int) -> Pair<List<D>, SeerrPageInfoDto>,
         ): List<D> {
-            val fresh = mutableListOf<D>()
-            var reachedEnd = false
+            if (sinceId == null) return fetchPage(0).first
+            return collectRows(
+                idOf = idOf,
+                keep = { idOf(it) > sinceId },
+                doneAfter = { page -> page.any { idOf(it) <= sinceId } },
+                fetchPage = fetchPage,
+            )
+        }
+
+        /**
+         * Pages newest-first, keeping what [keep] accepts, and stops at [doneAfter], the server's last
+         * page or [MAX_FEED_PAGES]. Offset paging can show a boundary row twice when the list shifts
+         * between fetches, so the rows are deduplicated by id.
+         */
+        private suspend fun <D> collectRows(
+            idOf: (D) -> Int,
+            keep: (D) -> Boolean = { true },
+            doneAfter: (List<D>) -> Boolean = { false },
+            fetchPage: suspend (skip: Int) -> Pair<List<D>, SeerrPageInfoDto>,
+        ): List<D> {
+            val rows = mutableListOf<D>()
             for (pageIndex in 0 until MAX_FEED_PAGES) {
                 val (results, pageInfo) = fetchPage(pageIndex * REQUESTS_PAGE_SIZE)
-                if (sinceId == null) return results
-                fresh += results.filter { idOf(it) > sinceId }
-                val reachedSeen = results.any { idOf(it) <= sinceId }
+                rows += results.filter(keep)
                 val lastPage = pageInfo.pages > 0 && pageIndex + 1 >= pageInfo.pages
-                if (results.isEmpty() || reachedSeen || lastPage) {
-                    reachedEnd = true
-                    break
-                }
+                if (results.isEmpty() || lastPage || doneAfter(results)) return rows.distinctBy(idOf)
             }
-            if (!reachedEnd) Log.w(TAG, "A backlog wider than $MAX_FEED_PAGES pages; the older rows are not announced")
-            return fresh.distinctBy(idOf)
+            Log.w(TAG, "A list wider than $MAX_FEED_PAGES pages; the older rows are not read")
+            return rows.distinctBy(idOf)
         }
     }
