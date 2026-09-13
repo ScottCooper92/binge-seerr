@@ -7,6 +7,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
@@ -17,12 +18,14 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchDataDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchStatsDto
-import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.details
+import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
+import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +50,6 @@ class RequestDetailViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
-        private val titles: TitleCache,
         @Assisted private val requestId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
@@ -99,8 +101,12 @@ class RequestDetailViewModel
             }
         }
 
+        /** A dismiss while a send is in flight only hides the sheet; it must not clear [IssueReport.Sending], or reopening it loses [reportIssue]'s re-entrancy guard and lets a second POST fire. */
         fun dismissReport() =
-            state.update { current -> (current as? RequestDetailUiState.Ready)?.copy(report = IssueReport.Idle) ?: current }
+            state.update { current ->
+                val ready = current as? RequestDetailUiState.Ready ?: return@update current
+                if (ready.report == IssueReport.Sending) ready else ready.copy(report = IssueReport.Idle)
+            }
 
         private suspend fun load(): RequestDetail =
             coroutineScope {
@@ -109,19 +115,7 @@ class RequestDetailViewModel
                 val user = async { runCatching { connection.authenticatedUser() }.getOrNull() }
                 val permissions = async { user.await().toPermissions() }
                 val dto = api.request(requestId)
-                val item = checkNotNull(dto.toRequestItem(api, titles::get, System.currentTimeMillis())) { "Unrenderable media type" }
-                val details =
-                    async {
-                        runCatching {
-                            if (dto.media.mediaType ==
-                                MEDIA_TYPE_MOVIE
-                            ) {
-                                api.movieDetails(dto.media.tmdbId)
-                            } else {
-                                api.tvDetails(dto.media.tmdbId)
-                            }
-                        }.getOrNull()
-                    }
+                val details = async { runCatching { api.details(dto.media.mediaType, dto.media.tmdbId) }.getOrNull() }
                 val destination = async { dto.destination(api) }
                 val watch =
                     async {
@@ -133,6 +127,11 @@ class RequestDetailViewModel
                         }
                     }
                 val detailsDto = details.await()
+                val hydrated = detailsDto?.let { HydratedTitle(it.displayTitle, it.posterPath?.toTmdbPosterUrl(), it.year) }
+                val item =
+                    checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
+                        "Unrenderable media type"
+                    }
                 val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
                 val scope =
                     ModerationScope(
@@ -168,7 +167,7 @@ class RequestDetailViewModel
                         statuses.map { status ->
                             DetailDownload(
                                 title = status.title,
-                                fraction = status.fraction(),
+                                fraction = listOf(status).downloadFraction(),
                                 totalBytes = status.size?.toLong()?.takeIf { it > 0 },
                                 etaMinutes = listOf(status).etaMinutes(System.currentTimeMillis()),
                             )
@@ -203,12 +202,18 @@ class RequestDetailViewModel
                 isTv = media.mediaType != MEDIA_TYPE_MOVIE,
                 instances =
                     listOfNotNull(
-                        MediaInstance(false, media.status, media.serviceUrl, media.mediaUrl, watch?.data?.toWatchStats()),
+                        MediaInstance(
+                            false,
+                            media.status,
+                            media.serviceUrl?.takeIf { it.isWebUrl() },
+                            media.mediaUrl?.takeIf { it.isWebUrl() },
+                            watch?.data?.toWatchStats(),
+                        ),
                         MediaInstance(
                             true,
                             media.status4k,
-                            media.serviceUrl4k,
-                            media.mediaUrl4k,
+                            media.serviceUrl4k?.takeIf { it.isWebUrl() },
+                            media.mediaUrl4k?.takeIf { it.isWebUrl() },
                             watch?.data4k?.toWatchStats(),
                         ).takeIf { has4k },
                     ),
@@ -246,12 +251,6 @@ class RequestDetailViewModel
             fun create(requestId: Int): RequestDetailViewModel
         }
     }
-
-private fun io.github.scottcooper92.binge.seerr.seerr.SeerrDownloadStatusDto.fraction(): Float {
-    val total = size ?: return 0f
-    val left = sizeLeft ?: return 0f
-    return if (total > 0.0) ((total - left) / total).toFloat().coerceIn(0f, 1f) else 0f
-}
 
 private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
     WatchStats(

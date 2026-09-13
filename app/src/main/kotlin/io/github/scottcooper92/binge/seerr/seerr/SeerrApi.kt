@@ -524,6 +524,7 @@ data class SeerrRequestSummaryDto(
     @SerialName("status") val status: SeerrRequestStatusCode? = null,
     @SerialName("createdAt") val createdAt: String? = null,
     @SerialName("requestedBy") val requestedBy: SeerrRequestUserDto? = null,
+    @SerialName("is4k") val is4k: Boolean = false,
     /** The seasons this request covers; empty for movie requests. */
     @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
 )
@@ -549,6 +550,7 @@ data class SeerrSeasonDto(
 data class SeerrSeasonStatusDto(
     @SerialName("seasonNumber") val seasonNumber: Int,
     @SerialName("status") val status: SeerrMediaStatusCode? = null,
+    @SerialName("status4k") val status4k: SeerrMediaStatusCode? = null,
 )
 
 /** A single in-flight download from the *arr backend. Sizes are bytes, read as Double to tolerate either form. */
