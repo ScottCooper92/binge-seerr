@@ -80,7 +80,7 @@ class SettingsLoader
                 val sonarr = async { runCatching { api.sonarrServices() }.getOrNull() }
                 val mainDto = main.await()
                 ServerConfig(
-                    general = mainDto?.toGeneral(),
+                    general = mainDto?.toGeneral()?.copy(discoverSliders = connection.profile().hasDiscoverSliders),
                     requestPolicy = mainDto?.toRequestPolicy(),
                     agents = agents(email.await(), discord.await()),
                     system = system(about.await(), jobs.await()),

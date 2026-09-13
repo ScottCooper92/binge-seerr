@@ -7,7 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 
 /** The server's own settings pages, for a user who manages settings. */
-enum class ServerSettingsPage { General, DefaultPermissions, MediaServer, Tautulli, Services, NotificationAgents }
+enum class ServerSettingsPage { General, DefaultPermissions, MediaServer, Tautulli, Services, NotificationAgents, DiscoverSliders }
 
 /**
  * The main settings form. A null field is one this server's lineage does not have, and the form
