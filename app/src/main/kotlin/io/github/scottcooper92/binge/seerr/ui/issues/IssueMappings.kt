@@ -101,7 +101,12 @@ suspend fun SeerrIssueDto.toIssueItem(
         commentCount = comments.size,
         createdAtMillis = createdAt?.toEpochMillisOrNull(),
         updatedAtMillis = updatedAt?.toEpochMillisOrNull(),
-        problem = comments.firstOrNull()?.message?.takeIf { it.isNotBlank() },
+        problem =
+            comments
+                .sortedBy { it.id }
+                .firstOrNull()
+                ?.message
+                ?.takeIf { it.isNotBlank() },
         problemSeason = problemSeason,
         problemEpisode = problemEpisode,
     )
