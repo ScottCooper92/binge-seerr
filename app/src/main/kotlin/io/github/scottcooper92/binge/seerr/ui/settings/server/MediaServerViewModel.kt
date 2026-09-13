@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 import javax.inject.Inject
 
@@ -44,6 +46,15 @@ class MediaServerViewModel
 
         private var kind = MediaServerKind.Plex
         private var scanPoll: Job? = null
+
+        /**
+         * Serializes the released-server fallback's library writes. That path sends the whole
+         * enabled set computed from local state, so two toggles racing each other would each
+         * compute from a snapshot that is missing the other's change and the one that lands
+         * last on the server would silently drop it; this makes the second wait for the first
+         * to finish and fold into local state before it reads that state.
+         */
+        private val libraryWriteMutex = Mutex()
 
         init {
             reload()
@@ -94,11 +105,23 @@ class MediaServerViewModel
                                 }
                             },
                             released = {
-                                val enabledIds =
-                                    extrasState.value.libraries
-                                        .filter { if (it.id == id) enabled else it.enabled }
-                                        .map { it.id }
-                                api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
+                                libraryWriteMutex.withLock {
+                                    val enabledIds =
+                                        extrasState.value.libraries
+                                            .filter { if (it.id == id) enabled else it.enabled }
+                                            .map { it.id }
+                                    val libraries = api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
+                                    // Folded into local state before the lock is released, so the next
+                                    // waiting toggle computes its enabled set from this one's result
+                                    // rather than the snapshot from before it landed.
+                                    extrasState.update {
+                                        it.copy(
+                                            libraries = libraries.map { dto -> dto.toLibrary() },
+                                            busyLibraryIds = it.busyLibraryIds - id,
+                                        )
+                                    }
+                                    libraries
+                                }
                             },
                         )
                     }
