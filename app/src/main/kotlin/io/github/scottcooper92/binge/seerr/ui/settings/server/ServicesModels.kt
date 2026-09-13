@@ -73,12 +73,14 @@ data class DvrForm(
     val preventSearch: Boolean = false,
     val tagRequests: Boolean = false,
     val profileId: Int? = null,
+    val profileName: String? = null,
     val rootFolder: String? = null,
     val tagIds: Set<Int> = emptySet(),
     val minimumAvailability: String? = null,
     val seriesType: String? = null,
     val animeSeriesType: String? = null,
     val animeProfileId: Int? = null,
+    val animeProfileName: String? = null,
     val animeRootFolder: String? = null,
     val animeTagIds: Set<Int>? = null,
     val seasonFolders: Boolean? = null,
@@ -177,19 +179,26 @@ internal fun SeerrServiceSettingsDto.toForm(type: ServiceType): DvrForm =
         preventSearch = preventSearch,
         tagRequests = tagRequests,
         profileId = activeProfileId,
+        profileName = activeProfileName,
         rootFolder = activeDirectory,
         tagIds = tags.toSet(),
         minimumAvailability = if (type == ServiceType.Radarr) minimumAvailability ?: MINIMUM_AVAILABILITIES.last() else null,
         seriesType = if (type == ServiceType.Sonarr) seriesType ?: SERIES_TYPES.first() else null,
         animeSeriesType = if (type == ServiceType.Sonarr) animeSeriesType ?: SERIES_TYPES.first() else null,
         animeProfileId = activeAnimeProfileId,
+        animeProfileName = activeAnimeProfileName,
         animeRootFolder = activeAnimeDirectory,
         animeTagIds = if (type == ServiceType.Sonarr) animeTags.orEmpty().toSet() else null,
         seasonFolders = if (type == ServiceType.Sonarr) enableSeasonFolders ?: true else null,
         languageProfileId = activeLanguageProfileId,
     )
 
-/** The record the server stores; the profile names ride along because the server shows them without asking the instance. */
+/**
+ * The record the server stores; the profile names ride along because the server shows them
+ * without asking the instance. A fresh test's answer is preferred, but where the instance wasn't
+ * (re)tested this session — an existing record, loaded while its instance was briefly unreachable
+ * — the name already on the record is kept rather than blanked.
+ */
 internal fun DvrForm.toDto(choices: DvrChoices?): SeerrServiceSettingsDto =
     SeerrServiceSettingsDto(
         id = id,
@@ -200,7 +209,7 @@ internal fun DvrForm.toDto(choices: DvrChoices?): SeerrServiceSettingsDto =
         useSsl = useSsl,
         baseUrl = baseUrl.trim().takeIf { it.isNotEmpty() },
         activeProfileId = profileId,
-        activeProfileName = choices?.profiles?.firstOrNull { it.id == profileId }?.label,
+        activeProfileName = choices?.profiles?.firstOrNull { it.id == profileId }?.label ?: profileName,
         activeDirectory = rootFolder,
         tags = tagIds.toList(),
         is4k = is4k,
@@ -213,7 +222,7 @@ internal fun DvrForm.toDto(choices: DvrChoices?): SeerrServiceSettingsDto =
         seriesType = seriesType,
         animeSeriesType = animeSeriesType,
         activeAnimeProfileId = animeProfileId,
-        activeAnimeProfileName = choices?.profiles?.firstOrNull { it.id == animeProfileId }?.label,
+        activeAnimeProfileName = choices?.profiles?.firstOrNull { it.id == animeProfileId }?.label ?: animeProfileName,
         activeAnimeDirectory = animeRootFolder,
         animeTags = animeTagIds?.toList(),
         enableSeasonFolders = seasonFolders,

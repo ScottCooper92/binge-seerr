@@ -182,6 +182,31 @@ class DvrInstanceViewModelTest {
         }
 
     @Test
+    fun `saving an unrelated edit when the load-time test failed keeps the stored profile names`() =
+        runTest {
+            val recordWithAnimeName =
+                SONARR.trim().removePrefix("[").removeSuffix("]").replace(
+                    "\"activeAnimeProfileId\":5,",
+                    "\"activeAnimeProfileId\":5,\"activeAnimeProfileName\":\"HD\",",
+                )
+            seerr.serve("GET /api/v1/settings/sonarr", "[$recordWithAnimeName]")
+            seerr.serve("POST /api/v1/settings/sonarr/test", "{}", code = 500)
+            seerr.serve("PUT /api/v1/settings/sonarr/3", recordWithAnimeName)
+            val vm = viewModel(ServiceType.Sonarr, id = 3)
+            val ready = vm.awaitReady()
+            assertNull(vm.extras.first().choices)
+
+            vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
+            assertTrue(vm.awaitReady().draft.valid)
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
+            assertEquals("HD", sent.getValue("activeProfileName").jsonPrimitive.content)
+            assertEquals("HD", sent.getValue("activeAnimeProfileName").jsonPrimitive.content)
+        }
+
+    @Test
     fun `deleting an instance removes it and reports the page done`() =
         runTest {
             seerr.serve("DELETE /api/v1/settings/sonarr/3")
