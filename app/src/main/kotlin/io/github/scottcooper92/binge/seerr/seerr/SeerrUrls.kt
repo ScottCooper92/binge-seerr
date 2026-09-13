@@ -29,6 +29,17 @@ fun String.toTmdbPosterUrl(): String = TMDB_POSTER_BASE + withLeadingSlash()
 
 private fun String.withLeadingSlash(): String = if (startsWith("/")) this else "/$this"
 
+/** Where each fork publishes its releases: the "update available" row's destination. */
+fun SeerrVariant.releaseNotesUrl(): String =
+    when (this) {
+        SeerrVariant.Overseerr -> "https://github.com/sct/overseerr/releases"
+        SeerrVariant.Jellyseerr -> "https://github.com/fallenbagel/jellyseerr/releases"
+        SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://github.com/seerr-team/seerr/releases"
+    }
+
+/** Only an `http(s)` address is handed to a browser. */
+fun String.isWebUrl(): Boolean = startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)
+
 /** Whether [this] parses as a base URL once normalised — the check a setup screen makes before connecting. */
 fun String.isValidBaseUrl(): Boolean = normaliseBaseUrl().toHttpUrlOrNull() != null
 

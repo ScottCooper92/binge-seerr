@@ -1,0 +1,256 @@
+package io.github.scottcooper92.binge.seerr.ui.settings
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.RequestPage
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.theme.BingeSentiment
+import com.binge.designsystem.theme.fill
+import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
+import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
+import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
+import io.github.scottcooper92.binge.seerr.ui.openInBrowser
+import java.util.Locale
+
+/** The Connection group: the server (opens in the browser), who is signed in, the version, and the way to edit. */
+@Composable
+internal fun connectionRows(
+    connection: ConnectionSummary,
+    server: ServerSummary,
+    onEditConnection: () -> Unit,
+): List<SettingsRow> {
+    val context = LocalContext.current
+    return listOf(
+        SettingsRow(
+            icon = Icons.Filled.Link,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_server),
+            detail = connection.baseUrl,
+            clickable = connection.baseUrl.isWebUrl(),
+            onClick = { context.openInBrowser(connection.baseUrl) },
+        ),
+        SettingsRow(
+            icon = Icons.Filled.Person,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_signed_in_as),
+            detail =
+                when (connection.signInKind) {
+                    SignInKind.ApiKey -> stringResource(R.string.settings_signed_in_api_key)
+                    SignInKind.Session -> connection.userName ?: stringResource(R.string.settings_value_unknown)
+                },
+            clickable = false,
+        ),
+        SettingsRow(
+            icon = Icons.Filled.Dns,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_version),
+            detail = server.versionDetail(),
+            clickable = server.updateAvailable,
+            onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
+        ),
+        SettingsRow(
+            icon = Icons.Filled.Edit,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_edit_connection),
+            detail = stringResource(R.string.settings_edit_connection_caption),
+            onClick = onEditConnection,
+        ),
+    )
+}
+
+@Composable
+private fun ServerSummary.versionDetail(): String {
+    val edition =
+        versionLabel?.let { stringResource(R.string.setup_server_edition, variant.displayName, it) }
+            ?: stringResource(R.string.setup_server_development, variant.displayName)
+    return when {
+        commitsBehind > 0 -> stringResource(R.string.settings_version_behind, edition, commitsBehind)
+        updateAvailable -> stringResource(R.string.settings_version_update, edition)
+        else -> edition
+    }
+}
+
+@Composable
+internal fun generalRows(general: GeneralSettings): List<SettingsRow> {
+    val context = LocalContext.current
+    return listOfNotNull(
+        general.applicationUrl?.takeIf { it.isWebUrl() }?.let { url ->
+            SettingsRow(
+                icon = Icons.Filled.Link,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.settings_application_url),
+                detail = url,
+                onClick = { context.openInBrowser(url) },
+            )
+        },
+        SettingsRow(
+            icon = Icons.Filled.Language,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_display_language),
+            detail = general.displayLanguage?.let { displayLanguageName(it) } ?: stringResource(R.string.settings_value_unknown),
+            clickable = false,
+        ),
+        general.hideAvailable?.let { hidden ->
+            SettingsRow(
+                icon = Icons.Filled.VisibilityOff,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.settings_hide_available),
+                detail = stringResource(onOffRes(hidden)),
+                clickable = false,
+            )
+        },
+    )
+}
+
+@Composable
+internal fun serviceRows(services: List<ServerService>): List<SettingsRow> {
+    val context = LocalContext.current
+    return services.map { service ->
+        val url = service.url?.takeIf { it.isWebUrl() }
+        SettingsRow(
+            icon = if (service.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv,
+            iconTint = BingeSentiment.Info.fill(),
+            label = service.label(),
+            detail = service.detail(),
+            clickable = url != null,
+            onClick = { url?.let { context.openInBrowser(it) } },
+        )
+    }
+}
+
+@Composable
+private fun ServerService.label(): String {
+    val markers =
+        listOfNotNull(
+            if (is4k) stringResource(R.string.settings_service_4k) else null,
+            if (isDefault) stringResource(R.string.settings_service_default) else null,
+        )
+    return (listOf(name) + markers).joinToString(stringResource(R.string.hub_meta_separator))
+}
+
+@Composable
+private fun ServerService.detail(): String =
+    listOfNotNull(qualityProfile, rootFolder).takeIf { it.isNotEmpty() }?.joinToString(stringResource(R.string.hub_meta_separator))
+        ?: url?.takeIf { it.isWebUrl() }
+        ?: stringResource(R.string.settings_value_unknown)
+
+@Composable
+internal fun requestPolicyRows(policy: RequestPolicy): List<SettingsRow> =
+    listOf(
+        SettingsRow(
+            icon = Icons.Filled.Shield,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_default_permissions),
+            detail =
+                stringResource(
+                    when (policy.defaultAccess) {
+                        SeerrDefaultAccess.NoRequests -> R.string.settings_default_access_none
+                        SeerrDefaultAccess.RequestWithApproval -> R.string.settings_default_access_request
+                        SeerrDefaultAccess.AutoApprove -> R.string.settings_default_access_auto
+                    },
+                ),
+            clickable = false,
+        ),
+        SettingsRow(
+            icon = Icons.Filled.RequestPage,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_request_limit),
+            detail = requestLimitDetail(policy.movieLimit, policy.tvLimit),
+            clickable = false,
+        ),
+    )
+
+@Composable
+private fun requestLimitDetail(
+    movie: RequestLimit?,
+    tv: RequestLimit?,
+): String {
+    if (movie == null && tv == null) return stringResource(R.string.settings_request_limit_unlimited)
+    return listOf(
+        stringResource(R.string.settings_request_limit_movie, movie.limitText()),
+        stringResource(R.string.settings_request_limit_tv, tv.limitText()),
+    ).joinToString(stringResource(R.string.hub_meta_separator))
+}
+
+@Composable
+private fun RequestLimit?.limitText(): String =
+    this?.let { stringResource(R.string.settings_request_limit_value, it.count, it.days) }
+        ?: stringResource(R.string.settings_request_limit_unlimited)
+
+@Composable
+internal fun agentRows(agents: NotificationAgents): List<SettingsRow> =
+    listOfNotNull(
+        agents.emailEnabled?.let { on -> agentRow(Icons.Filled.Email, stringResource(R.string.settings_agent_email), on) },
+        agents.discordEnabled?.let { on -> agentRow(Icons.Filled.Forum, stringResource(R.string.settings_agent_discord), on) },
+    )
+
+@Composable
+private fun agentRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    on: Boolean,
+): SettingsRow =
+    SettingsRow(
+        icon = icon,
+        iconTint = BingeSentiment.Info.fill(),
+        label = label,
+        detail = stringResource(onOffRes(on)),
+        detailColor = if (on) BingeSentiment.Positive.fill() else null,
+        clickable = false,
+    )
+
+/** About first, then every scheduled job with its next run; a running job says so. */
+@Composable
+internal fun systemRows(system: SystemInfo): List<SettingsRow> =
+    listOf(
+        SettingsRow(
+            icon = Icons.Filled.Public,
+            iconTint = BingeSentiment.Neutral.fill(),
+            label = stringResource(R.string.settings_about),
+            detail =
+                listOfNotNull(
+                    system.version?.let { stringResource(R.string.settings_about_version, it) },
+                    system.totalRequests?.let { stringResource(R.string.settings_about_requests, it) },
+                    system.totalMediaItems?.let { stringResource(R.string.settings_about_media, it) },
+                ).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty { stringResource(R.string.settings_value_unknown) },
+            clickable = false,
+        ),
+    ) +
+        system.jobs.map { job ->
+            SettingsRow(
+                icon = Icons.Filled.Cached,
+                iconTint = BingeSentiment.Neutral.fill(),
+                label = job.name,
+                detail =
+                    when {
+                        job.running -> stringResource(R.string.settings_job_running)
+                        else ->
+                            formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
+                                ?: stringResource(R.string.settings_value_unknown)
+                    },
+                clickable = false,
+            )
+        }
+
+private fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off
+
+/** The locale tag's own name in the device's language; the raw tag when the JVM cannot resolve it. */
+private fun displayLanguageName(tag: String): String =
+    Locale.forLanguageTag(tag).getDisplayName(Locale.getDefault()).takeIf { it.isNotBlank() } ?: tag

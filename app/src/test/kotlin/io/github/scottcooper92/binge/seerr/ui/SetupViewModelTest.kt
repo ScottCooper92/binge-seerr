@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
+import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.plexTvApi
@@ -66,17 +67,19 @@ class SetupViewModelTest {
     private lateinit var connection: SeerrConnection
 
     /** The state is shared WhileSubscribed, so a collector is kept open for the test's life. */
-    private fun TestScope.viewModel(): SetupViewModel {
-        connection =
-            SeerrConnection(
-                store =
-                    CredentialStore(
-                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
-                        PlainCipher,
-                    ),
-                apis = SeerrApiFactory(logRequests = false),
-                quickConnectPollInterval = 10.milliseconds,
-            )
+    private fun TestScope.viewModel(reuseConnection: Boolean = false): SetupViewModel {
+        if (!reuseConnection) {
+            connection =
+                SeerrConnection(
+                    store =
+                        CredentialStore(
+                            PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
+                            PlainCipher,
+                        ),
+                    apis = SeerrApiFactory(logRequests = false),
+                    quickConnectPollInterval = 10.milliseconds,
+                )
+        }
         val vm =
             SetupViewModel(
                 connection = connection,
@@ -87,7 +90,7 @@ class SetupViewModelTest {
                         pollInterval = 10.milliseconds,
                     ),
             )
-        viewModels.put("setup", vm)
+        viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
@@ -367,6 +370,42 @@ class SetupViewModelTest {
             val after = vm.awaitSignIn { it.link == null }
             assertNull(after.error)
             assertFalse(after.isConnecting)
+        }
+
+    @Test
+    fun `editing the connection keeps the saved server until a new one is accepted`() =
+        runTest {
+            val vm = viewModel()
+            vm.inspect("""{"version":"3.0.0"}""", """{"mediaServerType":2}""")
+            vm.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "k3y") }
+            seerr.enqueue(json("""{"id":1,"permissions":2}"""))
+            seerr.enqueue(json("""{"version":"3.0.0"}"""))
+            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            vm.connect()
+            val original = vm.awaitConnected().credentials
+            repeat(6) { seerr.takeRequest() }
+
+            // Edit connection opens on its own ViewModel over the same connection, as the entry does.
+            val editor = viewModel(reuseConnection = true)
+            seerr.enqueue(json("""{"version":"3.0.0"}"""))
+            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueue(json("[]"))
+            editor.beginEdit()
+            val editing = editor.awaitSignIn { !it.isConnecting }
+            assertEquals(original.baseUrl, editing.server.baseUrl)
+
+            seerr.enqueue(MockResponse(code = 401))
+            editor.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "wrong") }
+            editor.connect()
+            assertEquals(SetupError.Rejected, editor.awaitSignIn { it.error != null }.error)
+            assertEquals(original, connection.credentials.first())
+
+            seerr.enqueue(json("""{"id":1,"permissions":2}"""))
+            seerr.enqueue(json("""{"version":"3.0.0"}"""))
+            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            editor.editForm { copy(apiKey = "n3w") }
+            editor.connect()
+            assertEquals(SeerrAuth.ApiKey("n3w"), editor.awaitConnected().credentials.auth)
         }
 
     private fun json(

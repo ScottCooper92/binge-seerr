@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.auth.QuickConnectExpiredException
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
@@ -60,7 +61,8 @@ class SetupViewModel
             combine(connection.credentials, draft) { saved, draft ->
                 val server = draft.server
                 when {
-                    saved != null -> SetupUiState.Connected(saved)
+                    // While editing, the connection being edited is not "connected": only new credentials are.
+                    saved != null && saved != draft.editing -> SetupUiState.Connected(saved)
                     server == null ->
                         SetupUiState.Address(
                             serverUrl = draft.serverUrl,
@@ -79,6 +81,16 @@ class SetupViewModel
                         )
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
+
+        /** Settings' Edit connection: the form on the live server, prefilled and read, with that connection kept until a new one saves. */
+        fun beginEdit() {
+            if (draft.value.editing != null) return
+            viewModelScope.launch {
+                val saved = runCatching { connection.current() }.getOrNull() ?: return@launch
+                draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl) }
+                inspect()
+            }
+        }
 
         fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null) }
 
@@ -186,7 +198,7 @@ class SetupViewModel
             linkJob = null
             draft.update { current ->
                 if (failure == null) {
-                    current.copy(busy = false, link = null, form = SignInForm(mode = current.form.mode))
+                    current.copy(busy = false, link = null, editing = null, form = SignInForm(mode = current.form.mode))
                 } else {
                     current.copy(busy = false, link = null, error = failure.toSetupError())
                 }
@@ -211,6 +223,8 @@ class SetupViewModel
             val link: LinkFlow? = null,
             val error: SetupError? = null,
             val notice: SetupNotice? = null,
+            /** The credentials being edited, which the form must not read as "connected". */
+            val editing: SeerrCredentials? = null,
         )
 
         private companion object {

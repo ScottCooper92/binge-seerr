@@ -32,8 +32,10 @@ class SetupActions(
 fun SetupScreen(
     state: SetupUiState,
     actions: SetupActions,
+    title: String = stringResource(R.string.companion_name),
+    onBack: (() -> Unit)? = null,
 ) {
-    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.companion_name)) }) { padding ->
+    Scaffold(topBar = { BingeTopBar(title = title, onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (state) {
                 SetupUiState.Loading -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center))

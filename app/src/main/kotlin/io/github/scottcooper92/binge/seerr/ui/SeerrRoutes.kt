@@ -14,6 +14,14 @@ sealed interface SeerrRoute : NavKey
 @Serializable
 data object HomeRoute : SeerrRoute
 
+/** Settings: the connection and the admin's read-only view of the server. */
+@Serializable
+data object SettingsRoute : SeerrRoute
+
+/** The setup form on the live connection; pops itself once new credentials are saved. */
+@Serializable
+data object EditConnectionRoute : SeerrRoute
+
 /** One of the hub's manage sections; its screen arrives with its phase. */
 @Serializable
 data class SectionRoute(
