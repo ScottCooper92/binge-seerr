@@ -50,11 +50,25 @@ sealed interface UsersUiState {
         val edit: BulkEdit?,
         /** The toggles the editor offers: the blocklist ones only on the Jellyseerr lineage. */
         val offered: List<ManageablePermission>,
+        /** Adding users is a manager's; [importSource] is the media server whose accounts can be imported, if any. */
+        val canAdmit: Boolean = false,
+        val importSource: UserOrigin? = null,
+        val canGeneratePassword: Boolean = false,
+        val admission: UserAdmissionState? = null,
     ) : UsersUiState
 }
 
 sealed interface UsersEvent {
     data class PermissionsSaved(
+        val count: Int,
+    ) : UsersEvent
+
+    data class UserCreated(
+        val name: String,
+    ) : UsersEvent
+
+    /** How many accounts the import created; zero when every one picked was already known and only refreshed. */
+    data class UsersImported(
         val count: Int,
     ) : UsersEvent
 

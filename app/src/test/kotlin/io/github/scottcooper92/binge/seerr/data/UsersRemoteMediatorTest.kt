@@ -22,6 +22,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
 
 private const val PAGE0 = """
 { "pageInfo": { "pages": 2, "results": 21 }, "results": [
@@ -39,7 +40,7 @@ private const val LAST_PAGE = """
 @OptIn(ExperimentalPagingApi::class)
 class UsersRemoteMediatorTest {
     private val server = MockWebServer()
-    private val received = mutableListOf<RecordedRequest>()
+    private val received = CopyOnWriteArrayList<RecordedRequest>()
     private var pageBody: (Int) -> MockResponse = { skip -> json(if (skip == 0) PAGE0 else LAST_PAGE) }
 
     private val pagingState =

@@ -29,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
@@ -40,7 +41,7 @@ class RequestDetailViewModelTest {
     val folder = TemporaryFolder()
 
     private val seerr = MockWebServer()
-    private val received = mutableListOf<RecordedRequest>()
+    private val received = CopyOnWriteArrayList<RecordedRequest>()
     private val responses = mutableMapOf<String, () -> MockResponse>()
     private val viewModels = ViewModelStore()
     private var stores = 0

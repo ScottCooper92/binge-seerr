@@ -22,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CopyOnWriteArrayList
 
 /** The write side over a real connection into a path-scripted Seerr, one that still serves the blocklist at its old path. */
 class RequestModerationTest {
@@ -29,7 +30,7 @@ class RequestModerationTest {
     val folder = TemporaryFolder()
 
     private val seerr = MockWebServer()
-    private val received = mutableListOf<RecordedRequest>()
+    private val received = CopyOnWriteArrayList<RecordedRequest>()
     private val codes = mutableMapOf<String, Int>()
     private var moderated = 0
 
