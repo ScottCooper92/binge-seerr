@@ -89,6 +89,18 @@ data class SeerrServerProfile(
 
     val hasDiscoverSliders: Boolean get() = jellyseerrLineage || atLeast(1, 32)
 
+    /** The ntfy agent arrived with Jellyseerr 2.6; Overseerr never had it. */
+    val hasNtfy: Boolean get() = jellyseerrLineage && atLeast(2, 6)
+
+    /** LunaSea is Overseerr's alone: the Jellyseerr lineage dropped the agent. */
+    val hasLunaSea: Boolean get() = variant == SeerrVariant.Overseerr
+
+    /** Gotify: Overseerr 1.29, and the Jellyseerr lineage from 1.1. */
+    val hasGotify: Boolean get() = if (jellyseerrLineage) atLeast(1, 1) else atLeast(1, 29)
+
+    /** Pushover's sound list: Overseerr 1.34, and the Jellyseerr lineage from 1.8. */
+    val hasPushoverSounds: Boolean get() = if (jellyseerrLineage) atLeast(1, 8) else atLeast(1, 34)
+
     /** Deleting a title's files from Radarr or Sonarr arrived with Jellyseerr 1.5; Overseerr never had it. */
     val hasDeleteMediaFiles: Boolean get() = jellyseerrLineage && atLeast(1, 5)
 

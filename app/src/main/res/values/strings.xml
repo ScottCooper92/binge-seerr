@@ -604,6 +604,54 @@
     <string name="settings_group_notifications">Notification agents</string>
     <string name="settings_agent_email">Email</string>
     <string name="settings_agent_discord" translatable="false">Discord</string>
+    <string name="settings_agent_slack" translatable="false">Slack</string>
+    <string name="settings_agent_gotify" translatable="false">Gotify</string>
+    <string name="settings_agent_ntfy" translatable="false">ntfy</string>
+    <string name="settings_agent_lunasea" translatable="false">LunaSea</string>
+    <string name="settings_agent_webhook">Webhook</string>
+    <string name="server_settings_agents_manage">Manage agents</string>
+    <string name="server_settings_agents_manage_caption">Every agent this server can send through</string>
+    <string name="server_settings_agent_section_options">Settings</string>
+    <string name="server_settings_agent_test">Send a test notification</string>
+    <string name="server_settings_agent_tested">Test notification sent</string>
+    <string name="server_settings_agent_email_from">Sender address</string>
+    <string name="server_settings_agent_sender_name">Sender name</string>
+    <string name="server_settings_agent_smtp_host">SMTP host</string>
+    <string name="server_settings_agent_smtp_port">SMTP port</string>
+    <string name="server_settings_agent_secure">Use implicit TLS</string>
+    <string name="server_settings_agent_ignore_tls">Ignore TLS</string>
+    <string name="server_settings_agent_require_tls">Require TLS</string>
+    <string name="server_settings_agent_allow_self_signed">Allow self-signed certificates</string>
+    <string name="server_settings_agent_auth_user">SMTP username</string>
+    <string name="server_settings_agent_auth_pass">SMTP password</string>
+    <string name="server_settings_agent_pgp_private_key">PGP private key</string>
+    <string name="server_settings_agent_pgp_password">PGP password</string>
+    <string name="server_settings_agent_user_email_required">Require a user email address</string>
+    <string name="server_settings_agent_webhook_url">Webhook URL</string>
+    <string name="server_settings_agent_bot_username">Bot username</string>
+    <string name="server_settings_agent_bot_avatar_url">Bot avatar URL</string>
+    <string name="server_settings_agent_webhook_role_id">Role ID to mention</string>
+    <string name="server_settings_agent_enable_mentions">Mention users</string>
+    <string name="server_settings_agent_bot_token">Bot authorisation token</string>
+    <string name="server_settings_agent_chat_id">Chat ID</string>
+    <string name="server_settings_agent_message_thread_id">Message thread ID</string>
+    <string name="server_settings_agent_application_token">Application token</string>
+    <string name="server_settings_agent_user_key">User or group key</string>
+    <string name="server_settings_agent_sound">Sound</string>
+    <string name="server_settings_agent_access_token">Access token</string>
+    <string name="server_settings_agent_channel_tag">Channel tag</string>
+    <string name="server_settings_agent_server_url">Server URL</string>
+    <string name="server_settings_agent_topic">Topic</string>
+    <string name="server_settings_agent_tags">Tags</string>
+    <string name="server_settings_agent_priority">Priority</string>
+    <string name="server_settings_agent_auth_by_password">Sign in with a username and password</string>
+    <string name="server_settings_agent_username">Username</string>
+    <string name="server_settings_agent_password">Password</string>
+    <string name="server_settings_agent_auth_by_token">Sign in with an access token</string>
+    <string name="server_settings_agent_profile_name">Profile name</string>
+    <string name="server_settings_agent_auth_header">Authorisation header</string>
+    <string name="server_settings_agent_json_payload">JSON payload</string>
+    <string name="server_settings_agent_json_payload_hint">The template the server fills; {{notification_type}}, {{subject}} and the other variables are replaced when it sends</string>
     <string name="settings_group_system">System</string>
     <string name="settings_about">About</string>
     <string name="settings_about_version">Version %1$s</string>

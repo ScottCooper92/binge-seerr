@@ -74,8 +74,8 @@ class SettingsLoader
                 val main = async { runCatching { api.mainSettings() }.getOrNull() }
                 val about = async { runCatching { api.about() }.getOrNull() }
                 val jobs = async { runCatching { api.jobs() }.getOrNull() }
-                val email = async { runCatching { api.emailAgent().enabled }.getOrNull() }
-                val discord = async { runCatching { api.discordAgent().enabled }.getOrNull() }
+                val email = async { runCatching { api.notificationAgent("email").enabled }.getOrNull() }
+                val discord = async { runCatching { api.notificationAgent("discord").enabled }.getOrNull() }
                 val radarr = async { runCatching { api.radarrServices() }.getOrNull() }
                 val sonarr = async { runCatching { api.sonarrServices() }.getOrNull() }
                 val mainDto = main.await()

@@ -56,8 +56,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub and in Settings. |
 | `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
 | `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | The Settings summary, and the general settings form. |
-| `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
-| `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
+| `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
+| `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
 | `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 | yes | The Settings summary, the services page and the instance editor. |
 | `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 | yes | The Settings summary, the services page and the instance editor. |
 | `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub, and any user's on their page. |
@@ -174,38 +174,38 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /settings/metadatas/test` | Test Provider configuration | — | v3.0.0 |  |  |
 | `GET /settings/network` | Get network settings | — | v2.4.0 |  |  |
 | `POST /settings/network` | Update network settings | — | v2.4.0 |  |  |
-| `POST /settings/notifications/discord` | Update Discord notification settings | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/discord/test` | Test Discord settings | v1.12.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/email` | Update email notification settings | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/email/test` | Test email settings | v1.12.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/gotify` | Get Gotify notification settings | v1.29.0 | v1.1.0 |  |  |
-| `POST /settings/notifications/gotify` | Update Gotify notification settings | v1.29.0 | v1.1.0 |  |  |
-| `POST /settings/notifications/gotify/test` | Test Gotify settings | v1.29.0 | v1.1.0 |  |  |
-| `GET /settings/notifications/lunasea` | Get LunaSea notification settings | v1.24.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/lunasea` | Update LunaSea notification settings | v1.24.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/lunasea/test` | Test LunaSea settings | v1.24.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/ntfy` | Get ntfy.sh notification settings | — | v2.6.0 |  |  |
-| `POST /settings/notifications/ntfy` | Update ntfy.sh notification settings | — | v2.6.0 |  |  |
-| `POST /settings/notifications/ntfy/test` | Test ntfy.sh settings | — | v2.6.0 |  |  |
-| `GET /settings/notifications/pushbullet` | Get Pushbullet notification settings | v1.20.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/pushbullet` | Update Pushbullet notification settings | v1.20.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/pushbullet/test` | Test Pushbullet settings | v1.20.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/pushover` | Get Pushover notification settings | v1.16.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/pushover` | Update Pushover notification settings | v1.16.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/pushover/sounds` | Get Pushover sounds | v1.34.0 | v1.8.0 |  |  |
-| `POST /settings/notifications/pushover/test` | Test Pushover settings | v1.16.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/slack` | Get Slack notification settings | v1.14.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/slack` | Update Slack notification settings | v1.14.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/slack/test` | Test Slack settings | v1.14.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/telegram` | Get Telegram notification settings | v1.15.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/telegram` | Update Telegram notification settings | v1.15.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/telegram/test` | Test Telegram settings | v1.15.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/webhook` | Get webhook notification settings | v1.17.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/webhook` | Update webhook notification settings | v1.17.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/webhook/test` | Test webhook settings | v1.17.0 | v1.0.0 |  |  |
-| `GET /settings/notifications/webpush` | Get Web Push notification settings | v1.24.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/webpush` | Update Web Push notification settings | v1.24.0 | v1.0.0 |  |  |
-| `POST /settings/notifications/webpush/test` | Test Web Push settings | v1.24.0 | v1.0.0 |  |  |
+| `POST /settings/notifications/discord` | Update Discord notification settings | v1.0.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/discord/test` | Test Discord settings | v1.12.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `POST /settings/notifications/email` | Update email notification settings | v1.0.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/email/test` | Test email settings | v1.12.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/gotify` | Get Gotify notification settings | v1.29.0 | v1.1.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/gotify` | Update Gotify notification settings | v1.29.0 | v1.1.0 | yes | The agent's page. |
+| `POST /settings/notifications/gotify/test` | Test Gotify settings | v1.29.0 | v1.1.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/lunasea` | Get LunaSea notification settings | v1.24.0 | v1.0.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/lunasea` | Update LunaSea notification settings | v1.24.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/lunasea/test` | Test LunaSea settings | v1.24.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/ntfy` | Get ntfy.sh notification settings | — | v2.6.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/ntfy` | Update ntfy.sh notification settings | — | v2.6.0 | yes | The agent's page. |
+| `POST /settings/notifications/ntfy/test` | Test ntfy.sh settings | — | v2.6.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/pushbullet` | Get Pushbullet notification settings | v1.20.0 | v1.0.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/pushbullet` | Update Pushbullet notification settings | v1.20.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/pushbullet/test` | Test Pushbullet settings | v1.20.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/pushover` | Get Pushover notification settings | v1.16.0 | v1.0.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/pushover` | Update Pushover notification settings | v1.16.0 | v1.0.0 | yes | The agent's page. |
+| `GET /settings/notifications/pushover/sounds` | Get Pushover sounds | v1.34.0 | v1.8.0 | yes | The sound picker on the Pushover page, read for the application token typed. |
+| `POST /settings/notifications/pushover/test` | Test Pushover settings | v1.16.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/slack` | Get Slack notification settings | v1.14.0 | v1.0.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/slack` | Update Slack notification settings | v1.14.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/slack/test` | Test Slack settings | v1.14.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/telegram` | Get Telegram notification settings | v1.15.0 | v1.0.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/telegram` | Update Telegram notification settings | v1.15.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/telegram/test` | Test Telegram settings | v1.15.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/webhook` | Get webhook notification settings | v1.17.0 | v1.0.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/webhook` | Update webhook notification settings | v1.17.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/webhook/test` | Test webhook settings | v1.17.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
+| `GET /settings/notifications/webpush` | Get Web Push notification settings | v1.24.0 | v1.0.0 | yes | The agents page, and the agent's page. |
+| `POST /settings/notifications/webpush` | Update Web Push notification settings | v1.24.0 | v1.0.0 | yes | The agent's page. |
+| `POST /settings/notifications/webpush/test` | Test Web Push settings | v1.24.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
 | `GET /settings/plex` | Get Plex settings | v1.0.0 | v1.0.0 | yes | The media-server page on a Plex server. |
 | `POST /settings/plex` | Update Plex settings | v1.0.0 | v1.0.0 | yes | The media-server page's save. |
 | `GET /settings/plex/devices/servers` | Gets the user's available Plex servers | v1.18.0 | v1.0.0 | yes | The server picker on the media-server page. |

@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 /**
  * `GET settings/main`, admin-only, and what `POST settings/main` and `settings/main/regenerate`
@@ -91,10 +92,24 @@ data class SeerrJobDto(
     @SerialName("running") val running: Boolean = false,
 )
 
-/** A notification agent's settings (`GET settings/notifications/{agent}`); only whether it is on is read. */
+/**
+ * A notification agent's settings (`GET`/`POST settings/notifications/{agent}`, and the body of its
+ * `test`): on or off, the events it is sent as a bitmask, and the agent's own options. The options
+ * are kept as the object the server sent, since each agent has its own set and a server may carry
+ * one this app does not show; an edit overlays the known keys and sends the rest back unchanged.
+ */
 @Serializable
 data class SeerrNotificationAgentDto(
     @SerialName("enabled") val enabled: Boolean = false,
+    @SerialName("types") val types: Int = 0,
+    @SerialName("options") val options: JsonObject = JsonObject(emptyMap()),
+)
+
+/** One Pushover sound (`GET settings/notifications/pushover/sounds`). */
+@Serializable
+data class SeerrPushoverSoundDto(
+    @SerialName("name") val name: String,
+    @SerialName("description") val description: String? = null,
 )
 
 /**
