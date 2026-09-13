@@ -56,6 +56,17 @@ minified build (`-PminifyDebug`, the same rules as release): it binds the export
 completes a handshake and a status call. It runs on a push to `main` that touches what could
 change its answer, weekly, and on request.
 
+## Releasing
+
+A release is a tag: `git tag v0.2.0 && git push origin v0.2.0`. `release.yml` runs the gate, builds
+the release bundle signed with the upload key it decodes from the `RELEASE_KEYSTORE_BASE64`,
+`RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD` secrets, takes the
+version name from the tag and the version code from the run number, checks the bundle is
+release-signed and shrunk, and attaches it with the R8 mapping to a GitHub Release. A local signed
+build reads the same four values from a gitignored `keystore.properties` at the root; without them
+a release build signs with the debug key. The store listing, privacy policy and data-safety answers
+live under `docs/listing/`, reviewed like code.
+
 ## Locales
 
 `values/` is British English, declared as `en-GB` in `app/src/main/res/resources.properties`, and
