@@ -19,6 +19,7 @@ import com.binge.designsystem.component.SettingsRow
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
 
@@ -29,6 +30,8 @@ class SettingsActions(
     val onOpenMediaServer: () -> Unit,
     val onOpenServices: () -> Unit,
     val onOpenInstance: (ServiceType, Int) -> Unit,
+    val onOpenAgents: () -> Unit,
+    val onOpenAgent: (ServerAgent) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
     val onDisconnect: () -> Unit,
@@ -72,7 +75,9 @@ private fun SettingsContent(
         }
         config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
         state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
-        config?.agents?.let { Group(stringResource(R.string.settings_group_notifications), agentRows(it)) }
+        config?.agents?.let {
+            Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenAgents, actions.onOpenAgent))
+        }
         config?.system?.let { Group(stringResource(R.string.settings_group_system), systemRows(it)) }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)))

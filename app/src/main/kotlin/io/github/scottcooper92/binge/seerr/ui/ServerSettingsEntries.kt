@@ -9,6 +9,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
+import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ApiKeyActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsViewModel
@@ -17,9 +19,14 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.DvrInstanceViewMod
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.NotificationAgentScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.NotificationAgentViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.NotificationAgentsScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.NotificationAgentsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.OverrideRuleActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.OverrideRuleScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.OverrideRuleViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerGeneralScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerGeneralViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
@@ -39,8 +46,18 @@ internal fun ServerSettingsPageEntry(
     onOpenPage: (ServerSettingsPage) -> Unit,
     onOpenInstance: (ServiceType, Int?) -> Unit,
     onOpenRule: (Int?) -> Unit,
+    onOpenAgent: (ServerAgent) -> Unit,
 ) {
     when (page) {
+        ServerSettingsPage.NotificationAgents -> {
+            val viewModel = hiltViewModel<NotificationAgentsViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(viewModel) { viewModel.reload() }
+            NotificationAgentsScreen(
+                state = state,
+                actions = AgentsActions(onBack = onBack, onRetry = viewModel::reload, onOpenAgent = onOpenAgent),
+            )
+        }
         ServerSettingsPage.Services -> {
             val viewModel = hiltViewModel<ServicesViewModel>()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -137,6 +154,34 @@ internal fun DvrInstanceEntry(
         actions = viewModel.editorActions(onBack),
         onTest = viewModel::test,
         onDelete = viewModel::delete,
+    )
+}
+
+/** One agent's editor, with the test beside it. */
+@Composable
+internal fun NotificationAgentEntry(
+    agent: ServerAgent,
+    onBack: () -> Unit,
+) {
+    val viewModel =
+        hiltViewModel<NotificationAgentViewModel, NotificationAgentViewModel.Factory>(creationCallback = { factory ->
+            factory.create(agent)
+        })
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val extras by viewModel.extras.collectAsStateWithLifecycle()
+    NotificationAgentScreen(
+        state = state,
+        extras = extras,
+        events = viewModel.events,
+        actions = viewModel.editorActions(onBack),
+        agentActions =
+            AgentActions(
+                onSetEnabled = viewModel::setEnabled,
+                onSetOption = viewModel::setOption,
+                onToggleType = viewModel::toggleType,
+                onTest = viewModel::test,
+            ),
+        agent = agent,
     )
 }
 

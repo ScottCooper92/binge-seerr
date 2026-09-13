@@ -42,6 +42,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -131,8 +132,10 @@ fun SeerrNavHost(
                         onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
                         onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
                         onOpenRule = { id -> backStack.add(OverrideRuleRoute(id)) },
+                        onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
                     )
                 }
+                entry<NotificationAgentRoute> { route -> NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
                 entry<DvrInstanceRoute> { route -> DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
                 entry<OverrideRuleRoute> { route -> OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
                 entry<SettingsRoute> {
@@ -143,6 +146,8 @@ fun SeerrNavHost(
                         onOpenMediaServer = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.MediaServer)) },
                         onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
                         onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
+                        onOpenAgents = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.NotificationAgents)) },
+                        onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
                     )
                 }
                 entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
@@ -423,6 +428,8 @@ private fun SettingsEntry(
     onOpenMediaServer: () -> Unit,
     onOpenServices: () -> Unit,
     onOpenInstance: (ServiceType, Int) -> Unit,
+    onOpenAgents: () -> Unit,
+    onOpenAgent: (ServerAgent) -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -441,6 +448,8 @@ private fun SettingsEntry(
                 onOpenMediaServer = onOpenMediaServer,
                 onOpenServices = onOpenServices,
                 onOpenInstance = onOpenInstance,
+                onOpenAgents = onOpenAgents,
+                onOpenAgent = onOpenAgent,
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.

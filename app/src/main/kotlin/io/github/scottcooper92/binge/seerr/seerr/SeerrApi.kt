@@ -455,11 +455,30 @@ interface SeerrApi {
         @Path("ruleId") ruleId: Int,
     ): SeerrOverrideRuleDto
 
-    @GET("api/v1/settings/notifications/email")
-    suspend fun emailAgent(): SeerrNotificationAgentDto
+    /** One notification agent's settings; [agent] is the server's segment (`email`, `discord`, …). */
+    @GET("api/v1/settings/notifications/{agent}")
+    suspend fun notificationAgent(
+        @Path("agent") agent: String,
+    ): SeerrNotificationAgentDto
 
-    @GET("api/v1/settings/notifications/discord")
-    suspend fun discordAgent(): SeerrNotificationAgentDto
+    @POST("api/v1/settings/notifications/{agent}")
+    suspend fun updateNotificationAgent(
+        @Path("agent") agent: String,
+        @Body body: SeerrNotificationAgentDto,
+    ): SeerrNotificationAgentDto
+
+    /** Sends a test notification through the settings in [body], saved or not; a failure is a status code. */
+    @POST("api/v1/settings/notifications/{agent}/test")
+    suspend fun testNotificationAgent(
+        @Path("agent") agent: String,
+        @Body body: SeerrNotificationAgentDto,
+    ): Response<Unit>
+
+    /** The sounds a Pushover application offers, Overseerr 1.34 and Jellyseerr 1.8. */
+    @GET("api/v1/settings/notifications/pushover/sounds")
+    suspend fun pushoverSounds(
+        @Query("token") token: String,
+    ): List<SeerrPushoverSoundDto>
 
     /** Re-targets a request: the seasons of a show, and the destination for one not yet sent to the client. */
     @PUT("api/v1/request/{requestId}")
