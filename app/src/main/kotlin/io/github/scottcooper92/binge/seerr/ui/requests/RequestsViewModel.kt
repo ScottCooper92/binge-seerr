@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
@@ -33,8 +34,10 @@ private data class ListScope(
 
 /**
  * The requests browser. One cached paging stream per filter, so switching chips keeps each list's
- * rows; every stream re-queries when the sort changes. The chip counts refetch on a filter change
- * and on the screen becoming visible, holding the previous totals while a fetch is in flight.
+ * rows; every stream re-queries when the sort changes. The chip counts and the resolved scope both
+ * refetch on the screen becoming visible (the counts also on a filter change), holding the previous
+ * value while a fetch is in flight — so a transient `auth/me` failure on entry isn't a permanent
+ * stuck spinner, it self-corrects the next time the screen becomes visible.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -46,6 +49,7 @@ class RequestsViewModel
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
+        private val refreshTrigger = MutableStateFlow(0)
         private val countsRefresh = MutableStateFlow(0)
         private val actionItem = MutableStateFlow<RequestItem?>(null)
         private val listVersionState = MutableStateFlow(0)
@@ -76,23 +80,33 @@ class RequestsViewModel
             return true
         }
 
-        /** Resolved once per connection: the user's permissions decide whether the list is theirs alone. */
-        private val scope: Flow<ListScope> =
-            flow {
-                val user = runCatching { connection.authenticatedUser() }.getOrNull()
-                val permissions = user.toPermissions()
-                val hasBlocklist = runCatching { connection.profile().hasBlocklist }.getOrDefault(false)
-                emit(
-                    ListScope(
-                        moderation = ModerationScope(permissions, currentUserId = user?.id, hasBlocklist = hasBlocklist),
-                        requestedBy = user?.id?.takeUnless { permissions.canViewRequests },
-                    ),
-                )
-            }.stateIn(viewModelScope, SharingStarted.Lazily, ListScope(ModerationScope(), requestedBy = null))
+        /**
+         * The user's permissions decide whether the list is theirs alone, and what they may moderate.
+         * Re-resolved on becoming visible; null while unresolved (including after a failed re-resolve),
+         * so nothing downstream acts on a guessed, all-permissive scope.
+         */
+        private val scope: StateFlow<ListScope?> =
+            refreshTrigger
+                .flatMapLatest {
+                    flow {
+                        val user = runCatching { connection.authenticatedUser() }.getOrNull()
+                        emit(
+                            user?.let { resolved ->
+                                val permissions = resolved.toPermissions()
+                                val hasBlocklist = runCatching { connection.profile().hasBlocklist }.getOrDefault(false)
+                                ListScope(
+                                    moderation =
+                                        ModerationScope(permissions, currentUserId = resolved.id, hasBlocklist = hasBlocklist),
+                                    requestedBy = resolved.id.takeUnless { permissions.canViewRequests },
+                                )
+                            },
+                        )
+                    }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
         private val streams: Map<RequestFilter, Flow<PagingData<RequestItem>>> =
             RequestFilter.entries.associateWith { filter ->
-                combine(selectedSort, scope) { sort, scope -> sort to scope }
+                combine(selectedSort, scope.filterNotNull()) { sort, scope -> sort to scope }
                     .flatMapLatest { (sort, scope) ->
                         Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
                             RequestsPagingSource(
@@ -109,7 +123,7 @@ class RequestsViewModel
         fun requests(filter: RequestFilter): Flow<PagingData<RequestItem>> = streams.getValue(filter)
 
         private val counts: Flow<RequestCounts?> =
-            combine(selectedFilter, countsRefresh) { _, _ -> }
+            combine(selectedFilter, refreshTrigger, countsRefresh) { _, _, _ -> }
                 .flatMapLatest {
                     flow {
                         emit(
@@ -128,14 +142,18 @@ class RequestsViewModel
                 moderation.actingIds,
                 actionItem,
             ) { (filter, sort), counts, scope, acting, actionItem ->
-                RequestsUiState.Ready(
-                    filter = filter,
-                    sort = sort,
-                    counts = counts,
-                    scope = scope.moderation,
-                    actingIds = acting,
-                    actionItem = actionItem,
-                )
+                if (scope == null) {
+                    RequestsUiState.Loading
+                } else {
+                    RequestsUiState.Ready(
+                        filter = filter,
+                        sort = sort,
+                        counts = counts,
+                        scope = scope.moderation,
+                        actingIds = acting,
+                        actionItem = actionItem,
+                    )
+                }
             }.stateIn(viewModelScope, SharingStarted.Lazily, RequestsUiState.Loading)
 
         fun openActions(item: RequestItem) {
@@ -154,8 +172,8 @@ class RequestsViewModel
             selectedSort.value = sort
         }
 
-        /** The counts are low-velocity totals: refetched on entry, never polled. */
+        /** The counts and the scope are low-velocity: refetched on entry, never polled. */
         fun setScreenVisible(visible: Boolean) {
-            if (visible) countsRefresh.value++
+            if (visible) refreshTrigger.value++
         }
     }

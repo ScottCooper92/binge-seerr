@@ -78,7 +78,24 @@ fun SeerrUserDto.toUserItem(): UserItem? {
         listOfNotNull(displayName, handle).firstOrNull { it.isNotBlank() }
             ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
             ?: return null
-    return UserItem(
+    return toUserItem(name, handle)
+}
+
+/** As [toUserItem], but a page for one user has nothing to fall back to: the id stands in for a name. */
+fun SeerrUserDto.toUserItemOrFallback(): UserItem {
+    val handle = listOfNotNull(username, jellyfinUsername, plexUsername).firstOrNull { it.isNotBlank() }
+    val name =
+        listOfNotNull(displayName, handle).firstOrNull { it.isNotBlank() }
+            ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
+            ?: "#$id"
+    return toUserItem(name, handle)
+}
+
+private fun SeerrUserDto.toUserItem(
+    name: String,
+    handle: String?,
+): UserItem =
+    UserItem(
         id = id,
         name = name,
         email = email?.takeIf { it.isNotBlank() },
@@ -89,7 +106,6 @@ fun SeerrUserDto.toUserItem(): UserItem? {
         requestCount = requestCount ?: 0,
         createdAtMillis = createdAt?.toEpochMillisOrNull(),
     )
-}
 
 fun UserItem.toEntity(
     listKey: String,
