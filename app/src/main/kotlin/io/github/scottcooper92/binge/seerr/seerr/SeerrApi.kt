@@ -433,7 +433,7 @@ interface SeerrApi {
     suspend fun deleteDvr(
         @Path("service") service: String,
         @Path("id") id: Int,
-    ): SeerrServiceSettingsDto
+    )
 
     /** The override rules, Jellyseerr 2.2+. */
     @GET("api/v1/overrideRule")
@@ -453,7 +453,7 @@ interface SeerrApi {
     @DELETE("api/v1/overrideRule/{ruleId}")
     suspend fun deleteOverrideRule(
         @Path("ruleId") ruleId: Int,
-    ): SeerrOverrideRuleDto
+    )
 
     @GET("api/v1/settings/notifications/email")
     suspend fun emailAgent(): SeerrNotificationAgentDto
