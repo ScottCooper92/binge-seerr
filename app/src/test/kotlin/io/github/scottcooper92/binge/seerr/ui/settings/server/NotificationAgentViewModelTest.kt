@@ -128,6 +128,17 @@ class NotificationAgentViewModelTest {
         }
 
     @Test
+    fun `a required number option that does not parse blocks save the same as a blank one`() =
+        runTest {
+            val vm = viewModel(ServerAgent.Email)
+            vm.awaitReady()
+            vm.setOption(AgentOption.EmailSmtpPort, "abcd")
+            assertFalse(vm.awaitReady().draft.valid)
+            vm.save()
+            assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
+        }
+
+    @Test
     fun `a test sends the draft as typed and reports either way`() =
         runTest {
             val vm = viewModel(ServerAgent.Email)
@@ -149,7 +160,9 @@ class NotificationAgentViewModelTest {
             seerr.serve("POST /api/v1/settings/notifications/email/test", """{"message":"boom"}""", code = 500)
             vm.test()
             assertTrue(vm.events.first() is EditorEvent.Failed)
-            assertFalse(vm.extras.first().testing)
+            // `test()` reports the outcome before it clears `testing`, so await the flag rather
+            // than sampling it the moment the event lands.
+            assertFalse(vm.extras.first { !it.testing }.testing)
         }
 
     @Test

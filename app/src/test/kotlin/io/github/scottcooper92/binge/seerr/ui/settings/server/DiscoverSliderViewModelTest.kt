@@ -104,6 +104,18 @@ class DiscoverSliderViewModelTest {
         }
 
     @Test
+    fun `a custom slider of a kind this app does not know fails to load rather than being coerced`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/discover",
+                """[{"id":6,"type":99,"title":"Newer kind","isBuiltIn":false,"enabled":true,"data":"1"}]""",
+            )
+            val vm = viewModel(id = 6)
+            val state = vm.uiState.first { it !is EditorUiState.Loading }
+            assertTrue(state is EditorUiState.Error)
+        }
+
+    @Test
     fun `deleting a slider removes it and reports the page done`() =
         runTest {
             val vm = viewModel(id = 3)

@@ -91,6 +91,13 @@ enum class AgentOption(
 
     val secret: Boolean get() = kind == OptionKind.Secret
 
+    /** Whether [value] is something this option can be saved with: non-blank, and parseable if [kind] is [OptionKind.Number]. */
+    fun satisfiedBy(value: String): Boolean =
+        when (kind) {
+            OptionKind.Number -> value.trim().toIntOrNull() != null
+            else -> value.isNotBlank()
+        }
+
     companion object {
         fun of(agent: ServerAgent): List<AgentOption> = entries.filter { it.agent == agent }
     }
@@ -109,7 +116,7 @@ data class AgentForm(
 ) {
     /** An agent that is off may be saved half-typed; one that is on needs what it cannot send without. */
     val valid: Boolean
-        get() = !enabled || AgentOption.of(agent).filter { it.required }.all { options[it].orEmpty().isNotBlank() }
+        get() = !enabled || AgentOption.of(agent).filter { it.required }.all { it.satisfiedBy(options[it].orEmpty()) }
 
     fun option(option: AgentOption): String = options[option].orEmpty()
 

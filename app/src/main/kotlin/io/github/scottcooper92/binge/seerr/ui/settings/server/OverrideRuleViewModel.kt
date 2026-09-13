@@ -19,7 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val USERS_PAGE = 100
+/** Matches `UserAdmission`'s `ALL_USERS_TAKE`: the "requested by" picker needs every user, not one page of them. */
+private const val USERS_PAGE = 1000
 
 /**
  * One override rule, new ([id] null) or existing: an instance, the conditions a request must
