@@ -202,12 +202,18 @@ class RequestDetailViewModel
                 isTv = media.mediaType != MEDIA_TYPE_MOVIE,
                 instances =
                     listOfNotNull(
-                        MediaInstance(false, media.status, media.serviceUrl, media.mediaUrl, watch?.data?.toWatchStats()),
+                        MediaInstance(
+                            false,
+                            media.status,
+                            media.serviceUrl?.takeIf { it.isWebUrl() },
+                            media.mediaUrl?.takeIf { it.isWebUrl() },
+                            watch?.data?.toWatchStats(),
+                        ),
                         MediaInstance(
                             true,
                             media.status4k,
-                            media.serviceUrl4k,
-                            media.mediaUrl4k,
+                            media.serviceUrl4k?.takeIf { it.isWebUrl() },
+                            media.mediaUrl4k?.takeIf { it.isWebUrl() },
                             watch?.data4k?.toWatchStats(),
                         ).takeIf { has4k },
                     ),
