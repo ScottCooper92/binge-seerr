@@ -69,20 +69,7 @@ internal fun <T> EditorPage(
     content: @Composable ColumnScope.(draft: T, enabled: Boolean) -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
-    LaunchedEffect(events) {
-        events.collectLatest { event ->
-            snackbarHostState.currentSnackbarData?.dismiss()
-            when (event) {
-                EditorEvent.Saved ->
-                    snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
-                is EditorEvent.Failed ->
-                    snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
-                is EditorEvent.Notice ->
-                    snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
-            }
-        }
-    }
+    EditorEventSnackbarEffect(events, snackbarHostState)
     val ready = state as? EditorUiState.Ready<T>
     Scaffold(
         snackbarHost = { BingeSnackbarHost(snackbarHostState) },
@@ -118,6 +105,28 @@ internal fun <T> EditorPage(
                     ) {
                         content(state.draft, !state.saving)
                     }
+            }
+        }
+    }
+}
+
+/** Each editor outcome as a snackbar; a newer one supersedes the one still showing. */
+@Composable
+internal fun EditorEventSnackbarEffect(
+    events: Flow<EditorEvent>,
+    snackbarHostState: SnackbarHostState,
+) {
+    val resources = LocalResources.current
+    LaunchedEffect(events) {
+        events.collectLatest { event ->
+            snackbarHostState.currentSnackbarData?.dismiss()
+            when (event) {
+                EditorEvent.Saved ->
+                    snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
+                is EditorEvent.Failed ->
+                    snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
+                is EditorEvent.Notice ->
+                    snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
             }
         }
     }
