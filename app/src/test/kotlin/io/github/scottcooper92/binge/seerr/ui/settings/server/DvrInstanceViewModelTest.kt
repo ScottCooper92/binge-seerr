@@ -6,7 +6,9 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -135,8 +137,11 @@ class DvrInstanceViewModelTest {
             vm.test()
             vm.extras.first { it.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
+            // `events` has no replay, so subscribe before saving rather than after: subscribing
+            // afterwards can miss the save's own event, or catch `test()`'s notice arriving late.
+            val saved = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first { it is EditorEvent.Saved } }
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/radarr")).jsonObject
             assertEquals("6", sent.getValue("activeProfileId").jsonPrimitive.content)
@@ -173,8 +178,11 @@ class DvrInstanceViewModelTest {
             assertEquals(1, seerr.count("POST", "/api/v1/settings/sonarr/test"))
 
             vm.edit { it.copy(seasonFolders = false) }
+            // `events` has no replay, so subscribe before saving rather than after: subscribing
+            // afterwards can miss the save's own event, or catch `test()`'s notice arriving late.
+            val saved = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first { it is EditorEvent.Saved } }
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("false", sent.getValue("enableSeasonFolders").jsonPrimitive.content)
             assertEquals("HD", sent.getValue("activeAnimeProfileName").jsonPrimitive.content)

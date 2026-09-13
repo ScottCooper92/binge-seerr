@@ -157,7 +157,9 @@ class NotificationAgentViewModelTest {
             seerr.serve("POST /api/v1/settings/notifications/email/test", """{"message":"boom"}""", code = 500)
             vm.test()
             assertTrue(vm.events.first() is EditorEvent.Failed)
-            assertFalse(vm.extras.first().testing)
+            // `test()` reports the outcome before it clears `testing`, so await the flag rather
+            // than sampling it the moment the event lands.
+            assertFalse(vm.extras.first { !it.testing }.testing)
         }
 
     @Test
