@@ -39,6 +39,7 @@ enum class IssueType(
 
 data class RequestDetail(
     val item: RequestItem,
+    val actions: RequestActions,
     val backdropUrl: String?,
     val overview: String?,
     val modifiedBy: String?,

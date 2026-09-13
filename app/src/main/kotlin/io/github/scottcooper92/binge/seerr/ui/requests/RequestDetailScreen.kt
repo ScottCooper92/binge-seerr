@@ -1,9 +1,11 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,10 +15,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -27,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.InfoRowEntry
 import com.binge.designsystem.component.InfoRowList
@@ -40,6 +47,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
+import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
 class RequestDetailActions(
@@ -47,6 +55,10 @@ class RequestDetailActions(
     val onRetry: () -> Unit,
     val onReportIssue: (IssueType, String) -> Unit,
     val onDismissReport: () -> Unit,
+    val onApprove: () -> Unit,
+    val onRetryRequest: () -> Unit,
+    val onDecline: (Boolean) -> Unit,
+    val onRemove: (Boolean) -> Unit,
 )
 
 /**
@@ -57,12 +69,33 @@ class RequestDetailActions(
 @Composable
 fun RequestDetailScreen(
     state: RequestDetailUiState,
+    events: Flow<ModerationEvent>,
     actions: RequestDetailActions,
 ) {
-    when (state) {
-        RequestDetailUiState.Loading -> LoadingScreen()
-        is RequestDetailUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
-        is RequestDetailUiState.Ready -> Ready(state, actions)
+    val snackbarHostState = remember { SnackbarHostState() }
+    ModerationSnackbarEffect(events, snackbarHostState)
+    // A removed request has no page to stay on.
+    LaunchedEffect(events) {
+        events.collect {
+            if (it == ModerationEvent.Removed ||
+                it == ModerationEvent.RemovedAndBlocked ||
+                it == ModerationEvent.RemovedButBlockFailed
+            ) {
+                actions.onBack()
+            }
+        }
+    }
+    Scaffold(
+        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            when (state) {
+                RequestDetailUiState.Loading -> LoadingScreen()
+                is RequestDetailUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+                is RequestDetailUiState.Ready -> Ready(state, actions)
+            }
+        }
     }
 }
 
@@ -75,6 +108,7 @@ private fun Ready(
     val item = detail.item
     val context = LocalContext.current
     var reporting by rememberSaveable { mutableStateOf(false) }
+    var moderating by rememberSaveable { mutableStateOf(false) }
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         DetailHero(
@@ -145,15 +179,38 @@ private fun Ready(
             SectionHeader(title = stringResource(R.string.request_downloads))
             detail.downloads.forEach { download -> DownloadRow(download) }
         }
-        if (detail.canReportIssue) {
-            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            BingeFilledButton(
-                label = stringResource(R.string.issue_report_title),
-                onClick = { reporting = true },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = inset),
-            )
+        if (detail.actions.any || detail.canReportIssue) {
+            Column(
+                modifier = Modifier.padding(inset),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            ) {
+                if (detail.actions.any) {
+                    BingeFilledButton(
+                        label = stringResource(R.string.request_actions_cd),
+                        onClick = { moderating = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (detail.canReportIssue) {
+                    BingeOutlinedButton(
+                        label = stringResource(R.string.issue_report_title),
+                        onClick = { reporting = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
         }
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
+    }
+    if (moderating) {
+        RequestActionsSheet(
+            item = item,
+            actions = detail.actions,
+            onApprove = actions.onApprove,
+            onRetry = actions.onRetryRequest,
+            onDecline = actions.onDecline,
+            onRemove = actions.onRemove,
+            onDismiss = { moderating = false },
+        )
     }
     if (reporting) {
         ReportIssueSheet(

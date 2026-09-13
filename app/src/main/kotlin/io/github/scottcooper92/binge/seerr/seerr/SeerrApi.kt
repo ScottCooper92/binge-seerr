@@ -239,6 +239,7 @@ value class SeerrRequestStatusCode(
     val raw: Int,
 ) {
     companion object {
+        val Pending = SeerrRequestStatusCode(1)
         val Approved = SeerrRequestStatusCode(2)
         val Declined = SeerrRequestStatusCode(3)
         val Failed = SeerrRequestStatusCode(4)
@@ -472,6 +473,7 @@ data class SeerrRequestSummaryDto(
 /** Whichever of these the server filled in names the requester. */
 @Serializable
 data class SeerrRequestUserDto(
+    @SerialName("id") val id: Int? = null,
     @SerialName("displayName") val displayName: String? = null,
     @SerialName("username") val username: String? = null,
     @SerialName("email") val email: String? = null,

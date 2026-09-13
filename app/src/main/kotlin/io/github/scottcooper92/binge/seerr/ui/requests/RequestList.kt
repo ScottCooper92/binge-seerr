@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,7 +52,10 @@ import com.binge.designsystem.R as DesR
 internal fun RequestsBody(
     filter: RequestFilter,
     lazyItems: LazyPagingItems<RequestItem>,
+    scope: ModerationScope,
+    actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
+    onOpenActions: (RequestItem) -> Unit,
     onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,7 +64,7 @@ internal fun RequestsBody(
         lazyItems.itemCount > 0 ->
             Column(modifier.fillMaxSize()) {
                 if (refreshState is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                RequestList(lazyItems, onOpen, onReconnect)
+                RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect)
             }
         refreshState is LoadState.Loading -> LoadingScreen(modifier)
         refreshState is LoadState.Error ->
@@ -75,7 +81,10 @@ internal fun RequestsBody(
 @Composable
 private fun RequestList(
     lazyItems: LazyPagingItems<RequestItem>,
+    scope: ModerationScope,
+    actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
+    onOpenActions: (RequestItem) -> Unit,
     onReconnect: () -> Unit,
 ) {
     LazyColumn(
@@ -84,7 +93,14 @@ private fun RequestList(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
-            lazyItems[index]?.let { item -> RequestRow(item = item, onClick = { onOpen(item) }) }
+            lazyItems[index]?.let { item ->
+                RequestRow(
+                    item = item,
+                    onClick = { onOpen(item) },
+                    onActions = { onOpenActions(item) }.takeIf { item.actions(scope).any },
+                    isActing = item.id in actingIds,
+                )
+            }
         }
         item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry, onReconnect = onReconnect) }
     }
@@ -95,6 +111,8 @@ internal fun RequestRow(
     item: RequestItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onActions: (() -> Unit)? = null,
+    isActing: Boolean = false,
     now: Long = System.currentTimeMillis(),
 ) {
     // Only a transferring grab earns a bar; a queued one stops at its chip.
@@ -102,7 +120,16 @@ internal fun RequestRow(
     ListRow(
         modifier = modifier,
         onClick = onClick,
-        leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null) },
+        enabled = !isActing,
+        leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null, dimmed = isActing) },
+        trailing =
+            onActions?.let { open ->
+                {
+                    IconButton(onClick = open, enabled = !isActing) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.request_actions_cd))
+                    }
+                }
+            },
         footer = download?.let { { DownloadFooter(it) } },
     ) { contentModifier -> RequestRowMeta(item, now, contentModifier) }
 }

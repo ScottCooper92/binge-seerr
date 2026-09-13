@@ -64,12 +64,31 @@ data class RequestItem(
     val posterUrl: String?,
     val year: String?,
     val requestedBy: String?,
+    val requestedById: Int?,
     val requestedAtMillis: Long?,
     val status: SeerrRequestStatusCode?,
     val mediaStatus: SeerrMediaStatusCode?,
     val download: RequestDownload?,
     val seasonNumbers: List<Int>,
     val is4k: Boolean,
+)
+
+/** What the connected user may do to one request, from the server's own rules. */
+data class RequestActions(
+    val canApprove: Boolean = false,
+    val canDecline: Boolean = false,
+    val canRetry: Boolean = false,
+    val canRemove: Boolean = false,
+    val canBlock: Boolean = false,
+) {
+    val any: Boolean get() = canApprove || canDecline || canRetry || canRemove
+}
+
+/** Who is looking, and what the server has: the inputs every request's [RequestActions] are read from. */
+data class ModerationScope(
+    val permissions: SeerrPermissions = SeerrPermissions(),
+    val currentUserId: Int? = null,
+    val hasBlocklist: Boolean = false,
 )
 
 sealed interface RequestsUiState {
@@ -79,6 +98,9 @@ sealed interface RequestsUiState {
         val filter: RequestFilter,
         val sort: RequestSort,
         val counts: RequestCounts?,
-        val permissions: SeerrPermissions,
+        val scope: ModerationScope,
+        val actingIds: Set<Int>,
+        /** The request whose actions sheet is open; held here so it survives rotation. */
+        val actionItem: RequestItem? = null,
     ) : RequestsUiState
 }

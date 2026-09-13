@@ -67,3 +67,21 @@ fun RequestItem.statusChip(): RequestRowChip =
             RequestRowChip(R.string.request_state_approved, RequestStateTone.Success)
         else -> RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending)
     }
+
+/**
+ * The server's own rules for one request: approve, decline and retry are `MANAGE_REQUESTS`;
+ * removing is that too, or the requester's own pending request; blocking rides a decline or
+ * removal where the lineage has a blocklist and the user may manage it.
+ */
+fun RequestItem.actions(scope: ModerationScope): RequestActions {
+    val pending = status == null || status == SeerrRequestStatusCode.Pending
+    val moderator = scope.permissions.canManageRequests
+    val own = requestedById != null && requestedById == scope.currentUserId
+    return RequestActions(
+        canApprove = moderator && pending,
+        canDecline = moderator && pending,
+        canRetry = moderator && status == SeerrRequestStatusCode.Failed,
+        canRemove = moderator || (own && pending),
+        canBlock = scope.hasBlocklist && scope.permissions.canManageBlocklist && mediaStatus != SeerrMediaStatusCode.Blocklisted,
+    )
+}
