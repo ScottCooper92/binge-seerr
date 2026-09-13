@@ -7,6 +7,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -177,6 +178,13 @@ interface SeerrApi {
 
     @GET("api/v1/settings/notifications/discord")
     suspend fun discordAgent(): SeerrNotificationAgentDto
+
+    /** Re-targets a request: the seasons of a show, and the destination for one not yet sent to the client. */
+    @PUT("api/v1/request/{requestId}")
+    suspend fun editRequest(
+        @Path("requestId") requestId: Int,
+        @Body body: SeerrEditRequestBody,
+    ): SeerrRequestDto
 
     @DELETE("api/v1/request/{requestId}")
     suspend fun deleteRequest(
@@ -360,6 +368,18 @@ data class SeerrRequestBody(
     @SerialName("rootFolder") val rootFolder: String? = null,
 )
 
+/** `PUT request/{id}`: only the fields sent change; the seasons list is a show's whole new set. */
+@Serializable
+data class SeerrEditRequestBody(
+    @SerialName("mediaType") val mediaType: String,
+    @SerialName("seasons") val seasons: List<Int>? = null,
+    @SerialName("is4k") val is4k: Boolean = false,
+    @SerialName("serverId") val serverId: Int? = null,
+    @SerialName("profileId") val profileId: Int? = null,
+    @SerialName("rootFolder") val rootFolder: String? = null,
+    @SerialName("tags") val tags: List<Int>? = null,
+)
+
 /** A Radarr or Sonarr instance as Seerr lists it; the `active*` fields are what a plain request gets. */
 @Serializable
 data class SeerrServerDto(
@@ -466,6 +486,7 @@ data class SeerrRequestSummaryDto(
     @SerialName("status") val status: SeerrRequestStatusCode? = null,
     @SerialName("createdAt") val createdAt: String? = null,
     @SerialName("requestedBy") val requestedBy: SeerrRequestUserDto? = null,
+    @SerialName("is4k") val is4k: Boolean = false,
     /** The seasons this request covers; empty for movie requests. */
     @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
 )
@@ -491,6 +512,7 @@ data class SeerrSeasonDto(
 data class SeerrSeasonStatusDto(
     @SerialName("seasonNumber") val seasonNumber: Int,
     @SerialName("status") val status: SeerrMediaStatusCode? = null,
+    @SerialName("status4k") val status4k: SeerrMediaStatusCode? = null,
 )
 
 /** A single in-flight download from the *arr backend. Sizes are bytes, read as Double to tolerate either form. */

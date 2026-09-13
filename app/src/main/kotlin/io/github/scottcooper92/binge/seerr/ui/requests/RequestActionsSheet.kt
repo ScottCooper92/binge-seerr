@@ -185,6 +185,7 @@ internal fun ModerationEvent.messageRes(): Int =
         when (this) {
             ModerationEvent.Approved -> R.string.request_approved
             ModerationEvent.Retried -> R.string.request_retried
+            ModerationEvent.Edited -> R.string.request_edited
             ModerationEvent.Declined -> R.string.request_declined
             ModerationEvent.DeclinedAndBlocked -> R.string.request_declined_and_blocked
             ModerationEvent.DeclinedButBlockFailed -> R.string.request_declined_block_failed

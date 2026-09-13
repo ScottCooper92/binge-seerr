@@ -73,8 +73,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /request` | Get all requests | v1.0.0 | v1.0.0 | yes |  |
 | `POST /request` | Create new request | v1.0.0 | v1.0.0 | yes |  |
 | `DELETE /request/{requestId}` | Delete request | v1.0.0 | v1.0.0 | yes |  |
-| `GET /request/{requestId}` | Get MediaRequest | v1.0.0 | v1.0.0 |  |  |
-| `PUT /request/{requestId}` | Update MediaRequest | v1.17.0 | v1.0.0 |  |  |
+| `GET /request/{requestId}` | Get MediaRequest | v1.0.0 | v1.0.0 | yes | The request page. |
+| `PUT /request/{requestId}` | Update MediaRequest | v1.17.0 | v1.0.0 | yes | Edit request: the season set and, with `REQUEST_ADVANCED`, the destination. |
 | `POST /request/{requestId}/retry` | Retry failed request | v1.14.0 | v1.0.0 | yes |  |
 | `POST /request/{requestId}/{status}` | Update a request's status | v1.20.0 | v1.0.0 | yes |  |
 | `GET /service/radarr` | Get non-sensitive Radarr server list | v1.17.0 | v1.0.0 | yes | Advanced picker (in place) and the edit-request modal. |

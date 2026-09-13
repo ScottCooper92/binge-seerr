@@ -19,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.EditRequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen
@@ -141,6 +142,17 @@ private fun RequestDetailEntry(
                     (state as? RequestDetailUiState.Ready)?.let { viewModel.moderation.decline(it.detail.item, block) }
                 },
                 onRemove = { block -> (state as? RequestDetailUiState.Ready)?.let { viewModel.moderation.remove(it.detail.item, block) } },
+                onStartEdit = viewModel::startEdit,
+                edit =
+                    EditRequestActions(
+                        onToggleSeason = viewModel.editor::toggleSeason,
+                        onSelectServer = viewModel.editor::selectServer,
+                        onSelectProfile = viewModel.editor::selectProfile,
+                        onSelectRootFolder = viewModel.editor::selectRootFolder,
+                        onToggleTag = viewModel.editor::toggleTag,
+                        onSave = viewModel.editor::save,
+                        onDismiss = viewModel.editor::cancel,
+                    ),
             ),
     )
 }

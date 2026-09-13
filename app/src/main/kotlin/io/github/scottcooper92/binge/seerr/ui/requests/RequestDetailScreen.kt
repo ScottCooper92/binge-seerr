@@ -59,6 +59,8 @@ class RequestDetailActions(
     val onRetryRequest: () -> Unit,
     val onDecline: (Boolean) -> Unit,
     val onRemove: (Boolean) -> Unit,
+    val onStartEdit: () -> Unit,
+    val edit: EditRequestActions,
 )
 
 /**
@@ -179,7 +181,7 @@ private fun Ready(
             SectionHeader(title = stringResource(R.string.request_downloads))
             detail.downloads.forEach { download -> DownloadRow(download) }
         }
-        if (detail.actions.any || detail.canReportIssue) {
+        if (detail.actions.any || detail.canEdit || detail.canReportIssue) {
             Column(
                 modifier = Modifier.padding(inset),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
@@ -188,6 +190,13 @@ private fun Ready(
                     BingeFilledButton(
                         label = stringResource(R.string.request_actions_cd),
                         onClick = { moderating = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (detail.canEdit) {
+                    BingeOutlinedButton(
+                        label = stringResource(R.string.request_edit_title),
+                        onClick = actions.onStartEdit,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -212,6 +221,7 @@ private fun Ready(
             onDismiss = { moderating = false },
         )
     }
+    state.edit?.let { edit -> EditRequestSheet(item = item, edit = edit, actions = actions.edit) }
     if (reporting) {
         ReportIssueSheet(
             report = state.report,

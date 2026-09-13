@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
@@ -23,8 +24,10 @@ import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -45,13 +48,26 @@ class RequestDetailViewModel
         @Assisted private val requestId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
-        val uiState: StateFlow<RequestDetailUiState> = state.asStateFlow()
 
         /** A moderation reloads the page, so the chip and the history show the server's new answer. */
         val moderation = RequestModeration(scope = viewModelScope, connection = connection, onModerated = ::reload)
 
+        /** The editor rides the page's state while it is open; it closes itself on the save landing. */
+        val editor = RequestEditor(scope = viewModelScope, connection = connection, moderation = moderation)
+
+        val uiState: StateFlow<RequestDetailUiState> =
+            combine(state, editor.state) { page, edit -> (page as? RequestDetailUiState.Ready)?.copy(edit = edit) ?: page }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, RequestDetailUiState.Loading)
+
+        private var editSource: EditSource? = null
+
         init {
             reload()
+        }
+
+        fun startEdit() {
+            val ready = state.value as? RequestDetailUiState.Ready ?: return
+            if (ready.detail.canEdit) editSource?.let(editor::start)
         }
 
         fun reload() {
@@ -103,16 +119,21 @@ class RequestDetailViewModel
                         "Unrenderable media type"
                     }
                 val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
+                val scope =
+                    ModerationScope(
+                        permissions.await(),
+                        currentUserId = user.await()?.id,
+                        hasBlocklist = profile.await().hasBlocklist,
+                    )
+                val pending = dto.status == null || dto.status == SeerrRequestStatusCode.Pending
+                val own = dto.requestedBy?.id != null && dto.requestedBy.id == scope.currentUserId
+                val canEditDestination = pending && scope.permissions.canRequestAdvanced
+                editSource = EditSource(request = dto, details = detailsDto, canEditDestination = canEditDestination)
                 RequestDetail(
                     item = item,
-                    actions =
-                        item.actions(
-                            ModerationScope(
-                                permissions.await(),
-                                currentUserId = user.await()?.id,
-                                hasBlocklist = profile.await().hasBlocklist,
-                            ),
-                        ),
+                    actions = item.actions(scope),
+                    canEdit = pending && (scope.permissions.canManageRequests || own),
+                    canEditDestination = canEditDestination,
                     backdropUrl = detailsDto?.backdropPath?.toTmdbBackdropUrl(),
                     overview = detailsDto?.overview?.takeIf { it.isNotBlank() },
                     modifiedBy =

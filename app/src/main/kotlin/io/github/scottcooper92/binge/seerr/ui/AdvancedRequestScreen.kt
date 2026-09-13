@@ -105,7 +105,7 @@ private fun OptionsForm(
 
 /** One choice per chip, stacked: root-folder paths are long, and a wrapped path is unreadable. */
 @Composable
-private fun <T> ChoicePicker(
+internal fun <T> ChoicePicker(
     title: String,
     choices: List<Pair<T, String>>,
     selected: T?,
