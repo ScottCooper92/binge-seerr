@@ -330,6 +330,7 @@ internal fun systemRows(
     onOpenJobs: () -> Unit,
     onOpenCache: () -> Unit,
     onOpenLogs: () -> Unit,
+    onOpenAbout: () -> Unit,
 ): List<SettingsRow> =
     listOf(
         SettingsRow(
@@ -342,7 +343,7 @@ internal fun systemRows(
                     system.totalRequests?.let { stringResource(R.string.settings_about_requests, it) },
                     system.totalMediaItems?.let { stringResource(R.string.settings_about_media, it) },
                 ).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty { stringResource(R.string.settings_value_unknown) },
-            clickable = false,
+            onClick = onOpenAbout,
         ),
     ) +
         system.jobs.map { job ->

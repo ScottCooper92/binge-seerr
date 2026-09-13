@@ -37,6 +37,24 @@ fun SeerrVariant.releaseNotesUrl(): String =
         SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://github.com/seerr-team/seerr/releases"
     }
 
+/** Each fork's documentation. */
+fun SeerrVariant.docsUrl(): String =
+    when (this) {
+        SeerrVariant.Overseerr -> "https://docs.overseerr.dev"
+        SeerrVariant.Jellyseerr -> "https://docs.jellyseerr.dev"
+        SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://docs.seerr.dev"
+    }
+
+/** Each fork's Discord invite; Seerr kept Jellyseerr's server. */
+fun SeerrVariant.discordUrl(): String =
+    when (this) {
+        SeerrVariant.Overseerr -> "https://discord.gg/overseerr"
+        SeerrVariant.Jellyseerr, SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://discord.gg/ckbvBtDJgC"
+    }
+
+/** Each fork's repository. */
+fun SeerrVariant.githubUrl(): String = releaseNotesUrl().removeSuffix("/releases")
+
 /** Only an `http(s)` address is handed to a browser. */
 fun String.isWebUrl(): Boolean = startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)
 
