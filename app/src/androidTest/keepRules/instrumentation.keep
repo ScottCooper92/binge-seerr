@@ -1,0 +1,6 @@
+# Keeps for the test APK alone, which AGP minifies alongside a minified app under test.
+#
+# hilt-android-testing references AutoValue, a compile-time-only annotation processor that is
+# never on the runtime classpath; R8 would otherwise refuse to build the test APK over the
+# missing class. Nothing at runtime reaches it.
+-dontwarn com.google.auto.value.AutoValue
