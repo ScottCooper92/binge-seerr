@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The Android TV home-screen banner, 320x180 at xhdpi as the platform asks for, drawn as a vector so the
+    companion's mark is the one source for both the icon and the banner.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path
+        android:fillColor="#1C1B2E"
+        android:pathData="M0,0h320v180h-320z" />
+    <group
+        android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:translateX="100"
+        android:translateY="30">
+        <path
+            android:fillColor="#6366F1"
+            android:pathData="M24,4a20,20 0 1,0 0,40a20,20 0 1,0 0,-40z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M24,14a10,10 0 1,0 0,20a10,10 0 1,0 0,-20zM24,18a6,6 0 1,1 0,12a6,6 0 1,1 0,-12z" />
+    </group>
+</vector>

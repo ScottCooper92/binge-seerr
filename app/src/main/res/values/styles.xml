@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The window before Compose paints. Light on a phone, and dark with a black window on a
+        television (values-television), so the first frame agrees with the theme each shell wears
+        rather than flashing white under the TV theme.
+    -->
+    <style name="Theme.Seerr" parent="@android:style/Theme.Material.Light.NoActionBar" />
+</resources>

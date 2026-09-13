@@ -509,7 +509,7 @@ private fun SetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
     SetupScreen(state = state, actions = viewModel.actions())
 }
 
-private fun SetupViewModel.actions(): SetupActions =
+internal fun SetupViewModel.actions(): SetupActions =
     SetupActions(
         onEditAddress = ::editAddress,
         onInspect = ::inspect,

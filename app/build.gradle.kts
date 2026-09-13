@@ -51,6 +51,13 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
+
+    testOptions {
+        // The TV focus tests drive a real D-pad through Robolectric on the JVM, against screens built
+        // out of dimensionResource and stringResource, so they need the merged resources on the
+        // unit-test classpath.
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -58,6 +65,9 @@ dependencies {
     implementation(libs.binge.integration.sdk)
     implementation(libs.binge.integration.contracts)
     implementation(libs.binge.designsystem)
+    // The television surface in ui/tv: tv-material and the phone's Material 3 are never mixed in one
+    // file, so that package imports only this module's theme and units.
+    implementation(libs.binge.designsystem.tv)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)
@@ -96,4 +106,10 @@ dependencies {
     testImplementation(libs.paging.testing)
     // The generated service is driven over an in-process channel: the whole contract, no device.
     testImplementation(libs.grpc.inprocess)
+    // The TV focus tests: Robolectric hosts Compose on the JVM, and the television qualifier makes
+    // its 2D focus search behave like a panel's rather than a handset's.
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

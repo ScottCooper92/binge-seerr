@@ -43,10 +43,12 @@ includeBuild("binge-integrations")
 // The shared design system arrives the same way (Binge#2427): the theme and the components this
 // app's screen wears come from binge-design-system as source, so a user moving between Binge and
 // this app sees one product without this app depending on Binge. Gradle substitutes
-// `com.binge:designsystem` with the included build's project.
+// `com.binge:designsystem` with the included build's project, and `com.binge:designsystem-tv` — the
+// tv-material foundation the television surface is built from — with its TV module.
 includeBuild("design-system") {
     dependencySubstitution {
         substitute(module("com.binge:designsystem")).using(project(":designsystem"))
+        substitute(module("com.binge:designsystem-tv")).using(project(":designsystem-tv"))
     }
 }
 
