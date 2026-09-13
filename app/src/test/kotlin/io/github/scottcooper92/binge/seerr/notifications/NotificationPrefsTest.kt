@@ -32,4 +32,17 @@ class NotificationPrefsTest {
             assertNull(prefs.notifiedIds(NotificationSignal.RequestApproved))
             assertTrue(prefs.isEnabled(NotificationSignal.PendingRequests))
         }
+
+    @Test
+    fun `forgetServer also clears a pause left by a rejected credential`() =
+        runTest {
+            val prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("p.preferences_pb") })
+            assertFalse(prefs.pausedForAuthFailure.first())
+
+            prefs.setPausedForAuthFailure(true)
+            assertTrue(prefs.pausedForAuthFailure.first())
+
+            prefs.forgetServer()
+            assertFalse(prefs.pausedForAuthFailure.first())
+        }
 }

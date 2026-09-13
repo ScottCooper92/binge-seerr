@@ -757,9 +757,8 @@
     <string name="server_settings_agent_json_payload_hint">La plantilla que rellena el servidor; {{notification_type}}, {{subject}} y las demás variables se sustituyen al enviar</string>
     <string name="settings_group_system">Sistema</string>
     <string name="settings_about">Acerca de</string>
+    <string name="settings_about_caption">Edición, totales y enlaces de ayuda</string>
     <string name="settings_about_version">Versión %1$s</string>
-    <string name="settings_about_requests">%1$d peticiones</string>
-    <string name="settings_about_media">%1$d títulos</string>
     <string name="settings_job_running">Ejecutándose ahora</string>
     <string name="settings_job_next_run">Próxima ejecución %1$s</string>
     <string name="hub_retry">Reintentar</string>

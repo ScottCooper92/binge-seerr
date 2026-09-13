@@ -526,8 +526,7 @@ app:server_settings_visitor_title  4713b9923dfa
 app:server_settings_youtube_url  60d148a500ae
 app:server_settings_youtube_url_hint  a5e06ab9a284
 app:settings_about  4efca0d10c5f
-app:settings_about_media  4064eae8f223
-app:settings_about_requests  79635c9e5143
+app:settings_about_caption  2711ac1f33da
 app:settings_about_version  b65bfa7f1eb0
 app:settings_agent_email  969ccbd3cf63
 app:settings_agent_webhook  4814f62c108d

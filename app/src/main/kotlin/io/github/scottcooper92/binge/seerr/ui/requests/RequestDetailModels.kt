@@ -69,10 +69,16 @@ data class EditState(
     val seasons: List<SeasonChoice>,
     val destination: DestinationChoices?,
     val saving: Boolean = false,
+    /** The show's season list failed to load, so [seasons] is empty for lack of data, not because there is none. */
+    val seasonsUnknown: Boolean = false,
 ) {
     /** A show with nothing ticked is a request for nothing, which the server refuses. */
     val canSave: Boolean
-        get() = !saving && destination?.loadingChoices != true && (seasons.isEmpty() || seasons.any { it.selected && !it.locked })
+        get() =
+            !saving &&
+                !seasonsUnknown &&
+                destination?.loadingChoices != true &&
+                (seasons.isEmpty() || seasons.any { it.selected && !it.locked })
 }
 
 /** The states the server lets a moderator mark a media record with, by the path it takes. */
