@@ -41,10 +41,10 @@ interface IssueStore {
 }
 
 class RoomIssueStore(
-    private val db: IssuesDatabase,
+    private val db: SeerrCacheDatabase,
 ) : IssueStore {
     private val issues get() = db.issueDao()
-    private val keys get() = db.remoteKeyDao()
+    private val keys get() = db.issueRemoteKeyDao()
 
     override fun pagingSource(
         listKey: String,

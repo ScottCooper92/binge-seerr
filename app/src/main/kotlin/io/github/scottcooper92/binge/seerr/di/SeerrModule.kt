@@ -19,8 +19,10 @@ import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.IssueStore
-import io.github.scottcooper92.binge.seerr.data.IssuesDatabase
 import io.github.scottcooper92.binge.seerr.data.RoomIssueStore
+import io.github.scottcooper92.binge.seerr.data.RoomUserStore
+import io.github.scottcooper92.binge.seerr.data.SeerrCacheDatabase
+import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import javax.inject.Singleton
@@ -74,15 +76,24 @@ object SeerrModule {
             },
         )
 
+    /** A cache, so a schema change rebuilds it rather than migrating it. */
     @Provides
     @Singleton
-    fun issuesDatabase(
+    fun cacheDatabase(
         @ApplicationContext context: Context,
-    ): IssuesDatabase = Room.databaseBuilder(context, IssuesDatabase::class.java, "seerr_issues.db").build()
+    ): SeerrCacheDatabase =
+        Room
+            .databaseBuilder(context, SeerrCacheDatabase::class.java, "seerr_cache.db")
+            .fallbackToDestructiveMigration(dropAllTables = true)
+            .build()
 
     @Provides
     @Singleton
-    fun issueStore(db: IssuesDatabase): IssueStore = RoomIssueStore(db)
+    fun issueStore(db: SeerrCacheDatabase): IssueStore = RoomIssueStore(db)
+
+    @Provides
+    @Singleton
+    fun userStore(db: SeerrCacheDatabase): UserStore = RoomUserStore(db)
 
     /** The caches keyed to one server are cleared when the server changes, so nothing of the last one shows. */
     @Provides
@@ -92,5 +103,10 @@ object SeerrModule {
         apis: SeerrApiFactory,
         health: SeerrConnectionHealthMonitor,
         issues: IssueStore,
-    ): SeerrConnection = SeerrConnection(store, apis, health, onServerChanged = { issues.clearAll() })
+        users: UserStore,
+    ): SeerrConnection =
+        SeerrConnection(store, apis, health, onServerChanged = {
+            issues.clearAll()
+            users.clearAll()
+        })
 }

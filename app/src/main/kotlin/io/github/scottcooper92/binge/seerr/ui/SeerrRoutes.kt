@@ -28,6 +28,10 @@ data class IssueDetailRoute(
     val issueId: Int,
 ) : SeerrRoute
 
+/** The users browser. */
+@Serializable
+data object UsersRoute : SeerrRoute
+
 /** One request as a page. */
 @Serializable
 data class RequestDetailRoute(
