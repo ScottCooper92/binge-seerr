@@ -29,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -228,16 +229,28 @@ class RequestDetailViewModelTest {
     fun `dismissing the report sheet mid-send keeps it Sending, so a re-opened send does not duplicate the POST`() =
         runTest {
             server(ADMIN)
+            // The subject is the state while the POST is open, so hold the response rather than
+            // racing OkHttp's thread to assert before it lands.
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
             val vm = viewModel()
             vm.awaitReady()
 
+            // `uiState` is `state` combined with the editor's and re-shared, so a write reaches it
+            // on the next dispatch, not on the next line. Await it: reading `.value` here passed
+            // only while Main happened to dispatch inline.
             vm.reportIssue(IssueType.Subtitles, "Missing subs")
-            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.report == IssueReport.Sending }.report)
 
+            // Dismissing mid-send must leave Sending in place; if it did not, this second send
+            // would pass the re-entrancy guard and the request count below would read 2.
             vm.dismissReport()
-            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
-
             vm.reportIssue(IssueType.Subtitles, "Missing subs again")
+            release.countDown()
+
             assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
             assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
         }
