@@ -3,12 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -22,6 +21,9 @@ private const val PAGE =
 
 class LogsViewModelTest {
     @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @get:Rule
     val folder = TemporaryFolder()
 
     private val seerr = ScriptedSeerr(folder)
@@ -29,7 +31,6 @@ class LogsViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
         seerr.viewer(id = 1, permissions = ADMIN)
         seerr.serve("GET /api/v1/settings/logs", PAGE)

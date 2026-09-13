@@ -5,12 +5,11 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -34,6 +33,9 @@ private const val OVERSEERR_CACHE =
 
 class CacheViewModelTest {
     @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @get:Rule
     val folder = TemporaryFolder()
 
     private val seerr = ScriptedSeerr(folder)
@@ -41,7 +43,6 @@ class CacheViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
     }
 

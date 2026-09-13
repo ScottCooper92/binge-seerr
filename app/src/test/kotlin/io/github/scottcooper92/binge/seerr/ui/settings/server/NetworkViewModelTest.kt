@@ -5,12 +5,11 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -33,6 +32,9 @@ private const val JELLYSEERR_NETWORK = """{"csrfProtection":true,"trustProxy":fa
 
 class NetworkViewModelTest {
     @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @get:Rule
     val folder = TemporaryFolder()
 
     private val seerr = ScriptedSeerr(folder)
@@ -40,7 +42,6 @@ class NetworkViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
     }
 

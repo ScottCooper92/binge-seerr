@@ -5,13 +5,13 @@ import androidx.paging.testing.asSnapshot
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.After
@@ -31,6 +31,9 @@ private const val PAGE = """{"pageInfo":{"pages":1,"results":1},"results":[{"id"
 
 class BlocklistViewModelTest {
     @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @get:Rule
     val folder = TemporaryFolder()
 
     private val seerr = ScriptedSeerr(folder)
@@ -38,7 +41,6 @@ class BlocklistViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
         seerr.viewer(id = 1, permissions = ADMIN)
         seerr.serve("GET /api/v1/blocklist", PAGE)

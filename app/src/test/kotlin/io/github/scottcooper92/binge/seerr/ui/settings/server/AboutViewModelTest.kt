@@ -7,11 +7,10 @@ import io.github.scottcooper92.binge.seerr.seerr.githubUrl
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.REQUEST
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,13 +23,15 @@ import org.junit.rules.TemporaryFolder
 
 class AboutViewModelTest {
     @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @get:Rule
     val folder = TemporaryFolder()
 
     private val seerr = ScriptedSeerr(folder)
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
     }
 
