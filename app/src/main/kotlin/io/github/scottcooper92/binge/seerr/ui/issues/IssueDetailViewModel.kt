@@ -17,6 +17,8 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -50,6 +52,9 @@ class IssueDetailViewModel
         val events: SharedFlow<IssueDetailEvent> = eventFlow.asSharedFlow()
 
         private var nextLocalId = 1L
+
+        /** The in-flight [send] for each outbox entry, so an edit or a drop can cancel a still-running one. */
+        private val outboxJobs = mutableMapOf<Long, Job>()
 
         init {
             reload()
@@ -93,27 +98,37 @@ class IssueDetailViewModel
                     state = SendState.Sending,
                 )
             state.value = ready.copy(draft = "", outbox = ready.outbox + entry)
-            viewModelScope.launch { send(entry.localId, message) }
+            outboxJobs[entry.localId] = viewModelScope.launch { send(entry.localId, message) }
         }
 
         fun retryOutbox(localId: Long) {
             val entry = outbox(localId) ?: return
+            outboxJobs.remove(localId)?.cancel()
             updateOutbox(localId) { it.copy(state = SendState.Sending) }
-            viewModelScope.launch { send(localId, entry.message) }
+            outboxJobs[localId] = viewModelScope.launch { send(localId, entry.message) }
         }
 
-        /** A pending comment never reached the server, so its edit is local and re-sent at once. */
+        /**
+         * A pending comment never reached the server, so its edit is local and re-sent at once. Any
+         * send still in flight for it is cancelled first, so an edit mid-send can never land alongside
+         * the text it replaced.
+         */
         fun editOutbox(
             localId: Long,
             message: String,
         ) {
             val trimmed = message.trim()
             if (trimmed.isEmpty() || outbox(localId) == null) return
+            outboxJobs.remove(localId)?.cancel()
             updateOutbox(localId) { it.copy(message = trimmed, state = SendState.Sending) }
-            viewModelScope.launch { send(localId, trimmed) }
+            outboxJobs[localId] = viewModelScope.launch { send(localId, trimmed) }
         }
 
-        fun dropOutbox(localId: Long) = updateReady { it.copy(outbox = it.outbox.filterNot { entry -> entry.localId == localId }) }
+        /** Cancels a send still in flight, so a discarded comment can never land after the fact. */
+        fun dropOutbox(localId: Long) {
+            outboxJobs.remove(localId)?.cancel()
+            updateReady { it.copy(outbox = it.outbox.filterNot { entry -> entry.localId == localId }) }
+        }
 
         fun editComment(
             commentId: Int,
@@ -126,8 +141,10 @@ class IssueDetailViewModel
             viewModelScope.launch {
                 runCatching { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                     .onSuccess {
-                        reloadAfterWrite()
-                        eventFlow.emit(IssueDetailEvent.CommentEdited)
+                        val reloadFailure = reloadAfterWrite()
+                        eventFlow.emit(
+                            reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentEdited,
+                        )
                     }.onFailure { failure ->
                         updateReady { it.copy(commentAction = CommentAction.None) }
                         eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
@@ -179,8 +196,10 @@ class IssueDetailViewModel
             viewModelScope.launch {
                 runCatching { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {
-                        reloadAfterWrite()
-                        eventFlow.emit(IssueDetailEvent.CommentDeleted)
+                        val reloadFailure = reloadAfterWrite()
+                        eventFlow.emit(
+                            reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentDeleted,
+                        )
                     }.onFailure { failure ->
                         updateReady { it.copy(commentAction = CommentAction.None) }
                         eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
@@ -188,7 +207,15 @@ class IssueDetailViewModel
             }
         }
 
-        /** The confirmed comment is the newest on the issue the post answers with; it replaces the pending row. */
+        /**
+         * The confirmed comment is resolved by diffing the post's answer against what this issue's
+         * comments look like right when this confirmation is applied, not a snapshot taken before the
+         * request went out: a sibling outbox entry that lands first is folded into `detail.comments`
+         * before this one resolves, so it's already "known" and can't be reclaimed here even when both
+         * entries sent identical text. The newest id alone can't be trusted either, because another
+         * comment on the same issue - another user's, another device's, or a second outbox entry - can
+         * arrive between this request and its response and outrank it.
+         */
         private suspend fun send(
             localId: Long,
             message: String,
@@ -196,25 +223,49 @@ class IssueDetailViewModel
             runCatching {
                 val issue = connection.api().commentOnIssue(issueId, SeerrIssueCommentBody(message))
                 val user = runCatching { connection.authenticatedUser() }.getOrNull()
-                issue.comments.maxByOrNull { it.id }?.toIssueComment(user?.id) ?: error("No comment on the answer")
-            }.onSuccess { confirmed ->
+                issue to user
+            }.onSuccess { (issue, user) ->
+                outboxJobs.remove(localId)
+                var matched = false
                 updateReady { ready ->
-                    ready.copy(
-                        detail = ready.detail.copy(comments = ready.detail.comments + confirmed.copy(isMine = true)),
-                        outbox = ready.outbox.filterNot { it.localId == localId },
-                    )
+                    val knownIds = setOfNotNull(ready.detail.report?.id) + ready.detail.comments.map { it.id }
+                    val candidates = issue.comments.filter { it.id !in knownIds && it.message == message }
+                    val confirmedDto =
+                        user?.let { u -> candidates.firstOrNull { it.user?.id == u.id } } ?: candidates.minByOrNull { it.id }
+                    val confirmed = confirmedDto?.toIssueComment(user?.id)
+                    if (confirmed == null) {
+                        ready
+                    } else {
+                        matched = true
+                        ready.copy(
+                            detail = ready.detail.copy(comments = ready.detail.comments + confirmed.copy(isMine = true)),
+                            outbox = ready.outbox.filterNot { it.localId == localId },
+                        )
+                    }
                 }
+                if (!matched) updateOutbox(localId) { it.copy(state = SendState.Failed(retryable = true)) }
             }.onFailure { failure ->
+                // A cancellation means this send was superseded by an edit or a drop, not that it failed:
+                // that entry's outbox state (or its removal) is already handled by whatever cancelled it.
+                if (failure is CancellationException) throw failure
+                outboxJobs.remove(localId)
                 val retryable = failure.toSeerrError().let { it != SeerrError.Forbidden && it != SeerrError.Unauthorized }
                 updateOutbox(localId) { it.copy(state = SendState.Failed(retryable)) }
             }
         }
 
-        private suspend fun reloadAfterWrite() {
-            val detail = runCatching { load() }.getOrNull()
+        /**
+         * Reloads after a write that already landed on the server, and reports whether the reload
+         * itself failed, so a caller never announces success on a page still showing the stale comment.
+         */
+        private suspend fun reloadAfterWrite(): Throwable? {
+            val result = runCatching { load() }
             updateReady { ready ->
-                ready.copy(detail = detail ?: ready.detail, commentAction = CommentAction.None, action = IssueAction.None)
+                result.getOrNull()
+                    ?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None, action = IssueAction.None) }
+                    ?: ready.copy(commentAction = CommentAction.None, action = IssueAction.None)
             }
+            return result.exceptionOrNull()
         }
 
         private suspend fun load(): IssueDetail =
