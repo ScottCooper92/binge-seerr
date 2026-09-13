@@ -56,6 +56,34 @@ minified build (`-PminifyDebug`, the same rules as release): it binds the export
 completes a handshake and a status call. It runs on a push to `main` that touches what could
 change its answer, weekly, and on request.
 
+## Releasing
+
+A release is a tag: `git tag v0.2.0 && git push origin v0.2.0`. `release.yml` runs the gate, builds
+the release bundle signed with the upload key it decodes from the `RELEASE_KEYSTORE_BASE64`
+secret into a file, then passes that file's path along with the `RELEASE_STORE_PASSWORD`,
+`RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD` secrets to Gradle as `RELEASE_STORE_FILE` and the
+other `RELEASE_*` environment variables, takes the version name from the tag and the version code
+from the run number, checks the bundle is release-signed and shrunk, and attaches it with the R8
+mapping to a GitHub Release. A local signed build reads the same four `RELEASE_*` values — with
+`RELEASE_STORE_FILE` pointing directly at the keystore file, since there is no decoding step
+locally — from a gitignored `keystore.properties` at the root; without them the release build
+type gets no signing config at all, so a local `assembleRelease`/`bundleRelease` still succeeds
+but produces an unsigned artifact, not a debug-signed one. The store listing, privacy policy and
+data-safety answers live under
+`docs/listing/`, reviewed like code.
+
+## Locales
+
+`values/` is British English, declared as `en-GB` in `app/src/main/res/resources.properties`, and
+Spanish ships beside it in `values-es/`. A locale is complete or it does not exist: the lint checks
+for a missing or extra translation, a missing CLDR quantity and a placeholder that drifted are
+pinned to error, so adding an English string means adding its Spanish in the same change. The one
+drift lint cannot see, a reworded English string, is caught by `checkTranslationStaleness` (part
+of `check`), which compares each translated source string against the hash committed in
+`translation-hashes.txt`; re-read the translation it names, fix it if it no longer matches, then
+re-stamp with `./gradlew updateTranslationHashes`. Debug builds also carry the `en-XA` and `ar-XB`
+pseudolocales for truncation and mirroring checks before any translation is written.
+
 ## Conventions
 
 `CLAUDE.md` holds the repository's conventions and is read from `main` by the agent

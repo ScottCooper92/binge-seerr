@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.serialization)
@@ -21,8 +23,9 @@ android {
         applicationId = "io.github.scottcooper92.binge.seerr"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // release.yml overrides both from the tag it builds; a local build keeps the placeholders.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "0.1.0"
         // The device lane's tests take the object graph from Hilt, so the runner swaps in Hilt's test
         // Application; it is the only instrumentation this app runs.
         testInstrumentationRunner = "io.github.scottcooper92.binge.seerr.SeerrHiltTestRunner"
@@ -35,8 +38,54 @@ android {
         compose = true
     }
 
+    // Generates the locale config from the values-<lang> directories present, so Android 13+ offers
+    // this app in the per-app language picker and adding a locale is one directory.
+    androidResources { generateLocaleConfig = true }
+
+    // A locale is complete or it does not exist: the alternative is not English, it is Android's
+    // per-string fallback rendering half a screen in each. Adding an English string means adding
+    // its translation in the same change.
+    lint {
+        error +=
+            setOf(
+                "MissingTranslation",
+                "ExtraTranslation",
+                "MissingQuantity",
+                "UnusedQuantity",
+                "StringFormatMatches",
+                "StringFormatCount",
+            )
+    }
+
+    // The release keystore is never in the repository: the values come from keystore.properties at
+    // the root (gitignored) for a local signed build, or from the environment in release.yml.
+    // Without them the release build type gets no signing config at all, so it still builds
+    // everywhere, but the output is an unsigned APK/bundle rather than a debug-signed one.
+    val keystoreProperties =
+        Properties().apply {
+            val file = rootDir.resolve("keystore.properties")
+            if (file.exists()) file.inputStream().use { load(it) }
+        }
+
+    fun signingValue(key: String): String? = keystoreProperties.getProperty(key) ?: System.getenv(key)
+    val releaseStoreFile = signingValue("RELEASE_STORE_FILE")
+
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = rootDir.resolve(releaseStoreFile)
+                storePassword = signingValue("RELEASE_STORE_PASSWORD")
+                keyAlias = signingValue("RELEASE_KEY_ALIAS")
+                keyPassword = signingValue("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
+            // en-XA lengthens and accents every string, ar-XB mirrors the layout: truncation and RTL
+            // bugs found with no translation written. Debug only; they must never ship.
+            isPseudoLocalesEnabled = true
             // Opt-in (`-PminifyDebug`) minified debug build: the one the device lane runs, so a keep
             // rule that goes stale fails there rather than on a user. BuildConfig.DEBUG stays true, which
             // is what lets the smoke test bind as a caller. Off by default: it would slow the dev loop.
@@ -49,6 +98,9 @@ android {
             // this app's own rules are the `keepRules` source set. Must stay identical to the
             // minifyDebug block above, or the lane stops proving what release ships.
             optimization { enable = true }
+            if (releaseStoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -82,6 +134,35 @@ android {
         }
     }
 }
+
+// A reworded English string is the one translation drift lint cannot see, so the hash of every
+// translated source string is committed at the repo root and `check` fails when one moves. Fix or
+// re-read the translation it names, then re-stamp with `updateTranslationHashes`.
+val translatedStringFiles =
+    fileTree(projectDir) {
+        include("src/*/res/values/strings.xml", "src/*/res/values-*/strings.xml")
+    }
+val translationHashes = rootProject.layout.projectDirectory.file("translation-hashes.txt")
+
+tasks.register<CheckTranslationStalenessTask>("checkTranslationStaleness") {
+    group = "verification"
+    description = "Checks that no translated source string changed without its translations being re-confirmed."
+    stringFiles.from(translatedStringFiles)
+    hashFile.set(translationHashes)
+    repoRoot.set(rootProject.layout.projectDirectory)
+    rewrite.set(false)
+}
+
+tasks.register<CheckTranslationStalenessTask>("updateTranslationHashes") {
+    group = "verification"
+    description = "Re-stamps translation-hashes.txt after the named translations have been re-read."
+    stringFiles.from(translatedStringFiles)
+    hashFile.set(translationHashes)
+    repoRoot.set(rootProject.layout.projectDirectory)
+    rewrite.set(true)
+}
+
+tasks.named("check") { dependsOn("checkTranslationStaleness") }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
