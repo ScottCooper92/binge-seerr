@@ -26,6 +26,9 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.DvrInstanceViewMod
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerViewModel
@@ -65,6 +68,25 @@ internal fun ServerSettingsPageEntry(
     onOpenSlider: (Int?) -> Unit,
 ) {
     when (page) {
+        ServerSettingsPage.Logs -> {
+            val viewModel = hiltViewModel<LogsViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val context = LocalContext.current
+            val copyLabel = stringResource(R.string.server_settings_logs)
+            LogsScreen(
+                state = state,
+                entries = viewModel.entries,
+                refreshTicks = viewModel.refreshTicks,
+                actions =
+                    LogsActions(
+                        onBack = onBack,
+                        onLevelChange = viewModel::setLevel,
+                        onSearchChange = viewModel::setSearch,
+                        onFollowingChange = viewModel::setFollowing,
+                        onCopy = { text -> context.copyToClipboard(copyLabel, text) },
+                    ),
+            )
+        }
         ServerSettingsPage.Jobs -> {
             val viewModel = hiltViewModel<JobsViewModel>()
             val state by viewModel.uiState.collectAsStateWithLifecycle()

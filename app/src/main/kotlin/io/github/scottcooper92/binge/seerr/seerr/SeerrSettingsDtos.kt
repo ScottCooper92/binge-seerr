@@ -344,3 +344,20 @@ data class SeerrDnsEntryDto(
     @SerialName("hits") val hits: Long = 0,
     @SerialName("misses") val misses: Long = 0,
 )
+
+/** One log line (`GET settings/logs`); [data] is whatever the logger attached, kept as sent. */
+@Serializable
+data class SeerrLogEntryDto(
+    @SerialName("label") val label: String? = null,
+    @SerialName("level") val level: String? = null,
+    @SerialName("message") val message: String? = null,
+    @SerialName("timestamp") val timestamp: String? = null,
+    @SerialName("data") val data: JsonElement? = null,
+)
+
+/** The logs page: `pageInfo` and `results`, as the server answers despite the spec's bare array. */
+@Serializable
+data class SeerrLogPageDto(
+    @SerialName("pageInfo") val pageInfo: SeerrPageInfoDto = SeerrPageInfoDto(),
+    @SerialName("results") val results: List<SeerrLogEntryDto> = emptyList(),
+)

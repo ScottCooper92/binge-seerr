@@ -36,6 +36,7 @@ class SettingsActions(
     val onOpenMetadata: () -> Unit,
     val onOpenJobs: () -> Unit,
     val onOpenCache: () -> Unit,
+    val onOpenLogs: () -> Unit,
     val onOpenAgent: (ServerAgent) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
@@ -91,7 +92,7 @@ private fun SettingsContent(
         config?.system?.let {
             Group(
                 stringResource(R.string.settings_group_system),
-                systemRows(it, actions.onOpenJobs, actions.onOpenCache),
+                systemRows(it, actions.onOpenJobs, actions.onOpenCache, actions.onOpenLogs),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

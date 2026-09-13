@@ -613,6 +613,15 @@
     <string name="server_settings_sliders">Discover sliders</string>
     <string name="server_settings_network">Network</string>
     <string name="server_settings_jobs">Scheduled jobs</string>
+    <string name="server_settings_logs">Logs</string>
+    <string name="server_settings_logs_caption">The server\'s own log, filtered and searched</string>
+    <string name="server_settings_logs_search">Search the log</string>
+    <string name="server_settings_logs_empty">Nothing logged at this level</string>
+    <string name="server_settings_logs_copy">Copy line</string>
+    <string name="server_settings_log_debug">Debug</string>
+    <string name="server_settings_log_info">Info</string>
+    <string name="server_settings_log_warn">Warning</string>
+    <string name="server_settings_log_error">Error</string>
     <string name="server_settings_job_run">Run now</string>
     <string name="server_settings_job_cancel">Cancel</string>
     <string name="server_settings_job_schedule">Schedule</string>
