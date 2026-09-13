@@ -154,12 +154,6 @@ internal fun TvSetupLoadingPreview() {
 
 @TvPreviewsOnBlack
 @Composable
-internal fun TvHomeConnectedPreview() {
-    TvConnectedScreen(serverUrl = "http://seerr.lan:5055", onDisconnect = {}, initiallyFocused = true)
-}
-
-@TvPreviewsOnBlack
-@Composable
 internal fun TvAdvancedRequestReadyPreview() {
     TvAdvancedRequestScreen(state = ready(), actions = NoAdvancedActions, initialFocusedLabel = "Radarr")
 }

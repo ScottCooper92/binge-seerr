@@ -16,17 +16,22 @@ import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.data.IssuesRemoteMediator
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
+import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -47,6 +52,12 @@ class IssuesViewModel
         private val selectedFilter = MutableStateFlow(IssueFilter.Open)
         private val selectedSort = MutableStateFlow(IssueSort.Added)
         private val countsRefresh = MutableStateFlow(0)
+        private val actionItem = MutableStateFlow<IssueItem?>(null)
+        private val actingState = MutableStateFlow<Set<Int>>(emptySet())
+        private val eventFlow = MutableSharedFlow<IssueListEvent>()
+
+        /** The outcome of each row action, once. */
+        val events: Flow<IssueListEvent> = eventFlow.asSharedFlow()
 
         /** Resolved once per connection: the user's permissions decide whether the list is theirs alone. */
         private val scope: Flow<IssueListScope> =
@@ -89,9 +100,67 @@ class IssuesViewModel
                 }.onStart { emit(null) }
 
         val uiState: StateFlow<IssuesUiState> =
-            combine(selectedFilter, selectedSort, counts, scope) { filter, sort, counts, scope ->
-                IssuesUiState.Ready(filter = filter, sort = sort, counts = counts, scope = scope)
+            combine(
+                combine(selectedFilter, selectedSort) { filter, sort -> filter to sort },
+                counts,
+                scope,
+                actingState,
+                actionItem,
+            ) { (filter, sort), counts, scope, acting, actionItem ->
+                IssuesUiState.Ready(
+                    filter = filter,
+                    sort = sort,
+                    counts = counts,
+                    scope = scope,
+                    actingIds = acting,
+                    actionItem = actionItem,
+                )
             }.stateIn(viewModelScope, SharingStarted.Lazily, IssuesUiState.Loading)
+
+        fun openActions(item: IssueItem) {
+            actionItem.value = item
+        }
+
+        fun dismissActions() {
+            actionItem.value = null
+        }
+
+        /** Marks an open issue resolved; the cached row moves with it, so the list agrees at once. */
+        fun resolve(item: IssueItem) =
+            act(item, IssueListEvent.Resolved) {
+                connection.api().setIssueStatus(item.id, STATUS_RESOLVED)
+                store.updateStatus(item.id, IssueStatus.Resolved.name)
+            }
+
+        fun reopen(item: IssueItem) =
+            act(item, IssueListEvent.Reopened) {
+                connection.api().setIssueStatus(item.id, STATUS_OPEN)
+                store.updateStatus(item.id, IssueStatus.Open.name)
+            }
+
+        /** Removes the report and its whole thread from the server and the cache. */
+        fun delete(item: IssueItem) =
+            act(item, IssueListEvent.Deleted) {
+                connection.api().deleteIssue(item.id)
+                store.delete(item.id)
+            }
+
+        private fun act(
+            item: IssueItem,
+            success: IssueListEvent,
+            write: suspend () -> Unit,
+        ) {
+            if (item.id in actingState.value) return
+            actingState.update { it + item.id }
+            viewModelScope.launch {
+                runCatching { write() }
+                    .onSuccess {
+                        countsRefresh.value++
+                        eventFlow.emit(success)
+                    }.onFailure { failure -> eventFlow.emit(IssueListEvent.Failed(failure.toSeerrError())) }
+                actingState.update { it - item.id }
+            }
+        }
 
         fun setFilter(filter: IssueFilter) {
             selectedFilter.value = filter

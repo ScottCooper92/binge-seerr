@@ -854,9 +854,23 @@
     <string name="tv_setup_mode_title">Sign in with</string>
     <string name="tv_setup_no_typed_modes">This server only offers sign-ins that finish on another device. Connect it from the phone app.</string>
     <string name="tv_setup_connecting">Connecting…</string>
-    <string name="tv_home_connected_headline">Connected</string>
-    <string name="tv_home_connected_body">%1$s is connected. Request titles from Binge; this app\'s own screens arrive on TV in a later release.</string>
-    <string name="tv_home_disconnect">Disconnect</string>
     <string name="tv_loading">Loading…</string>
     <string name="tv_advanced_submitting">Sending the request…</string>
+
+    <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->
+    <string name="tv_rail_hub">Home</string>
+    <string name="tv_hub_health_checking">Checking the server…</string>
+    <string name="tv_hub_stat_open_issues">Open issues</string>
+    <string name="tv_hub_reconnect">Reconnect</string>
+    <string name="tv_download_percent">%1$d%%</string>
+    <string name="tv_list_load_failed">The list could not be loaded.</string>
+    <string name="tv_list_load_more_failed">Could not load more. Press OK to retry.</string>
+    <string name="tv_list_loading_more">Loading more…</string>
+    <string name="tv_issue_resolve">Resolve issue</string>
+    <string name="tv_issue_reopen">Reopen issue</string>
+    <string name="tv_issue_deleted">Issue deleted</string>
+    <string name="tv_issue_action_failed">The issue could not be updated. Try again.</string>
+    <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
+    <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
+    <string name="tv_filter_with_count">%1$s (%2$d)</string>
 </resources>

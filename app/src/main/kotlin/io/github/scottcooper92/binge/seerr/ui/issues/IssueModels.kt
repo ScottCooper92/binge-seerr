@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
@@ -77,5 +78,22 @@ sealed interface IssuesUiState {
         val sort: IssueSort,
         val counts: IssueCounts?,
         val scope: IssueListScope,
+        /** Issues with a write in flight, dimmed in a list that offers actions on its rows. */
+        val actingIds: Set<Int> = emptySet(),
+        /** The issue whose actions sheet is open; held here so it survives rotation. */
+        val actionItem: IssueItem? = null,
     ) : IssuesUiState
+}
+
+/** One-shot feedback for an action taken on an issue from its row. */
+sealed interface IssueListEvent {
+    data object Resolved : IssueListEvent
+
+    data object Reopened : IssueListEvent
+
+    data object Deleted : IssueListEvent
+
+    data class Failed(
+        val error: SeerrError,
+    ) : IssueListEvent
 }

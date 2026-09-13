@@ -267,8 +267,8 @@ class IssueDetailViewModel
         }
     }
 
-private const val STATUS_OPEN = "open"
-private const val STATUS_RESOLVED = "resolved"
+internal const val STATUS_OPEN = "open"
+internal const val STATUS_RESOLVED = "resolved"
 
 private fun io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentDto.toIssueComment(currentUserId: Int?): IssueComment =
     IssueComment(
