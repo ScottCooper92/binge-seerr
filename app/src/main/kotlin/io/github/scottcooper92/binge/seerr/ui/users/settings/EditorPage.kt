@@ -78,6 +78,8 @@ internal fun <T> EditorPage(
                     snackbarHostState.showSnackbar(resources.getString(R.string.user_settings_saved), SnackbarMessageKind.Confirmation)
                 is EditorEvent.Failed ->
                     snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
+                is EditorEvent.Notice ->
+                    snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
             }
         }
     }

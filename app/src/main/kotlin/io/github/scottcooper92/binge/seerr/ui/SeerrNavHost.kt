@@ -41,6 +41,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.users.UserAdmissionActions
@@ -122,8 +123,19 @@ fun SeerrNavHost(
                 entry<UserSettingsPageRoute> { route ->
                     UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
                 }
+                entry<ServerSettingsPageRoute> { route ->
+                    ServerSettingsPageEntry(
+                        page = route.page,
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
+                    )
+                }
                 entry<SettingsRoute> {
-                    SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
+                    SettingsEntry(
+                        onBack = { backStack.removeLastOrNull() },
+                        onEditConnection = { backStack.add(EditConnectionRoute) },
+                        onOpenServerSettings = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.General)) },
+                    )
                 }
                 entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
                 entry<SectionRoute> { route ->
@@ -399,6 +411,7 @@ private fun UserDetailEntry(
 private fun SettingsEntry(
     onBack: () -> Unit,
     onEditConnection: () -> Unit,
+    onOpenServerSettings: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -413,6 +426,7 @@ private fun SettingsEntry(
             SettingsActions(
                 onBack = onBack,
                 onEditConnection = onEditConnection,
+                onOpenServerSettings = onOpenServerSettings,
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
