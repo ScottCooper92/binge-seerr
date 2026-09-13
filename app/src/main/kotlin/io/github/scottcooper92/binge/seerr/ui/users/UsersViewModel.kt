@@ -41,8 +41,9 @@ private data class UsersScope(
 
 /**
  * The users browser: one cached, sorted list read from the cache and refreshed through the
- * mediator, and the bulk edit, which writes one permission set to every selected user and moves
- * their cached rows with it.
+ * mediator, and the bulk edit, which re-applies the chosen toggles onto each selected user's own
+ * cached bitmask — never onto a value shared across the selection — and moves their cached rows
+ * with it.
  */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalPagingApi::class)
 @HiltViewModel
@@ -111,7 +112,7 @@ class UsersViewModel
             edit.value = BulkEdit(saving = true)
             viewModelScope.launch {
                 val selected =
-                    store.permissionsFor(ids).fold(emptySet<ManageablePermission>()) { acc, bitmask ->
+                    store.permissionsFor(ids).values.fold(emptySet<ManageablePermission>()) { acc, bitmask ->
                         acc + ManageablePermission.decode(bitmask)
                     }
                 edit.value = BulkEdit(selected = selected)
@@ -146,12 +147,15 @@ class UsersViewModel
             edit.value = current.copy(saving = true)
             viewModelScope.launch {
                 runCatching {
-                    // OR'd across the selection: a bit unmanaged by the editor survives if any selected user had it,
-                    // since one write applies the same resulting bitmask to everyone chosen.
-                    val baseline = store.permissionsFor(ids).fold(0) { acc, bitmask -> acc or bitmask }
-                    val permissions = ManageablePermission.apply(baseline, current.selected)
-                    connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = ids, permissions = permissions))
-                    store.updatePermissions(ids, permissions)
+                    // Each id's own cached bitmask is the baseline for that id alone, so an unmanaged
+                    // bit only some of the selection holds is never carried onto the rest. Ids whose
+                    // resulting bitmask agrees are still written together in one PUT.
+                    val baselines = store.permissionsFor(ids)
+                    val idsByResult = ids.groupBy { id -> ManageablePermission.apply(baselines[id] ?: 0, current.selected) }
+                    idsByResult.forEach { (permissions, groupIds) ->
+                        connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = groupIds, permissions = permissions))
+                        store.updatePermissions(groupIds, permissions)
+                    }
                 }.onSuccess {
                     edit.value = null
                     selection.value = emptySet()

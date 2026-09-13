@@ -5,6 +5,12 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 
+/** One [UserDao.permissionsFor] row: an id and one cached copy of its raw bitmask. */
+data class UserPermissionsRow(
+    val id: Int,
+    val permissions: Int,
+)
+
 @Dao
 interface UserDao {
     @Query("SELECT * FROM users WHERE listKey = :listKey ORDER BY orderIndex ASC")
@@ -20,9 +26,9 @@ interface UserDao {
         permissions: Int,
     )
 
-    /** The raw bitmask cached for each of [ids], one per cached order — duplicates for a user are harmless to an OR-fold. */
-    @Query("SELECT permissions FROM users WHERE id IN (:ids)")
-    suspend fun permissionsFor(ids: List<Int>): List<Int>
+    /** The raw bitmask cached for each of [ids], one row per cached order — duplicates for a user OR-fold harmlessly. */
+    @Query("SELECT id, permissions FROM users WHERE id IN (:ids)")
+    suspend fun permissionsFor(ids: List<Int>): List<UserPermissionsRow>
 
     @Query("DELETE FROM users WHERE id = :id")
     suspend fun delete(id: Int)

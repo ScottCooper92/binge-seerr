@@ -171,6 +171,81 @@ class UsersViewModelTest {
             assertEquals(ADMIN, cache.rows.first { it.id == 7 }.permissions)
         }
 
+    @Test
+    fun `a bulk edit across users never carries one user's unmanaged bit onto another`() =
+        runTest {
+            // Ida (10) and Jo (11) already agree on every *managed* bit the editor shows (Request,
+            // ManageIssues), so seeding the sheet from their union introduces nothing extra to
+            // propagate. Jo alone has the unmanaged 4K-movie bit. A shared, OR-folded baseline would
+            // leak that bit onto Ida's write even though Ida never had it and the editor never showed it.
+            val sharedManaged = ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit
+            seerr.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        received += request
+                        return when (request.method + " " + request.url.encodedPath) {
+                            "GET /api/v1/auth/me" -> json("""{"id":1,"displayName":"Admin","permissions":$ADMIN}""")
+                            "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
+                            "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                            "GET /api/v1/user" ->
+                                json(
+                                    """{"pageInfo":{"pages":1,"results":2},"results":[
+                                       {"id":10,"displayName":"Ida","permissions":$sharedManaged,"userType":3,"requestCount":0},
+                                       {"id":11,"displayName":"Jo","permissions":${sharedManaged or UNMANAGED_4K_MOVIE_BIT},
+                                        "userType":3,"requestCount":0}]}""",
+                                )
+                            "PUT /api/v1/user" -> json("[]")
+                            else -> MockResponse(code = 404)
+                        }
+                    }
+                }
+
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.users.asSnapshot()
+
+            vm.toggleSelected(10)
+            vm.toggleSelected(11)
+            assertEquals(setOf(10, 11), vm.awaitReady { it.selection == setOf(10, 11) }.selection)
+            vm.startBulkEdit()
+            assertEquals(
+                setOf(ManageablePermission.Request, ManageablePermission.ManageIssues),
+                vm.awaitReady { it.edit?.selected?.isNotEmpty() == true }.edit?.selected,
+            )
+
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.selected?.size == 3 }
+
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), vm.events.first())
+            val puts = received.filter { it.method == "PUT" }
+            assertEquals(2, puts.size)
+
+            val idaExpected = sharedManaged or ManageablePermission.CreateIssues.bit
+            val joExpected = idaExpected or UNMANAGED_4K_MOVIE_BIT
+
+            val idaPut =
+                puts
+                    .single { it.body?.utf8()?.contains("\"ids\":[10]") == true }
+                    .body
+                    ?.utf8()
+                    .orEmpty()
+            assertTrue(idaPut, idaPut.contains("\"permissions\":$idaExpected"))
+
+            val joPut =
+                puts
+                    .single { it.body?.utf8()?.contains("\"ids\":[11]") == true }
+                    .body
+                    ?.utf8()
+                    .orEmpty()
+            assertTrue(joPut, joPut.contains("\"permissions\":$joExpected"))
+
+            vm.awaitReady { it.edit == null }
+            assertEquals(idaExpected, cache.rows.first { it.id == 10 }.permissions)
+            assertEquals(joExpected, cache.rows.first { it.id == 11 }.permissions)
+        }
+
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {
