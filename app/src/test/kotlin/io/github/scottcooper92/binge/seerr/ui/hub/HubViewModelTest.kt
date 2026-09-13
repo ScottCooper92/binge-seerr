@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -28,6 +30,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import kotlin.time.Duration.Companion.seconds
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -217,6 +220,28 @@ class HubViewModelTest {
             vm.disconnect()
 
             assertNull(connection.credentials.first { it == null })
+        }
+
+    /** The same instance survives a disconnect + reconnect: the nav host reuses it across the swap. */
+    @Test
+    fun `reconnecting after disconnect drops the previous connection's server and overview, not just its health`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel()
+            vm.awaitReady { it.server.title == "Family" && it.overview.loaded }
+
+            vm.disconnect()
+            connection.credentials.first { it == null }
+            serve("/api/v1/settings/public", """{"applicationTitle":"Second Home","mediaServerType":2}""")
+            serve("/api/v1/request/count", """{"total":0,"movie":0,"tv":0,"pending":0,"processing":0}""")
+            connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y-2")).getOrThrow()
+
+            val ready =
+                withContext(Dispatchers.Default.limitedParallelism(1)) {
+                    withTimeout(5.seconds) { vm.awaitReady { it.server.title == "Second Home" && it.overview.loaded } }
+                }
+
+            assertEquals(0, ready.overview.movieRequestCount)
         }
 
     private object PlainCipher : SecretCipher {
