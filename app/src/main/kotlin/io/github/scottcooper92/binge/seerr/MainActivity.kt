@@ -5,12 +5,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.scottcooper92.binge.seerr.ui.DeepLinkNavigator
 import io.github.scottcooper92.binge.seerr.ui.HomeRoute
 import io.github.scottcooper92.binge.seerr.ui.SeerrNavHost
+import io.github.scottcooper92.binge.seerr.ui.tv.TvSeerrShell
+import io.github.scottcooper92.binge.seerr.ui.tv.isTelevision
 import javax.inject.Inject
 
 private const val KEY_CONSUMED_LINK = "consumed_link"
@@ -19,6 +22,7 @@ private const val KEY_CONSUMED_LINK = "consumed_link"
  * The app's own UI, one Navigation 3 host wearing Binge's theme so the two read as one product.
  * Home is the start destination, setup or the hub by whether a server is saved; the sections push
  * above it. A notification's link replaces the stack with its own, on a cold start and a warm one.
+ * A television gets its own shell under the TV theme, bound to the same ViewModels.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -38,6 +42,12 @@ class MainActivity : ComponentActivity() {
             consumedLink = link
         }
         setContent {
+            // A television gets the D-pad shell, as Binge's MainActivity selects its own at runtime; the
+            // notification links push phone routes, which the TV shell grows into with a later phase.
+            if (LocalConfiguration.current.isTelevision()) {
+                TvSeerrShell()
+                return@setContent
+            }
             val backStack = rememberNavBackStack(HomeRoute)
             LaunchedEffect(backStack) {
                 deepLinks.backStacks.collect { routes ->

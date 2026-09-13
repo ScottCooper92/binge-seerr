@@ -5,6 +5,18 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!--
+        Both required="false", as Binge declares them, so the one APK serves phones and televisions.
+        Without the touchscreen declaration Play assumes a touchscreen is required and hides the app
+        from every TV; the leanback category alone does not override that default.
+    -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
     <!-- Package visibility for the title hand-off: whether Binge answers its own binge:// link. -->
     <queries>
         <intent>
@@ -21,6 +33,7 @@
     <application
         android:name=".SeerrApp"
         android:allowBackup="false"
+        android:banner="@drawable/tv_banner"
         android:icon="@drawable/ic_companion"
         android:label="@string/companion_name"
         android:supportsRtl="true"
@@ -45,10 +58,11 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            android:theme="@style/Theme.Seerr">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -63,7 +77,7 @@
             android:name=".AdvancedRequestActivity"
             android:exported="true"
             android:label="@string/advanced_title"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            android:theme="@style/Theme.Seerr">
             <intent-filter>
                 <action android:name="com.binge.integration.ADVANCED_REQUEST" />
                 <category android:name="android.intent.category.DEFAULT" />
