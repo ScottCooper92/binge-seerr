@@ -28,6 +28,8 @@ private const val PAGE_JSON = """
         "downloadStatus": [ { "title": "Heat.1995.mkv", "size": 100.0, "sizeLeft": 25.0, "status": "downloading", "timeLeft": "00:30:00" } ] } },
     { "id": 12, "status": 1, "createdAt": "2026-06-02T10:00:00.000Z", "requestedBy": { "email": "user@example.com" },
       "seasons": [ { "seasonNumber": 1 }, { "seasonNumber": 2 } ], "media": { "tmdbId": 200, "mediaType": "tv", "status": 5 } },
+    { "id": 13, "status": 2, "is4k": true,
+      "media": { "tmdbId": 400, "mediaType": "movie", "status": 2, "status4k": 5 } },
     { "id": 14, "status": 1, "media": { "tmdbId": 300, "mediaType": "person" } }
   ]
 }
@@ -83,7 +85,7 @@ class RequestsPagingSourceTest {
 
             val result = source().page() as PagingSource.LoadResult.Page
 
-            assertEquals(listOf(11, 12), result.data.map { it.id })
+            assertEquals(listOf(11, 12, 13), result.data.map { it.id })
             val heat = result.data[0]
             assertEquals("Heat", heat.title)
             assertEquals("https://image.tmdb.org/t/p/w342/heat.jpg", heat.posterUrl)
@@ -99,6 +101,9 @@ class RequestsPagingSourceTest {
             assertEquals("user", severance.requestedBy)
             assertEquals(listOf(1, 2), severance.seasonNumbers)
             assertNull(severance.download)
+            val fourK = result.data[2]
+            assertTrue(fourK.is4k)
+            assertEquals(SeerrMediaStatusCode.Available, fourK.mediaStatus)
             assertNull(result.prevKey)
             assertEquals(1, result.nextKey)
         }

@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaBucketDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
+import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -17,7 +18,6 @@ import javax.inject.Inject
 
 private const val FILTER_PROCESSING = "processing"
 private const val ACTIVE_DOWNLOADS_PAGE = 20
-private const val MEDIA_TYPE_MOVIE = "movie"
 
 /**
  * The hub's reads over the saved connection. [load] is the once-per-connect overview: `auth/me`
@@ -124,10 +124,7 @@ class HubOverviewLoader
             if (statuses.isEmpty()) return null
             val totalSize = statuses.sumOf { it.size ?: 0.0 }
             val totalLeft = statuses.sumOf { it.sizeLeft ?: 0.0 }
-            val details =
-                runCatching {
-                    if (media.mediaType == MEDIA_TYPE_MOVIE) api.movieDetails(media.tmdbId) else api.tvDetails(media.tmdbId)
-                }.getOrNull()
+            val details = runCatching { api.details(media.mediaType, media.tmdbId) }.getOrNull()
             return HubDownload(
                 requestId = id,
                 title = details?.displayTitle ?: statuses.firstOrNull()?.title,

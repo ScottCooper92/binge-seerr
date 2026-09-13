@@ -9,13 +9,13 @@ private const val UNMANAGED_BIT = 1 shl 26
 
 class ManageablePermissionTest {
     @Test
-    fun `admin implies everything, request covers what sits beneath it, and the umbrellas chain`() {
+    fun `admin implies everything, request does not cover 4K or advanced, and the umbrellas chain`() {
         val admin = setOf(ManageablePermission.Admin)
         assertTrue(ManageablePermission.entries.all { ManageablePermission.isGranted(it, admin) })
 
         val requester = setOf(ManageablePermission.Request)
-        assertTrue(ManageablePermission.isGranted(ManageablePermission.Request4k, requester))
-        assertTrue(ManageablePermission.isGranted(ManageablePermission.AutoApprove4k, requester))
+        assertFalse(ManageablePermission.isGranted(ManageablePermission.Request4k, requester))
+        assertFalse(ManageablePermission.isGranted(ManageablePermission.AutoApprove4k, requester))
         assertFalse(ManageablePermission.isGranted(ManageablePermission.ManageRequests, requester))
 
         val manager = setOf(ManageablePermission.ManageIssues)
