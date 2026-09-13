@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
@@ -48,6 +49,19 @@ class SettingsLoader
                 updateAvailable = profile.updateAvailable || profile.commitsBehind > 0,
                 commitsBehind = profile.commitsBehind,
             )
+        }
+
+        /** The signals this viewer may turn on: the feeds follow the moderator permissions, the user's own are everyone's. */
+        suspend fun notificationSignals(): List<NotificationSignal> {
+            val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
+            val hasIssues = runCatching { connection.profile().hasIssues }.getOrDefault(false)
+            return NotificationSignal.entries.filter { signal ->
+                when (signal) {
+                    NotificationSignal.PendingRequests -> permissions.canManageRequests
+                    NotificationSignal.OpenIssues -> permissions.canManageIssues && hasIssues
+                    else -> true
+                }
+            }
         }
 
         /** Null for a user who may not manage settings; otherwise every section that answered. */

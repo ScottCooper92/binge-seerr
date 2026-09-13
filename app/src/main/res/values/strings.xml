@@ -430,6 +430,56 @@
     <string name="settings_request_limit_value">%1$d per %2$d days</string>
     <string name="settings_request_limit_movie">Movies %1$s</string>
     <string name="settings_request_limit_tv">TV %1$s</string>
+    <string name="settings_group_notify_me">Notify me</string>
+    <string name="settings_signal_pending">New requests</string>
+    <string name="settings_signal_pending_caption">Requests waiting for approval</string>
+    <string name="settings_signal_issues">New issues</string>
+    <string name="settings_signal_issues_caption">Reports from your users</string>
+    <string name="settings_signal_available">My requests are available</string>
+    <string name="settings_signal_available_caption">A title you asked for is ready to watch</string>
+    <string name="settings_signal_approved">My requests are approved</string>
+    <string name="settings_signal_approved_caption">A request of yours was approved</string>
+    <string name="settings_signal_declined">My requests are declined</string>
+    <string name="settings_signal_declined_caption">A request of yours was declined</string>
+    <string name="settings_notifications_blocked">Notifications are blocked</string>
+    <string name="settings_notifications_blocked_caption">Allow them in the system settings to be told about any of this</string>
+    <string name="settings_notifications_poll">Checked in the background</string>
+    <string name="settings_notifications_last_run">Last checked %1$s</string>
+    <string name="settings_notifications_not_yet">Not checked yet</string>
+    <string name="notif_channel_requests_name">New requests</string>
+    <string name="notif_channel_requests_description">Requests waiting for your approval</string>
+    <string name="notif_channel_issues_name">New issues</string>
+    <string name="notif_channel_issues_description">Issues reported by your users</string>
+    <string name="notif_channel_own_name">My requests</string>
+    <string name="notif_channel_own_description">Your own requests being approved, declined or becoming available</string>
+    <string name="notif_channel_connection_name">Connection</string>
+    <string name="notif_channel_connection_description">When the server needs signing in to again</string>
+    <string name="notif_connection_title">Sign in to your server again</string>
+    <string name="notif_connection_body">The server rejected the saved sign-in. Open the app to reconnect.</string>
+    <plurals name="notif_and_more">
+        <item quantity="one">%1$s and %2$d more</item>
+        <item quantity="other">%1$s and %2$d more</item>
+    </plurals>
+    <plurals name="notif_new_requests">
+        <item quantity="one">%1$d new request</item>
+        <item quantity="other">%1$d new requests</item>
+    </plurals>
+    <plurals name="notif_new_issues">
+        <item quantity="one">%1$d new issue</item>
+        <item quantity="other">%1$d new issues</item>
+    </plurals>
+    <plurals name="notif_requests_available">
+        <item quantity="one">%1$d request is available</item>
+        <item quantity="other">%1$d requests are available</item>
+    </plurals>
+    <plurals name="notif_requests_approved">
+        <item quantity="one">%1$d request approved</item>
+        <item quantity="other">%1$d requests approved</item>
+    </plurals>
+    <plurals name="notif_requests_declined">
+        <item quantity="one">%1$d request declined</item>
+        <item quantity="other">%1$d requests declined</item>
+    </plurals>
     <string name="settings_group_notifications">Notification agents</string>
     <string name="settings_agent_email">Email</string>
     <string name="settings_agent_discord" translatable="false">Discord</string>

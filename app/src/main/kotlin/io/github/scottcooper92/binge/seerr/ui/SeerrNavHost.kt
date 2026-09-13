@@ -409,6 +409,8 @@ private fun SettingsEntry(
             SettingsActions(
                 onBack = onBack,
                 onEditConnection = onEditConnection,
+                onToggleSignal = viewModel::setSignal,
+                onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
                 onDisconnect = {
                     viewModel.disconnect()

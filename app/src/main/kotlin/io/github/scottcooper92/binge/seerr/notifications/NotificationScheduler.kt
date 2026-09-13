@@ -5,7 +5,10 @@ import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 
 /** WorkManager's floor for periodic work; Doze stretches it further. */
@@ -17,6 +20,9 @@ interface NotificationScheduler {
     fun schedule()
 
     fun cancel()
+
+    /** When the next run is due, or null while nothing is scheduled. */
+    fun nextRunMillis(): Flow<Long?>
 }
 
 /** The poll as unique periodic work, kept across restarts and updated in place when re-scheduled. */
@@ -34,4 +40,10 @@ class WorkManagerNotificationScheduler(
     override fun cancel() {
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
     }
+
+    override fun nextRunMillis(): Flow<Long?> =
+        WorkManager
+            .getInstance(context)
+            .getWorkInfosForUniqueWorkFlow(WORK_NAME)
+            .map { infos -> infos.firstOrNull { it.state == WorkInfo.State.ENQUEUED }?.nextScheduleTimeMillis }
 }
