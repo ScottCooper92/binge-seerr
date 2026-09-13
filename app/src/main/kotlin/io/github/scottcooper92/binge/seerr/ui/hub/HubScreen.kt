@@ -36,6 +36,8 @@ class HubActions(
     val onOpenSection: (HubSection) -> Unit,
     val onOpenAccount: (userId: Int) -> Unit,
     val onRetry: () -> Unit,
+    /** The sign-in form on the saved server, for a session it rejected. */
+    val onReconnect: () -> Unit,
     val onDisconnect: () -> Unit,
 )
 
@@ -53,7 +55,7 @@ fun HubScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 ready == null -> LoadingScreen()
-                ready.health.isProblem() -> ConnectionProblem(ready.health, actions.onRetry, actions.onDisconnect)
+                ready.health.isProblem() -> ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect)
                 else -> Dashboard(ready, actions)
             }
         }
@@ -113,6 +115,7 @@ private fun Dashboard(
 private fun ConnectionProblem(
     health: ConnectionHealth,
     onRetry: () -> Unit,
+    onReconnect: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
     val retryable = health != ConnectionHealth.Unauthorized
@@ -146,6 +149,12 @@ private fun ConnectionProblem(
             ) {
                 if (retryable) {
                     BingeFilledButton(label = stringResource(R.string.hub_retry), onClick = onRetry, modifier = Modifier.fillMaxWidth())
+                } else {
+                    BingeFilledButton(
+                        label = stringResource(R.string.hub_sign_in_again),
+                        onClick = onReconnect,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
                 DisconnectButton(onDisconnect)
                 Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

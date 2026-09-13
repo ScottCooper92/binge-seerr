@@ -120,6 +120,7 @@
     <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
     <string name="request_state_queued">Queued</string>
     <string name="media_type_movie">Movie</string>
+    <string name="request_open_title">Open the title</string>
     <string name="request_open_web">Open on the server</string>
     <string name="request_open_media_server">Open in media server</string>
     <string name="request_requested_by">Requested by</string>
@@ -497,7 +498,8 @@
     <string name="hub_unreachable_headline">Can\'t reach your server</string>
     <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and retry.</string>
     <string name="hub_unauthorized_headline">Reconnect needed</string>
-    <string name="hub_unauthorized_body">The server rejected the saved sign-in. Disconnect and sign in again.</string>
+    <string name="hub_unauthorized_body">The server rejected the saved sign-in. Sign in again to carry on.</string>
+    <string name="hub_sign_in_again">Sign in again</string>
     <string name="hub_couldnt_load_headline">Still connecting…</string>
     <string name="hub_couldnt_load_body">The server answered but the dashboard could not load yet. This can happen on first launch while the connection settles. Retrying automatically.</string>
 
