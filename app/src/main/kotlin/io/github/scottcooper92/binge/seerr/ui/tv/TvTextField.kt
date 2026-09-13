@@ -53,7 +53,7 @@ import com.binge.designsystem.R as DesR
  *
  * [initiallyFocused] seeds the ring for a preview and production passes false: a static frame runs no focus
  * search, so a focused frame is only renderable if focus is a parameter. [arrival] makes this the field
- * the page lands on.
+ * the page lands on. [autoCorrect] is off for a value the keyboard must not rewrite, such as a username.
  */
 @Composable
 internal fun TvTextField(
@@ -64,6 +64,7 @@ internal fun TvTextField(
     enabled: Boolean = true,
     secret: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
+    autoCorrect: Boolean = true,
     initiallyFocused: Boolean = false,
     arrival: TvArrivalFocus? = null,
 ) {
@@ -87,7 +88,7 @@ internal fun TvTextField(
             textStyle = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, autoCorrectEnabled = autoCorrect, imeAction = ImeAction.Done),
             modifier =
                 Modifier
                     .fillMaxWidth()
