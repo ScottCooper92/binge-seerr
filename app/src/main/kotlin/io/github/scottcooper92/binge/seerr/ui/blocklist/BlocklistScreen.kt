@@ -30,7 +30,7 @@ import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.openInBrowser
+import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -47,7 +47,7 @@ class BlocklistActions(
 
 /**
  * The blocklist browser: a search over the server's blocked titles, the source chips where the
- * server has them, and the paged rows. A title opens on the server; a manager unblocks from the
+ * server has them, and the paged rows. A title opens in Binge, or on the server; a manager unblocks from the
  * row, behind a confirm. A removal refreshes the pager in place, so the list keeps its position.
  */
 @Composable
@@ -131,7 +131,7 @@ private fun BlocklistContent(
             isFiltered = state.isFiltered,
             actingTmdbIds = state.actingTmdbIds,
             canManage = state.canManage,
-            onOpen = { item -> context.openInBrowser(state.webRoot + item.mediaType.webPath() + item.tmdbId) },
+            onOpen = { item -> context.openTitle(item.mediaType, item.tmdbId, state.webRoot + item.mediaType.webPath() + item.tmdbId) },
             onRemove = { item -> removing = item.tmdbId },
             // A rejected session cannot be retried past: the hub owns reconnecting.
             onReconnect = actions.onBack,
