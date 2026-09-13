@@ -152,7 +152,18 @@ class SettingsViewModelTest {
             assertEquals("2.7.0", ready.server.versionLabel)
             assertEquals(3, ready.server.commitsBehind)
             val config = checkNotNull(ready.config)
-            assertEquals(GeneralSettings("Family", "https://seerr.example.com", "en", true, discoverSliders = true), config.general)
+            assertEquals(
+                GeneralSettings(
+                    "Family",
+                    "https://seerr.example.com",
+                    "en",
+                    true,
+                    discoverSliders = true,
+                    network = true,
+                    metadata = false,
+                ),
+                config.general,
+            )
             assertEquals(RequestPolicy(SeerrDefaultAccess.RequestWithApproval, RequestLimit(5, 7), null), config.requestPolicy)
             assertEquals(NotificationAgents(emailEnabled = true, discordEnabled = false), config.agents)
             val system = checkNotNull(config.system)

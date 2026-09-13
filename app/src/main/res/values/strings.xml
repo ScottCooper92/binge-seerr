@@ -611,6 +611,27 @@
     <string name="settings_agent_webhook">Webhook</string>
     <string name="server_settings_agents_manage">Manage agents</string>
     <string name="server_settings_sliders">Discover sliders</string>
+    <string name="server_settings_network">Network</string>
+    <string name="server_settings_network_caption">Proxy headers, CSRF, the outbound proxy and the DNS cache</string>
+    <string name="server_settings_force_ipv4">Prefer IPv4</string>
+    <string name="server_settings_proxy">Outbound proxy</string>
+    <string name="server_settings_proxy_enabled">Use a proxy</string>
+    <string name="server_settings_proxy_bypass">Bypass for</string>
+    <string name="server_settings_proxy_bypass_hint">Hosts the proxy is not used for, separated by commas</string>
+    <string name="server_settings_proxy_bypass_local">Bypass for local addresses</string>
+    <string name="server_settings_dns_cache">DNS cache</string>
+    <string name="server_settings_dns_cache_enabled">Cache DNS lookups</string>
+    <string name="server_settings_dns_min_ttl">Minimum TTL</string>
+    <string name="server_settings_dns_max_ttl">Maximum TTL</string>
+    <string name="server_settings_dns_ttl_hint">Seconds; blank to keep the answer\'s own</string>
+    <string name="server_settings_metadata">Metadata providers</string>
+    <string name="server_settings_metadata_caption">Where series and anime details come from</string>
+    <string name="server_settings_metadata_tv">Series</string>
+    <string name="server_settings_metadata_anime">Anime</string>
+    <string name="server_settings_metadata_tmdb" translatable="false">TMDB</string>
+    <string name="server_settings_metadata_tvdb" translatable="false">TVDB</string>
+    <string name="server_settings_metadata_test">Test the providers</string>
+    <string name="server_settings_metadata_tested">Providers reached</string>
     <string name="server_settings_sliders_caption">The rows of the web client\'s Discover page, and their order</string>
     <string name="server_settings_slider_add">Add a slider</string>
     <string name="server_settings_slider_edit">Edit slider</string>

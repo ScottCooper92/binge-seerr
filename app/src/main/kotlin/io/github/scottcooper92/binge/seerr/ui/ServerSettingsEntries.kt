@@ -23,6 +23,10 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.DvrInstanceViewMod
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.MetadataScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.MetadataViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.NetworkScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.NetworkViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.NotificationAgentScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.NotificationAgentViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.NotificationAgentsScreen
@@ -55,6 +59,23 @@ internal fun ServerSettingsPageEntry(
     onOpenSlider: (Int?) -> Unit,
 ) {
     when (page) {
+        ServerSettingsPage.Network -> {
+            val viewModel = hiltViewModel<NetworkViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            NetworkScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
+        }
+        ServerSettingsPage.Metadata -> {
+            val viewModel = hiltViewModel<MetadataViewModel>()
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val extras by viewModel.extras.collectAsStateWithLifecycle()
+            MetadataScreen(
+                state = state,
+                extras = extras,
+                events = viewModel.events,
+                actions = viewModel.editorActions(onBack),
+                onTest = viewModel::test,
+            )
+        }
         ServerSettingsPage.DiscoverSliders -> {
             val viewModel = hiltViewModel<DiscoverSlidersViewModel>()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
