@@ -36,6 +36,7 @@ activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 browser = "1.9.0"
 paging = "3.5.1"
+room = "2.8.4"
 # The version binge-design-system pins: its components load their artwork with it, and a consumer
 # that includes that build has to agree with it or resolution silently picks one of the two.
 coil = "3.6.1"
@@ -74,6 +75,9 @@ androidx-browser = { module = "androidx.browser:browser", version.ref = "browser
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 paging-testing = { module = "androidx.paging:paging-testing", version.ref = "paging" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
@@ -86,3 +90,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+room = { id = "androidx.room", version.ref = "room" }

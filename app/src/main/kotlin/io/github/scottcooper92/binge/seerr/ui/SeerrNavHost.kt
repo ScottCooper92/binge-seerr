@@ -5,6 +5,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,6 +20,10 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.issues.IssuesActions
+import io.github.scottcooper92.binge.seerr.ui.issues.IssuesScreen
+import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
+import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.EditRequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.requests.ManageMediaActions
@@ -62,6 +67,7 @@ fun SeerrNavHost(
                             backStack.add(
                                 when (section) {
                                     HubSection.Requests -> RequestsRoute
+                                    HubSection.Issues -> IssuesRoute
                                     HubSection.Settings -> SettingsRoute
                                     else -> SectionRoute(section)
                                 },
@@ -73,6 +79,7 @@ fun SeerrNavHost(
                     RequestsEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(RequestDetailRoute(id)) })
                 }
                 entry<RequestDetailRoute> { route -> RequestDetailEntry(route.requestId, onBack = { backStack.removeLastOrNull() }) }
+                entry<IssuesRoute> { IssuesEntry(onBack = { backStack.removeLastOrNull() }) }
                 entry<SettingsRoute> {
                     SettingsEntry(onBack = { backStack.removeLastOrNull() }, onEditConnection = { backStack.add(EditConnectionRoute) })
                 }
@@ -193,6 +200,32 @@ private fun RequestsEntry(
                 onRetry = viewModel.moderation::retry,
                 onDecline = viewModel.moderation::decline,
                 onRemove = viewModel.moderation::remove,
+            ),
+    )
+}
+
+/** Until the issue page lands, a row opens the issue in the server's web client. */
+@Composable
+private fun IssuesEntry(
+    onBack: () -> Unit,
+    viewModel: IssuesViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    // The chip counts refetch on arrival, so a resolve elsewhere shows without a poll.
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
+    IssuesScreen(
+        state = state,
+        issuesFor = viewModel::issues,
+        actions =
+            IssuesActions(
+                onBack = onBack,
+                onFilterChange = viewModel::setFilter,
+                onSortChange = viewModel::setSort,
+                onOpen = { item -> (state as? IssuesUiState.Ready)?.scope?.webUrl(item)?.let(context::openInBrowser) },
             ),
     )
 }

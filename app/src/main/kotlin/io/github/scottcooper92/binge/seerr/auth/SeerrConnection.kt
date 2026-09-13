@@ -75,6 +75,8 @@ class SeerrConnection(
     private val apis: SeerrApiFactory,
     private val healthMonitor: SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor(),
     private val quickConnectPollInterval: Duration = 2.seconds,
+    /** Runs after the saved server changes or is forgotten, for the caches keyed to one server. */
+    private val onServerChanged: suspend () -> Unit = {},
 ) {
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
 
@@ -232,6 +234,7 @@ class SeerrConnection(
         store.clear()
         apis.evict()
         healthMonitor.reset()
+        onServerChanged()
     }
 
     private suspend fun SeerrApi.checkQuickConnectApproved(secret: String): Boolean =
@@ -272,6 +275,7 @@ class SeerrConnection(
             cachedProfile = credentials to profile
         }
         healthMonitor.onConnected()
+        onServerChanged()
         return credentials
     }
 }

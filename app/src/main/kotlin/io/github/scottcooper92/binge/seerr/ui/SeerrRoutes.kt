@@ -18,6 +18,10 @@ data object HomeRoute : SeerrRoute
 @Serializable
 data object RequestsRoute : SeerrRoute
 
+/** The issues browser. */
+@Serializable
+data object IssuesRoute : SeerrRoute
+
 /** One request as a page. */
 @Serializable
 data class RequestDetailRoute(
