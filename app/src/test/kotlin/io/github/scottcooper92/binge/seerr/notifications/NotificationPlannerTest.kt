@@ -86,10 +86,14 @@ class NotificationPlannerTest {
             PollReactor(notifier, scheduler, prefs).react(CheckResult.AuthFailure)
             awaitLastCall("cancel")
             assertTrue(prefs.pausedForAuthFailure.first())
+            assertEquals(1, notifier.connectionProblems)
+            // The reactor's own notice must survive the re-plan the pause itself triggers.
+            val cancelsWhilePaused = notifier.connectionProblemCancels
 
             // The same key that was just rejected: a structural comparison of the credentials sees no change.
             connection.connect(seerr.server.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
             awaitLastCall("schedule")
             assertFalse(prefs.pausedForAuthFailure.first())
+            assertEquals(cancelsWhilePaused, notifier.connectionProblemCancels - 1)
         }
 }
