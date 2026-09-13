@@ -78,7 +78,8 @@ class RequestEditor(
             } else {
                 null
             }
-        edit.value = EditState(seasons = source.seasonChoices(), destination = destination)
+        val seasonsUnknown = request.media.mediaType == MEDIA_TYPE_TV && source.details == null
+        edit.value = EditState(seasons = source.seasonChoices(), destination = destination, seasonsUnknown = seasonsUnknown)
         if (destination != null) scope.launch { loadServers(request) }
     }
 
@@ -167,9 +168,7 @@ class RequestEditor(
         SeerrEditRequestBody(
             mediaType = request.media.mediaType,
             seasons =
-                if (request.media.mediaType ==
-                    MEDIA_TYPE_TV
-                ) {
+                if (request.media.mediaType == MEDIA_TYPE_TV && !seasonsUnknown) {
                     seasons.filter { it.selected && !it.locked }.map { it.number }
                 } else {
                     null
@@ -210,17 +209,22 @@ private fun EditSource.seasonChoices(): List<SeasonChoice> {
                 name = season.name,
                 episodeCount = season.episodeCount,
                 selected = season.seasonNumber in requested,
-                heldStatus = details.heldStatus(season.seasonNumber, request.id),
+                heldStatus = details.heldStatus(season.seasonNumber, request.id, request.is4k),
             )
         }
 }
 
+/** A request that is neither declined nor failed still occupies the season it covers. */
+private fun SeerrRequestStatusCode?.isLive(): Boolean = this != SeerrRequestStatusCode.Declined && this != SeerrRequestStatusCode.Failed
+
 private fun SeerrMediaDetailsDto.heldStatus(
     seasonNumber: Int,
     requestId: Int,
+    is4k: Boolean,
 ): SeerrMediaStatusCode? {
     val info = mediaInfo ?: return null
-    val status = info.seasons.firstOrNull { it.seasonNumber == seasonNumber }?.status
+    val season = info.seasons.firstOrNull { it.seasonNumber == seasonNumber }
+    val status = if (is4k) season?.status4k else season?.status
     if (status == SeerrMediaStatusCode.Processing ||
         status == SeerrMediaStatusCode.PartiallyAvailable ||
         status == SeerrMediaStatusCode.Available
@@ -230,7 +234,8 @@ private fun SeerrMediaDetailsDto.heldStatus(
     val elsewhere =
         info.requests.any { other ->
             other.id != requestId &&
-                other.status != SeerrRequestStatusCode.Declined &&
+                other.is4k == is4k &&
+                other.status.isLive() &&
                 other.seasons.any { it.seasonNumber == seasonNumber }
         }
     return if (elsewhere) SeerrMediaStatusCode.Pending else null

@@ -74,7 +74,7 @@ private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
 }
 
 /** Email is a last resort and masked to its local part, so a raw address never reaches the host. */
-private fun SeerrRequestUserDto.displayString(): String? =
+internal fun SeerrRequestUserDto.displayString(): String? =
     listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() }
         ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
 
@@ -87,25 +87,29 @@ fun List<SeerrDownloadStatusDto>.toDownloadProgress(nowMillis: Long): DownloadPr
     if (isEmpty()) return null
     val totalSize = sumOf { it.size ?: 0.0 }
     val totalLeft = sumOf { it.sizeLeft ?: 0.0 }
-    val fraction = if (totalSize > 0.0) ((totalSize - totalLeft) / totalSize).toFloat().coerceIn(0f, 1f) else 0f
+    val fraction = downloadFraction(totalSize, totalLeft)
     val builder =
         DownloadProgress
             .newBuilder()
             .setFraction(fraction)
-            .setState(downloadState(fraction))
+            .setState(if (isDownloading(fraction)) DownloadState.DOWNLOAD_STATE_DOWNLOADING else DownloadState.DOWNLOAD_STATE_QUEUED)
             .setTotalBytes(totalSize.toLong().coerceAtLeast(0))
     firstOrNull()?.title?.let(builder::setLabel)
     etaMinutes(nowMillis)?.let(builder::setEtaMinutes)
     return builder.build()
 }
 
+internal fun List<SeerrDownloadStatusDto>.downloadFraction(
+    totalSize: Double = sumOf { it.size ?: 0.0 },
+    totalLeft: Double = sumOf { it.sizeLeft ?: 0.0 },
+): Float = if (totalSize > 0.0) ((totalSize - totalLeft) / totalSize).toFloat().coerceIn(0f, 1f) else 0f
+
 /** Downloading when any item is transferring, otherwise queued; older servers with no status fall back to progress. */
-private fun List<SeerrDownloadStatusDto>.downloadState(fraction: Float): DownloadState =
+internal fun List<SeerrDownloadStatusDto>.isDownloading(fraction: Float): Boolean =
     when {
-        any { it.status?.equals(STATUS_DOWNLOADING, ignoreCase = true) == true } -> DownloadState.DOWNLOAD_STATE_DOWNLOADING
-        any { it.status != null } -> DownloadState.DOWNLOAD_STATE_QUEUED
-        fraction > 0f -> DownloadState.DOWNLOAD_STATE_DOWNLOADING
-        else -> DownloadState.DOWNLOAD_STATE_QUEUED
+        any { it.status?.equals(STATUS_DOWNLOADING, ignoreCase = true) == true } -> true
+        any { it.status != null } -> false
+        else -> fraction > 0f
     }
 
 /** The slowest active download's remaining whole minutes, or null when nothing reports one. */
@@ -119,7 +123,7 @@ private fun SeerrDownloadStatusDto.remainingMillis(nowMillis: Long): Long? =
     estimatedCompletionTime?.toEpochMillisOrNull()?.let { it - nowMillis }
         ?: timeLeft?.parseTimeLeftMillis()
 
-private fun String.toEpochMillisOrNull(): Long? =
+internal fun String.toEpochMillisOrNull(): Long? =
     runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
         ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()
 

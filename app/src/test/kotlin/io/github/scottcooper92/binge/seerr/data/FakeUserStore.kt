@@ -41,6 +41,12 @@ class FakeUserStore : UserStore {
         permissions: Int,
     ) = write(rows.map { if (it.id in ids) it.copy(permissions = permissions) else it })
 
+    override suspend fun permissionsFor(ids: List<Int>): Map<Int, Int> =
+        rows
+            .filter { it.id in ids }
+            .groupBy({ it.id }, { it.permissions })
+            .mapValues { (_, bitmasks) -> bitmasks.fold(0) { acc, bitmask -> acc or bitmask } }
+
     override suspend fun delete(userId: Int) = write(rows.filterNot { it.id == userId })
 
     override suspend fun clearAll() {

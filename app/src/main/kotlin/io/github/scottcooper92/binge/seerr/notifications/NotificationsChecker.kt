@@ -85,40 +85,46 @@ class NotificationsChecker
             val on = signals.filter { prefs.isEnabled(it) }
             if (on.isEmpty()) return CheckResult.Ok
             val requests = attempt { feeds.ownRequests() }.getOrElse { return it.toResult() }
-            on.forEach { signal ->
-                checkTransition(signal, requests.filter { it.isIn(signal) }) { items ->
-                    when (signal) {
-                        NotificationSignal.RequestAvailable -> notifier.notifyRequestsAvailable(items)
-                        NotificationSignal.RequestApproved -> notifier.notifyRequestsApproved(items)
-                        else -> notifier.notifyRequestsDeclined(items)
-                    }
-                }
+            return on.fold(CheckResult.Ok) { acc, signal ->
+                worstOf(
+                    acc,
+                    checkTransition(signal, requests.filter { it.isIn(signal) }) { items ->
+                        when (signal) {
+                            NotificationSignal.RequestAvailable -> notifier.notifyRequestsAvailable(items)
+                            NotificationSignal.RequestApproved -> notifier.notifyRequestsApproved(items)
+                            else -> notifier.notifyRequestsDeclined(items)
+                        }
+                    },
+                )
             }
-            return CheckResult.Ok
         }
 
         /**
          * Announces the requests in the state whose id is not in the saved set, then saves the
          * current set. Saving the current set prunes itself: a request that leaves the state drops
          * out, so re-entering it is announced again. A null set is a seed run and announces nothing.
+         * A failed title lookup is a [CheckResult.TransientFailure], like a failed feed fetch: the
+         * set is left unsaved so the next run retries the same ids rather than this one counting as
+         * a clean poll.
          */
         private suspend fun checkTransition(
             signal: NotificationSignal,
             current: List<SeerrRequestDto>,
             notify: suspend (List<RequestItem>) -> Unit,
-        ) {
+        ): CheckResult {
             val currentIds = current.mapTo(mutableSetOf()) { it.id }
             val seen = prefs.notifiedIds(signal)
             if (seen == null) {
                 prefs.setNotifiedIds(signal, currentIds)
-                return
+                return CheckResult.Ok
             }
             val fresh = current.filter { it.id !in seen }
             if (fresh.isNotEmpty()) {
-                val titled = attempt { feeds.titled(fresh) }.getOrElse { return }
+                val titled = attempt { feeds.titled(fresh) }.getOrElse { return it.toResult() }
                 if (titled.isNotEmpty()) notify(titled)
             }
             prefs.setNotifiedIds(signal, currentIds)
+            return CheckResult.Ok
         }
     }
 
