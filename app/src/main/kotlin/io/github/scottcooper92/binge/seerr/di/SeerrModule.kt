@@ -23,8 +23,8 @@ import io.github.scottcooper92.binge.seerr.data.RoomIssueStore
 import io.github.scottcooper92.binge.seerr.data.RoomUserStore
 import io.github.scottcooper92.binge.seerr.data.SeerrCacheDatabase
 import io.github.scottcooper92.binge.seerr.data.UserStore
+import io.github.scottcooper92.binge.seerr.notifications.AndroidNotifier
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
-import io.github.scottcooper92.binge.seerr.notifications.LogNotifier
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
@@ -140,8 +140,9 @@ object SeerrModule {
         @ApplicationContext context: Context,
     ): NotificationScheduler = WorkManagerNotificationScheduler(context)
 
-    /** What the poll finds is logged until the notifier lands: the channels and the deep links are Phase 5.2. */
     @Provides
     @Singleton
-    fun notifier(): SeerrNotifier = LogNotifier()
+    fun notifier(
+        @ApplicationContext context: Context,
+    ): SeerrNotifier = AndroidNotifier(context)
 }

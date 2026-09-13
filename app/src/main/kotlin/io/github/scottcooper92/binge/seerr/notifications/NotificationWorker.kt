@@ -24,10 +24,13 @@ class NotificationWorker
         @Assisted params: WorkerParameters,
         private val checker: NotificationsChecker,
         private val reactor: PollReactor,
+        private val prefs: NotificationPrefs,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result =
             try {
-                when (reactor.react(checker.check())) {
+                val result = checker.check()
+                prefs.setLastRun(System.currentTimeMillis())
+                when (reactor.react(result)) {
                     PollOutcome.Succeed -> Result.success()
                     PollOutcome.Retry -> Result.retry()
                 }

@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings
 
+import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 
@@ -82,6 +83,18 @@ data class ServerConfig(
     val services: List<ServerService>? = null,
 )
 
+/**
+ * The poll's settings: the signals this viewer may turn on, which are on, whether the system would
+ * show anything, and when the poll ran and runs next.
+ */
+data class NotificationSettings(
+    val offered: List<NotificationSignal>,
+    val enabled: Set<NotificationSignal>,
+    val blocked: Boolean,
+    val lastRunMillis: Long?,
+    val nextRunMillis: Long?,
+)
+
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState
 
@@ -90,5 +103,6 @@ sealed interface SettingsUiState {
         val server: ServerSummary,
         /** Null for a user who may not read the server's settings, or until they load. */
         val config: ServerConfig?,
+        val notifications: NotificationSettings? = null,
     ) : SettingsUiState
 }

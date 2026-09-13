@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -33,6 +34,8 @@ enum class NotificationSignal(
 
     val isFeed: Boolean get() = this == PendingRequests || this == OpenIssues
 }
+
+private val LAST_RUN = longPreferencesKey("last_run_millis")
 
 /**
  * The poll's own DataStore: a toggle per signal, and each signal's deduplication state. A null
@@ -89,6 +92,13 @@ class NotificationPrefs(
         ids: Set<Int>,
     ) {
         dataStore.edit { it[signal.notifiedKey()] = ids.mapTo(mutableSetOf()) { id -> id.toString() } }
+    }
+
+    /** When the poll last finished, for the settings row; null before its first run. */
+    val lastRunMillis: Flow<Long?> = dataStore.data.map { it[LAST_RUN] }.distinctUntilChanged()
+
+    suspend fun setLastRun(millis: Long) {
+        dataStore.edit { it[LAST_RUN] = millis }
     }
 
     /**

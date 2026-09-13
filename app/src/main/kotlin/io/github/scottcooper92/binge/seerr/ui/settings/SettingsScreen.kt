@@ -17,6 +17,7 @@ import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
@@ -24,6 +25,8 @@ import com.binge.designsystem.R as DesR
 class SettingsActions(
     val onBack: () -> Unit,
     val onEditConnection: () -> Unit,
+    val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
+    val onNotificationAccessChanged: () -> Unit,
     val onDisconnect: () -> Unit,
 )
 
@@ -57,6 +60,7 @@ private fun SettingsContent(
         config?.general?.let { Group(stringResource(R.string.settings_group_general), generalRows(it)) }
         config?.services?.takeIf { it.isNotEmpty() }?.let { Group(stringResource(R.string.settings_group_services), serviceRows(it)) }
         config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
+        state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
         config?.agents?.let { Group(stringResource(R.string.settings_group_notifications), agentRows(it)) }
         config?.system?.let { Group(stringResource(R.string.settings_group_system), systemRows(it)) }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
