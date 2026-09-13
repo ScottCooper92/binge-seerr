@@ -41,9 +41,10 @@ fun OverrideRuleScreen(
         actions = actions,
         canSave = { it.valid },
     ) { draft, enabled ->
+        val instanceSeparator = stringResource(R.string.hub_meta_separator)
         ChoicePicker(
             title = stringResource(R.string.advanced_server),
-            choices = extras.instances.map { it to "${it.type.name} · ${it.name}" },
+            choices = extras.instances.map { it to "${it.type.name}$instanceSeparator${it.name}" },
             selected = extras.instances.firstOrNull { it.type == draft.serviceType && it.id == draft.serviceId },
             onSelect = ruleActions.onSelectInstance,
         )

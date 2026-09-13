@@ -6,6 +6,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
@@ -19,7 +20,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val USERS_PAGE = 100
+/** Matches `UserAdmission`'s `ALL_USERS_TAKE`: the "requested by" picker needs every user, not one page of them. */
+private const val USERS_PAGE = 1000
 
 /**
  * One override rule, new ([id] null) or existing: an instance, the conditions a request must
@@ -38,6 +40,10 @@ class OverrideRuleViewModel
 
         private val deletedState = MutableStateFlow(false)
         val deleted: StateFlow<Boolean> = deletedState.asStateFlow()
+
+        /** Filled by [load] so [loadChoices] can reuse the same fetch instead of re-fetching per instance pick. */
+        private var radarrRecords: List<SeerrServiceSettingsDto> = emptyList()
+        private var sonarrRecords: List<SeerrServiceSettingsDto> = emptyList()
 
         init {
             reload()
@@ -58,9 +64,11 @@ class OverrideRuleViewModel
                         api.overrideRules().firstOrNull { it.id == id }?.toForm()
                             ?: throw NoSuchElementException("rule $id")
                     }
+                radarrRecords = radarr.await()
+                sonarrRecords = sonarr.await()
                 val instances =
-                    radarr.await().mapNotNull { it.toSummary(ServiceType.Radarr) } +
-                        sonarr.await().mapNotNull { it.toSummary(ServiceType.Sonarr) }
+                    radarrRecords.mapNotNull { it.toSummary(ServiceType.Radarr) } +
+                        sonarrRecords.mapNotNull { it.toSummary(ServiceType.Sonarr) }
                 extrasState.update {
                     it.copy(
                         instances = instances,
@@ -85,12 +93,12 @@ class OverrideRuleViewModel
             viewModelScope.launch { loadChoices(instance.type, instance.id) }
         }
 
-        fun toggleUser(userId: Int) = edit { it.copy(userIds = if (userId in it.userIds) it.userIds - userId else it.userIds + userId) }
+        fun toggleUser(userId: Int) = edit { it.copy(userIds = it.userIds.toggled(userId)) }
 
-        fun toggleTag(tagId: Int) = edit { it.copy(tagIds = if (tagId in it.tagIds) it.tagIds - tagId else it.tagIds + tagId) }
+        fun toggleTag(tagId: Int) = edit { it.copy(tagIds = it.tagIds.toggled(tagId)) }
 
         fun delete() {
-            val existing = id ?: return
+            val existing = ready()?.draft?.id ?: return
             viewModelScope.launch {
                 runCatching { connection.api().deleteOverrideRule(existing) }
                     .onSuccess { deletedState.value = true }
@@ -104,12 +112,11 @@ class OverrideRuleViewModel
             serviceId: Int,
         ) {
             extrasState.update { it.copy(choices = null, loadingChoices = true) }
-            val api = connection.api()
+            val records = if (type == ServiceType.Radarr) radarrRecords else sonarrRecords
             val choices =
                 runCatching {
-                    val record =
-                        api.instances(type).firstOrNull { it.id == serviceId } ?: throw NoSuchElementException("instance $serviceId")
-                    api.testDvr(type.apiSegment, record.toForm(type).toTestBody()).toChoices()
+                    val record = records.firstOrNull { it.id == serviceId } ?: throw NoSuchElementException("instance $serviceId")
+                    connection.api().testDvr(type.apiSegment, record.toForm(type).toTestBody()).toChoices()
                 }.getOrNull()
             extrasState.update { it.copy(choices = choices, loadingChoices = false) }
         }

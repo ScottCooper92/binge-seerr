@@ -10,14 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,8 +26,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeLoadingIndicator
@@ -37,6 +33,8 @@ import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeTextButton
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
+import io.github.scottcooper92.binge.seerr.ui.users.settings.PasswordSettings
 import com.binge.designsystem.R as DesR
 
 class UserAdmissionActions(
@@ -131,19 +129,24 @@ private fun CreateUserSheet(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             Text(stringResource(R.string.users_create_title), style = MaterialTheme.typography.titleLarge)
-            Field(draft.email, stringResource(R.string.setup_email), enabled = !saving, keyboardType = KeyboardType.Email) { value ->
+            EditorTextField(
+                draft.email,
+                stringResource(R.string.setup_email),
+                enabled = !saving,
+                keyboardType = KeyboardType.Email,
+            ) { value ->
                 actions.onEditDraft { it.copy(email = value) }
             }
-            Field(draft.username, stringResource(R.string.setup_username), enabled = !saving) { value ->
+            EditorTextField(draft.username, stringResource(R.string.setup_username), enabled = !saving) { value ->
                 actions.onEditDraft { it.copy(username = value) }
             }
             if (!draft.generatePassword) {
-                Field(
+                EditorTextField(
                     value = draft.password,
                     label = stringResource(R.string.setup_password),
                     enabled = !saving,
                     secret = true,
-                    supporting = stringResource(R.string.user_settings_password_hint, CreateUserDraft.MIN_PASSWORD_LENGTH),
+                    supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
                 ) { value -> actions.onEditDraft { it.copy(password = value) } }
             }
             Row(
@@ -179,29 +182,6 @@ private fun CreateUserSheet(
             )
         }
     }
-}
-
-@Composable
-private fun Field(
-    value: String,
-    label: String,
-    enabled: Boolean,
-    secret: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    supporting: String? = null,
-    onValueChange: (String) -> Unit,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        enabled = enabled,
-        singleLine = true,
-        supportingText = supporting?.let { { Text(it) } },
-        visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = if (secret) KeyboardType.Password else keyboardType),
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 /** The media server's accounts not yet on the server, each tickable, imported together. */

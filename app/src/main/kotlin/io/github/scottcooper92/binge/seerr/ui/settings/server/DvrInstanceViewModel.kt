@@ -56,11 +56,12 @@ class DvrInstanceViewModel
                         ?.toForm(type)
                         ?: throw NoSuchElementException("instance $id")
                 }
-            if (form.connectionValid) {
+            if (!form.connectionValid) return form
+            val choices =
                 runCatching { connection.api().testDvr(type.apiSegment, form.toTestBody()).toChoices() }
                     .onSuccess { choices -> extrasState.update { it.copy(choices = choices) } }
-            }
-            return form
+                    .getOrNull()
+            return choices?.let { form.reconciledWith(it) } ?: form
         }
 
         override suspend fun write(draft: DvrForm): DvrForm {
@@ -91,7 +92,7 @@ class DvrInstanceViewModel
         }
 
         fun delete() {
-            val existing = id ?: return
+            val existing = ready()?.draft?.id ?: return
             viewModelScope.launch {
                 runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
                     .onSuccess { deletedState.value = true }

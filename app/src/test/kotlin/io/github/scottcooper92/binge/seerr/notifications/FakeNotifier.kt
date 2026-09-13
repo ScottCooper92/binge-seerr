@@ -4,7 +4,7 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.Collections
 
 /** Records what the poll would have shown. */
 internal class FakeNotifier : SeerrNotifier {
@@ -54,8 +54,8 @@ internal class FakeNotifier : SeerrNotifier {
 }
 
 internal class FakeScheduler : NotificationScheduler {
-    /** Appended on the planner's thread and read on the test's, so a copy-on-write list. */
-    val calls: MutableList<String> = CopyOnWriteArrayList()
+    /** Synchronized: the planner's own coroutine appends while a test's polling loop reads. */
+    val calls: MutableList<String> = Collections.synchronizedList(mutableListOf())
     val nextRun = MutableStateFlow<Long?>(null)
 
     override fun schedule() {
