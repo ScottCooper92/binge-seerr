@@ -5,25 +5,35 @@ this file from `main` and treat it as the source of truth; so should you.
 
 ## What this repository is
 
-The reference companion app for [Binge](https://github.com/ScottCooper92). Binge
-ships as a plain TMDB client with zero bundled providers. A companion app is a
-separate APK that exports a bound Android Service implementing a contract from
-[binge-integrations](https://github.com/ScottCooper92/binge-integrations). This one
-implements REQUEST v1 against a Seerr instance.
+An Android admin console for a Seerr, Jellyseerr or Overseerr server, and the reference
+companion app for [Binge](https://github.com/ScottCooper92). Those are its two jobs, in that
+order for the person installing it and in the other order for the person reading it.
+
+As a console, it manages the server the user already runs: requests, issues, users, the
+blocklist, the server's settings pages and its notifications, on a phone and on Android TV. It
+is not a discovery client; browsing for titles is Binge's job or the server's web client's.
+
+As a companion, it is what Binge talks to. Binge ships as a plain TMDB client with zero
+bundled providers; a companion app is a separate APK that exports a bound Android Service
+implementing a contract from
+[binge-integrations](https://github.com/ScottCooper92/binge-integrations). This one implements
+REQUEST v1 against the connected server, and `AdvancedRequestActivity` is the SDK's hand-off,
+the Activity Binge starts with a title.
 
 The contracts live in that repository and are authoritative there. **Nothing in this
 repository defines a contract.** A change to the wire format is a PR against
 binge-integrations, and this repository consumes the result.
 
 Status is pre-alpha, at contract parity: the exported Service serves every REQUEST v1
-operation against the connected server, the capability set is derived from the
-signed-in user's permissions, and the UI is two screens — setup, and the advanced
-request picker Binge hands a title to (`AdvancedRequestActivity`, the SDK's hand-off).
-This replaced Binge's in-tree Seerr integration (roadmap stage 4 in binge-integrations).
+operation against the connected server, the capability set is derived from the signed-in
+user's permissions and the server's profile, the console covers the server end to end, release
+builds are shrunk, signed from a tag and proven on a device lane, and the app ships in English
+and Spanish. Not yet released: Binge's release certificate is not yet published in the SDK, and
+the Play listing under `docs/listing/` waits on its screenshots.
 
 The contracts and the SDK are consumed as source: `binge-integrations/` is a git
 submodule and `settings.gradle.kts` includes it as a composite build. So is the
-shared design system, `design-system/` (binge-design-system): the screen is built
+shared design system, `design-system/` (binge-design-system): the screens are built
 from its theme and components, which is what makes this app read as part of Binge
 without depending on it. `.gitmodules` is an agent-governed path, so an author
 bot's commit can revert a change to it — bump a submodule in a commit of its own,
@@ -64,6 +74,23 @@ rather than a private arrangement.
   `SecurityPolicy` — is load-bearing and is not something to loosen to make a test
   pass.
 
+## Talking to the server
+
+Three servers share one API and not one feature set, and a user's account decides what they may
+change, so **every feature is gated on three things, and a screen reads the gate rather than the
+raw facts behind it** (`docs/server-compatibility.md` has the full list):
+
+1. **Lineage and version**, from `GET /status` into `SeerrServerProfile`: which endpoints exist.
+   Overseerr stopped at 1.x; Jellyseerr and Seerr are one lineage that kept adding.
+2. **The signed-in user's permissions**, from `GET /auth/me` into `SeerrPermissions`: what the
+   server would let this user do. `ADMIN` implies everything.
+3. **The server's public settings**, from `GET /settings/public`: what the administrator turned on.
+
+A feature that ignores a gate is a screen that shows a control the server will refuse, which is
+the bug users report as "it does not work". This is a different rule from the host's
+"capabilities, never versions": the host contract is versioned by capability because it is ours
+to design; the server's API is versioned by release because it is not.
+
 ## Kotlin, Gradle and Android
 
 - Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 17.
@@ -83,16 +110,22 @@ rather than a private arrangement.
 
 ## Gates
 
-CI runs `./gradlew build`. That is the whole gate, and it covers four things, all of
+CI runs `./gradlew build`. That is the whole gate, and it covers five things, all of
 which turn the build red:
 
 - Kotlin compilation.
 - The unit tests (`:app:test`).
 - `ktlintCheck` — the ktlint plugin wires itself into `check`.
 - **Android lint** (`:app:lint`) — AGP wires this into `check` too. It is easy to
-  forget it is running until it fails, because nothing in the repository names it.
+  forget it is running until it fails, because nothing in the repository names it. The
+  translation checks are pinned to error there: a locale is complete or it does not exist, so
+  an English string added without its Spanish is a red build.
+- `checkTranslationStaleness` — a reworded English string whose translation was not re-read.
+  Fix or re-read the translation it names, then `./gradlew updateTranslationHashes`.
 
-`build` depends on `check`, which is what pulls the last three in.
+`build` depends on `check`, which is what pulls the last four in. The device lane
+(`device-smoke.yml`) is not part of it: it runs on `main`, weekly and on request, and proves the
+release keep rules across a real Binder.
 
 There is no detekt, no coverage floor, no screenshot suite and no `buf` in this
 repository, so do not look for one and do not report a finding as though one had
