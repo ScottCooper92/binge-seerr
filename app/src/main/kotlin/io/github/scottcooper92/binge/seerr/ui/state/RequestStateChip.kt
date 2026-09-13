@@ -50,6 +50,7 @@ fun SeerrMediaStatusCode.tone(): RequestStateTone =
         SeerrMediaStatusCode.Processing -> RequestStateTone.Active
         SeerrMediaStatusCode.PartiallyAvailable, SeerrMediaStatusCode.Available -> RequestStateTone.Success
         SeerrMediaStatusCode.Blocklisted -> RequestStateTone.Blocked
+        SeerrMediaStatusCode.Unknown -> RequestStateTone.Pending
         else -> RequestStateTone.Pending
     }
 
@@ -60,6 +61,7 @@ fun SeerrMediaStatusCode.labelRes(): Int =
         SeerrMediaStatusCode.PartiallyAvailable -> R.string.media_state_partially_available
         SeerrMediaStatusCode.Available -> R.string.media_state_available
         SeerrMediaStatusCode.Blocklisted -> R.string.media_state_blocklisted
+        SeerrMediaStatusCode.Unknown -> R.string.media_state_unknown
         else -> R.string.request_state_pending
     }
 

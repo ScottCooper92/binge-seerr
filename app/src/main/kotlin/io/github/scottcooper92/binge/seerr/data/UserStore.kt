@@ -26,6 +26,9 @@ interface UserStore {
         permissions: Int,
     )
 
+    /** The raw bitmask currently cached per id in [ids], so an edit can seed from and preserve each user's own. */
+    suspend fun permissionsFor(ids: List<Int>): Map<Int, Int>
+
     suspend fun delete(userId: Int)
 
     suspend fun clearAll()
@@ -64,6 +67,12 @@ class RoomUserStore(
         ids: List<Int>,
         permissions: Int,
     ) = users.updatePermissions(ids, permissions)
+
+    override suspend fun permissionsFor(ids: List<Int>): Map<Int, Int> =
+        users
+            .permissionsFor(ids)
+            .groupBy({ it.id }, { it.permissions })
+            .mapValues { (_, bitmasks) -> bitmasks.fold(0) { acc, bitmask -> acc or bitmask } }
 
     override suspend fun delete(userId: Int) = users.delete(userId)
 

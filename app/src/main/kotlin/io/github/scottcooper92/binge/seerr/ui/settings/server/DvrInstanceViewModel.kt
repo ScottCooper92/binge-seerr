@@ -92,7 +92,7 @@ class DvrInstanceViewModel
         }
 
         fun delete() {
-            val existing = id ?: return
+            val existing = ready()?.draft?.id ?: return
             viewModelScope.launch {
                 runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
                     .onSuccess { deletedState.value = true }

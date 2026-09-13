@@ -271,4 +271,27 @@ class DvrInstanceViewModelTest {
             assertTrue(vm.deleted.first { it })
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/sonarr/3"))
         }
+
+    @Test
+    fun `deleting a just-created instance uses the id the server just assigned, not the still-null constructor id`() =
+        runTest {
+            seerr.serve(
+                "POST /api/v1/settings/radarr",
+                """{"id":7,"name":"Movies","hostname":"radarr.local","port":7878,"apiKey":"r-key"}""",
+            )
+            seerr.serve("DELETE /api/v1/settings/radarr/7")
+            val vm = viewModel(ServiceType.Radarr, id = null)
+            vm.awaitReady()
+            vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
+            vm.test()
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
+            vm.extras.first { it.choices != null }
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(7, vm.awaitReady().saved.id)
+
+            vm.delete()
+            assertTrue(vm.deleted.first { it })
+            assertEquals(1, seerr.count("DELETE", "/api/v1/settings/radarr/7"))
+        }
 }
