@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
@@ -87,10 +88,21 @@ private fun ServerSummary.versionDetail(): String {
     }
 }
 
+/** The general settings as read, and first the way into editing them: the page owns every field, these rows only summarise. */
 @Composable
-internal fun generalRows(general: GeneralSettings): List<SettingsRow> {
+internal fun generalRows(
+    general: GeneralSettings,
+    onEdit: () -> Unit,
+): List<SettingsRow> {
     val context = LocalContext.current
     return listOfNotNull(
+        SettingsRow(
+            icon = Icons.Filled.Tune,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_edit),
+            detail = stringResource(R.string.server_settings_edit_caption),
+            onClick = onEdit,
+        ),
         general.applicationUrl?.takeIf { it.isWebUrl() }?.let { url ->
             SettingsRow(
                 icon = Icons.Filled.Link,

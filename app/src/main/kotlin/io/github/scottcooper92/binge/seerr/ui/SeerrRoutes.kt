@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.UserSettingsPage
 import kotlinx.serialization.Serializable
 
@@ -58,6 +59,12 @@ data class UserSettingsRoute(
 data class UserSettingsPageRoute(
     val userId: Int,
     val page: UserSettingsPage,
+) : SeerrRoute
+
+/** One of the server's own settings pages, for a user who manages settings. */
+@Serializable
+data class ServerSettingsPageRoute(
+    val page: ServerSettingsPage,
 ) : SeerrRoute
 
 /** One request as a page. */

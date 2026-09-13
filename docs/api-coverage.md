@@ -35,7 +35,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /auth/local` | Sign in using a local account | v1.17.0 | v1.0.0 | yes | In place today. |
 | `GET /auth/me` | Get logged-in user | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
 | `GET /movie/{movieId}` | Get movie details | v1.0.0 | v1.0.0 | yes | The status lookup the Service already makes; never a page. |
-| `GET /settings/public` | Get public settings | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
+| `GET /settings/public` | Get public settings | v1.0.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions; "what a visitor sees" on the general settings page. |
 | `GET /status` | Get Seerr status | v1.15.0 | v1.0.0 | yes | Server profile: variant, version, media server, sign-in modes, permissions. |
 | `GET /tv/{tvId}` | Get TV details | v1.0.0 | v1.0.0 | yes | The status lookup the Service already makes; never a page. |
 
@@ -55,7 +55,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips, and the pending count in the host's attention badge. |
 | `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub and in Settings. |
 | `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
-| `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
+| `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | The Settings summary, and the general settings form. |
 | `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
 | `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub; editing is Phase 8. |
 | `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
@@ -167,8 +167,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /settings/jobs/{jobId}/run` | Invoke a specific job | v1.20.0 | v1.0.0 |  |  |
 | `POST /settings/jobs/{jobId}/schedule` | Modify job schedule | v1.27.0 | v1.1.0 |  |  |
 | `GET /settings/logs` | Returns logs | v1.22.0 | v1.0.0 |  |  |
-| `POST /settings/main` | Update main settings | v1.0.0 | v1.0.0 |  |  |
-| `POST /settings/main/regenerate` | Get main settings with newly-generated API key | v1.20.0 | v1.0.0 |  |  |
+| `POST /settings/main` | Update main settings | v1.0.0 | v1.0.0 | yes | The general settings form, and the default permissions page (which sends only those bits). |
+| `POST /settings/main/regenerate` | Get main settings with newly-generated API key | v1.20.0 | v1.0.0 | yes | Regenerate on the general settings page; an API-key session reconnects with the new key. |
 | `GET /settings/metadatas` | Get Metadata settings | — | v3.0.0 |  |  |
 | `PUT /settings/metadatas` | Update Metadata settings | — | v3.0.0 |  |  |
 | `POST /settings/metadatas/test` | Test Provider configuration | — | v3.0.0 |  |  |

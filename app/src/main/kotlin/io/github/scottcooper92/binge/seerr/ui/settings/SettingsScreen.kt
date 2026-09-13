@@ -25,14 +25,15 @@ import com.binge.designsystem.R as DesR
 class SettingsActions(
     val onBack: () -> Unit,
     val onEditConnection: () -> Unit,
+    val onOpenServerSettings: () -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
     val onDisconnect: () -> Unit,
 )
 
 /**
- * Settings: the connection and a way to edit it, then the admin's read-only view of the server.
- * Editing the server's own settings arrives with Phase 8; here every row reads.
+ * Settings: the connection and a way to edit it, then the admin's view of the server — the general
+ * settings open their own page for editing; the other groups read until their phase.
  */
 @Composable
 fun SettingsScreen(
@@ -57,7 +58,7 @@ private fun SettingsContent(
     val config = state.config
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Group(stringResource(R.string.settings_group_connection), connectionRows(state.connection, state.server, actions.onEditConnection))
-        config?.general?.let { Group(stringResource(R.string.settings_group_general), generalRows(it)) }
+        config?.general?.let { Group(stringResource(R.string.settings_group_general), generalRows(it, actions.onOpenServerSettings)) }
         config?.services?.takeIf { it.isNotEmpty() }?.let { Group(stringResource(R.string.settings_group_services), serviceRows(it)) }
         config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
         state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
