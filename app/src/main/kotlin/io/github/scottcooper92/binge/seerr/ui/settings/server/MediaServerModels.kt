@@ -168,6 +168,14 @@ internal fun SeerrLibraryDto.toLibrary(): MediaLibrary =
         lastScanMillis = lastScan?.takeIf { it > 0 },
     )
 
+/** The inverse of [SeerrLibraryDto.toLibrary]'s `type` mapping. */
+internal fun LibraryType?.toSeerrType(): String? =
+    when (this) {
+        LibraryType.Movies -> "movie"
+        LibraryType.Shows -> "show"
+        null -> null
+    }
+
 internal fun SeerrScanStatusDto.toScan(): LibraryScan =
     LibraryScan(running = running, progress = progress, total = total, currentLibrary = currentLibrary?.name?.takeIf { it.isNotBlank() })
 

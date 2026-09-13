@@ -173,10 +173,11 @@ class MediaServerViewModelTest {
             vm.extras.first { it.libraries.isNotEmpty() }
 
             vm.setLibraryEnabled("2", true)
-            vm.extras.first { it.libraries.all { library -> library.enabled } }
+            val extras = vm.extras.first { it.libraries.all { library -> library.enabled } }
 
             assertEquals("""{"enabled":true}""", seerr.body("PUT", "/api/v1/settings/plex/library/2"))
             assertEquals(0, seerr.count("GET", "/api/v1/settings/plex/library"))
+            assertEquals(LibraryType.Movies, extras.libraries.first { it.id == "1" }.type)
         }
 
     @Test

@@ -191,7 +191,7 @@ class MediaServerViewModel
                 ) {
                     updated
                 } else {
-                    SeerrLibraryDto(library.id, library.name, library.enabled, null, library.lastScanMillis)
+                    SeerrLibraryDto(library.id, library.name, library.enabled, library.type.toSeerrType(), library.lastScanMillis)
                 }
             }
 
