@@ -8,38 +8,28 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** What the television home shows: nothing until the store has answered, then setup or the saved server. */
+/** What the television home shows: nothing until the store has answered, then setup or the rail. */
 sealed interface TvHomeUiState {
     data object Loading : TvHomeUiState
 
     data object Setup : TvHomeUiState
 
-    data class Connected(
-        val serverUrl: String,
-    ) : TvHomeUiState
+    data object Connected : TvHomeUiState
 }
 
-/**
- * The television home over the saved credentials. It names the server rather than reading the hub, which
- * is a network round trip the connected plate has no use for.
- */
+/** The television home over the saved credentials: whether there is a server to put the rail in front of. */
 @HiltViewModel
 class TvHomeViewModel
     @Inject
     constructor(
-        private val connection: SeerrConnection,
+        connection: SeerrConnection,
     ) : ViewModel() {
         val uiState: StateFlow<TvHomeUiState> =
             connection.credentials
-                .map { credentials -> if (credentials == null) TvHomeUiState.Setup else TvHomeUiState.Connected(credentials.baseUrl) }
+                .map { credentials -> if (credentials == null) TvHomeUiState.Setup else TvHomeUiState.Connected }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), TvHomeUiState.Loading)
-
-        fun disconnect() {
-            viewModelScope.launch { connection.disconnect() }
-        }
 
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L

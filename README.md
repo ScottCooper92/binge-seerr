@@ -48,6 +48,14 @@ JDK 17, AGP 9.3.2, `compileSdk` 37, `minSdk` 26 — matching Binge, so the extra
 is a code move rather than a toolchain negotiation. The object graph is Hilt's, through
 KSP, at the versions Binge pins; the wiring is one module, `di/SeerrModule.kt`.
 
+A release build is shrunk by R8, with this app's own keep rules in `app/src/main/keepRules/`
+on top of what the libraries ship. Measured on the unsigned release APK when it was turned on:
+20.2 MB before, 3.4 MB after. What the gate above cannot see is whether those rules hold across a
+real Binder, so `device-smoke.yml` runs one instrumentation test on a hosted emulator against the
+minified build (`-PminifyDebug`, the same rules as release): it binds the exported Service and
+completes a handshake and a status call. It runs on a push to `main` that touches what could
+change its answer, weekly, and on request.
+
 ## Conventions
 
 `CLAUDE.md` holds the repository's conventions and is read from `main` by the agent

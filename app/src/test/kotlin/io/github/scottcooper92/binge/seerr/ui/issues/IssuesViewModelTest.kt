@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -76,6 +77,8 @@ class IssuesViewModelTest {
                                    "createdBy":{"displayName":"ana"},"media":{"tmdbId":100,"mediaType":"movie"}}]}""",
                             )
                         "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
+                        "/api/v1/issue/31/resolved", "/api/v1/issue/31/open" -> json("""{"id":31,"status":2}""")
+                        "/api/v1/issue/31" -> if (request.method == "DELETE") MockResponse(code = 204) else MockResponse(code = 404)
                         else -> MockResponse(code = 404)
                     }
                 }
@@ -145,6 +148,52 @@ class IssuesViewModelTest {
             val listed = received.last { it.url.encodedPath == "/api/v1/issue" }.url
             assertEquals("7", listed.queryParameter("requestedBy"))
             assertEquals("all", listed.queryParameter("filter"))
+        }
+
+    @Test
+    fun `resolving from the row posts the status, moves the cached row, and reports once`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts != null }
+            val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
+            val event = async { vm.events.first() }
+
+            vm.resolve(heat)
+
+            assertEquals(IssueListEvent.Resolved, event.await())
+            assertTrue(received.any { it.method == "POST" && it.url.encodedPath == "/api/v1/issue/31/resolved" })
+            vm.awaitReady { it.actingIds.isEmpty() }
+        }
+
+    @Test
+    fun `deleting from the row removes it from the server and the cache`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts != null }
+            val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
+            val event = async { vm.events.first() }
+
+            vm.delete(heat)
+
+            assertEquals(IssueListEvent.Deleted, event.await())
+            assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/issue/31" })
+        }
+
+    @Test
+    fun `a refused action reports the failure and leaves the row free to try again`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts != null }
+            val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
+            val event = async { vm.events.first() }
+
+            vm.reopen(heat.copy(id = 99))
+
+            assertTrue(event.await() is IssueListEvent.Failed)
+            vm.awaitReady { it.actingIds.isEmpty() }
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

@@ -62,7 +62,7 @@ fun HubScreen(
     }
 }
 
-private fun ConnectionHealth.isProblem(): Boolean =
+internal fun ConnectionHealth.isProblem(): Boolean =
     this == ConnectionHealth.Unreachable || this == ConnectionHealth.CouldNotLoad || this == ConnectionHealth.Unauthorized
 
 @Composable

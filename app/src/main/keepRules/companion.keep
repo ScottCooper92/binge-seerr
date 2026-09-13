@@ -1,0 +1,31 @@
+# This app's R8 keep rules. It is a `keepRules` source set (AGP 9.3+), so every `.keep` file here is
+# picked up with no `proguardFiles` entry naming it. It sits in `main` rather than `release` so the
+# opt-in `-PminifyDebug` build the device lane runs minifies against the same rules as release; a
+# per-variant copy is the one that goes stale.
+#
+# Retrofit, OkHttp, Room, Hilt, Coil and kotlinx.serialization ship their own consumer rules. Only
+# what this app genuinely needs on top of those belongs here: a rule copied from a library silently
+# diverges when the library is upgraded, and the copy is the one that goes stale.
+
+# Line numbers and source file names, so a crash a user reports reads as a stack trace.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# Every annotation attribute on kept classes. The bundled Retrofit and serialization rules keep only
+# RuntimeVisible* and AnnotationDefault; this additionally keeps type-use and CLASS-retention
+# annotations, and attributes cost R8 nothing to keep.
+-keepattributes *Annotation*
+
+# R8 full mode shrinks a @Serializable class nothing references. A Retrofit method whose parsed
+# response is discarded leaves its DTO unreferenced, so the class goes and the method's return type
+# collapses to Object: "Serializer for class 'Any' is not found". Only the class need survive; the
+# generated serializer references the fields itself, and the bundled rules retain Companion and
+# serializer().
+-keep,allowobfuscation,allowoptimization @kotlinx.serialization.Serializable class **
+
+# The lite protobuf runtime resolves a message's fields by name the first time it is used
+# (MessageSchema reads the names newMessageInfo() recorded), and neither protobuf-javalite nor grpc
+# ships a consumer rule. Keeping the fields of every generated message is protobuf's own guidance for
+# the lite runtime under R8. The messages are the contract, and small; the classes themselves may
+# still go or be renamed, and the device lane is what proves the rest of the transport survives.
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite { <fields>; }
