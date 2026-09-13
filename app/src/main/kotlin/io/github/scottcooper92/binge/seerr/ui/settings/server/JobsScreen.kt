@@ -131,7 +131,7 @@ private fun ScheduleDialog(
         title = stringResource(R.string.server_settings_job_schedule_title, job.name),
         message = stringResource(R.string.server_settings_job_schedule_message),
         confirmLabel = stringResource(R.string.user_settings_save),
-        onConfirm = { onConfirm(cron) },
+        onConfirm = { cron.trim().takeIf { it.isNotBlank() }?.let(onConfirm) },
         onDismiss = onDismiss,
         extraContent = {
             Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {

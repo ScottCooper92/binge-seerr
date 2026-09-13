@@ -173,10 +173,54 @@ class MediaServerViewModelTest {
             vm.extras.first { it.libraries.isNotEmpty() }
 
             vm.setLibraryEnabled("2", true)
-            vm.extras.first { it.libraries.all { library -> library.enabled } }
+            val extras = vm.extras.first { it.libraries.all { library -> library.enabled } }
 
             assertEquals("""{"enabled":true}""", seerr.body("PUT", "/api/v1/settings/plex/library/2"))
             assertEquals(0, seerr.count("GET", "/api/v1/settings/plex/library"))
+            assertEquals(LibraryType.Movies, extras.libraries.first { it.id == "1" }.type)
+        }
+
+    @Test
+    fun `syncing libraries uses the sync route where the server has it`() =
+        runTest {
+            plexServer()
+            seerr.serve(
+                "POST /api/v1/settings/plex/library/sync",
+                """[{"id":"1","name":"Movies","enabled":true,"type":"movie"},
+                   {"id":"3","name":"Music","enabled":false,"type":"movie"}]""",
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.extras.first { it.libraries.isNotEmpty() }
+
+            vm.syncLibraries()
+            val extras = vm.extras.first { it.libraries.any { library -> library.id == "3" } }
+
+            assertEquals(0, seerr.count("GET", "/api/v1/settings/plex/library"))
+            assertEquals(listOf("1", "3"), extras.libraries.map { it.id })
+        }
+
+    /** A released server has no `library/sync` route: the 404 falls back to `sync=true` on the GET. */
+    @Test
+    fun `syncing libraries falls back to the sync query on a released server`() =
+        runTest {
+            plexServer()
+            seerr.serve(
+                "GET /api/v1/settings/plex/library",
+                """[{"id":"1","name":"Movies","enabled":true,"type":"movie"},
+                   {"id":"3","name":"Music","enabled":false,"type":"movie"}]""",
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.extras.first { it.libraries.isNotEmpty() }
+
+            vm.syncLibraries()
+            val extras = vm.extras.first { it.libraries.any { library -> library.id == "3" } }
+
+            assertEquals(1, seerr.count("GET", "/api/v1/settings/plex/library"))
+            val read = seerr.received.last { it.url.encodedPath == "/api/v1/settings/plex/library" }
+            assertEquals("true", read.url.queryParameter("sync"))
+            assertEquals(listOf("1", "3"), extras.libraries.map { it.id })
         }
 
     @Test

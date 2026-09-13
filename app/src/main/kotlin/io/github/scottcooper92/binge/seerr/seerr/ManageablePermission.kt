@@ -6,8 +6,8 @@ enum class PermissionGroup { Administration, Requests, Issues, Blocklist }
 /**
  * The permissions an editor can flip, each with its server bit (`server/lib/permissions.ts`).
  * [Admin] implies every other one, so the editor shows the rest as granted and locked while it is
- * on; [Request] likewise covers the 4K and advanced grants beneath it. Bits the server has that
- * are not listed here are preserved untouched on save: the editor only ever changes these.
+ * on. Bits the server has that are not listed here are preserved untouched on save: the editor
+ * only ever changes these.
  */
 enum class ManageablePermission(
     val bit: Int,
@@ -37,7 +37,6 @@ enum class ManageablePermission(
         get() =
             when (this) {
                 Admin -> null
-                Request4k, RequestAdvanced, AutoApprove, AutoApprove4k -> Request
                 ViewRequests -> ManageRequests
                 ViewIssues, CreateIssues -> ManageIssues
                 ViewBlocklist -> ManageBlocklist
