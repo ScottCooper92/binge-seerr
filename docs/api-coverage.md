@@ -54,7 +54,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 | yes | Hub counts; also the browsers' filter chips, and the open count in the host's attention badge. |
 | `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips, and the pending count in the host's attention badge. |
 | `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub and in Settings. |
-| `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | Read-only Settings summary; the writes are Phase 8. |
+| `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | The hub's system group, and the jobs page. |
 | `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | The Settings summary, and the general settings form. |
 | `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
 | `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
@@ -147,9 +147,9 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /overrideRule` | Create override rule | — | v2.2.0 | yes | The rule editor. |
 | `DELETE /overrideRule/{ruleId}` | Delete override rule by ID | — | v2.2.0 | yes | The rule editor's delete. |
 | `PUT /overrideRule/{ruleId}` | Update override rule | — | v2.2.0 | yes | The rule editor. |
-| `GET /settings/cache` | Get a list of active caches | v1.19.0 | v1.0.0 |  |  |
-| `POST /settings/cache/dns/{dnsEntry}/flush` | Flush a specific DNS cache entry | — | v3.0.0 |  |  |
-| `POST /settings/cache/{cacheId}/flush` | Flush a specific cache | v1.20.0 | v1.0.0 |  |  |
+| `GET /settings/cache` | Get a list of active caches | v1.19.0 | v1.0.0 | yes | The cache page. |
+| `POST /settings/cache/dns/{dnsEntry}/flush` | Flush a specific DNS cache entry | — | v3.0.0 | yes | Flush on a DNS entry, on the cache page. |
+| `POST /settings/cache/{cacheId}/flush` | Flush a specific cache | v1.20.0 | v1.0.0 | yes | Flush on an API cache, on the cache page. |
 | `GET /settings/discover` | Get all discover sliders | v1.32.0 | v1.4.0 | yes | The slider list. |
 | `POST /settings/discover` | Batch update all sliders. | v1.32.0 | v1.4.0 | yes | Save on the slider list: the order and each switch, as one batch. |
 | `POST /settings/discover/add` | Add a new slider | v1.32.0 | v1.4.0 | yes | Add a custom slider, on its own page. |
@@ -163,9 +163,9 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `PUT /settings/jellyfin/library/{libraryId}` | Update a single Jellyfin library | — | develop | yes | Tried first for a library toggle; a 404 falls back to the `GET`. |
 | `GET /settings/jellyfin/sync` | Get status of full Jellyfin library sync | — | v1.0.0 | yes | The scan's progress, polled while it runs. |
 | `POST /settings/jellyfin/sync` | Start full Jellyfin library sync | — | v1.0.0 | yes | Start and cancel the scan. |
-| `POST /settings/jobs/{jobId}/cancel` | Cancel a specific job | v1.20.0 | v1.0.0 |  |  |
-| `POST /settings/jobs/{jobId}/run` | Invoke a specific job | v1.20.0 | v1.0.0 |  |  |
-| `POST /settings/jobs/{jobId}/schedule` | Modify job schedule | v1.27.0 | v1.1.0 |  |  |
+| `POST /settings/jobs/{jobId}/cancel` | Cancel a specific job | v1.20.0 | v1.0.0 | yes | Cancel on a running job, on the jobs page. |
+| `POST /settings/jobs/{jobId}/run` | Invoke a specific job | v1.20.0 | v1.0.0 | yes | Run now on the jobs page. |
+| `POST /settings/jobs/{jobId}/schedule` | Modify job schedule | v1.27.0 | v1.1.0 | yes | The schedule dialog on the jobs page: the presets or a cron of the admin's own. |
 | `GET /settings/logs` | Returns logs | v1.22.0 | v1.0.0 |  |  |
 | `POST /settings/main` | Update main settings | v1.0.0 | v1.0.0 | yes | The general settings form, and the default permissions page (which sends only those bits). |
 | `POST /settings/main/regenerate` | Get main settings with newly-generated API key | v1.20.0 | v1.0.0 | yes | Regenerate on the general settings page; an API-key session reconnects with the new key. |

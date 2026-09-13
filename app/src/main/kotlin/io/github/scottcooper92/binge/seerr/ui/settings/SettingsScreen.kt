@@ -34,6 +34,8 @@ class SettingsActions(
     val onOpenSliders: () -> Unit,
     val onOpenNetwork: () -> Unit,
     val onOpenMetadata: () -> Unit,
+    val onOpenJobs: () -> Unit,
+    val onOpenCache: () -> Unit,
     val onOpenAgent: (ServerAgent) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
@@ -86,7 +88,12 @@ private fun SettingsContent(
         config?.agents?.let {
             Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenAgents, actions.onOpenAgent))
         }
-        config?.system?.let { Group(stringResource(R.string.settings_group_system), systemRows(it)) }
+        config?.system?.let {
+            Group(
+                stringResource(R.string.settings_group_system),
+                systemRows(it, actions.onOpenJobs, actions.onOpenCache),
+            )
+        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
