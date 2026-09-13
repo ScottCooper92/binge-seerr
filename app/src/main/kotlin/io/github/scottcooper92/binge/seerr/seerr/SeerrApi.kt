@@ -418,7 +418,11 @@ interface SeerrApi {
         @Path("issueId") issueId: Int,
     )
 
-    /** Answers with the updated issue, whose newest comment is the one just posted. */
+    /**
+     * Answers with the updated issue, which includes the newly posted comment among [SeerrIssueDto.comments] -
+     * but not necessarily as the one with the highest id, since another comment on the same issue can land
+     * between this request and its response.
+     */
     @POST("api/v1/issue/{issueId}/comment")
     suspend fun commentOnIssue(
         @Path("issueId") issueId: Int,
@@ -710,15 +714,15 @@ data class SeerrRequestResultDto(
     @SerialName("id") val id: Int? = null,
 )
 
-/**
- * Body for `POST issue`. [mediaId] is the server's INTERNAL media id (a title's `mediaInfo.id`),
- * not the TMDB id — the server can only attach an issue to a title it already tracks.
- */
 @Serializable
 data class SeerrIssueCommentBody(
     @SerialName("message") val message: String,
 )
 
+/**
+ * Body for `POST issue`. [mediaId] is the server's INTERNAL media id (a title's `mediaInfo.id`),
+ * not the TMDB id — the server can only attach an issue to a title it already tracks.
+ */
 @Serializable
 data class SeerrCreateIssueBody(
     @SerialName("mediaId") val mediaId: Int,
@@ -778,6 +782,7 @@ data class SeerrRequestSummaryDto(
     @SerialName("status") val status: SeerrRequestStatusCode? = null,
     @SerialName("createdAt") val createdAt: String? = null,
     @SerialName("requestedBy") val requestedBy: SeerrRequestUserDto? = null,
+    @SerialName("is4k") val is4k: Boolean = false,
     /** The seasons this request covers; empty for movie requests. */
     @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
 )
@@ -805,6 +810,7 @@ data class SeerrSeasonDto(
 data class SeerrSeasonStatusDto(
     @SerialName("seasonNumber") val seasonNumber: Int,
     @SerialName("status") val status: SeerrMediaStatusCode? = null,
+    @SerialName("status4k") val status4k: SeerrMediaStatusCode? = null,
 )
 
 /** A single in-flight download from the *arr backend. Sizes are bytes, read as Double to tolerate either form. */

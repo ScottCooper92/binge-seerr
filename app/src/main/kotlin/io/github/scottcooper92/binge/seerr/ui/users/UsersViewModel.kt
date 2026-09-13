@@ -46,8 +46,9 @@ private data class UsersScope(
 
 /**
  * The users browser: one cached, sorted list read from the cache and refreshed through the
- * mediator, and the bulk edit, which writes one permission set to every selected user and moves
- * their cached rows with it.
+ * mediator, and the bulk edit, which re-applies the chosen toggles onto each selected user's own
+ * cached bitmask — never onto a value shared across the selection — and moves their cached rows
+ * with it.
  */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalPagingApi::class)
 @HiltViewModel
@@ -128,10 +129,22 @@ class UsersViewModel
             selection.value = emptySet()
         }
 
-        /** Opens the editor on nothing granted: the set written is the whole new set for everyone selected. */
+        /**
+         * Opens the editor seeded from what the selection already has — the union of every selected
+         * user's decoded permissions — so a save that re-ticks nothing still preserves them, rather
+         * than opening blank and writing an empty set over whatever they had.
+         */
         fun startBulkEdit() {
-            if (selection.value.isEmpty() || edit.value != null) return
-            edit.value = BulkEdit()
+            val ids = selection.value.toList()
+            if (ids.isEmpty() || edit.value != null) return
+            edit.value = BulkEdit(saving = true)
+            viewModelScope.launch {
+                val selected =
+                    store.permissionsFor(ids).values.fold(emptySet<ManageablePermission>()) { acc, bitmask ->
+                        acc + ManageablePermission.decode(bitmask)
+                    }
+                edit.value = BulkEdit(selected = selected)
+            }
         }
 
         fun togglePermission(permission: ManageablePermission) =
@@ -160,11 +173,17 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
-            val permissions = ManageablePermission.apply(0, current.selected)
             viewModelScope.launch {
                 runCatching {
-                    connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = ids, permissions = permissions))
-                    store.updatePermissions(ids, permissions)
+                    // Each id's own cached bitmask is the baseline for that id alone, so an unmanaged
+                    // bit only some of the selection holds is never carried onto the rest. Ids whose
+                    // resulting bitmask agrees are still written together in one PUT.
+                    val baselines = store.permissionsFor(ids)
+                    val idsByResult = ids.groupBy { id -> ManageablePermission.apply(baselines[id] ?: 0, current.selected) }
+                    idsByResult.forEach { (permissions, groupIds) ->
+                        connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = groupIds, permissions = permissions))
+                        store.updatePermissions(groupIds, permissions)
+                    }
                 }.onSuccess {
                     edit.value = null
                     selection.value = emptySet()

@@ -90,6 +90,7 @@ internal class ScriptedSeerr(
     suspend fun connection(
         scope: TestScope,
         quickConnectPollInterval: Duration = 10.milliseconds,
+        onServerChanged: suspend () -> Unit = {},
     ): SeerrConnection {
         val connection =
             SeerrConnection(
@@ -100,6 +101,7 @@ internal class ScriptedSeerr(
                     ),
                 apis = SeerrApiFactory(logRequests = false),
                 quickConnectPollInterval = quickConnectPollInterval,
+                onServerChanged = onServerChanged,
             )
         connection.connect(server.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
         return connection

@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.blocklist
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBlocklistEntryDto
-import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestUserDto
+import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.ui.issues.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPage
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPagingSource
@@ -85,7 +85,3 @@ internal fun String?.toBlocklistTags(): List<String> =
         ?.map { it.trim() }
         ?.filter { it.isNotEmpty() }
         .orEmpty()
-
-/** Email is a last resort and masked to its local part, as a requester's is. */
-private fun SeerrRequestUserDto.displayString(): String? =
-    listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() } ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
