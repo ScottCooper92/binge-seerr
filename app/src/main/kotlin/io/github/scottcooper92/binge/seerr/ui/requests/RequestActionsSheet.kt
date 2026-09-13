@@ -186,6 +186,9 @@ internal fun ModerationEvent.messageRes(): Int =
             ModerationEvent.Approved -> R.string.request_approved
             ModerationEvent.Retried -> R.string.request_retried
             ModerationEvent.Edited -> R.string.request_edited
+            ModerationEvent.MediaStatusSet -> R.string.media_status_set
+            ModerationEvent.MediaCleared -> R.string.media_cleared
+            ModerationEvent.MediaFilesDeleted -> R.string.media_files_deleted
             ModerationEvent.Declined -> R.string.request_declined
             ModerationEvent.DeclinedAndBlocked -> R.string.request_declined_and_blocked
             ModerationEvent.DeclinedButBlockFailed -> R.string.request_declined_block_failed

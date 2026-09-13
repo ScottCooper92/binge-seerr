@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -61,6 +62,7 @@ class RequestDetailActions(
     val onRemove: (Boolean) -> Unit,
     val onStartEdit: () -> Unit,
     val edit: EditRequestActions,
+    val media: ManageMediaActions,
 )
 
 /**
@@ -76,12 +78,13 @@ fun RequestDetailScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     ModerationSnackbarEffect(events, snackbarHostState)
-    // A removed request has no page to stay on.
+    // A removed request has no page to stay on; clearing the media record removes it too.
     LaunchedEffect(events) {
         events.collect {
             if (it == ModerationEvent.Removed ||
                 it == ModerationEvent.RemovedAndBlocked ||
-                it == ModerationEvent.RemovedButBlockFailed
+                it == ModerationEvent.RemovedButBlockFailed ||
+                it == ModerationEvent.MediaCleared
             ) {
                 actions.onBack()
             }
@@ -111,6 +114,7 @@ private fun Ready(
     val context = LocalContext.current
     var reporting by rememberSaveable { mutableStateOf(false) }
     var moderating by rememberSaveable { mutableStateOf(false) }
+    var managing by rememberSaveable { mutableStateOf(false) }
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         DetailHero(
@@ -141,16 +145,7 @@ private fun Ready(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-                BingeOutlinedButton(label = stringResource(R.string.request_open_web), onClick = {
-                    context.openInBrowser(detail.webUrl)
-                }, modifier = Modifier.weight(1f))
-                detail.mediaServerUrl?.let { url ->
-                    BingeOutlinedButton(label = stringResource(R.string.request_open_media_server), onClick = {
-                        context.openInBrowser(url)
-                    }, modifier = Modifier.weight(1f))
-                }
-            }
+            OpenLinks(detail)
         }
         InfoRowList(
             entries =
@@ -181,7 +176,7 @@ private fun Ready(
             SectionHeader(title = stringResource(R.string.request_downloads))
             detail.downloads.forEach { download -> DownloadRow(download) }
         }
-        if (detail.actions.any || detail.canEdit || detail.canReportIssue) {
+        if (detail.actions.any || detail.media?.canManage == true || detail.canEdit || detail.canReportIssue) {
             Column(
                 modifier = Modifier.padding(inset),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
@@ -190,6 +185,13 @@ private fun Ready(
                     BingeFilledButton(
                         label = stringResource(R.string.request_actions_cd),
                         onClick = { moderating = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (detail.media?.canManage == true) {
+                    BingeOutlinedButton(
+                        label = stringResource(R.string.media_manage),
+                        onClick = { managing = true },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -222,6 +224,10 @@ private fun Ready(
         )
     }
     state.edit?.let { edit -> EditRequestSheet(item = item, edit = edit, actions = actions.edit) }
+    val media = detail.media
+    if (managing && media != null) {
+        ManageMediaSheet(media = media, actions = actions.media, onDismiss = { managing = false })
+    }
     if (reporting) {
         ReportIssueSheet(
             report = state.report,
@@ -231,6 +237,37 @@ private fun Ready(
                 actions.onDismissReport()
             },
         )
+    }
+}
+
+/** The title elsewhere: the server's web client, the media server, and Radarr or Sonarr, as the server knows them. */
+@Composable
+private fun OpenLinks(detail: RequestDetail) {
+    val context = LocalContext.current
+    val links =
+        listOfNotNull(
+            R.string.request_open_web to detail.webUrl,
+            detail.mediaServerUrl?.let { R.string.request_open_media_server to it },
+            detail.serviceUrl?.let {
+                (
+                    if (detail.item.mediaType ==
+                        RequestMediaType.Tv
+                    ) {
+                        R.string.media_open_sonarr
+                    } else {
+                        R.string.media_open_radarr
+                    }
+                ) to
+                    it
+            },
+        )
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+    ) {
+        links.forEach { (labelRes, url) ->
+            BingeOutlinedButton(label = stringResource(labelRes), onClick = { context.openInBrowser(url) })
+        }
     }
 }
 

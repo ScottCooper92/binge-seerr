@@ -54,6 +54,23 @@ data class SeerrRequestMediaDto(
     /** Links the server derives: the title in the media server, and in the download client. */
     @SerialName("mediaUrl") val mediaUrl: String? = null,
     @SerialName("serviceUrl") val serviceUrl: String? = null,
+    @SerialName("mediaUrl4k") val mediaUrl4k: String? = null,
+    @SerialName("serviceUrl4k") val serviceUrl4k: String? = null,
+)
+
+/** `media/{id}/watch_data`: Tautulli's counts per instance; an instance without plays is absent. */
+@Serializable
+data class SeerrWatchDataDto(
+    @SerialName("data") val data: SeerrWatchStatsDto? = null,
+    @SerialName("data4k") val data4k: SeerrWatchStatsDto? = null,
+)
+
+@Serializable
+data class SeerrWatchStatsDto(
+    @SerialName("playCount") val playCount: Int = 0,
+    @SerialName("playCount7Days") val playCount7Days: Int = 0,
+    @SerialName("playCount30Days") val playCount30Days: Int = 0,
+    @SerialName("users") val users: List<SeerrRequestUserDto> = emptyList(),
 )
 
 /** A download client's tag, as `service/{type}/{id}` lists them. */

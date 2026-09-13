@@ -86,6 +86,12 @@ data class SeerrServerProfile(
 
     val hasDiscoverSliders: Boolean get() = jellyseerrLineage || atLeast(1, 32)
 
+    /** Deleting a title's files from Radarr or Sonarr arrived with Jellyseerr 1.5; Overseerr never had it. */
+    val hasDeleteMediaFiles: Boolean get() = jellyseerrLineage && atLeast(1, 5)
+
+    /** Tautulli watch data: Overseerr 1.29, and the Jellyseerr lineage from 1.1. */
+    val hasWatchData: Boolean get() = if (jellyseerrLineage) atLeast(1, 1) else atLeast(1, 29)
+
     val mediaServer: SeerrMediaServer get() = SeerrMediaServer.fromCode(settings.mediaServerType)
 
     /** The sign-in modes the form offers: what the lineage can do, narrowed by what the admin turned on. */

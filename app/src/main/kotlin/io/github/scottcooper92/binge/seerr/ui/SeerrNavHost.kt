@@ -21,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.EditRequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.ListRefresh
+import io.github.scottcooper92.binge.seerr.ui.requests.ManageMediaActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
@@ -152,6 +153,12 @@ private fun RequestDetailEntry(
                         onToggleTag = viewModel.editor::toggleTag,
                         onSave = viewModel.editor::save,
                         onDismiss = viewModel.editor::cancel,
+                    ),
+                media =
+                    ManageMediaActions(
+                        onSetStatus = { mediaId, status, is4k -> viewModel.moderation.setMediaStatus(requestId, mediaId, status, is4k) },
+                        onClearData = { mediaId -> viewModel.moderation.clearMedia(requestId, mediaId) },
+                        onDeleteFiles = { mediaId, is4k -> viewModel.moderation.deleteMediaFiles(requestId, mediaId, is4k) },
                     ),
             ),
     )

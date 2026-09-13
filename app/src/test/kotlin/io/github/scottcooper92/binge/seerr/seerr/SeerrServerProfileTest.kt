@@ -33,6 +33,9 @@ class SeerrServerProfileTest {
         assertTrue(current.hasCounts)
         assertFalse(current.hasOverrideRules)
         assertFalse(current.hasQuickConnect)
+        assertFalse(current.hasDeleteMediaFiles)
+        assertFalse(profile("1.28.0").hasWatchData)
+        assertTrue(current.hasWatchData)
     }
 
     @Test
@@ -51,6 +54,9 @@ class SeerrServerProfileTest {
         assertTrue(seerr.canBlockCollections)
         assertTrue(seerr.hasQuickConnect)
         assertTrue(seerr.hasIssues)
+        assertFalse(profile("1.4.0").hasDeleteMediaFiles)
+        assertTrue(jellyseerr.hasDeleteMediaFiles)
+        assertTrue(jellyseerr.hasWatchData)
     }
 
     @Test

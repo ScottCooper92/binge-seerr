@@ -29,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -228,16 +229,28 @@ class RequestDetailViewModelTest {
     fun `dismissing the report sheet mid-send keeps it Sending, so a re-opened send does not duplicate the POST`() =
         runTest {
             server(ADMIN)
+            // The subject is the state while the POST is open, so hold the response rather than
+            // racing OkHttp's thread to assert before it lands.
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
             val vm = viewModel()
             vm.awaitReady()
 
+            // `uiState` is `state` combined with the editor's and re-shared, so a write reaches it
+            // on the next dispatch, not on the next line. Await it: reading `.value` here passed
+            // only while Main happened to dispatch inline.
             vm.reportIssue(IssueType.Subtitles, "Missing subs")
-            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.report == IssueReport.Sending }.report)
 
+            // Dismissing mid-send must leave Sending in place; if it did not, this second send
+            // would pass the re-entrancy guard and the request count below would read 2.
             vm.dismissReport()
-            assertEquals(IssueReport.Sending, (vm.uiState.value as RequestDetailUiState.Ready).report)
-
             vm.reportIssue(IssueType.Subtitles, "Missing subs again")
+            release.countDown()
+
             assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
             assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
         }
@@ -464,6 +477,96 @@ class RequestDetailViewModelTest {
 
             serve("/api/v1/auth/me", """{"id":9,"displayName":"Other","permissions":$REQUEST}""")
             assertFalse(viewModel().awaitReady().detail.canEdit)
+        }
+
+    @Test
+    fun `a moderator manages the media record, with watch data where the server has it, and a plain user only reads it`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/media/900/watch_data",
+                """{"data":{"playCount":12,"playCount7Days":2,"playCount30Days":5,"users":[{"displayName":"Scott"},{"username":"ana"}]}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            serve("/api/v1/media/900/file", "{}")
+            serve("/api/v1/media/900", "{}")
+            val vm = viewModel()
+            val media = checkNotNull(vm.awaitReady().detail.media)
+
+            assertEquals(900, media.mediaId)
+            assertTrue(media.isTv)
+            assertTrue(media.canSetStatus)
+            assertTrue(media.canClearData)
+            assertTrue(media.canDeleteFiles)
+            val standard = media.instances.single()
+            assertFalse(standard.is4k)
+            assertEquals(SeerrMediaStatusCode.PartiallyAvailable, standard.status)
+            assertEquals(WatchStats(12, 2, 5, listOf("Scott", "ana")), standard.watch)
+
+            // The admin's page is idle once loaded, so a plain user's open must not add a watch-data read.
+            serve("/api/v1/auth/me", """{"id":8,"permissions":$REQUEST}""")
+            val plain = checkNotNull(viewModel().awaitReady().detail.media)
+            assertFalse(plain.canManage)
+            assertNull(plain.instances.single().watch)
+            assertEquals(1, received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" })
+            serve("/api/v1/auth/me", """{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
+
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
+            vm.moderation.events.first { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            vm.moderation.events.first { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.clearMedia(11, 900)
+            vm.moderation.events.first { it == ModerationEvent.MediaCleared }
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("false", status.url.queryParameter("is4k"))
+            val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
+            assertEquals("false", files.url.queryParameter("is4k"))
+            assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900" })
+        }
+
+    @Test
+    fun `a request with a 4K record lists both instances, and moderation targets the one asked for`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+                   "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"status4k":5,
+                     "mediaUrl":"https://jellyfin.example.com/item/1","mediaUrl4k":"https://jellyfin.example.com/item/1-4k",
+                     "serviceUrl4k":"https://sonarr.example.com/1-4k",
+                     "downloadStatus":[{"title":"Severance.S02","size":1000,"sizeLeft":250,"status":"downloading","timeLeft":"00:10:00"}]}}""",
+            )
+            serve(
+                "/api/v1/media/900/watch_data",
+                """{"data":{"playCount":12,"playCount7Days":2,"playCount30Days":5,"users":[]},
+                    "data4k":{"playCount":3,"playCount7Days":1,"playCount30Days":2,"users":[]}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            serve("/api/v1/media/900/file", "{}")
+            val vm = viewModel()
+            val media = checkNotNull(vm.awaitReady().detail.media)
+
+            val (standard, fourK) = media.instances
+            assertEquals(2, media.instances.size)
+            assertFalse(standard.is4k)
+            assertTrue(fourK.is4k)
+            assertEquals(SeerrMediaStatusCode.Available, fourK.status)
+            assertEquals("https://sonarr.example.com/1-4k", fourK.serviceUrl)
+            assertEquals("https://jellyfin.example.com/item/1-4k", fourK.mediaServerUrl)
+            assertEquals(WatchStats(3, 1, 2, emptyList()), fourK.watch)
+
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = true)
+            vm.moderation.events.first { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = true)
+            vm.moderation.events.first { it == ModerationEvent.MediaFilesDeleted }
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("true", status.url.queryParameter("is4k"))
+            val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
+            assertEquals("true", files.url.queryParameter("is4k"))
         }
 
     private object PlainCipher : SecretCipher {
