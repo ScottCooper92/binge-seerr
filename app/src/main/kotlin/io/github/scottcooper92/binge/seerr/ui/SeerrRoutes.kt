@@ -14,10 +14,6 @@ sealed interface SeerrRoute : NavKey
 @Serializable
 data object HomeRoute : SeerrRoute
 
-/** Connect a server. Reached from the hub's Disconnect, or as the home while nothing is saved. */
-@Serializable
-data object SetupRoute : SeerrRoute
-
 /** The requests browser. */
 @Serializable
 data object RequestsRoute : SeerrRoute
@@ -30,7 +26,7 @@ data object SettingsRoute : SeerrRoute
 @Serializable
 data object EditConnectionRoute : SeerrRoute
 
-/** One of the hub's manage sections whose screen arrives with a later phase. */
+/** One of the hub's manage sections; its screen arrives with its phase. */
 @Serializable
 data class SectionRoute(
     val section: HubSection,
