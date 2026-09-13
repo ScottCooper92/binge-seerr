@@ -133,6 +133,7 @@ class DvrInstanceViewModelTest {
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
             vm.test()
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
             vm.extras.first { it.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
             vm.save()
