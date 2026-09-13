@@ -21,6 +21,9 @@ val MINIMUM_AVAILABILITIES: List<String> = listOf("announced", "inCinemas", "rel
 /** Sonarr's series types, as the server spells them. */
 val SERIES_TYPES: List<String> = listOf("standard", "daily", "anime")
 
+/** Sonarr's "Monitor New Seasons" default: the web client's own default for a new instance. */
+private const val MONITOR_NEW_ITEMS_ALL = "all"
+
 /** One instance as the services page lists it. */
 data class DvrSummary(
     val id: Int,
@@ -85,6 +88,7 @@ data class DvrForm(
     val animeTagIds: Set<Int>? = null,
     val seasonFolders: Boolean? = null,
     val languageProfileId: Int? = null,
+    val monitorNewItems: String? = null,
 ) {
     val connectionValid: Boolean
         get() = host.isNotBlank() && port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true && apiKey.isNotBlank()
@@ -104,6 +108,7 @@ data class DvrForm(
                         animeSeriesType = SERIES_TYPES.first(),
                         animeTagIds = emptySet(),
                         seasonFolders = true,
+                        monitorNewItems = MONITOR_NEW_ITEMS_ALL,
                     )
             }
     }
@@ -191,6 +196,7 @@ internal fun SeerrServiceSettingsDto.toForm(type: ServiceType): DvrForm =
         animeTagIds = if (type == ServiceType.Sonarr) animeTags.orEmpty().toSet() else null,
         seasonFolders = if (type == ServiceType.Sonarr) enableSeasonFolders ?: true else null,
         languageProfileId = activeLanguageProfileId,
+        monitorNewItems = if (type == ServiceType.Sonarr) monitorNewItems ?: MONITOR_NEW_ITEMS_ALL else null,
     )
 
 /**
@@ -227,6 +233,7 @@ internal fun DvrForm.toDto(choices: DvrChoices?): SeerrServiceSettingsDto =
         animeTags = animeTagIds?.toList(),
         enableSeasonFolders = seasonFolders,
         activeLanguageProfileId = languageProfileId,
+        monitorNewItems = monitorNewItems,
     )
 
 internal fun DvrForm.toTestBody(): SeerrDvrTestBody =

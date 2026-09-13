@@ -39,7 +39,7 @@ private const val SONARR =
     """[{"id":3,"name":"Main","hostname":"sonarr.local","port":8989,"apiKey":"s-key","useSsl":false,
          "activeProfileId":5,"activeProfileName":"HD","activeDirectory":"/tv","tags":[9],"is4k":false,"isDefault":true,
          "seriesType":"standard","animeSeriesType":"anime","activeAnimeProfileId":5,"activeAnimeDirectory":"/anime",
-         "animeTags":[],"enableSeasonFolders":true,"activeLanguageProfileId":1}]"""
+         "animeTags":[],"enableSeasonFolders":true,"activeLanguageProfileId":1,"monitorNewItems":"none"}]"""
 
 class DvrInstanceViewModelTest {
     @get:Rule
@@ -179,6 +179,28 @@ class DvrInstanceViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("false", sent.getValue("enableSeasonFolders").jsonPrimitive.content)
             assertEquals("HD", sent.getValue("activeAnimeProfileName").jsonPrimitive.content)
+            assertEquals("none", sent.getValue("monitorNewItems").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a new sonarr defaults to monitoring all new seasons, matching the web client`() =
+        runTest {
+            seerr.serve(
+                "POST /api/v1/settings/sonarr",
+                SONARR.trim().removePrefix("[").removeSuffix("]"),
+            )
+            val vm = viewModel(ServiceType.Sonarr, id = null)
+            assertEquals("all", vm.awaitReady().draft.monitorNewItems)
+
+            vm.edit { it.copy(name = "Main", host = "sonarr.local", apiKey = "s-key") }
+            vm.test()
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
+            vm.extras.first { it.choices != null }
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/sonarr")).jsonObject
+            assertEquals("all", sent.getValue("monitorNewItems").jsonPrimitive.content)
         }
 
     @Test
