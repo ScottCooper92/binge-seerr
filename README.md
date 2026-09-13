@@ -5,8 +5,9 @@ companion app for [Binge](https://github.com/ScottCooper92).
 
 ## For the person running a server
 
-Install it, enter your server's address, and sign in with an API key, a local account, Plex, or
-Jellyfin's Quick Connect. The app then manages the server from your phone or your TV:
+Install it, enter your server's address, and sign in with an API key, a local account, or your
+media server's own login (Plex, Jellyfin, Emby — with Quick Connect where the server offers it).
+The app then manages the server from your phone or your TV:
 
 - **Requests**: every request on the server, filtered by state and sorted your way; approve,
   decline, retry or remove them, block a title from being requested again, and change a
