@@ -38,6 +38,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsScreen
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
@@ -128,14 +129,20 @@ fun SeerrNavHost(
                         page = route.page,
                         onBack = { backStack.removeLastOrNull() },
                         onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
+                        onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
+                        onOpenRule = { id -> backStack.add(OverrideRuleRoute(id)) },
                     )
                 }
+                entry<DvrInstanceRoute> { route -> DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
+                entry<OverrideRuleRoute> { route -> OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
                 entry<SettingsRoute> {
                     SettingsEntry(
                         onBack = { backStack.removeLastOrNull() },
                         onEditConnection = { backStack.add(EditConnectionRoute) },
                         onOpenServerSettings = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.General)) },
                         onOpenMediaServer = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.MediaServer)) },
+                        onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
+                        onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
                     )
                 }
                 entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
@@ -414,6 +421,8 @@ private fun SettingsEntry(
     onEditConnection: () -> Unit,
     onOpenServerSettings: () -> Unit,
     onOpenMediaServer: () -> Unit,
+    onOpenServices: () -> Unit,
+    onOpenInstance: (ServiceType, Int) -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -430,6 +439,8 @@ private fun SettingsEntry(
                 onEditConnection = onEditConnection,
                 onOpenServerSettings = onOpenServerSettings,
                 onOpenMediaServer = onOpenMediaServer,
+                onOpenServices = onOpenServices,
+                onOpenInstance = onOpenInstance,
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.

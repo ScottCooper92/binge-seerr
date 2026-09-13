@@ -408,6 +408,53 @@ interface SeerrApi {
     @GET("api/v1/settings/sonarr")
     suspend fun sonarrSettings(): List<SeerrServiceSettingsDto>
 
+    /** Reaches an instance and answers with what it offers; [service] is `radarr` or `sonarr`. */
+    @POST("api/v1/settings/{service}/test")
+    suspend fun testDvr(
+        @Path("service") service: String,
+        @Body body: SeerrDvrTestBody,
+    ): SeerrDvrTestResultDto
+
+    /** Adds an instance; the server assigns the id and, for a default, clears the previous default of the same 4K kind. */
+    @POST("api/v1/settings/{service}")
+    suspend fun createDvr(
+        @Path("service") service: String,
+        @Body body: SeerrServiceSettingsDto,
+    ): SeerrServiceSettingsDto
+
+    @PUT("api/v1/settings/{service}/{id}")
+    suspend fun updateDvr(
+        @Path("service") service: String,
+        @Path("id") id: Int,
+        @Body body: SeerrServiceSettingsDto,
+    ): SeerrServiceSettingsDto
+
+    @DELETE("api/v1/settings/{service}/{id}")
+    suspend fun deleteDvr(
+        @Path("service") service: String,
+        @Path("id") id: Int,
+    ): SeerrServiceSettingsDto
+
+    /** The override rules, Jellyseerr 2.2+. */
+    @GET("api/v1/overrideRule")
+    suspend fun overrideRules(): List<SeerrOverrideRuleDto>
+
+    @POST("api/v1/overrideRule")
+    suspend fun createOverrideRule(
+        @Body body: SeerrOverrideRuleDto,
+    ): SeerrOverrideRuleDto
+
+    @PUT("api/v1/overrideRule/{ruleId}")
+    suspend fun updateOverrideRule(
+        @Path("ruleId") ruleId: Int,
+        @Body body: SeerrOverrideRuleDto,
+    ): SeerrOverrideRuleDto
+
+    @DELETE("api/v1/overrideRule/{ruleId}")
+    suspend fun deleteOverrideRule(
+        @Path("ruleId") ruleId: Int,
+    ): SeerrOverrideRuleDto
+
     @GET("api/v1/settings/notifications/email")
     suspend fun emailAgent(): SeerrNotificationAgentDto
 

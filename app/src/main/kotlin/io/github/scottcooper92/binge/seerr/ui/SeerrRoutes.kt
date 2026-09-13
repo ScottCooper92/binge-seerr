@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
+import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.UserSettingsPage
 import kotlinx.serialization.Serializable
@@ -65,6 +66,19 @@ data class UserSettingsPageRoute(
 @Serializable
 data class ServerSettingsPageRoute(
     val page: ServerSettingsPage,
+) : SeerrRoute
+
+/** One Radarr or Sonarr instance; a null [id] is a new one. */
+@Serializable
+data class DvrInstanceRoute(
+    val type: ServiceType,
+    val id: Int?,
+) : SeerrRoute
+
+/** One override rule; a null [id] is a new one. */
+@Serializable
+data class OverrideRuleRoute(
+    val id: Int?,
 ) : SeerrRoute
 
 /** One request as a page. */
