@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -47,7 +48,7 @@ class CacheViewModel
 
         private fun flushing(
             key: String,
-            call: suspend (io.github.scottcooper92.binge.seerr.seerr.SeerrApi) -> Response<Unit>,
+            call: suspend (SeerrApi) -> Response<Unit>,
         ) {
             val ready = state.value as? CacheUiState.Ready ?: return
             if (key in ready.busyIds) return
