@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.notifications
 
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
+import java.util.Collections
 
 /** Records what the poll would have shown. */
 internal class FakeNotifier : SeerrNotifier {
@@ -51,7 +52,8 @@ internal class FakeNotifier : SeerrNotifier {
 }
 
 internal class FakeScheduler : NotificationScheduler {
-    val calls = mutableListOf<String>()
+    /** Synchronized: the planner's own coroutine appends while a test's polling loop reads. */
+    val calls: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
     override fun schedule() {
         calls += "schedule"

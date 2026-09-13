@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
+/** Set by [PollReactor] when the server rejects the saved credentials, cleared by [forgetServer]. */
+private val PAUSED_FOR_AUTH_FAILURE = booleanPreferencesKey("paused_for_auth_failure")
+
 /**
  * What the poll can tell the user about, each behind its own toggle. The first two are feeds a
  * moderator watches, deduplicated by a last-seen id; the rest are the user's own requests
@@ -47,6 +50,17 @@ class NotificationPrefs(
 
     suspend fun isEnabled(signal: NotificationSignal): Boolean = enabled(signal).first()
 
+    /**
+     * Whether a poll's rejected credentials have paused the schedule. Tracked independently of the
+     * credentials themselves so re-entering the same, still-rejected key does not look like a no-op
+     * to [NotificationPlanner]: re-arming the poll needs its own signal, not structural equality.
+     */
+    val pausedForAuthFailure: Flow<Boolean> = dataStore.data.map { it[PAUSED_FOR_AUTH_FAILURE] ?: false }.distinctUntilChanged()
+
+    suspend fun setPausedForAuthFailure(paused: Boolean) {
+        dataStore.edit { it[PAUSED_FOR_AUTH_FAILURE] = paused }
+    }
+
     /** Enabling a signal drops its deduplication state, so what arrived while it was off is not announced. */
     suspend fun setEnabled(
         signal: NotificationSignal,
@@ -77,9 +91,17 @@ class NotificationPrefs(
         dataStore.edit { it[signal.notifiedKey()] = ids.mapTo(mutableSetOf()) { id -> id.toString() } }
     }
 
-    /** Drops every signal's deduplication state; the next check re-seeds. For a server change, whose ids mean nothing here. */
+    /**
+     * Drops every signal's deduplication state; the next check re-seeds. For a server change, whose
+     * ids mean nothing here. Also clears [pausedForAuthFailure]: this runs on every successful
+     * connect and on disconnect (`SeerrConnection.onServerChanged`), so it re-arms a paused poll
+     * even when the credentials that fixed it are byte-for-byte the ones that were rejected.
+     */
     suspend fun forgetServer() {
-        dataStore.edit { prefs -> NotificationSignal.entries.forEach { prefs.clearDedup(it) } }
+        dataStore.edit { prefs ->
+            NotificationSignal.entries.forEach { prefs.clearDedup(it) }
+            prefs.remove(PAUSED_FOR_AUTH_FAILURE)
+        }
     }
 
     private fun MutablePreferences.clearDedup(signal: NotificationSignal) {
