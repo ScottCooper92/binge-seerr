@@ -23,12 +23,22 @@ import io.github.scottcooper92.binge.seerr.data.RoomIssueStore
 import io.github.scottcooper92.binge.seerr.data.RoomUserStore
 import io.github.scottcooper92.binge.seerr.data.SeerrCacheDatabase
 import io.github.scottcooper92.binge.seerr.data.UserStore
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
+import io.github.scottcooper92.binge.seerr.notifications.LogNotifier
+import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
+import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
+import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
+import io.github.scottcooper92.binge.seerr.notifications.WorkManagerNotificationScheduler
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_credentials")
 private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_device")
+private val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
 
 /** The name plex.tv lists this app under on the user's authorised devices. A brand name, never translated. */
 private const val PLEX_PRODUCT_NAME = "Binge Seerr"
@@ -104,9 +114,34 @@ object SeerrModule {
         health: SeerrConnectionHealthMonitor,
         issues: IssueStore,
         users: UserStore,
+        notifications: NotificationPrefs,
     ): SeerrConnection =
         SeerrConnection(store, apis, health, onServerChanged = {
             issues.clearAll()
             users.clearAll()
+            notifications.forgetServer()
         })
+
+    /** The scope for work that outlives every screen: the notification planner runs on it. */
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun applicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    @Provides
+    @Singleton
+    fun notificationPrefs(
+        @ApplicationContext context: Context,
+    ): NotificationPrefs = NotificationPrefs(context.notificationsDataStore)
+
+    @Provides
+    @Singleton
+    fun notificationScheduler(
+        @ApplicationContext context: Context,
+    ): NotificationScheduler = WorkManagerNotificationScheduler(context)
+
+    /** What the poll finds is logged until the notifier lands: the channels and the deep links are Phase 5.2. */
+    @Provides
+    @Singleton
+    fun notifier(): SeerrNotifier = LogNotifier()
 }

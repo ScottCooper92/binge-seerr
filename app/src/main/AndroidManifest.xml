@@ -17,6 +17,21 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true">
 
+        <!--
+            WorkManager's own initializer is removed so it starts through SeerrApp's configuration,
+            whose worker factory is Hilt's: the poll worker takes its collaborators by injection.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

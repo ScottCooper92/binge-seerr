@@ -84,6 +84,9 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.paging)
     ksp(libs.room.compiler)
+    implementation(libs.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
