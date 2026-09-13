@@ -75,12 +75,10 @@ internal fun SeerrIssueStatusCode?.toIssueStatus(): IssueStatus =
     if (this == SeerrIssueStatusCode.Resolved) IssueStatus.Resolved else IssueStatus.Open
 
 /** Null for an issue on media this app does not render; the row would have nothing to say. */
-suspend fun SeerrIssueDto.toIssueEntity(
+suspend fun SeerrIssueDto.toIssueItem(
     api: SeerrApi,
     hydrate: suspend (SeerrApi, String, Int) -> HydratedTitle?,
-    listKey: String,
-    orderIndex: Int,
-): IssueEntity? {
+): IssueItem? {
     val media = media ?: return null
     val mediaType =
         when (media.mediaType) {
@@ -89,27 +87,63 @@ suspend fun SeerrIssueDto.toIssueEntity(
             else -> return null
         }
     val details = hydrate(api, media.mediaType, media.tmdbId)
-    return IssueEntity(
-        listKey = listKey,
+    return IssueItem(
         id = id,
         tmdbId = media.tmdbId,
-        mediaType = mediaType.name,
+        mediaType = mediaType,
         title = details?.title,
         posterUrl = details?.posterUrl,
         year = details?.year,
-        issueType = (IssueType.entries.firstOrNull { it.code == issueType } ?: IssueType.Other).name,
-        status = status.toIssueStatus().name,
+        type = IssueType.entries.firstOrNull { it.code == issueType } ?: IssueType.Other,
+        status = status.toIssueStatus(),
         reportedBy = createdBy?.displayString(),
         reportedById = createdBy?.id,
         commentCount = comments.size,
         createdAtMillis = createdAt?.toEpochMillisOrNull(),
         updatedAtMillis = updatedAt?.toEpochMillisOrNull(),
-        problem = comments.firstOrNull()?.message?.takeIf { it.isNotBlank() },
+        problem =
+            comments
+                .sortedBy { it.id }
+                .firstOrNull()
+                ?.message
+                ?.takeIf { it.isNotBlank() },
+        problemSeason = problemSeason,
+        problemEpisode = problemEpisode,
+    )
+}
+
+/** The row as the mediator caches it, in the list it was loaded for. */
+suspend fun SeerrIssueDto.toIssueEntity(
+    api: SeerrApi,
+    hydrate: suspend (SeerrApi, String, Int) -> HydratedTitle?,
+    listKey: String,
+    orderIndex: Int,
+): IssueEntity? = toIssueItem(api, hydrate)?.toEntity(listKey, orderIndex)
+
+fun IssueItem.toEntity(
+    listKey: String,
+    orderIndex: Int,
+): IssueEntity =
+    IssueEntity(
+        listKey = listKey,
+        id = id,
+        tmdbId = tmdbId,
+        mediaType = mediaType.name,
+        title = title,
+        posterUrl = posterUrl,
+        year = year,
+        issueType = type.name,
+        status = status.name,
+        reportedBy = reportedBy,
+        reportedById = reportedById,
+        commentCount = commentCount,
+        createdAtMillis = createdAtMillis,
+        updatedAtMillis = updatedAtMillis,
+        problem = problem,
         problemSeason = problemSeason,
         problemEpisode = problemEpisode,
         orderIndex = orderIndex,
     )
-}
 
 fun IssueEntity.toIssueItem(): IssueItem =
     IssueItem(
@@ -132,9 +166,9 @@ fun IssueEntity.toIssueItem(): IssueItem =
     )
 
 /** Email is a last resort and masked to its local part. */
-private fun SeerrRequestUserDto.displayString(): String? =
+internal fun SeerrRequestUserDto.displayString(): String? =
     listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() } ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
 
-private fun String.toEpochMillisOrNull(): Long? =
+internal fun String.toEpochMillisOrNull(): Long? =
     runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
         ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()

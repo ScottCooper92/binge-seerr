@@ -22,6 +22,12 @@ data object RequestsRoute : SeerrRoute
 @Serializable
 data object IssuesRoute : SeerrRoute
 
+/** One issue as a page: its thread. */
+@Serializable
+data class IssueDetailRoute(
+    val issueId: Int,
+) : SeerrRoute
+
 /** One request as a page. */
 @Serializable
 data class RequestDetailRoute(

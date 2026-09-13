@@ -52,8 +52,7 @@ class IssuesViewModel
         private val scope: Flow<IssueListScope> =
             flow {
                 val user = runCatching { connection.authenticatedUser() }.getOrNull()
-                val baseUrl = runCatching { connection.current().baseUrl }.getOrNull()
-                emit(IssueListScope(permissions = user.toPermissions(), currentUserId = user?.id, baseUrl = baseUrl))
+                emit(IssueListScope(permissions = user.toPermissions(), currentUserId = user?.id))
             }.stateIn(viewModelScope, SharingStarted.Lazily, IssueListScope())
 
         private val streams: Map<IssueFilter, Flow<PagingData<IssueItem>>> =

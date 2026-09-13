@@ -60,17 +60,11 @@ data class IssueItem(
     val problemEpisode: Int?,
 )
 
-/**
- * Who is looking, and at which server: the permissions decide whether the list is everyone's
- * issues or only the user's own, and [baseUrl] is where a row opens until the issue page lands.
- */
+/** Who is looking: the permissions decide whether the list is everyone's issues or only the user's own. */
 data class IssueListScope(
     val permissions: SeerrPermissions = SeerrPermissions(),
     val currentUserId: Int? = null,
-    val baseUrl: String? = null,
 ) {
-    fun webUrl(item: IssueItem): String? = baseUrl?.let { it + "issues/" + item.id }
-
     /** The `requestedBy` the list is narrowed to, or null for a user who may see everyone's. */
     val requestedBy: Int? get() = currentUserId?.takeUnless { permissions.canManageIssues || permissions.canViewIssues }
 }
