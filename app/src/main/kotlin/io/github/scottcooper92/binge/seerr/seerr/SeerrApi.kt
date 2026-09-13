@@ -402,6 +402,38 @@ interface SeerrApi {
     @GET("api/v1/settings/jobs")
     suspend fun jobs(): List<SeerrJobDto>
 
+    /** Starts the job now; the answer is the job with `running` set. */
+    @POST("api/v1/settings/jobs/{jobId}/run")
+    suspend fun runJob(
+        @Path("jobId") jobId: String,
+    ): SeerrJobDto
+
+    @POST("api/v1/settings/jobs/{jobId}/cancel")
+    suspend fun cancelJob(
+        @Path("jobId") jobId: String,
+    ): SeerrJobDto
+
+    /** Changes when the job runs, Overseerr 1.27 and the Jellyseerr lineage from 1.1. */
+    @POST("api/v1/settings/jobs/{jobId}/schedule")
+    suspend fun scheduleJob(
+        @Path("jobId") jobId: String,
+        @Body body: SeerrJobScheduleBody,
+    ): SeerrJobDto
+
+    @GET("api/v1/settings/cache")
+    suspend fun caches(): SeerrCacheDto
+
+    @POST("api/v1/settings/cache/{cacheId}/flush")
+    suspend fun flushCache(
+        @Path("cacheId") cacheId: String,
+    ): Response<Unit>
+
+    /** Drops one DNS cache entry by hostname, Seerr 3.0+. */
+    @POST("api/v1/settings/cache/dns/{dnsEntry}/flush")
+    suspend fun flushDnsEntry(
+        @Path("dnsEntry") dnsEntry: String,
+    ): Response<Unit>
+
     @GET("api/v1/settings/radarr")
     suspend fun radarrSettings(): List<SeerrServiceSettingsDto>
 

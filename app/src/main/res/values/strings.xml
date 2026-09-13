@@ -612,6 +612,39 @@
     <string name="server_settings_agents_manage">Manage agents</string>
     <string name="server_settings_sliders">Discover sliders</string>
     <string name="server_settings_network">Network</string>
+    <string name="server_settings_jobs">Scheduled jobs</string>
+    <string name="server_settings_job_run">Run now</string>
+    <string name="server_settings_job_cancel">Cancel</string>
+    <string name="server_settings_job_schedule">Schedule</string>
+    <string name="server_settings_job_schedule_title">Schedule %1$s</string>
+    <string name="server_settings_job_schedule_message">Pick how often it runs, or type a cron expression of your own.</string>
+    <string name="server_settings_job_presets">Every</string>
+    <string name="server_settings_job_cron">Cron expression</string>
+    <string name="server_settings_job_cron_hint">Six fields, seconds first: 0 */15 * * * *</string>
+    <string name="server_settings_job_scheduled">Schedule saved</string>
+    <string name="server_settings_cache">Caches</string>
+    <string name="server_settings_cache_caption">API and image caches, and what to flush</string>
+    <string name="server_settings_api_caches">API caches</string>
+    <string name="server_settings_image_caches">Image caches</string>
+    <string name="server_settings_cache_stats">%1$d hits · %2$d misses · %3$d keys</string>
+    <string name="server_settings_image_cache_stats">%1$s · %2$d images</string>
+    <string name="server_settings_cache_flush">Flush</string>
+    <string name="server_settings_cache_flushed">Cache flushed</string>
+    <string name="server_settings_dns_entries">%1$d of %2$d entries</string>
+    <string name="server_settings_dns_stats">%1$d hits · %2$d misses · %3$d failures</string>
+    <string name="server_settings_dns_ttl">TTL %1$d s</string>
+    <plurals name="server_settings_every_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="server_settings_every_hours">
+        <item quantity="one">%1$d hour</item>
+        <item quantity="other">%1$d hours</item>
+    </plurals>
+    <plurals name="server_settings_every_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
     <string name="server_settings_network_caption">Proxy headers, CSRF, the outbound proxy and the DNS cache</string>
     <string name="server_settings_force_ipv4">Prefer IPv4</string>
     <string name="server_settings_proxy">Outbound proxy</string>

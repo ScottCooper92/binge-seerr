@@ -155,7 +155,7 @@ private fun SeerrJobDto.toJob(): ScheduledJob =
         nextRunMillis = nextExecutionTime?.toEpochMillisOrNull(),
     )
 
-private fun String.toEpochMillisOrNull(): Long? =
+internal fun String.toEpochMillisOrNull(): Long? =
     runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
         ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()
 
