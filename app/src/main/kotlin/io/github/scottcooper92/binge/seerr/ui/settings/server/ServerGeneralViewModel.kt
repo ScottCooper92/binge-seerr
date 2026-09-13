@@ -61,25 +61,31 @@ class ServerGeneralViewModel
          * Replaces the key. When this app is itself signed in with it, the new one is validated and
          * saved in the same step — the old one stopped working the moment the server answered, so
          * leaving the connection on it would sign the app out.
+         *
+         * The regenerate call and the reconnect probe are reported separately: the regenerate call
+         * is what actually invalidates the old key, so its result is adopted into [extras]
+         * regardless of whether the follow-up reconnect succeeds. Otherwise a probe failure right
+         * after a successful regenerate would discard the only copy of the new key the app ever saw.
          */
         fun regenerateApiKey() {
             if (extrasState.value.apiKey.regenerating) return
             extrasState.update { it.copy(apiKey = it.apiKey.copy(regenerating = true)) }
             viewModelScope.launch {
                 runCatching {
-                    val key =
-                        connection
-                            .api()
-                            .regenerateApiKey()
-                            .apiKey
-                            .orEmpty()
-                    val current = connection.current()
-                    if (current.auth is SeerrAuth.ApiKey && key.isNotEmpty()) {
-                        connection.connect(current.baseUrl, SeerrAuth.ApiKey(key)).getOrThrow()
-                    }
-                    key
+                    connection
+                        .api()
+                        .regenerateApiKey()
+                        .apiKey
+                        .orEmpty()
                 }.onSuccess { key ->
                     extrasState.update { it.copy(apiKey = it.apiKey.copy(key = key, regenerating = false)) }
+                    val current = connection.current()
+                    if (current.auth is SeerrAuth.ApiKey && key.isNotEmpty()) {
+                        connection.connect(current.baseUrl, SeerrAuth.ApiKey(key)).onFailure { failure ->
+                            notify(EditorEvent.Failed(failure.toSeerrError()))
+                            return@launch
+                        }
+                    }
                     notify(EditorEvent.Notice(R.string.server_settings_api_key_regenerated))
                 }.onFailure { failure ->
                     extrasState.update { it.copy(apiKey = it.apiKey.copy(regenerating = false)) }
