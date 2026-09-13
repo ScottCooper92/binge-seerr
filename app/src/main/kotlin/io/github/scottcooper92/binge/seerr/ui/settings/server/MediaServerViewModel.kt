@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
-import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryEnabledBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanCommandBody
@@ -217,6 +216,3 @@ class MediaServerViewModel
             const val SCAN_POLL_MILLIS = 2_000L
         }
     }
-
-/** For [MediaServerViewModel.load]'s two branches to share one call shape. */
-private inline fun <T> SeerrApi.let(block: (SeerrApi) -> T): T = block(this)
