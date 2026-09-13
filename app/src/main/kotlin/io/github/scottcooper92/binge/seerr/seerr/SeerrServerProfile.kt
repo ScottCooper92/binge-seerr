@@ -83,6 +83,9 @@ data class SeerrServerProfile(
 
     val hasNetworkSettings: Boolean get() = jellyseerrLineage && atLeast(2, 4)
 
+    /** Choosing TMDB or TVDB for series and anime arrived with Seerr 3.0. */
+    val hasMetadataSettings: Boolean get() = jellyseerrLineage && atLeast(3, 0)
+
     val hasLinkedAccounts: Boolean get() = jellyseerrLineage && atLeast(2, 4)
 
     val hasQuickConnect: Boolean get() = jellyseerrLineage && atLeast(3, 4)

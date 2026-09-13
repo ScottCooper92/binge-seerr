@@ -121,6 +121,8 @@ internal fun generalRows(
     general: GeneralSettings,
     onEdit: () -> Unit,
     onOpenSliders: () -> Unit,
+    onOpenNetwork: () -> Unit,
+    onOpenMetadata: () -> Unit,
 ): List<SettingsRow> {
     val context = LocalContext.current
     return listOfNotNull(
@@ -163,6 +165,28 @@ internal fun generalRows(
                 label = stringResource(R.string.server_settings_sliders),
                 detail = stringResource(R.string.server_settings_sliders_caption),
                 onClick = onOpenSliders,
+            )
+        } else {
+            null
+        },
+        if (general.network) {
+            SettingsRow(
+                icon = Icons.Filled.Dns,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_network),
+                detail = stringResource(R.string.server_settings_network_caption),
+                onClick = onOpenNetwork,
+            )
+        } else {
+            null
+        },
+        if (general.metadata) {
+            SettingsRow(
+                icon = Icons.Filled.Storage,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_metadata),
+                detail = stringResource(R.string.server_settings_metadata_caption),
+                onClick = onOpenMetadata,
             )
         } else {
             null

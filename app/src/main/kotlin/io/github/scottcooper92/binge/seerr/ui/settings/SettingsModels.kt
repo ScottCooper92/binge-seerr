@@ -45,6 +45,10 @@ data class GeneralSettings(
     val hideAvailable: Boolean?,
     /** Whether the server has discover sliders to edit: Overseerr 1.32, and the Jellyseerr lineage from 1.4. */
     val discoverSliders: Boolean = false,
+    /** Whether the server has a network settings page: the Jellyseerr lineage from 2.4. */
+    val network: Boolean = false,
+    /** Whether the server picks its metadata providers: Seerr 3.0+. */
+    val metadata: Boolean = false,
 )
 
 /** [count] requests per [days]-day window; the server's global default for one media type. */
