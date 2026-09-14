@@ -111,11 +111,7 @@ private fun ConnectionFields(
         stringResource(R.string.server_settings_port),
         enabled = enabled,
         keyboardType = KeyboardType.Number,
-        // The port the kind listens on by default; this form starts blank, so it is an example and not a value.
-        placeholder =
-            stringResource(
-                if (draft.kind == MediaServerKind.Plex) R.string.placeholder_port_plex else R.string.placeholder_port_jellyfin,
-            ),
+        placeholder = portPlaceholder(draft.kind),
         isError = draft.port.isNotBlank() && !draft.copy(host = "x").valid,
     ) { value -> actions.onEdit { it.copy(port = value) } }
     EditorSwitchRow(stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled = enabled) { value ->
@@ -126,7 +122,7 @@ private fun ConnectionFields(
             base,
             stringResource(R.string.server_settings_url_base),
             enabled = enabled,
-            placeholder = stringResource(R.string.placeholder_url_base_jellyfin),
+            placeholder = urlBasePlaceholder(draft.kind),
         ) { value ->
             actions.onEdit { it.copy(urlBase = value) }
         }
@@ -144,10 +140,7 @@ private fun ConnectionFields(
         ),
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
-        placeholder =
-            stringResource(
-                if (draft.kind == MediaServerKind.Plex) R.string.placeholder_plex_web_url else R.string.placeholder_server_url,
-            ),
+        placeholder = externalUrlPlaceholder(draft.kind),
         supporting = stringResource(R.string.server_settings_external_hint),
     ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
     draft.forgotPasswordUrl?.let { url ->
@@ -322,3 +315,18 @@ private fun MediaServerKind.labelRes(): Int =
         MediaServerKind.Jellyfin -> R.string.user_origin_jellyfin
         MediaServerKind.Emby -> R.string.user_origin_emby
     }
+
+/** The port the kind listens on out of the box. An example only: unlike the DVR form, this one starts blank. */
+@Composable
+private fun portPlaceholder(kind: MediaServerKind): String =
+    stringResource(if (kind == MediaServerKind.Plex) R.string.placeholder_port_plex else R.string.placeholder_port_jellyfin)
+
+/** The path each install is commonly served under when it is not at the root. Plex has no URL base. */
+@Composable
+private fun urlBasePlaceholder(kind: MediaServerKind): String =
+    stringResource(if (kind == MediaServerKind.Emby) R.string.placeholder_url_base_emby else R.string.placeholder_url_base_jellyfin)
+
+/** Plex asks for its web app's own address; the others for the address the server is reached at. */
+@Composable
+private fun externalUrlPlaceholder(kind: MediaServerKind): String =
+    stringResource(if (kind == MediaServerKind.Plex) R.string.placeholder_plex_web_url else R.string.placeholder_server_url)
