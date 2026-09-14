@@ -74,6 +74,7 @@ class SetupViewModelTest {
     private fun TestScope.viewModel(
         reuseConnection: Boolean = false,
         savedState: SavedStateHandle = SavedStateHandle(),
+        cipher: SecretCipher = PlainCipher,
     ): SetupViewModel {
         if (!reuseConnection) {
             connection =
@@ -97,6 +98,7 @@ class SetupViewModelTest {
                         pollInterval = 10.milliseconds,
                     ),
                 savedState = savedState,
+                cipher = cipher,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -316,6 +318,28 @@ class SetupViewModelTest {
         }
 
     @Test
+    fun `the quick connect secret is encrypted before it is written to the saved state`() =
+        runTest {
+            val saved = SavedStateHandle()
+            val vm = viewModel(savedState = saved, cipher = ReversingCipher)
+            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
+            seerr.enqueue(json("""{"authenticated":false}"""))
+
+            vm.connect()
+            vm.awaitSignIn { it.link != null }
+
+            // The bearer secret that alone finishes this sign-in must not sit in the clear in the
+            // Bundle Android persists across a process death; it is round-tripped through the cipher.
+            val stored = saved.get<String>("pendingLink").orEmpty()
+            assertFalse(stored.contains("abcdef12"))
+            assertTrue(stored.contains("abcdef12".reversed()))
+
+            vm.cancelLink()
+        }
+
+    @Test
     fun `an expired quick connect code is reported and the code taken down`() =
         runTest {
             val vm = viewModel()
@@ -486,5 +510,12 @@ class SetupViewModelTest {
         override fun encrypt(plaintext: String): String = plaintext
 
         override fun decrypt(ciphertext: String): String = ciphertext
+    }
+
+    /** Distinct from [PlainCipher] so a test can tell the stored blob apart from the plaintext. */
+    private object ReversingCipher : SecretCipher {
+        override fun encrypt(plaintext: String): String = plaintext.reversed()
+
+        override fun decrypt(ciphertext: String): String = ciphertext.reversed()
     }
 }

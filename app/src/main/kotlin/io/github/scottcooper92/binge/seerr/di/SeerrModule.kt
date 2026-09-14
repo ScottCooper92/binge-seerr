@@ -16,6 +16,7 @@ import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.DeviceIdentityStore
 import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
+import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.IssueStore
@@ -53,9 +54,14 @@ private const val PLEX_PRODUCT_NAME = "Binge Seerr"
 object SeerrModule {
     @Provides
     @Singleton
+    fun secretCipher(): SecretCipher = KeystoreSecretCipher()
+
+    @Provides
+    @Singleton
     fun credentialStore(
         @ApplicationContext context: Context,
-    ): CredentialStore = CredentialStore(context.credentialsDataStore, KeystoreSecretCipher())
+        cipher: SecretCipher,
+    ): CredentialStore = CredentialStore(context.credentialsDataStore, cipher)
 
     @Provides
     @Singleton

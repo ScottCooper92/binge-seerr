@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui
 import androidx.lifecycle.SavedStateHandle
 import io.github.scottcooper92.binge.seerr.auth.PlexPin
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
+import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrQuickConnect
 import kotlinx.coroutines.CancellationException
@@ -25,14 +26,21 @@ internal class SetupLinks(
     private val connection: SeerrConnection,
     private val plex: PlexPinFlow,
     private val savedState: SavedStateHandle,
+    private val cipher: SecretCipher,
     private val onLink: (LinkFlow) -> Unit,
     private val onFinished: (Throwable?) -> Unit,
 ) {
     private var job: Job? = null
 
-    /** The link left waiting when the process died, if there was one. */
-    fun pending(): PendingLink? =
-        savedState.get<String>(PENDING_LINK)?.let { stored -> runCatching { Json.decodeFromString<PendingLink>(stored) }.getOrNull() }
+    /**
+     * The link left waiting when the process died, if there was one. A Quick Connect secret that
+     * fails to decrypt — a lost Keystore key — reads as no pending link at all, the same as a
+     * corrupt or absent JSON blob, rather than as a resume that fails every launch.
+     */
+    fun pending(): PendingLink? {
+        val stored = savedState.get<String>(PENDING_LINK) ?: return null
+        return runCatching { Json.decodeFromString<PendingLink>(stored) }.getOrNull()?.decrypted(cipher)
+    }
 
     fun startPlex(
         server: SetupServer,
@@ -135,10 +143,28 @@ internal class SetupLinks(
     }
 
     private fun keep(pending: PendingLink) {
-        savedState[PENDING_LINK] = Json.encodeToString<PendingLink>(pending)
+        savedState[PENDING_LINK] = Json.encodeToString<PendingLink>(pending.encrypted(cipher))
     }
 }
 
 /** [runCatching] would swallow the cancellation [SetupLinks.cancel] sends; this lets it back out. */
 private inline fun <T> attempt(block: () -> T): Result<T> =
     runCatching(block).onFailure { failure -> if (failure is CancellationException) throw failure }
+
+/**
+ * The Quick Connect secret is the bearer value that alone finishes that sign-in, so it is the one
+ * field here [SecretCipher] covers before [SavedStateHandle] writes it to disk. The Plex PIN's
+ * code and id are not: the code is shown to the user anyway, and resuming it needs no secret this
+ * install does not already hold.
+ */
+private fun PendingLink.encrypted(cipher: SecretCipher): PendingLink =
+    when (this) {
+        is PendingLink.Plex -> this
+        is PendingLink.QuickConnect -> copy(secret = cipher.encrypt(secret))
+    }
+
+private fun PendingLink.decrypted(cipher: SecretCipher): PendingLink? =
+    when (this) {
+        is PendingLink.Plex -> this
+        is PendingLink.QuickConnect -> cipher.decrypt(secret)?.let { copy(secret = it) }
+    }

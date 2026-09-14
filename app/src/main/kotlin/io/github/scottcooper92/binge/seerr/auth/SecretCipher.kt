@@ -11,7 +11,10 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-/** Encrypts and decrypts the one secret this app holds: the API key or session cookie for the server. */
+/**
+ * Encrypts and decrypts the secrets this app persists at rest: the API key or session cookie for
+ * the server, and a sign-in that finishes in another app's bearer secret while it waits.
+ */
 interface SecretCipher {
     fun encrypt(plaintext: String): String
 

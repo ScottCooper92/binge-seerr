@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.auth.NotSeerrServerException
 import io.github.scottcooper92.binge.seerr.auth.PlexPinExpiredException
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.QuickConnectExpiredException
+import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
@@ -51,6 +52,7 @@ class SetupViewModel
         private val connection: SeerrConnection,
         plex: PlexPinFlow,
         savedState: SavedStateHandle,
+        cipher: SecretCipher,
     ) : ViewModel() {
         private val draft = MutableStateFlow(Draft())
 
@@ -60,6 +62,7 @@ class SetupViewModel
                 connection = connection,
                 plex = plex,
                 savedState = savedState,
+                cipher = cipher,
                 onLink = { link -> draft.update { it.copy(busy = false, link = link) } },
                 onFinished = ::finish,
             )
