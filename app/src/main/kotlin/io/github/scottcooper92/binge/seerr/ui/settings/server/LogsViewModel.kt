@@ -29,7 +29,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val REFRESH_MILLIS = 10_000L
-private const val SEARCH_DEBOUNCE_MS = 300L
+
+/** Internal so the test measures the debounce this file sets rather than a copy of the number. */
+internal const val SEARCH_DEBOUNCE_MS = 300L
 
 /**
  * The logs page: the level and the search are the query, paged from the top; while the list is
