@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
+    alias(libs.plugins.screenshot)
 }
 
 // The exported schema is committed: a change to a table is a migration decision made in review.
@@ -20,6 +21,10 @@ room {
 android {
     namespace = "io.github.scottcooper92.binge.seerr"
     compileSdk = 37
+
+    // What makes AGP create the screenshotTest source set. The matching flag is in gradle.properties;
+    // both have to be present or the frames compile nowhere and the task does not exist.
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {
         applicationId = "io.github.scottcooper92.binge.seerr"
@@ -223,6 +228,12 @@ dependencies {
     testImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)
 
+    // The frames render against the same Compose the app ships, and the validation API is what
+    // @PreviewTest resolves to.
+    screenshotTestImplementation(platform(libs.compose.bom))
+    screenshotTestImplementation(libs.compose.ui.tooling)
+    screenshotTestImplementation(libs.screenshot.validation.api)
+
     // The device lane (#86): one instrumentation test that binds the exported Service over a real
     // Binder on the minified build and completes a handshake and a status call against a mock server.
     androidTestImplementation(libs.junit)
@@ -255,6 +266,21 @@ tasks.withType<Test>().configureEach {
         showCauses = true
         showStackTraces = true
     }
+    // The screenshot render and validate tasks are Test tasks too, and they discover no JUnit tests:
+    // the plugin renders @Preview functions rather than executing test code. The plugin also warns
+    // unless it has the fork to itself.
+    if (name.contains("ScreenshotTest")) {
+        failOnNoDiscoveredTests = false
+        maxParallelForks = 1
+    }
+}
+
+// The screenshot plugin does not wire itself into `check` the way ktlint and AGP's lint do, so
+// without this `./gradlew build` — which is this repository's whole gate, and all CI runs — would
+// carry the frames and never compare them. Named here rather than in ci.yml so a local build and a
+// CI build answer the same question (#146).
+tasks.named("check") {
+    dependsOn("validateDebugScreenshotTest")
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
