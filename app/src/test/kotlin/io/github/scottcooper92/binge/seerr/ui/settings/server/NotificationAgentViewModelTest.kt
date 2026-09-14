@@ -82,6 +82,14 @@ class NotificationAgentViewModelTest {
         uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<AgentForm>
 
     @Test
+    fun `only the options holding a username opt out of autocorrect`() {
+        assertEquals(
+            setOf(AgentOption.EmailAuthUser, AgentOption.NtfyUsername),
+            AgentOption.entries.filterNot { it.autoCorrect }.toSet(),
+        )
+    }
+
+    @Test
     fun `an agent's options are read as typed, and written back typed with the unknown ones kept`() =
         runTest {
             val vm = viewModel(ServerAgent.Email)

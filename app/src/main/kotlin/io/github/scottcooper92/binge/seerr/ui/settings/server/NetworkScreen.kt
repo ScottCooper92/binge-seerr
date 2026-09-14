@@ -81,7 +81,7 @@ private fun ProxyFields(
             it.copy(useSsl = value)
         }
     }
-    EditorTextField(proxy.user, stringResource(R.string.server_settings_agent_username), enabled = editable) { value ->
+    EditorTextField(proxy.user, stringResource(R.string.server_settings_agent_username), enabled = editable, autoCorrect = false) { value ->
         onEdit {
             it.copy(user = value)
         }

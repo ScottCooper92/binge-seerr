@@ -204,6 +204,7 @@ private fun MediaServerLinkSheet(
             EditorTextField(
                 username,
                 stringResource(R.string.setup_username),
+                autoCorrect = false,
                 placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
             ) { username = it }
             EditorTextField(password, stringResource(R.string.setup_password), secret = true) { password = it }

@@ -138,7 +138,7 @@ private fun CreateUserSheet(
             ) { value ->
                 actions.onEditDraft { it.copy(email = value) }
             }
-            EditorTextField(draft.username, stringResource(R.string.setup_username), enabled = !saving) { value ->
+            EditorTextField(draft.username, stringResource(R.string.setup_username), enabled = !saving, autoCorrect = false) { value ->
                 actions.onEditDraft { it.copy(username = value) }
             }
             if (!draft.generatePassword) {
