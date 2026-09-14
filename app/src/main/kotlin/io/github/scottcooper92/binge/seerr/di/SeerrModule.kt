@@ -11,7 +11,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.scottcooper92.binge.seerr.data.IssueStore
+import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.RoomIssueStore
+import io.github.scottcooper92.binge.seerr.data.RoomMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.RoomUserStore
 import io.github.scottcooper92.binge.seerr.data.SeerrCacheDatabase
 import io.github.scottcooper92.binge.seerr.data.UserStore
@@ -53,6 +55,10 @@ object SeerrModule {
     @Provides
     @Singleton
     fun userStore(db: SeerrCacheDatabase): UserStore = RoomUserStore(db)
+
+    @Provides
+    @Singleton
+    fun mediaStatusStore(db: SeerrCacheDatabase): MediaStatusStore = RoomMediaStatusStore(db)
 
     /** The scope for work that outlives every screen: the notification planner runs on it. */
     @Provides

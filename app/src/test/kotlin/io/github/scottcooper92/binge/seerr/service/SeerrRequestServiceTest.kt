@@ -21,6 +21,9 @@ import com.binge.integration.contracts.v1.MediaType
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.CachedStatus
+import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
+import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
@@ -73,6 +76,8 @@ class SeerrRequestServiceTest {
     private fun connected(
         permissions: Int = ADMIN,
         version: String = "2.7.0",
+        cache: MediaStatusStore = NoMediaStatusStore,
+        now: () -> Long = { 0L },
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
             CredentialStore(
@@ -89,9 +94,10 @@ class SeerrRequestServiceTest {
                 SeerrRequestService(
                     connection,
                     versionName = "0.1.0-test",
-                    clock = { 0L },
+                    clock = now,
                     observeIntervalMillis = 1,
                     attentionIntervalMillis = 1,
+                    statusCache = cache,
                 ),
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
@@ -513,6 +519,129 @@ class SeerrRequestServiceTest {
             Status.Code.OK
         } catch (e: StatusException) {
             e.status.code
+        }
+
+    /** A cache that keeps one row per title in memory, standing in for the Room one. */
+    private class FakeStatusCache : MediaStatusStore {
+        val rows = mutableMapOf<Pair<Int, Int>, CachedStatus>()
+        var clears = 0
+
+        override suspend fun find(media: MediaId): CachedStatus? = rows[media.mediaTypeValue to media.tmdbId]
+
+        override suspend fun put(
+            media: MediaId,
+            status: com.binge.integration.contracts.request.v1.RequestStatus,
+            fetchedAtMillis: Long,
+        ) {
+            rows[media.mediaTypeValue to media.tmdbId] = CachedStatus(status, fetchedAtMillis)
+        }
+
+        override suspend fun clearAll() {
+            rows.clear()
+            clears++
+        }
+    }
+
+    private fun getStatus(stub: RequestServiceGrpcKt.RequestServiceCoroutineStub) =
+        runBlocking { stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status }
+
+    @Test
+    fun `a status young enough for where the title is answers without asking the server`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache)
+            val before = seerr.requestCount
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+
+            // One call for two lookups: nothing was enqueued for a second, and nothing asked for one.
+            assertEquals(1, seerr.requestCount - before)
+        }
+
+    @Test
+    fun `a row past its maximum age is refetched and rewritten`() =
+        runTest {
+            val cache = FakeStatusCache()
+            var now = 0L
+            val stub = connected(cache = cache, now = { now })
+            val before = seerr.requestCount
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":3}}"""))
+            assertEquals(Availability.AVAILABILITY_PROCESSING, getStatus(stub).availability)
+
+            now = 60_000
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+            assertEquals(2, seerr.requestCount - before)
+            assertEquals(
+                60_000,
+                cache.rows.values
+                    .single()
+                    .fetchedAtMillis,
+            )
+        }
+
+    @Test
+    fun `a write drops every row, so the status after it is the server's`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache)
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":2,"requests":[{"id":4,"status":1}]}}"""))
+            getStatus(stub)
+            seerr.takeRequest()
+
+            seerr.enqueue(json("{}"))
+            stub.approveRequest(ApproveRequestRequest.newBuilder().setRequestId(4).build())
+            assertEquals(1, cache.clears)
+            assertTrue(cache.rows.isEmpty())
+
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+        }
+
+    /** The contract defines them as what this user may do *now*, so a row that stored them would lie. */
+    @Test
+    fun `allowed actions are recomputed on every read and never stored`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache)
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5,"requests":[{"id":4,"status":2}]}}"""))
+            getStatus(stub)
+
+            assertTrue(
+                cache.rows.values
+                    .single()
+                    .status.allowedActionsList
+                    .isEmpty(),
+            )
+            assertTrue(Capability.CAPABILITY_REPORT_ISSUE in getStatus(stub).allowedActionsList)
+        }
+
+    /** The stream is what keeps the row warm; a poll answering from the row it wrote would never see the server. */
+    @Test
+    fun `observe may answer its first push from the cache and never its later ones`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache)
+            val before = seerr.requestCount
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
+            getStatus(stub)
+            assertEquals(1, seerr.requestCount - before)
+
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":4}}"""))
+            val pushed =
+                stub
+                    .observeStatus(ObserveStatusRequest.newBuilder().setMedia(movie).build())
+                    .take(2)
+                    .toList()
+                    .map { it.status.availability }
+
+            assertEquals(
+                listOf(Availability.AVAILABILITY_AVAILABLE, Availability.AVAILABILITY_PARTIALLY_AVAILABLE),
+                pushed,
+            )
         }
 
     private fun json(body: String): MockResponse =

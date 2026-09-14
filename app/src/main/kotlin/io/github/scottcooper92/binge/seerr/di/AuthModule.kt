@@ -23,12 +23,14 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.IssueStore
+import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_credentials")
@@ -61,10 +63,23 @@ object AuthModule {
     @Singleton
     fun healthMonitor(): SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor()
 
+    /**
+     * The write hook drops the title-status cache. It covers this app's own pages, which reach the
+     * server through the same client as the exported service does; the service also drops the cache
+     * itself, because its own writes are followed immediately by a status it must not answer stale.
+     */
     @Provides
     @Singleton
-    fun apiFactory(health: SeerrConnectionHealthMonitor): SeerrApiFactory =
-        SeerrApiFactory(logRequests = BuildConfig.DEBUG, health = health)
+    fun apiFactory(
+        health: SeerrConnectionHealthMonitor,
+        statuses: MediaStatusStore,
+        @ApplicationScope scope: CoroutineScope,
+    ): SeerrApiFactory =
+        SeerrApiFactory(
+            logRequests = BuildConfig.DEBUG,
+            health = health,
+            onWrite = { scope.launch { statuses.clearAll() } },
+        )
 
     @Provides
     @Singleton
@@ -115,11 +130,13 @@ object AuthModule {
         carrier: ConnectionCarrier,
         issues: IssueStore,
         users: UserStore,
+        statuses: MediaStatusStore,
         notifications: NotificationPrefs,
     ): SeerrConnection =
         SeerrConnection(store, apis, health, carrier = carrier, onServerChanged = {
             issues.clearAll()
             users.clearAll()
+            statuses.clearAll()
             notifications.forgetServer()
         })
 }

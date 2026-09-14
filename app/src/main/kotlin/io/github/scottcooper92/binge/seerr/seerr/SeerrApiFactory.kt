@@ -25,6 +25,8 @@ class SeerrApiFactory(
     private val logRequests: Boolean,
     /** Fed by the cached client only: a probe's candidate credentials never speak for the saved server. */
     private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
+    /** Called on the cached client only, whenever the saved server accepts a write. */
+    private val onWrite: () -> Unit = {},
 ) {
     /** `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null. */
     private val json =
@@ -50,6 +52,7 @@ class SeerrApiFactory(
                     OkHttpClient
                         .Builder()
                         .addInterceptor(SeerrHealthInterceptor(health))
+                        .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .applyAuth(auth, baseUrl)
                         .finish(HttpLoggingInterceptor.Level.BODY)
                 CachedApi(baseUrl, auth, client, retrofit(baseUrl, client)).also { cached = it }.api

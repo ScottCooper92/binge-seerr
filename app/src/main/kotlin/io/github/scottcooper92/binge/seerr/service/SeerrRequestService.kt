@@ -37,6 +37,8 @@ import com.binge.integration.contracts.v1.MediaId
 import com.binge.integration.sdk.handshakeResponse
 import com.binge.integration.sdk.requireDeclared
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
+import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
@@ -82,8 +84,10 @@ class SeerrRequestService(
     private val clock: () -> Long = System::currentTimeMillis,
     private val observeIntervalMillis: Long = OBSERVE_INTERVAL_MILLIS,
     private val attentionIntervalMillis: Long = ATTENTION_INTERVAL_MILLIS,
+    private val statusCache: MediaStatusStore = NoMediaStatusStore,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val mediaIds = SeerrMediaIds { connection.api() }
+    private val freshness = MediaStatusFreshness(observeIntervalMillis)
 
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
         statusCatching {
@@ -107,6 +111,7 @@ class SeerrRequestService(
                 )
             val api = connection.api()
             val response = api.requestMedia(body)
+            statusCache.clearAll()
             val builder = SubmitRequestResponse.newBuilder()
             when {
                 response.code() == HTTP_ACCEPTED -> Unit
@@ -127,8 +132,12 @@ class SeerrRequestService(
      */
     override fun observeStatus(request: ObserveStatusRequest): Flow<ObserveStatusResponse> =
         flow {
+            // Only the first emission may come from the cache: after that this stream is what keeps
+            // the row warm, and a poll answering from the row it wrote would never see the server.
+            var fromCache = true
             while (true) {
-                emit(statusCatching { status(request.media) })
+                emit(statusCatching { status(request.media, allowCached = fromCache) })
+                fromCache = false
                 delay(observeIntervalMillis)
             }
         }.distinctUntilChanged()
@@ -238,15 +247,41 @@ class SeerrRequestService(
 
     private suspend fun permissions(): SeerrPermissions = connection.authenticatedUser().toPermissions()
 
-    private suspend fun status(media: MediaId): RequestStatus {
+    /**
+     * The title's status, from the cache while it is young enough for where the title is, and from
+     * the server otherwise.
+     *
+     * Allowed actions are never cached and never stored: the contract defines them as what this
+     * user may do right now, so they are recomputed against the live permissions on every read of
+     * the row. What is cached is the server's answer alone.
+     */
+    private suspend fun status(
+        media: MediaId,
+        allowCached: Boolean = true,
+    ): RequestStatus {
         val permissions = permissions()
+        val status = (if (allowCached) cachedStatus(media) else null) ?: fetchStatus(media)
+        return status.toBuilder().addAllAllowedActions(permissions.allowedActions(status, connection.profile())).build()
+    }
+
+    private suspend fun cachedStatus(media: MediaId): RequestStatus? =
+        statusCache.find(media)?.takeIf { freshness.isFresh(it, clock()) }?.status
+
+    /**
+     * The row carries the download ETA the server's answer was turned into, so a cached one is up
+     * to its own maximum age out of date. That age is the poll interval for anything downloading,
+     * which is the same staleness a host subscribed to [observeStatus] already lives with.
+     */
+    private suspend fun fetchStatus(media: MediaId): RequestStatus {
+        val now = clock()
         val status =
             connection
                 .api()
                 .details(media)
                 .mediaInfo
-                .toRequestStatus(clock())
-        return status.toBuilder().addAllAllowedActions(permissions.allowedActions(status, connection.profile())).build()
+                .toRequestStatus(now)
+        if (freshness.maxAgeMillis(status) != null) statusCache.put(media, status, now)
+        return status
     }
 
     private suspend fun <T> gated(
@@ -255,7 +290,9 @@ class SeerrRequestService(
     ): T =
         statusCatching {
             permissions().toCapabilities(connection.profile()).requireDeclared(capability)
-            block()
+            // Every gated rpc is a write, and a write to any title makes every cached row suspect —
+            // most of them name a request id rather than a title, so there is nothing narrower to drop.
+            block().also { statusCache.clearAll() }
         }
 
     private companion object {
