@@ -5,6 +5,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserMainSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
@@ -35,9 +36,11 @@ class GeneralSettingsViewModel
                 val target = async { api.user(userId) }
                 val settings = api.userMainSettings(userId)
                 val permissions = viewer.await().toPermissions()
+                val user = target.await()
                 settings.toGeneralSettings(
                     canEditQuotas = permissions.canManageUsers,
-                    canEditEmail = permissions.canManageUsers || target.await().userType.toUserOrigin() == UserOrigin.Local,
+                    canEditEmail = permissions.canManageUsers || user.userType.toUserOrigin() == UserOrigin.Local,
+                    fallbackName = user.fallbackName(),
                 )
             }
 
@@ -54,12 +57,22 @@ class GeneralSettingsViewModel
         }
     }
 
+/**
+ * What Seerr shows a user as once they have no display name: their media-server username, else their
+ * email. Deliberately not [SeerrUserDto.displayName], which is the stored name where there is one —
+ * the placeholder has to answer "or what?" for a field the user is in the middle of clearing.
+ */
+internal fun SeerrUserDto.fallbackName(): String =
+    listOfNotNull(plexUsername, jellyfinUsername, email).firstOrNull { it.isNotBlank() }.orEmpty()
+
 internal fun SeerrUserMainSettingsDto.toGeneralSettings(
     canEditQuotas: Boolean,
     canEditEmail: Boolean,
+    fallbackName: String = "",
 ): GeneralSettings =
     GeneralSettings(
         displayName = username.orEmpty(),
+        fallbackName = fallbackName,
         email = email.orEmpty(),
         discordId = discordId.orEmpty(),
         locale = locale.orEmpty(),

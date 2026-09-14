@@ -28,7 +28,13 @@ fun GeneralSettingsScreen(
         actions = actions,
         canSave = { it.quotasValid },
     ) { draft, enabled ->
-        EditorTextField(draft.displayName, stringResource(R.string.user_settings_display_name), enabled = enabled) { value ->
+        EditorTextField(
+            draft.displayName,
+            stringResource(R.string.user_settings_display_name),
+            enabled = enabled,
+            // What the server itself shows when this is blank, so the example is also the answer to "or what?".
+            placeholder = draft.fallbackName.takeIf { it.isNotBlank() },
+        ) { value ->
             actions.onEdit { it.copy(displayName = value) }
         }
         EditorTextField(
@@ -36,12 +42,14 @@ fun GeneralSettingsScreen(
             stringResource(R.string.user_settings_email),
             enabled = enabled && draft.canEditEmail,
             keyboardType = KeyboardType.Email,
+            placeholder = stringResource(R.string.placeholder_email),
         ) { value -> actions.onEdit { it.copy(email = value) } }
         EditorTextField(
             draft.discordId,
             stringResource(R.string.user_settings_discord_id),
             enabled = enabled,
             keyboardType = KeyboardType.Number,
+            supporting = stringResource(R.string.user_settings_discord_id_hint),
         ) { value -> actions.onEdit { it.copy(discordId = value) } }
         EditorSectionTitle(stringResource(R.string.user_settings_section_discover))
         EditorTextField(
@@ -56,7 +64,13 @@ fun GeneralSettingsScreen(
             enabled = enabled,
             supporting = stringResource(R.string.user_settings_region_hint),
         ) { value -> actions.onEdit { it.copy(region = value) } }
-        EditorTextField(draft.originalLanguage, stringResource(R.string.user_settings_original_language), enabled = enabled) { value ->
+        EditorTextField(
+            draft.originalLanguage,
+            stringResource(R.string.user_settings_original_language),
+            enabled = enabled,
+            // The same field as the server-level one, so it says the same thing rather than a second wording of it.
+            supporting = stringResource(R.string.server_settings_original_language_hint),
+        ) { value ->
             actions.onEdit { it.copy(originalLanguage = value) }
         }
         draft.watchlistSyncMovies?.let { on ->

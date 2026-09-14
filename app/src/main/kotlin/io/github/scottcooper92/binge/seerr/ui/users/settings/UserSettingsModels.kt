@@ -38,6 +38,8 @@ data class QuotaDefault(
  */
 data class GeneralSettings(
     val displayName: String = "",
+    /** What the server falls back to when the display name is blank: the media-server username, or the email. */
+    val fallbackName: String = "",
     val email: String = "",
     val discordId: String = "",
     val locale: String = "",

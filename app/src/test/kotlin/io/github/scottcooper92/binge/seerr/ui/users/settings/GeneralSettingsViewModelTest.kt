@@ -85,6 +85,25 @@ class GeneralSettingsViewModelTest {
         }
 
     @Test
+    fun `the placeholder name is what the server would fall back to, never the display name being cleared`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve(
+                "GET /api/v1/user/8",
+                """{"id":8,"displayName":"Ana","username":"Ana","jellyfinUsername":"ana.j","email":"ana@example.com","userType":3}""",
+            )
+            assertEquals("ana.j", viewModel().awaitReady().draft.fallbackName)
+        }
+
+    @Test
+    fun `a user with no media-server account falls back to their email`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","username":"Ana","email":"ana@example.com","userType":2}""")
+            assertEquals("ana@example.com", viewModel().awaitReady().draft.fallbackName)
+        }
+
+    @Test
     fun `saving posts the draft with a blank quota as null, then adopts the server's re-read`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
