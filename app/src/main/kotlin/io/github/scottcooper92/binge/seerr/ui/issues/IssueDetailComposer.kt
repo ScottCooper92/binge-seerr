@@ -24,6 +24,10 @@ import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 
+/**
+ * The pinned bar: a field that opens the composer, and Resolve or Reopen, each only where the user
+ * may. A status change in flight spins its button and holds the field, so the two cannot race.
+ */
 @Composable
 internal fun ActionBar(
     detail: IssueDetail,
