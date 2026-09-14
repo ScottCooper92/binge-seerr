@@ -17,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.UsersViewModel
 @Composable
 internal fun UsersEntry(
     onBack: () -> Unit,
+    showBack: Boolean,
     onOpen: (Int) -> Unit,
     viewModel: UsersViewModel = hiltViewModel(),
 ) {
@@ -28,6 +29,7 @@ internal fun UsersEntry(
     }
     UsersScreen(
         state = state,
+        showBack = showBack,
         users = viewModel.users,
         events = viewModel.events,
         actions =

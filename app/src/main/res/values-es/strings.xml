@@ -82,6 +82,8 @@
     <string name="hub_section_settings">Ajustes</string>
     <string name="hub_section_settings_desc">Servicios, notificaciones y tareas</string>
     <string name="section_coming_soon">Esta sección llegará en una fase posterior.</string>
+    <string name="section_none_open_title">Nada abierto</string>
+    <string name="section_none_open_body">Elige una sección del panel para gestionarla aquí.</string>
     <string name="requests_filter_all">Todas</string>
     <string name="requests_filter_pending">Pendientes</string>
     <string name="requests_filter_approved">Aprobadas</string>

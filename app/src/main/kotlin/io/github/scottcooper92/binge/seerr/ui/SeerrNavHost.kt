@@ -1,5 +1,12 @@
 package io.github.scottcooper92.binge.seerr.ui
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -9,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -19,11 +27,9 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
-import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
-import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -33,15 +39,23 @@ import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
  * entry its own store, so a screen's ViewModel lives and dies with its place on the stack rather
  * than with the Activity.
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SeerrNavHost(
     backStack: NavBackStack<NavKey>,
     modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    val connected by viewModel.isConnected.collectAsStateWithLifecycle()
+    // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
+    // about whether the hub is on screen beside a section.
+    val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
+    val hubBeside = connected == true && directive.maxHorizontalPartitions > 1
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.removeLastOrNull() },
+        sceneStrategies = listOf(rememberListDetailSceneStrategy<NavKey>(directive = directive)),
         entryDecorators =
             listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
@@ -49,127 +63,166 @@ fun SeerrNavHost(
             ),
         entryProvider =
             entryProvider {
-                entry<HomeRoute> {
-                    HomeEntry(
-                        onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
-                        onReconnect = { backStack.add(EditConnectionRoute) },
-                        onOpenSection = { section ->
-                            backStack.add(
-                                when (section) {
-                                    HubSection.Requests -> RequestsRoute
-                                    HubSection.Issues -> IssuesRoute
-                                    HubSection.Users -> UsersRoute
-                                    HubSection.Blocklist -> BlocklistRoute
-                                    HubSection.Settings -> SettingsRoute
-                                    else -> SectionRoute(section)
-                                },
-                            )
-                        },
-                    )
-                }
-                entry<RequestsRoute> {
-                    RequestsEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(RequestDetailRoute(id)) })
-                }
-                entry<RequestDetailRoute> { route -> RequestDetailEntry(route.requestId, onBack = { backStack.removeLastOrNull() }) }
-                entry<IssuesRoute> {
-                    IssuesEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
-                }
-                entry<IssueDetailRoute> { route -> IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }) }
-                entry<BlocklistRoute> { BlocklistEntry(onBack = { backStack.removeLastOrNull() }) }
-                entry<UsersRoute> {
-                    UsersEntry(onBack = { backStack.removeLastOrNull() }, onOpen = { id -> backStack.add(UserDetailRoute(id)) })
-                }
-                entry<UserDetailRoute> { route ->
-                    UserDetailEntry(
-                        route.userId,
-                        onBack = { backStack.removeLastOrNull() },
-                        onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
-                        onOpenSettings = { backStack.add(UserSettingsRoute(route.userId)) },
-                    )
-                }
-                entry<UserSettingsRoute> { route ->
-                    UserSettingsEntry(
-                        route.userId,
-                        onBack = { backStack.removeLastOrNull() },
-                        onOpenPage = { page -> backStack.add(UserSettingsPageRoute(route.userId, page)) },
-                    )
-                }
-                entry<UserSettingsPageRoute> { route ->
-                    UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
-                }
-                entry<ServerSettingsPageRoute> { route ->
-                    ServerSettingsPageEntry(
-                        page = route.page,
-                        onBack = { backStack.removeLastOrNull() },
-                        onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
-                        onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
-                        onOpenRule = { id -> backStack.add(OverrideRuleRoute(id)) },
-                        onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
-                        onOpenSlider = { id -> backStack.add(DiscoverSliderRoute(id)) },
-                    )
-                }
-                entry<DiscoverSliderRoute> { route -> DiscoverSliderEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
-                entry<NotificationAgentRoute> { route -> NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
-                entry<DvrInstanceRoute> { route -> DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
-                entry<OverrideRuleRoute> { route -> OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
-                entry<SettingsRoute> {
-                    SettingsEntry(
-                        onBack = { backStack.removeLastOrNull() },
-                        onEditConnection = { backStack.add(EditConnectionRoute) },
-                        onOpenServerSettings = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.General)) },
-                        onOpenMediaServer = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.MediaServer)) },
-                        onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
-                        onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
-                        onOpenAgents = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.NotificationAgents)) },
-                        onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
-                        onOpenSliders = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.DiscoverSliders)) },
-                        onOpenNetwork = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Network)) },
-                        onOpenMetadata = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Metadata)) },
-                        onOpenJobs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Jobs)) },
-                        onOpenCache = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Cache)) },
-                        onOpenLogs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Logs)) },
-                        onOpenAbout = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.About)) },
-                    )
-                }
-                entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
-                entry<SectionRoute> { route ->
-                    EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
-                }
+                homeEntry(backStack, connected)
+                sectionEntries(backStack, showBack = !hubBeside)
+                detailEntries(backStack)
+                serverSettingsEntries(backStack)
             },
+    )
+}
+
+/**
+ * The hub, and the setup it swaps to. A list pane only once a server is connected: setup and the
+ * connection problem are whole-window screens, and a route's metadata cannot vary by anything
+ * narrower than the route.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+private fun EntryProviderScope<NavKey>.homeEntry(
+    backStack: NavBackStack<NavKey>,
+    connected: Boolean?,
+) {
+    entry<HomeRoute>(
+        metadata =
+            if (connected == true) {
+                ListDetailSceneStrategy.listPane(detailPlaceholder = { SectionPlaceholder() })
+            } else {
+                emptyMap()
+            },
+    ) {
+        HomeEntry(
+            connected = connected,
+            selectedSection = backStack.lastOrNull()?.hubSection(),
+            onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
+            onReconnect = { backStack.add(EditConnectionRoute) },
+            onOpenSection = backStack::openSection,
+        )
+    }
+}
+
+/** The hub's manage sections: the detail pane beside it, or the whole window on a narrow one. */
+private fun EntryProviderScope<NavKey>.sectionEntries(
+    backStack: NavBackStack<NavKey>,
+    showBack: Boolean,
+) {
+    entry<RequestsRoute>(metadata = SectionDetailPane) {
+        RequestsEntry(
+            onBack = { backStack.removeLastOrNull() },
+            showBack = showBack,
+            onOpen = { id -> backStack.add(RequestDetailRoute(id)) },
+        )
+    }
+    entry<IssuesRoute>(metadata = SectionDetailPane) {
+        IssuesEntry(
+            onBack = { backStack.removeLastOrNull() },
+            showBack = showBack,
+            onOpen = { id -> backStack.add(IssueDetailRoute(id)) },
+        )
+    }
+    entry<BlocklistRoute>(metadata = SectionDetailPane) {
+        BlocklistEntry(onBack = { backStack.removeLastOrNull() }, showBack = showBack)
+    }
+    entry<UsersRoute>(metadata = SectionDetailPane) {
+        UsersEntry(
+            onBack = { backStack.removeLastOrNull() },
+            showBack = showBack,
+            onOpen = { id -> backStack.add(UserDetailRoute(id)) },
+        )
+    }
+    entry<SettingsRoute>(metadata = SectionDetailPane) { SettingsEntry(backStack, showBack = showBack) }
+    entry<SectionRoute>(metadata = SectionDetailPane) { route ->
+        EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
+    }
+}
+
+/** What a section's rows open: one request, one issue, one user and their settings. */
+private fun EntryProviderScope<NavKey>.detailEntries(backStack: NavBackStack<NavKey>) {
+    entry<RequestDetailRoute> { route -> RequestDetailEntry(route.requestId, onBack = { backStack.removeLastOrNull() }) }
+    entry<IssueDetailRoute> { route -> IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }) }
+    entry<UserDetailRoute> { route ->
+        UserDetailEntry(
+            route.userId,
+            onBack = { backStack.removeLastOrNull() },
+            onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
+            onOpenSettings = { backStack.add(UserSettingsRoute(route.userId)) },
+        )
+    }
+    entry<UserSettingsRoute> { route ->
+        UserSettingsEntry(
+            route.userId,
+            onBack = { backStack.removeLastOrNull() },
+            onOpenPage = { page -> backStack.add(UserSettingsPageRoute(route.userId, page)) },
+        )
+    }
+    entry<UserSettingsPageRoute> { route ->
+        UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
+    }
+    entry<EditConnectionRoute> { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
+}
+
+/** The server's own settings pages and the editors they open. */
+private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {
+    entry<ServerSettingsPageRoute> { route ->
+        ServerSettingsPageEntry(
+            page = route.page,
+            onBack = { backStack.removeLastOrNull() },
+            onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
+            onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
+            onOpenRule = { id -> backStack.add(OverrideRuleRoute(id)) },
+            onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
+            onOpenSlider = { id -> backStack.add(DiscoverSliderRoute(id)) },
+        )
+    }
+    entry<DiscoverSliderRoute> { route -> DiscoverSliderEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
+    entry<NotificationAgentRoute> { route -> NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
+    entry<DvrInstanceRoute> { route -> DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
+    entry<OverrideRuleRoute> { route -> OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
+}
+
+/** What the detail pane shows before a section is opened; only ever composed beside the hub. */
+@Composable
+private fun SectionPlaceholder() {
+    EmptyScreen(
+        title = stringResource(R.string.section_none_open_title),
+        message = stringResource(R.string.section_none_open_body),
+        icon = Icons.AutoMirrored.Filled.List,
     )
 }
 
 /** The home swaps between setup and the hub on the saved credentials, so neither has to know the other. */
 @Composable
 private fun HomeEntry(
+    connected: Boolean?,
+    selectedSection: HubSection?,
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
     onReconnect: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val connected by viewModel.isConnected.collectAsStateWithLifecycle()
     when (connected) {
         null -> LoadingScreen()
         false -> SetupEntry()
-        true -> HubEntry(onOpenSection, onOpenAccount, onReconnect)
+        true -> HubEntry(selectedSection, onOpenSection, onOpenAccount, onReconnect)
     }
 }
 
 @Composable
 private fun HubEntry(
+    selectedSection: HubSection?,
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
     onReconnect: () -> Unit,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    // The downloading poll and the auto-retry run only while the hub is on screen.
+    // The downloading poll and the auto-retry run while the hub is composed. Beside a section that
+    // means all the time it is open, which is the point of keeping it there: its badge counts and
+    // its downloading strip are what the admin is watching while they work in the pane next door.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
     HubScreen(
         state = state,
+        selectedSection = selectedSection,
         actions =
             HubActions(
                 onOpenSection = onOpenSection,
@@ -183,21 +236,8 @@ private fun HubEntry(
 
 @Composable
 private fun SettingsEntry(
-    onBack: () -> Unit,
-    onEditConnection: () -> Unit,
-    onOpenServerSettings: () -> Unit,
-    onOpenMediaServer: () -> Unit,
-    onOpenServices: () -> Unit,
-    onOpenInstance: (ServiceType, Int) -> Unit,
-    onOpenAgents: () -> Unit,
-    onOpenAgent: (ServerAgent) -> Unit,
-    onOpenSliders: () -> Unit,
-    onOpenNetwork: () -> Unit,
-    onOpenMetadata: () -> Unit,
-    onOpenJobs: () -> Unit,
-    onOpenCache: () -> Unit,
-    onOpenLogs: () -> Unit,
-    onOpenAbout: () -> Unit,
+    backStack: NavBackStack<NavKey>,
+    showBack: Boolean,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -206,25 +246,30 @@ private fun SettingsEntry(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
+    val onBack = {
+        backStack.removeLastOrNull()
+        Unit
+    }
     SettingsScreen(
         state = state,
+        showBack = showBack,
         actions =
             SettingsActions(
                 onBack = onBack,
-                onEditConnection = onEditConnection,
-                onOpenServerSettings = onOpenServerSettings,
-                onOpenMediaServer = onOpenMediaServer,
-                onOpenServices = onOpenServices,
-                onOpenInstance = onOpenInstance,
-                onOpenAgents = onOpenAgents,
-                onOpenAgent = onOpenAgent,
-                onOpenSliders = onOpenSliders,
-                onOpenNetwork = onOpenNetwork,
-                onOpenMetadata = onOpenMetadata,
-                onOpenJobs = onOpenJobs,
-                onOpenCache = onOpenCache,
-                onOpenLogs = onOpenLogs,
-                onOpenAbout = onOpenAbout,
+                onEditConnection = { backStack.add(EditConnectionRoute) },
+                onOpenServerSettings = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.General)) },
+                onOpenMediaServer = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.MediaServer)) },
+                onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
+                onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
+                onOpenAgents = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.NotificationAgents)) },
+                onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
+                onOpenSliders = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.DiscoverSliders)) },
+                onOpenNetwork = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Network)) },
+                onOpenMetadata = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Metadata)) },
+                onOpenJobs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Jobs)) },
+                onOpenCache = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Cache)) },
+                onOpenLogs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Logs)) },
+                onOpenAbout = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.About)) },
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.

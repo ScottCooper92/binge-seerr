@@ -49,6 +49,8 @@ class BlocklistActions(
  * The blocklist browser: a search over the server's blocked titles, the source chips where the
  * server has them, and the paged rows. A title opens in Binge, or on the server; a manager unblocks from the
  * row, behind a confirm. A removal refreshes the pager in place, so the list keeps its position.
+ *
+ * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
  */
 @Composable
 fun BlocklistScreen(
@@ -56,6 +58,7 @@ fun BlocklistScreen(
     items: Flow<PagingData<BlocklistItem>>,
     events: Flow<BlocklistEvent>,
     actions: BlocklistActions,
+    showBack: Boolean = true,
 ) {
     val lazyItems = items.collectAsLazyPagingItems()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -82,7 +85,9 @@ fun BlocklistScreen(
     val ready = state as? BlocklistUiState.Ready
     Scaffold(
         snackbarHost = { BingeSnackbarHost(snackbarHostState) },
-        topBar = { BingeTopBar(title = stringResource(R.string.hub_section_blocklist), onBack = actions.onBack) },
+        topBar = {
+            BingeTopBar(title = stringResource(R.string.hub_section_blocklist), onBack = actions.onBack.takeIf { showBack })
+        },
     ) { padding ->
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))

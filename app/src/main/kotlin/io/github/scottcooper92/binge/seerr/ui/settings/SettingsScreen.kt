@@ -47,13 +47,20 @@ class SettingsActions(
 /**
  * Settings: the connection and a way to edit it, then the admin's view of the server — the general
  * settings open their own page for editing; the other groups read until their phase.
+ *
+ * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
  */
 @Composable
 fun SettingsScreen(
     state: SettingsUiState,
     actions: SettingsActions,
+    showBack: Boolean = true,
 ) {
-    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.hub_section_settings), onBack = actions.onBack) }) { padding ->
+    Scaffold(
+        topBar = {
+            BingeTopBar(title = stringResource(R.string.hub_section_settings), onBack = actions.onBack.takeIf { showBack })
+        },
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (state) {
                 SettingsUiState.Loading -> LoadingScreen()
