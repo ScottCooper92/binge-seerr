@@ -259,7 +259,6 @@ app:requests_seasons  bd03814e7d73
 app:requests_sort_added  7459b8690410
 app:requests_sort_cd  7e817324a953
 app:requests_sort_modified  474b2a869ac1
-app:requests_sort_title  c9129025bd3f
 app:section_coming_soon  fd8fd19bfe08
 app:server_settings_about_behind  16813cfc29da
 app:server_settings_about_commit  82a9c46ffa47
@@ -622,6 +621,7 @@ app:setup_sign_in_plex  bf7f8a232706
 app:setup_start_quick_connect  b6dbd8215798
 app:setup_username  e3b89e9d33f8
 app:setup_username_placeholder  43c6c81836dc
+app:sort_title  c9129025bd3f
 app:state_empty_title  49abaf804ab3
 app:state_error_forbidden_message  f70b28bf6c5c
 app:state_error_forbidden_title  f0406a0e7eb1

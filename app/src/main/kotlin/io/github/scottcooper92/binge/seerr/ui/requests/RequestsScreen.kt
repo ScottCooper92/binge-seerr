@@ -29,6 +29,7 @@ import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
@@ -114,7 +115,13 @@ fun RequestsScreen(
         }
     }
     if (showSort && ready != null) {
-        RequestSortSheet(selected = ready.sort, onSelect = actions.onSortChange, onDismiss = { showSort = false })
+        SortSheet(
+            choices = RequestSort.entries,
+            selected = ready.sort,
+            label = { stringResource(it.labelRes()) },
+            onSelect = actions.onSortChange,
+            onDismiss = { showSort = false },
+        )
     }
     ready?.actionItem?.let { item ->
         RequestActionsSheet(

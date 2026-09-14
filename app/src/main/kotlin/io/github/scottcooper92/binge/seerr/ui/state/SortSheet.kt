@@ -52,7 +52,7 @@ fun <T> SortContent(
 ) {
     Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
         Text(
-            text = stringResource(R.string.requests_sort_title),
+            text = stringResource(R.string.sort_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier =

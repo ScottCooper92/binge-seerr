@@ -111,7 +111,7 @@
     <string name="requests_empty_available">No requested titles are available yet.</string>
     <string name="requests_empty_unavailable">Everything requested is available.</string>
     <string name="requests_empty_failed">No failed requests.</string>
-    <string name="requests_sort_title">Sort by</string>
+    <string name="sort_title">Sort by</string>
     <string name="requests_sort_added">Most recent</string>
     <string name="requests_sort_modified">Recently updated</string>
     <string name="requests_sort_cd">Change sort order</string>
