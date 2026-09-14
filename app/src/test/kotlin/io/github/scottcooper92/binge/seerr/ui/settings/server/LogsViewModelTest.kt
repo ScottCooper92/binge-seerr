@@ -49,19 +49,19 @@ class LogsViewModelTest {
     }
 
     @Test
-    fun `the ticks land on the interval while following, and stop once it does not`() =
+    fun `a refresh lands on the interval while following, and stops once it does not`() =
         runTest {
             val vm = viewModel()
             vm.refreshMillis = 1_000
-            val ticks = mutableListOf<Unit>()
-            backgroundScope.launch { vm.refreshTicks.collect { ticks += it } }
+            val events = mutableListOf<LogsEvent>()
+            backgroundScope.launch { vm.events.collect { events += it } }
 
             vm.setFollowing(true)
             advanceTimeBy(2_500)
-            assertEquals(2, ticks.size)
+            assertEquals(listOf(LogsEvent.Refresh, LogsEvent.Refresh), events)
 
             vm.setFollowing(false)
             advanceTimeBy(10_000)
-            assertEquals(2, ticks.size)
+            assertEquals(2, events.size)
         }
 }

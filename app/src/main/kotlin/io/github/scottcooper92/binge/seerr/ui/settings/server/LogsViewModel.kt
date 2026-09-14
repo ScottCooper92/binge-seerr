@@ -12,16 +12,20 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val REFRESH_MILLIS = 10_000L
@@ -57,16 +61,21 @@ class LogsViewModel
                     }.flow
                 }.cachedIn(viewModelScope)
 
-        /** Ticks while the list sits at the top; the page refreshes on each. */
-        val refreshTicks: Flow<Unit> =
-            following.flatMapLatest { on ->
-                flow {
+        private val eventFlow = MutableSharedFlow<LogsEvent>(extraBufferCapacity = 1)
+        val events: SharedFlow<LogsEvent> = eventFlow.asSharedFlow()
+
+        init {
+            // collectLatest, so the wait is cancelled the moment following stops rather than
+            // firing one more time on the interval already under way.
+            viewModelScope.launch {
+                following.collectLatest { on ->
                     while (on) {
                         delay(refreshMillis)
-                        emit(Unit)
+                        eventFlow.emit(LogsEvent.Refresh)
                     }
                 }
             }
+        }
 
         fun setLevel(level: LogLevel) = state.update { it.copy(level = level) }
 

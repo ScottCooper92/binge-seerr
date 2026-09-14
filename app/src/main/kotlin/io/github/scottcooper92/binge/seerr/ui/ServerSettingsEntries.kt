@@ -84,7 +84,7 @@ internal fun ServerSettingsPageEntry(
             LogsScreen(
                 state = state,
                 entries = viewModel.entries,
-                refreshTicks = viewModel.refreshTicks,
+                events = viewModel.events,
                 actions =
                     LogsActions(
                         onBack = onBack,
