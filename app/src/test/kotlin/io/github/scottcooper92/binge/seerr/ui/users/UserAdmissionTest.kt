@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.REQUEST
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.drop
@@ -96,8 +97,9 @@ class UserAdmissionTest {
             assertEquals(0, seerr.count("POST", "/api/v1/user"))
 
             vm.admission.editDraft { it.copy(email = " ana@example.com ", password = "longenough") }
+            val created = awaitEvent(vm.events)
             vm.admission.create()
-            assertEquals(UsersEvent.UserCreated("Ana"), vm.events.first())
+            assertEquals(UsersEvent.UserCreated("Ana"), created.await())
             assertEquals("""{"email":"ana@example.com","username":"ana","password":"longenough"}""", seerr.body("POST", "/api/v1/user"))
             assertNull(vm.awaitReady().admission)
 
@@ -107,8 +109,9 @@ class UserAdmissionTest {
 
             vm.admission.startCreate(canGeneratePassword = true)
             vm.admission.editDraft { it.copy(email = "bo@example.com", username = "bo", generatePassword = true) }
+            val createdAgain = awaitEvent(vm.events)
             vm.admission.create()
-            assertEquals(UsersEvent.UserCreated("Ana"), vm.events.first())
+            assertEquals(UsersEvent.UserCreated("Ana"), createdAgain.await())
             assertEquals("""{"email":"bo@example.com","username":"bo"}""", seerr.body("POST", "/api/v1/user"))
         }
 
@@ -138,8 +141,9 @@ class UserAdmissionTest {
             vm.admission.selectAllCandidates(true)
             vm.admission.toggleCandidate("j-9")
             vm.admission.toggleCandidate("j-9")
+            val imported = awaitEvent(vm.events)
             vm.admission.import()
-            assertEquals(UsersEvent.UsersImported(2), vm.events.first())
+            assertEquals(UsersEvent.UsersImported(2), imported.await())
             assertEquals("""{"jellyfinUserIds":["j-8","j-9"]}""", seerr.body("POST", "/api/v1/user/import-from-jellyfin"))
             assertNull(vm.awaitReady().admission)
         }
@@ -156,8 +160,9 @@ class UserAdmissionTest {
             vm.admission.startImport(UserOrigin.Plex)
             vm.awaitReady { (it.admission as? UserAdmissionState.Importing)?.picker?.candidates?.size == 1 }
             vm.admission.toggleCandidate("p-1")
+            val imported = awaitEvent(vm.events)
             vm.admission.import()
-            assertEquals(UsersEvent.UsersImported(0), vm.events.first())
+            assertEquals(UsersEvent.UsersImported(0), imported.await())
             assertEquals("""{"plexIds":["p-1"]}""", seerr.body("POST", "/api/v1/user/import-from-plex"))
         }
 }
