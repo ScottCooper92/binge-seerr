@@ -52,6 +52,10 @@ class EditorActions<T>(
     val onSave: () -> Unit,
 )
 
+/** Every editor route wires the same four: only where Back goes is the page's own. */
+fun <T> EditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
 /**
  * The frame every per-user settings page shares: the title, a Save action live only while the
  * draft differs from the record and passes [canSave], and a snackbar for the outcome. [scrolling]

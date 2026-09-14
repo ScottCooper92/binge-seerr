@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.GeneralSettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.GeneralSettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.LinkedAccountsActions
@@ -21,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.UserSettingsActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.UserSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.UserSettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.UserSettingsViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.editorActions
 
 /** The user-settings entries of [SeerrNavHost]: the index, and one screen per page. */
 @Composable
@@ -105,6 +104,3 @@ internal fun UserSettingsPageEntry(
         }
     }
 }
-
-private fun <T> EditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
-    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)

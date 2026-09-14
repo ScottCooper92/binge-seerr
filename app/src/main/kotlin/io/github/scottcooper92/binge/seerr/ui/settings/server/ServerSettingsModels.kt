@@ -6,6 +6,19 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 
+/** The highest TCP port there is; a typed port outside 1..this is not one. */
+private const val PORT_MAX = 65_535
+
+/**
+ * Whether a service is addressable as typed. Four settings forms ask it — the media server, its
+ * Tautulli, each DVR instance and the proxy — so they ask it the same way rather than each
+ * carrying the range.
+ */
+internal fun hostAndPortValid(
+    host: String,
+    port: String,
+): Boolean = host.isNotBlank() && port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true
+
 /** The server's own settings pages, for a user who manages settings. */
 enum class ServerSettingsPage {
     General,
