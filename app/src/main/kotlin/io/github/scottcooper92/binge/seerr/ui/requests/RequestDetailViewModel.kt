@@ -15,10 +15,11 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
-import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchDataDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchStatsDto
+import io.github.scottcooper92.binge.seerr.seerr.arrServer
+import io.github.scottcooper92.binge.seerr.seerr.arrServers
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
@@ -224,18 +225,11 @@ class RequestDetailViewModel
         /** The service lists name the ids the request carries; a service the admin removed leaves the id unnamed. */
         private suspend fun SeerrRequestDto.destination(api: SeerrApi): RequestDestination? {
             val serverId = serverId ?: return null
-            val isMovie = media.mediaType == SEERR_MEDIA_TYPE_MOVIE
-            val servers = runCatching { if (isMovie) api.radarrServers() else api.sonarrServers() }.getOrNull()
-            val details: SeerrServerDetailsDto? =
-                runCatching {
-                    if (isMovie) {
-                        api.radarrServer(
-                            serverId,
-                        )
-                    } else {
-                        api.sonarrServer(serverId)
-                    }
-                }.getOrNull()
+            // Not `isTv`: this page reads anything that is not a film as a series, which is a
+            // different answer from the picker's for a media type that is neither.
+            val notMovie = media.mediaType != SEERR_MEDIA_TYPE_MOVIE
+            val servers = runCatching { api.arrServers(notMovie) }.getOrNull()
+            val details = runCatching { api.arrServer(notMovie, serverId) }.getOrNull()
             return RequestDestination(
                 serverName = servers?.firstOrNull { it.id == serverId }?.name ?: details?.server?.name,
                 profileName = details?.profiles?.firstOrNull { it.id == profileId }?.name,
