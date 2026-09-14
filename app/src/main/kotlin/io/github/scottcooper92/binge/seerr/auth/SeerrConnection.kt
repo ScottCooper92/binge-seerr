@@ -21,7 +21,8 @@ import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -80,8 +81,19 @@ class SeerrConnection(
 ) {
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
 
-    /** Live health of the saved server, fed by every call the cached client makes. */
-    val health: StateFlow<SeerrConnectionHealth> get() = healthMonitor.health
+    /**
+     * Live health of the saved server, fed by every call the cached client makes.
+     *
+     * [SeerrConnectionHealth.NotConnected] is answered from the store, not the monitor: the monitor
+     * reports what calls said and cannot know whether anything is saved. So with nothing saved this
+     * is NotConnected whatever the last call before the disconnect reported, and with something
+     * saved but not yet called it is [SeerrConnectionHealth.Unchecked] rather than a claim that no
+     * connection exists.
+     */
+    val health: Flow<SeerrConnectionHealth> =
+        combine(store.credentials, healthMonitor.health) { saved, reported ->
+            if (saved == null) SeerrConnectionHealth.NotConnected else reported
+        }.distinctUntilChanged()
 
     private val userLock = Mutex()
     private var cachedUser: Pair<SeerrCredentials, SeerrUserDto>? = null

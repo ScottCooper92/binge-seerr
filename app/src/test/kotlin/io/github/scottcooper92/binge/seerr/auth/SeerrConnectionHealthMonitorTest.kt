@@ -7,8 +7,8 @@ class SeerrConnectionHealthMonitorTest {
     private val monitor = SeerrConnectionHealthMonitor()
 
     @Test
-    fun `starts not connected, and a success is healthy`() {
-        assertEquals(SeerrConnectionHealth.NotConnected, monitor.health.value)
+    fun `starts unchecked, and a success is healthy`() {
+        assertEquals(SeerrConnectionHealth.Unchecked, monitor.health.value)
         monitor.reportSuccess()
         assertEquals(SeerrConnectionHealth.Healthy, monitor.health.value)
     }
@@ -45,6 +45,6 @@ class SeerrConnectionHealthMonitorTest {
         monitor.reportNetworkFailure()
         monitor.reset()
         monitor.reportNetworkFailure()
-        assertEquals(SeerrConnectionHealth.NotConnected, monitor.health.value)
+        assertEquals(SeerrConnectionHealth.Unchecked, monitor.health.value)
     }
 }
