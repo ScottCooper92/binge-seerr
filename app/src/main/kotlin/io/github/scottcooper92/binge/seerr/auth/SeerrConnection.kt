@@ -133,6 +133,16 @@ class SeerrConnection(
         }
     }
 
+    /**
+     * Re-reads `auth/me` rather than serving the cached copy. The cache is per connection, so a
+     * permission granted or revoked on the server is otherwise invisible until the app reconnects;
+     * a screen that re-resolves its scope on entry has to ask for this explicitly.
+     */
+    suspend fun refreshAuthenticatedUser(): SeerrUserDto {
+        userLock.withLock { cachedUser = null }
+        return authenticatedUser()
+    }
+
     suspend fun refreshProfile(): SeerrServerProfile {
         userLock.withLock { cachedProfile = null }
         return profile()

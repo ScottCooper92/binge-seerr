@@ -369,6 +369,11 @@ private fun UsersEntry(
     viewModel: UsersViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The scope re-resolves on arrival, so a permission changed in the web client shows here.
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
     UsersScreen(
         state = state,
         users = viewModel.users,

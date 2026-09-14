@@ -71,26 +71,34 @@ class UsersViewModel
 
         val events: SharedFlow<UsersEvent> = merge(eventFlow, admission.events).shareIn(viewModelScope, SharingStarted.Lazily)
 
+        /** Bumped when the page becomes visible, so the scope is re-read rather than held from the first visit. */
+        private val scopeRefresh = MutableStateFlow(0)
+
         private val scope: Flow<UsersScope> =
-            flow {
-                val profile = runCatching { connection.profile() }.getOrNull()
-                val viewer = runCatching { connection.authenticatedUser() }.getOrNull()
-                val settings = profile?.settings
-                emit(
-                    UsersScope(
-                        jellyseerrLineage = profile?.hasBlocklist == true,
-                        canAdmit = viewer.toPermissions().canManageUsers,
-                        importSource =
-                            when (profile?.mediaServer) {
-                                SeerrMediaServer.Plex -> UserOrigin.Plex
-                                SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
-                                SeerrMediaServer.Emby -> UserOrigin.Emby
-                                SeerrMediaServer.NotConfigured, null -> null
-                            },
-                        canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
-                    ),
-                )
-            }.stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
+            scopeRefresh
+                .flatMapLatest {
+                    flow {
+                        // The refreshing reads, not the cached ones: both caches live as long as the
+                        // connection, so re-running this over them would re-read nothing.
+                        val profile = runCatching { connection.refreshProfile() }.getOrNull()
+                        val viewer = runCatching { connection.refreshAuthenticatedUser() }.getOrNull()
+                        val settings = profile?.settings
+                        emit(
+                            UsersScope(
+                                jellyseerrLineage = profile?.hasBlocklist == true,
+                                canAdmit = viewer.toPermissions().canManageUsers,
+                                importSource =
+                                    when (profile?.mediaServer) {
+                                        SeerrMediaServer.Plex -> UserOrigin.Plex
+                                        SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
+                                        SeerrMediaServer.Emby -> UserOrigin.Emby
+                                        SeerrMediaServer.NotConfigured, null -> null
+                                    },
+                                canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
+                            ),
+                        )
+                    }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
 
         val users: Flow<PagingData<UserItem>> =
             combine(selectedSort, listVersion) { sort, _ -> sort }
@@ -118,6 +126,18 @@ class UsersViewModel
                     admission = admission,
                 )
             }.stateIn(viewModelScope, SharingStarted.Lazily, UsersUiState.Loading)
+
+        /**
+         * The scope is low-velocity: re-read on entry, never polled. A permission granted or a media
+         * server changed in the web client otherwise shows only once the ViewModel is recreated.
+         *
+         * The list is deliberately left alone. It is Room-backed through [UsersRemoteMediator] and
+         * writes made here already land in the cache, so bumping its version would recreate the
+         * pager and throw away the scroll for nothing.
+         */
+        fun setScreenVisible(visible: Boolean) {
+            if (visible) scopeRefresh.update { it + 1 }
+        }
 
         fun setSort(sort: UserSort) {
             selectedSort.value = sort
