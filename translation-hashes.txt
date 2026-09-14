@@ -581,6 +581,7 @@ app:settings_version  dd167905de0d
 app:settings_version_behind  eebfe437fd4d
 app:settings_version_update  8b0e41b62826
 app:setup_api_key  16f0ee47f993
+app:setup_api_key_hint  f1235e7994db
 app:setup_change_server  b7ee1dabf9b9
 app:setup_connect  1a2303ede074
 app:setup_continue  31fbef162594
@@ -607,6 +608,7 @@ app:setup_sign_in  bfd402b2f6f3
 app:setup_sign_in_plex  bf7f8a232706
 app:setup_start_quick_connect  b6dbd8215798
 app:setup_username  e3b89e9d33f8
+app:setup_username_placeholder  43c6c81836dc
 app:state_empty_title  49abaf804ab3
 app:state_error_forbidden_message  f70b28bf6c5c
 app:state_error_forbidden_title  f0406a0e7eb1

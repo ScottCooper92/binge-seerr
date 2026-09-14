@@ -134,6 +134,7 @@ private fun CreateUserSheet(
                 stringResource(R.string.setup_email),
                 enabled = !saving,
                 keyboardType = KeyboardType.Email,
+                placeholder = stringResource(R.string.placeholder_email),
             ) { value ->
                 actions.onEditDraft { it.copy(email = value) }
             }

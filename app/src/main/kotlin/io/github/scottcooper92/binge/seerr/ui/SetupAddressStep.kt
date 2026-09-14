@@ -40,6 +40,7 @@ internal fun SetupAddressStep(
             value = state.serverUrl,
             onValueChange = onEditAddress,
             label = { Text(stringResource(R.string.setup_server_url)) },
+            placeholder = { Text(stringResource(R.string.placeholder_server_url)) },
             singleLine = true,
             enabled = !state.isInspecting,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
