@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
+import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPlanner
 import javax.inject.Inject
 
@@ -23,11 +24,15 @@ class SeerrApp :
     @Inject
     lateinit var planner: NotificationPlanner
 
+    @Inject
+    lateinit var connectionRestore: ConnectionRestore
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
+        connectionRestore.start()
         planner.start()
     }
 }

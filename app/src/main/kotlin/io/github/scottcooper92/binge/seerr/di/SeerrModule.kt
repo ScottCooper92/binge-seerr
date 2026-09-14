@@ -6,12 +6,16 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import com.google.android.gms.auth.blockstore.Blockstore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.scottcooper92.binge.seerr.BuildConfig
+import io.github.scottcooper92.binge.seerr.auth.BlockStoreConnectionCarrier
+import io.github.scottcooper92.binge.seerr.auth.ConnectionCarrier
+import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.DeviceIdentityStore
 import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
@@ -111,6 +115,25 @@ object SeerrModule {
     @Singleton
     fun userStore(db: SeerrCacheDatabase): UserStore = RoomUserStore(db)
 
+    /**
+     * The carrier is Block Store where Play Services has it. `getClient` hands one back on any
+     * device; a device without Play Services fails the calls instead, which the carrier absorbs.
+     */
+    @Provides
+    @Singleton
+    fun connectionCarrier(
+        @ApplicationContext context: Context,
+    ): ConnectionCarrier = BlockStoreConnectionCarrier(Blockstore.getClient(context))
+
+    @Provides
+    @Singleton
+    fun connectionRestore(
+        store: CredentialStore,
+        apis: SeerrApiFactory,
+        carrier: ConnectionCarrier,
+        @ApplicationScope scope: CoroutineScope,
+    ): ConnectionRestore = ConnectionRestore(store, apis, carrier, scope)
+
     /** The caches keyed to one server are cleared when the server changes, so nothing of the last one shows. */
     @Provides
     @Singleton
@@ -118,11 +141,12 @@ object SeerrModule {
         store: CredentialStore,
         apis: SeerrApiFactory,
         health: SeerrConnectionHealthMonitor,
+        carrier: ConnectionCarrier,
         issues: IssueStore,
         users: UserStore,
         notifications: NotificationPrefs,
     ): SeerrConnection =
-        SeerrConnection(store, apis, health, onServerChanged = {
+        SeerrConnection(store, apis, health, carrier = carrier, onServerChanged = {
             issues.clearAll()
             users.clearAll()
             notifications.forgetServer()
