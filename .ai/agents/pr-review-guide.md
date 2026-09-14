@@ -75,6 +75,10 @@ handshake optional needs a traced reason, not a convenience argument.
 - Do the tests exercise the thing the PR changed, or only that it compiles?
 - Reuse before addition: a helper that already exists, a second way of doing
   something the repository already does one way.
+- The screen and ViewModel conventions — `CLAUDE.md` > Screens and ViewModels. One
+  state stream, a sealed state, events as their own flow, the sharing policy for the
+  kind of screen, dp and strings from resources, and the file-length signal. None of
+  it is gated, and the length one has no check at all, so it is held here or nowhere.
 
 ## 4. Calibration
 
