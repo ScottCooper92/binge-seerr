@@ -53,10 +53,20 @@ class NotificationAgentViewModel
 
         override fun canSave(draft: AgentForm): Boolean = draft.valid
 
+        /**
+         * Turning on an option that excludes another turns that one off, so the two can never be
+         * saved together. Done here rather than by disabling the other switch: a server whose
+         * options already hold both — which this app could write before this — would then have no
+         * control left to fix it with.
+         */
         fun setOption(
             option: AgentOption,
             value: String,
-        ) = edit { it.copy(options = it.options + (option to value)) }
+        ) = edit { draft ->
+            val excluded = option.excludedBy?.takeIf { value.toBoolean() }
+            val cleared = excluded?.let { mapOf(it to false.toString()) }.orEmpty()
+            draft.copy(options = draft.options + (option to value) + cleared)
+        }
 
         fun setEnabled(enabled: Boolean) = edit { it.copy(enabled = enabled) }
 

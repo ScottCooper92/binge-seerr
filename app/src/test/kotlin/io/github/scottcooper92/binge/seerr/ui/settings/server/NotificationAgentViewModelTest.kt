@@ -32,6 +32,11 @@ private const val EMAIL =
         "smtpPort":465,"secure":true,"ignoreTls":false,"requireTls":false,"allowSelfSigned":false,"authUser":"","authPass":"",
         "pgpMode":"legacy"}}"""
 
+private const val NTFY =
+    """{"enabled":true,"types":2,"options":{"url":"https://ntfy.example.com","topic":"seerr",
+        "authMethodUsernamePassword":true,"username":"me","password":"pw",
+        "authMethodToken":true,"token":"tk"}}"""
+
 private const val PUSHOVER = """{"enabled":false,"types":0,"options":{"accessToken":"","userToken":"","sound":""}}"""
 
 private const val SOUNDS = """[{"name":"pushover","description":"Pushover (default)"},{"name":"bike","description":"Bike"}]"""
@@ -53,6 +58,8 @@ class NotificationAgentViewModelTest {
         seerr.serve("GET /api/v1/settings/notifications/email", EMAIL)
         seerr.serve("POST /api/v1/settings/notifications/email", EMAIL)
         seerr.serve("POST /api/v1/settings/notifications/email/test", "", code = 204)
+        seerr.serve("GET /api/v1/settings/notifications/ntfy", NTFY)
+        seerr.serve("POST /api/v1/settings/notifications/ntfy", NTFY)
         seerr.serve("GET /api/v1/settings/notifications/pushover", PUSHOVER)
         seerr.serve("GET /api/v1/settings/notifications/pushover/sounds", SOUNDS)
     }
@@ -157,6 +164,27 @@ class NotificationAgentViewModelTest {
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/ntfy")).jsonObject
             assertEquals(JsonNull, sent.getValue("options").jsonObject.getValue("priority"))
+        }
+
+    @Test
+    fun `turning on one ntfy auth method turns the other off, and a server holding both stays fixable`() =
+        runTest {
+            val vm = viewModel(ServerAgent.Ntfy)
+            // The server is already holding both, which this app could write before this change.
+            val loaded = vm.awaitReady().draft
+            assertTrue(loaded.switched(AgentOption.NtfyAuthByPassword))
+            assertTrue(loaded.switched(AgentOption.NtfyAuthByToken))
+
+            vm.setOption(AgentOption.NtfyAuthByToken, true.toString())
+
+            val draft = vm.awaitReady().draft
+            assertTrue(draft.switched(AgentOption.NtfyAuthByToken))
+            assertFalse(draft.switched(AgentOption.NtfyAuthByPassword))
+
+            vm.setOption(AgentOption.NtfyAuthByPassword, true.toString())
+            val swapped = vm.awaitReady().draft
+            assertTrue(swapped.switched(AgentOption.NtfyAuthByPassword))
+            assertFalse(swapped.switched(AgentOption.NtfyAuthByToken))
         }
 
     @Test
