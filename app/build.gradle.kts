@@ -273,6 +273,19 @@ tasks.withType<Test>().configureEach {
     if (name.contains("ScreenshotTest")) {
         failOnNoDiscoveredTests = false
         maxParallelForks = 1
+    } else {
+        // Where CoroutineLeakReporter writes. Under build/reports/tests so ci.yml's artifact already
+        // carries it: a leak reports between tests, which is exactly where Gradle's per-test capture
+        // has nowhere to put it (#177).
+        val leakLog =
+            layout.buildDirectory
+                .file("reports/tests/$name/coroutine-leaks.txt")
+                .get()
+                .asFile
+        systemProperty("binge.coroutineLeakLog", leakLog.absolutePath)
+        // Gradle does not clear this directory between runs, and a leak file is only written when
+        // there is a leak — so without this a clean run still shows the last dirty one's.
+        doFirst { leakLog.delete() }
     }
 }
 
