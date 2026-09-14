@@ -271,7 +271,7 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Sonarr, id = 3)
             vm.awaitReady()
             vm.delete()
-            assertTrue(vm.deleted.first { it })
+            assertEquals(EditorEvent.Deleted, vm.events.first())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/sonarr/3"))
         }
 
@@ -294,7 +294,7 @@ class DvrInstanceViewModelTest {
             assertEquals(7, vm.awaitReady().saved.id)
 
             vm.delete()
-            assertTrue(vm.deleted.first { it })
+            assertEquals(EditorEvent.Deleted, vm.events.first())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/radarr/7"))
         }
 }

@@ -156,7 +156,7 @@ class OverrideRuleViewModelTest {
             val vm = viewModel(id = 11)
             vm.awaitReady()
             vm.delete()
-            assertEquals(true, vm.deleted.first { it })
+            assertEquals(EditorEvent.Deleted, vm.events.first())
         }
 
     @Test
@@ -173,7 +173,7 @@ class OverrideRuleViewModelTest {
             assertEquals(12, vm.awaitReady().saved.id)
 
             vm.delete()
-            assertEquals(true, vm.deleted.first { it })
+            assertEquals(EditorEvent.Deleted, vm.events.first())
             assertEquals(1, seerr.count("DELETE", "/api/v1/overrideRule/12"))
         }
 }

@@ -131,6 +131,8 @@ internal fun EditorEventSnackbarEffect(
                     snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
                 is EditorEvent.Notice ->
                     snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
+                // The page is leaving on this one; a snackbar on a screen being popped is not seen.
+                EditorEvent.Deleted -> Unit
             }
         }
     }

@@ -38,9 +38,6 @@ class OverrideRuleViewModel
         private val extrasState = MutableStateFlow(OverrideRuleExtras())
         val extras: StateFlow<OverrideRuleExtras> = extrasState.asStateFlow()
 
-        private val deletedState = MutableStateFlow(false)
-        val deleted: StateFlow<Boolean> = deletedState.asStateFlow()
-
         /** Filled by [load] so [loadChoices] can reuse the same fetch instead of re-fetching per instance pick. */
         private var radarrRecords: List<SeerrServiceSettingsDto> = emptyList()
         private var sonarrRecords: List<SeerrServiceSettingsDto> = emptyList()
@@ -101,7 +98,7 @@ class OverrideRuleViewModel
             val existing = ready()?.draft?.id ?: return
             viewModelScope.launch {
                 runCatching { connection.api().deleteOverrideRule(existing) }
-                    .onSuccess { deletedState.value = true }
+                    .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
