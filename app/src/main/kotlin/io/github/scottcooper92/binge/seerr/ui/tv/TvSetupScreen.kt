@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.tv.component.TvButton
@@ -168,6 +169,7 @@ private fun TvModeFields(
                 label = stringResource(R.string.setup_api_key),
                 secret = true,
                 keyboardType = KeyboardType.Password,
+                // No content type: the key is the server's, not an account credential.
                 initiallyFocused = credentialFocused,
             )
             // TvTextField has no supporting slot, and this has to stay readable while the user
@@ -181,6 +183,9 @@ private fun TvModeFields(
                 label = stringResource(R.string.setup_email),
                 placeholder = stringResource(R.string.placeholder_email),
                 keyboardType = KeyboardType.Email,
+                // Both types: the local account is an email address and it is also the username the
+                // saved login is filed under.
+                contentType = ContentType.EmailAddress + ContentType.Username,
                 initiallyFocused = credentialFocused,
             )
             TvPasswordField(form, onEdit)
@@ -192,6 +197,7 @@ private fun TvModeFields(
                 label = stringResource(R.string.setup_username),
                 placeholder = stringResource(R.string.setup_username_placeholder, form.mode.label(server)),
                 autoCorrect = false,
+                contentType = ContentType.Username,
                 initiallyFocused = credentialFocused,
             )
             TvPasswordField(form, onEdit)
@@ -212,5 +218,6 @@ private fun TvPasswordField(
         label = stringResource(R.string.setup_password),
         secret = true,
         keyboardType = KeyboardType.Password,
+        contentType = ContentType.Password,
     )
 }

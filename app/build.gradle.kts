@@ -196,6 +196,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.savedstate)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.credentials)
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
     implementation(libs.room.runtime)
