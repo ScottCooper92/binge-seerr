@@ -184,6 +184,7 @@ dependencies {
     implementation(libs.hilt.lifecycle.viewmodel.compose)
     implementation(libs.navigation3.runtime)
     implementation(libs.navigation3.ui)
+    implementation(libs.material3.adaptive.navigation3)
     implementation(libs.lifecycle.viewmodel.navigation3)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)

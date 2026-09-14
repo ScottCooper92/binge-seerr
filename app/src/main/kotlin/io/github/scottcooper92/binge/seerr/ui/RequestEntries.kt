@@ -62,6 +62,7 @@ internal fun RequestDetailEntry(
 @Composable
 internal fun RequestsEntry(
     onBack: () -> Unit,
+    showBack: Boolean,
     onOpen: (Int) -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
@@ -73,6 +74,7 @@ internal fun RequestsEntry(
     }
     RequestsScreen(
         state = state,
+        showBack = showBack,
         requestsFor = viewModel::requests,
         events = viewModel.moderation.events,
         shouldRefresh = viewModel::shouldRefresh,

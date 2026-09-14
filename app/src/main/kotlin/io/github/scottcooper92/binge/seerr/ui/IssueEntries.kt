@@ -18,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 @Composable
 internal fun IssuesEntry(
     onBack: () -> Unit,
+    showBack: Boolean,
     onOpen: (Int) -> Unit,
     viewModel: IssuesViewModel = hiltViewModel(),
 ) {
@@ -29,6 +30,7 @@ internal fun IssuesEntry(
     }
     IssuesScreen(
         state = state,
+        showBack = showBack,
         issuesFor = viewModel::issues,
         actions =
             IssuesActions(
@@ -71,6 +73,7 @@ internal fun IssueDetailEntry(
 @Composable
 internal fun BlocklistEntry(
     onBack: () -> Unit,
+    showBack: Boolean,
     viewModel: BlocklistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,6 +84,7 @@ internal fun BlocklistEntry(
     }
     BlocklistScreen(
         state = state,
+        showBack = showBack,
         items = viewModel.items,
         events = viewModel.events,
         actions =
