@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_NOT_FOUND
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryEnabledBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanCommandBody
@@ -21,8 +22,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 import javax.inject.Inject
-
-private const val HTTP_NOT_FOUND = 404
 
 /**
  * The media-server page: the connection as an editor over `settings/plex` or `settings/jellyfin`

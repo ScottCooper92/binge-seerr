@@ -43,6 +43,14 @@ data class SeerrCredentials(
 )
 
 /**
+ * Whether a variant is on the lineage that kept adding after Overseerr stopped at 1.x. The first
+ * of the three gates in `docs/server-compatibility.md`, and the one asked most often, so it is one
+ * definition rather than the same comparison written wherever a variant is to hand.
+ */
+val SeerrVariant.isJellyseerrLineage: Boolean
+    get() = this == SeerrVariant.Jellyseerr || this == SeerrVariant.Seerr
+
+/**
  * Which fork of the Seerr family a server is, from its reported version. Overseerr and Jellyseerr
  * are the legacy forks (both migrating to Seerr on an identical `/api/v1`); [Unknown] is the
  * fallback when the version cannot be read or parsed, and brands as plain "Seerr".

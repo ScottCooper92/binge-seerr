@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.auth
 
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_NOT_FOUND
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
@@ -30,8 +31,6 @@ import retrofit2.HttpException
 import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-
-private const val HTTP_NOT_FOUND = 404
 
 /** The entered address cannot be parsed as a URL even after normalisation. */
 class InvalidServerUrlException : IllegalArgumentException("Invalid Seerr server URL")
