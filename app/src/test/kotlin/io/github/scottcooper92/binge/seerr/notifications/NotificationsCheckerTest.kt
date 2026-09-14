@@ -221,6 +221,86 @@ class NotificationsCheckerTest {
             assertEquals(1, seerr.count("GET", OWN_REQUESTS))
         }
 
+    /** One row per page, newest first, so a page index is a depth: page 0 holds id 100, page 6 id 94. */
+    private fun ownRequestPages(
+        pages: Int,
+        oldestStatus: String,
+    ): List<String> =
+        (0 until pages).map { page ->
+            val status = if (page == pages - 1) oldestStatus else """"status":2|,"status":5"""
+            ownRequests(100 - page to status, pages = pages)
+        }
+
+    @Test
+    fun `a request still waiting on an outcome is found however deep the list has pushed it`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            val pages = 7
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, ownRequestPages(pages, """"status":1"""))
+
+            // The seed walks the whole list once, which is how a request already outstanding beyond
+            // the feed cap gets watched at all.
+            checker.check()
+            assertEquals(pages, seerr.count("GET", OWN_REQUESTS))
+            assertEquals(setOf(94), prefs.watchedRequestIds())
+
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, ownRequestPages(pages, """"status":2"""))
+            checker.check()
+
+            // Page 6, two pages past where a fixed five-page walk would have stopped.
+            assertEquals(listOf(listOf(94)), notifier.approved)
+            // Approved is not resolved: its media has not landed, so Available is still to come.
+            assertEquals(setOf(94), prefs.watchedRequestIds())
+        }
+
+    @Test
+    fun `with nothing outstanding the walk still covers the pages the deduplication sets are built from`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, ownRequestPages(10, """"status":2|,"status":5"""))
+            checker.check()
+            assertEquals(emptySet<Int>(), prefs.watchedRequestIds())
+            seerr.received.clear()
+
+            checker.check()
+
+            // Five, not one: a shallower walk would prune the saved ids to its own depth and announce
+            // them all over again the next time something outstanding took it deeper.
+            assertEquals(5, seerr.count("GET", OWN_REQUESTS))
+        }
+
+    @Test
+    fun `a watched request the server no longer has stops being watched`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(2 to """"status":1""", 1 to """"status":1"""))
+            checker.check()
+            assertEquals(setOf(2, 1), prefs.watchedRequestIds())
+
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(2 to """"status":1"""))
+            checker.check()
+
+            assertEquals(setOf(2), prefs.watchedRequestIds())
+        }
+
+    @Test
+    fun `a failed poll leaves the watched set alone, so the next one walks as deep`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(1 to """"status":1"""))
+            checker.check()
+            assertEquals(setOf(1), prefs.watchedRequestIds())
+
+            seerr.serve("GET $OWN_REQUESTS", "", code = 500)
+            assertEquals(CheckResult.TransientFailure, checker.check())
+
+            assertEquals(setOf(1), prefs.watchedRequestIds())
+        }
+
     @Test
     fun `a plain user's own signals run without the moderator feeds`() =
         runTest {
