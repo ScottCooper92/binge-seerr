@@ -41,13 +41,18 @@ class NotificationsChecker
             val hasIssues = attempt { connection.profile().hasIssues }.getOrDefault(false)
             val requests =
                 if (permissions.canManageRequests && prefs.isEnabled(NotificationSignal.PendingRequests)) {
-                    checkFeed(NotificationSignal.PendingRequests, { feeds.pendingRequests(it) }, { it.id }, notifier::notifyNewRequests)
+                    checkFeed(
+                        NotificationSignal.PendingRequests,
+                        feeds::seedPendingRequests,
+                        feeds::pendingRequests,
+                        notifier::notifyNewRequests,
+                    )
                 } else {
                     CheckResult.Ok
                 }
             val issues =
                 if (permissions.canManageIssues && hasIssues && prefs.isEnabled(NotificationSignal.OpenIssues)) {
-                    checkFeed(NotificationSignal.OpenIssues, { feeds.openIssues(it) }, { it.id }, notifier::notifyNewIssues)
+                    checkFeed(NotificationSignal.OpenIssues, feeds::seedOpenIssues, feeds::openIssues, notifier::notifyNewIssues)
                 } else {
                     CheckResult.Ok
                 }
@@ -55,26 +60,32 @@ class NotificationsChecker
         }
 
         /**
-         * A feed: fetch what is newer than the cursor, announce it, advance. A seed run stores the
-         * newest id without announcing; an empty feed seeds to 0, a real cursor, so the first row
-         * to arrive is announced rather than seeding again.
+         * A feed: fetch what is newer than the cursor, announce it, advance. A seed run takes the
+         * separate [seed] read, which titles nothing because it announces nothing; an empty feed
+         * seeds to 0, a real cursor, so the first row to arrive is announced rather than seeding
+         * again. After that the cursor follows the newest **raw** id the server offered, not the
+         * newest announced row, so a row titling drops cannot hold it back.
          */
         private suspend fun <T> checkFeed(
             signal: NotificationSignal,
-            fetch: suspend (sinceId: Int?) -> List<T>,
-            idOf: (T) -> Int,
+            seed: suspend () -> Int,
+            fetch: suspend (sinceId: Int) -> FeedRead<T>,
             notify: (List<T>) -> Unit,
         ): CheckResult {
-            val cursor = prefs.cursor(signal)
-            val fresh = attempt { fetch(cursor) }.getOrElse { return it.toResult() }
-            if (cursor == null) {
-                prefs.setCursor(signal, fresh.maxOfOrNull(idOf) ?: 0)
-                return CheckResult.Ok
-            }
-            if (fresh.isNotEmpty()) {
-                notify(fresh)
-                prefs.setCursor(signal, fresh.maxOf(idOf))
-            }
+            val cursor = prefs.cursor(signal) ?: return seedCursor(signal, seed)
+            val read = attempt { fetch(cursor) }.getOrElse { return it.toResult() }
+            if (read.rows.isNotEmpty()) notify(read.rows)
+            if (read.newestId > cursor) prefs.setCursor(signal, read.newestId)
+            return CheckResult.Ok
+        }
+
+        /** A seed announces nothing, so it titles nothing: it reads the newest id and stores that. */
+        private suspend fun seedCursor(
+            signal: NotificationSignal,
+            seed: suspend () -> Int,
+        ): CheckResult {
+            val newest = attempt { seed() }.getOrElse { return it.toResult() }
+            prefs.setCursor(signal, newest)
             return CheckResult.Ok
         }
 
