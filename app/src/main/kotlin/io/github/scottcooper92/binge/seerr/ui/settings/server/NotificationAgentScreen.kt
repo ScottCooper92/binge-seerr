@@ -92,6 +92,7 @@ private fun OptionFields(
                     choices = extras.sounds.map { it.name to it.description },
                     selected = draft.option(option).takeIf { it.isNotEmpty() },
                     onSelect = { name -> actions.onSetOption(option, name) },
+                    enabled = editable,
                 )
             option.kind == OptionKind.Switch ->
                 EditorSwitchRow(stringResource(option.labelRes()), draft.switched(option), enabled = enabled) { value ->

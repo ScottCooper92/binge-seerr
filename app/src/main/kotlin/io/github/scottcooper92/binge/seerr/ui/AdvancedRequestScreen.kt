@@ -73,6 +73,7 @@ private fun OptionsForm(
             choices = state.servers.map { it.id to it.label },
             selected = state.serverId,
             onSelect = onSelectServer,
+            enabled = !state.isSubmitting,
         )
         if (state.isLoadingChoices) {
             BingeLoadingIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -82,12 +83,14 @@ private fun OptionsForm(
                 choices = state.profiles.map { it.id to it.label },
                 selected = state.profileId,
                 onSelect = onSelectProfile,
+                enabled = !state.isSubmitting,
             )
             ChoicePicker(
                 title = stringResource(R.string.advanced_root_folder),
                 choices = state.rootFolders.map { it to it },
                 selected = state.rootFolder,
                 onSelect = onSelectRootFolder,
+                enabled = !state.isSubmitting,
             )
         }
         state.error?.let { error ->
@@ -103,19 +106,30 @@ private fun OptionsForm(
     }
 }
 
-/** One choice per chip, stacked: root-folder paths are long, and a wrapped path is unreadable. */
+/**
+ * One choice per chip, stacked: root-folder paths are long, and a wrapped path is unreadable.
+ *
+ * [enabled] is what an editor page passes while it saves. Without it a pick made mid-save lands in
+ * a draft the request has already been sent from, and the chips give no sign the page is busy.
+ */
 @Composable
 internal fun <T> ChoicePicker(
     title: String,
     choices: List<Pair<T, String>>,
     selected: T?,
     onSelect: (T) -> Unit,
+    enabled: Boolean = true,
 ) {
     if (choices.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
         Text(title, style = MaterialTheme.typography.titleSmall)
         choices.forEach { (id, label) ->
-            FilterChip(selected = id == selected, onClick = { onSelect(id) }, label = { Text(label) })
+            FilterChip(
+                selected = id == selected,
+                onClick = { onSelect(id) },
+                label = { Text(label) },
+                enabled = enabled,
+            )
         }
     }
 }

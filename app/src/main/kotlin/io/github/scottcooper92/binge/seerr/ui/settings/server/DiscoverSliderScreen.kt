@@ -43,6 +43,7 @@ fun DiscoverSliderScreen(
             choices = SliderType.customTypes.map { it to stringResource(it.labelRes()) },
             selected = draft.type,
             onSelect = { type -> actions.onEdit { it.copy(type = type) } },
+            enabled = enabled,
         )
         EditorTextField(draft.title, stringResource(R.string.server_settings_slider_title), enabled = enabled) { value ->
             actions.onEdit { it.copy(title = value) }

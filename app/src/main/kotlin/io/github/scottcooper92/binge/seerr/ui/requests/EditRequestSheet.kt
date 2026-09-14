@@ -81,18 +81,21 @@ internal fun EditRequestContent(
                     choices = destination.servers.map { it.id to it.label },
                     selected = destination.serverId,
                     onSelect = actions.onSelectServer,
+                    enabled = !edit.saving,
                 )
                 ChoicePicker(
                     title = stringResource(R.string.advanced_profile),
                     choices = destination.profiles.map { it.id to it.label },
                     selected = destination.profileId,
                     onSelect = actions.onSelectProfile,
+                    enabled = !edit.saving,
                 )
                 ChoicePicker(
                     title = stringResource(R.string.advanced_root_folder),
                     choices = destination.rootFolders.map { it to it },
                     selected = destination.rootFolder,
                     onSelect = actions.onSelectRootFolder,
+                    enabled = !edit.saving,
                 )
                 if (destination.tags.isNotEmpty()) {
                     Text(stringResource(R.string.request_tags), style = MaterialTheme.typography.titleSmall)

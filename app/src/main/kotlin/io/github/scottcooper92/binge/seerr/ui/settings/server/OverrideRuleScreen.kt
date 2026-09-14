@@ -47,6 +47,7 @@ fun OverrideRuleScreen(
             choices = extras.instances.map { it to "${it.type.name}$instanceSeparator${it.name}" },
             selected = extras.instances.firstOrNull { it.type == draft.serviceType && it.id == draft.serviceId },
             onSelect = ruleActions.onSelectInstance,
+            enabled = enabled,
         )
         EditorSectionTitle(stringResource(R.string.server_settings_rule_conditions_title))
         if (extras.users.isNotEmpty()) {
@@ -101,12 +102,14 @@ fun OverrideRuleScreen(
                 choices = choices.profiles.map { it.id to it.label },
                 selected = draft.profileId,
                 onSelect = { id -> actions.onEdit { it.copy(profileId = if (it.profileId == id) null else id) } },
+                enabled = enabled,
             )
             ChoicePicker(
                 title = stringResource(R.string.advanced_root_folder),
                 choices = choices.rootFolders.map { it to it },
                 selected = draft.rootFolder,
                 onSelect = { path -> actions.onEdit { it.copy(rootFolder = if (it.rootFolder == path) null else path) } },
+                enabled = enabled,
             )
             TagChips(choices.tags, draft.tagIds, enabled, ruleActions.onToggleTag)
         }
