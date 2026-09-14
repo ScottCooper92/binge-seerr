@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import kotlinx.serialization.Serializable
 
 /** Why an attempt failed, as the setup form shows it. */
 enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, Unknown, LinkExpired }
@@ -62,6 +63,43 @@ sealed interface LinkFlow {
     data class QuickConnect(
         override val code: String,
     ) : LinkFlow
+}
+
+/**
+ * A [LinkFlow] as it is kept across the process dying while the user is away approving it. Only
+ * what cannot be derived again is stored: the server is read again on the way back, and the Plex
+ * authorisation URL is rebuilt from this install's own identity rather than saved with the code.
+ */
+@Serializable
+internal sealed interface PendingLink {
+    val serverUrl: String
+    val code: String
+
+    /** Whether this was Settings' Edit connection, whose saved credentials the form must not read as "connected". */
+    val editing: Boolean
+
+    val mode: SeerrSignInMode
+
+    @Serializable
+    data class Plex(
+        override val serverUrl: String,
+        override val code: String,
+        override val editing: Boolean,
+        val pinId: Long,
+        val expiresAtEpochMillis: Long?,
+    ) : PendingLink {
+        override val mode: SeerrSignInMode get() = SeerrSignInMode.Plex
+    }
+
+    @Serializable
+    data class QuickConnect(
+        override val serverUrl: String,
+        override val code: String,
+        override val editing: Boolean,
+        val secret: String,
+    ) : PendingLink {
+        override val mode: SeerrSignInMode get() = SeerrSignInMode.QuickConnect
+    }
 }
 
 /** The screen's state: which step of setup the user is on, or the saved connection. */

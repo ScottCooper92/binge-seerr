@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
@@ -20,8 +21,10 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -32,6 +35,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -67,7 +71,10 @@ class SetupViewModelTest {
     private lateinit var connection: SeerrConnection
 
     /** The state is shared WhileSubscribed, so a collector is kept open for the test's life. */
-    private fun TestScope.viewModel(reuseConnection: Boolean = false): SetupViewModel {
+    private fun TestScope.viewModel(
+        reuseConnection: Boolean = false,
+        savedState: SavedStateHandle = SavedStateHandle(),
+    ): SetupViewModel {
         if (!reuseConnection) {
             connection =
                 SeerrConnection(
@@ -89,6 +96,7 @@ class SetupViewModelTest {
                         apis = { plexTvApi(it, plex.url("/").toString()) },
                         pollInterval = 10.milliseconds,
                     ),
+                savedState = savedState,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -352,6 +360,67 @@ class SetupViewModelTest {
                     .orEmpty()
                     .contains("tok3n"),
             )
+        }
+
+    @Test
+    fun `a plex sign-in the process died during is picked up where the user left it`() =
+        runTest {
+            // plex.tv answers by path rather than from the queue here: two ViewModels poll the same
+            // PIN across the restart, and which of them reads a given response is not the assertion.
+            val token = AtomicReference<String?>(null)
+            plex.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        if (request.method == "POST") {
+                            json("""{"id":41,"code":"ABCD","expiresAt":"2099-01-01T00:00:00Z"}""")
+                        } else {
+                            json("""{"id":41,"code":"ABCD","authToken":${token.get()?.let { "\"$it\"" } ?: "null"}}""")
+                        }
+                }
+            val saved = SavedStateHandle()
+            val vm = viewModel(savedState = saved)
+            vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true}""")
+            repeat(3) { seerr.takeRequest() }
+            vm.connect()
+            vm.awaitSignIn { it.link != null }
+
+            // Android reclaims the process while the user is still approving the PIN on plex.tv.
+            viewModels.clear()
+            seerr.enqueue(json("""{"version":"1.33.2"}"""))
+            seerr.enqueue(json("""{"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
+            seerr.enqueue(json("""{"version":"1.33.2"}"""))
+            seerr.enqueue(json("""{"localLogin":true}"""))
+            val restored = viewModel(reuseConnection = true, savedState = saved)
+
+            val link = restored.awaitSignIn { it.link != null }.link as LinkFlow.Plex
+            assertEquals("ABCD", link.code)
+            assertTrue(link.authUrl.startsWith("https://app.plex.tv/auth#?clientID=cid&code=ABCD"))
+            // The user has just come back to the app: the page is theirs to reopen, not reopened over them.
+            assertFalse(link.launchPending)
+
+            token.set("tok3n")
+            assertEquals(SeerrVariant.Overseerr, restored.awaitConnected().credentials.variant)
+        }
+
+    @Test
+    fun `a cancelled link is forgotten, so the next start does not resume into it`() =
+        runTest {
+            val saved = SavedStateHandle()
+            val vm = viewModel(savedState = saved)
+            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
+            seerr.enqueue(json("""{"authenticated":false}"""))
+            vm.connect()
+            vm.awaitSignIn { it.link != null }
+
+            vm.cancelLink()
+            viewModels.clear()
+
+            val restarted = viewModel(reuseConnection = true, savedState = saved)
+            assertEquals("", restarted.awaitAddress().serverUrl)
         }
 
     @Test

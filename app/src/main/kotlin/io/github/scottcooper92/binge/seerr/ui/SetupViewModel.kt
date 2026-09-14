@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +19,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.isInsecurePublicUrl
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -49,10 +49,24 @@ class SetupViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-        private val plex: PlexPinFlow,
+        plex: PlexPinFlow,
+        savedState: SavedStateHandle,
     ) : ViewModel() {
         private val draft = MutableStateFlow(Draft())
-        private var linkJob: Job? = null
+
+        private val links =
+            SetupLinks(
+                scope = viewModelScope,
+                connection = connection,
+                plex = plex,
+                savedState = savedState,
+                onLink = { link -> draft.update { it.copy(busy = false, link = link) } },
+                onFinished = ::finish,
+            )
+
+        init {
+            restore()
+        }
 
         val uiState: StateFlow<SetupUiState> =
             combine(connection.credentials, draft) { saved, draft ->
@@ -119,9 +133,10 @@ class SetupViewModel
             val server = current.server ?: return
             if (!current.form.canSubmit || current.busy || current.link != null) return
             draft.update { it.copy(busy = true, error = null, notice = null) }
+            val editing = current.editing != null
             when (current.form.mode) {
-                SeerrSignInMode.Plex -> startPlex(server)
-                SeerrSignInMode.QuickConnect -> startQuickConnect(server)
+                SeerrSignInMode.Plex -> links.startPlex(server, editing)
+                SeerrSignInMode.QuickConnect -> links.startQuickConnect(server, editing)
                 else -> signIn(server, current.form)
             }
         }
@@ -133,8 +148,7 @@ class SetupViewModel
             }
 
         fun cancelLink() {
-            linkJob?.cancel()
-            linkJob = null
+            links.cancel()
             draft.update { it.copy(busy = false, link = null) }
         }
 
@@ -170,29 +184,38 @@ class SetupViewModel
             }
         }
 
-        private fun startPlex(server: SetupServer) {
-            linkJob =
-                viewModelScope.launch {
-                    val pin = attempt { plex.start() }.getOrElse { failure -> return@launch finish(failure) }
-                    draft.update { it.copy(busy = false, link = LinkFlow.Plex(pin.code, pin.authUrl, launchPending = true)) }
-                    val outcome = attempt { connection.logInWithPlex(server.baseUrl, plex.awaitToken(pin)).getOrThrow() }
-                    finish(outcome.exceptionOrNull())
-                }
+        /**
+         * A link the user left the app to approve outlives the process. On the way back the server
+         * is read again and the wait picked up where it was, rather than dropping the user on a
+         * blank address step with an approval they have already given.
+         */
+        private fun restore() {
+            val pending = links.pending() ?: return
+            draft.update { it.copy(serverUrl = pending.serverUrl, busy = true) }
+            viewModelScope.launch { resume(pending) }
         }
 
-        private fun startQuickConnect(server: SetupServer) {
-            linkJob =
-                viewModelScope.launch {
-                    val session = connection.startQuickConnect(server.baseUrl).getOrElse { failure -> return@launch finish(failure) }
-                    draft.update { it.copy(busy = false, link = LinkFlow.QuickConnect(session.code)) }
-                    finish(connection.finishQuickConnect(server.baseUrl, session).exceptionOrNull())
+        private suspend fun resume(pending: PendingLink) {
+            // Before the server is read, not after: while `editing` is unset the saved credentials
+            // read as connected, and the screen would leave for the hub mid-resume.
+            if (pending.editing) {
+                val editing = runCatching { connection.current() }.getOrNull()
+                draft.update { it.copy(editing = editing) }
+            }
+            val server =
+                connection.inspect(pending.serverUrl).map { it.toSetupServer() }.getOrElse { failure ->
+                    // The address is kept and the failure shown, but the link is not: a server that
+                    // cannot be reached now would otherwise resume into the same failure every launch.
+                    links.forget()
+                    return finish(failure)
                 }
+            draft.update { it.copy(server = server, form = SignInForm(mode = pending.mode), busy = false) }
+            links.resume(server, pending)
         }
 
         /** Every attempt ends here: the secret leaves the form once it is stored encrypted, or the failure is shown. */
         private fun finish(failure: Throwable?) {
             if (failure is CancellationException) return
-            linkJob = null
             draft.update { current ->
                 if (failure == null) {
                     current.copy(busy = false, link = null, editing = null, form = SignInForm(mode = current.form.mode))
@@ -201,16 +224,6 @@ class SetupViewModel
                 }
             }
         }
-
-        /** [runCatching] would swallow the cancellation [cancelLink] sends; this lets it through. */
-        private inline fun <T> attempt(block: () -> T): Result<T> =
-            try {
-                Result.success(block())
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
 
         private data class Draft(
             val serverUrl: String = "",
