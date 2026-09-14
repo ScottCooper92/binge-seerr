@@ -11,7 +11,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPlexSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanStatusDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrTautulliSettingsDto
 
-private const val PORT_MAX = 65_535
 private const val CONNECTION_OK = 200
 
 /** Which media server the record describes; the server keeps one record for Jellyfin and Emby both. */
@@ -36,7 +35,7 @@ data class MediaServerForm(
     val forgotPasswordUrl: String? = null,
     val apiKey: String? = null,
 ) {
-    val valid: Boolean get() = host.isNotBlank() && port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true
+    val valid: Boolean get() = hostAndPortValid(host, port)
 }
 
 enum class LibraryType { Movies, Shows }
@@ -101,7 +100,7 @@ data class TautulliForm(
     val apiKey: String = "",
     val externalUrl: String = "",
 ) {
-    val valid: Boolean get() = host.isNotBlank() && port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true && apiKey.isNotBlank()
+    val valid: Boolean get() = hostAndPortValid(host, port) && apiKey.isNotBlank()
 }
 
 /** Overseerr has no media-server type and is always Plex; a lineage server not yet set up is shown the Plex form too. */

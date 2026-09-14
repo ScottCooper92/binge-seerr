@@ -55,9 +55,8 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServicesViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.SlidersActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliViewModel
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PermissionsSettingsScreen
+import io.github.scottcooper92.binge.seerr.ui.users.settings.editorActions
 
 /** The server-settings entries of [SeerrNavHost]: one screen per page, each over its own editor. */
 @Composable
@@ -342,6 +341,3 @@ internal fun OverrideRuleEntry(
             ),
     )
 }
-
-private fun <T> EditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
-    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)

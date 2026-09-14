@@ -8,7 +8,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 
-private const val PORT_MAX = 65_535
 private const val RADARR_PORT = "7878"
 private const val SONARR_PORT = "8989"
 
@@ -91,7 +90,7 @@ data class DvrForm(
     val monitorNewItems: String? = null,
 ) {
     val connectionValid: Boolean
-        get() = host.isNotBlank() && port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true && apiKey.isNotBlank()
+        get() = hostAndPortValid(host, port) && apiKey.isNotBlank()
 
     val valid: Boolean get() = connectionValid && name.isNotBlank() && profileId != null && !rootFolder.isNullOrBlank()
 

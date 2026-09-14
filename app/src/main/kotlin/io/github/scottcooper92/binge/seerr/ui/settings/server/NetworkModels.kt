@@ -7,7 +7,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataTestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNetworkSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrProxySettingsDto
 
-private const val PORT_MAX = 65_535
 private const val NO_TTL = -1
 
 /**
@@ -36,7 +35,7 @@ data class ProxyForm(
     val bypassFilter: String = "",
     val bypassLocalAddresses: Boolean = true,
 ) {
-    val valid: Boolean get() = !enabled || (host.isNotBlank() && port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true)
+    val valid: Boolean get() = !enabled || hostAndPortValid(host, port)
 }
 
 /** The DNS cache and the TTL bounds it forces; a blank bound is none. */
