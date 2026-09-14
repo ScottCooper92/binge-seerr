@@ -85,6 +85,24 @@
         </activity>
 
         <!--
+            The host's "manage" affordance. Binge resolves it by this action and this package and
+            starts it for a result, which is what gives this app a callingPackage to check; it has
+            no window of its own and opens MainActivity once the caller is admitted.
+
+            Not an intent filter on MainActivity: that one is singleTask, and an Activity launched
+            into its own task has no calling package, so the check would refuse every host.
+        -->
+        <activity
+            android:name=".SettingsHandOffActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SeerrHandOff">
+            <intent-filter>
+                <action android:name="com.binge.integration.SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
             exported="true" is the integration surface: the host reaches this Service with
             bindService, and what guards it is the caller policy in SeerrCompanionService, not the
             manifest. android:process is deliberately absent so the Service runs under this app's
