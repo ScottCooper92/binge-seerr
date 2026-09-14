@@ -9,9 +9,6 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /** One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. */
@@ -22,9 +19,6 @@ class DiscoverSliderViewModel
         private val connection: SeerrConnection,
         @Assisted private val id: Int?,
     ) : EditorViewModel<SliderForm>() {
-        private val deletedState = MutableStateFlow(false)
-        val deleted: StateFlow<Boolean> = deletedState.asStateFlow()
-
         init {
             reload()
         }
@@ -59,7 +53,7 @@ class DiscoverSliderViewModel
             val existing = id ?: return
             viewModelScope.launch {
                 runCatching { connection.api().deleteDiscoverSlider(existing) }
-                    .onSuccess { deletedState.value = true }
+                    .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }

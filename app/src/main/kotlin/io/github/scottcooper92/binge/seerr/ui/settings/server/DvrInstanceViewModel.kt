@@ -35,11 +35,6 @@ class DvrInstanceViewModel
         private val extrasState = MutableStateFlow(DvrExtras())
         val extras: StateFlow<DvrExtras> = extrasState.asStateFlow()
 
-        private val deletedState = MutableStateFlow(false)
-
-        /** True once the instance is gone from the server; the page leaves on it. */
-        val deleted: StateFlow<Boolean> = deletedState.asStateFlow()
-
         init {
             reload()
         }
@@ -95,7 +90,7 @@ class DvrInstanceViewModel
             val existing = ready()?.draft?.id ?: return
             viewModelScope.launch {
                 runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
-                    .onSuccess { deletedState.value = true }
+                    .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }

@@ -55,8 +55,10 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServicesViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.SlidersActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PermissionsSettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorActions
+import kotlinx.coroutines.flow.Flow
 
 /** The server-settings entries of [SeerrNavHost]: one screen per page, each over its own editor. */
 @Composable
@@ -259,8 +261,7 @@ internal fun DvrInstanceEntry(
         hiltViewModel<DvrInstanceViewModel, DvrInstanceViewModel.Factory>(creationCallback = { factory -> factory.create(type, id) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val extras by viewModel.extras.collectAsStateWithLifecycle()
-    val deleted by viewModel.deleted.collectAsStateWithLifecycle()
-    LaunchedEffect(deleted) { if (deleted) onBack() }
+    LeaveOnDeleted(viewModel.events, onBack)
     DvrInstanceScreen(
         state = state,
         extras = extras,
@@ -280,8 +281,7 @@ internal fun DiscoverSliderEntry(
     val viewModel =
         hiltViewModel<DiscoverSliderViewModel, DiscoverSliderViewModel.Factory>(creationCallback = { factory -> factory.create(id) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val deleted by viewModel.deleted.collectAsStateWithLifecycle()
-    LaunchedEffect(deleted) { if (deleted) onBack() }
+    LeaveOnDeleted(viewModel.events, onBack)
     DiscoverSliderScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack), onDelete = viewModel::delete)
 }
 
@@ -326,8 +326,7 @@ internal fun OverrideRuleEntry(
         })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val extras by viewModel.extras.collectAsStateWithLifecycle()
-    val deleted by viewModel.deleted.collectAsStateWithLifecycle()
-    LaunchedEffect(deleted) { if (deleted) onBack() }
+    LeaveOnDeleted(viewModel.events, onBack)
     OverrideRuleScreen(
         state = state,
         extras = extras,
@@ -341,4 +340,16 @@ internal fun OverrideRuleEntry(
                 onDelete = viewModel::delete,
             ),
     )
+}
+
+/**
+ * An editor whose record can be deleted leaves on [EditorEvent.Deleted] rather than on a flag that
+ * stays raised: the record is gone, so there is nothing for the page to go on showing.
+ */
+@Composable
+private fun LeaveOnDeleted(
+    events: Flow<EditorEvent>,
+    onBack: () -> Unit,
+) {
+    LaunchedEffect(events) { events.collect { event -> if (event == EditorEvent.Deleted) onBack() } }
 }

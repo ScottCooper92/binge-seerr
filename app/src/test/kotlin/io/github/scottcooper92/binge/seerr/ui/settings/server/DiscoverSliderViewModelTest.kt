@@ -122,7 +122,7 @@ class DiscoverSliderViewModelTest {
             val vm = viewModel(id = 3)
             vm.awaitReady()
             vm.delete()
-            assertTrue(vm.deleted.first { it })
+            assertEquals(EditorEvent.Deleted, vm.events.first())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/discover/3"))
         }
 }

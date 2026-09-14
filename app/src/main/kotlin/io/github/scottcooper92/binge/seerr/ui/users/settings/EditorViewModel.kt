@@ -34,6 +34,9 @@ sealed interface EditorUiState<out T> {
 sealed interface EditorEvent {
     data object Saved : EditorEvent
 
+    /** The record is gone from the server, so the page that edited it has nothing left to show. */
+    data object Deleted : EditorEvent
+
     data class Failed(
         val error: SeerrError,
     ) : EditorEvent
