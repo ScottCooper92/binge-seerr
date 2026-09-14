@@ -36,6 +36,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.security.GeneralSecurityException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -54,6 +56,9 @@ class SetupViewModelTest {
 
     /** Every ViewModel goes in here and is cleared on teardown, so no link poll outlives its test. */
     private val viewModels = ViewModelStore()
+
+    /** Counts the Quick Connect initiates, so a resume can be told from a second sign-in started. */
+    private val initiates = AtomicInteger(0)
 
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -76,6 +81,7 @@ class SetupViewModelTest {
         reuseConnection: Boolean = false,
         savedState: SavedStateHandle = SavedStateHandle(),
         cipher: SecretCipher = PlainCipher,
+        seen: MutableList<SetupUiState>? = null,
     ): SetupViewModel {
         if (!reuseConnection) {
             connection =
@@ -102,7 +108,7 @@ class SetupViewModelTest {
                 cipher = cipher,
             )
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.uiState.collect {} }
+        backgroundScope.launch { vm.uiState.collect { state -> seen?.add(state) } }
         return vm
     }
 
@@ -448,6 +454,89 @@ class SetupViewModelTest {
 
             token.set("tok3n")
             assertEquals(SeerrVariant.Overseerr, restored.awaitConnected().credentials.variant)
+        }
+
+    @Test
+    fun `a quick connect sign-in the process died during is picked up where the user left it`() =
+        runTest {
+            // The server answers by path here, as plex.tv does in the test above: two ViewModels poll
+            // the same code across the restart, and which of them reads a given response is not the
+            // assertion. `approved` is the user finally tapping approve on the media server.
+            val approved = AtomicBoolean(false)
+            seerr.dispatcher = quickConnectServer(approved)
+            val saved = SavedStateHandle()
+            val vm = viewModel(savedState = saved)
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/").toString())
+            vm.inspect()
+            vm.awaitSignIn()
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            vm.connect()
+            assertEquals(LinkFlow.QuickConnect("123456"), vm.awaitSignIn { it.link != null }.link)
+
+            // Android reclaims the process while the user is still approving on the media server.
+            viewModels.clear()
+            val restored = viewModel(reuseConnection = true, savedState = saved)
+
+            // The code comes back without the user typing the address again, and without a second
+            // initiate: the resumed wait is the one they already approved against.
+            assertEquals(LinkFlow.QuickConnect("123456"), restored.awaitSignIn { it.link != null }.link)
+            approved.set(true)
+            assertEquals(SeerrVariant.Seerr, restored.awaitConnected().credentials.variant)
+            assertEquals(1, initiates.get())
+        }
+
+    @Test
+    fun `a resume of an edit-connection link stays on the form rather than leaving for the hub`() =
+        runTest {
+            val approved = AtomicBoolean(false)
+            seerr.dispatcher = quickConnectServer(approved)
+            val saved = SavedStateHandle()
+            val vm = viewModel(savedState = saved)
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/").toString())
+            vm.inspect()
+            vm.awaitSignIn()
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            vm.connect()
+            approved.set(true)
+            vm.awaitConnected()
+
+            // Editing the live connection, then the process dies mid-approval.
+            approved.set(false)
+            val editing = viewModel(reuseConnection = true, savedState = saved)
+            editing.beginEdit()
+            editing.awaitSignIn()
+            editing.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            editing.connect()
+            editing.awaitSignIn { it.link != null }
+            viewModels.clear()
+
+            // Credentials are saved, so a resume that restored `editing` any later than it does
+            // would read them as connected and drop the user on the hub, taking the link with it.
+            val seen = mutableListOf<SetupUiState>()
+            val restored = viewModel(reuseConnection = true, savedState = saved, seen = seen)
+            assertEquals(LinkFlow.QuickConnect("123456"), restored.awaitSignIn { it.link != null }.link)
+            assertTrue(seen.none { it is SetupUiState.Connected })
+        }
+
+    /** Quick Connect end to end, by path: initiate, the poll [approved] answers, then the session. */
+    private fun quickConnectServer(approved: AtomicBoolean) =
+        object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when (request.url.encodedPath) {
+                    "/api/v1/status" -> json("""{"version":"3.4.0"}""")
+                    "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                    "/api/v1/backdrops" -> json("[]")
+                    "/api/v1/auth/jellyfin/quickconnect/initiate" -> {
+                        initiates.incrementAndGet()
+                        json("""{"code":"123456","secret":"abcdef12"}""")
+                    }
+                    "/api/v1/auth/jellyfin/quickconnect/check" -> json("""{"authenticated":${approved.get()}}""")
+                    "/api/v1/auth/jellyfin/quickconnect/authenticate" ->
+                        json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/"))
+                    else -> json("{}")
+                }
         }
 
     @Test
