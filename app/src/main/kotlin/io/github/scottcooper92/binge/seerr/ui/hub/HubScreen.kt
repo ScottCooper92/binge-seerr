@@ -44,11 +44,15 @@ class HubActions(
 /**
  * The connected hub: the dashboard when the server is healthy, or the problem and its way out when
  * it is not. The fork's name is the title, so the app reads as that server's console.
+ *
+ * @param selectedSection the section open beside the hub, marked in the Manage group. Null on a
+ * window narrow enough that the hub is alone on screen, where nothing is open beside it.
  */
 @Composable
 fun HubScreen(
     state: HubUiState,
     actions: HubActions,
+    selectedSection: HubSection? = null,
 ) {
     val ready = state as? HubUiState.Ready
     Scaffold(topBar = { BingeTopBar(title = ready?.server?.title ?: stringResource(R.string.companion_name)) }) { padding ->
@@ -56,7 +60,7 @@ fun HubScreen(
             when {
                 ready == null -> LoadingScreen()
                 ready.health.isProblem() -> ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect)
-                else -> Dashboard(ready, actions)
+                else -> Dashboard(ready, actions, selectedSection)
             }
         }
     }
@@ -69,6 +73,7 @@ internal fun ConnectionHealth.isProblem(): Boolean =
 private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
+    selectedSection: HubSection?,
 ) {
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         ServerCard(server = state.server, overview = state.overview)
@@ -91,6 +96,7 @@ private fun Dashboard(
                         detail = stringResource(section.descriptionRes),
                         badgeCount = section.badgeCount(state.overview),
                         badgeTint = section.badgeTint(),
+                        selected = section == selectedSection,
                         onClick = { actions.onOpenSection(section) },
                     )
                 },

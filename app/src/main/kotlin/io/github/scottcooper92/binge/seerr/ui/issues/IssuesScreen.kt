@@ -32,12 +32,17 @@ class IssuesActions(
     val onOpen: (IssueItem) -> Unit,
 )
 
-/** The issues browser: filter chips with the server's totals over the selected filter's cached, paged rows. */
+/**
+ * The issues browser: filter chips with the server's totals over the selected filter's cached, paged rows.
+ *
+ * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
+ */
 @Composable
 fun IssuesScreen(
     state: IssuesUiState,
     issuesFor: (IssueFilter) -> Flow<PagingData<IssueItem>>,
     actions: IssuesActions,
+    showBack: Boolean = true,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssuesUiState.Ready
@@ -45,7 +50,7 @@ fun IssuesScreen(
         topBar = {
             BingeTopBar(
                 title = stringResource(R.string.hub_section_issues),
-                onBack = actions.onBack,
+                onBack = actions.onBack.takeIf { showBack },
                 actions = {
                     if (ready != null) {
                         IconButton(onClick = { showSort = true }) {

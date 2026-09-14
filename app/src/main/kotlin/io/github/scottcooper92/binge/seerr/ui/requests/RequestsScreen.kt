@@ -51,6 +51,7 @@ class RequestsActions(
  *
  * @param shouldRefresh true at most once per list version per filter, so a freshly composed, current
  * page does not blank-refresh after a moderation elsewhere.
+ * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
  */
 @Composable
 fun RequestsScreen(
@@ -59,6 +60,7 @@ fun RequestsScreen(
     events: Flow<ModerationEvent>,
     shouldRefresh: (RequestFilter, Int) -> Boolean,
     actions: RequestsActions,
+    showBack: Boolean = true,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? RequestsUiState.Ready
@@ -69,7 +71,7 @@ fun RequestsScreen(
         topBar = {
             BingeTopBar(
                 title = stringResource(R.string.hub_section_requests),
-                onBack = actions.onBack,
+                onBack = actions.onBack.takeIf { showBack },
                 actions = {
                     if (ready != null) {
                         IconButton(onClick = { showSort = true }) {

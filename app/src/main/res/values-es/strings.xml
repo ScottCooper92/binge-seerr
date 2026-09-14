@@ -82,6 +82,8 @@
     <string name="hub_section_settings">Ajustes</string>
     <string name="hub_section_settings_desc">Servicios, notificaciones y tareas</string>
     <string name="section_coming_soon">Esta sección llegará en una fase posterior.</string>
+    <string name="section_none_open_title">Nada abierto</string>
+    <string name="section_none_open_body">Elige una sección del panel para gestionarla aquí.</string>
     <string name="requests_filter_all">Todas</string>
     <string name="requests_filter_pending">Pendientes</string>
     <string name="requests_filter_approved">Aprobadas</string>
@@ -829,9 +831,9 @@
     <string name="tv_setup_headline">Conectar un servidor</string>
     <string name="tv_setup_address_body">Escribe la dirección de tu servidor Seerr, Jellyseerr u Overseerr. Pulsa el botón central sobre un campo para abrir el teclado.</string>
     <string name="tv_setup_checking">Comprobando el servidor…</string>
-    <string name="tv_setup_sign_in_body">Inicia sesión con una clave de API o con una cuenta escrita desde el mando. Los inicios de sesión con Plex y Quick Connect están por ahora en la app del móvil.</string>
+    <string name="tv_setup_sign_in_body">Inicia sesión con una clave de API, una cuenta escrita desde el mando o Quick Connect. El inicio de sesión con Plex está por ahora en la app del móvil.</string>
     <string name="tv_setup_mode_title">Iniciar sesión con</string>
-    <string name="tv_setup_no_typed_modes">Este servidor solo ofrece inicios de sesión que terminan en otro dispositivo. Conéctalo desde la app del móvil.</string>
+    <string name="tv_setup_no_modes_here">El único inicio de sesión de este servidor requiere un navegador web, que este televisor no tiene. Conéctalo desde la app del móvil.</string>
     <string name="tv_setup_connecting">Conectando…</string>
     <string name="tv_loading">Cargando…</string>
     <string name="tv_advanced_submitting">Enviando la petición…</string>

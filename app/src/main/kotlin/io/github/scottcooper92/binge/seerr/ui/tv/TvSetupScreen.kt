@@ -28,9 +28,10 @@ import io.github.scottcooper92.binge.seerr.ui.submitLabelRes
 internal enum class TvSetupFocus { Address, Continue, Credential, Connect }
 
 /**
- * The two steps to a connection, on a television: the address, then the sign-ins a remote can type. The
- * same ViewModel and the same [SetupUiState] as the phone's setup, with the link flows left out — a Plex
- * or Quick Connect sign-in finishes on another device, and the phone app is that device for now.
+ * The two steps to a connection, on a television: the address, then the sign-ins a remote can finish.
+ * The same ViewModel and the same [SetupUiState] as the phone's setup. Quick Connect is finished here
+ * too — its code is approved in another Jellyfin app, so the television shows it and waits — while a
+ * Plex sign-in wants a browser and stays on the phone.
  */
 @Composable
 internal fun TvSetupScreen(
@@ -43,7 +44,12 @@ internal fun TvSetupScreen(
         // The home swaps to the connected plate on the credentials landing; this is the frame in between.
         SetupUiState.Loading, is SetupUiState.Connected -> TvLoadingPlate(modifier = modifier)
         is SetupUiState.Address -> TvSetupAddressStep(state, actions, modifier, initialFocus)
-        is SetupUiState.SignIn -> TvSetupSignInStep(state, actions, modifier, initialFocus)
+        // A link flow takes the whole page: the code is the only thing to read, and the only thing to do
+        // is wait or back out.
+        is SetupUiState.SignIn ->
+            state.link
+                ?.let { link -> TvSetupLinkPlate(link, actions.onCancelLink, modifier) }
+                ?: TvSetupSignInStep(state, actions, modifier, initialFocus)
     }
 }
 
@@ -86,12 +92,17 @@ private fun TvSetupAddressStep(
     }
 }
 
-/** The sign-ins a remote can finish: a key or an account typed on screen, never a code approved elsewhere. */
-internal val SeerrSignInMode.typedOnTv: Boolean
+/**
+ * The sign-ins a remote can finish. A key or an account typed on screen, and Quick Connect — its code
+ * is approved in any Jellyfin app the user is already signed into, so the television only has to show
+ * it and wait. Plex is the one left out: it finishes in a browser, which this surface does not have.
+ */
+internal val SeerrSignInMode.finishableOnTv: Boolean
     get() =
         when (this) {
             SeerrSignInMode.ApiKey, SeerrSignInMode.Local, SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> true
-            SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect -> false
+            SeerrSignInMode.QuickConnect -> true
+            SeerrSignInMode.Plex -> false
         }
 
 @Composable
@@ -101,11 +112,11 @@ private fun TvSetupSignInStep(
     modifier: Modifier,
     initialFocus: TvSetupFocus?,
 ) {
-    val typed = state.server.modes.filter { it.typedOnTv }
+    val offered = state.server.modes.filter { it.finishableOnTv }
     // The form opens on the server's first mode, which may be one this surface cannot finish.
-    val modeOffered = state.form.mode in typed
-    LaunchedEffect(modeOffered, typed) {
-        if (!modeOffered && typed.isNotEmpty()) actions.onEditForm { copy(mode = typed.first()) }
+    val modeOffered = state.form.mode in offered
+    LaunchedEffect(modeOffered, offered) {
+        if (!modeOffered && offered.isNotEmpty()) actions.onEditForm { copy(mode = offered.first()) }
     }
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
@@ -116,8 +127,8 @@ private fun TvSetupSignInStep(
         icon = Icons.Filled.Lock,
         modifier = modifier,
     ) {
-        if (typed.isEmpty()) {
-            TvFormNote(stringResource(R.string.tv_setup_no_typed_modes))
+        if (offered.isEmpty()) {
+            TvFormNote(stringResource(R.string.tv_setup_no_modes_here))
             TvButton(
                 label = stringResource(R.string.setup_change_server),
                 onClick = actions.onChangeServer,
@@ -127,7 +138,7 @@ private fun TvSetupSignInStep(
         } else {
             TvOptionGroup(
                 title = stringResource(R.string.tv_setup_mode_title),
-                choices = typed.map { mode -> mode to mode.label(state.server) },
+                choices = offered.map { mode -> mode to mode.label(state.server) },
                 selected = state.form.mode,
                 onSelect = { mode -> actions.onEditForm { copy(mode = mode) } },
                 arrival = arrival,

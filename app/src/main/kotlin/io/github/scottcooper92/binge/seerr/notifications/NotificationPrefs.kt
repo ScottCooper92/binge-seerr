@@ -38,6 +38,13 @@ enum class NotificationSignal(
 private val LAST_RUN = longPreferencesKey("last_run_millis")
 
 /**
+ * The user's own requests that still have an outcome to announce. Shared by the three own-request
+ * signals, because it is not deduplication: it is how deep the next walk of the list has to go
+ * before every request it is still watching has been accounted for (#181).
+ */
+private val WATCHED_REQUEST_IDS = stringSetPreferencesKey("own_requests_watching")
+
+/**
  * The poll's own DataStore: a toggle per signal, and each signal's deduplication state. A null
  * cursor or set is unseeded; the next check seeds it without notifying, so turning a signal on
  * does not announce the backlog. Everything defaults off.
@@ -94,6 +101,17 @@ class NotificationPrefs(
         dataStore.edit { it[signal.notifiedKey()] = ids.mapTo(mutableSetOf()) { id -> id.toString() } }
     }
 
+    /**
+     * The ids the own-requests walk is still watching, or null before it has ever run — which is
+     * the seed, and walks the whole list once to find what was already outstanding.
+     */
+    suspend fun watchedRequestIds(): Set<Int>? =
+        dataStore.data.first()[WATCHED_REQUEST_IDS]?.mapNotNullTo(mutableSetOf()) { it.toIntOrNull() }
+
+    suspend fun setWatchedRequestIds(ids: Set<Int>) {
+        dataStore.edit { it[WATCHED_REQUEST_IDS] = ids.mapTo(mutableSetOf()) { id -> id.toString() } }
+    }
+
     /** When the poll last finished, for the settings row; null before its first run. */
     val lastRunMillis: Flow<Long?> = dataStore.data.map { it[LAST_RUN] }.distinctUntilChanged()
 
@@ -110,18 +128,19 @@ class NotificationPrefs(
     suspend fun forgetServer() {
         dataStore.edit { prefs ->
             NotificationSignal.entries.forEach { prefs.clearDedup(it) }
+            prefs.remove(WATCHED_REQUEST_IDS)
             prefs.remove(PAUSED_FOR_AUTH_FAILURE)
         }
     }
-
-    private fun MutablePreferences.clearDedup(signal: NotificationSignal) {
-        remove(signal.cursorKey())
-        remove(signal.notifiedKey())
-    }
-
-    private fun NotificationSignal.toggleKey() = booleanPreferencesKey("signal_${key}_enabled")
-
-    private fun NotificationSignal.cursorKey() = intPreferencesKey("signal_${key}_cursor")
-
-    private fun NotificationSignal.notifiedKey() = stringSetPreferencesKey("signal_${key}_notified")
 }
+
+private fun MutablePreferences.clearDedup(signal: NotificationSignal) {
+    remove(signal.cursorKey())
+    remove(signal.notifiedKey())
+}
+
+private fun NotificationSignal.toggleKey() = booleanPreferencesKey("signal_${key}_enabled")
+
+private fun NotificationSignal.cursorKey() = intPreferencesKey("signal_${key}_cursor")
+
+private fun NotificationSignal.notifiedKey() = stringSetPreferencesKey("signal_${key}_notified")
