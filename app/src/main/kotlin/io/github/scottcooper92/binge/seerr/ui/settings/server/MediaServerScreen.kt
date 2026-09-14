@@ -102,6 +102,7 @@ private fun ConnectionFields(
         stringResource(R.string.server_settings_host),
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
+        placeholder = stringResource(R.string.placeholder_host),
     ) { value ->
         actions.onEdit { it.copy(host = value) }
     }
@@ -110,13 +111,23 @@ private fun ConnectionFields(
         stringResource(R.string.server_settings_port),
         enabled = enabled,
         keyboardType = KeyboardType.Number,
+        // The port the kind listens on by default; this form starts blank, so it is an example and not a value.
+        placeholder =
+            stringResource(
+                if (draft.kind == MediaServerKind.Plex) R.string.placeholder_port_plex else R.string.placeholder_port_jellyfin,
+            ),
         isError = draft.port.isNotBlank() && !draft.copy(host = "x").valid,
     ) { value -> actions.onEdit { it.copy(port = value) } }
     EditorSwitchRow(stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled = enabled) { value ->
         actions.onEdit { it.copy(useSsl = value) }
     }
     draft.urlBase?.let { base ->
-        EditorTextField(base, stringResource(R.string.server_settings_url_base), enabled = enabled) { value ->
+        EditorTextField(
+            base,
+            stringResource(R.string.server_settings_url_base),
+            enabled = enabled,
+            placeholder = stringResource(R.string.placeholder_url_base_jellyfin),
+        ) { value ->
             actions.onEdit { it.copy(urlBase = value) }
         }
     }
@@ -133,6 +144,10 @@ private fun ConnectionFields(
         ),
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
+        placeholder =
+            stringResource(
+                if (draft.kind == MediaServerKind.Plex) R.string.placeholder_plex_web_url else R.string.placeholder_server_url,
+            ),
         supporting = stringResource(R.string.server_settings_external_hint),
     ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
     draft.forgotPasswordUrl?.let { url ->
@@ -141,6 +156,7 @@ private fun ConnectionFields(
             stringResource(R.string.server_settings_forgot_password_url),
             enabled = enabled,
             keyboardType = KeyboardType.Uri,
+            placeholder = stringResource(R.string.placeholder_url_https),
         ) { value ->
             actions.onEdit { it.copy(forgotPasswordUrl = value) }
         }

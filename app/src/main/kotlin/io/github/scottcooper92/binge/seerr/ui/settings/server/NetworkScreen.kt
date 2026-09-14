@@ -65,6 +65,7 @@ private fun ProxyFields(
         stringResource(R.string.server_settings_host),
         enabled = editable,
         keyboardType = KeyboardType.Uri,
+        placeholder = stringResource(R.string.placeholder_proxy_host),
         isError = proxy.enabled && proxy.host.isBlank(),
     ) { value -> onEdit { it.copy(host = value) } }
     EditorTextField(
@@ -72,6 +73,7 @@ private fun ProxyFields(
         stringResource(R.string.server_settings_port),
         enabled = editable,
         keyboardType = KeyboardType.Number,
+        placeholder = stringResource(R.string.placeholder_port_proxy),
         isError = proxy.enabled && !proxy.valid && proxy.host.isNotBlank(),
     ) { value -> onEdit { it.copy(port = value) } }
     EditorSwitchRow(stringResource(R.string.server_settings_use_ssl), proxy.useSsl, enabled = editable) { value ->
