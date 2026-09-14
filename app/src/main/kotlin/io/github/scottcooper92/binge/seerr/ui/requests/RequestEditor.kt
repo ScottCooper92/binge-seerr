@@ -1,8 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
-import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
-import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
@@ -10,7 +8,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
+import io.github.scottcooper92.binge.seerr.seerr.arrServer
+import io.github.scottcooper92.binge.seerr.seerr.arrServers
 import io.github.scottcooper92.binge.seerr.seerr.forRequest
+import io.github.scottcooper92.binge.seerr.seerr.isTv
 import io.github.scottcooper92.binge.seerr.seerr.preferred
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import kotlinx.coroutines.CoroutineScope
@@ -78,7 +79,7 @@ class RequestEditor(
             } else {
                 null
             }
-        val seasonsUnknown = request.media.mediaType == SEERR_MEDIA_TYPE_TV && source.details == null
+        val seasonsUnknown = request.isTv && source.details == null
         edit.value = EditState(seasons = source.seasonChoices(), destination = destination, seasonsUnknown = seasonsUnknown)
         if (destination != null) scope.launch { loadServers(request) }
     }
@@ -128,7 +129,7 @@ class RequestEditor(
 
     /** The list a request of this shape may go to; the request's own server where it is still listed, else the default. */
     private suspend fun loadServers(request: SeerrRequestDto) {
-        val loaded = runCatching { connection.api().servers(request).forRequest(request.is4k) }.getOrNull()
+        val loaded = runCatching { connection.api().arrServers(request.isTv).forRequest(request.is4k) }.getOrNull()
         if (loaded == null) {
             updateDestination { it.copy(loadingChoices = false) }
             return
@@ -142,7 +143,7 @@ class RequestEditor(
     /** Fills the chosen server's choices in, unless the user has moved to another server meanwhile. */
     private suspend fun loadChoices(serverId: Int) {
         val request = source?.request ?: return
-        val details = runCatching { connection.api().server(request, serverId) }.getOrNull()
+        val details = runCatching { connection.api().arrServer(request.isTv, serverId) }.getOrNull()
         updateDestination { destination ->
             when {
                 destination.serverId != serverId -> destination
@@ -168,7 +169,7 @@ class RequestEditor(
         SeerrEditRequestBody(
             mediaType = request.media.mediaType,
             seasons =
-                if (request.media.mediaType == SEERR_MEDIA_TYPE_TV && !seasonsUnknown) {
+                if (request.isTv && !seasonsUnknown) {
                     seasons.filter { it.selected && !it.locked }.map { it.number }
                 } else {
                     null
@@ -184,14 +185,6 @@ class RequestEditor(
 
     private fun updateDestination(transform: (DestinationChoices) -> DestinationChoices) =
         update { state -> state.copy(destination = state.destination?.let(transform)) }
-
-    private suspend fun SeerrApi.servers(request: SeerrRequestDto): List<SeerrServerDto> =
-        if (request.media.mediaType == SEERR_MEDIA_TYPE_TV) sonarrServers() else radarrServers()
-
-    private suspend fun SeerrApi.server(
-        request: SeerrRequestDto,
-        id: Int,
-    ): SeerrServerDetailsDto = if (request.media.mediaType == SEERR_MEDIA_TYPE_TV) sonarrServer(id) else radarrServer(id)
 }
 
 /**

@@ -10,11 +10,12 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
-import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
+import io.github.scottcooper92.binge.seerr.seerr.arrServer
+import io.github.scottcooper92.binge.seerr.seerr.arrServers
 import io.github.scottcooper92.binge.seerr.seerr.forRequest
 import io.github.scottcooper92.binge.seerr.seerr.preferred
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
@@ -84,7 +85,7 @@ class AdvancedRequestViewModel
         }
 
         private suspend fun load() {
-            runCatching { connection.api().servers().forRequest(request.is4k) }
+            runCatching { connection.api().arrServers(isTv).forRequest(request.is4k) }
                 .onFailure { _uiState.value = AdvancedRequestUiState.Failed(it.toAdvancedRequestError()) }
                 .onSuccess { loaded ->
                     servers = loaded
@@ -146,7 +147,7 @@ class AdvancedRequestViewModel
 
         /** Fills the chosen server's choices in, unless the user has moved to another server meanwhile. */
         private suspend fun loadChoices(server: SeerrServerDto) {
-            runCatching { connection.api().server(server.id) }
+            runCatching { connection.api().arrServer(isTv, server.id) }
                 .onSuccess { details -> updateReady { if (it.serverId == server.id) it.withChoices(details) else it } }
                 .onFailure { failure ->
                     updateReady {
@@ -187,10 +188,6 @@ class AdvancedRequestViewModel
                 profileId = profileId,
                 rootFolder = rootFolder,
             )
-
-        private suspend fun SeerrApi.servers(): List<SeerrServerDto> = if (isTv) sonarrServers() else radarrServers()
-
-        private suspend fun SeerrApi.server(id: Int): SeerrServerDetailsDto = if (isTv) sonarrServer(id) else radarrServer(id)
 
         private fun ready(): AdvancedRequestUiState.Ready? = _uiState.value as? AdvancedRequestUiState.Ready
 
