@@ -82,6 +82,9 @@ private fun OptionFields(
     val options = AgentOption.of(draft.agent)
     if (options.isNotEmpty()) EditorSectionTitle(stringResource(R.string.server_settings_agent_section_options))
     options.forEach { option ->
+        // An option nothing reads follows the switch that would read it. The switches themselves
+        // stay live: exclusivity is enforced by turning the other one off, not by refusing this one.
+        val editable = enabled && option.gatedBy?.let { draft.switched(it) } != false
         when {
             option == AgentOption.PushoverSound && extras.sounds.isNotEmpty() ->
                 ChoicePicker(
@@ -98,7 +101,7 @@ private fun OptionFields(
                 EditorTextField(
                     draft.option(option),
                     stringResource(option.labelRes()),
-                    enabled = enabled,
+                    enabled = editable,
                     secret = option.secret,
                     singleLine = option.kind != OptionKind.Multiline,
                     keyboardType =

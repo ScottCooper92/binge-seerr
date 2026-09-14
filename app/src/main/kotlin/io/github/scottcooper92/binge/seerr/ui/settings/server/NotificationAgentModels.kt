@@ -92,6 +92,27 @@ enum class AgentOption(
 
     val secret: Boolean get() = kind == OptionKind.Secret
 
+    /**
+     * The switch that has to be on for this option to be read. ntfy takes one set of credentials
+     * per auth method and ignores the other, so each set follows the method that uses it.
+     */
+    val gatedBy: AgentOption?
+        get() =
+            when (this) {
+                NtfyUsername, NtfyPassword -> NtfyAuthByPassword
+                NtfyToken -> NtfyAuthByToken
+                else -> null
+            }
+
+    /** The switch this one rules out: ntfy authenticates one way, so both methods cannot be on. */
+    val excludedBy: AgentOption?
+        get() =
+            when (this) {
+                NtfyAuthByPassword -> NtfyAuthByToken
+                NtfyAuthByToken -> NtfyAuthByPassword
+                else -> null
+            }
+
     /** Whether [value] is something this option can be saved with: non-blank, and parseable if [kind] is [OptionKind.Number]. */
     fun satisfiedBy(value: String): Boolean =
         when (kind) {

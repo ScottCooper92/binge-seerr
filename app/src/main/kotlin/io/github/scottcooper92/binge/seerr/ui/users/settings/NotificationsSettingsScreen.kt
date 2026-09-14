@@ -66,7 +66,13 @@ private fun AgentSection(
         }
     }
     if (agent == NotificationAgent.Telegram) {
-        EditorSwitchRow(stringResource(R.string.user_settings_telegram_silent), current.sendSilently, enabled = enabled) { value ->
+        // Only how a message is delivered, so it follows the agent. The id and chat fields above do
+        // not: they are filled in before the agent is turned on.
+        EditorSwitchRow(
+            stringResource(R.string.user_settings_telegram_silent),
+            current.sendSilently,
+            enabled = enabled && current.enabled,
+        ) { value ->
             onEdit { it.update(agent) { agentSettings -> agentSettings.copy(sendSilently = value) } }
         }
     }
