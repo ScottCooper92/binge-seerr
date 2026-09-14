@@ -62,6 +62,24 @@ class NetworkViewModelTest {
         uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<NetworkForm>
 
     @Test
+    fun `a ttl the dns cache is not using does not block saving the rest of the page`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            // Off, with a TTL the server would refuse: nothing reads it, so Save stays available.
+            vm.edit { it.copy(dnsCache = it.dnsCache?.copy(enabled = false, minTtl = "-1")) }
+            assertTrue(vm.awaitReady().draft.valid)
+
+            // On, and the same value is now the page's problem.
+            vm.edit { it.copy(dnsCache = it.dnsCache?.copy(enabled = true)) }
+            assertFalse(vm.awaitReady().draft.valid)
+        }
+
+    @Test
     fun `a seerr's proxy and dns cache are read, and a proxy that is on needs an address`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
