@@ -45,10 +45,10 @@ data class DnsCacheForm(
     val minTtl: String = "",
     val maxTtl: String = "",
 ) {
-    val valid: Boolean get() = minTtl.isTtl() && maxTtl.isTtl()
+    val valid: Boolean get() = !enabled || (minTtl.isTtl() && maxTtl.isTtl())
 }
 
-private fun String.isTtl(): Boolean = isBlank() || trim().toIntOrNull()?.let { it >= 0 } == true
+internal fun String.isTtl(): Boolean = isBlank() || trim().toIntOrNull()?.let { it >= 0 } == true
 
 /** The metadata providers Seerr 3 can serve series and anime from. */
 enum class MetadataProvider(
