@@ -1,12 +1,14 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
+import androidx.paging.PagingData
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -47,6 +49,53 @@ class LogsViewModelTest {
         viewModels.put(vm.hashCode().toString(), vm)
         return vm
     }
+
+    /**
+     * One emission of [LogsViewModel.entries] is one query reaching the `Pager`. Collected rather
+     * than snapshotted: a snapshot presents a generation, and what is under test is how many
+     * generations there are.
+     */
+    private fun TestScope.generations(vm: LogsViewModel): List<PagingData<LogEntry>> =
+        mutableListOf<PagingData<LogEntry>>().also { seen -> backgroundScope.launch { vm.entries.collect { seen += it } } }
+
+    @Test
+    fun `typing a search reaches the pager once, after the debounce rather than per keystroke`() =
+        runTest {
+            val vm = viewModel()
+            val seen = generations(vm)
+            runCurrent()
+            // The blank query is not held back, so the first page is already on its way.
+            assertEquals(1, seen.size)
+
+            vm.setSearch("p")
+            vm.setSearch("po")
+            vm.setSearch("port")
+            advanceTimeBy(SEARCH_DEBOUNCE_MS - 1)
+            assertEquals(1, seen.size)
+
+            advanceTimeBy(2)
+            assertEquals(2, seen.size)
+        }
+
+    @Test
+    fun `clearing the search is not held back, and re-picking the level the page is on re-queries nothing`() =
+        runTest {
+            val vm = viewModel()
+            val seen = generations(vm)
+            runCurrent()
+
+            vm.setSearch("port")
+            advanceTimeBy(SEARCH_DEBOUNCE_MS + 1)
+            assertEquals(2, seen.size)
+
+            vm.setSearch("")
+            runCurrent()
+            assertEquals(3, seen.size)
+
+            vm.setLevel(vm.uiState.value.level)
+            advanceTimeBy(SEARCH_DEBOUNCE_MS + 1)
+            assertEquals(3, seen.size)
+        }
 
     @Test
     fun `a refresh lands on the interval while following, and stops once it does not`() =
