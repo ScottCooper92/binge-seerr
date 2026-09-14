@@ -212,7 +212,9 @@ class SetupViewModel
                     links.forget()
                     return finish(failure)
                 }
-            draft.update { it.copy(server = server, form = SignInForm(mode = pending.mode), busy = false) }
+            // `busy` stays true here: `links.resume()` genuinely suspends before `onLink` fires for
+            // Plex, and clearing it early would re-enable Connect and let a second flow start.
+            draft.update { it.copy(server = server, form = SignInForm(mode = pending.mode)) }
             links.resume(server, pending)
         }
 
