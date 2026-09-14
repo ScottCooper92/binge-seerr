@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.isJellyseerrLineage
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 
 /** The server's own settings pages, for a user who manages settings. */
@@ -71,9 +72,6 @@ data class ServerGeneralExtras(
     val apiKey: ApiKeyState = ApiKeyState(),
     val visitor: VisitorView? = null,
 )
-
-private val SeerrVariant.isJellyseerrLineage: Boolean
-    get() = this == SeerrVariant.Jellyseerr || this == SeerrVariant.Seerr
 
 internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): ServerGeneralSettings {
     val lineage = variant.isJellyseerrLineage

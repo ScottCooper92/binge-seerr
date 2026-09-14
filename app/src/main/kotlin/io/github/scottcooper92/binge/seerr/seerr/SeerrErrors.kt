@@ -8,8 +8,10 @@ import java.io.IOException
 
 private const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
-private const val HTTP_NOT_FOUND = 404
 private const val HTTP_SERVER_ERROR_MIN = 500
+
+/** Seerr answers 404 for a route a lineage does not serve as well as for a missing record, so callers read it directly. */
+const val HTTP_NOT_FOUND = 404
 
 /**
  * Why a call to the server failed, as the app's own screens classify it. The gRPC mapping below

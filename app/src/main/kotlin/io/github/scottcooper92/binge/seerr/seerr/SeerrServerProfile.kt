@@ -61,7 +61,7 @@ data class SeerrServerProfile(
     val commitsBehind: Int = 0,
     val settings: SeerrPublicSettings = SeerrPublicSettings(),
 ) {
-    private val jellyseerrLineage: Boolean get() = variant == SeerrVariant.Jellyseerr || variant == SeerrVariant.Seerr
+    private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage
 
     /** The blocklist arrived with Jellyseerr 2.0; Overseerr never had one. */
     val hasBlocklist: Boolean get() = jellyseerrLineage && atLeast(2, 0)
