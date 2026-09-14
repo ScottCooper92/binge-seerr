@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
 import io.grpc.Status
 import io.grpc.StatusException
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -97,3 +98,11 @@ suspend inline fun <T> statusCatching(block: () -> T): T =
     } catch (e: Exception) {
         throw e.toStatusException()
     }
+
+/**
+ * [runCatching] catches everything, cancellation included, which would swallow the cancellation a
+ * cancelled scope or a stopped worker sends. This lets that one back out and treats the rest as a
+ * failure to classify with [toSeerrError].
+ */
+internal inline fun <T> attempt(block: () -> T): Result<T> =
+    runCatching(block).onFailure { failure -> if (failure is CancellationException) throw failure }

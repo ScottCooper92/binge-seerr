@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrQuickConnect
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -153,10 +154,6 @@ internal class SetupLinks(
         savedState[PENDING_LINK] = Json.encodeToString<PendingLink>(encrypted)
     }
 }
-
-/** [runCatching] would swallow the cancellation [SetupLinks.cancel] sends; this lets it back out. */
-private inline fun <T> attempt(block: () -> T): Result<T> =
-    runCatching(block).onFailure { failure -> if (failure is CancellationException) throw failure }
 
 /**
  * The Quick Connect secret is the bearer value that alone finishes that sign-in, so it is the one
