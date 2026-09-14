@@ -41,6 +41,15 @@ class HubScreenshotTest {
     @Composable
     fun readySectionOpen() = HubScreen(state = previewReady(), actions = previewActions(), selectedSection = HubSection.Requests)
 
+    /**
+     * An administrator with nothing downloading, which is the steady state rather than an edge: it
+     * is the only frame where the strip and its header are absent from an otherwise full hub.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun readyIdle() = HubScreen(state = previewReady(downloading = emptyList()), actions = previewActions())
+
     /** Server gone: the retry route out. */
     @PreviewTest
     @SeerrScreenStatePreview
