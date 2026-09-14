@@ -127,6 +127,7 @@ private fun DestinationFields(
             choices = MINIMUM_AVAILABILITIES.map { it to stringResource(it.availabilityRes()) },
             selected = draft.minimumAvailability,
             onSelect = { value -> actions.onEdit { it.copy(minimumAvailability = value) } },
+            enabled = enabled,
         )
     }
     ChoicePicker(
@@ -134,12 +135,14 @@ private fun DestinationFields(
         choices = choices.profiles.map { it.id to it.label },
         selected = draft.profileId,
         onSelect = { id -> actions.onEdit { it.copy(profileId = id) } },
+        enabled = enabled,
     )
     ChoicePicker(
         title = stringResource(R.string.advanced_root_folder),
         choices = choices.rootFolders.map { it to it },
         selected = draft.rootFolder,
         onSelect = { path -> actions.onEdit { it.copy(rootFolder = path) } },
+        enabled = enabled,
     )
     choices.languageProfiles?.let { profiles ->
         ChoicePicker(
@@ -147,6 +150,7 @@ private fun DestinationFields(
             choices = profiles.map { it.id to it.label },
             selected = draft.languageProfileId,
             onSelect = { id -> actions.onEdit { it.copy(languageProfileId = id) } },
+            enabled = enabled,
         )
     }
     TagChips(choices.tags, draft.tagIds, enabled) { id -> actions.onEdit { it.copy(tagIds = it.tagIds.toggled(id)) } }
@@ -165,6 +169,7 @@ private fun SonarrFields(
         choices = SERIES_TYPES.map { it to stringResource(it.seriesTypeRes()) },
         selected = draft.seriesType,
         onSelect = { value -> actions.onEdit { it.copy(seriesType = value) } },
+        enabled = enabled,
     )
     draft.seasonFolders?.let { on ->
         EditorSwitchRow(stringResource(R.string.server_settings_dvr_season_folders), on, enabled = enabled) { value ->
@@ -177,18 +182,21 @@ private fun SonarrFields(
         choices = SERIES_TYPES.map { it to stringResource(it.seriesTypeRes()) },
         selected = draft.animeSeriesType,
         onSelect = { value -> actions.onEdit { it.copy(animeSeriesType = value) } },
+        enabled = enabled,
     )
     ChoicePicker(
         title = stringResource(R.string.advanced_profile),
         choices = choices.profiles.map { it.id to it.label },
         selected = draft.animeProfileId,
         onSelect = { id -> actions.onEdit { it.copy(animeProfileId = id) } },
+        enabled = enabled,
     )
     ChoicePicker(
         title = stringResource(R.string.advanced_root_folder),
         choices = choices.rootFolders.map { it to it },
         selected = draft.animeRootFolder,
         onSelect = { path -> actions.onEdit { it.copy(animeRootFolder = path) } },
+        enabled = enabled,
     )
     TagChips(choices.tags, draft.animeTagIds.orEmpty(), enabled) { id ->
         actions.onEdit { it.copy(animeTagIds = it.animeTagIds.orEmpty().toggled(id)) }

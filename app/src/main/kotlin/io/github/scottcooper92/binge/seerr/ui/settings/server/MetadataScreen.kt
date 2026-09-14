@@ -34,12 +34,14 @@ fun MetadataScreen(
             choices = choices,
             selected = draft.tv,
             onSelect = { provider -> actions.onEdit { it.copy(tv = provider) } },
+            enabled = enabled,
         )
         ChoicePicker(
             title = stringResource(R.string.server_settings_metadata_anime),
             choices = choices,
             selected = draft.anime,
             onSelect = { provider -> actions.onEdit { it.copy(anime = provider) } },
+            enabled = enabled,
         )
         BingeOutlinedButton(
             label = stringResource(R.string.server_settings_metadata_test),

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +22,7 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeSheetFooter
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
+import io.github.scottcooper92.binge.seerr.ui.settings.server.TagChips
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import com.binge.designsystem.R as DesR
 
@@ -73,7 +73,9 @@ internal fun EditRequestContent(
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            edit.seasons.forEach { season -> SeasonToggleRow(season, onToggle = { actions.onToggleSeason(season.number) }) }
+            edit.seasons.forEach { season ->
+                SeasonToggleRow(season, enabled = !edit.saving, onToggle = { actions.onToggleSeason(season.number) })
+            }
             edit.destination?.let { destination ->
                 if (destination.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
                 ChoicePicker(
@@ -81,29 +83,23 @@ internal fun EditRequestContent(
                     choices = destination.servers.map { it.id to it.label },
                     selected = destination.serverId,
                     onSelect = actions.onSelectServer,
+                    enabled = !edit.saving,
                 )
                 ChoicePicker(
                     title = stringResource(R.string.advanced_profile),
                     choices = destination.profiles.map { it.id to it.label },
                     selected = destination.profileId,
                     onSelect = actions.onSelectProfile,
+                    enabled = !edit.saving,
                 )
                 ChoicePicker(
                     title = stringResource(R.string.advanced_root_folder),
                     choices = destination.rootFolders.map { it to it },
                     selected = destination.rootFolder,
                     onSelect = actions.onSelectRootFolder,
+                    enabled = !edit.saving,
                 )
-                if (destination.tags.isNotEmpty()) {
-                    Text(stringResource(R.string.request_tags), style = MaterialTheme.typography.titleSmall)
-                    destination.tags.forEach { tag ->
-                        FilterChip(
-                            selected = tag.id in destination.tagIds,
-                            onClick = { actions.onToggleTag(tag.id) },
-                            label = { Text(tag.label) },
-                        )
-                    }
-                }
+                TagChips(destination.tags, destination.tagIds, !edit.saving, actions.onToggleTag)
             }
         }
         BingeSheetFooter(
@@ -118,14 +114,16 @@ internal fun EditRequestContent(
 @Composable
 private fun SeasonToggleRow(
     season: SeasonChoice,
+    enabled: Boolean,
     onToggle: () -> Unit,
 ) {
+    val rowEnabled = enabled && !season.locked
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = !season.locked, onClick = onToggle),
+        modifier = Modifier.fillMaxWidth().clickable(enabled = rowEnabled, onClick = onToggle),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        Checkbox(checked = season.selected || season.locked, onCheckedChange = { onToggle() }, enabled = !season.locked)
+        Checkbox(checked = season.selected || season.locked, onCheckedChange = { onToggle() }, enabled = rowEnabled)
         Column(modifier = Modifier.weight(1f)) {
             Text(season.name ?: stringResource(R.string.request_season_number, season.number), style = MaterialTheme.typography.bodyLarge)
             Text(
