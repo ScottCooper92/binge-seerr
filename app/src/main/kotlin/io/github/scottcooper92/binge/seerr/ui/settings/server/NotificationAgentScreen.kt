@@ -120,6 +120,7 @@ private fun OptionFields(
                             OptionKind.Uri -> KeyboardType.Uri
                             else -> KeyboardType.Text
                         },
+                    autoCorrect = option.autoCorrect,
                     supporting =
                         if (option ==
                             AgentOption.WebhookJsonPayload
