@@ -87,7 +87,14 @@ private fun HttpException.mentionsQuota(): Boolean =
         .orEmpty()
         .contains("quota", ignoreCase = true)
 
-/** Runs [block] and re-throws any failure as the [StatusException] the contract expects. */
+/**
+ * Runs [block] and re-throws any failure as the [StatusException] the contract expects.
+ *
+ * The broad catch is the point rather than an oversight: this is the edge of the exported Service,
+ * where the contract says a failure is a gRPC status code and never a field on a response. Anything
+ * that escapes here uncaught crosses the Binder as an unknown, so everything is mapped.
+ */
+@Suppress("TooGenericExceptionCaught")
 suspend inline fun <T> statusCatching(block: () -> T): T =
     try {
         block()

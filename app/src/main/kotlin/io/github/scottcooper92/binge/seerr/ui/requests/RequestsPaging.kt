@@ -7,12 +7,12 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDownloadStatusDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestsPageDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isDownloading
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -40,7 +40,7 @@ abstract class OffsetPagingSource<T : Any>(
 
     final override suspend fun load(params: LoadParams<Int>): LoadResult<Int, T> {
         val page = params.key ?: 0
-        return try {
+        return attempt {
             val result = loadPage(take = pageSize, skip = page * pageSize)
             val totalPages = result.totalPages ?: (page + 1)
             LoadResult.Page(
@@ -48,11 +48,7 @@ abstract class OffsetPagingSource<T : Any>(
                 prevKey = if (page == 0) null else page - 1,
                 nextKey = if (page + 1 >= totalPages) null else page + 1,
             )
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            LoadResult.Error(e)
-        }
+        }.getOrElse { failure -> LoadResult.Error(failure) }
     }
 
     final override fun getRefreshKey(state: PagingState<Int, T>): Int? =

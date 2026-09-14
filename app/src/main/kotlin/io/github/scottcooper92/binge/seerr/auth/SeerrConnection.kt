@@ -14,12 +14,12 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrQuickConnectSecretBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.inspectProfile
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.readProfile
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -237,15 +237,10 @@ class SeerrConnection(
     ): Result<Unit> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return try {
+        return attempt {
             apis.anonymous(baseUrl) { api ->
                 while (!api.checkQuickConnectApproved(session.secret)) delay(quickConnectPollInterval)
             }
-            Result.success(Unit)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
