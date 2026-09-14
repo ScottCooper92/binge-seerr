@@ -882,6 +882,7 @@
     <string name="placeholder_port_proxy" translatable="false">3128</string>
     <string name="placeholder_proxy_host" translatable="false">proxy.example.com</string>
     <string name="placeholder_url_base_jellyfin" translatable="false">/jellyfin</string>
+    <string name="placeholder_url_base_emby" translatable="false">/emby</string>
     <string name="placeholder_url_base_tautulli" translatable="false">/tautulli</string>
     <string name="placeholder_url_base_radarr" translatable="false">/radarr</string>
     <string name="placeholder_url_base_sonarr" translatable="false">/sonarr</string>

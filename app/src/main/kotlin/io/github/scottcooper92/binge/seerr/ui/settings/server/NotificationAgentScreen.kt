@@ -120,6 +120,7 @@ private fun OptionFields(
                             OptionKind.Uri -> KeyboardType.Uri
                             else -> KeyboardType.Text
                         },
+                    autoCorrect = option.autoCorrect,
                     placeholder = option.placeholderRes()?.let { stringResource(it) },
                     supporting = option.hintRes()?.let { stringResource(it) },
                     isError = draft.enabled && option.required && !option.satisfiedBy(draft.option(option)),

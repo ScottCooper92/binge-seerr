@@ -92,6 +92,9 @@ enum class AgentOption(
 
     val secret: Boolean get() = kind == OptionKind.Secret
 
+    /** Off for a username another system matches exactly: a keyboard rewriting one fails the send with no visible cause. */
+    val autoCorrect: Boolean get() = this != EmailAuthUser && this != NtfyUsername
+
     /**
      * The switch that has to be on for this option to be read. ntfy takes one set of credentials
      * per auth method and ignores the other, so each set follows the method that uses it.

@@ -138,6 +138,7 @@ internal fun EditorEventSnackbarEffect(
     }
 }
 
+/** [autoCorrect] is off for a value another system has to match exactly, such as a username. */
 @Composable
 internal fun EditorTextField(
     value: String,
@@ -147,6 +148,7 @@ internal fun EditorTextField(
     secret: Boolean = false,
     singleLine: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
+    autoCorrect: Boolean = true,
     placeholder: String? = null,
     supporting: String? = null,
     isError: Boolean = false,
@@ -162,7 +164,11 @@ internal fun EditorTextField(
         isError = isError,
         supportingText = supporting?.let { { Text(it) } },
         visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = if (secret) KeyboardType.Password else keyboardType),
+        keyboardOptions =
+            KeyboardOptions(
+                keyboardType = if (secret) KeyboardType.Password else keyboardType,
+                autoCorrectEnabled = autoCorrect,
+            ),
         modifier = modifier.fillMaxWidth(),
     )
 }
