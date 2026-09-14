@@ -10,8 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.theme.BingeExpressiveTheme
-import com.binge.integration.sdk.BingeHosts
-import com.binge.integration.sdk.HandOffPolicy
 import com.binge.integration.sdk.toAdvancedRequest
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
@@ -42,7 +40,7 @@ class AdvancedRequestActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!callerPolicy().permits(callingPackage) || intent.toAdvancedRequest() == null) {
+        if (!bingeHandOffPolicy().permits(callingPackage) || intent.toAdvancedRequest() == null) {
             setResult(RESULT_CANCELED)
             finish()
             return
@@ -86,12 +84,5 @@ class AdvancedRequestActivity : ComponentActivity() {
                 )
             }
         }
-    }
-
-    private fun callerPolicy() =
-        if (BuildConfig.DEBUG) HandOffPolicy.anyCaller(TAG) else HandOffPolicy.pinned(this, listOf(BingeHosts.release))
-
-    private companion object {
-        const val TAG = "SeerrCompanion"
     }
 }

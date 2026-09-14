@@ -6,4 +6,10 @@
         rather than flashing white under the TV theme.
     -->
     <style name="Theme.Seerr" parent="@android:style/Theme.Material.Light.NoActionBar" />
+
+    <!--
+        The settings hand-off never paints: it admits its caller and opens the hub from onCreate.
+        A translucent window is what stops a frame of the theme above flashing on the way through.
+    -->
+    <style name="Theme.SeerrHandOff" parent="@android:style/Theme.Translucent.NoTitleBar" />
 </resources>
