@@ -1,0 +1,125 @@
+package io.github.scottcooper92.binge.seerr.di
+
+import android.content.Context
+import android.os.Build
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
+import com.google.android.gms.auth.blockstore.Blockstore
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import io.github.scottcooper92.binge.seerr.BuildConfig
+import io.github.scottcooper92.binge.seerr.auth.BlockStoreConnectionCarrier
+import io.github.scottcooper92.binge.seerr.auth.ConnectionCarrier
+import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
+import io.github.scottcooper92.binge.seerr.auth.CredentialStore
+import io.github.scottcooper92.binge.seerr.auth.DeviceIdentityStore
+import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
+import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
+import io.github.scottcooper92.binge.seerr.auth.SecretCipher
+import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
+import io.github.scottcooper92.binge.seerr.data.IssueStore
+import io.github.scottcooper92.binge.seerr.data.UserStore
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
+import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
+import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
+import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
+import kotlinx.coroutines.CoroutineScope
+import javax.inject.Singleton
+
+private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_credentials")
+private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_device")
+
+/** The name plex.tv lists this app under on the user's authorised devices. A brand name, never translated. */
+private const val PLEX_PRODUCT_NAME = "Binge Seerr"
+
+/**
+ * Everything that reaches the server: the saved connection, what encrypts it, what carries it to a
+ * new device, and the clients that speak to it. The one connection is application-scoped because the
+ * exported Service and the app's own screens share it: what the user connects on one is what the
+ * host is served from the other.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+object AuthModule {
+    @Provides
+    @Singleton
+    fun secretCipher(): SecretCipher = KeystoreSecretCipher()
+
+    @Provides
+    @Singleton
+    fun credentialStore(
+        @ApplicationContext context: Context,
+        cipher: SecretCipher,
+    ): CredentialStore = CredentialStore(context.credentialsDataStore, cipher)
+
+    @Provides
+    @Singleton
+    fun healthMonitor(): SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor()
+
+    @Provides
+    @Singleton
+    fun apiFactory(health: SeerrConnectionHealthMonitor): SeerrApiFactory =
+        SeerrApiFactory(logRequests = BuildConfig.DEBUG, health = health)
+
+    @Provides
+    @Singleton
+    fun deviceIdentityStore(
+        @ApplicationContext context: Context,
+    ): DeviceIdentityStore = DeviceIdentityStore(context.deviceDataStore)
+
+    @Provides
+    @Singleton
+    fun plexPinFlow(devices: DeviceIdentityStore): PlexPinFlow =
+        PlexPinFlow(
+            identity = {
+                PlexClientIdentity(
+                    identifier = devices.plexClientIdentifier(),
+                    product = PLEX_PRODUCT_NAME,
+                    version = BuildConfig.VERSION_NAME,
+                    device = Build.MODEL,
+                )
+            },
+        )
+
+    /**
+     * The carrier is Block Store where Play Services has it. `getClient` hands one back on any
+     * device; a device without Play Services fails the calls instead, which the carrier absorbs.
+     */
+    @Provides
+    @Singleton
+    fun connectionCarrier(
+        @ApplicationContext context: Context,
+    ): ConnectionCarrier = BlockStoreConnectionCarrier(Blockstore.getClient(context))
+
+    @Provides
+    @Singleton
+    fun connectionRestore(
+        store: CredentialStore,
+        apis: SeerrApiFactory,
+        carrier: ConnectionCarrier,
+        @ApplicationScope scope: CoroutineScope,
+    ): ConnectionRestore = ConnectionRestore(store, apis, carrier, scope)
+
+    /** The caches keyed to one server are cleared when the server changes, so nothing of the last one shows. */
+    @Provides
+    @Singleton
+    fun connection(
+        store: CredentialStore,
+        apis: SeerrApiFactory,
+        health: SeerrConnectionHealthMonitor,
+        carrier: ConnectionCarrier,
+        issues: IssueStore,
+        users: UserStore,
+        notifications: NotificationPrefs,
+    ): SeerrConnection =
+        SeerrConnection(store, apis, health, carrier = carrier, onServerChanged = {
+            issues.clearAll()
+            users.clearAll()
+            notifications.forgetServer()
+        })
+}
