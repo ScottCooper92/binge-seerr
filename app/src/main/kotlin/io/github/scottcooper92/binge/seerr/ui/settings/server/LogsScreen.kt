@@ -65,14 +65,20 @@ class LogsActions(
 fun LogsScreen(
     state: LogsUiState,
     entries: Flow<PagingData<LogEntry>>,
-    refreshTicks: Flow<Unit>,
+    events: Flow<LogsEvent>,
     actions: LogsActions,
 ) {
     val lazyItems = entries.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
     val atTop by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 } }
     LaunchedEffect(atTop) { actions.onFollowingChange(atTop) }
-    LaunchedEffect(refreshTicks) { refreshTicks.collect { lazyItems.refresh() } }
+    LaunchedEffect(events) {
+        events.collect { event ->
+            when (event) {
+                LogsEvent.Refresh -> lazyItems.refresh()
+            }
+        }
+    }
     Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.server_settings_logs), onBack = actions.onBack) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             BingeSearchField(

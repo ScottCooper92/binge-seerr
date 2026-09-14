@@ -43,10 +43,20 @@ data class LogEntry(
         get() = listOfNotNull(timestampRaw, "[${level.apiValue}]", label?.let { "[$it]" }, message, data).joinToString(" ")
 }
 
+/**
+ * Flat, unlike the sealed states elsewhere, because it holds only the query — the level and the
+ * search, both always editable. Loading and failure belong to the paging flow `entries`, which is
+ * where a log page is actually read.
+ */
 data class LogsUiState(
     val level: LogLevel = LogLevel.Info,
     val search: String = "",
 )
+
+/** What the logs page is told to do rather than shown: while following, re-read the newest lines. */
+sealed interface LogsEvent {
+    data object Refresh : LogsEvent
+}
 
 /** Pages the log; the server answers `{pageInfo, results}`, and a bare array (the spec's shape) is read as one page. */
 class LogsPagingSource(
