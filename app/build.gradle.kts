@@ -239,6 +239,21 @@ detekt {
     parallel = true
 }
 
+/**
+ * The exception on a failed test, into the console and so into CI's own log. Gradle's default
+ * renderer prints the exception's class and location and not its message, which is the hole
+ * binge-ci's author-ci-fix job works around by downloading the reports artifact and extracting the
+ * message out of Gradle's HTML.
+ */
+tasks.withType<Test>().configureEach {
+    testLogging {
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
     setSource(
         fileTree("src/main") {
