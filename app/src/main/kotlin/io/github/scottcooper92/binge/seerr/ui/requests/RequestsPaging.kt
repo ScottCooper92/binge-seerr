@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDownloadStatusDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestsPageDto
 import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
@@ -61,6 +62,28 @@ abstract class OffsetPagingSource<T : Any>(
 }
 
 /**
+ * A page of requests, titled: every row hydrated concurrently, a failed lookup degrading its own
+ * row rather than the page. Shared because the browser and one user's page read different
+ * endpoints — `GET request` and `GET user/{id}/requests`, which need different permissions — and
+ * the same thing of whichever answered.
+ */
+internal suspend fun SeerrRequestsPageDto.toRequestPage(
+    api: SeerrApi,
+    hydrate: suspend (SeerrApi, String, Int) -> HydratedTitle?,
+    nowMillis: Long,
+): OffsetPage<RequestItem> =
+    OffsetPage(
+        items =
+            coroutineScope {
+                results
+                    .map { dto -> async { dto.toRequestItem(api, hydrate, nowMillis) } }
+                    .awaitAll()
+                    .filterNotNull()
+            },
+        totalPages = pageInfo.pages.takeIf { it > 0 },
+    )
+
+/**
  * Pages `GET request` for one [filter] in one [sort], each row titled through [hydrate]
  * concurrently; a failed lookup degrades its row rather than the page. [requestedBy] narrows the
  * list to one user's requests, for a user who may not see everyone's.
@@ -78,15 +101,9 @@ class RequestsPagingSource(
         skip: Int,
     ): OffsetPage<RequestItem> {
         val api = api()
-        val page = api.requests(take = take, skip = skip, filter = filter.apiValue, sort = sort.apiValue, requestedBy = requestedBy)
-        val items =
-            coroutineScope {
-                page.results
-                    .map { dto -> async { dto.toRequestItem(api, hydrate, now()) } }
-                    .awaitAll()
-                    .filterNotNull()
-            }
-        return OffsetPage(items, page.pageInfo.pages.takeIf { it > 0 })
+        return api
+            .requests(take = take, skip = skip, filter = filter.apiValue, sort = sort.apiValue, requestedBy = requestedBy)
+            .toRequestPage(api, hydrate, now())
     }
 }
 
