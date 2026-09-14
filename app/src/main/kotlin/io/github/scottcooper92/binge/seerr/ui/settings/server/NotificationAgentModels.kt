@@ -113,6 +113,14 @@ enum class AgentOption(
                 else -> null
             }
 
+    /**
+     * Whether the form gives this option a control of its own. Email's `ignoreTls` and `requireTls`
+     * are two thirds of one four-way choice, shown as an [EmailEncryption] picker in [EmailSecure]'s
+     * place, so neither is a switch on the page.
+     */
+    val ownControl: Boolean
+        get() = this != EmailIgnoreTls && this != EmailRequireTls
+
     /** Whether [value] is something this option can be saved with: non-blank, and parseable if [kind] is [OptionKind.Number]. */
     fun satisfiedBy(value: String): Boolean =
         when (kind) {
@@ -122,6 +130,46 @@ enum class AgentOption(
 
     companion object {
         fun of(agent: ServerAgent): List<AgentOption> = entries.filter { it.agent == agent }
+    }
+}
+
+/**
+ * How the email agent secures its SMTP connection. The server stores this as three independent
+ * booleans of which the web client only ever sets one, so reading it as a single four-way choice is
+ * what keeps a contradictory pair — `ignoreTls` with `requireTls` — off the wire.
+ */
+enum class EmailEncryption(
+    private val secure: Boolean,
+    private val ignoreTls: Boolean,
+    private val requireTls: Boolean,
+) {
+    None(secure = false, ignoreTls = true, requireTls = false),
+    StartTlsIfAvailable(secure = false, ignoreTls = false, requireTls = false),
+    StartTlsAlways(secure = false, ignoreTls = false, requireTls = true),
+    ImplicitTls(secure = true, ignoreTls = false, requireTls = false),
+    ;
+
+    /** All three keys, every time: a choice writes the two it does not mean as false rather than leaving them as found. */
+    val flags: Map<AgentOption, String>
+        get() =
+            mapOf(
+                AgentOption.EmailSecure to secure.toString(),
+                AgentOption.EmailIgnoreTls to ignoreTls.toString(),
+                AgentOption.EmailRequireTls to requireTls.toString(),
+            )
+
+    companion object {
+        /**
+         * Reads whatever is stored, contradictions included: `secure`, then `requireTls`, then
+         * `ignoreTls`, which is the order the web client resolves them in.
+         */
+        fun of(form: AgentForm): EmailEncryption =
+            when {
+                form.switched(AgentOption.EmailSecure) -> ImplicitTls
+                form.switched(AgentOption.EmailRequireTls) -> StartTlsAlways
+                form.switched(AgentOption.EmailIgnoreTls) -> None
+                else -> StartTlsIfAvailable
+            }
     }
 }
 

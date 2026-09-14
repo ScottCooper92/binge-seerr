@@ -188,6 +188,34 @@ class NotificationAgentViewModelTest {
         }
 
     @Test
+    fun `the email TLS trio reads as one choice, and a pick writes exactly one of the three`() =
+        runTest {
+            // The server is holding a pair the web client cannot produce, which this app could write before this change.
+            seerr.serve(
+                "GET /api/v1/settings/notifications/email",
+                """{"enabled":true,"types":6,"options":{"emailFrom":"seerr@example.com","smtpHost":"smtp.example.com",
+                    "smtpPort":587,"secure":false,"ignoreTls":true,"requireTls":true}}""",
+            )
+            val vm = viewModel(ServerAgent.Email)
+            vm.awaitReady()
+            assertEquals(EmailEncryption.StartTlsAlways, EmailEncryption.of(vm.awaitReady().draft))
+
+            vm.setEncryption(EmailEncryption.None)
+            vm.save()
+            assertEquals(EditorEvent.Saved, vm.events.first())
+
+            val options =
+                Json
+                    .parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email"))
+                    .jsonObject
+                    .getValue("options")
+                    .jsonObject
+            assertEquals("true", options.getValue("ignoreTls").jsonPrimitive.content)
+            assertEquals("false", options.getValue("requireTls").jsonPrimitive.content)
+            assertEquals("false", options.getValue("secure").jsonPrimitive.content)
+        }
+
+    @Test
     fun `a test sends the draft as typed and reports either way`() =
         runTest {
             val vm = viewModel(ServerAgent.Email)

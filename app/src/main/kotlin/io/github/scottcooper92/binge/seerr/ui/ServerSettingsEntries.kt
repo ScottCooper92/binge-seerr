@@ -306,6 +306,7 @@ internal fun NotificationAgentEntry(
             AgentActions(
                 onSetEnabled = viewModel::setEnabled,
                 onSetOption = viewModel::setOption,
+                onSetEncryption = viewModel::setEncryption,
                 onToggleType = viewModel::toggleType,
                 onTest = viewModel::test,
             ),

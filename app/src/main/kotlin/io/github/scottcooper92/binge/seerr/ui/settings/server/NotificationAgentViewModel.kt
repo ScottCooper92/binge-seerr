@@ -68,6 +68,9 @@ class NotificationAgentViewModel
             draft.copy(options = draft.options + (option to value) + cleared)
         }
 
+        /** Email's TLS choice writes all three keys at once, so the three can never disagree. */
+        fun setEncryption(encryption: EmailEncryption) = edit { draft -> draft.copy(options = draft.options + encryption.flags) }
+
         fun setEnabled(enabled: Boolean) = edit { it.copy(enabled = enabled) }
 
         fun toggleType(bit: Int) = edit { it.copy(types = it.types xor bit) }

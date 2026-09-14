@@ -48,9 +48,8 @@ internal fun AgentOption.labelRes(): Int =
         AgentOption.EmailSenderName -> R.string.server_settings_agent_sender_name
         AgentOption.EmailSmtpHost -> R.string.server_settings_agent_smtp_host
         AgentOption.EmailSmtpPort -> R.string.server_settings_agent_smtp_port
-        AgentOption.EmailSecure -> R.string.server_settings_agent_secure
-        AgentOption.EmailIgnoreTls -> R.string.server_settings_agent_ignore_tls
-        AgentOption.EmailRequireTls -> R.string.server_settings_agent_require_tls
+        AgentOption.EmailSecure, AgentOption.EmailIgnoreTls, AgentOption.EmailRequireTls ->
+            R.string.server_settings_agent_encryption
         AgentOption.EmailAllowSelfSigned -> R.string.server_settings_agent_allow_self_signed
         AgentOption.EmailAuthUser -> R.string.server_settings_agent_auth_user
         AgentOption.EmailAuthPass -> R.string.server_settings_agent_auth_pass
@@ -83,4 +82,12 @@ internal fun AgentOption.labelRes(): Int =
         AgentOption.LunaSeaProfileName -> R.string.server_settings_agent_profile_name
         AgentOption.WebhookAuthHeader -> R.string.server_settings_agent_auth_header
         AgentOption.WebhookJsonPayload -> R.string.server_settings_agent_json_payload
+    }
+
+internal fun EmailEncryption.labelRes(): Int =
+    when (this) {
+        EmailEncryption.None -> R.string.server_settings_agent_encryption_none
+        EmailEncryption.StartTlsIfAvailable -> R.string.server_settings_agent_encryption_starttls_optional
+        EmailEncryption.StartTlsAlways -> R.string.server_settings_agent_encryption_starttls_always
+        EmailEncryption.ImplicitTls -> R.string.server_settings_agent_encryption_implicit
     }

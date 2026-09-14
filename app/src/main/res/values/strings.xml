@@ -739,9 +739,11 @@
     <string name="server_settings_agent_sender_name">Sender name</string>
     <string name="server_settings_agent_smtp_host">SMTP host</string>
     <string name="server_settings_agent_smtp_port">SMTP port</string>
-    <string name="server_settings_agent_secure">Use implicit TLS</string>
-    <string name="server_settings_agent_ignore_tls">Ignore TLS</string>
-    <string name="server_settings_agent_require_tls">Require TLS</string>
+    <string name="server_settings_agent_encryption">Encryption method</string>
+    <string name="server_settings_agent_encryption_none">None</string>
+    <string name="server_settings_agent_encryption_starttls_optional">Use STARTTLS if available</string>
+    <string name="server_settings_agent_encryption_starttls_always">Always use STARTTLS</string>
+    <string name="server_settings_agent_encryption_implicit">Use implicit TLS</string>
     <string name="server_settings_agent_allow_self_signed">Allow self-signed certificates</string>
     <string name="server_settings_agent_auth_user">SMTP username</string>
     <string name="server_settings_agent_auth_pass">SMTP password</string>

@@ -289,7 +289,11 @@ app:server_settings_agent_channel_tag  124a2e730504
 app:server_settings_agent_chat_id  8fd1a38b785b
 app:server_settings_agent_email_from  9bca5264ced9
 app:server_settings_agent_enable_mentions  ff1bf5c25f5e
-app:server_settings_agent_ignore_tls  f5e00ba4db06
+app:server_settings_agent_encryption  e165f70ee0dc
+app:server_settings_agent_encryption_implicit  04cdaf51dae4
+app:server_settings_agent_encryption_none  dc937b598926
+app:server_settings_agent_encryption_starttls_always  d33daae86076
+app:server_settings_agent_encryption_starttls_optional  ae6756f512b2
 app:server_settings_agent_json_payload  fe9718a2505f
 app:server_settings_agent_json_payload_hint  04aa527c961d
 app:server_settings_agent_message_thread_id  40a3ef246d83
@@ -298,9 +302,7 @@ app:server_settings_agent_pgp_password  2fe70fd35184
 app:server_settings_agent_pgp_private_key  d48d2d0edf80
 app:server_settings_agent_priority  d60dbba07922
 app:server_settings_agent_profile_name  d3663280e101
-app:server_settings_agent_require_tls  04c617c095a1
 app:server_settings_agent_section_options  74a883a037bc
-app:server_settings_agent_secure  04cdaf51dae4
 app:server_settings_agent_sender_name  e1a2eeab9921
 app:server_settings_agent_server_url  22f5ebc3ad3f
 app:server_settings_agent_smtp_host  ab328f83926c
