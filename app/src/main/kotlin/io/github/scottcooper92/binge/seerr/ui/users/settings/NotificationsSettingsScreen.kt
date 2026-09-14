@@ -87,17 +87,9 @@ private fun AgentSection(
                     label = stringResource(type.labelRes()),
                     selected = current.types and type.bit != 0,
                     onClick = {
-                        if (enabled) {
-                            onEdit {
-                                it.update(agent) { agentSettings ->
-                                    agentSettings.copy(
-                                        types =
-                                            agentSettings.types xor type.bit,
-                                    )
-                                }
-                            }
-                        }
+                        onEdit { it.update(agent) { agentSettings -> agentSettings.copy(types = agentSettings.types xor type.bit) } }
                     },
+                    enabled = enabled,
                 )
             }
         }

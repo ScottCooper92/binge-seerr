@@ -154,7 +154,8 @@ private fun TypeChips(
                 BingeFilterChip(
                     label = stringResource(type.labelRes()),
                     selected = draft.types and type.bit != 0,
-                    onClick = { if (enabled) onToggle(type.bit) },
+                    onClick = { onToggle(type.bit) },
+                    enabled = enabled,
                 )
             }
         }
