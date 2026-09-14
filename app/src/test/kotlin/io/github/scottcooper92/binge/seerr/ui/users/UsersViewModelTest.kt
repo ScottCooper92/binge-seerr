@@ -31,6 +31,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val ADMIN = 2
 
@@ -51,6 +52,9 @@ class UsersViewModelTest {
     private val viewModels = ViewModelStore()
     private val cache = FakeUserStore()
 
+    /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
+    private val viewerPermissions = AtomicInteger(ADMIN)
+
     @Before
     fun setUp() {
         Dispatchers.setMain(Dispatchers.Unconfined)
@@ -59,7 +63,7 @@ class UsersViewModelTest {
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     received += request
                     return when (request.method + " " + request.url.encodedPath) {
-                        "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
+                        "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
                         "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
                         "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
                         "GET /api/v1/user" ->
@@ -105,6 +109,19 @@ class UsersViewModelTest {
 
     private suspend fun UsersViewModel.awaitReady(match: (UsersUiState.Ready) -> Boolean = { true }): UsersUiState.Ready =
         uiState.first { it is UsersUiState.Ready && match(it) } as UsersUiState.Ready
+
+    @Test
+    fun `becoming visible re-reads the scope, so a permission revoked on the server lands`() =
+        runTest {
+            val vm = viewModel()
+            assertTrue(vm.awaitReady { it.canAdmit }.canAdmit)
+
+            // Revoked in the web client while this screen was elsewhere.
+            viewerPermissions.set(0)
+            vm.setScreenVisible(true)
+
+            assertFalse(vm.awaitReady { !it.canAdmit }.canAdmit)
+        }
 
     @Test
     fun `the list reads through the cache in the chosen order, and the jellyseerr lineage offers the blocklist toggles`() =
