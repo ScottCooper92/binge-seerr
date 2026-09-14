@@ -721,9 +721,11 @@
     <string name="server_settings_agent_sender_name">Nombre del remitente</string>
     <string name="server_settings_agent_smtp_host">Host SMTP</string>
     <string name="server_settings_agent_smtp_port">Puerto SMTP</string>
-    <string name="server_settings_agent_secure">Usar TLS implícito</string>
-    <string name="server_settings_agent_ignore_tls">Ignorar TLS</string>
-    <string name="server_settings_agent_require_tls">Exigir TLS</string>
+    <string name="server_settings_agent_encryption">Método de cifrado</string>
+    <string name="server_settings_agent_encryption_none">Ninguno</string>
+    <string name="server_settings_agent_encryption_starttls_optional">Usar STARTTLS si está disponible</string>
+    <string name="server_settings_agent_encryption_starttls_always">Usar siempre STARTTLS</string>
+    <string name="server_settings_agent_encryption_implicit">Usar TLS implícito</string>
     <string name="server_settings_agent_allow_self_signed">Permitir certificados autofirmados</string>
     <string name="server_settings_agent_auth_user">Usuario SMTP</string>
     <string name="server_settings_agent_auth_pass">Contraseña SMTP</string>

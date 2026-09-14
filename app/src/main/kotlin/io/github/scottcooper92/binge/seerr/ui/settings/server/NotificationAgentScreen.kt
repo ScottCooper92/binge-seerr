@@ -30,6 +30,7 @@ import com.binge.designsystem.R as DesR
 class AgentActions(
     val onSetEnabled: (Boolean) -> Unit,
     val onSetOption: (AgentOption, String) -> Unit,
+    val onSetEncryption: (EmailEncryption) -> Unit,
     val onToggleType: (Int) -> Unit,
     val onTest: () -> Unit,
 )
@@ -79,13 +80,21 @@ private fun OptionFields(
     enabled: Boolean,
     actions: AgentActions,
 ) {
-    val options = AgentOption.of(draft.agent)
+    val options = AgentOption.of(draft.agent).filter { it.ownControl }
     if (options.isNotEmpty()) EditorSectionTitle(stringResource(R.string.server_settings_agent_section_options))
     options.forEach { option ->
         // An option nothing reads follows the switch that would read it. The switches themselves
         // stay live: exclusivity is enforced by turning the other one off, not by refusing this one.
         val editable = enabled && option.gatedBy?.let { draft.switched(it) } != false
         when {
+            option == AgentOption.EmailSecure ->
+                ChoicePicker(
+                    title = stringResource(option.labelRes()),
+                    choices = EmailEncryption.entries.map { it to stringResource(it.labelRes()) },
+                    selected = EmailEncryption.of(draft),
+                    onSelect = actions.onSetEncryption,
+                    enabled = editable,
+                )
             option == AgentOption.PushoverSound && extras.sounds.isNotEmpty() ->
                 ChoicePicker(
                     title = stringResource(option.labelRes()),
