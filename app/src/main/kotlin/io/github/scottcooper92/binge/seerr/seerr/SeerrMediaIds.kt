@@ -5,9 +5,9 @@ import com.binge.integration.contracts.v1.MediaType
 import io.grpc.Status
 import io.grpc.StatusException
 
-/** The wire values Seerr's own API uses for a media type. */
-private const val SEERR_MEDIA_TYPE_MOVIE = "movie"
-private const val SEERR_MEDIA_TYPE_TV = "tv"
+/** The wire values Seerr's own API uses for a media type, for the contract translation and the app alike. */
+const val SEERR_MEDIA_TYPE_MOVIE = "movie"
+const val SEERR_MEDIA_TYPE_TV = "tv"
 
 /**
  * The translation between the contract's identity — media type + TMDB id — and Seerr's. This is

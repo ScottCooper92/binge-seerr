@@ -17,8 +17,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 const val REQUESTS_PAGE_SIZE = 20
-private const val MEDIA_TYPE_MOVIE = "movie"
-private const val MEDIA_TYPE_TV = "tv"
 
 /** One fetched page; [totalPages] is null when the server sends no `pageInfo`, which reads as the last page. */
 data class OffsetPage<T>(
@@ -91,14 +89,6 @@ class RequestsPagingSource(
         return OffsetPage(items, page.pageInfo.pages.takeIf { it > 0 })
     }
 }
-
-/** Null for a media type this app does not render. */
-fun String.toRequestMediaTypeOrNull(): RequestMediaType? =
-    when (this) {
-        MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
-        MEDIA_TYPE_TV -> RequestMediaType.Tv
-        else -> null
-    }
 
 /** Null for a request whose media type this app does not render; there is nothing to show. */
 suspend fun SeerrRequestDto.toRequestItem(

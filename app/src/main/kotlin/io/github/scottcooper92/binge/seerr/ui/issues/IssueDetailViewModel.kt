@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CancellationException

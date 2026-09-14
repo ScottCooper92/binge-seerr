@@ -162,7 +162,7 @@ class RequestModeration(
 
     private suspend fun block(item: RequestItem): Boolean =
         runCatching {
-            val mediaType = if (item.mediaType == RequestMediaType.Movie) "movie" else "tv"
+            val mediaType = item.mediaType.seerrMediaType()
             connection.api().addToBlocklist(
                 connection.profile().blocklistPath,
                 SeerrAddToBlocklistBody(item.tmdbId, mediaType, item.title.orEmpty()),

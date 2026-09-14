@@ -1,5 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
@@ -44,6 +46,26 @@ data class RequestCounts(
 }
 
 enum class RequestMediaType { Movie, Tv }
+
+/**
+ * Between this app's media type and the `"movie"`/`"tv"` string Seerr keys its own REST endpoints
+ * by. The contract's translation is `MediaId.seerrMediaType()`; this is the same rename for the
+ * screens, which read the string off a DTO rather than off a `MediaId`. Both read one pair of
+ * constants, so neither can drift.
+ */
+fun RequestMediaType.seerrMediaType(): String =
+    when (this) {
+        RequestMediaType.Movie -> SEERR_MEDIA_TYPE_MOVIE
+        RequestMediaType.Tv -> SEERR_MEDIA_TYPE_TV
+    }
+
+/** Null for a media type this app does not render. */
+fun String.toRequestMediaTypeOrNull(): RequestMediaType? =
+    when (this) {
+        SEERR_MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
+        SEERR_MEDIA_TYPE_TV -> RequestMediaType.Tv
+        else -> null
+    }
 
 /** The one aggregate bar over a request's active downloads. */
 data class RequestDownload(

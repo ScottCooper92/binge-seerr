@@ -3,9 +3,9 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLogEntryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLogPageDto
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPage
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPagingSource
-import io.github.scottcooper92.binge.seerr.ui.settings.toEpochMillisOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement

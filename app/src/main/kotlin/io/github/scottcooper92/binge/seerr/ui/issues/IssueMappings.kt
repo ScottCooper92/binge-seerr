@@ -4,18 +4,16 @@ import androidx.annotation.StringRes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.data.IssueEntity
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestUserDto
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
-import java.time.Instant
-import java.time.OffsetDateTime
-
-private const val MEDIA_TYPE_MOVIE = "movie"
-private const val MEDIA_TYPE_TV = "tv"
 
 @StringRes
 internal fun IssueFilter.labelRes(): Int =
@@ -82,8 +80,8 @@ suspend fun SeerrIssueDto.toIssueItem(
     val media = media ?: return null
     val mediaType =
         when (media.mediaType) {
-            MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
-            MEDIA_TYPE_TV -> RequestMediaType.Tv
+            SEERR_MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
+            SEERR_MEDIA_TYPE_TV -> RequestMediaType.Tv
             else -> return null
         }
     val details = hydrate(api, media.mediaType, media.tmdbId)
@@ -168,7 +166,3 @@ fun IssueEntity.toIssueItem(): IssueItem =
 /** Email is a last resort and masked to its local part. */
 internal fun SeerrRequestUserDto.displayString(): String? =
     listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() } ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
-
-internal fun String.toEpochMillisOrNull(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-        ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()

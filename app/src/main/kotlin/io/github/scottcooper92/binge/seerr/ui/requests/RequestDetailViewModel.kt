@@ -8,6 +8,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
@@ -22,6 +23,7 @@ import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
@@ -35,10 +37,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.OffsetDateTime
-
-private const val MEDIA_TYPE_MOVIE = "movie"
 
 /**
  * One request as a page. The request itself, its title's lookup, and the destination's names are
@@ -199,7 +197,7 @@ class RequestDetailViewModel
             val has4k = is4k || (media.status4k != null && media.status4k != SeerrMediaStatusCode.Unknown)
             return MediaRecord(
                 mediaId = mediaId,
-                isTv = media.mediaType != MEDIA_TYPE_MOVIE,
+                isTv = media.mediaType != SEERR_MEDIA_TYPE_MOVIE,
                 instances =
                     listOfNotNull(
                         MediaInstance(
@@ -226,7 +224,7 @@ class RequestDetailViewModel
         /** The service lists name the ids the request carries; a service the admin removed leaves the id unnamed. */
         private suspend fun SeerrRequestDto.destination(api: SeerrApi): RequestDestination? {
             val serverId = serverId ?: return null
-            val isMovie = media.mediaType == MEDIA_TYPE_MOVIE
+            val isMovie = media.mediaType == SEERR_MEDIA_TYPE_MOVIE
             val servers = runCatching { if (isMovie) api.radarrServers() else api.sonarrServers() }.getOrNull()
             val details: SeerrServerDetailsDto? =
                 runCatching {
@@ -259,7 +257,3 @@ private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
         playCount30Days = playCount30Days,
         users = users.mapNotNull { user -> listOfNotNull(user.displayName, user.username).firstOrNull { it.isNotBlank() } },
     )
-
-private fun String.toEpochMillisOrNull(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-        ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()

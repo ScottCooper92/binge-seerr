@@ -36,7 +36,7 @@ class TitleCache
             lock.withLock { entries[key] }?.let { return it }
             val details =
                 runCatching {
-                    if (mediaType == MEDIA_TYPE_MOVIE) api.movieDetails(tmdbId) else api.tvDetails(tmdbId)
+                    if (mediaType == SEERR_MEDIA_TYPE_MOVIE) api.movieDetails(tmdbId) else api.tvDetails(tmdbId)
                 }.getOrNull() ?: return null
             val hydrated = HydratedTitle(details.displayTitle, details.posterPath?.toTmdbPosterUrl(), details.year)
             lock.withLock {
@@ -47,8 +47,4 @@ class TitleCache
         }
 
         suspend fun clear() = lock.withLock { entries.clear() }
-
-        private companion object {
-            const val MEDIA_TYPE_MOVIE = "movie"
-        }
     }

@@ -5,7 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrCacheDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDnsEntryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
-import io.github.scottcooper92.binge.seerr.ui.settings.toEpochMillisOrNull
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
