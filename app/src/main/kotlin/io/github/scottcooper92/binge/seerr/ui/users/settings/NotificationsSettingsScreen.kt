@@ -61,6 +61,7 @@ private fun AgentSection(
             stringResource(field.labelRes()),
             enabled = enabled,
             secret = field.secret,
+            supporting = field.hintRes()?.let { stringResource(it) },
         ) { value ->
             onEdit { it.update(agent) { agentSettings -> agentSettings.copy(fields = agentSettings.fields + (field to value)) } }
         }

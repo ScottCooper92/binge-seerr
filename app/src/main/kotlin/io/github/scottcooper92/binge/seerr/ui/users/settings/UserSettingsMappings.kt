@@ -62,6 +62,20 @@ internal fun AgentField.labelRes(): Int =
         AgentField.PushoverSound -> R.string.user_settings_field_pushover_sound
     }
 
+/**
+ * The hint under a field whose value a user cannot guess from its label. Null for the three
+ * provider tokens: where those are issued is the provider's own page, not something to spell out here.
+ */
+@StringRes
+internal fun AgentField.hintRes(): Int? =
+    when (this) {
+        AgentField.PgpKey -> R.string.user_settings_field_pgp_hint
+        AgentField.DiscordId -> R.string.user_settings_discord_id_hint
+        AgentField.TelegramChatId -> R.string.user_settings_telegram_chat_id_hint
+        AgentField.PushoverSound -> R.string.user_settings_field_pushover_sound_hint
+        AgentField.PushbulletToken, AgentField.PushoverUserKey, AgentField.PushoverAppToken -> null
+    }
+
 @StringRes
 internal fun NotificationType.labelRes(): Int =
     when (this) {

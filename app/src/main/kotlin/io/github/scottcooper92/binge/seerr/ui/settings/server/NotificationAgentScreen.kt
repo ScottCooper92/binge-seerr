@@ -121,14 +121,8 @@ private fun OptionFields(
                             else -> KeyboardType.Text
                         },
                     autoCorrect = option.autoCorrect,
-                    supporting =
-                        if (option ==
-                            AgentOption.WebhookJsonPayload
-                        ) {
-                            stringResource(R.string.server_settings_agent_json_payload_hint)
-                        } else {
-                            null
-                        },
+                    placeholder = option.placeholderRes()?.let { stringResource(it) },
+                    supporting = option.hintRes()?.let { stringResource(it) },
                     isError = draft.enabled && option.required && !option.satisfiedBy(draft.option(option)),
                 ) { value -> actions.onSetOption(option, value) }
         }

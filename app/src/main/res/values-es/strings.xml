@@ -852,4 +852,21 @@
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <string name="setup_username_placeholder">Tu nombre de usuario de %1$s</string>
     <string name="setup_api_key_hint">Lo encontrarás en Seerr, en Ajustes → General.</string>
+    <string name="user_settings_discord_id_hint">El ID numérico, no tu nombre de usuario: en Discord, activa el Modo desarrollador, haz clic derecho en tu nombre y copia el ID de usuario.</string>
+    <string name="user_settings_telegram_chat_id_hint">Escribe a @get_id_bot en Telegram, o añade tu bot a un grupo y usa el ID del grupo.</string>
+    <string name="server_settings_agent_discord_bot_username_hint">En blanco, publica con el título de la aplicación del servidor.</string>
+    <string name="issue_message_placeholder">Describe con el mayor detalle posible qué ocurre con este título.</string>
+    <string name="server_settings_slider_title_hint">El encabezado con el que aparece esta fila en Descubrir.</string>
+    <string name="user_settings_field_pgp_hint">Opcional. Los correos que recibas se cifran con esta clave.</string>
+    <string name="user_settings_field_pushover_sound_hint">En blanco, usa el sonido configurado en tu dispositivo Pushover.</string>
+    <string name="server_settings_agent_telegram_bot_username_hint">Permite que los usuarios inicien su propio chat con el bot y elijan sus notificaciones.</string>
+    <string name="server_settings_agent_chat_id_hint">Inicia un chat con tu bot, después escribe a @get_id_bot y envía /my_id.</string>
+    <string name="server_settings_agent_smtp_port_hint">TLS implícito suele usar el 465, y STARTTLS el 587.</string>
+    <string name="server_settings_agent_pgp_hint">Firma y cifra con OpenPGP los correos que envía el servidor.</string>
+    <string name="server_settings_agent_user_key_hint">Tu identificador de usuario o de grupo de Pushover, de 30 caracteres.</string>
+    <string name="server_settings_agent_application_token_hint">Registra una aplicación en Pushover y usa el token de API que te dé.</string>
+    <string name="server_settings_agent_pushbullet_token_hint">Crea un token en los ajustes de tu cuenta de Pushbullet.</string>
+    <string name="server_settings_agent_topic_hint">Cualquiera que conozca el tema puede leer lo que se envía, así que elige uno difícil de adivinar.</string>
+    <string name="server_settings_agent_priority_hint">De 1 (mínima) a 5 (máxima). En blanco, se envía con la predeterminada, 3.</string>
+    <string name="server_settings_agent_profile_name_hint">Solo hace falta si el servidor no usa el perfil predeterminado.</string>
 </resources>

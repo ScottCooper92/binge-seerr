@@ -84,6 +84,38 @@ internal fun AgentOption.labelRes(): Int =
         AgentOption.WebhookJsonPayload -> R.string.server_settings_agent_json_payload
     }
 
+/**
+ * The hint under an option whose value an administrator cannot derive from its label: what blank
+ * does, where the provider issues the value, or what the number means. Null where the label says it.
+ */
+@StringRes
+internal fun AgentOption.hintRes(): Int? =
+    when (this) {
+        AgentOption.EmailSmtpPort -> R.string.server_settings_agent_smtp_port_hint
+        AgentOption.EmailPgpPrivateKey, AgentOption.EmailPgpPassword -> R.string.server_settings_agent_pgp_hint
+        AgentOption.DiscordBotUsername -> R.string.server_settings_agent_discord_bot_username_hint
+        AgentOption.TelegramBotUsername -> R.string.server_settings_agent_telegram_bot_username_hint
+        AgentOption.TelegramChatId -> R.string.server_settings_agent_chat_id_hint
+        AgentOption.PushoverUserToken -> R.string.server_settings_agent_user_key_hint
+        AgentOption.PushoverAccessToken -> R.string.server_settings_agent_application_token_hint
+        AgentOption.PushbulletAccessToken -> R.string.server_settings_agent_pushbullet_token_hint
+        AgentOption.NtfyTopic -> R.string.server_settings_agent_topic_hint
+        AgentOption.NtfyPriority -> R.string.server_settings_agent_priority_hint
+        AgentOption.LunaSeaProfileName -> R.string.server_settings_agent_profile_name_hint
+        AgentOption.WebhookJsonPayload -> R.string.server_settings_agent_json_payload_hint
+        else -> null
+    }
+
+/** An example of the value, for the options where the shape of one is the thing that is unclear. */
+@StringRes
+internal fun AgentOption.placeholderRes(): Int? =
+    when (this) {
+        AgentOption.GotifyUrl -> R.string.placeholder_gotify_url
+        AgentOption.NtfyUrl -> R.string.placeholder_ntfy_url
+        AgentOption.NtfyTags -> R.string.placeholder_ntfy_tags
+        else -> null
+    }
+
 internal fun EmailEncryption.labelRes(): Int =
     when (this) {
         EmailEncryption.None -> R.string.server_settings_agent_encryption_none

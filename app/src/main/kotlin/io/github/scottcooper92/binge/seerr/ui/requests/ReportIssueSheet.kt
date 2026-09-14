@@ -63,6 +63,7 @@ internal fun ReportIssueContent(
             value = message,
             onValueChange = { message = it },
             label = { Text(stringResource(R.string.issue_report_message)) },
+            placeholder = { Text(stringResource(R.string.issue_message_placeholder)) },
             minLines = 3,
             enabled = report != IssueReport.Sending,
             modifier = Modifier.fillMaxWidth(),

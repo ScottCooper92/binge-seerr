@@ -893,4 +893,24 @@
     <!-- %1$s is the media server's own name where the administrator set one, else Jellyfin or Emby. -->
     <string name="setup_username_placeholder">Your %1$s username</string>
     <string name="setup_api_key_hint">Find this in Seerr, under Settings → General.</string>
+    <string name="placeholder_ntfy_tags" translatable="false">eyes,warning</string>
+    <string name="placeholder_gotify_url" translatable="false">https://gotify.example.com</string>
+    <string name="placeholder_ntfy_url" translatable="false">https://ntfy.sh</string>
+    <string name="user_settings_discord_id_hint">The numeric ID, not your username: in Discord, enable Developer Mode, then right-click your name and Copy User ID.</string>
+    <string name="user_settings_telegram_chat_id_hint">Message @get_id_bot on Telegram, or add your bot to a group and use the group\'s ID.</string>
+    <string name="server_settings_agent_discord_bot_username_hint">Blank posts under the server\'s application title.</string>
+    <string name="issue_message_placeholder">Describe what is wrong with this title in as much detail as you can.</string>
+    <string name="server_settings_slider_title_hint">The heading this row appears under on Discover.</string>
+    <string name="user_settings_field_pgp_hint">Optional. The emails you are sent are encrypted with this key.</string>
+    <string name="user_settings_field_pushover_sound_hint">Blank uses the sound your Pushover device is set to.</string>
+    <string name="server_settings_agent_telegram_bot_username_hint">Lets users start their own chat with the bot and choose their own notifications.</string>
+    <string name="server_settings_agent_chat_id_hint">Start a chat with your bot, then message @get_id_bot and send /my_id.</string>
+    <string name="server_settings_agent_smtp_port_hint">Implicit TLS is usually 465, and STARTTLS 587.</string>
+    <string name="server_settings_agent_pgp_hint">Signs and encrypts the emails the server sends, using OpenPGP.</string>
+    <string name="server_settings_agent_user_key_hint">Your 30-character user or group identifier from Pushover.</string>
+    <string name="server_settings_agent_application_token_hint">Register an application with Pushover and use the API token it gives you.</string>
+    <string name="server_settings_agent_pushbullet_token_hint">Create a token in your Pushbullet account settings.</string>
+    <string name="server_settings_agent_topic_hint">Anyone who knows the topic can read what is sent to it, so pick one that is hard to guess.</string>
+    <string name="server_settings_agent_priority_hint">1 (min) to 5 (max). Blank sends at the default, 3.</string>
+    <string name="server_settings_agent_profile_name_hint">Only needed where the server does not use the default profile.</string>
 </resources>
