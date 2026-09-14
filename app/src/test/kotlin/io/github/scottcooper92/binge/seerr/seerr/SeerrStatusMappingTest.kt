@@ -98,4 +98,11 @@ class SeerrStatusMappingTest {
         assertEquals(28, downloads.etaMinutes(NOW))
         assertEquals(null, emptyList<SeerrDownloadStatusDto>().etaMinutes(NOW))
     }
+
+    @Test
+    fun `a time left with an unparseable field is not read as a shorter, valid one`() {
+        val downloads = listOf(SeerrDownloadStatusDto(timeLeft = "1:xx:03:04"))
+
+        assertEquals(null, downloads.etaMinutes(NOW))
+    }
 }
