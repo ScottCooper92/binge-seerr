@@ -2,9 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
-import io.github.scottcooper92.binge.seerr.auth.ConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
+import io.github.scottcooper92.binge.seerr.auth.NoConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
@@ -61,17 +61,16 @@ class HomeViewModelTest {
         return vm
     }
 
-    private fun TestScope.restore(
-        store: CredentialStore,
-        carrier: ConnectionCarrier,
-    ) = ConnectionRestore(store, SeerrApiFactory(logRequests = false), carrier, backgroundScope)
+    /** [NoConnectionCarrier] is the production carrier for a device with nothing to carry: it settles without reaching a server. */
+    private fun TestScope.restore(store: CredentialStore) =
+        ConnectionRestore(store, SeerrApiFactory(logRequests = false), NoConnectionCarrier, backgroundScope)
 
     @Test
     fun `nothing saved and no restore tried yet is not yet an answer`() =
         runTest {
             val store = store()
 
-            val vm = viewModel(store, restore(store, EmptyCarrier))
+            val vm = viewModel(store, restore(store))
 
             // The store has answered, so a home that keyed off it alone would be showing setup by
             // now. Waited for in real time because DataStore reads on a dispatcher of its own,
@@ -85,7 +84,7 @@ class HomeViewModelTest {
     fun `nothing saved once the restore has settled is the setup screen`() =
         runTest {
             val store = store()
-            val restore = restore(store, EmptyCarrier)
+            val restore = restore(store)
             val vm = viewModel(store, restore)
 
             restore.run()
@@ -99,19 +98,10 @@ class HomeViewModelTest {
             val store = store()
             store.save(SeerrCredentials("https://seerr.example/", SeerrAuth.ApiKey("k3y")))
 
-            val vm = viewModel(store, restore(store, EmptyCarrier))
+            val vm = viewModel(store, restore(store))
 
             assertEquals(true, withContext(Dispatchers.Default) { vm.isConnected.first { it != null } })
         }
-
-    /** A device with nothing transferred to it: the restore settles without reaching a server. */
-    private object EmptyCarrier : ConnectionCarrier {
-        override suspend fun put(credentials: SeerrCredentials) = Unit
-
-        override suspend fun read(): SeerrCredentials? = null
-
-        override suspend fun clear() = Unit
-    }
 
     private object ReversingCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext.reversed()
