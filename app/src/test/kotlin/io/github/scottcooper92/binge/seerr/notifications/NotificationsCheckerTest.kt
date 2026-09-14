@@ -93,6 +93,8 @@ class NotificationsCheckerTest {
             assertEquals(CheckResult.Ok, checker.check())
             assertTrue(notifier.newRequests.isEmpty())
             assertEquals(3, prefs.cursor(NotificationSignal.PendingRequests))
+            // A seed announces nothing, so it titles nothing: no TMDB lookup per row.
+            assertTrue(seerr.received.none { it.url.encodedPath.startsWith("/api/v1/movie/") })
 
             seerr.serve("GET /api/v1/request", requestsPage(listOf(5, 4, 3), pages = 2))
             assertEquals(CheckResult.Ok, checker.check())
@@ -101,6 +103,29 @@ class NotificationsCheckerTest {
 
             assertEquals(CheckResult.Ok, checker.check())
             assertEquals(1, notifier.newRequests.size)
+        }
+
+    @Test
+    fun `a row titling drops still advances the cursor past it`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.PendingRequests)
+            checker.check()
+            assertEquals(0, prefs.cursor(NotificationSignal.PendingRequests))
+
+            // Row 9 is the newest and maps to neither movie nor tv, so `toRequestItem` drops it.
+            seerr.serve(
+                "GET /api/v1/request",
+                """{"pageInfo":{"pages":1,"results":2},"results":[
+                   {"id":9,"status":1,"media":{"tmdbId":900,"mediaType":"person","status":2}},
+                   {"id":8,"status":1,"media":{"tmdbId":108,"mediaType":"movie","status":2}}]}""",
+            )
+            checker.check()
+
+            assertEquals(listOf(listOf(8)), notifier.newRequests)
+            // 9, not 8: the cursor follows what the server offered, so the dropped row is not
+            // re-fetched for good, and a row arriving above 8 is not announced twice.
+            assertEquals(9, prefs.cursor(NotificationSignal.PendingRequests))
         }
 
     @Test
