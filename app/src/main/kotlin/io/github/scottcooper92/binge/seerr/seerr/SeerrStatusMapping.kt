@@ -8,6 +8,10 @@ import com.binge.integration.contracts.request.v1.RequestInfo
 import com.binge.integration.contracts.request.v1.RequestStatus
 import com.binge.integration.contracts.request.v1.SeasonAvailability
 import kotlin.math.ceil
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Seerr's view of a title as the contract's [RequestStatus]. A title the server does not track has
@@ -77,7 +81,7 @@ internal fun SeerrRequestUserDto.displayString(): String? =
         ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
 
 private const val STATUS_DOWNLOADING = "downloading"
-private const val TIME_LEFT_PART_COUNT = 3
+private const val TIME_LEFT_FIELD_COUNT = 3
 private const val MILLIS_PER_MINUTE = 60_000.0
 
 /** One aggregate bar across every active download: summed sizes, the slowest ETA, the first title. */
@@ -121,19 +125,22 @@ private fun SeerrDownloadStatusDto.remainingMillis(nowMillis: Long): Long? =
     estimatedCompletionTime?.toEpochMillisOrNull()?.let { it - nowMillis }
         ?: timeLeft?.parseTimeLeftMillis()
 
-/** The *arr queue's `hh:mm:ss` or `d.hh:mm:ss`; null on any other shape. */
+/**
+ * The *arr queue's `hh:mm:ss` or `d.hh:mm:ss`; null on any other shape, including one where a
+ * field fails to parse. The raw split is checked against the field count first, so a malformed
+ * input can't lose a field to `mapNotNull` and disguise itself as a shorter, valid shape; the
+ * count is checked again after parsing, so a field that drops out still fails the count. Only the
+ * seconds field tolerates a fractional suffix (`substringBefore('.')`); hours and minutes are
+ * parsed as plain integers, so a stray fraction there fails to parse rather than being truncated.
+ */
 private fun String.parseTimeLeftMillis(): Long? {
-    val dotIndex = indexOf('.')
-    val (days, time) =
-        if (dotIndex in 1 until indexOf(':')) {
-            (substring(0, dotIndex).toLongOrNull() ?: return null) to substring(dotIndex + 1)
-        } else {
-            0L to this
-        }
-    val parts = time.split(':')
-    if (parts.size != TIME_LEFT_PART_COUNT) return null
-    val hours = parts[0].toLongOrNull() ?: return null
-    val minutes = parts[1].toLongOrNull() ?: return null
-    val seconds = parts[2].substringBefore('.').toLongOrNull() ?: return null
-    return (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000
+    val dayBreak = indexOf('.').takeIf { it in 1 until indexOf(':') }
+    val days = ((dayBreak?.let { substring(0, it) } ?: "0").toLongOrNull() ?: return null).days
+    return substring(dayBreak?.plus(1) ?: 0)
+        .split(':')
+        .takeIf { it.size == TIME_LEFT_FIELD_COUNT }
+        ?.mapIndexed { index, field -> if (index == TIME_LEFT_FIELD_COUNT - 1) field.substringBefore('.') else field }
+        ?.mapNotNull { it.toLongOrNull() }
+        ?.takeIf { it.size == TIME_LEFT_FIELD_COUNT }
+        ?.let { (hours, minutes, seconds) -> (days + hours.hours + minutes.minutes + seconds.seconds).inWholeMilliseconds }
 }

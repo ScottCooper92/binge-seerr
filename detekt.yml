@@ -76,8 +76,12 @@ complexity:
     # An API surface where the method count IS the contract - one function per Seerr endpoint -
     # rather than a class that has accreted responsibilities. Config rather than a baseline entry,
     # so the baseline stays a record of real debt.
+    #
+    # `*Previews.kt` is the other kind: a file of preview functions has one per frame, and the count
+    # tracks how much is previewed rather than how much one thing does.
     excludes:
       - '**/SeerrApi.kt'
+      - '**/*Previews.kt'
     thresholdInFiles: 16
     thresholdInClasses: 16
     thresholdInInterfaces: 16
@@ -162,7 +166,10 @@ style:
   # deviations from those defaults.
   MagicNumber:
     active: true
-    excludes: ['**/*PreviewData.kt']
+    # `*Previews.kt` alongside `*PreviewData.kt`: both are preview tooling rather than logic, and a
+    # sample's literal is its own context — a quality profile named "Ultra-HD" with the id 20 says
+    # what 20 is. Config rather than a baseline entry, so the baseline stays a record of real debt.
+    excludes: ['**/*PreviewData.kt', '**/*Previews.kt']
     ignoreNumbers: ['-1', '0', '1', '2']
     ignoreHashCodeFunction: true
     ignoreAnnotation: true
