@@ -1,9 +1,11 @@
 package io.github.scottcooper92.binge.seerr.util
 
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.ServiceLoader
 
 class CoroutineLeakReporterTest {
     @Test
@@ -46,5 +48,24 @@ class CoroutineLeakReporterTest {
         val report = describeLeak("Test worker", Job(), IllegalStateException("boom"))
 
         assertTrue(report, report.contains("an unnamed coroutine"))
+    }
+
+    /**
+     * `kotlinx-coroutines-test` registers its own collector as this same service, and
+     * `handleUncaughtCoroutineException` stops at the first handler that consumes one — the
+     * collector does, by throwing `ExceptionSuccessfullyProcessed`. So the reporter only ever sees
+     * a leak while it is asked first, and nothing declares that: the order is the classpath's, this
+     * module's own resources ahead of its dependencies'. This is what says so, rather than the
+     * reporter going quiet the day that changes.
+     */
+    @Test
+    fun `the reporter is the first handler the service loader yields`() {
+        val handlers =
+            ServiceLoader
+                .load(CoroutineExceptionHandler::class.java, CoroutineExceptionHandler::class.java.classLoader)
+                .toList()
+
+        assertTrue("no handler is registered at all", handlers.isNotEmpty())
+        assertTrue("the first handler was ${handlers.first()}", handlers.first() is CoroutineLeakReporter)
     }
 }
