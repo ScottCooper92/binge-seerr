@@ -133,12 +133,18 @@ private fun ModeFields(
     val form = state.form
     when (form.mode) {
         SeerrSignInMode.ApiKey ->
-            SecretField(form.apiKey, stringResource(R.string.setup_api_key)) { value -> onEdit { copy(apiKey = value) } }
+            SecretField(
+                form.apiKey,
+                stringResource(R.string.setup_api_key),
+                // Supporting rather than a placeholder: it has to stay readable while the user goes to fetch the key.
+                supporting = stringResource(R.string.setup_api_key_hint),
+            ) { value -> onEdit { copy(apiKey = value) } }
         SeerrSignInMode.Local -> {
             OutlinedTextField(
                 value = form.email,
                 onValueChange = { value -> onEdit { copy(email = value) } },
                 label = { Text(stringResource(R.string.setup_email)) },
+                placeholder = { Text(stringResource(R.string.placeholder_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
@@ -157,6 +163,7 @@ private fun ModeFields(
                 value = form.username,
                 onValueChange = { value -> onEdit { copy(username = value) } },
                 label = { Text(stringResource(R.string.setup_username)) },
+                placeholder = { Text(stringResource(R.string.setup_username_placeholder, form.mode.label(state.server))) },
                 singleLine = true,
                 // A plain text field is autocorrected, and a rewritten username fails sign-in with no visible cause.
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
@@ -173,12 +180,14 @@ private fun ModeFields(
 private fun SecretField(
     value: String,
     label: String,
+    supporting: String? = null,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        supportingText = supporting?.let { { Text(it) } },
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),

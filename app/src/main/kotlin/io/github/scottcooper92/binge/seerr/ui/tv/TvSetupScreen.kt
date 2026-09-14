@@ -131,7 +131,7 @@ private fun TvSetupSignInStep(
                 onSelect = { mode -> actions.onEditForm { copy(mode = mode) } },
                 arrival = arrival,
             )
-            TvModeFields(state.form, actions.onEditForm, initialFocus == TvSetupFocus.Credential)
+            TvModeFields(state.form, state.server, actions.onEditForm, initialFocus == TvSetupFocus.Credential)
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
             state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = TvFormNoteTone.Success) }
             TvButton(
@@ -156,11 +156,12 @@ private fun SetupServer.editionLine(): String =
 @Composable
 private fun TvModeFields(
     form: SignInForm,
+    server: SetupServer,
     onEdit: (SignInForm.() -> SignInForm) -> Unit,
     credentialFocused: Boolean,
 ) {
     when (form.mode) {
-        SeerrSignInMode.ApiKey ->
+        SeerrSignInMode.ApiKey -> {
             TvTextField(
                 value = form.apiKey,
                 onValueChange = { value -> onEdit { copy(apiKey = value) } },
@@ -169,11 +170,16 @@ private fun TvModeFields(
                 keyboardType = KeyboardType.Password,
                 initiallyFocused = credentialFocused,
             )
+            // TvTextField has no supporting slot, and this has to stay readable while the user
+            // fetches the key — so it is the note the page already uses for what it wants said.
+            TvFormNote(stringResource(R.string.setup_api_key_hint))
+        }
         SeerrSignInMode.Local -> {
             TvTextField(
                 value = form.email,
                 onValueChange = { value -> onEdit { copy(email = value) } },
                 label = stringResource(R.string.setup_email),
+                placeholder = stringResource(R.string.placeholder_email),
                 keyboardType = KeyboardType.Email,
                 initiallyFocused = credentialFocused,
             )
@@ -184,6 +190,7 @@ private fun TvModeFields(
                 value = form.username,
                 onValueChange = { value -> onEdit { copy(username = value) } },
                 label = stringResource(R.string.setup_username),
+                placeholder = stringResource(R.string.setup_username_placeholder, form.mode.label(server)),
                 autoCorrect = false,
                 initiallyFocused = credentialFocused,
             )

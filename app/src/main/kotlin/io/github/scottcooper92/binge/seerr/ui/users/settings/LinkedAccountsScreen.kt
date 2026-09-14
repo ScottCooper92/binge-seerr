@@ -201,7 +201,11 @@ private fun MediaServerLinkSheet(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            EditorTextField(username, stringResource(R.string.setup_username)) { username = it }
+            EditorTextField(
+                username,
+                stringResource(R.string.setup_username),
+                placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
+            ) { username = it }
             EditorTextField(password, stringResource(R.string.setup_password), secret = true) { password = it }
             BingeFilledButton(
                 label = stringResource(R.string.user_settings_link),
