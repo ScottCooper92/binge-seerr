@@ -22,6 +22,7 @@ import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.FilterChipItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.Flow
 
 class IssuesActions(
@@ -79,6 +80,12 @@ fun IssuesScreen(
         }
     }
     if (showSort && ready != null) {
-        IssueSortSheet(selected = ready.sort, onSelect = actions.onSortChange, onDismiss = { showSort = false })
+        SortSheet(
+            choices = IssueSort.entries,
+            selected = ready.sort,
+            label = { stringResource(it.labelRes()) },
+            onSelect = actions.onSortChange,
+            onDismiss = { showSort = false },
+        )
     }
 }

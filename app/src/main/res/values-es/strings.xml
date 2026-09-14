@@ -96,7 +96,7 @@
     <string name="requests_empty_available">Aún no hay títulos solicitados disponibles.</string>
     <string name="requests_empty_unavailable">Todo lo solicitado está disponible.</string>
     <string name="requests_empty_failed">No hay peticiones fallidas.</string>
-    <string name="requests_sort_title">Ordenar por</string>
+    <string name="sort_title">Ordenar por</string>
     <string name="requests_sort_added">Más recientes</string>
     <string name="requests_sort_modified">Actualizadas recientemente</string>
     <string name="requests_sort_cd">Cambiar el orden</string>
