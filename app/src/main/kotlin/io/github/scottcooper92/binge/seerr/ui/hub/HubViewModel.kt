@@ -144,6 +144,7 @@ internal fun SeerrConnectionHealth.toConnectionHealth(): ConnectionHealth =
         SeerrConnectionHealth.Healthy -> ConnectionHealth.Healthy
         SeerrConnectionHealth.Unreachable -> ConnectionHealth.Unreachable
         SeerrConnectionHealth.Unauthorized -> ConnectionHealth.Unauthorized
-        // Credentials vanished mid-check; the shell swaps to setup, so this is never rendered.
-        SeerrConnectionHealth.NotConnected -> ConnectionHealth.Checking
+        // Unchecked is every cold start: the credentials are saved and the overview has not landed
+        // yet. NotConnected means they vanished mid-check, and the shell swaps to setup on it.
+        SeerrConnectionHealth.Unchecked, SeerrConnectionHealth.NotConnected -> ConnectionHealth.Checking
     }

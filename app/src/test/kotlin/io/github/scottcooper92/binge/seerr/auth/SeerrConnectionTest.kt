@@ -198,17 +198,40 @@ class SeerrConnectionTest {
                     apis = SeerrApiFactory(logRequests = false, health = monitor),
                     healthMonitor = monitor,
                 )
-            assertEquals(SeerrConnectionHealth.NotConnected, sut.health.value)
+            assertEquals(SeerrConnectionHealth.NotConnected, sut.health.first())
 
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
-            assertEquals(SeerrConnectionHealth.Healthy, sut.health.value)
+            assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())
 
             server.enqueue(MockResponse(code = 401))
             runCatching { sut.api().authenticatedUser() }
-            assertEquals(SeerrConnectionHealth.Unauthorized, sut.health.value)
+            assertEquals(SeerrConnectionHealth.Unauthorized, sut.health.first())
 
             sut.disconnect()
-            assertEquals(SeerrConnectionHealth.NotConnected, sut.health.value)
+            assertEquals(SeerrConnectionHealth.NotConnected, sut.health.first())
+        }
+
+    @Test
+    fun `a cold start over saved credentials is unchecked, not disconnected`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueue(json("""{"version":"3.1.0"}"""))
+            server.enqueue(json("""{"initialized":true}"""))
+            val store =
+                CredentialStore(
+                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("cold.preferences_pb") },
+                    ReversingCipher,
+                )
+            SeerrConnection(store = store, apis = SeerrApiFactory(logRequests = false))
+                .connect(baseUrl, SeerrAuth.ApiKey("k3y"))
+                .getOrThrow()
+
+            // The restart: the store outlives the process, the monitor does not, so this instance
+            // has saved credentials and a monitor that has heard nothing. That is the case
+            // NotConnected used to claim, while its own doc says nothing is stored.
+            val restarted = SeerrConnection(store = store, apis = SeerrApiFactory(logRequests = false))
+
+            assertEquals(SeerrConnectionHealth.Unchecked, restarted.health.first())
         }
 
     @Test

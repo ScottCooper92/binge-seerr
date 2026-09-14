@@ -9,6 +9,12 @@ enum class SeerrConnectionHealth {
     /** Nothing is stored; there is no connection to check. */
     NotConnected,
 
+    /**
+     * A connection is stored but nothing has spoken to the server yet, which is where a cold start
+     * begins. Distinct from [NotConnected]: there is something to check, and no verdict on it.
+     */
+    Unchecked,
+
     /** Server reachable and the credentials accepted. */
     Healthy,
 
@@ -49,12 +55,16 @@ private const val UNREACHABLE_FAILURE_THRESHOLD = 2
  * request on it. An auth rejection flips to [SeerrConnectionHealth.Unauthorized] at once; transient
  * failures flip to [SeerrConnectionHealth.Unreachable] only after [UNREACHABLE_FAILURE_THRESHOLD] in
  * a row; any success restores [SeerrConnectionHealth.Healthy] and clears the streak.
+ *
+ * It starts [SeerrConnectionHealth.Unchecked] rather than [SeerrConnectionHealth.NotConnected],
+ * because it does not read the store and so cannot know whether anything is saved. Whether a
+ * reading means "not connected" is [SeerrConnection]'s to answer, since it holds both.
  */
 class SeerrConnectionHealthMonitor : SeerrConnectionHealthReporter {
     private val lock = Any()
     private var networkFailureStreak = 0
 
-    private val state = MutableStateFlow(SeerrConnectionHealth.NotConnected)
+    private val state = MutableStateFlow(SeerrConnectionHealth.Unchecked)
     val health: StateFlow<SeerrConnectionHealth> = state.asStateFlow()
 
     /** Reported from OkHttp threads, so the streak and the state move together under the lock. */
@@ -85,10 +95,10 @@ class SeerrConnectionHealthMonitor : SeerrConnectionHealthReporter {
             state.value = SeerrConnectionHealth.Healthy
         }
 
-    /** The credentials were cleared: there is nothing to be healthy about. */
+    /** The credentials were cleared: whatever the last call said no longer describes anything. */
     fun reset() =
         synchronized(lock) {
             networkFailureStreak = 0
-            state.value = SeerrConnectionHealth.NotConnected
+            state.value = SeerrConnectionHealth.Unchecked
         }
 }
