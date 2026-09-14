@@ -108,6 +108,57 @@ to design; the server's API is versioned by release because it is not.
   to a module (`:app:test`) rather than running the whole tree when you are checking
   one thing.
 
+## Screens and ViewModels
+
+The code was ported with these conventions and mostly keeps them. They are written down here
+because this file is what the bots read, and an unwritten convention is one the next screen drifts
+from without anyone noticing.
+
+**State.** Every screen's state is a sealed interface: `Loading`, a data variant, and `Error` where
+the screen can hard-fail. Never a flat class with `isLoading`-style flags. The shared generic form
+is `ui/state/UiState.kt`, whose data variant is `Success`; a per-screen state names its data variant
+`Ready`. Do not mix the two in one screen.
+
+A flat data class is allowed for a screen whose top level is always interactive, with loading kept
+elsewhere — and it carries a KDoc saying so. `LogsUiState` is the one: it holds only the query,
+while loading and failure belong to the paging flow.
+
+**Streams.** A ViewModel exposes **one** `StateFlow` for its state. Two other public flows are
+allowed and no more: `Flow<PagingData<T>>`, which has to stay separate because `PagingData` is a
+one-shot stream, and one-shot events. Anything else — a version counter, a "deleted" flag, a
+refresh tick — is either state or an event, and belongs in one of the two.
+
+Events use a per-screen sealed type, held as a private `MutableSharedFlow(extraBufferCapacity = 1)`
+and exposed with `asSharedFlow()`. Editors inherit `EditorViewModel`'s `uiState` and `events`.
+Never expose a `MutableStateFlow`. Collect with `collectAsStateWithLifecycle`.
+
+**Sharing.** The policy follows what the screen is:
+
+| Screen | Policy |
+| --- | --- |
+| Root: home, setup, TV home | `WhileSubscribed(5_000)` |
+| List root | `Lazily`, with a `setScreenVisible` hook the entry calls from a `DisposableEffect` |
+| Detail keyed on an id | `Lazily` |
+
+A `Lazily` list root without the hook never refreshes on return. And a hook that re-reads
+`connection.authenticatedUser()` or `connection.profile()` re-reads nothing: both are cached for the
+life of the connection, so a scope that must see a server-side change asks for
+`refreshAuthenticatedUser()` or `refreshProfile()` instead.
+
+**Resources.** Every dp comes from `res/values/dimens.xml` through `dimensionResource`; no `.dp`
+literals in production code. Every user-visible string comes from `strings.xml`, with its Spanish
+in `values-es` — the Gates section covers what happens if it does not.
+
+**Structure.** A screen composable orchestrates and delegates to focused children. About 300 lines
+is the signal to split a file by concern, and 400 is too long. Route entries live in `*Entries.kt`
+files by area. There is no automated length gate here — the custom detekt rule that enforces one in
+Binge lives in an unpublished module (binge-integrations#39) — so this one is held in review.
+
+**Where the code does not follow this**, it is an open issue rather than a line here: a list of
+departures in this file goes stale faster than it is read. The one standing exception is the DVR
+instance and override rule editors, which carry their pickers' choices in a second stream because
+`EditorUiState<T>` has nowhere to put them; #188 is where that is being decided.
+
 ## Gates
 
 CI runs `./gradlew build`. That is the whole gate, and it covers seven things, all of
