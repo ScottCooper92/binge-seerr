@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaDetailsDto
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val MEDIA_TYPE_TV = "tv"
 private const val FIRST_SEASON = 1
 
 /** What the editor opens on: the request as the server returned it, and its title as the server lists it. */
@@ -78,7 +78,7 @@ class RequestEditor(
             } else {
                 null
             }
-        val seasonsUnknown = request.media.mediaType == MEDIA_TYPE_TV && source.details == null
+        val seasonsUnknown = request.media.mediaType == SEERR_MEDIA_TYPE_TV && source.details == null
         edit.value = EditState(seasons = source.seasonChoices(), destination = destination, seasonsUnknown = seasonsUnknown)
         if (destination != null) scope.launch { loadServers(request) }
     }
@@ -168,7 +168,7 @@ class RequestEditor(
         SeerrEditRequestBody(
             mediaType = request.media.mediaType,
             seasons =
-                if (request.media.mediaType == MEDIA_TYPE_TV && !seasonsUnknown) {
+                if (request.media.mediaType == SEERR_MEDIA_TYPE_TV && !seasonsUnknown) {
                     seasons.filter { it.selected && !it.locked }.map { it.number }
                 } else {
                     null
@@ -186,12 +186,12 @@ class RequestEditor(
         update { state -> state.copy(destination = state.destination?.let(transform)) }
 
     private suspend fun SeerrApi.servers(request: SeerrRequestDto): List<SeerrServerDto> =
-        if (request.media.mediaType == MEDIA_TYPE_TV) sonarrServers() else radarrServers()
+        if (request.media.mediaType == SEERR_MEDIA_TYPE_TV) sonarrServers() else radarrServers()
 
     private suspend fun SeerrApi.server(
         request: SeerrRequestDto,
         id: Int,
-    ): SeerrServerDetailsDto = if (request.media.mediaType == MEDIA_TYPE_TV) sonarrServer(id) else radarrServer(id)
+    ): SeerrServerDetailsDto = if (request.media.mediaType == SEERR_MEDIA_TYPE_TV) sonarrServer(id) else radarrServer(id)
 }
 
 /**

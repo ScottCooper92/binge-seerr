@@ -1,10 +1,12 @@
 package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBlocklistEntryDto
 import io.github.scottcooper92.binge.seerr.seerr.displayString
-import io.github.scottcooper92.binge.seerr.ui.issues.toEpochMillisOrNull
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPage
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPagingSource
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
@@ -13,8 +15,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 const val BLOCKLIST_PAGE_SIZE = 20
-private const val MEDIA_TYPE_MOVIE = "movie"
-private const val MEDIA_TYPE_TV = "tv"
 
 /**
  * Pages the blocklist at [path] for one [filter] and an optional [search], each row titled
@@ -60,8 +60,8 @@ internal suspend fun SeerrBlocklistEntryDto.toBlocklistItem(
     val rawType = mediaType ?: return null
     val type =
         when (rawType) {
-            MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
-            MEDIA_TYPE_TV -> RequestMediaType.Tv
+            SEERR_MEDIA_TYPE_MOVIE -> RequestMediaType.Movie
+            SEERR_MEDIA_TYPE_TV -> RequestMediaType.Tv
             else -> return null
         }
     val details = hydrate(api, rawType, tmdbId)

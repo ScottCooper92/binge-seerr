@@ -7,8 +7,6 @@ import com.binge.integration.contracts.request.v1.DownloadState
 import com.binge.integration.contracts.request.v1.RequestInfo
 import com.binge.integration.contracts.request.v1.RequestStatus
 import com.binge.integration.contracts.request.v1.SeasonAvailability
-import java.time.Instant
-import java.time.OffsetDateTime
 import kotlin.math.ceil
 
 /**
@@ -122,10 +120,6 @@ fun List<SeerrDownloadStatusDto>.etaMinutes(nowMillis: Long): Int? =
 private fun SeerrDownloadStatusDto.remainingMillis(nowMillis: Long): Long? =
     estimatedCompletionTime?.toEpochMillisOrNull()?.let { it - nowMillis }
         ?: timeLeft?.parseTimeLeftMillis()
-
-internal fun String.toEpochMillisOrNull(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-        ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()
 
 /** The *arr queue's `hh:mm:ss` or `d.hh:mm:ss`; null on any other shape. */
 private fun String.parseTimeLeftMillis(): Long? {

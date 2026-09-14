@@ -6,8 +6,7 @@ import io.github.scottcooper92.binge.seerr.data.UserEntity
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.PermissionGroup
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
-import java.time.Instant
-import java.time.OffsetDateTime
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 
 private const val USER_TYPE_PLEX = 1
 private const val USER_TYPE_LOCAL = 2
@@ -137,7 +136,3 @@ fun UserEntity.toUserItem(): UserItem =
         requestCount = requestCount,
         createdAtMillis = createdAtMillis,
     )
-
-private fun String.toEpochMillisOrNull(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-        ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()

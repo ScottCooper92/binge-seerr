@@ -9,11 +9,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultQuotaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.time.Instant
-import java.time.OffsetDateTime
 import javax.inject.Inject
 
 /** A default quota with no window is a daily one, which is the server's own fallback. */
@@ -145,10 +144,6 @@ private fun SeerrJobDto.toJob(): ScheduledJob =
         running = running,
         nextRunMillis = nextExecutionTime?.toEpochMillisOrNull(),
     )
-
-internal fun String.toEpochMillisOrNull(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-        ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()
 
 internal fun SeerrServiceSettingsDto.toService(type: ServiceType): ServerService =
     ServerService(
