@@ -5,10 +5,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -154,15 +154,3 @@ private fun worstOf(
     a: CheckResult,
     b: CheckResult,
 ): CheckResult = if (a.ordinal >= b.ordinal) a else b
-
-/** [runCatching] would swallow the worker's cancellation; this lets it through. */
-private inline fun <T> attempt(block: () -> T): Result<T> =
-    try {
-        Result.success(block())
-    } catch (e: CancellationException) {
-        throw e
-    } catch (
-        @Suppress("TooGenericExceptionCaught") e: Exception,
-    ) {
-        Result.failure(e)
-    }
