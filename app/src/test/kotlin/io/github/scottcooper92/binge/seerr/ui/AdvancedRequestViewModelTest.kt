@@ -74,11 +74,11 @@ class AdvancedRequestViewModelTest {
 
             assertEquals("/api/v1/service/radarr", seerr.takeRequest().url.encodedPath)
             assertEquals("/api/v1/service/radarr/1", seerr.takeRequest().url.encodedPath)
-            assertEquals(listOf(Choice(1, "Main"), Choice(2, "Spare")), ready.servers)
-            assertEquals(1, ready.serverId)
-            assertEquals(4, ready.profileId)
-            assertEquals("/media", ready.rootFolder)
-            assertEquals(listOf("/media", "/kids"), ready.rootFolders)
+            assertEquals(listOf(Choice(1, "Main"), Choice(2, "Spare")), ready.destination.servers)
+            assertEquals(1, ready.destination.serverId)
+            assertEquals(4, ready.destination.profileId)
+            assertEquals("/media", ready.destination.rootFolder)
+            assertEquals(listOf("/media", "/kids"), ready.destination.rootFolders)
         }
 
     @Test
@@ -143,9 +143,9 @@ class AdvancedRequestViewModelTest {
 
             vm.selectServer(2)
 
-            val ready = vm.awaitChoices { it.serverId == 2 }
-            assertEquals(7, ready.profileId)
-            assertEquals("/spare", ready.rootFolder)
+            val ready = vm.awaitChoices { it.destination.serverId == 2 }
+            assertEquals(7, ready.destination.profileId)
+            assertEquals("/spare", ready.destination.rootFolder)
         }
 
     @Test
@@ -201,7 +201,7 @@ class AdvancedRequestViewModelTest {
     private suspend fun AdvancedRequestViewModel.awaitChoices(
         match: (AdvancedRequestUiState.Ready) -> Boolean = { true },
     ): AdvancedRequestUiState.Ready =
-        uiState.first { it is AdvancedRequestUiState.Ready && !it.isLoadingChoices && match(it) } as AdvancedRequestUiState.Ready
+        uiState.first { it is AdvancedRequestUiState.Ready && !it.destination.loadingChoices && match(it) } as AdvancedRequestUiState.Ready
 
     private fun json(
         body: String,

@@ -12,7 +12,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
 import io.github.scottcooper92.binge.seerr.seerr.arrServer
 import io.github.scottcooper92.binge.seerr.seerr.arrServers
@@ -41,17 +40,11 @@ sealed interface AdvancedRequestUiState {
     data object Loading : AdvancedRequestUiState
 
     data class Ready(
-        val servers: List<Choice>,
-        val serverId: Int,
-        val profiles: List<Choice>,
-        val profileId: Int?,
-        val rootFolders: List<String>,
-        val rootFolder: String?,
-        val isLoadingChoices: Boolean,
+        val destination: DestinationChoices,
         val isSubmitting: Boolean,
         val error: AdvancedRequestError?,
     ) : AdvancedRequestUiState {
-        val canSubmit: Boolean get() = !isLoadingChoices && !isSubmitting
+        val canSubmit: Boolean get() = !destination.loadingChoices && !isSubmitting
     }
 
     data class Failed(
@@ -95,13 +88,8 @@ class AdvancedRequestViewModel
                     } else {
                         _uiState.value =
                             AdvancedRequestUiState.Ready(
-                                servers = loaded.map { Choice(it.id, it.name) },
-                                serverId = server.id,
-                                profiles = emptyList(),
-                                profileId = server.activeProfileId,
-                                rootFolders = emptyList(),
-                                rootFolder = server.activeDirectory,
-                                isLoadingChoices = true,
+                                destination =
+                                    DestinationChoices(servers = loaded.map { Choice(it.id, it.name) }).onServer(server),
                                 isSubmitting = false,
                                 error = null,
                             )
@@ -113,23 +101,14 @@ class AdvancedRequestViewModel
         fun selectServer(id: Int) {
             val ready = ready() ?: return
             val server = servers.firstOrNull { it.id == id } ?: return
-            if (server.id == ready.serverId) return
-            _uiState.value =
-                ready.copy(
-                    serverId = server.id,
-                    profiles = emptyList(),
-                    profileId = server.activeProfileId,
-                    rootFolders = emptyList(),
-                    rootFolder = server.activeDirectory,
-                    isLoadingChoices = true,
-                    error = null,
-                )
+            if (server.id == ready.destination.serverId) return
+            _uiState.value = ready.copy(destination = ready.destination.onServer(server), error = null)
             viewModelScope.launch { loadChoices(server) }
         }
 
-        fun selectProfile(id: Int) = updateReady { it.copy(profileId = id) }
+        fun selectProfile(id: Int) = updateDestination { it.copy(profileId = id) }
 
-        fun selectRootFolder(path: String) = updateReady { it.copy(rootFolder = path) }
+        fun selectRootFolder(path: String) = updateDestination { it.copy(rootFolder = path) }
 
         fun submit() {
             val ready = ready() ?: return
@@ -145,32 +124,26 @@ class AdvancedRequestViewModel
             }
         }
 
-        /** Fills the chosen server's choices in, unless the user has moved to another server meanwhile. */
+        /**
+         * Fills the chosen server's choices in, unless the user has moved to another server
+         * meanwhile. A failure here names itself on the state: unlike the editor, this screen has no
+         * previously-sent destination to fall back on, so a silent empty picker would be a dead end.
+         */
         private suspend fun loadChoices(server: SeerrServerDto) {
+            val stillChosen = { state: AdvancedRequestUiState.Ready -> state.destination.serverId == server.id }
             runCatching { connection.api().arrServer(isTv, server.id) }
-                .onSuccess { details -> updateReady { if (it.serverId == server.id) it.withChoices(details) else it } }
-                .onFailure { failure ->
+                .onSuccess { details ->
+                    updateReady { if (stillChosen(it)) it.copy(destination = it.destination.withChoices(details)) else it }
+                }.onFailure { failure ->
                     updateReady {
-                        if (it.serverId ==
-                            server.id
-                        ) {
-                            it.copy(isLoadingChoices = false, error = failure.toAdvancedRequestError())
+                        if (stillChosen(it)) {
+                            it.copy(destination = it.destination.copy(loadingChoices = false), error = failure.toAdvancedRequestError())
                         } else {
                             it
                         }
                     }
                 }
         }
-
-        private fun AdvancedRequestUiState.Ready.withChoices(details: SeerrServerDetailsDto): AdvancedRequestUiState.Ready =
-            copy(
-                profiles = details.profiles.map { Choice(it.id, it.name) },
-                profileId = profileId?.takeIf { id -> details.profiles.any { it.id == id } } ?: details.profiles.firstOrNull()?.id,
-                rootFolders = details.rootFolders.map { it.path },
-                rootFolder =
-                    rootFolder?.takeIf { path -> details.rootFolders.any { it.path == path } } ?: details.rootFolders.firstOrNull()?.path,
-                isLoadingChoices = false,
-            )
 
         private fun AdvancedRequestUiState.Ready.toBody(): SeerrRequestBody =
             SeerrRequestBody(
@@ -184,9 +157,9 @@ class AdvancedRequestViewModel
                 mediaId = request.tmdbId,
                 seasons = request.seasonNumbers.takeIf { it.isNotEmpty() },
                 is4k = request.is4k,
-                serverId = serverId,
-                profileId = profileId,
-                rootFolder = rootFolder,
+                serverId = destination.serverId,
+                profileId = destination.profileId,
+                rootFolder = destination.rootFolder,
             )
 
         private fun ready(): AdvancedRequestUiState.Ready? = _uiState.value as? AdvancedRequestUiState.Ready
@@ -194,6 +167,9 @@ class AdvancedRequestViewModel
         private fun updateReady(transform: (AdvancedRequestUiState.Ready) -> AdvancedRequestUiState.Ready) {
             _uiState.update { state -> (state as? AdvancedRequestUiState.Ready)?.let(transform) ?: state }
         }
+
+        private fun updateDestination(transform: (DestinationChoices) -> DestinationChoices) =
+            updateReady { it.copy(destination = transform(it.destination)) }
 
         private companion object {
             const val HTTP_CONFLICT = 409

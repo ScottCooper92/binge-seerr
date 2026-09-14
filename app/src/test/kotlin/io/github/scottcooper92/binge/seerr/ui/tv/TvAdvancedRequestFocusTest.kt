@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestError
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.Choice
+import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -189,13 +190,16 @@ class TvAdvancedRequestFocusTest {
 
     private fun ready(isLoadingChoices: Boolean = false) =
         AdvancedRequestUiState.Ready(
-            servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")),
-            serverId = 1,
-            profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")),
-            profileId = 10,
-            rootFolders = listOf("/data/media/movies", "/data/media/kids"),
-            rootFolder = "/data/media/movies",
-            isLoadingChoices = isLoadingChoices,
+            destination =
+                DestinationChoices(
+                    servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")),
+                    serverId = 1,
+                    profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")),
+                    profileId = 10,
+                    rootFolders = listOf("/data/media/movies", "/data/media/kids"),
+                    rootFolder = "/data/media/movies",
+                    loadingChoices = isLoadingChoices,
+                ),
             isSubmitting = false,
             error = null,
         )

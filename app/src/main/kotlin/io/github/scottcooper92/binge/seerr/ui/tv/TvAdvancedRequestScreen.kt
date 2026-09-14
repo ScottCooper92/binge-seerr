@@ -77,26 +77,26 @@ private fun TvOptionsForm(
     ) {
         TvOptionGroup(
             title = stringResource(R.string.advanced_server),
-            choices = state.servers.map { it.id to it.label },
-            selected = state.serverId,
+            choices = state.destination.servers.map { it.id to it.label },
+            selected = state.destination.serverId,
             onSelect = actions.onSelectServer,
             initialFocusedLabel = initialFocusedLabel,
             arrival = arrival,
         )
-        if (state.isLoadingChoices) {
+        if (state.destination.loadingChoices) {
             TvFormNote(stringResource(R.string.tv_loading))
         } else {
             TvOptionGroup(
                 title = stringResource(R.string.advanced_profile),
-                choices = state.profiles.map { it.id to it.label },
-                selected = state.profileId,
+                choices = state.destination.profiles.map { it.id to it.label },
+                selected = state.destination.profileId,
                 onSelect = actions.onSelectProfile,
                 initialFocusedLabel = initialFocusedLabel,
             )
             TvOptionGroup(
                 title = stringResource(R.string.advanced_root_folder),
-                choices = state.rootFolders.map { it to it },
-                selected = state.rootFolder,
+                choices = state.destination.rootFolders.map { it to it },
+                selected = state.destination.rootFolder,
                 onSelect = actions.onSelectRootFolder,
                 initialFocusedLabel = initialFocusedLabel,
             )
