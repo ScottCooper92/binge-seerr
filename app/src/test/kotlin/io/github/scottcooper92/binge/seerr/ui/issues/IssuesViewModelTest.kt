@@ -32,6 +32,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val ADMIN = 2
 private const val CREATE_ISSUES = 1 shl 22
@@ -61,13 +62,17 @@ class IssuesViewModelTest {
         seerr.close()
     }
 
+    /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
+    private val viewerPermissions = AtomicInteger(0)
+
     private fun server(permissions: Int) {
+        viewerPermissions.set(permissions)
         seerr.dispatcher =
             object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     received += request
                     return when (request.url.encodedPath) {
-                        "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":$permissions}""")
+                        "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
                         "/api/v1/status" -> json("""{"version":"3.1.0"}""")
                         "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
                         "/api/v1/issue/count" -> json("""{"total":3,"open":2,"closed":1}""")
@@ -132,6 +137,20 @@ class IssuesViewModelTest {
             vm.awaitReady { it.sort == IssueSort.Modified }
             vm.issues(IssueFilter.Open).asSnapshot()
             assertTrue(received.any { it.url.encodedPath == "/api/v1/issue" && it.url.queryParameter("sort") == "modified" })
+        }
+
+    @Test
+    fun `becoming visible re-reads the scope, so a permission granted on the server lands`() =
+        runTest {
+            server(CREATE_ISSUES)
+            val vm = viewModel()
+            assertEquals(7, vm.awaitReady { it.scope.currentUserId != null }.scope.requestedBy)
+
+            // Granted in the web client while this screen was elsewhere; the cached auth/me would miss it.
+            viewerPermissions.set(ADMIN)
+            vm.setScreenVisible(true)
+
+            assertNull(vm.awaitReady { it.scope.permissions.canManageIssues }.scope.requestedBy)
         }
 
     @Test

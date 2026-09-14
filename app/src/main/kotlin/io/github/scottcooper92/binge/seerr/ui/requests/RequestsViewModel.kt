@@ -79,14 +79,16 @@ class RequestsViewModel
 
         /**
          * The user's permissions decide whether the list is theirs alone, and what they may moderate.
-         * Re-resolved on becoming visible; null while unresolved (including after a failed re-resolve),
-         * so nothing downstream acts on a guessed, all-permissive scope.
+         * Re-read from the server on becoming visible, since the cached `auth/me` would not show a
+         * permission changed in the web client; null while unresolved (including after a failed
+         * re-resolve), so nothing downstream acts on a guessed, all-permissive scope. The profile is
+         * not re-read: `hasBlocklist` follows the server's version, which an upgrade restarts anyway.
          */
         private val scope: StateFlow<ListScope?> =
             refreshTrigger
                 .flatMapLatest {
                     flow {
-                        val user = runCatching { connection.authenticatedUser() }.getOrNull()
+                        val user = runCatching { connection.refreshAuthenticatedUser() }.getOrNull()
                         emit(
                             user?.let { resolved ->
                                 val permissions = resolved.toPermissions()
