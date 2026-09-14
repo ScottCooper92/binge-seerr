@@ -851,7 +851,7 @@
     <string name="tv_setup_headline">Connect a server</string>
     <string name="tv_setup_address_body">Type the address of your Seerr, Jellyseerr or Overseerr server. Press the centre button on a field to bring up the keyboard.</string>
     <string name="tv_setup_checking">Checking the server…</string>
-    <string name="tv_setup_sign_in_body">Sign in with an API key or an account typed on the remote. Plex and Quick Connect sign-in are on the phone app for now.</string>
+    <string name="tv_setup_sign_in_body">Sign in with an API key, an account typed on the remote, or Quick Connect. Plex sign-in is on the phone app for now.</string>
     <string name="tv_setup_mode_title">Sign in with</string>
     <string name="tv_setup_no_modes_here">This server\'s only sign-in needs a web browser, which this television does not have. Connect it from the phone app.</string>
     <string name="tv_setup_connecting">Connecting…</string>
