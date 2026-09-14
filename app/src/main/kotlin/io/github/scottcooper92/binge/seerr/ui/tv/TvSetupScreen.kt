@@ -67,6 +67,7 @@ private fun TvSetupAddressStep(
             label = stringResource(R.string.setup_server_url),
             enabled = !state.isInspecting,
             keyboardType = KeyboardType.Uri,
+            placeholder = stringResource(R.string.placeholder_server_url),
             initiallyFocused = initialFocus == TvSetupFocus.Address,
             arrival = arrival,
         )

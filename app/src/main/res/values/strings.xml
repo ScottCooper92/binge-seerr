@@ -874,4 +874,18 @@
     <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
+    <!-- Example values shown while a connection field is empty; an address, a port or a path a translator cannot localise. -->
+    <string name="placeholder_host" translatable="false">192.168.1.10</string>
+    <string name="placeholder_port_plex" translatable="false">32400</string>
+    <string name="placeholder_port_jellyfin" translatable="false">8096</string>
+    <string name="placeholder_port_tautulli" translatable="false">8181</string>
+    <string name="placeholder_port_proxy" translatable="false">3128</string>
+    <string name="placeholder_proxy_host" translatable="false">proxy.example.com</string>
+    <string name="placeholder_url_base_jellyfin" translatable="false">/jellyfin</string>
+    <string name="placeholder_url_base_tautulli" translatable="false">/tautulli</string>
+    <string name="placeholder_url_base_radarr" translatable="false">/radarr</string>
+    <string name="placeholder_url_base_sonarr" translatable="false">/sonarr</string>
+    <string name="placeholder_url_https" translatable="false">https://\u2026</string>
+    <string name="placeholder_plex_web_url" translatable="false">https://your-server-fqdn.com/web/index.html</string>
+    <string name="placeholder_server_url" translatable="false">https://seerr.example.com</string>
 </resources>

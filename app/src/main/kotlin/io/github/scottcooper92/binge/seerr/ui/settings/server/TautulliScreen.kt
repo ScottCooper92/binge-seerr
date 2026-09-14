@@ -31,6 +31,7 @@ fun TautulliScreen(
             stringResource(R.string.server_settings_host),
             enabled = enabled,
             keyboardType = KeyboardType.Uri,
+            placeholder = stringResource(R.string.placeholder_host),
         ) { value ->
             actions.onEdit { it.copy(host = value) }
         }
@@ -39,12 +40,18 @@ fun TautulliScreen(
             stringResource(R.string.server_settings_port),
             enabled = enabled,
             keyboardType = KeyboardType.Number,
+            placeholder = stringResource(R.string.placeholder_port_tautulli),
             isError = draft.port.isNotBlank() && !draft.copy(host = "x", apiKey = "x").valid,
         ) { value -> actions.onEdit { it.copy(port = value) } }
         EditorSwitchRow(stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled = enabled) { value ->
             actions.onEdit { it.copy(useSsl = value) }
         }
-        EditorTextField(draft.urlBase, stringResource(R.string.server_settings_url_base), enabled = enabled) { value ->
+        EditorTextField(
+            draft.urlBase,
+            stringResource(R.string.server_settings_url_base),
+            enabled = enabled,
+            placeholder = stringResource(R.string.placeholder_url_base_tautulli),
+        ) { value ->
             actions.onEdit { it.copy(urlBase = value) }
         }
         EditorTextField(draft.apiKey, stringResource(R.string.server_settings_api_key), enabled = enabled, secret = true) { value ->

@@ -54,6 +54,7 @@ import com.binge.designsystem.R as DesR
  * [initiallyFocused] seeds the ring for a preview and production passes false: a static frame runs no focus
  * search, so a focused frame is only renderable if focus is a parameter. [arrival] makes this the field
  * the page lands on. [autoCorrect] is off for a value the keyboard must not rewrite, such as a username.
+ * [placeholder] is an example of what to type, shown only while the field is empty.
  */
 @Composable
 internal fun TvTextField(
@@ -64,6 +65,7 @@ internal fun TvTextField(
     enabled: Boolean = true,
     secret: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
+    placeholder: String? = null,
     autoCorrect: Boolean = true,
     initiallyFocused: Boolean = false,
     arrival: TvArrivalFocus? = null,
@@ -116,6 +118,14 @@ internal fun TvTextField(
                     modifier = Modifier.fillMaxSize().padding(horizontal = dimensionResource(R.dimen.tv_form_field_padding_horizontal)),
                     contentAlignment = Alignment.CenterStart,
                 ) {
+                    // Behind the field rather than instead of it, so the cursor still sits where typing starts.
+                    if (value.isEmpty() && placeholder != null) {
+                        Text(
+                            text = placeholder,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     inner()
                 }
             },

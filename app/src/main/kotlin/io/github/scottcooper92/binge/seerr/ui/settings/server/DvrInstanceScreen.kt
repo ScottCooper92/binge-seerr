@@ -76,6 +76,7 @@ private fun ConnectionFields(
         stringResource(R.string.server_settings_host),
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
+        placeholder = stringResource(R.string.placeholder_host),
     ) { value ->
         actions.onEdit { it.copy(host = value) }
     }
@@ -92,7 +93,15 @@ private fun ConnectionFields(
     EditorTextField(draft.apiKey, stringResource(R.string.server_settings_api_key), enabled = enabled, secret = true) { value ->
         actions.onEdit { it.copy(apiKey = value) }
     }
-    EditorTextField(draft.baseUrl, stringResource(R.string.server_settings_url_base), enabled = enabled) { value ->
+    EditorTextField(
+        draft.baseUrl,
+        stringResource(R.string.server_settings_url_base),
+        enabled = enabled,
+        placeholder =
+            stringResource(
+                if (draft.type == ServiceType.Radarr) R.string.placeholder_url_base_radarr else R.string.placeholder_url_base_sonarr,
+            ),
+    ) { value ->
         actions.onEdit { it.copy(baseUrl = value) }
     }
     EditorTextField(
