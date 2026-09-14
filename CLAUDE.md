@@ -161,7 +161,7 @@ instance and override rule editors, which carry their pickers' choices in a seco
 
 ## Gates
 
-CI runs `./gradlew build`. That is the whole gate, and it covers seven things, all of
+CI runs `./gradlew build`. That is the whole gate, and it covers eight things, all of
 which turn the build red:
 
 - Kotlin compilation.
@@ -175,13 +175,32 @@ which turn the build red:
 - `checkTranslationStaleness` — a reworded English string whose translation was not re-read.
   Fix or re-read the translation it names, then `./gradlew updateTranslationHashes`.
 - `koverVerify` — line coverage below the floor.
+- `validateDebugScreenshotTest` — a `@PreviewTest` frame that no longer renders like its committed
+  PNG. The screenshot plugin does not wire itself into `check` the way ktlint and AGP's lint do, so
+  `app/build.gradle.kts` does it by hand; a local `build` and a CI build therefore ask the same
+  question.
 
-`build` depends on `check`, which is what pulls the last six in. The device lane
+`build` depends on `check`, which is what pulls the last seven in. The device lane
 (`device-smoke.yml`) is not part of it: it runs on `main`, weekly and on request, and proves the
 release keep rules across a real Binder.
 
-There is no screenshot suite and no `buf` in this repository, so do not look for one and
-do not report a finding as though one had caught it.
+There is no `buf` in this repository, so do not look for one and do not report a finding as though
+one had caught it.
+
+### Screenshot frames
+
+Frames live in `app/src/screenshotTest/kotlin/…`, each a `@Composable` carrying both `@PreviewTest`
+and one of the multipreviews in `preview/SeerrPreviews.kt`; the PNGs are committed under
+`app/src/screenshotTestDebug/reference/…`. When a change is meant to alter a frame, re-record with
+`./gradlew updateDebugScreenshotTest`, look at the regenerated PNGs, and commit them in the same
+commit as the code. That is the only way to accept a change; there is no override flag.
+
+**The frames pin the locale, and they have to.** This app is one module, and its `debug` variant is
+both what the frames render and what carries the AAPT2 pseudolocales. `values-en-XA` is a closer
+match for a bare `en` — or for no request at all — than the untagged default folder, so an unpinned
+frame records every string accented and bracketed. Binge never meets this: it enables pseudolocales
+in its application plugin and keeps every frame in a library module. That is the whole reason
+`SeerrPreviews.kt` spells out a device matrix the design system already has.
 
 ### detekt
 
