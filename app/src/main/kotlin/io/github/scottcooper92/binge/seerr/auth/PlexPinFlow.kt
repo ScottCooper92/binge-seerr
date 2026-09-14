@@ -41,6 +41,19 @@ class PlexPinFlow(
         return apis(identity).createPin().toPin(identity)
     }
 
+    /**
+     * The PIN a process that has since died minted, ready to poll again. The identity is this
+     * install's own, so it is derived rather than carried across the restart with the code.
+     */
+    suspend fun resume(
+        id: Long,
+        code: String,
+        expiresAt: Instant?,
+    ): PlexPin {
+        val identity = identity()
+        return PlexPin(id = id, code = code, authUrl = identity.authUrl(code), expiresAt = expiresAt, identity = identity)
+    }
+
     suspend fun awaitToken(pin: PlexPin): String {
         val api = apis(pin.identity)
         while (true) {

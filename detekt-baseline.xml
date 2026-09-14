@@ -29,7 +29,6 @@
     <ID>TooGenericExceptionCaught:RequestsPaging.kt$OffsetPagingSource$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SeerrConnection.kt$SeerrConnection$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SeerrErrors.kt$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:SetupViewModel.kt$SetupViewModel$e: Exception</ID>
     <ID>TooManyFunctions:IssueDetailViewModel.kt$IssueDetailViewModel : ViewModel</ID>
     <ID>TooManyFunctions:RequestEditor.kt$RequestEditor</ID>
     <ID>TooManyFunctions:SeerrConnection.kt$SeerrConnection</ID>
