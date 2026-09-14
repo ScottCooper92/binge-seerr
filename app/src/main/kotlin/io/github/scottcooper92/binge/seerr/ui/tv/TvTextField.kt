@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
@@ -31,6 +32,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,7 +56,9 @@ import com.binge.designsystem.R as DesR
  * [initiallyFocused] seeds the ring for a preview and production passes false: a static frame runs no focus
  * search, so a focused frame is only renderable if focus is a parameter. [arrival] makes this the field
  * the page lands on. [autoCorrect] is off for a value the keyboard must not rewrite, such as a username.
- * [placeholder] is an example of what to type, shown only while the field is empty.
+ * [placeholder] is an example of what to type, shown only while the field is empty. [contentType]
+ * offers the field to an autofill service; the panel has no Credential Manager picker, so that is the
+ * whole of the hand-off here.
  */
 @Composable
 internal fun TvTextField(
@@ -67,6 +71,7 @@ internal fun TvTextField(
     keyboardType: KeyboardType = KeyboardType.Text,
     placeholder: String? = null,
     autoCorrect: Boolean = true,
+    contentType: ContentType? = null,
     initiallyFocused: Boolean = false,
     arrival: TvArrivalFocus? = null,
 ) {
@@ -100,6 +105,7 @@ internal fun TvTextField(
                     .background(MaterialTheme.colorScheme.surface)
                     .border(dimensionResource(R.dimen.tv_form_field_border_width), MaterialTheme.colorScheme.border, shape)
                     .then(arrival?.let { Modifier.tvArrivalTarget(it) } ?: Modifier)
+                    .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier)
                     .onFocusChanged { focused = it.isFocused }
                     // The field would otherwise swallow ↑ and ↓ as cursor moves it cannot make on one line, and the
                     // remote could never leave it. ← and → stay the field's: they move within the typed text.

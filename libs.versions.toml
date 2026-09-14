@@ -42,6 +42,9 @@ material3 = "1.5.0-alpha27"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 browser = "1.9.0"
+# Only for the sign-in fields: it builds the saved-password request whose bundles a credential
+# provider parses, so those keys are not spelled out here.
+credentials = "1.6.0"
 paging = "3.5.1"
 room = "2.8.4"
 workManager = "2.11.2"
@@ -83,6 +86,7 @@ lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel
 lifecycle-viewmodel-savedstate = { module = "androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 paging-testing = { module = "androidx.paging:paging-testing", version.ref = "paging" }

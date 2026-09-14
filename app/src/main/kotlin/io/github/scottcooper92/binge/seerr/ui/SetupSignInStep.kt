@@ -19,11 +19,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import coil3.compose.AsyncImage
@@ -132,6 +135,8 @@ private fun ModeFields(
 ) {
     val form = state.form
     when (form.mode) {
+        // No content type: the key is the server's, not an account credential, and offering to save
+        // it as this user's password is how a password manager ends up holding the wrong secret.
         SeerrSignInMode.ApiKey ->
             SecretField(
                 form.apiKey,
@@ -147,9 +152,19 @@ private fun ModeFields(
                 placeholder = { Text(stringResource(R.string.placeholder_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth(),
+                // Both types: the local account is an email address and it is also the username the
+                // saved login is filed under.
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentType = ContentType.EmailAddress + ContentType.Username }
+                        .savedLoginRequest { login -> onEdit { copy(email = login.id, password = login.password) } },
             )
-            SecretField(form.password, stringResource(R.string.setup_password)) { value -> onEdit { copy(password = value) } }
+            SecretField(
+                form.password,
+                stringResource(R.string.setup_password),
+                contentType = ContentType.Password,
+            ) { value -> onEdit { copy(password = value) } }
             if (state.server.canResetPassword) {
                 BingeTextButton(
                     label = stringResource(R.string.setup_forgot_password),
@@ -167,20 +182,30 @@ private fun ModeFields(
                 singleLine = true,
                 // A plain text field is autocorrected, and a rewritten username fails sign-in with no visible cause.
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentType = ContentType.Username }
+                        .savedLoginRequest { login -> onEdit { copy(username = login.id, password = login.password) } },
             )
-            SecretField(form.password, stringResource(R.string.setup_password)) { value -> onEdit { copy(password = value) } }
+            SecretField(
+                form.password,
+                stringResource(R.string.setup_password),
+                contentType = ContentType.Password,
+            ) { value -> onEdit { copy(password = value) } }
         }
         SeerrSignInMode.Plex -> Text(stringResource(R.string.setup_plex_hint), style = MaterialTheme.typography.bodyMedium)
         SeerrSignInMode.QuickConnect -> Text(stringResource(R.string.setup_quick_connect_hint), style = MaterialTheme.typography.bodyMedium)
     }
 }
 
+/** [contentType] is null for a secret no credential provider should be asked to hold. */
 @Composable
 private fun SecretField(
     value: String,
     label: String,
     supporting: String? = null,
+    contentType: ContentType? = null,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -191,7 +216,10 @@ private fun SecretField(
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier),
     )
 }
 

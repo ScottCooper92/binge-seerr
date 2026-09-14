@@ -24,10 +24,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -138,7 +141,12 @@ internal fun EditorEventSnackbarEffect(
     }
 }
 
-/** [autoCorrect] is off for a value another system has to match exactly, such as a username. */
+/**
+ * [autoCorrect] is off for a value another system has to match exactly, such as a username.
+ *
+ * [contentType] is null by default because most of these fields hold a server's secret rather than
+ * the user's own credential, and a credential provider should only be offered the latter.
+ */
 @Composable
 internal fun EditorTextField(
     value: String,
@@ -152,6 +160,7 @@ internal fun EditorTextField(
     placeholder: String? = null,
     supporting: String? = null,
     isError: Boolean = false,
+    contentType: ContentType? = null,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -169,7 +178,10 @@ internal fun EditorTextField(
                 keyboardType = if (secret) KeyboardType.Password else keyboardType,
                 autoCorrectEnabled = autoCorrect,
             ),
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier),
     )
 }
 

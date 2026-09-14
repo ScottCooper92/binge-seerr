@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
 import io.github.scottcooper92.binge.seerr.R
 import kotlinx.coroutines.flow.Flow
@@ -30,16 +31,20 @@ fun PasswordSettingsScreen(
                 stringResource(R.string.user_settings_password_current),
                 enabled = enabled,
                 secret = true,
+                contentType = ContentType.Password,
             ) { value ->
                 actions.onEdit { it.copy(current = value) }
             }
         }
+        // NewPassword on both halves of the pair: it is what tells a password manager to offer a
+        // generated one and then to update the entry it already holds rather than add a second.
         EditorTextField(
             draft.new,
             stringResource(R.string.user_settings_password_new),
             enabled = enabled,
             secret = true,
             supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
+            contentType = ContentType.NewPassword,
         ) { value -> actions.onEdit { it.copy(new = value) } }
         val mismatch = draft.confirm.isNotEmpty() && draft.confirm != draft.new
         EditorTextField(
@@ -49,6 +54,7 @@ fun PasswordSettingsScreen(
             secret = true,
             supporting = stringResource(R.string.user_settings_password_mismatch).takeIf { mismatch },
             isError = mismatch,
+            contentType = ContentType.NewPassword,
         ) { value -> actions.onEdit { it.copy(confirm = value) } }
     }
 }
