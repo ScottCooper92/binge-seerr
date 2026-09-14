@@ -853,7 +853,7 @@
     <string name="tv_setup_checking">Checking the server…</string>
     <string name="tv_setup_sign_in_body">Sign in with an API key or an account typed on the remote. Plex and Quick Connect sign-in are on the phone app for now.</string>
     <string name="tv_setup_mode_title">Sign in with</string>
-    <string name="tv_setup_no_typed_modes">This server only offers sign-ins that finish on another device. Connect it from the phone app.</string>
+    <string name="tv_setup_no_modes_here">This server\'s only sign-in needs a web browser, which this television does not have. Connect it from the phone app.</string>
     <string name="tv_setup_connecting">Connecting…</string>
     <string name="tv_loading">Loading…</string>
     <string name="tv_advanced_submitting">Sending the request…</string>

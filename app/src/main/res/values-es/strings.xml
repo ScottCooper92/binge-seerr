@@ -831,7 +831,7 @@
     <string name="tv_setup_checking">Comprobando el servidor…</string>
     <string name="tv_setup_sign_in_body">Inicia sesión con una clave de API o con una cuenta escrita desde el mando. Los inicios de sesión con Plex y Quick Connect están por ahora en la app del móvil.</string>
     <string name="tv_setup_mode_title">Iniciar sesión con</string>
-    <string name="tv_setup_no_typed_modes">Este servidor solo ofrece inicios de sesión que terminan en otro dispositivo. Conéctalo desde la app del móvil.</string>
+    <string name="tv_setup_no_modes_here">El único inicio de sesión de este servidor requiere un navegador web, que este televisor no tiene. Conéctalo desde la app del móvil.</string>
     <string name="tv_setup_connecting">Conectando…</string>
     <string name="tv_loading">Cargando…</string>
     <string name="tv_advanced_submitting">Enviando la petición…</string>
