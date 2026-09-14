@@ -15,10 +15,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrLinkJellyfinBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLinkPlexBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLinkQuickConnectBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -114,14 +114,7 @@ class LinkedAccountsViewModel
             if (ready.busy) return null
             state.value = ready.copy(busy = true)
             return viewModelScope.launch {
-                val outcome =
-                    try {
-                        Result.success(block(connection.api()))
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Result.failure(e)
-                    }
+                val outcome = attempt { block(connection.api()) }
                 linkJob = null
                 outcome
                     .onSuccess {
