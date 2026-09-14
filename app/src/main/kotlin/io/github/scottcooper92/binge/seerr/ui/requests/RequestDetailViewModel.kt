@@ -61,7 +61,7 @@ class RequestDetailViewModel
 
         val uiState: StateFlow<RequestDetailUiState> =
             combine(state, editor.state) { page, edit -> (page as? RequestDetailUiState.Ready)?.copy(edit = edit) ?: page }
-                .stateIn(viewModelScope, SharingStarted.Eagerly, RequestDetailUiState.Loading)
+                .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
         private var editSource: EditSource? = null
 
