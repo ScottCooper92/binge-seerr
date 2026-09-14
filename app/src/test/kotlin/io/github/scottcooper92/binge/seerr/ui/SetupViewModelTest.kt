@@ -35,6 +35,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.security.GeneralSecurityException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -340,6 +341,27 @@ class SetupViewModelTest {
         }
 
     @Test
+    fun `a keystore that cannot encrypt costs the resume, not the sign-in`() =
+        runTest {
+            val saved = SavedStateHandle()
+            val vm = viewModel(savedState = saved, cipher = FailingCipher)
+            vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
+            seerr.enqueue(json("""{"authenticated":false}"""))
+            seerr.enqueue(json("""{"authenticated":true}"""))
+            seerr.enqueue(json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/")))
+            seerr.enqueue(json("""{"version":"3.4.0"}"""))
+            seerr.enqueue(json("""{"mediaServerType":2}"""))
+
+            vm.connect()
+
+            assertEquals(LinkFlow.QuickConnect("123456"), vm.awaitSignIn { it.link != null }.link)
+            vm.awaitConnected()
+            assertNull(saved.get<String>("pendingLink"))
+        }
+
+    @Test
     fun `an expired quick connect code is reported and the code taken down`() =
         runTest {
             val vm = viewModel()
@@ -510,6 +532,13 @@ class SetupViewModelTest {
         override fun encrypt(plaintext: String): String = plaintext
 
         override fun decrypt(ciphertext: String): String = ciphertext
+    }
+
+    /** A Keystore that will not encrypt, as a flaky vendor keymaster is. */
+    private object FailingCipher : SecretCipher {
+        override fun encrypt(plaintext: String): String = throw GeneralSecurityException("keymaster")
+
+        override fun decrypt(ciphertext: String): String? = null
     }
 
     /** Distinct from [PlainCipher] so a test can tell the stored blob apart from the plaintext. */

@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.lifecycle.SavedStateHandle
+import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.PlexPin
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
@@ -142,8 +143,14 @@ internal class SetupLinks(
         onFinished(failure)
     }
 
+    /**
+     * A link whose secret will not encrypt is not stored at all. A flaky vendor keymaster can throw
+     * from the Keystore, and the cost of that has to be a sign-in that does not survive a restart —
+     * never a sign-in that fails. [CredentialStore.save] declines the same way.
+     */
     private fun keep(pending: PendingLink) {
-        savedState[PENDING_LINK] = Json.encodeToString<PendingLink>(pending.encrypted(cipher))
+        val encrypted = attempt { pending.encrypted(cipher) }.getOrElse { return }
+        savedState[PENDING_LINK] = Json.encodeToString<PendingLink>(encrypted)
     }
 }
 
