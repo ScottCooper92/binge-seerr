@@ -23,6 +23,7 @@ import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -75,6 +76,7 @@ class RequestsViewModelTest {
                                 """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
                             )
                         "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
+                        "/api/v1/request/11/approve" -> json("{}")
                         else -> MockResponse(code = 404)
                     }
                 }
@@ -121,6 +123,23 @@ class RequestsViewModelTest {
             vm.awaitReady { it.sort == RequestSort.Modified }
             vm.requests(RequestFilter.All).asSnapshot()
             assertEquals("modified", received.last { it.url.encodedPath == "/api/v1/request" }.url.queryParameter("sort"))
+        }
+
+    @Test
+    fun `a moderation carries its list version in the state, and each filter refreshes once on it`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            val before = vm.awaitReady { it.counts != null }.listVersion
+
+            vm.moderation.approve(11)
+
+            val after = vm.awaitReady { it.listVersion > before }.listVersion
+            // The gate is per filter per version: the open list refreshes once, a filter that was
+            // never on screen refreshes when it first is, and neither refreshes twice.
+            assertTrue(vm.shouldRefresh(RequestFilter.All, after))
+            assertFalse(vm.shouldRefresh(RequestFilter.All, after))
+            assertTrue(vm.shouldRefresh(RequestFilter.Pending, after))
         }
 
     @Test

@@ -29,7 +29,6 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssuesActions
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesScreen
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.EditRequestActions
-import io.github.scottcooper92.binge.seerr.ui.requests.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.requests.ManageMediaActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen
@@ -268,7 +267,7 @@ private fun RequestsEntry(
         state = state,
         requestsFor = viewModel::requests,
         events = viewModel.moderation.events,
-        refresh = ListRefresh(viewModel.listVersion, viewModel::shouldRefresh),
+        shouldRefresh = viewModel::shouldRefresh,
         actions =
             RequestsActions(
                 onBack = onBack,
