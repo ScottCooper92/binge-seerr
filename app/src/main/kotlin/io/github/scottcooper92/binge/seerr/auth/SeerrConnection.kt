@@ -75,6 +75,8 @@ class SeerrConnection(
     private val apis: SeerrApiFactory,
     private val healthMonitor: SeerrConnectionHealthMonitor = SeerrConnectionHealthMonitor(),
     private val quickConnectPollInterval: Duration = 2.seconds,
+    /** The off-device copy, kept in step with the store so a new device has something to restore from. */
+    private val carrier: ConnectionCarrier = NoConnectionCarrier,
     /** Runs after the saved server changes or is forgotten, for the caches keyed to one server. */
     private val onServerChanged: suspend () -> Unit = {},
 ) {
@@ -269,6 +271,7 @@ class SeerrConnection(
             cachedProfile = null
         }
         store.clear()
+        carrier.clear()
         apis.evict()
         healthMonitor.reset()
         onServerChanged()
@@ -307,6 +310,7 @@ class SeerrConnection(
         val profile = apis.probe(baseUrl, auth) { it.readProfile(SeerrVariant.Unknown) }
         val credentials = SeerrCredentials(baseUrl, auth, profile.variant)
         if (!store.save(credentials)) throw CredentialsSaveException()
+        carrier.put(credentials)
         userLock.withLock {
             cachedUser = null
             cachedProfile = credentials to profile

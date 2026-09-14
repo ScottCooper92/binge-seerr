@@ -197,6 +197,8 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.androidx.browser)
     implementation(libs.androidx.credentials)
+    implementation(libs.play.services.blockstore)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.paging.runtime)
     implementation(libs.paging.compose)
     implementation(libs.room.runtime)
