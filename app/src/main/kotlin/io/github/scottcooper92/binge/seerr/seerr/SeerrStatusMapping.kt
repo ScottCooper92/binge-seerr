@@ -129,7 +129,9 @@ private fun SeerrDownloadStatusDto.remainingMillis(nowMillis: Long): Long? =
  * The *arr queue's `hh:mm:ss` or `d.hh:mm:ss`; null on any other shape, including one where a
  * field fails to parse. The raw split is checked against the field count first, so a malformed
  * input can't lose a field to `mapNotNull` and disguise itself as a shorter, valid shape; the
- * count is checked again after parsing, so a field that drops out still fails the count.
+ * count is checked again after parsing, so a field that drops out still fails the count. Only the
+ * seconds field tolerates a fractional suffix (`substringBefore('.')`); hours and minutes are
+ * parsed as plain integers, so a stray fraction there fails to parse rather than being truncated.
  */
 private fun String.parseTimeLeftMillis(): Long? {
     val dayBreak = indexOf('.').takeIf { it in 1 until indexOf(':') }
@@ -137,7 +139,8 @@ private fun String.parseTimeLeftMillis(): Long? {
     return substring(dayBreak?.plus(1) ?: 0)
         .split(':')
         .takeIf { it.size == TIME_LEFT_FIELD_COUNT }
-        ?.mapNotNull { it.substringBefore('.').toLongOrNull() }
+        ?.mapIndexed { index, field -> if (index == TIME_LEFT_FIELD_COUNT - 1) field.substringBefore('.') else field }
+        ?.mapNotNull { it.toLongOrNull() }
         ?.takeIf { it.size == TIME_LEFT_FIELD_COUNT }
         ?.let { (hours, minutes, seconds) -> (days + hours.hours + minutes.minutes + seconds.seconds).inWholeMilliseconds }
 }

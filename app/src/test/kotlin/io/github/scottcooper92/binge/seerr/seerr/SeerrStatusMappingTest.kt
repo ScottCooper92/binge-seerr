@@ -103,8 +103,11 @@ class SeerrStatusMappingTest {
     fun `a time left the queue did not write in one of the two shapes is read as no eta at all`() {
         // `1:xx:03:04` is the one that matters and the one the review found: four fields with one
         // that will not parse, which reads as a valid three if the bad field is dropped before the
-        // count is taken. The rest are the other shapes the parser must refuse rather than guess at.
-        listOf("1:xx:03:04", "00:05", "00:05:00:00", "xx:05:00", "00:xx:00", "", "abc")
+        // count is taken. `02:03.5:04` is the one the next review round found: a fractional suffix
+        // outside the seconds field, which a uniform `substringBefore('.')` truncates to a valid
+        // field instead of refusing. The rest are the other shapes the parser must refuse rather
+        // than guess at.
+        listOf("1:xx:03:04", "02:03.5:04", "1.02:03.5:04", "00:05", "00:05:00:00", "xx:05:00", "00:xx:00", "", "abc")
             .forEach { assertEquals(it, null, listOf(SeerrDownloadStatusDto(timeLeft = it)).etaMinutes(NOW)) }
 
         // And the two it must still accept, so the refusals above cannot pass by refusing everything.
