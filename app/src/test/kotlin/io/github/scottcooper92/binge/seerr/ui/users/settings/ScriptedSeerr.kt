@@ -6,7 +6,11 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -21,6 +25,9 @@ internal const val ADMIN = 2
 internal const val MANAGE_USERS = 1 shl 3
 internal const val MANAGE_REQUESTS = 1 shl 4
 internal const val REQUEST = 1 shl 5
+
+private const val REQUEST_WAIT_MILLIS = 2_000L
+private const val POLL_MILLIS = 10L
 
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
 
@@ -101,6 +108,18 @@ internal class ScriptedSeerr(
         method: String,
         path: String,
     ): Int = received.count { it.method == method && it.url.encodedPath == path }
+
+    /**
+     * A request a refresh triggers lands on OkHttp's threads after the call that triggered it has
+     * returned, so a count read on the next line races it; this waits for it in real time.
+     */
+    suspend fun awaitCount(
+        method: String,
+        path: String,
+        moreThan: Int,
+    ) = withContext(Dispatchers.Default) {
+        withTimeout(REQUEST_WAIT_MILLIS) { while (count(method, path) <= moreThan) delay(POLL_MILLIS) }
+    }
 
     suspend fun connection(
         scope: TestScope,

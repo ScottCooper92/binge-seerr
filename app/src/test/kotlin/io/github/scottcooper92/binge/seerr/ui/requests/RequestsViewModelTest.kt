@@ -11,11 +11,14 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -33,6 +36,9 @@ import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+
+private const val REQUEST_WAIT_MILLIS = 2_000L
+private const val POLL_MILLIS = 10L
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -225,18 +231,34 @@ class RequestsViewModelTest {
 
             // Fail only the ViewModel's own resolve, not the connect() probe above.
             authShouldFail.set(true)
+            val probes = authReads()
             val vm = RequestsViewModel(connection, TitleCache())
             viewModels.put("requests", vm)
-            backgroundScope.launch { vm.uiState.collect {} }
+            // Every emission, not the current value: Loading is also stateIn's seed, so sampling
+            // uiState cannot tell "held at Loading" apart from "has not propagated yet".
+            val seen = CopyOnWriteArrayList<RequestsUiState>()
+            backgroundScope.launch { vm.uiState.collect { seen += it } }
 
             authFailed.await()
-            assertEquals(RequestsUiState.Loading, vm.uiState.value)
+            awaitAuthReads(moreThan = probes)
+            assertTrue(seen.none { it is RequestsUiState.Ready })
 
             authShouldFail.set(false)
             vm.setScreenVisible(true)
 
             val ready = vm.awaitReady { it.counts != null }
-            assertTrue(!ready.scope.permissions.canManageRequests)
+            assertFalse(ready.scope.permissions.canManageRequests)
+            // The timing-free half: a guessed scope is the all-permissive one, and this user has
+            // only REQUEST, so a Ready carrying moderation could only have come from a guess.
+            assertTrue(seen.none { it is RequestsUiState.Ready && it.scope.permissions.canManageRequests })
+        }
+
+    private fun authReads() = received.count { it.url.encodedPath == "/api/v1/auth/me" }
+
+    /** The resolve lands on OkHttp's threads after the dispatcher answered it; this waits in real time. */
+    private suspend fun awaitAuthReads(moreThan: Int) =
+        withContext(Dispatchers.Default) {
+            withTimeout(REQUEST_WAIT_MILLIS) { while (authReads() <= moreThan) delay(POLL_MILLIS) }
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

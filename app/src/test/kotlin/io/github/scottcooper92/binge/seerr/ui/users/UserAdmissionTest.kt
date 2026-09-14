@@ -102,6 +102,7 @@ class UserAdmissionTest {
             assertNull(vm.awaitReady().admission)
 
             flowOf(refreshed.await()).asSnapshot()
+            seerr.awaitCount("GET", "/api/v1/user", moreThan = listReads)
             assertTrue(seerr.count("GET", "/api/v1/user") > listReads)
 
             vm.admission.startCreate(canGeneratePassword = true)
