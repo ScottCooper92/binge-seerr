@@ -25,12 +25,30 @@ private const val SORT_ADDED = "added"
 private const val MAX_FEED_PAGES = 5
 
 /**
+ * The backstop on the own-requests walk, which is bounded by what it is still watching rather than
+ * by a page count. Only a list with something outstanding this far down reaches it (#181).
+ */
+private const val MAX_OWN_REQUEST_PAGES = 25
+
+/**
  * One feed read: the rows worth announcing, titled, and the newest id the server offered, titled
  * or not. The cursor advances to [newestId], never to the newest announced row.
  */
 data class FeedRead<T>(
     val rows: List<T>,
     val newestId: Int,
+)
+
+/**
+ * One own-requests read: the rows the walk reached, and the watched ids it never got down to.
+ *
+ * [unaccountedFor] is empty whenever the walk saw the server's last page, because an id missing
+ * from a complete list is a request that no longer exists. It is non-empty only where the backstop
+ * stopped the walk first, and the caller keeps those ids so the next poll tries for them again.
+ */
+data class OwnRequestsRead(
+    val rows: List<SeerrRequestDto>,
+    val unaccountedFor: Set<Int>,
 )
 
 /**
@@ -80,16 +98,37 @@ class NotificationFeeds
          * Paged, and unlike a feed not against a cursor. A feed is append-only, so what is new is at
          * the front and a cursor can stop the walk; a request instead changes state where it already
          * sits in a list ordered newest-first. Read as one page, a request awaiting approval slides
-         * out of view as the user makes others and its approval is then never seen (#127). The walk
-         * stops at the server's last page, so a short history still costs one call.
+         * out of view as the user makes others and its approval is then never seen (#127).
+         *
+         * [watching] is the ids whose outcome has not been announced yet, and the walk carries on
+         * until each has turned up — so a request stays reachable however many the user makes after
+         * it, which a fixed page count could not promise (#181). A null [watching] is the seed run
+         * and walks the whole list once, to find what was already outstanding before any of this was
+         * being tracked.
+         *
+         * The first [MAX_FEED_PAGES] are read whatever is outstanding, and that is not laziness: the
+         * caller rebuilds its per-signal deduplication sets from what this returns, so a walk that
+         * stopped shallower than before would prune ids it simply had not looked at and announce
+         * them again next time it went deeper.
          */
-        suspend fun ownRequests(): List<SeerrRequestDto> {
+        suspend fun ownRequests(watching: Set<Int>?): OwnRequestsRead {
             val userId = connection.authenticatedUser().id
             val api = connection.api()
-            return collectRows({ it.id }) { skip ->
-                val page = api.userRequests(userId = userId, take = REQUESTS_PAGE_SIZE, skip = skip)
-                page.results to page.pageInfo
-            }.rows
+            val outstanding = watching.orEmpty().toMutableSet()
+            val seeding = watching == null
+            val rows = mutableListOf<SeerrRequestDto>()
+            for (pageIndex in 0 until MAX_OWN_REQUEST_PAGES) {
+                val page = api.userRequests(userId = userId, take = REQUESTS_PAGE_SIZE, skip = pageIndex * REQUESTS_PAGE_SIZE)
+                rows += page.results
+                outstanding -= page.results.mapTo(mutableSetOf()) { it.id }
+                val lastPage = page.pageInfo.pages > 0 && pageIndex + 1 >= page.pageInfo.pages
+                if (page.results.isEmpty() || lastPage) return OwnRequestsRead(rows.distinctBy { it.id }, emptySet())
+                if (!seeding && pageIndex + 1 >= MAX_FEED_PAGES && outstanding.isEmpty()) break
+                if (pageIndex + 1 == MAX_OWN_REQUEST_PAGES) {
+                    Log.w(TAG, "Own requests run past $MAX_OWN_REQUEST_PAGES pages; ${outstanding.size} still unaccounted for")
+                }
+            }
+            return OwnRequestsRead(rows.distinctBy { it.id }, outstanding)
         }
 
         suspend fun titled(rows: List<SeerrRequestDto>): List<RequestItem> {

@@ -89,14 +89,33 @@ class NotificationsChecker
             return CheckResult.Ok
         }
 
-        /** One read of the user's own requests, then each state signal that is on. */
+        /**
+         * One read of the user's own requests, then each state signal that is on.
+         *
+         * The read is told which ids are still waiting on an outcome, so it walks far enough to find
+         * every one of them however many requests the user has made since (#181). What it finds
+         * outstanding afterwards is saved for the next poll, plus anything the walk never reached.
+         * A poll that did not finish cleanly leaves the set alone, so the next one goes as deep.
+         */
         private suspend fun checkOwnRequests(): CheckResult {
             val signals =
                 listOf(NotificationSignal.RequestAvailable, NotificationSignal.RequestApproved, NotificationSignal.RequestDeclined)
             val on = signals.filter { prefs.isEnabled(it) }
             if (on.isEmpty()) return CheckResult.Ok
-            val requests = attempt { feeds.ownRequests() }.getOrElse { return it.toResult() }
-            return on.fold(CheckResult.Ok) { acc, signal ->
+            val read = attempt { feeds.ownRequests(prefs.watchedRequestIds()) }.getOrElse { return it.toResult() }
+            val requests = read.rows
+            val result = checkOwnRequestSignals(on, requests)
+            if (result == CheckResult.Ok) {
+                prefs.setWatchedRequestIds(read.unaccountedFor + requests.filter { it.isUnresolved() }.map { it.id })
+            }
+            return result
+        }
+
+        private suspend fun checkOwnRequestSignals(
+            on: List<NotificationSignal>,
+            requests: List<SeerrRequestDto>,
+        ): CheckResult =
+            on.fold(CheckResult.Ok) { acc, signal ->
                 worstOf(
                     acc,
                     checkTransition(signal, requests.filter { it.isIn(signal) }) { items ->
@@ -108,7 +127,6 @@ class NotificationsChecker
                     },
                 )
             }
-        }
 
         /**
          * Announces the requests in the state whose id is not in the saved set, then saves the
@@ -138,6 +156,14 @@ class NotificationsChecker
             return CheckResult.Ok
         }
     }
+
+/**
+ * Still has an outcome to announce. Resolved needs both answers: the media has landed, and the
+ * request is no longer waiting on a moderator — a pending request whose media someone else made
+ * available can still be approved or declined.
+ */
+private fun SeerrRequestDto.isUnresolved(): Boolean =
+    media.status != SeerrMediaStatusCode.Available || status == null || status == SeerrRequestStatusCode.Pending
 
 private fun SeerrRequestDto.isIn(signal: NotificationSignal): Boolean =
     when (signal) {
