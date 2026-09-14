@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueTypeCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
-import io.github.scottcooper92.binge.seerr.ui.Choice
+import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 
 /** One season of a requested show: the request asked for it, and this is where the server has it. */
 data class SeasonState(
@@ -51,19 +51,6 @@ data class SeasonChoice(
 ) {
     val locked: Boolean get() = heldStatus != null
 }
-
-/** The destination pickers for a request not yet sent to its client; null where the user may not choose one. */
-data class DestinationChoices(
-    val servers: List<Choice>,
-    val serverId: Int?,
-    val profiles: List<Choice>,
-    val profileId: Int?,
-    val rootFolders: List<String>,
-    val rootFolder: String?,
-    val tags: List<Choice>,
-    val tagIds: Set<Int>,
-    val loadingChoices: Boolean = false,
-)
 
 data class EditState(
     val seasons: List<SeasonChoice>,

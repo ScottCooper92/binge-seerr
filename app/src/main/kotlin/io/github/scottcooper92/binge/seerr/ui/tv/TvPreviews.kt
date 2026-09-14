@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestError
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.Choice
+import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupError
 import io.github.scottcooper92.binge.seerr.ui.SetupServer
@@ -54,13 +55,16 @@ private fun ready(
     isSubmitting: Boolean = false,
     error: AdvancedRequestError? = null,
 ) = AdvancedRequestUiState.Ready(
-    servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")),
-    serverId = 1,
-    profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")),
-    profileId = 10,
-    rootFolders = listOf("/data/media/movies", "/data/media/kids"),
-    rootFolder = "/data/media/movies",
-    isLoadingChoices = isLoadingChoices,
+    destination =
+        DestinationChoices(
+            servers = listOf(Choice(1, "Radarr"), Choice(2, "Radarr 4K")),
+            serverId = 1,
+            profiles = listOf(Choice(10, "HD-1080p"), Choice(20, "Ultra-HD")),
+            profileId = 10,
+            rootFolders = listOf("/data/media/movies", "/data/media/kids"),
+            rootFolder = "/data/media/movies",
+            loadingChoices = isLoadingChoices,
+        ),
     isSubmitting = isSubmitting,
     error = error,
 )

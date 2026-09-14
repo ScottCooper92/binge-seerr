@@ -6,7 +6,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
-import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
 import io.github.scottcooper92.binge.seerr.seerr.arrServer
 import io.github.scottcooper92.binge.seerr.seerr.arrServers
@@ -14,6 +13,7 @@ import io.github.scottcooper92.binge.seerr.seerr.forRequest
 import io.github.scottcooper92.binge.seerr.seerr.isTv
 import io.github.scottcooper92.binge.seerr.seerr.preferred
 import io.github.scottcooper92.binge.seerr.ui.Choice
+import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,13 +66,9 @@ class RequestEditor(
         val destination =
             if (source.canEditDestination) {
                 DestinationChoices(
-                    servers = emptyList(),
                     serverId = request.serverId,
-                    profiles = emptyList(),
                     profileId = request.profileId,
-                    rootFolders = emptyList(),
                     rootFolder = request.rootFolder,
-                    tags = emptyList(),
                     tagIds = request.tags.toSet(),
                     loadingChoices = true,
                 )
@@ -99,16 +95,7 @@ class RequestEditor(
         updateDestination { destination ->
             if (destination.serverId == id) return@updateDestination destination
             changed = true
-            destination.copy(
-                serverId = id,
-                profiles = emptyList(),
-                profileId = server.activeProfileId,
-                rootFolders = emptyList(),
-                rootFolder = server.activeDirectory,
-                tags = emptyList(),
-                tagIds = emptySet(),
-                loadingChoices = true,
-            )
+            destination.onServer(server)
         }
         if (changed) scope.launch { loadChoices(id) }
     }
@@ -152,18 +139,6 @@ class RequestEditor(
             }
         }
     }
-
-    private fun DestinationChoices.withChoices(details: SeerrServerDetailsDto): DestinationChoices =
-        copy(
-            profiles = details.profiles.map { Choice(it.id, it.name) },
-            profileId = details.profiles.firstOrNull { it.id == profileId }?.id ?: details.profiles.firstOrNull()?.id ?: profileId,
-            rootFolders = details.rootFolders.map { it.path },
-            rootFolder =
-                details.rootFolders.firstOrNull { it.path == rootFolder }?.path ?: details.rootFolders.firstOrNull()?.path ?: rootFolder,
-            tags = details.tags.map { Choice(it.id, it.label) },
-            tagIds = tagIds.filter { id -> details.tags.any { it.id == id } }.toSet(),
-            loadingChoices = false,
-        )
 
     private fun EditState.toBody(request: SeerrRequestDto): SeerrEditRequestBody =
         SeerrEditRequestBody(

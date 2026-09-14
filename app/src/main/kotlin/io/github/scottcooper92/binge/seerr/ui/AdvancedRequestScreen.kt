@@ -70,25 +70,25 @@ private fun OptionsForm(
         Text(stringResource(R.string.advanced_intro), style = MaterialTheme.typography.bodyMedium)
         ChoicePicker(
             title = stringResource(R.string.advanced_server),
-            choices = state.servers.map { it.id to it.label },
-            selected = state.serverId,
+            choices = state.destination.servers.map { it.id to it.label },
+            selected = state.destination.serverId,
             onSelect = onSelectServer,
             enabled = !state.isSubmitting,
         )
-        if (state.isLoadingChoices) {
+        if (state.destination.loadingChoices) {
             BingeLoadingIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             ChoicePicker(
                 title = stringResource(R.string.advanced_profile),
-                choices = state.profiles.map { it.id to it.label },
-                selected = state.profileId,
+                choices = state.destination.profiles.map { it.id to it.label },
+                selected = state.destination.profileId,
                 onSelect = onSelectProfile,
                 enabled = !state.isSubmitting,
             )
             ChoicePicker(
                 title = stringResource(R.string.advanced_root_folder),
-                choices = state.rootFolders.map { it to it },
-                selected = state.rootFolder,
+                choices = state.destination.rootFolders.map { it to it },
+                selected = state.destination.rootFolder,
                 onSelect = onSelectRootFolder,
                 enabled = !state.isSubmitting,
             )
