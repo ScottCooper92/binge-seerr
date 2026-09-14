@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -56,7 +55,8 @@ class RequestsViewModel
 
         /**
          * The version each filter's list last refreshed at: a filter refreshes once while it trails
-         * [listVersion], so a page swiped away and back does not re-refresh a current list.
+         * [RequestsUiState.Ready.listVersion], so a page swiped away and back does not re-refresh a
+         * current list.
          */
         private val refreshedVersions = ConcurrentHashMap<RequestFilter, Int>()
 
@@ -65,9 +65,6 @@ class RequestsViewModel
                 countsRefresh.value++
                 listVersionState.update { it + 1 }
             }
-
-        /** Bumped after each successful moderation; the visible list reconciles in place, keeping its scroll. */
-        val listVersion: StateFlow<Int> = listVersionState.asStateFlow()
 
         /** True at most once per version per filter, so a freshly composed, current page does not blank-refresh. */
         fun shouldRefresh(
@@ -136,12 +133,12 @@ class RequestsViewModel
 
         val uiState: StateFlow<RequestsUiState> =
             combine(
-                combine(selectedFilter, selectedSort) { filter, sort -> filter to sort },
+                combine(selectedFilter, selectedSort, listVersionState) { filter, sort, version -> Triple(filter, sort, version) },
                 counts,
                 scope,
                 moderation.actingIds,
                 actionItem,
-            ) { (filter, sort), counts, scope, acting, actionItem ->
+            ) { (filter, sort, version), counts, scope, acting, actionItem ->
                 if (scope == null) {
                     RequestsUiState.Loading
                 } else {
@@ -151,6 +148,7 @@ class RequestsViewModel
                         counts = counts,
                         scope = scope.moderation,
                         actingIds = acting,
+                        listVersion = version,
                         actionItem = actionItem,
                     )
                 }

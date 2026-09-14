@@ -160,6 +160,7 @@ class TvRequestsBoardFocusTest {
                         counts = null,
                         scope = scope,
                         actingIds = emptySet(),
+                        listVersion = 0,
                     ),
                 )
             }

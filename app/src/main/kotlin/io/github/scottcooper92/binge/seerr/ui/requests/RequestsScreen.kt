@@ -19,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.BingeFilterChipRow
@@ -31,7 +30,6 @@ import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 
 class RequestsActions(
@@ -47,19 +45,18 @@ class RequestsActions(
     val onRemove: (RequestItem, Boolean) -> Unit,
 )
 
-/** The in-place refresh after a moderation: the version stream plus the once-per-version gate. */
-class ListRefresh(
-    val version: StateFlow<Int>,
-    val shouldRefresh: (RequestFilter, Int) -> Boolean,
-)
-
-/** The requests browser: filter chips with the server's totals over the selected filter's paged rows. */
+/**
+ * The requests browser: filter chips with the server's totals over the selected filter's paged rows.
+ *
+ * @param shouldRefresh true at most once per list version per filter, so a freshly composed, current
+ * page does not blank-refresh after a moderation elsewhere.
+ */
 @Composable
 fun RequestsScreen(
     state: RequestsUiState,
     requestsFor: (RequestFilter) -> Flow<PagingData<RequestItem>>,
     events: Flow<ModerationEvent>,
-    refresh: ListRefresh,
+    shouldRefresh: (RequestFilter, Int) -> Boolean,
     actions: RequestsActions,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
@@ -98,10 +95,9 @@ fun RequestsScreen(
                     onSelect = { actions.onFilterChange(RequestFilter.entries[it]) },
                 )
                 val lazyItems = requestsFor(ready.filter).collectAsLazyPagingItems()
-                val version by refresh.version.collectAsStateWithLifecycle()
                 // A moderation bumps the version; a stale filter refreshes once, anchored, keeping its scroll.
-                LaunchedEffect(version, ready.filter) {
-                    if (refresh.shouldRefresh(ready.filter, version)) lazyItems.refresh()
+                LaunchedEffect(ready.listVersion, ready.filter) {
+                    if (shouldRefresh(ready.filter, ready.listVersion)) lazyItems.refresh()
                 }
                 RequestsBody(
                     filter = ready.filter,

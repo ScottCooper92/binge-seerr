@@ -122,6 +122,8 @@ sealed interface RequestsUiState {
         val counts: RequestCounts?,
         val scope: ModerationScope,
         val actingIds: Set<Int>,
+        /** Bumped after each successful moderation; the visible list reconciles in place, keeping its scroll. */
+        val listVersion: Int,
         /** The request whose actions sheet is open; held here so it survives rotation. */
         val actionItem: RequestItem? = null,
     ) : RequestsUiState

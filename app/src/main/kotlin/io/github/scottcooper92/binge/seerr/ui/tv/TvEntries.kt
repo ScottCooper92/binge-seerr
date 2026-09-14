@@ -105,10 +105,9 @@ private fun TvRequestsEntry(
     // The pager is collected here and handed down as a count and an accessor: the board never touches
     // LazyPagingItems, which do not progress under a Compose test rule.
     val lazyItems = ready?.let { viewModel.requests(it.filter).collectAsLazyPagingItems() }
-    val version by viewModel.listVersion.collectAsStateWithLifecycle()
-    LaunchedEffect(version, ready?.filter, lazyItems) {
+    LaunchedEffect(ready?.listVersion, ready?.filter, lazyItems) {
         val filter = ready?.filter ?: return@LaunchedEffect
-        if (viewModel.shouldRefresh(filter, version)) lazyItems?.refresh()
+        if (viewModel.shouldRefresh(filter, ready.listVersion)) lazyItems?.refresh()
     }
     TvRequestsBoard(
         state = state,
