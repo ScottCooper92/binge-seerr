@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +39,7 @@ import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.SetupLinkSheet
+import io.github.scottcooper92.binge.seerr.ui.savedLoginRequest
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -204,10 +206,21 @@ private fun MediaServerLinkSheet(
             EditorTextField(
                 username,
                 stringResource(R.string.setup_username),
+                modifier =
+                    Modifier.savedLoginRequest { login ->
+                        username = login.id
+                        password = login.password
+                    },
                 autoCorrect = false,
                 placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
+                contentType = ContentType.Username,
             ) { username = it }
-            EditorTextField(password, stringResource(R.string.setup_password), secret = true) { password = it }
+            EditorTextField(
+                password,
+                stringResource(R.string.setup_password),
+                secret = true,
+                contentType = ContentType.Password,
+            ) { password = it }
             BingeFilledButton(
                 label = stringResource(R.string.user_settings_link),
                 onClick = { onLink(username, password) },
