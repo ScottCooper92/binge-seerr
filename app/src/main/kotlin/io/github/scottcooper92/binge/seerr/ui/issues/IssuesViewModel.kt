@@ -52,6 +52,7 @@ class IssuesViewModel
         private val selectedFilter = MutableStateFlow(IssueFilter.Open)
         private val selectedSort = MutableStateFlow(IssueSort.Added)
         private val countsRefresh = MutableStateFlow(0)
+        private val scopeRefresh = MutableStateFlow(0)
         private val actionItem = MutableStateFlow<IssueItem?>(null)
         private val actingState = MutableStateFlow<Set<Int>>(emptySet())
         private val eventFlow = MutableSharedFlow<IssueListEvent>(extraBufferCapacity = 1)
@@ -59,12 +60,19 @@ class IssuesViewModel
         /** The outcome of each row action, once. */
         val events: Flow<IssueListEvent> = eventFlow.asSharedFlow()
 
-        /** Resolved once per connection: the user's permissions decide whether the list is theirs alone. */
+        /**
+         * The user's permissions decide whether the list is theirs alone. Re-read from the server on
+         * becoming visible, since the cached `auth/me` would not show a permission changed in the web
+         * client. The profile is not re-read: `hasCounts` follows the server's version.
+         */
         private val scope: Flow<IssueListScope> =
-            flow {
-                val user = runCatching { connection.authenticatedUser() }.getOrNull()
-                emit(IssueListScope(permissions = user.toPermissions(), currentUserId = user?.id))
-            }.stateIn(viewModelScope, SharingStarted.Lazily, IssueListScope())
+            scopeRefresh
+                .flatMapLatest {
+                    flow {
+                        val user = runCatching { connection.refreshAuthenticatedUser() }.getOrNull()
+                        emit(IssueListScope(permissions = user.toPermissions(), currentUserId = user?.id))
+                    }
+                }.stateIn(viewModelScope, SharingStarted.Lazily, IssueListScope())
 
         private val streams: Map<IssueFilter, Flow<PagingData<IssueItem>>> =
             IssueFilter.entries.associateWith { filter ->
@@ -171,8 +179,10 @@ class IssuesViewModel
             selectedSort.value = sort
         }
 
-        /** The counts are low-velocity totals: refetched on entry, never polled. */
+        /** The counts and the viewer's permissions are both refetched on entry, and neither is polled. */
         fun setScreenVisible(visible: Boolean) {
-            if (visible) countsRefresh.value++
+            if (!visible) return
+            countsRefresh.value++
+            scopeRefresh.value++
         }
     }
