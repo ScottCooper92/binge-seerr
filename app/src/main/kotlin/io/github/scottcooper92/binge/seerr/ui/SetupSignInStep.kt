@@ -30,13 +30,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeTextButton
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
 /** Step two: the server's name over its artwork, then only the sign-ins it accepts. */
@@ -148,9 +148,10 @@ private fun ModeFields(
         // No content type: the key is the server's, not an account credential, and offering to save
         // it as this user's password is how a password manager ends up holding the wrong secret.
         SeerrSignInMode.ApiKey ->
-            SecretField(
+            EditorTextField(
                 form.apiKey,
                 stringResource(R.string.setup_api_key),
+                secret = true,
                 // Supporting rather than a placeholder: it has to stay readable while the user goes to fetch the key.
                 supporting = stringResource(R.string.setup_api_key_hint),
             ) { value -> onEdit { copy(apiKey = value) } }
@@ -170,9 +171,10 @@ private fun ModeFields(
                         .semantics { contentType = ContentType.EmailAddress + ContentType.Username }
                         .savedLoginRequest { login -> onEdit { copy(email = login.id, password = login.password) } },
             )
-            SecretField(
+            EditorTextField(
                 form.password,
                 stringResource(R.string.setup_password),
+                secret = true,
                 contentType = ContentType.Password,
             ) { value -> onEdit { copy(password = value) } }
             if (state.server.canResetPassword) {
@@ -198,39 +200,16 @@ private fun ModeFields(
                         .semantics { contentType = ContentType.Username }
                         .savedLoginRequest { login -> onEdit { copy(username = login.id, password = login.password) } },
             )
-            SecretField(
+            EditorTextField(
                 form.password,
                 stringResource(R.string.setup_password),
+                secret = true,
                 contentType = ContentType.Password,
             ) { value -> onEdit { copy(password = value) } }
         }
         SeerrSignInMode.Plex -> Text(stringResource(R.string.setup_plex_hint), style = MaterialTheme.typography.bodyMedium)
         SeerrSignInMode.QuickConnect -> Text(stringResource(R.string.setup_quick_connect_hint), style = MaterialTheme.typography.bodyMedium)
     }
-}
-
-/** [contentType] is null for a secret no credential provider should be asked to hold. */
-@Composable
-private fun SecretField(
-    value: String,
-    label: String,
-    supporting: String? = null,
-    contentType: ContentType? = null,
-    onValueChange: (String) -> Unit,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        supportingText = supporting?.let { { Text(it) } },
-        singleLine = true,
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier),
-    )
 }
 
 /** The Jellyfin/Emby chip carries the server's own name where the admin set one. */

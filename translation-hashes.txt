@@ -32,6 +32,8 @@ app:blocklist_untitled  b588b8ee4230
 app:connected_hint  6e5fa3c2df6a
 app:download_eta_hours  02abf092ccd1
 app:download_eta_minutes  fc01feb5f7e5
+app:field_secret_hide  ad5caeb74e49
+app:field_secret_show  ff5a856d1a08
 app:hub_couldnt_load_body  221fccfe8796
 app:hub_couldnt_load_headline  e12aae2d43bd
 app:hub_disconnect  acfc5be785a9
