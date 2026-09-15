@@ -108,6 +108,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
         // And the other way: after a disconnect, settleHome is already swapping setup back in.
         if (connected() == true) {
             HubEntry(
+                asListPane = hubBeside(),
                 selectedSection = backStack.selectedSection(defaultShowing = hubBeside()),
                 onOpenSection = { section -> backStack.openSection(section, defaultShowing = hubBeside()) },
                 onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
@@ -212,6 +213,7 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
 
 @Composable
 private fun HubEntry(
+    asListPane: Boolean,
     selectedSection: HubSection?,
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
@@ -229,6 +231,7 @@ private fun HubEntry(
     HubScreen(
         state = state,
         selectedSection = selectedSection,
+        asListPane = asListPane,
         actions =
             HubActions(
                 onOpenSection = onOpenSection,

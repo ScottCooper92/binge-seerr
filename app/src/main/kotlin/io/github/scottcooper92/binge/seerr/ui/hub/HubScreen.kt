@@ -49,12 +49,15 @@ class HubActions(
  *
  * @param selectedSection the section open beside the hub, marked in the Manage group. Null on a
  * window narrow enough that the hub is alone on screen, where nothing is open beside it.
+ * @param asListPane true when the hub is the list pane rather than the whole window, which decides
+ * its side padding: a resource qualifier resolves against the window, and a pane is a fraction of it.
  */
 @Composable
 fun HubScreen(
     state: HubUiState,
     actions: HubActions,
     selectedSection: HubSection? = null,
+    asListPane: Boolean = false,
 ) {
     val ready = state as? HubUiState.Ready
     ScreenScaffold(title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
@@ -64,7 +67,7 @@ fun HubScreen(
                 ready == null -> LoadingScreen(Modifier.padding(inner))
                 ready.health.isProblem() ->
                     ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))
-                else -> Dashboard(ready, actions, selectedSection, contentPadding = inner)
+                else -> Dashboard(ready, actions, selectedSection, asListPane, contentPadding = inner)
             }
         }
     }
@@ -78,16 +81,23 @@ private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
     selectedSection: HubSection?,
+    asListPane: Boolean,
     contentPadding: PaddingValues,
 ) {
+    val inset = dimensionResource(if (asListPane) R.dimen.hub_list_pane_inset else DesR.dimen.screen_content_inset)
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        ServerCard(server = state.server, overview = state.overview)
+        ServerCard(server = state.server, overview = state.overview, inset = inset)
         state.overview.account?.let { account ->
-            AccountCard(account = account, quota = state.overview.quota, onClick = { actions.onOpenAccount(account.id) })
+            AccountCard(
+                account = account,
+                quota = state.overview.quota,
+                inset = inset,
+                onClick = { actions.onOpenAccount(account.id) },
+            )
         }
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
-            DownloadingStrip(state.downloading)
+            DownloadingStrip(state.downloading, inset = inset)
         }
         SectionHeader(title = stringResource(R.string.hub_manage))
         SettingsGroup(
@@ -105,10 +115,10 @@ private fun Dashboard(
                         onClick = { actions.onOpenSection(section) },
                     )
                 },
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
+            modifier = Modifier.padding(horizontal = inset),
         )
         Column(
-            modifier = Modifier.padding(dimensionResource(DesR.dimen.screen_content_inset)),
+            modifier = Modifier.padding(inset),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             Text(
