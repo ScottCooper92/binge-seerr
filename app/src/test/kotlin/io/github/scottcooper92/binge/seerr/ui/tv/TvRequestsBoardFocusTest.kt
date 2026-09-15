@@ -54,6 +54,7 @@ class TvRequestsBoardFocusTest {
     private val declined = mutableListOf<Pair<Int, Boolean>>()
     private var dismissed = 0
     private var filters = mutableListOf<RequestFilter>()
+    private var sorts = mutableListOf<RequestSort>()
 
     private val manager =
         ModerationScope(
@@ -84,6 +85,35 @@ class TvRequestsBoardFocusTest {
         pressOk()
 
         assertEquals(listOf(RequestFilter.Pending), filters)
+    }
+
+    @Test
+    fun theSortSitsAtTheEndOfTheBandAndCommitsOnOk() {
+        setBoard(manager)
+        focusBand()
+
+        // Past every filter pill, onto the sort. The chosen sort is first, so one more right reaches the other.
+        repeat(RequestFilter.entries.size) { pressRight() }
+        pill(R.string.requests_sort_added).assertIsFocused()
+        pressRight()
+        pressOk()
+
+        assertEquals(listOf(RequestSort.Modified), sorts)
+        assertTrue("choosing a sort must not re-filter", filters.isEmpty())
+    }
+
+    @Test
+    fun theBandComesBackFromTheSortAndTheRowsAreStillBelowIt() {
+        setBoard(manager)
+        focusBand()
+
+        repeat(RequestFilter.entries.size) { pressRight() }
+        pill(R.string.requests_sort_added).assertIsFocused()
+        repeat(RequestFilter.entries.size) { pressLeft() }
+
+        pill(R.string.requests_filter_all).assertIsFocused()
+        pressDown()
+        row(HEAT).assertIsFocused()
     }
 
     @Test
@@ -172,6 +202,7 @@ class TvRequestsBoardFocusTest {
                     actions =
                         TvRequestsActions(
                             onFilterChange = { filters += it },
+                            onSortChange = { sorts += it },
                             onOpenActions = { state = state.copy(actionItem = it) },
                             onDismissActions = {
                                 dismissed++

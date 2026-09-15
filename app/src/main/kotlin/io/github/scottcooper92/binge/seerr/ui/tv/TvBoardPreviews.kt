@@ -55,8 +55,8 @@ private const val DAY_MILLIS = 24 * HOUR_MILLIS
 private val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {}, {}, {})
-private val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {})
-private val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {})
+private val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {})
+private val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
     HubServer(

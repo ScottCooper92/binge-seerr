@@ -116,6 +116,7 @@ private fun TvRequestsEntry(
         actions =
             TvRequestsActions(
                 onFilterChange = viewModel::setFilter,
+                onSortChange = viewModel::setSort,
                 onOpenActions = viewModel::openActions,
                 onDismissActions = viewModel::dismissActions,
                 onApprove = viewModel.moderation::approve,
@@ -147,6 +148,7 @@ private fun TvIssuesEntry(
         actions =
             TvIssuesActions(
                 onFilterChange = viewModel::setFilter,
+                onSortChange = viewModel::setSort,
                 onOpenActions = viewModel::openActions,
                 onDismissActions = viewModel::dismissActions,
                 onResolve = viewModel::resolve,

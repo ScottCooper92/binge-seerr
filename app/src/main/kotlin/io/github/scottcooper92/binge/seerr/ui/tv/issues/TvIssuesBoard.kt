@@ -19,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueListEvent
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueSort
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.emptyMessageRes
@@ -29,9 +30,9 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetRow
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetStepFocus
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetTitle
+import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardBands
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
-import io.github.scottcooper92.binge.seerr.ui.tv.TvFilterBand
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedList
@@ -43,6 +44,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.labelRes as mediaTypeLabe
 /** Everything the issues board can ask of its ViewModel, in one place so the entry stays a wiring. */
 internal class TvIssuesActions(
     val onFilterChange: (IssueFilter) -> Unit,
+    val onSortChange: (IssueSort) -> Unit,
     val onOpenActions: (IssueItem) -> Unit,
     val onDismissActions: () -> Unit,
     val onResolve: (IssueItem) -> Unit,
@@ -79,10 +81,13 @@ internal fun TvIssuesBoard(
                 TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
                 return@TvBoardFrame
             }
-            TvFilterBand(
+            TvBoardBands(
                 filters = IssueFilter.entries.map { filter -> filter to filterLabel(filter, ready.counts) },
-                selected = ready.filter,
-                onSelect = actions.onFilterChange,
+                selectedFilter = ready.filter,
+                onFilterChange = actions.onFilterChange,
+                sorts = IssueSort.entries.map { sort -> sort to stringResource(sort.labelRes()) },
+                selectedSort = ready.sort,
+                onSortChange = actions.onSortChange,
             )
             TvPagedList(
                 rows = rows,

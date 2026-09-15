@@ -18,15 +18,16 @@ import io.github.scottcooper92.binge.seerr.ui.requests.ModerationEvent
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestCounts
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestFilter
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.actions
 import io.github.scottcooper92.binge.seerr.ui.requests.emptyMessageRes
 import io.github.scottcooper92.binge.seerr.ui.requests.isError
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.messageRes
+import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardBands
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
-import io.github.scottcooper92.binge.seerr.ui.tv.TvFilterBand
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedList
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.Flow
 /** Everything the requests board can ask of its ViewModel, in one place so the entry stays a wiring. */
 internal class TvRequestsActions(
     val onFilterChange: (RequestFilter) -> Unit,
+    val onSortChange: (RequestSort) -> Unit,
     val onOpenActions: (RequestItem) -> Unit,
     val onDismissActions: () -> Unit,
     val onApprove: (Int) -> Unit,
@@ -80,10 +82,13 @@ internal fun TvRequestsBoard(
                 TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
                 return@TvBoardFrame
             }
-            TvFilterBand(
+            TvBoardBands(
                 filters = RequestFilter.entries.map { filter -> filter to filterLabel(filter, ready.counts) },
-                selected = ready.filter,
-                onSelect = actions.onFilterChange,
+                selectedFilter = ready.filter,
+                onFilterChange = actions.onFilterChange,
+                sorts = RequestSort.entries.map { sort -> sort to stringResource(sort.labelRes()) },
+                selectedSort = ready.sort,
+                onSortChange = actions.onSortChange,
                 initialFocusedLabel = initialFocusedFilterLabel,
             )
             TvPagedList(
