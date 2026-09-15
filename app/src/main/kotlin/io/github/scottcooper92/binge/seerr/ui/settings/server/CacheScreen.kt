@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -45,11 +46,12 @@ fun CacheScreen(
     events: Flow<EditorEvent>,
     actions: CacheActions,
 ) {
-    ServerActionPage(title = stringResource(R.string.server_settings_cache), events = events, onBack = actions.onBack) {
+    ServerActionPage(title = stringResource(R.string.server_settings_cache), events = events, onBack = actions.onBack) { contentPadding ->
         when (state) {
-            CacheUiState.Loading -> LoadingScreen()
-            is CacheUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
-            is CacheUiState.Ready -> CacheContent(state, actions)
+            CacheUiState.Loading -> LoadingScreen(Modifier.padding(contentPadding))
+            is CacheUiState.Error ->
+                ErrorScreen(error = state.error, modifier = Modifier.padding(contentPadding), onRetry = actions.onRetry)
+            is CacheUiState.Ready -> CacheContent(state, actions, contentPadding)
         }
     }
 }
@@ -58,9 +60,10 @@ fun CacheScreen(
 private fun CacheContent(
     state: CacheUiState.Ready,
     actions: CacheActions,
+    contentPadding: PaddingValues,
 ) {
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         SettingsGroup(
             title = stringResource(R.string.server_settings_api_caches),

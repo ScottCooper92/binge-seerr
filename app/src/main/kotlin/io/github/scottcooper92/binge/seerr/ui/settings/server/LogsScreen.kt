@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -49,6 +50,8 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -80,7 +83,7 @@ fun LogsScreen(
         }
     }
     Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.server_settings_logs), onBack = actions.onBack) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Column(Modifier.fillMaxSize().padding(padding.outerPadding())) {
             BingeSearchField(
                 query = state.search,
                 onQueryChange = actions.onSearchChange,
@@ -93,7 +96,7 @@ fun LogsScreen(
                 selectedIndex = state.level.ordinal,
                 onSelect = { actions.onLevelChange(LogLevel.entries[it]) },
             )
-            LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize())
+            LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize(), padding.innerPadding())
         }
     }
 }
@@ -104,6 +107,7 @@ private fun LogsBody(
     listState: LazyListState,
     actions: LogsActions,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val refresh = lazyItems.loadState.refresh
     when {
@@ -111,7 +115,7 @@ private fun LogsBody(
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)),
+                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
             ) {
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
@@ -119,15 +123,20 @@ private fun LogsBody(
                 }
                 item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry, onReconnect = actions.onBack) }
             }
-        refresh is LoadState.Loading -> LoadingScreen(modifier)
+        refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         refresh is LoadState.Error ->
             PagedRefreshError(
                 refresh.error,
                 onRetry = lazyItems::retry,
                 onReconnect = actions.onBack,
-                modifier = modifier,
+                modifier = modifier.padding(contentPadding),
             )
-        else -> EmptyScreen(message = stringResource(R.string.server_settings_logs_empty), modifier = modifier, icon = Icons.Filled.Article)
+        else ->
+            EmptyScreen(
+                message = stringResource(R.string.server_settings_logs_empty),
+                modifier = modifier.padding(contentPadding),
+                icon = Icons.Filled.Article,
+            )
     }
 }
 

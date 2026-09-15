@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,7 +43,9 @@ import io.github.scottcooper92.binge.seerr.ui.SetupLinkSheet
 import io.github.scottcooper92.binge.seerr.ui.savedLoginRequest
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import kotlinx.coroutines.flow.Flow
@@ -91,11 +94,13 @@ fun LinkedAccountsScreen(
         snackbarHost = { BingeSnackbarHost(snackbarHostState) },
         topBar = { BingeTopBar(title = stringResource(R.string.user_settings_page_linked), onBack = actions.onBack) },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
-                LinkedAccountsUiState.Loading -> LoadingScreen()
-                is LinkedAccountsUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
-                is LinkedAccountsUiState.Ready -> LinkedAccountsContent(state, actions)
+                LinkedAccountsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is LinkedAccountsUiState.Error ->
+                    ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
+                is LinkedAccountsUiState.Ready -> LinkedAccountsContent(state, actions, contentPadding = inner)
             }
         }
     }
@@ -105,6 +110,7 @@ fun LinkedAccountsScreen(
 private fun LinkedAccountsContent(
     state: LinkedAccountsUiState.Ready,
     actions: LinkedAccountsActions,
+    contentPadding: PaddingValues,
 ) {
     var unlinking by rememberSaveable { mutableStateOf<UserOrigin?>(null) }
     var linkingMediaServer by rememberSaveable { mutableStateOf(false) }
@@ -115,7 +121,7 @@ private fun LinkedAccountsContent(
                 accountRow(account, state.busy, onLink = { linkingMediaServer = true }, onUnlink = { unlinking = account.origin })
             },
         )
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         SettingsGroup(title = null, rows = rows, modifier = Modifier.padding(dimensionResource(DesR.dimen.screen_content_inset)))
     }
     unlinking?.let { origin ->

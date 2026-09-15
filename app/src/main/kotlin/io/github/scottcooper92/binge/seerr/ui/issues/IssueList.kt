@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -58,6 +59,7 @@ internal fun IssuesBody(
     onOpen: (IssueItem) -> Unit,
     onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val remote = lazyItems.loadState.mediator?.refresh ?: lazyItems.loadState.refresh
     when {
@@ -65,17 +67,22 @@ internal fun IssuesBody(
             Column(modifier.fillMaxSize()) {
                 if (remote is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (remote is LoadState.Error) RefreshFailedLine(remote.error, onRetry = lazyItems::retry, onReconnect = onReconnect)
-                IssueList(lazyItems, onOpen, onReconnect)
+                IssueList(lazyItems, onOpen, onReconnect, contentPadding)
             }
-        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading -> LoadingScreen(modifier)
+        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         remote is LoadState.Error ->
             PagedRefreshError(
                 remote.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
-                modifier = modifier,
+                modifier = modifier.padding(contentPadding),
             )
-        else -> EmptyScreen(message = stringResource(filter.emptyMessageRes()), modifier = modifier, icon = Icons.Filled.ReportProblem)
+        else ->
+            EmptyScreen(
+                message = stringResource(filter.emptyMessageRes()),
+                modifier = modifier.padding(contentPadding),
+                icon = Icons.Filled.ReportProblem,
+            )
     }
 }
 
@@ -106,10 +113,11 @@ private fun IssueList(
     lazyItems: LazyPagingItems<IssueItem>,
     onOpen: (IssueItem) -> Unit,
     onReconnect: () -> Unit,
+    contentPadding: PaddingValues,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)),
+        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -58,23 +59,29 @@ internal fun RequestsBody(
     onOpenActions: (RequestItem) -> Unit,
     onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val refreshState = lazyItems.loadState.refresh
     when {
         lazyItems.itemCount > 0 ->
             Column(modifier.fillMaxSize()) {
                 if (refreshState is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect)
+                RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding)
             }
-        refreshState is LoadState.Loading -> LoadingScreen(modifier)
+        refreshState is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         refreshState is LoadState.Error ->
             PagedRefreshError(
                 refreshState.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
-                modifier = modifier,
+                modifier = modifier.padding(contentPadding),
             )
-        else -> EmptyScreen(message = stringResource(filter.emptyMessageRes()), modifier = modifier, icon = Icons.Filled.Inbox)
+        else ->
+            EmptyScreen(
+                message = stringResource(filter.emptyMessageRes()),
+                modifier = modifier.padding(contentPadding),
+                icon = Icons.Filled.Inbox,
+            )
     }
 }
 
@@ -86,10 +93,11 @@ private fun RequestList(
     onOpen: (RequestItem) -> Unit,
     onOpenActions: (RequestItem) -> Unit,
     onReconnect: () -> Unit,
+    contentPadding: PaddingValues,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)),
+        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

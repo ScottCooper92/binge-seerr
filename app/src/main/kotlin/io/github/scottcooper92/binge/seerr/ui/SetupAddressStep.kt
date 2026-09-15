@@ -2,8 +2,10 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,12 +28,15 @@ internal fun SetupAddressStep(
     state: SetupUiState.Address,
     onEditAddress: (String) -> Unit,
     onInspect: () -> Unit,
+    contentPadding: PaddingValues,
 ) {
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
+                .padding(contentPadding)
                 .padding(dimensionResource(DesR.dimen.screen_content_inset)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {

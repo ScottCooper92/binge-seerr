@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -54,26 +55,27 @@ internal fun BlocklistBody(
     onRemove: (BlocklistItem) -> Unit,
     onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val refresh = lazyItems.loadState.refresh
     when {
         lazyItems.itemCount > 0 ->
             Column(modifier.fillMaxSize()) {
                 if (refresh is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect)
+                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
             }
-        refresh is LoadState.Loading -> LoadingScreen(modifier)
+        refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         refresh is LoadState.Error ->
             PagedRefreshError(
                 refresh.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
-                modifier = modifier,
+                modifier = modifier.padding(contentPadding),
             )
         else ->
             EmptyScreen(
                 message = stringResource(if (isFiltered) R.string.blocklist_empty_filtered else R.string.blocklist_empty),
-                modifier = modifier,
+                modifier = modifier.padding(contentPadding),
                 icon = Icons.Filled.Block,
             )
     }
@@ -87,10 +89,11 @@ private fun BlocklistList(
     onOpen: (BlocklistItem) -> Unit,
     onRemove: (BlocklistItem) -> Unit,
     onReconnect: () -> Unit,
+    contentPadding: PaddingValues,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)),
+        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

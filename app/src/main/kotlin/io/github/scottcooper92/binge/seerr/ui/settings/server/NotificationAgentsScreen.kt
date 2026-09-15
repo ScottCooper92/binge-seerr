@@ -22,6 +22,8 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.onOffRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 class AgentsActions(
@@ -37,12 +39,13 @@ fun NotificationAgentsScreen(
     actions: AgentsActions,
 ) {
     Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.settings_group_notifications), onBack = actions.onBack) }) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
-                AgentsUiState.Loading -> LoadingScreen()
-                is AgentsUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+                AgentsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is AgentsUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is AgentsUiState.Ready ->
-                    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(inner)) {
                         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
                         SettingsGroup(
                             title = stringResource(R.string.settings_group_notifications),

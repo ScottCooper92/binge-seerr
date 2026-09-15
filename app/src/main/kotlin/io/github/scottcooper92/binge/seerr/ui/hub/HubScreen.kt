@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,8 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 class HubActions(
@@ -56,11 +59,13 @@ fun HubScreen(
 ) {
     val ready = state as? HubUiState.Ready
     Scaffold(topBar = { BingeTopBar(title = ready?.server?.title ?: stringResource(R.string.companion_name)) }) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when {
-                ready == null -> LoadingScreen()
-                ready.health.isProblem() -> ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect)
-                else -> Dashboard(ready, actions, selectedSection)
+                ready == null -> LoadingScreen(Modifier.padding(inner))
+                ready.health.isProblem() ->
+                    ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))
+                else -> Dashboard(ready, actions, selectedSection, contentPadding = inner)
             }
         }
     }
@@ -74,8 +79,9 @@ private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
     selectedSection: HubSection?,
+    contentPadding: PaddingValues,
 ) {
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         ServerCard(server = state.server, overview = state.overview)
         state.overview.account?.let { account ->
             AccountCard(account = account, quota = state.overview.quota, onClick = { actions.onOpenAccount(account.id) })
@@ -123,9 +129,11 @@ private fun ConnectionProblem(
     onRetry: () -> Unit,
     onReconnect: () -> Unit,
     onDisconnect: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val retryable = health != ConnectionHealth.Unauthorized
     EmptyScreen(
+        modifier = modifier,
         title =
             stringResource(
                 when (health) {
