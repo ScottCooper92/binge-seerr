@@ -14,13 +14,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.theme.BingeSentiment
@@ -29,6 +27,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
@@ -46,7 +45,7 @@ fun ServicesScreen(
     state: ServicesUiState,
     actions: ServicesActions,
 ) {
-    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.settings_group_services), onBack = actions.onBack) }) { padding ->
+    ScreenScaffold(title = stringResource(R.string.settings_group_services), onBack = actions.onBack) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when (state) {

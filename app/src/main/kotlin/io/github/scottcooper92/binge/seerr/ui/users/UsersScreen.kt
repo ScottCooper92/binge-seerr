@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,13 +24,12 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.binge.designsystem.component.BingeSnackbarHost
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -70,9 +68,24 @@ fun UsersScreen(
     val ready = state as? UsersUiState.Ready
     val snackbarHostState = remember { SnackbarHostState() }
     UsersSnackbarEffect(events, snackbarHostState)
-    Scaffold(
-        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
-        topBar = { UsersTopBar(ready, showBack, actions, onSort = { showSort = true }) },
+    val selected = ready?.selection?.size ?: 0
+    ScreenScaffold(
+        // The bar in both of its modes: the count while rows are ticked, the screen's own title otherwise.
+        title =
+            if (selected > 0) {
+                pluralStringResource(R.plurals.users_selected, selected, selected)
+            } else {
+                stringResource(R.string.hub_section_users)
+            },
+        // Selection mode keeps its exit arrow whatever the layout: it leaves a mode, not a screen.
+        onBack =
+            when {
+                selected > 0 -> actions.onClearSelection
+                showBack -> actions.onBack
+                else -> null
+            },
+        snackbarHostState = snackbarHostState,
+        actions = { UsersBarActions(ready, actions, onSort = { showSort = true }) },
     ) { padding ->
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
@@ -154,53 +167,31 @@ private fun UsersSnackbarEffect(
     }
 }
 
-/**
- * The bar in both of its modes: the count and the bulk actions while rows are ticked, the screen's
- * own title and its add/sort actions otherwise.
- */
+/** The bar's actions in both of its modes: the bulk actions while rows are ticked, add and sort otherwise. */
 @Composable
-private fun UsersTopBar(
+private fun UsersBarActions(
     ready: UsersUiState.Ready?,
-    showBack: Boolean,
     actions: UsersActions,
     onSort: () -> Unit,
 ) {
-    val selected = ready?.selection?.size ?: 0
-    BingeTopBar(
-        title =
-            if (selected > 0) {
-                pluralStringResource(R.plurals.users_selected, selected, selected)
-            } else {
-                stringResource(R.string.hub_section_users)
-            },
-        // Selection mode keeps its exit arrow whatever the layout: it leaves a mode, not a screen.
-        onBack =
-            when {
-                selected > 0 -> actions.onClearSelection
-                showBack -> actions.onBack
-                else -> null
-            },
-        actions = {
-            if (ready == null) return@BingeTopBar
-            if (selected > 0) {
-                IconButton(onClick = actions.onStartBulkEdit) {
-                    Icon(Icons.Filled.ManageAccounts, contentDescription = stringResource(R.string.users_edit_permissions))
-                }
-                IconButton(onClick = actions.onClearSelection) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.users_clear_selection_cd))
-                }
-            } else {
-                if (ready.canAdmit) {
-                    // One way in skips the choice: a server with no media server can only create.
-                    val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
-                    IconButton(onClick = onAdd) {
-                        Icon(Icons.Filled.PersonAdd, contentDescription = stringResource(R.string.users_add_cd))
-                    }
-                }
-                IconButton(onClick = onSort) {
-                    Icon(Icons.Filled.SwapVert, contentDescription = stringResource(R.string.requests_sort_cd))
-                }
+    if (ready == null) return
+    if (ready.selection.isNotEmpty()) {
+        IconButton(onClick = actions.onStartBulkEdit) {
+            Icon(Icons.Filled.ManageAccounts, contentDescription = stringResource(R.string.users_edit_permissions))
+        }
+        IconButton(onClick = actions.onClearSelection) {
+            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.users_clear_selection_cd))
+        }
+    } else {
+        if (ready.canAdmit) {
+            // One way in skips the choice: a server with no media server can only create.
+            val onAdd = if (ready.importSource == null) actions.admission.onStartCreate else actions.admission.onStart
+            IconButton(onClick = onAdd) {
+                Icon(Icons.Filled.PersonAdd, contentDescription = stringResource(R.string.users_add_cd))
             }
-        },
-    )
+        }
+        IconButton(onClick = onSort) {
+            Icon(Icons.Filled.SwapVert, contentDescription = stringResource(R.string.requests_sort_cd))
+        }
+    }
 }

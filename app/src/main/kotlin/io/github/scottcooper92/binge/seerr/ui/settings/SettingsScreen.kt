@@ -9,12 +9,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import io.github.scottcooper92.binge.seerr.R
@@ -22,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
@@ -59,11 +58,7 @@ fun SettingsScreen(
     actions: SettingsActions,
     showBack: Boolean = true,
 ) {
-    Scaffold(
-        topBar = {
-            BingeTopBar(title = stringResource(R.string.hub_section_settings), onBack = actions.onBack.takeIf { showBack })
-        },
-    ) { padding ->
+    ScreenScaffold(title = stringResource(R.string.hub_section_settings), onBack = actions.onBack.takeIf { showBack }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when (state) {

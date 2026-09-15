@@ -16,14 +16,12 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
@@ -31,6 +29,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
@@ -58,7 +57,7 @@ fun HubScreen(
     selectedSection: HubSection? = null,
 ) {
     val ready = state as? HubUiState.Ready
-    Scaffold(topBar = { BingeTopBar(title = ready?.server?.title ?: stringResource(R.string.companion_name)) }) { padding ->
+    ScreenScaffold(title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when {

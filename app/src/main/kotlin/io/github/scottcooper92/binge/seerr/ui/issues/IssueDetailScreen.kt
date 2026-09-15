@@ -22,7 +22,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,8 +40,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeSnackbarHost
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -54,6 +51,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
@@ -110,20 +108,16 @@ fun IssueDetailScreen(
     }
     var managing by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssueDetailUiState.Ready
-    Scaffold(
-        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
-        topBar = {
-            BingeTopBar(
-                title = ready?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
-                onBack = actions.onBack,
-                actions = {
-                    if (ready != null) {
-                        IconButton(onClick = { managing = true }) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.issue_manage_cd))
-                        }
-                    }
-                },
-            )
+    ScreenScaffold(
+        title = ready?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
+        onBack = actions.onBack,
+        snackbarHostState = snackbarHostState,
+        actions = {
+            if (ready != null) {
+                IconButton(onClick = { managing = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.issue_manage_cd))
+                }
+            }
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
@@ -156,7 +150,8 @@ private fun Ready(
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
     val detail = state.detail
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
-    // The navigation bar's inset goes under the pinned bar where there is one, and into the thread's scroll where there is not.
+    // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
+    // the thread's scroll where there is not.
     val pinnedBar = detail.canComment || detail.canResolve
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -164,7 +159,7 @@ private fun Ready(
                 Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(if (pinnedBar) PaddingValues() else contentPadding),
+                    .padding(if (pinnedBar) PaddingValues(top = contentPadding.calculateTopPadding()) else contentPadding),
         ) {
             IssueHeader(detail, modifier = Modifier.padding(inset))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
@@ -207,7 +202,7 @@ private fun Ready(
                 onAddComment = { modals.composing = true },
                 onToggleStatus = { modals.confirmingStatus = true },
                 inset = inset,
-                modifier = Modifier.padding(contentPadding),
+                modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding()),
             )
         }
     }

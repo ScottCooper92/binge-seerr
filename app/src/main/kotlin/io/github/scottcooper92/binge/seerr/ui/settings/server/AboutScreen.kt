@@ -20,12 +20,10 @@ import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.theme.BingeSentiment
@@ -37,6 +35,7 @@ import io.github.scottcooper92.binge.seerr.seerr.githubUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
@@ -49,7 +48,7 @@ fun AboutScreen(
     onRetry: () -> Unit,
     onOpenUrl: (String) -> Unit,
 ) {
-    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.settings_about), onBack = onBack) }) { padding ->
+    ScreenScaffold(title = stringResource(R.string.settings_about), onBack = onBack) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when (state) {

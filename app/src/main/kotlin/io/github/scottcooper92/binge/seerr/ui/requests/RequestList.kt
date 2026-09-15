@@ -41,6 +41,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import com.binge.designsystem.R as DesR
 
@@ -63,11 +64,13 @@ internal fun RequestsBody(
 ) {
     val refreshState = lazyItems.loadState.refresh
     when {
-        lazyItems.itemCount > 0 ->
-            Column(modifier.fillMaxSize()) {
-                if (refreshState is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding)
+        lazyItems.itemCount > 0 && refreshState is LoadState.Loading ->
+            // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
+            Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding.belowPinnedLine())
             }
+        lazyItems.itemCount > 0 -> RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding)
         refreshState is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         refreshState is LoadState.Error ->
             PagedRefreshError(
