@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The splash icon: the launcher mark's arc sweeping to the value it rests at.
+
+    It animates the shipped ic_launcher_foreground rather than a splash-only copy, so the frame the
+    splash ends on is the launcher icon exactly — there is no second asset to keep in step, and the
+    hand-off has nothing to jump between.
+
+    Reduce-motion needs no branch. An AVD's ObjectAnimator honours ANIMATOR_DURATION_SCALE, so at 0
+    the sweep completes immediately on its end value, which is the static icon.
+-->
+<animated-vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_foreground">
+    <target android:name="progressArc">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyName="trimPathEnd"
+                android:valueFrom="0"
+                android:valueTo="0.84"
+                android:valueType="floatType"
+                android:duration="800"
+                android:interpolator="@android:interpolator/decelerate_quint"/>
+        </aapt:attr>
+    </target>
+</animated-vector>

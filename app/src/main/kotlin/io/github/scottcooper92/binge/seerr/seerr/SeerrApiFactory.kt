@@ -28,8 +28,11 @@ class SeerrApiFactory(
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
 ) {
-    /** `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null. */
-    private val json =
+    /**
+     * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
+     * Internal so a decoding test reads responses with the client's own configuration.
+     */
+    internal val json =
         Json {
             ignoreUnknownKeys = true
             explicitNulls = false

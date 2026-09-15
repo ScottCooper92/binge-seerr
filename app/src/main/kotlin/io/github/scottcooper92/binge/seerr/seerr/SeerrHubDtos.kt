@@ -39,7 +39,11 @@ data class SeerrRequestDto(
     @SerialName("serverId") val serverId: Int? = null,
     @SerialName("profileId") val profileId: Int? = null,
     @SerialName("rootFolder") val rootFolder: String? = null,
-    @SerialName("tags") val tags: List<Int> = emptyList(),
+    /**
+     * Null as well as absent. The server keeps a request's tags in a nullable column, so a request made
+     * without any sends `"tags": null`, and a non-null list here failed the whole page to decode.
+     */
+    @SerialName("tags") val tags: List<Int>? = null,
 )
 
 @Serializable

@@ -52,6 +52,8 @@ material3 = "1.5.0-alpha27"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 browser = "1.9.0"
+# Backports the API 31 splash to API 21+, which is what gets a television one at all.
+coreSplashscreen = "1.2.0"
 # Only for the sign-in fields: it builds the saved-password request whose bundles a credential
 # provider parses, so those keys are not spelled out here.
 credentials = "1.6.0"
@@ -95,6 +97,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-viewmodel-savedstate = { module = "androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
