@@ -245,6 +245,7 @@
     <string name="users_add_import_desc">Cuentas del servidor multimedia que aún no están aquí</string>
     <string name="users_create_title">Nuevo usuario</string>
     <string name="users_create_generate">Enviar por correo una contraseña generada</string>
+    <string name="users_create_username_placeholder">Su nombre visible</string>
     <string name="users_create_generate_unavailable">Requiere que la URL de la aplicación y las notificaciones por correo estén configuradas en el servidor.</string>
     <string name="users_create_submit">Crear</string>
     <string name="users_created">%1$s creado</string>

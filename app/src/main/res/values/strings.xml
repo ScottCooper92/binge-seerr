@@ -261,6 +261,7 @@
     <string name="users_add_import_desc">Accounts on the media server that are not here yet</string>
     <string name="users_create_title">New user</string>
     <string name="users_create_generate">Email a generated password</string>
+    <string name="users_create_username_placeholder">Their display name</string>
     <string name="users_create_generate_unavailable">Needs the application URL and email notifications set up on the server.</string>
     <string name="users_create_submit">Create</string>
     <string name="users_created">%1$s created</string>
