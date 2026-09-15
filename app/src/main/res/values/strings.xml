@@ -52,7 +52,7 @@
     <!-- Format-only: a value the server did not report. -->
     <string name="hub_stat_placeholder" translatable="false">—</string>
     <!-- Format-only: the dot between a size and a time. -->
-    <string name="hub_meta_separator" translatable="false"> · </string>
+    <string name="hub_meta_separator" translatable="false">" · "</string>
     <string name="hub_stat_pending">Pending</string>
     <string name="hub_role_admin">Admin</string>
     <string name="hub_role_user">User</string>
