@@ -23,7 +23,7 @@ import org.junit.runner.Description
  * towards sampling state instead of awaiting it, and sampling is where the races live.
  *
  * Ten files keep their own `setMain` with no reset, and the reason is not the real socket they
- * drive: twenty-six other files drive a `MockWebServer` through this rule. Two separate causes,
+ * drive: twenty-five other files drive a `MockWebServer` through this rule. Two separate causes,
  * both since measured (#177).
  *
  * `HubViewModelTest` hangs, because it turns on `DownloadsPoller`, whose loop is
