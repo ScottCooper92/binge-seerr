@@ -14,9 +14,13 @@ import kotlinx.serialization.Serializable
  */
 sealed interface SeerrRoute : NavKey
 
-/** The start destination: the hub when a server is connected, setup when none is. */
+/** The start destination: the spinner while the connection is worked out, then setup if no server is saved. */
 @Serializable
 data object HomeRoute : SeerrRoute
+
+/** The hub, which replaces [HomeRoute] at the root once a server is connected. See [settleHome]. */
+@Serializable
+data object HubRoute : SeerrRoute
 
 /** The requests browser. */
 @Serializable

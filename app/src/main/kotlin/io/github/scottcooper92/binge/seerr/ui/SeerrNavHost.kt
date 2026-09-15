@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -46,11 +47,16 @@ fun SeerrNavHost(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val connected by viewModel.isConnected.collectAsStateWithLifecycle()
+    val connectedState = viewModel.isConnected.collectAsStateWithLifecycle()
+    val connected by connectedState
     // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
     // about whether the hub is on screen beside a section.
     val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
-    val hubBeside = connected == true && directive.maxHorizontalPartitions > 1
+    val hubBeside = rememberUpdatedState(connected == true && directive.maxHorizontalPartitions > 1)
+    // Keyed on the root as well as the connection: a notification's link replaces the stack with one
+    // rooted on HomeRoute, and it can arrive after the connection has already resolved.
+    val root = backStack.firstOrNull()
+    LaunchedEffect(connected, root) { backStack.settleHome(connected) }
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
@@ -61,10 +67,14 @@ fun SeerrNavHost(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
             ),
+        // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
+        // long as the key is on the stack. A value captured here is the value from the frame the entry
+        // was built in. So what changes later is handed over as a provider and read inside the content,
+        // where reading the state is what recomposes it.
         entryProvider =
             entryProvider {
-                homeEntry(backStack, connected)
-                sectionEntries(backStack, showBack = !hubBeside)
+                homeEntries(backStack, connected = { connectedState.value })
+                sectionEntries(backStack, showBack = { !hubBeside.value })
                 detailEntries(backStack)
                 serverSettingsEntries(backStack)
             },
@@ -72,63 +82,68 @@ fun SeerrNavHost(
 }
 
 /**
- * The hub, and the setup it swaps to. A list pane only once a server is connected: setup and the
- * connection problem are whole-window screens, and a route's metadata cannot vary by anything
- * narrower than the route.
+ * Home is two routes. [HomeRoute] takes the whole window while the connection is worked out, and for
+ * setup. [HubRoute] is the list pane the sections open beside. An entry's metadata cannot change
+ * once it is built, so a change of layout has to be a change of route: [settleHome] swaps one for the
+ * other at the root as the connection resolves.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-private fun EntryProviderScope<NavKey>.homeEntry(
+private fun EntryProviderScope<NavKey>.homeEntries(
     backStack: NavBackStack<NavKey>,
-    connected: Boolean?,
+    connected: () -> Boolean?,
 ) {
-    entry<HomeRoute>(
-        metadata =
-            if (connected == true) {
-                ListDetailSceneStrategy.listPane(detailPlaceholder = { SectionPlaceholder() })
-            } else {
-                emptyMap()
-            },
-    ) {
-        HomeEntry(
-            connected = connected,
-            selectedSection = backStack.lastOrNull()?.hubSection(),
-            onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
-            onReconnect = { backStack.add(EditConnectionRoute) },
-            onOpenSection = backStack::openSection,
-        )
+    entry<HomeRoute> {
+        // Connected shows the spinner for a frame at most, while settleHome swaps the hub in.
+        when (connected()) {
+            false -> SetupEntry()
+            else -> LoadingScreen()
+        }
+    }
+    entry<HubRoute>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { SectionPlaceholder() })) {
+        // And the other way: after a disconnect, settleHome is already swapping setup back in.
+        if (connected() == true) {
+            HubEntry(
+                selectedSection = backStack.lastOrNull()?.hubSection(),
+                onOpenSection = backStack::openSection,
+                onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
+                onReconnect = { backStack.add(EditConnectionRoute) },
+            )
+        } else {
+            LoadingScreen()
+        }
     }
 }
 
 /** The hub's manage sections: the detail pane beside it, or the whole window on a narrow one. */
 private fun EntryProviderScope<NavKey>.sectionEntries(
     backStack: NavBackStack<NavKey>,
-    showBack: Boolean,
+    showBack: () -> Boolean,
 ) {
     entry<RequestsRoute>(metadata = SectionDetailPane) {
         RequestsEntry(
             onBack = { backStack.removeLastOrNull() },
-            showBack = showBack,
+            showBack = showBack(),
             onOpen = { id -> backStack.add(RequestDetailRoute(id)) },
         )
     }
     entry<IssuesRoute>(metadata = SectionDetailPane) {
         IssuesEntry(
             onBack = { backStack.removeLastOrNull() },
-            showBack = showBack,
+            showBack = showBack(),
             onOpen = { id -> backStack.add(IssueDetailRoute(id)) },
         )
     }
     entry<BlocklistRoute>(metadata = SectionDetailPane) {
-        BlocklistEntry(onBack = { backStack.removeLastOrNull() }, showBack = showBack)
+        BlocklistEntry(onBack = { backStack.removeLastOrNull() }, showBack = showBack())
     }
     entry<UsersRoute>(metadata = SectionDetailPane) {
         UsersEntry(
             onBack = { backStack.removeLastOrNull() },
-            showBack = showBack,
+            showBack = showBack(),
             onOpen = { id -> backStack.add(UserDetailRoute(id)) },
         )
     }
-    entry<SettingsRoute>(metadata = SectionDetailPane) { SettingsEntry(backStack, showBack = showBack) }
+    entry<SettingsRoute>(metadata = SectionDetailPane) { SettingsEntry(backStack, showBack = showBack()) }
     entry<SectionRoute>(metadata = SectionDetailPane) { route ->
         EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
     }
@@ -186,22 +201,6 @@ private fun SectionPlaceholder() {
         message = stringResource(R.string.section_none_open_body),
         icon = Icons.AutoMirrored.Filled.List,
     )
-}
-
-/** The home swaps between setup and the hub on the saved credentials, so neither has to know the other. */
-@Composable
-private fun HomeEntry(
-    connected: Boolean?,
-    selectedSection: HubSection?,
-    onOpenSection: (HubSection) -> Unit,
-    onOpenAccount: (Int) -> Unit,
-    onReconnect: () -> Unit,
-) {
-    when (connected) {
-        null -> LoadingScreen()
-        false -> SetupEntry()
-        true -> HubEntry(selectedSection, onOpenSection, onOpenAccount, onReconnect)
-    }
 }
 
 @Composable
