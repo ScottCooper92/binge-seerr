@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -34,8 +33,9 @@ private const val REFRESH_MILLIS = 10_000L
 internal const val SEARCH_DEBOUNCE_MS = 300L
 
 /**
- * The logs page: the level and the search are the query, paged from the top; while the list is
- * at the top it is re-read on an interval, so the newest lines arrive on their own.
+ * The logs page: one cached paged list per level over the shared search, paged from the top; while
+ * the selected level's list is at the top it is re-read on an interval, so the newest lines arrive
+ * on their own.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
@@ -55,13 +55,17 @@ class LogsViewModel
         private val query: Flow<String> =
             state.map { it.search }.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }.distinctUntilChanged()
 
-        val entries: Flow<PagingData<LogEntry>> =
-            combine(state.map { it.level }.distinctUntilChanged(), query) { level, search -> level to search }
-                .flatMapLatest { (level, search) ->
-                    Pager(config = PagingConfig(pageSize = LOGS_PAGE_SIZE)) {
-                        LogsPagingSource(api = connection::api, level = level, search = search)
-                    }.flow
-                }.cachedIn(viewModelScope)
+        private val streams: Map<LogLevel, Flow<PagingData<LogEntry>>> =
+            LogLevel.entries.associateWith { level ->
+                query
+                    .flatMapLatest { search ->
+                        Pager(config = PagingConfig(pageSize = LOGS_PAGE_SIZE)) {
+                            LogsPagingSource(api = connection::api, level = level, search = search)
+                        }.flow
+                    }.cachedIn(viewModelScope)
+            }
+
+        fun entries(level: LogLevel): Flow<PagingData<LogEntry>> = streams.getValue(level)
 
         private val eventFlow = MutableSharedFlow<LogsEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<LogsEvent> = eventFlow.asSharedFlow()

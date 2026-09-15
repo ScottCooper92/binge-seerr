@@ -73,7 +73,8 @@ class BlocklistViewModelTest {
 
             assertEquals(
                 "Heat",
-                vm.items
+                vm
+                    .items(BlocklistFilter.All)
                     .asSnapshot()
                     .single()
                     .title,
@@ -93,7 +94,8 @@ class BlocklistViewModelTest {
             assertNull(ready.counts)
             assertEquals(
                 "Heat",
-                vm.items
+                vm
+                    .items(BlocklistFilter.All)
                     .asSnapshot()
                     .single()
                     .title,
@@ -108,7 +110,7 @@ class BlocklistViewModelTest {
             val vm = viewModel()
             vm.setScreenVisible(true)
             vm.awaitReady { it.counts != null }
-            val item = vm.items.asSnapshot().single()
+            val item = vm.items(BlocklistFilter.All).asSnapshot().single()
             val probes = received("GET", "/api/v1/blocklist").size
 
             vm.remove(item)

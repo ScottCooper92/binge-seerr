@@ -85,7 +85,7 @@ internal fun ServerSettingsPageEntry(
             val copyLabel = stringResource(R.string.server_settings_logs)
             LogsScreen(
                 state = state,
-                entries = viewModel.entries,
+                entriesFor = viewModel::entries,
                 events = viewModel.events,
                 actions =
                     LogsActions(

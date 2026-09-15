@@ -51,12 +51,15 @@ class LogsViewModelTest {
     }
 
     /**
-     * One emission of [LogsViewModel.entries] is one query reaching the `Pager`. Collected rather
-     * than snapshotted: a snapshot presents a generation, and what is under test is how many
+     * One emission of a level's [LogsViewModel.entries] is one query reaching its `Pager`. Collected
+     * rather than snapshotted: a snapshot presents a generation, and what is under test is how many
      * generations there are.
      */
-    private fun TestScope.generations(vm: LogsViewModel): List<PagingData<LogEntry>> =
-        mutableListOf<PagingData<LogEntry>>().also { seen -> backgroundScope.launch { vm.entries.collect { seen += it } } }
+    private fun TestScope.generations(
+        vm: LogsViewModel,
+        level: LogLevel = LogLevel.Info,
+    ): List<PagingData<LogEntry>> =
+        mutableListOf<PagingData<LogEntry>>().also { seen -> backgroundScope.launch { vm.entries(level).collect { seen += it } } }
 
     @Test
     fun `typing a search reaches the pager once, after the debounce rather than per keystroke`() =
@@ -78,10 +81,10 @@ class LogsViewModelTest {
         }
 
     @Test
-    fun `clearing the search is not held back, and re-picking the level the page is on re-queries nothing`() =
+    fun `clearing the search is not held back, and picking another level re-queries no level's page`() =
         runTest {
             val vm = viewModel()
-            val seen = generations(vm)
+            val seen = generations(vm, LogLevel.Info)
             runCurrent()
 
             vm.setSearch("port")
@@ -92,7 +95,9 @@ class LogsViewModelTest {
             runCurrent()
             assertEquals(3, seen.size)
 
-            vm.setLevel(vm.uiState.value.level)
+            // Each level has its own cached stream, so the selection does not reach any of them —
+            // which is what lets a page swiped away and back keep the lines it had.
+            vm.setLevel(LogLevel.Error)
             advanceTimeBy(SEARCH_DEBOUNCE_MS + 1)
             assertEquals(3, seen.size)
         }
