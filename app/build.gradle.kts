@@ -344,6 +344,78 @@ kotlin.target.compilations.configureEach {
     }
 }
 
+/**
+ * detekt with the baseline switched off, so [checkBaselineStaleness] can see which findings the code
+ * still produces. Findings are expected, so it never fails on its own.
+ */
+val detektWithoutBaseline by tasks.registering(io.gitlab.arturbosch.detekt.Detekt::class) {
+    description = "Runs detekt with no baseline applied, for checkBaselineStaleness."
+    ignoreFailures = true
+    baseline.set(null as org.gradle.api.file.RegularFile?)
+    // The extension's config reaches only the tasks the plugin creates. Without these two a
+    // hand-registered task runs detekt's defaults, where half this repository's rules are inactive
+    // and every baselined finding of one reads as fixed.
+    config.setFrom(layout.settingsDirectory.file("detekt.yml"))
+    buildUponDefaultConfig = true
+    reports {
+        xml.required.set(true)
+        xml.outputLocation.set(layout.buildDirectory.file("reports/detekt/no-baseline.xml"))
+    }
+}
+
+/**
+ * Fails when `detekt-baseline.xml` holds an entry the code no longer produces.
+ *
+ * An orphaned entry is worse than clutter: it reads as debt still owed, and it silently absorbs the
+ * next real finding of that rule in that file. Nothing else can see one — detekt passes on an entry
+ * that matches nothing — which is how a bad merge resolution reverted a paydown and stayed green
+ * (#283). Entries are compared per rule and file rather than by their full signature, because the
+ * report carries no signature; a rule with several findings in one file is therefore counted.
+ */
+val checkBaselineStaleness by tasks.registering {
+    description = "Fails when detekt-baseline.xml holds an entry the code no longer produces."
+    group = "verification"
+    val baselineFile = layout.settingsDirectory.file("detekt-baseline.xml").asFile
+    val reportFile =
+        layout.buildDirectory
+            .file("reports/detekt/no-baseline.xml")
+            .get()
+            .asFile
+    dependsOn(detektWithoutBaseline)
+    inputs.file(baselineFile)
+    inputs.file(reportFile)
+    outputs.upToDateWhen { true }
+    doLast {
+        val baselined = mutableMapOf<String, Int>()
+        Regex("<ID>([^<]+)</ID>").findAll(baselineFile.readText()).forEach { match ->
+            val id = match.groupValues[1]
+            val rule = id.substringBefore(':')
+            val file = id.substringAfter(':').substringBefore('$')
+            baselined.merge("$rule in $file", 1, Int::plus)
+        }
+        val reported = mutableMapOf<String, Int>()
+        var currentFile = ""
+        reportFile.readLines().forEach { line ->
+            Regex("""<file name="([^"]+)"""").find(line)?.let { currentFile = it.groupValues[1].substringAfterLast('/') }
+            Regex("""source="detekt\.([^"]+)"""").find(line)?.let {
+                reported.merge("${it.groupValues[1]} in $currentFile", 1, Int::plus)
+            }
+        }
+        val stale =
+            baselined
+                .filter { (key, count) -> count > (reported[key] ?: 0) }
+                .map { (key, count) -> "  $key — baselined $count, reported ${reported[key] ?: 0}" }
+        if (stale.isNotEmpty()) {
+            error(
+                "detekt-baseline.xml holds ${stale.size} entr${if (stale.size == 1) "y" else "ies"} " +
+                    "the code no longer produces:\n" + stale.sorted().joinToString("\n") +
+                    "\n\nDelete them. An entry that matches nothing absorbs the next real finding of " +
+                    "that rule in that file.",
+            )
+        }
+    }
+}
+
 // The gate measures logic: ViewModels, the Seerr client and its error mapping, the stores, the
 // mappers and the exported service. Everything excluded below is either generated or an Android
 // entry point with nothing a JVM unit test can reach - never a class that simply lacks tests.
@@ -389,3 +461,7 @@ kover {
         }
     }
 }
+
+// `build` depends on `check`, so the staleness gate runs where every other one does rather than
+// needing a line of its own in CI.
+tasks.named("check") { dependsOn(checkBaselineStaleness) }
