@@ -143,6 +143,7 @@ internal fun ManageMediaContent(
             BingeOutlinedButton(
                 label = stringResource(R.string.media_clear_data),
                 onClick = onClearData,
+                contentColor = MaterialTheme.colorScheme.error,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -198,6 +199,7 @@ private fun MediaInstanceSection(
             BingeOutlinedButton(
                 label = stringResource(R.string.media_delete_files),
                 onClick = onDeleteFiles,
+                contentColor = MaterialTheme.colorScheme.error,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
