@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -36,6 +37,8 @@ import io.github.scottcooper92.binge.seerr.seerr.githubUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 /** The about page: the edition and its update state, the totals, the server's own facts, and the fork's support links. */
@@ -47,11 +50,12 @@ fun AboutScreen(
     onOpenUrl: (String) -> Unit,
 ) {
     Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.settings_about), onBack = onBack) }) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
-                AboutUiState.Loading -> LoadingScreen()
-                is AboutUiState.Error -> ErrorScreen(error = state.error, onRetry = onRetry)
-                is AboutUiState.Ready -> AboutContent(state.info, onOpenUrl)
+                AboutUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is AboutUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = onRetry)
+                is AboutUiState.Ready -> AboutContent(state.info, onOpenUrl, contentPadding = inner)
             }
         }
     }
@@ -61,9 +65,10 @@ fun AboutScreen(
 private fun AboutContent(
     info: AboutInfo,
     onOpenUrl: (String) -> Unit,
+    contentPadding: PaddingValues,
 ) {
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         SettingsGroup(
             title = stringResource(R.string.server_settings_about_version),

@@ -23,6 +23,8 @@ import com.binge.designsystem.component.FilterChipItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 
 class IssuesActions(
@@ -64,7 +66,7 @@ fun IssuesScreen(
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
-            Column(Modifier.fillMaxSize().padding(padding)) {
+            Column(Modifier.fillMaxSize().padding(padding.outerPadding())) {
                 BingeFilterChipRow(
                     items =
                         IssueFilter.entries.map {
@@ -80,6 +82,7 @@ fun IssuesScreen(
                     // A rejected session cannot be retried past: the hub owns reconnecting.
                     onReconnect = actions.onBack,
                     modifier = Modifier.fillMaxSize(),
+                    contentPadding = padding.innerPadding(),
                 )
             }
         }

@@ -33,7 +33,9 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
@@ -75,7 +77,7 @@ fun UsersScreen(
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
-            Column(Modifier.fillMaxSize().padding(padding)) {
+            Column(Modifier.fillMaxSize().padding(padding.outerPadding())) {
                 UsersBody(
                     lazyItems = users.collectAsLazyPagingItems(),
                     selection = ready.selection,
@@ -84,6 +86,7 @@ fun UsersScreen(
                     // A rejected session cannot be retried past: the hub owns reconnecting.
                     onReconnect = actions.onBack,
                     modifier = Modifier.fillMaxSize(),
+                    contentPadding = padding.innerPadding(),
                 )
             }
         }

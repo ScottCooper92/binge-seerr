@@ -7,11 +7,16 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
@@ -92,13 +97,16 @@ fun RequestDetailScreen(
         }
     }
     Scaffold(
-        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
+        // Full-bleed: no top bar, and the hero pads its own controls clear of the status bar. What is
+        // left to clear the navigation bar (and a landscape cutout) is the snackbar and the page's end.
+        snackbarHost = { BingeSnackbarHost(snackbarHostState, Modifier.windowInsetsPadding(pageEdgeInsets())) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (state) {
-                RequestDetailUiState.Loading -> LoadingScreen()
-                is RequestDetailUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+                RequestDetailUiState.Loading -> LoadingScreen(Modifier.safeDrawingPadding())
+                is RequestDetailUiState.Error ->
+                    ErrorScreen(error = state.error, modifier = Modifier.safeDrawingPadding(), onRetry = actions.onRetry)
                 is RequestDetailUiState.Ready -> Ready(state, actions)
             }
         }
@@ -117,7 +125,7 @@ private fun Ready(
     var moderating by rememberSaveable { mutableStateOf(false) }
     var managing by rememberSaveable { mutableStateOf(false) }
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).windowInsetsPadding(pageEdgeInsets())) {
         DetailHero(
             title = item.title ?: stringResource(item.mediaType.labelRes()),
             backdropUrl = detail.backdropUrl,
@@ -240,6 +248,10 @@ private fun Ready(
         )
     }
 }
+
+/** The sides and the bottom of the window: what a page with no top bar and no Scaffold insets has to clear by hand. */
+@Composable
+private fun pageEdgeInsets(): WindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
 
 /** The title elsewhere: the server's web client, the media server, and Radarr or Sonarr, as the server knows them. */
 @Composable

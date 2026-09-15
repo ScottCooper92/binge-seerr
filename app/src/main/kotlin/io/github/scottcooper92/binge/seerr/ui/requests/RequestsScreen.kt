@@ -30,6 +30,8 @@ import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
@@ -85,7 +87,7 @@ fun RequestsScreen(
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
-            Column(Modifier.fillMaxSize().padding(padding)) {
+            Column(Modifier.fillMaxSize().padding(padding.outerPadding())) {
                 BingeFilterChipRow(
                     items =
                         RequestFilter.entries.map {
@@ -112,6 +114,7 @@ fun RequestsScreen(
                     // A rejected session cannot be retried past: the hub owns reconnecting.
                     onReconnect = actions.onBack,
                     modifier = Modifier.fillMaxSize(),
+                    contentPadding = padding.innerPadding(),
                 )
             }
         }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,7 +54,9 @@ import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -123,11 +126,13 @@ fun IssueDetailScreen(
             )
         },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
-                IssueDetailUiState.Loading -> LoadingScreen()
-                is IssueDetailUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
-                is IssueDetailUiState.Ready -> Ready(state, events, actions)
+                IssueDetailUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is IssueDetailUiState.Error ->
+                    ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
+                is IssueDetailUiState.Ready -> Ready(state, events, actions, contentPadding = inner)
             }
         }
     }
@@ -146,12 +151,21 @@ private fun Ready(
     state: IssueDetailUiState.Ready,
     events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
+    contentPadding: PaddingValues,
 ) {
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
     val detail = state.detail
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    // The navigation bar's inset goes under the pinned bar where there is one, and into the thread's scroll where there is not.
+    val pinnedBar = detail.canComment || detail.canResolve
     Column(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(if (pinnedBar) PaddingValues() else contentPadding),
+        ) {
             IssueHeader(detail, modifier = Modifier.padding(inset))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
             detail.report?.let { report ->
@@ -186,13 +200,14 @@ private fun Ready(
                 modifier = Modifier.padding(horizontal = inset).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
             )
         }
-        if (detail.canComment || detail.canResolve) {
+        if (pinnedBar) {
             ActionBar(
                 detail = detail,
                 action = state.action,
                 onAddComment = { modals.composing = true },
                 onToggleStatus = { modals.confirmingStatus = true },
                 inset = inset,
+                modifier = Modifier.padding(contentPadding),
             )
         }
     }

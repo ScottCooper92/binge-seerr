@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -11,6 +12,8 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeTopBar
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 
 /** Everything the setup screen can ask of its ViewModel, in one place so the entry stays a wiring. */
 class SetupActions(
@@ -36,16 +39,18 @@ fun SetupScreen(
     onBack: (() -> Unit)? = null,
 ) {
     Scaffold(topBar = { BingeTopBar(title = title, onBack = onBack) }) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        // The bars' insets are consumed here so a step's keyboard padding does not count the navigation bar twice.
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding()).consumeWindowInsets(padding)) {
+            val inner = padding.innerPadding()
             when (state) {
-                SetupUiState.Loading -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center))
-                is SetupUiState.Address -> SetupAddressStep(state, actions.onEditAddress, actions.onInspect)
+                SetupUiState.Loading -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center).padding(inner))
+                is SetupUiState.Address -> SetupAddressStep(state, actions.onEditAddress, actions.onInspect, inner)
                 is SetupUiState.SignIn -> {
-                    SetupSignInStep(state, actions)
+                    SetupSignInStep(state, actions, inner)
                     state.link?.let { link -> SetupLinkSheet(link, actions.onPlexLaunched, actions.onCancelLink) }
                 }
                 // The home swaps to the hub on the credentials landing; this is the frame in between.
-                is SetupUiState.Connected -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center))
+                is SetupUiState.Connected -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center).padding(inner))
             }
         }
     }

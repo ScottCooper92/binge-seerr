@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,7 +34,9 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -92,7 +95,13 @@ fun BlocklistScreen(
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
-            BlocklistContent(ready, lazyItems, actions, Modifier.fillMaxSize().padding(padding))
+            BlocklistContent(
+                ready,
+                lazyItems,
+                actions,
+                Modifier.fillMaxSize().padding(padding.outerPadding()),
+                contentPadding = padding.innerPadding(),
+            )
         }
     }
 }
@@ -103,6 +112,7 @@ private fun BlocklistContent(
     lazyItems: LazyPagingItems<BlocklistItem>,
     actions: BlocklistActions,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val context = LocalContext.current
     var removing by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -141,6 +151,7 @@ private fun BlocklistContent(
             // A rejected session cannot be retried past: the hub owns reconnecting.
             onReconnect = actions.onBack,
             modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding,
         )
     }
     removing?.let { tmdbId ->

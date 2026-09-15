@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
             deepLinks.open(link)
             consumedLink = link
         }
+        drawEdgeToEdge()
         setContent {
             // A television gets the D-pad shell, as Binge's MainActivity selects its own at runtime; the
             // notification links push phone routes, which the TV shell grows into with a later phase.

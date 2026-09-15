@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,8 @@ import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeTopBar
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 /**
@@ -40,12 +43,13 @@ fun AdvancedRequestScreen(
     onClose: () -> Unit,
 ) {
     Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.advanced_title), onBack = onClose) }) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
                 AdvancedRequestUiState.Loading, AdvancedRequestUiState.Submitted ->
-                    BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center))
-                is AdvancedRequestUiState.Failed -> FailurePanel(state.error, onOpenSetup, onClose)
-                is AdvancedRequestUiState.Ready -> OptionsForm(state, onSelectServer, onSelectProfile, onSelectRootFolder, onSubmit)
+                    BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center).padding(inner))
+                is AdvancedRequestUiState.Failed -> FailurePanel(state.error, onOpenSetup, onClose, Modifier.padding(inner))
+                is AdvancedRequestUiState.Ready -> OptionsForm(state, onSelectServer, onSelectProfile, onSelectRootFolder, onSubmit, inner)
             }
         }
     }
@@ -58,12 +62,14 @@ private fun OptionsForm(
     onSelectProfile: (Int) -> Unit,
     onSelectRootFolder: (String) -> Unit,
     onSubmit: () -> Unit,
+    contentPadding: PaddingValues,
 ) {
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .padding(contentPadding)
                 .padding(dimensionResource(DesR.dimen.screen_content_inset)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
@@ -139,9 +145,10 @@ private fun FailurePanel(
     error: AdvancedRequestError,
     onOpenSetup: () -> Unit,
     onClose: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        modifier = modifier.fillMaxSize().padding(dimensionResource(DesR.dimen.screen_content_inset)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(error.messageRes()), style = MaterialTheme.typography.bodyMedium)
