@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 private const val SEARCH_DEBOUNCE_MS = 300L
@@ -48,10 +49,11 @@ private data class BlocklistScope(
 )
 
 /**
- * The blocklist browser: the paged list for the selected filter and the debounced search, the
- * chip counts, and removal keyed by TMDB id. A removal reports through [events] and the screen
- * refreshes the pager in place, so the list keeps its position. Blocking a whole collection is
- * the collection page's call, offered where the server can do it.
+ * The blocklist browser: one cached paged list per filter over the debounced search, the chip
+ * counts, and removal keyed by TMDB id. A removal reports through [events] and bumps the list
+ * version, which refreshes each filter's page in place as it is selected, so the list keeps its
+ * position. Blocking a whole collection is the collection page's call, offered where the server can
+ * do it.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
@@ -65,6 +67,14 @@ class BlocklistViewModel
         private val search = MutableStateFlow("")
         private val countsRefresh = MutableStateFlow(0)
         private val acting = MutableStateFlow<Set<Int>>(emptySet())
+        private val listVersionState = MutableStateFlow(0)
+
+        /**
+         * The version each filter's list last refreshed at: a filter refreshes once while it trails
+         * [BlocklistUiState.Ready.listVersion], so a page swiped away and back does not re-refresh a
+         * current list.
+         */
+        private val refreshedVersions = ConcurrentHashMap<BlocklistFilter, Int>()
 
         private val eventFlow = MutableSharedFlow<BlocklistEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<BlocklistEvent> = eventFlow.asSharedFlow()
@@ -92,19 +102,34 @@ class BlocklistViewModel
         private val query: Flow<String> =
             search.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }.map { it.trim() }.distinctUntilChanged()
 
-        val items: Flow<PagingData<BlocklistItem>> =
-            combine(selectedFilter, query, scope) { filter, query, scope -> Triple(filter, query, scope) }
-                .flatMapLatest { (filter, query, scope) ->
-                    Pager(PagingConfig(pageSize = BLOCKLIST_PAGE_SIZE)) {
-                        BlocklistPagingSource(
-                            api = connection::api,
-                            path = scope.path,
-                            filter = filter,
-                            search = query,
-                            hydrate = titles::get,
-                        )
-                    }.flow
-                }.cachedIn(viewModelScope)
+        private val streams: Map<BlocklistFilter, Flow<PagingData<BlocklistItem>>> =
+            BlocklistFilter.entries.associateWith { filter ->
+                combine(query, scope) { query, scope -> query to scope }
+                    .flatMapLatest { (query, scope) ->
+                        Pager(PagingConfig(pageSize = BLOCKLIST_PAGE_SIZE)) {
+                            BlocklistPagingSource(
+                                api = connection::api,
+                                path = scope.path,
+                                filter = filter,
+                                search = query,
+                                hydrate = titles::get,
+                            )
+                        }.flow
+                    }.cachedIn(viewModelScope)
+            }
+
+        fun items(filter: BlocklistFilter): Flow<PagingData<BlocklistItem>> = streams.getValue(filter)
+
+        /** True at most once per version per filter, so a freshly composed, current page does not blank-refresh. */
+        fun shouldRefresh(
+            filter: BlocklistFilter,
+            version: Int,
+        ): Boolean {
+            val last = refreshedVersions[filter] ?: 0
+            if (version <= last) return false
+            refreshedVersions[filter] = version
+            return true
+        }
 
         /** The previous totals stay on the chips while a refetch is in flight; a failed probe leaves that chip bare. */
         private val counts: Flow<BlocklistCounts?> =
@@ -113,11 +138,18 @@ class BlocklistViewModel
                 .onStart { emit(null) }
 
         val uiState: StateFlow<BlocklistUiState> =
-            combine(selectedFilter, search, counts, scope, acting) { filter, search, counts, scope, acting ->
+            combine(
+                selectedFilter,
+                search,
+                combine(counts, scope) { counts, scope -> counts to scope },
+                acting,
+                listVersionState,
+            ) { filter, search, (counts, scope), acting, listVersion ->
                 BlocklistUiState.Ready(
                     filter = filter,
                     search = search,
                     counts = counts,
+                    listVersion = listVersion,
                     hasFilters = scope.hasFilters,
                     canManage = scope.canManage,
                     canBlockCollections = scope.canBlockCollections,
@@ -146,6 +178,7 @@ class BlocklistViewModel
                 runCatching { connection.api().removeFromBlocklist(connection.profile().blocklistPath, item.tmdbId) }
                     .onSuccess {
                         countsRefresh.update { it + 1 }
+                        listVersionState.update { it + 1 }
                         eventFlow.emit(BlocklistEvent.Removed)
                     }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
                 acting.update { it - item.tmdbId }
@@ -166,6 +199,7 @@ class BlocklistViewModel
                     if (blocked) api.blockCollection(collectionId) else api.unblockCollection(collectionId)
                 }.onSuccess {
                     countsRefresh.update { it + 1 }
+                    listVersionState.update { it + 1 }
                     eventFlow.emit(BlocklistEvent.CollectionChanged(blocked))
                 }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
             }

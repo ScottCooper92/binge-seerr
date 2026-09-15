@@ -85,8 +85,9 @@ internal fun BlocklistEntry(
     BlocklistScreen(
         state = state,
         showBack = showBack,
-        items = viewModel.items,
+        itemsFor = viewModel::items,
         events = viewModel.events,
+        shouldRefresh = viewModel::shouldRefresh,
         actions =
             BlocklistActions(
                 onBack = onBack,

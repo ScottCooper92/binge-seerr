@@ -17,6 +17,21 @@ import kotlinx.coroutines.launch
 
 /** One-shot feedback for a moderation; the partial cases say the action landed even though the block did not. */
 sealed interface ModerationEvent {
+    /**
+     * The request is gone from the server afterwards, so a page showing it has nothing left to show.
+     * Clearing the media record takes the request with it, which is why it counts.
+     *
+     * Exhaustive rather than a set, so a new event is a compile error until it says which it is.
+     */
+    val removesTheRequest: Boolean
+        get() =
+            when (this) {
+                Removed, RemovedAndBlocked, RemovedButBlockFailed, MediaCleared -> true
+                Approved, Retried, Edited, Declined, DeclinedAndBlocked, DeclinedButBlockFailed,
+                MediaStatusSet, MediaFilesDeleted, is Failed,
+                -> false
+            }
+
     data object Approved : ModerationEvent
 
     data object Retried : ModerationEvent
