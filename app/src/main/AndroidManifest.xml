@@ -34,7 +34,8 @@
         android:name=".SeerrApp"
         android:allowBackup="false"
         android:banner="@drawable/tv_banner"
-        android:icon="@drawable/ic_companion"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/companion_name"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true">
@@ -54,11 +55,15 @@
                 tools:node="remove" />
         </provider>
 
+        <!--
+            The launch theme is the splash one; installSplashScreen() swaps in Theme.Seerr as it
+            hands over, so Theme.Seerr stays the activity's real theme.
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Seerr">
+            android:theme="@style/Theme.Seerr.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
