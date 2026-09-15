@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,6 +36,26 @@ private const val JELLYFIN =
        "libraries":[{"id":"a","name":"Films","enabled":true,"type":"movie"}]}"""
 
 private const val IDLE = """{"running":false,"progress":0,"total":0}"""
+
+/** Long enough for a second call to reach the lock while the first still holds it. */
+private const val LIBRARY_HOLD_MILLIS = 300L
+
+/**
+ * The released `GET /library` as Overseerr implements it: every library's `enabled` is rewritten
+ * from the `enable` parameter on every call, outside the `sync` branch and unguarded, so an absent
+ * parameter disables all of them. `3` is the library a sync discovers.
+ */
+private fun libraryRoute(request: RecordedRequest): String {
+    val enabled =
+        request.url
+            .queryParameter("enable")
+            ?.split(",")
+            .orEmpty()
+    val ids = if (request.url.queryParameter("sync") == "true") listOf("1", "2", "3") else listOf("1", "2")
+    return ids.joinToString(",", "[", "]") { id ->
+        """{"id":"$id","name":"L$id","enabled":${id in enabled},"type":"movie"}"""
+    }
+}
 
 class MediaServerViewModelTest {
     @get:Rule
@@ -203,16 +224,18 @@ class MediaServerViewModelTest {
             assertEquals(listOf("1", "3"), extras.libraries.map { it.id })
         }
 
-    /** A released server has no `library/sync` route: the 404 falls back to `sync=true` on the GET. */
+    /**
+     * A released server has no `library/sync` route: the 404 falls back to `sync=true` on the GET.
+     *
+     * That route rewrites every library's `enabled` from the `enable` parameter on every call, so
+     * the sync has to carry the enabled ids or it disables them all — the fake answers the same way,
+     * which is what lets the wipe show up here rather than only on a real server.
+     */
     @Test
-    fun `syncing libraries falls back to the sync query on a released server`() =
+    fun `syncing libraries falls back to the sync query, carrying the enabled ids`() =
         runTest {
             plexServer()
-            seerr.serve(
-                "GET /api/v1/settings/plex/library",
-                """[{"id":"1","name":"Movies","enabled":true,"type":"movie"},
-                   {"id":"3","name":"Music","enabled":false,"type":"movie"}]""",
-            )
+            seerr.serveFrom("GET /api/v1/settings/plex/library") { request -> libraryRoute(request) }
             val vm = viewModel()
             vm.awaitReady()
             vm.extras.first { it.libraries.isNotEmpty() }
@@ -223,7 +246,35 @@ class MediaServerViewModelTest {
             assertEquals(1, seerr.count("GET", "/api/v1/settings/plex/library"))
             val read = seerr.received.last { it.url.encodedPath == "/api/v1/settings/plex/library" }
             assertEquals("true", read.url.queryParameter("sync"))
-            assertEquals(listOf("1", "3"), extras.libraries.map { it.id })
+            assertEquals("1", read.url.queryParameter("enable"))
+            assertEquals(listOf("1", "2", "3"), extras.libraries.map { it.id })
+            assertEquals(listOf("1"), extras.libraries.filter { it.enabled }.map { it.id })
+        }
+
+    /**
+     * A sync started while a toggle is still in flight. Both are whole-set writes on the released
+     * path, so the sync has to read its enabled set after the toggle has folded its result;
+     * otherwise it sends the set from before the toggle and the server undoes it.
+     *
+     * The route is held back so the sync queues behind the toggle rather than following it.
+     */
+    @Test
+    fun `a sync overlapping a toggle does not undo the toggle`() =
+        runTest {
+            plexServer()
+            seerr.serveFrom("GET /api/v1/settings/plex/library", delayMillis = LIBRARY_HOLD_MILLIS) { libraryRoute(it) }
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.extras.first { it.libraries.isNotEmpty() }
+
+            vm.setLibraryEnabled("2", enabled = true)
+            seerr.awaitCount("GET", "/api/v1/settings/plex/library", moreThan = 0)
+            vm.syncLibraries()
+            val extras = vm.extras.first { it.libraries.any { library -> library.id == "3" } }
+
+            val sync = seerr.received.last { it.url.encodedPath == "/api/v1/settings/plex/library" }
+            assertEquals("1,2", sync.url.queryParameter("enable"))
+            assertEquals(listOf("1", "2"), extras.libraries.filter { it.enabled }.map { it.id })
         }
 
     @Test

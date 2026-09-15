@@ -48,10 +48,12 @@ class MediaServerViewModel
 
         /**
          * Serializes the released-server fallback's library writes. That path sends the whole
-         * enabled set computed from local state, so two toggles racing each other would each
+         * enabled set computed from local state, so two of them racing each other would each
          * compute from a snapshot that is missing the other's change and the one that lands
          * last on the server would silently drop it; this makes the second wait for the first
          * to finish and fold into local state before it reads that state.
+         *
+         * A toggle and a sync are both whole-set writes on that path, so both take it.
          */
         private val libraryWriteMutex = Mutex()
 
@@ -136,7 +138,14 @@ class MediaServerViewModel
             }
         }
 
-        /** Re-reads the libraries from the media server, so a newly added one appears with its toggle. */
+        /**
+         * Re-reads the libraries from the media server, so a newly added one appears with its toggle.
+         *
+         * The released route rewrites the whole enabled set on every call, outside its `sync` branch
+         * and unguarded, so an absent `enable` is an instruction to disable everything and it is
+         * saved. The fallback therefore sends the currently enabled ids alongside `sync`, as
+         * Overseerr's own web client does, and reads them under the same lock a toggle takes.
+         */
         fun syncLibraries() {
             if (extrasState.value.syncingLibraries) return
             extrasState.update { it.copy(syncingLibraries = true) }
@@ -145,7 +154,22 @@ class MediaServerViewModel
                     val api = connection.api()
                     orOnNotFound(
                         newer = { api.syncLibraries(kind.apiSegment) },
-                        released = { api.mediaLibraries(kind.apiSegment, sync = true) },
+                        released = {
+                            libraryWriteMutex.withLock {
+                                val enabledIds =
+                                    extrasState.value.libraries
+                                        .filter { it.enabled }
+                                        .map { it.id }
+                                // Nothing enabled needs no parameter: the route's own answer to an absent
+                                // enable is then the correct one.
+                                api
+                                    .mediaLibraries(
+                                        kind.apiSegment,
+                                        enable = enabledIds.takeIf { it.isNotEmpty() }?.joinToString(","),
+                                        sync = true,
+                                    ).also { setLibraries(it) }
+                            }
+                        },
                     )
                 }.onSuccess { libraries ->
                     setLibraries(libraries)
