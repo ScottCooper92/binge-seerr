@@ -200,6 +200,10 @@ private fun BlockTitleRow(
 /**
  * Decline and remove. The label carries the toggle rather than the toggle being a separate
  * confirmation, so what the button is about to do is on the button.
+ *
+ * Removing deletes the request and is always toned. A plain decline is a decision the request
+ * survives, so it takes the error tone only once the toggle has added the block that outlives it —
+ * which is the same thing the label and the confirmation already switch on.
  */
 @Composable
 private fun DestructiveActions(
@@ -211,14 +215,21 @@ private fun DestructiveActions(
     val choices =
         buildList {
             if (actions.canDecline) {
-                add((if (blockTitle) R.string.request_decline_and_block else R.string.request_decline) to onDecline)
+                val label = if (blockTitle) R.string.request_decline_and_block else R.string.request_decline
+                add(Triple(label, blockTitle, onDecline))
             }
             if (actions.canRemove) {
-                add((if (blockTitle) R.string.request_remove_and_block else R.string.request_remove) to onRemove)
+                val label = if (blockTitle) R.string.request_remove_and_block else R.string.request_remove
+                add(Triple(label, true, onRemove))
             }
         }
-    choices.forEach { (labelRes, onClick) ->
-        BingeOutlinedButton(label = stringResource(labelRes), onClick = onClick, modifier = Modifier.fillMaxWidth())
+    choices.forEach { (labelRes, destructive, onClick) ->
+        BingeOutlinedButton(
+            label = stringResource(labelRes),
+            onClick = onClick,
+            contentColor = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

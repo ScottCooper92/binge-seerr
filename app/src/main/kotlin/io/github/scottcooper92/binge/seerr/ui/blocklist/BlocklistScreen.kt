@@ -230,7 +230,6 @@ private fun BlocklistPage(
                         ),
                     message = stringResource(R.string.blocklist_unblock_confirm_message),
                     confirmLabel = stringResource(R.string.blocklist_unblock),
-                    destructive = true,
                     onConfirm = {
                         removing = null
                         actions.onRemove(item)
