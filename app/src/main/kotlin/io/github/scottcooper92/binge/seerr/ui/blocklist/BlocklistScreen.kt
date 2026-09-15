@@ -1,10 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.blocklist
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,8 +23,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeSearchField
-import com.binge.designsystem.component.BingeSnackbarHost
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
@@ -33,7 +30,10 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -83,16 +83,22 @@ fun BlocklistScreen(
         }
     }
     val ready = state as? BlocklistUiState.Ready
-    Scaffold(
-        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
-        topBar = {
-            BingeTopBar(title = stringResource(R.string.hub_section_blocklist), onBack = actions.onBack.takeIf { showBack })
-        },
+    ScreenScaffold(
+        title = stringResource(R.string.hub_section_blocklist),
+        onBack = actions.onBack.takeIf { showBack },
+        snackbarHostState = snackbarHostState,
+        header = ready?.let { header -> @Composable { BlocklistHeader(header, actions) } },
     ) { padding ->
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
-            BlocklistContent(ready, lazyItems, actions, Modifier.fillMaxSize().padding(padding))
+            BlocklistContent(
+                ready,
+                lazyItems,
+                actions,
+                Modifier.fillMaxSize().padding(padding.outerPadding()),
+                contentPadding = padding.innerPadding(),
+            )
         }
     }
 }
@@ -103,46 +109,22 @@ private fun BlocklistContent(
     lazyItems: LazyPagingItems<BlocklistItem>,
     actions: BlocklistActions,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val context = LocalContext.current
     var removing by rememberSaveable { mutableStateOf<Int?>(null) }
-    Column(modifier) {
-        BingeSearchField(
-            query = state.search,
-            onQueryChange = actions.onSearchChange,
-            onClear = { actions.onSearchChange("") },
-            placeholder = stringResource(R.string.blocklist_search_hint),
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset))
-                    .padding(top = dimensionResource(DesR.dimen.padding_s)),
-        )
-        if (state.hasFilters) {
-            BingeFilterChipRow(
-                items =
-                    BlocklistFilter.entries.map {
-                        FilterChipItem(
-                            label = stringResource(it.labelRes()),
-                            count = state.counts?.countFor(it),
-                        )
-                    },
-                selectedIndex = state.filter.ordinal,
-                onSelect = { actions.onFilterChange(BlocklistFilter.entries[it]) },
-            )
-        }
-        BlocklistBody(
-            lazyItems = lazyItems,
-            isFiltered = state.isFiltered,
-            actingTmdbIds = state.actingTmdbIds,
-            canManage = state.canManage,
-            onOpen = { item -> context.openTitle(item.mediaType, item.tmdbId, state.webRoot + item.mediaType.webPath() + item.tmdbId) },
-            onRemove = { item -> removing = item.tmdbId },
-            // A rejected session cannot be retried past: the hub owns reconnecting.
-            onReconnect = actions.onBack,
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
+    BlocklistBody(
+        lazyItems = lazyItems,
+        isFiltered = state.isFiltered,
+        actingTmdbIds = state.actingTmdbIds,
+        canManage = state.canManage,
+        onOpen = { item -> context.openTitle(item.mediaType, item.tmdbId, state.webRoot + item.mediaType.webPath() + item.tmdbId) },
+        onRemove = { item -> removing = item.tmdbId },
+        // A rejected session cannot be retried past: the hub owns reconnecting.
+        onReconnect = actions.onBack,
+        modifier = modifier,
+        contentPadding = contentPadding,
+    )
     removing?.let { tmdbId ->
         val item = (0 until lazyItems.itemCount).asSequence().mapNotNull { lazyItems.peek(it) }.firstOrNull { it.tmdbId == tmdbId }
         if (item == null) {
@@ -160,6 +142,38 @@ private fun BlocklistContent(
                 onDismiss = { removing = null },
             )
         }
+    }
+}
+
+/** The search field and, where the server has them, the source chips: drawn over the rows, below the top bar. */
+@Composable
+private fun BlocklistHeader(
+    state: BlocklistUiState.Ready,
+    actions: BlocklistActions,
+) {
+    BingeSearchField(
+        query = state.search,
+        onQueryChange = actions.onSearchChange,
+        onClear = { actions.onSearchChange("") },
+        placeholder = stringResource(R.string.blocklist_search_hint),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset))
+                .padding(top = dimensionResource(DesR.dimen.padding_s)),
+    )
+    if (state.hasFilters) {
+        BingeFilterChipRow(
+            items =
+                BlocklistFilter.entries.map {
+                    FilterChipItem(
+                        label = stringResource(it.labelRes()),
+                        count = state.counts?.countFor(it),
+                    )
+                },
+            selectedIndex = state.filter.ordinal,
+            onSelect = { actions.onFilterChange(BlocklistFilter.entries[it]) },
+        )
     }
 }
 

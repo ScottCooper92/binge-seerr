@@ -234,7 +234,7 @@ class RequestDetailViewModel
                 serverName = servers?.firstOrNull { it.id == serverId }?.name ?: details?.server?.name,
                 profileName = details?.profiles?.firstOrNull { it.id == profileId }?.name,
                 rootFolder = rootFolder,
-                tags = tags.mapNotNull { id -> details?.tags?.firstOrNull { it.id == id }?.label },
+                tags = tags.orEmpty().mapNotNull { id -> details?.tags?.firstOrNull { it.id == id }?.label },
             )
         }
 

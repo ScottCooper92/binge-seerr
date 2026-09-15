@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -15,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -34,15 +35,16 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -78,35 +80,36 @@ internal fun <T> EditorPage(
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
     val ready = state as? EditorUiState.Ready<T>
-    Scaffold(
-        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
-        topBar = {
-            BingeTopBar(
-                title = title,
-                onBack = actions.onBack,
-                actions = {
-                    if (showSaveAction && ready != null) {
-                        BingeTextButton(
-                            label = stringResource(R.string.user_settings_save),
-                            onClick = actions.onSave,
-                            enabled = ready.dirty && !ready.saving && canSave(ready.draft),
-                            loading = ready.saving,
-                        )
-                    }
-                },
-            )
+    ScreenScaffold(
+        title = title,
+        onBack = actions.onBack,
+        snackbarHostState = snackbarHostState,
+        actions = {
+            if (showSaveAction && ready != null) {
+                BingeTextButton(
+                    label = stringResource(R.string.user_settings_save),
+                    onClick = actions.onSave,
+                    enabled = ready.dirty && !ready.saving && canSave(ready.draft),
+                    loading = ready.saving,
+                )
+            }
         },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        // The keyboard lifts the form rather than covering the field being typed in. The bars' insets are
+        // consumed first, so the navigation bar under the keyboard is not counted twice.
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding()).consumeWindowInsets(padding)) {
+            val inner = padding.innerPadding()
             when (state) {
-                EditorUiState.Loading -> LoadingScreen()
-                is EditorUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+                EditorUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is EditorUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is EditorUiState.Ready ->
                     Column(
                         modifier =
                             Modifier
                                 .fillMaxSize()
+                                .imePadding()
                                 .then(if (scrolling) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                                .padding(inner)
                                 .padding(dimensionResource(DesR.dimen.screen_content_inset)),
                         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
                     ) {

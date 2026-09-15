@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -13,13 +14,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.theme.BingeSentiment
@@ -28,6 +27,9 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 class ServicesActions(
@@ -43,12 +45,13 @@ fun ServicesScreen(
     state: ServicesUiState,
     actions: ServicesActions,
 ) {
-    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.settings_group_services), onBack = actions.onBack) }) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+    ScreenScaffold(title = stringResource(R.string.settings_group_services), onBack = actions.onBack) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
-                ServicesUiState.Loading -> LoadingScreen()
-                is ServicesUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
-                is ServicesUiState.Ready -> ServicesContent(state, actions)
+                ServicesUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is ServicesUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
+                is ServicesUiState.Ready -> ServicesContent(state, actions, contentPadding = inner)
             }
         }
     }
@@ -58,8 +61,9 @@ fun ServicesScreen(
 private fun ServicesContent(
     state: ServicesUiState.Ready,
     actions: ServicesActions,
+    contentPadding: PaddingValues,
 ) {
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         ServiceType.entries.forEach { type ->
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
             SettingsGroup(

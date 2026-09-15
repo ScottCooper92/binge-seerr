@@ -48,16 +48,17 @@ fun JobsScreen(
     events: Flow<EditorEvent>,
     actions: JobsActions,
 ) {
-    ServerActionPage(title = stringResource(R.string.server_settings_jobs), events = events, onBack = actions.onBack) {
+    ServerActionPage(title = stringResource(R.string.server_settings_jobs), events = events, onBack = actions.onBack) { contentPadding ->
         when (state) {
-            JobsUiState.Loading -> LoadingScreen()
-            is JobsUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+            JobsUiState.Loading -> LoadingScreen(Modifier.padding(contentPadding))
+            is JobsUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(contentPadding), onRetry = actions.onRetry)
             is JobsUiState.Ready ->
                 Column(
                     modifier =
                         Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
+                            .padding(contentPadding)
                             .padding(dimensionResource(DesR.dimen.screen_content_inset)),
                     verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
                 ) {

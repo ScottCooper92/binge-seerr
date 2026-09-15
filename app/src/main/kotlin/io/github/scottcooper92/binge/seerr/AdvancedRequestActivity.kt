@@ -45,6 +45,7 @@ class AdvancedRequestActivity : ComponentActivity() {
             finish()
             return
         }
+        drawEdgeToEdge()
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             LaunchedEffect(state) {

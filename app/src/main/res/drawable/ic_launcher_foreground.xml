@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+        This app's own mark — the indigo disc with the ring cut out of it — inside Binge's progress
+        arc. Same construction as Binge's launcher foreground, and the same 0.84, so the two sit
+        together on a home screen as one family; the colour is what separates them.
+    -->
+
+    <!-- Faint track ring (full circle, r=32 @ 54,54) -->
+    <path
+        android:pathData="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z"
+        android:strokeColor="#6366F1"
+        android:strokeAlpha="0.16"
+        android:strokeWidth="6"/>
+
+    <!--
+        The arc. Named so avd_launcher_ring can sweep trimPathEnd up to this same 0.84 on the
+        splash: the resting value here is the end state, so the splash finishes on the launcher
+        icon exactly rather than on a copy of it. The two move together or the hand-off jumps.
+    -->
+    <path
+        android:name="progressArc"
+        android:pathData="M54,22 A32,32 0 1,1 54,86 A32,32 0 1,1 54,22 Z"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:trimPathStart="0"
+        android:trimPathEnd="0.84">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="22"
+                android:endX="54"
+                android:endY="86">
+                <item android:offset="0.0" android:color="#FF818CF8"/>
+                <item android:offset="1.0" android:color="#FF4F46E5"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!--
+        The existing mark, scaled 0.95 and recentred on 54,54. The inner circle winds against the
+        outer one, so the ring is a hole rather than a white fill: that is what lets the disc show
+        through it here, and what makes the shape survive being tinted flat elsewhere.
+    -->
+    <path
+        android:fillColor="#6366F1"
+        android:pathData="M54,35 a19,19 0 1,0 0,38 a19,19 0 1,0 0,-38 z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,44.5 a9.5,9.5 0 1,0 0,19 a9.5,9.5 0 1,0 0,-19 z M54,48.3 a5.7,5.7 0 1,1 0,11.4 a5.7,5.7 0 1,1 0,-11.4 z"/>
+
+</vector>

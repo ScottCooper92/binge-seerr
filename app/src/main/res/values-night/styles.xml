@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The phone window in dark mode. BingeExpressiveTheme follows the system, so a light window here
+        showed through every frame Compose paints no background of its own - the loading spinner above
+        all. The colour is the design system's dark background, so that frame and the first screen agree.
+
+        A television still takes values-television: its UI mode qualifier outranks night mode.
+    -->
+    <style name="Theme.Seerr" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF0E0E0F</item>
+    </style>
+</resources>

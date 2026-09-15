@@ -35,9 +35,10 @@ internal fun ActionBar(
     onAddComment: () -> Unit,
     onToggleStatus: () -> Unit,
     inset: Dp,
+    modifier: Modifier = Modifier,
 ) {
     val idle = action == IssueAction.None
-    Column(Modifier.fillMaxWidth()) {
+    Column(modifier.fillMaxWidth()) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = inset, vertical = dimensionResource(DesR.dimen.padding_s)),

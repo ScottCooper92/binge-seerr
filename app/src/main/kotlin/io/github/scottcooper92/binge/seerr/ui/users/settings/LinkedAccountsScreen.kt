@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,9 +30,7 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -42,7 +40,10 @@ import io.github.scottcooper92.binge.seerr.ui.SetupLinkSheet
 import io.github.scottcooper92.binge.seerr.ui.savedLoginRequest
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import kotlinx.coroutines.flow.Flow
@@ -87,15 +88,18 @@ fun LinkedAccountsScreen(
             snackbarHostState.showSnackbar(resources.getString(message), kind)
         }
     }
-    Scaffold(
-        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
-        topBar = { BingeTopBar(title = stringResource(R.string.user_settings_page_linked), onBack = actions.onBack) },
+    ScreenScaffold(
+        title = stringResource(R.string.user_settings_page_linked),
+        onBack = actions.onBack,
+        snackbarHostState = snackbarHostState,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
-                LinkedAccountsUiState.Loading -> LoadingScreen()
-                is LinkedAccountsUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
-                is LinkedAccountsUiState.Ready -> LinkedAccountsContent(state, actions)
+                LinkedAccountsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is LinkedAccountsUiState.Error ->
+                    ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
+                is LinkedAccountsUiState.Ready -> LinkedAccountsContent(state, actions, contentPadding = inner)
             }
         }
     }
@@ -105,6 +109,7 @@ fun LinkedAccountsScreen(
 private fun LinkedAccountsContent(
     state: LinkedAccountsUiState.Ready,
     actions: LinkedAccountsActions,
+    contentPadding: PaddingValues,
 ) {
     var unlinking by rememberSaveable { mutableStateOf<UserOrigin?>(null) }
     var linkingMediaServer by rememberSaveable { mutableStateOf(false) }
@@ -115,7 +120,7 @@ private fun LinkedAccountsContent(
                 accountRow(account, state.busy, onLink = { linkingMediaServer = true }, onUnlink = { unlinking = account.origin })
             },
         )
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         SettingsGroup(title = null, rows = rows, modifier = Modifier.padding(dimensionResource(DesR.dimen.screen_content_inset)))
     }
     unlinking?.let { origin ->

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -40,6 +41,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import com.binge.designsystem.R as DesR
 
@@ -58,23 +60,31 @@ internal fun RequestsBody(
     onOpenActions: (RequestItem) -> Unit,
     onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val refreshState = lazyItems.loadState.refresh
     when {
-        lazyItems.itemCount > 0 ->
-            Column(modifier.fillMaxSize()) {
-                if (refreshState is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect)
+        lazyItems.itemCount > 0 && refreshState is LoadState.Loading ->
+            // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
+            Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding.belowPinnedLine())
             }
-        refreshState is LoadState.Loading -> LoadingScreen(modifier)
+        lazyItems.itemCount > 0 -> RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding)
+        refreshState is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         refreshState is LoadState.Error ->
             PagedRefreshError(
                 refreshState.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
-                modifier = modifier,
+                modifier = modifier.padding(contentPadding),
             )
-        else -> EmptyScreen(message = stringResource(filter.emptyMessageRes()), modifier = modifier, icon = Icons.Filled.Inbox)
+        else ->
+            EmptyScreen(
+                message = stringResource(filter.emptyMessageRes()),
+                modifier = modifier.padding(contentPadding),
+                icon = Icons.Filled.Inbox,
+            )
     }
 }
 
@@ -86,10 +96,11 @@ private fun RequestList(
     onOpen: (RequestItem) -> Unit,
     onOpenActions: (RequestItem) -> Unit,
     onReconnect: () -> Unit,
+    contentPadding: PaddingValues,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)),
+        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

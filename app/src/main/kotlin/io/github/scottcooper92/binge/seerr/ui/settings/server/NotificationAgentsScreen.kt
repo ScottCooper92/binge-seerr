@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.theme.BingeSentiment
@@ -22,6 +20,9 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.onOffRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 class AgentsActions(
@@ -36,13 +37,14 @@ fun NotificationAgentsScreen(
     state: AgentsUiState,
     actions: AgentsActions,
 ) {
-    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.settings_group_notifications), onBack = actions.onBack) }) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+    ScreenScaffold(title = stringResource(R.string.settings_group_notifications), onBack = actions.onBack) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            val inner = padding.innerPadding()
             when (state) {
-                AgentsUiState.Loading -> LoadingScreen()
-                is AgentsUiState.Error -> ErrorScreen(error = state.error, onRetry = actions.onRetry)
+                AgentsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is AgentsUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is AgentsUiState.Ready ->
-                    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(inner)) {
                         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
                         SettingsGroup(
                             title = stringResource(R.string.settings_group_notifications),

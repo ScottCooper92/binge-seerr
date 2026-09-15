@@ -6,9 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.ui.DeepLinkNavigator
 import io.github.scottcooper92.binge.seerr.ui.HomeRoute
 import io.github.scottcooper92.binge.seerr.ui.SeerrNavHost
@@ -29,9 +31,19 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var deepLinks: DeepLinkNavigator
 
+    /** Only read for the splash's hold condition; the screens observe it through HomeViewModel. */
+    @Inject
+    lateinit var connectionRestore: ConnectionRestore
+
     private var consumedLink: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Installed before super.onCreate, per the API's contract, and held until the Block Store
+        // restore has been tried: that answer is what decides setup-versus-hub, so dismissing any
+        // earlier would hand the splash to the loading screen — the frame it exists to replace.
+        // SeerrApp starts the restore and ConnectionRestore settles in a `finally`, so this
+        // condition clears on every path including a failed probe.
+        installSplashScreen().setKeepOnScreenCondition { !connectionRestore.settled.value }
         super.onCreate(savedInstanceState)
         // Keyed on the link, not on the saved state: after process death the launch intent is still
         // the notification's, and a rotation must not open it a second time.
@@ -41,6 +53,7 @@ class MainActivity : ComponentActivity() {
             deepLinks.open(link)
             consumedLink = link
         }
+        drawEdgeToEdge()
         setContent {
             // A television gets the D-pad shell, as Binge's MainActivity selects its own at runtime; the
             // notification links push phone routes, which the TV shell grows into with a later phase.
