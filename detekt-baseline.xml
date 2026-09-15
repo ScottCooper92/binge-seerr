@@ -3,9 +3,7 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>CognitiveComplexMethod:OverrideRuleScreen.kt$@Composable fun OverrideRuleScreen( state: EditorUiState&lt;OverrideRuleForm&gt;, extras: OverrideRuleExtras, events: Flow&lt;EditorEvent&gt;, actions: EditorActions&lt;OverrideRuleForm&gt;, ruleActions: OverrideRuleActions, )</ID>
-    <ID>CognitiveComplexMethod:RequestActionsSheet.kt$@Composable internal fun RequestActionsContent( item: RequestItem, actions: RequestActions, blockTitle: Boolean, onBlockTitleChange: (Boolean) -&gt; Unit, onApprove: () -&gt; Unit, onRetry: () -&gt; Unit, onDecline: () -&gt; Unit, onRemove: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>CognitiveComplexMethod:RequestDetailScreen.kt$@Composable private fun Ready( state: RequestDetailUiState.Ready, actions: RequestDetailActions, )</ID>
-    <ID>CognitiveComplexMethod:TvRequestActionsSheet.kt$@Composable internal fun TvRequestActionsSheet( item: RequestItem, actions: RequestActions, sheetActions: TvRequestSheetActions, modifier: Modifier = Modifier, )</ID>
     <ID>ComplexCondition:RequestDetailScreen.kt$detail.actions.any || detail.media?.canManage == true || detail.canEdit || detail.canReportIssue</ID>
     <ID>ComplexCondition:RequestDetailScreen.kt$it == ModerationEvent.Removed || it == ModerationEvent.RemovedAndBlocked || it == ModerationEvent.RemovedButBlockFailed || it == ModerationEvent.MediaCleared</ID>
     <ID>ComplexCondition:UserSettingsViewModel.kt$localSignIn &amp;&amp; (isSelf || !target.isAdmin || permissions.isAdmin)</ID>

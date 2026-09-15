@@ -74,35 +74,49 @@ internal fun RequestActionsSheet(
         )
     }
     pending?.let { choice ->
-        BingeConfirmDialog(
-            title =
-                stringResource(
-                    if (choice ==
-                        Pending.Remove
-                    ) {
-                        R.string.request_remove_confirm_title
-                    } else {
-                        R.string.request_decline_block_confirm_title
-                    },
-                ),
-            message =
-                stringResource(
-                    when {
-                        choice == Pending.Remove && blockTitle -> R.string.request_remove_block_confirm_message
-                        choice == Pending.Remove -> R.string.request_remove_confirm_message
-                        else -> R.string.request_decline_block_confirm_message
-                    },
-                ),
-            confirmLabel = stringResource(if (choice == Pending.Remove) R.string.request_remove else R.string.request_decline),
-            destructive = true,
+        PendingConfirm(
+            choice = choice,
+            blockTitle = blockTitle,
             onConfirm = {
                 pending = null
                 if (choice == Pending.Remove) onRemove(blockTitle) else onDecline(blockTitle)
                 onDismiss()
             },
-            onDismiss = { pending = null },
+            onCancel = { pending = null },
         )
     }
+}
+
+/**
+ * The second step a destructive choice takes. Removing always asks; declining asks only when it also
+ * blocks the title, which is the part that outlives the request.
+ */
+@Composable
+private fun PendingConfirm(
+    choice: Pending,
+    blockTitle: Boolean,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val removing = choice == Pending.Remove
+    BingeConfirmDialog(
+        title =
+            stringResource(
+                if (removing) R.string.request_remove_confirm_title else R.string.request_decline_block_confirm_title,
+            ),
+        message =
+            stringResource(
+                when {
+                    removing && blockTitle -> R.string.request_remove_block_confirm_message
+                    removing -> R.string.request_remove_confirm_message
+                    else -> R.string.request_decline_block_confirm_message
+                },
+            ),
+        confirmLabel = stringResource(if (removing) R.string.request_remove else R.string.request_decline),
+        destructive = true,
+        onConfirm = onConfirm,
+        onDismiss = onCancel,
+    )
 }
 
 @Composable
@@ -132,49 +146,79 @@ internal fun RequestActionsContent(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_s)),
         )
-        if (actions.canApprove || actions.canRetry) {
-            BingeFilledButton(
-                label = stringResource(if (actions.canRetry) R.string.request_retry else R.string.request_approve),
-                onClick = if (actions.canRetry) onRetry else onApprove,
-                modifier = Modifier.fillMaxWidth(),
+        PositiveAction(actions, onApprove, onRetry)
+        BlockTitleRow(actions, blockTitle, onBlockTitleChange)
+        DestructiveActions(actions, blockTitle, onDecline, onRemove)
+    }
+}
+
+/** Approve, or retry where the request already failed — one button, since the two never both apply. */
+@Composable
+private fun PositiveAction(
+    actions: RequestActions,
+    onApprove: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    if (!actions.canApprove && !actions.canRetry) return
+    BingeFilledButton(
+        label = stringResource(if (actions.canRetry) R.string.request_retry else R.string.request_approve),
+        onClick = if (actions.canRetry) onRetry else onApprove,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+}
+
+/** The block toggle, shown only where it has something to attach to: a decline or a remove below it. */
+@Composable
+private fun BlockTitleRow(
+    actions: RequestActions,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+) {
+    if (!actions.canBlock || !(actions.canDecline || actions.canRemove)) return
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onBlockTitleChange(!blockTitle)
+                }.padding(vertical = dimensionResource(DesR.dimen.padding_s)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.request_block_title), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(R.string.request_block_caption),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
-        if (actions.canBlock && (actions.canDecline || actions.canRemove)) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onBlockTitleChange(!blockTitle)
-                        }.padding(vertical = dimensionResource(DesR.dimen.padding_s)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.request_block_title), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.request_block_caption),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(checked = blockTitle, onCheckedChange = onBlockTitleChange)
+        Switch(checked = blockTitle, onCheckedChange = onBlockTitleChange)
+    }
+}
+
+/**
+ * Decline and remove. The label carries the toggle rather than the toggle being a separate
+ * confirmation, so what the button is about to do is on the button.
+ */
+@Composable
+private fun DestructiveActions(
+    actions: RequestActions,
+    blockTitle: Boolean,
+    onDecline: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    val choices =
+        buildList {
+            if (actions.canDecline) {
+                add((if (blockTitle) R.string.request_decline_and_block else R.string.request_decline) to onDecline)
+            }
+            if (actions.canRemove) {
+                add((if (blockTitle) R.string.request_remove_and_block else R.string.request_remove) to onRemove)
             }
         }
-        if (actions.canDecline) {
-            BingeOutlinedButton(
-                label = stringResource(if (blockTitle) R.string.request_decline_and_block else R.string.request_decline),
-                onClick = onDecline,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (actions.canRemove) {
-            BingeOutlinedButton(
-                label = stringResource(if (blockTitle) R.string.request_remove_and_block else R.string.request_remove),
-                onClick = onRemove,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+    choices.forEach { (labelRes, onClick) ->
+        BingeOutlinedButton(label = stringResource(labelRes), onClick = onClick, modifier = Modifier.fillMaxWidth())
     }
 }
 

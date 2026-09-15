@@ -57,19 +57,7 @@ internal fun TvRequestActionsSheet(
             listOfNotNull(item.requestedBy, stringResource(item.statusChip().labelRes))
                 .joinToString(stringResource(R.string.hub_meta_separator)),
         )
-        val rows =
-            buildList {
-                if (actions.canRetry) add(TvSheetChoice(R.string.request_retry, onClick = sheetActions.onRetry))
-                if (actions.canApprove) add(TvSheetChoice(R.string.request_approve, onClick = sheetActions.onApprove))
-                if (actions.canDecline) add(TvSheetChoice(R.string.request_decline) { sheetActions.onDecline(false) })
-                if (actions.canDecline && actions.canBlock) {
-                    add(TvSheetChoice(R.string.request_decline_and_block, destructive = true) { pending = Pending.DeclineAndBlock })
-                }
-                if (actions.canRemove) add(TvSheetChoice(R.string.request_remove, destructive = true) { pending = Pending.Remove })
-                if (actions.canRemove && actions.canBlock) {
-                    add(TvSheetChoice(R.string.request_remove_and_block, destructive = true) { pending = Pending.RemoveAndBlock })
-                }
-            }
+        val rows = tvRequestChoices(actions, sheetActions) { pending = it }
         rows.forEachIndexed { index, choice ->
             TvActionSheetRow(
                 label = stringResource(choice.labelRes),
@@ -87,6 +75,30 @@ private class TvSheetChoice(
     val destructive: Boolean = false,
     val onClick: () -> Unit,
 )
+
+/**
+ * The rows this viewer gets, in the order the remote walks them. Built outside the composable so the
+ * sheet reads as a list rendered rather than six conditions, and so the order is one thing to read.
+ *
+ * The block twins take a second step; a plain decline does not, since the server keeps the request.
+ */
+private fun tvRequestChoices(
+    actions: RequestActions,
+    sheetActions: TvRequestSheetActions,
+    onPending: (Pending) -> Unit,
+): List<TvSheetChoice> =
+    buildList {
+        if (actions.canRetry) add(TvSheetChoice(R.string.request_retry, onClick = sheetActions.onRetry))
+        if (actions.canApprove) add(TvSheetChoice(R.string.request_approve, onClick = sheetActions.onApprove))
+        if (actions.canDecline) add(TvSheetChoice(R.string.request_decline) { sheetActions.onDecline(false) })
+        if (actions.canDecline && actions.canBlock) {
+            add(TvSheetChoice(R.string.request_decline_and_block, destructive = true) { onPending(Pending.DeclineAndBlock) })
+        }
+        if (actions.canRemove) add(TvSheetChoice(R.string.request_remove, destructive = true) { onPending(Pending.Remove) })
+        if (actions.canRemove && actions.canBlock) {
+            add(TvSheetChoice(R.string.request_remove_and_block, destructive = true) { onPending(Pending.RemoveAndBlock) })
+        }
+    }
 
 @Composable
 private fun androidx.compose.foundation.layout.ColumnScope.TvPendingStep(
