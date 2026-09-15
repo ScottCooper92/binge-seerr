@@ -1,13 +1,18 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +29,6 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeOutlinedButton
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import com.binge.designsystem.R as DesR
@@ -53,15 +57,18 @@ private sealed interface Confirm : java.io.Serializable {
 internal fun ManageMediaSheet(
     media: MediaRecord,
     actions: ManageMediaActions,
+    onMarkStatus: (is4k: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var confirm by rememberSaveable { mutableStateOf<Confirm?>(null) }
     BingeBottomSheet(onDismissRequest = onDismiss) {
         ManageMediaContent(
             media = media,
-            onSetStatus = { status, is4k ->
-                actions.onSetStatus(media.mediaId, status, is4k)
+            // Dismiss first: two sheets at once is two windows and two scrims, and the pick closes
+            // everything anyway, so there is no state here to come back to.
+            onMarkStatus = { is4k ->
                 onDismiss()
+                onMarkStatus(is4k)
             },
             onDeleteFiles = { is4k -> confirm = Confirm.DeleteFiles(is4k) },
             onClearData = { confirm = Confirm.Clear },
@@ -116,7 +123,7 @@ internal fun ManageMediaSheet(
 @Composable
 internal fun ManageMediaContent(
     media: MediaRecord,
-    onSetStatus: (MediaStatusChoice, Boolean) -> Unit,
+    onMarkStatus: (Boolean) -> Unit,
     onDeleteFiles: (Boolean) -> Unit,
     onClearData: () -> Unit,
     modifier: Modifier = Modifier,
@@ -135,7 +142,7 @@ internal fun ManageMediaContent(
             MediaInstanceSection(
                 instance = instance,
                 media = media,
-                onSetStatus = { onSetStatus(it, instance.is4k) },
+                onMarkStatus = { onMarkStatus(instance.is4k) },
                 onDeleteFiles = { onDeleteFiles(instance.is4k) },
             )
         }
@@ -154,7 +161,7 @@ internal fun ManageMediaContent(
 private fun MediaInstanceSection(
     instance: MediaInstance,
     media: MediaRecord,
-    onSetStatus: (MediaStatusChoice) -> Unit,
+    onMarkStatus: () -> Unit,
     onDeleteFiles: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
@@ -187,12 +194,7 @@ private fun MediaInstanceSection(
             }
         }
         if (media.canSetStatus) {
-            ChoicePicker(
-                title = stringResource(R.string.media_mark_as),
-                choices = MediaStatusChoice.entries.map { it to stringResource(it.labelRes()) },
-                selected = MediaStatusChoice.entries.firstOrNull { it.code == instance.status },
-                onSelect = onSetStatus,
-            )
+            MarkAsRow(onMarkStatus)
         }
         instance.watch?.let { WatchDataText(it) }
         if (media.canDeleteFiles) {
@@ -221,6 +223,36 @@ private fun WatchDataText(watch: WatchStats) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * Opens [MediaStatusSheet]. It carries no value of its own: the instance header two rows up already
+ * reads the current state out, and a second copy here is what the chip group was doing.
+ */
+@Composable
+private fun MarkAsRow(onClick: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
+                .clickable(onClick = onClick)
+                .padding(vertical = dimensionResource(DesR.dimen.padding_s)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        Text(
+            text = stringResource(R.string.media_mark_as),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
