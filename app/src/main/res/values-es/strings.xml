@@ -106,6 +106,7 @@
     <string name="request_state_queued">En cola</string>
     <string name="media_type_movie">Película</string>
     <string name="request_open_title">Abrir el título</string>
+    <string name="request_open_elsewhere">Abrir en otro lugar</string>
     <string name="request_open_web">Abrir en el servidor</string>
     <string name="request_open_media_server">Abrir en el servidor multimedia</string>
     <string name="request_requested_by">Solicitado por</string>
@@ -142,6 +143,8 @@
     <string name="request_retried">Petición reintentada</string>
     <string name="request_edited">Petición actualizada</string>
     <string name="request_edit_title">Editar la petición</string>
+    <string name="request_primary_review">Revisar solicitud</string>
+    <string name="request_primary_manage">Gestionar</string>
     <string name="request_edit_save">Guardar los cambios</string>
     <string name="media_manage">Gestionar el contenido</string>
     <string name="media_instance_standard">Estándar</string>
@@ -151,7 +154,7 @@
     <string name="media_open_sonarr">Abrir en Sonarr</string>
     <string name="media_watch_title">Datos de visionado</string>
     <string name="media_watch_plays">%1$d reproducciones · %2$d en los últimos 7 días · %3$d en los últimos 30 días</string>
-    <string name="media_watch_users">Visto por %1$s</string>
+    <string name="media_watch_users_label">Visto por</string>
     <string name="media_clear_data">Borrar los datos</string>
     <string name="media_clear_confirm_title">¿Borrar los datos del contenido?</string>
     <string name="media_clear_confirm_message">El servidor olvida este título: su estado y todas sus peticiones. Cualquiera puede volver a solicitarlo.</string>

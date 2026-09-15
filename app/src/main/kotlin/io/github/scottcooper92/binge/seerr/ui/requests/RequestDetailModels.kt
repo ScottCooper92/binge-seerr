@@ -163,3 +163,10 @@ sealed interface RequestDetailUiState {
         val error: SeerrError,
     ) : RequestDetailUiState
 }
+
+/** What the media group of the request's action sheet calls back into. */
+class ManageMediaActions(
+    val onSetStatus: (mediaId: Int, status: MediaStatusChoice, is4k: Boolean) -> Unit,
+    val onClearData: (mediaId: Int) -> Unit,
+    val onDeleteFiles: (mediaId: Int, is4k: Boolean) -> Unit,
+)

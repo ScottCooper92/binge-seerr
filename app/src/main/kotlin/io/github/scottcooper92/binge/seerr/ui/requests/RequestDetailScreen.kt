@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
-import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,6 +14,11 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -28,9 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.DetailHero
+import com.binge.designsystem.component.DetailOverlayTopBar
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -69,8 +73,8 @@ fun RequestDetailScreen(
         events.collect { if (it.removesTheRequest) actions.onBack() }
     }
     Scaffold(
-        // Full-bleed: no top bar, and the hero pads its own controls clear of the status bar. What is
-        // left to clear the navigation bar (and a landscape cutout) is the snackbar and the page's end.
+        // Full-bleed: no top bar of the Scaffold's own, and the overlay bar clears the status bar
+        // itself. What is left is the snackbar and the page's end clearing the navigation bar.
         snackbarHost = { BingeSnackbarHost(snackbarHostState, Modifier.windowInsetsPadding(pageEdgeInsets())) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { padding ->
@@ -91,60 +95,41 @@ private fun Ready(
     actions: RequestDetailActions,
 ) {
     val detail = state.detail
-    val item = detail.item
     var reporting by rememberSaveable { mutableStateOf(false) }
-    var moderating by rememberSaveable { mutableStateOf(false) }
-    var managing by rememberSaveable { mutableStateOf(false) }
+    var acting by rememberSaveable { mutableStateOf(false) }
+    var opening by rememberSaveable { mutableStateOf(false) }
     // Which instance the status sheet is marking, keyed by is4k because that is what tells the
     // two apart — and because a Boolean survives process death where MediaInstance would not.
     var marking by rememberSaveable { mutableStateOf<Boolean?>(null) }
-    val inset = dimensionResource(DesR.dimen.screen_content_inset)
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).windowInsetsPadding(pageEdgeInsets())) {
-        DetailHero(
-            title = item.title ?: stringResource(item.mediaType.labelRes()),
-            backdropUrl = detail.backdropUrl,
-            tagline = null,
-            metaText =
-                listOfNotNull(
-                    stringResource(item.mediaType.labelRes()),
-                    item.year,
-                ).joinToString(stringResource(R.string.hub_meta_separator)),
-            onBack = actions.onBack,
-            richBackdrop = true,
-        )
-        RequestHeadline(detail, Modifier.padding(inset))
-        RequestFacts(detail)
-        RequestSections(detail)
-        RequestPageActions(
-            detail = detail,
-            onModerate = { moderating = true },
-            onManage = { managing = true },
-            onEdit = actions.onStartEdit,
-            onReport = { reporting = true },
-            modifier = Modifier.padding(inset),
-        )
-    }
-    if (moderating) {
+    val links = rememberRequestOpenLinks(detail)
+    RequestDetailPage(
+        detail = detail,
+        onBack = actions.onBack,
+        onOpen = { opening = true }.takeIf { links.isNotEmpty() },
+        onReport = { reporting = true }.takeIf { detail.canReportIssue },
+        onPrimary = { acting = true },
+    )
+    if (acting) {
         RequestActionsSheet(
-            item = item,
+            item = detail.item,
             actions = detail.actions,
             onApprove = actions.onApprove,
             onRetry = actions.onRetryRequest,
             onDecline = actions.onDecline,
             onRemove = actions.onRemove,
-            onDismiss = { moderating = false },
-        )
-    }
-    state.edit?.let { edit -> EditRequestSheet(item = item, edit = edit, actions = actions.edit) }
-    val media = detail.media
-    if (managing && media != null) {
-        ManageMediaSheet(
-            media = media,
-            actions = actions.media,
+            onDismiss = { acting = false },
+            canEdit = detail.canEdit,
+            onEdit = actions.onStartEdit,
+            media = detail.media,
+            mediaActions = actions.media,
             onMarkStatus = { is4k -> marking = is4k },
-            onDismiss = { managing = false },
         )
     }
+    if (opening) {
+        RequestOpenSheet(links = links, onDismiss = { opening = false })
+    }
+    state.edit?.let { edit -> EditRequestSheet(item = detail.item, edit = edit, actions = actions.edit) }
+    val media = detail.media
     if (media != null) {
         marking?.let { is4k ->
             media.instances.firstOrNull { it.is4k == is4k }?.let { instance ->
@@ -168,45 +153,86 @@ private fun Ready(
     }
 }
 
-/** One button the page offers; the prominent one is the moderation sheet, where this viewer has it. */
-private class RequestPageAction(
-    @StringRes val labelRes: Int,
-    val prominent: Boolean = false,
-    val onClick: () -> Unit,
-)
-
 /**
- * What this viewer may do with the request. Gathered into a list rather than four guarded buttons,
- * so "does the page offer anything at all" is the list being empty rather than the same four
- * conditions written again.
+ * The page itself, with no sheet state of its own so a frame can render it.
+ *
+ * The hero draws no chrome; [DetailOverlayTopBar] floats over it with back and the two navigation
+ * actions, and brings its scrim in as the hero's tail passes under it. A null [onOpen] or
+ * [onReport] is an action this viewer, or this title, does not have.
  */
 @Composable
-private fun RequestPageActions(
+internal fun RequestDetailPage(
     detail: RequestDetail,
-    onModerate: () -> Unit,
-    onManage: () -> Unit,
-    onEdit: () -> Unit,
-    onReport: () -> Unit,
+    onBack: () -> Unit,
+    onOpen: (() -> Unit)?,
+    onReport: (() -> Unit)?,
+    onPrimary: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    initiallyOverflowing: Boolean = false,
 ) {
-    val buttons =
-        buildList {
-            if (detail.actions.any) add(RequestPageAction(R.string.request_actions_cd, prominent = true, onClick = onModerate))
-            if (detail.media?.canManage == true) add(RequestPageAction(R.string.media_manage, onClick = onManage))
-            if (detail.canEdit) add(RequestPageAction(R.string.request_edit_title, onClick = onEdit))
-            if (detail.canReportIssue) add(RequestPageAction(R.string.issue_report_title, onClick = onReport))
+    val item = detail.item
+    val title = item.title ?: stringResource(item.mediaType.labelRes())
+    val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    Box(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+        ) {
+            DetailHero(
+                title = title,
+                backdropUrl = detail.backdropUrl,
+                tagline = null,
+                metaText =
+                    listOfNotNull(
+                        stringResource(item.mediaType.labelRes()),
+                        item.year,
+                    ).joinToString(stringResource(R.string.hub_meta_separator)),
+                onBack = onBack,
+                showChrome = false,
+                richBackdrop = true,
+            )
+            RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
+            RequestFacts(detail)
+            RequestSections(detail)
+            RequestPrimaryAction(detail, onPrimary, Modifier.padding(inset))
         }
-    if (buttons.isEmpty()) return
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-        buttons.forEach { button ->
-            val label = stringResource(button.labelRes)
-            if (button.prominent) {
-                BingeFilledButton(label = label, onClick = button.onClick, modifier = Modifier.fillMaxWidth())
-            } else {
-                BingeOutlinedButton(label = label, onClick = button.onClick, modifier = Modifier.fillMaxWidth())
+        DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
+            onOpen?.let {
+                IconButton(onClick = it) {
+                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = stringResource(R.string.request_open_elsewhere))
+                }
+            }
+            onReport?.let {
+                IconButton(onClick = it) {
+                    Icon(Icons.Filled.ReportProblem, contentDescription = stringResource(R.string.issue_report_title))
+                }
             }
         }
     }
+}
+
+/**
+ * One button, opening one sheet. Its label follows the request's state rather than being a generic
+ * "Manage": approving a pending request is the hottest path here, and a label that does not say so
+ * buries it behind a tap on exactly what an admin opened the app to do.
+ */
+@Composable
+private fun RequestPrimaryAction(
+    detail: RequestDetail,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val reviewable = detail.actions.canApprove || detail.actions.canRetry
+    if (!detail.actions.any && detail.media?.canManage != true && !detail.canEdit) return
+    BingeFilledButton(
+        label = stringResource(if (reviewable) R.string.request_primary_review else R.string.request_primary_manage),
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+    )
 }
 
 /** The sides and the bottom of the window: what a page with no top bar and no Scaffold insets has to clear by hand. */
