@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -60,8 +61,9 @@ class PasswordViewModelTest {
             assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/password"))
 
             vm.edit { it.copy(current = "old") }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             assertEquals(
                 """{"currentPassword":"old","newPassword":"longenough","confirmPassword":"longenough"}""",
                 seerr.body("POST", "/api/v1/user/8/settings/password"),
@@ -86,8 +88,9 @@ class PasswordViewModelTest {
             assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/password"))
 
             vm.edit { it.copy(confirm = "longenough") }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             assertEquals(
                 """{"newPassword":"longenough","confirmPassword":"longenough"}""",
                 seerr.body("POST", "/api/v1/user/8/settings/password"),

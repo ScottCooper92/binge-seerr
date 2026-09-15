@@ -11,8 +11,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -176,7 +176,7 @@ class IssuesViewModelTest {
             val vm = viewModel()
             vm.awaitReady { it.counts != null }
             val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
-            val event = async { vm.events.first() }
+            val event = awaitEvent(vm.events)
 
             vm.resolve(heat)
 
@@ -192,7 +192,7 @@ class IssuesViewModelTest {
             val vm = viewModel()
             vm.awaitReady { it.counts != null }
             val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
-            val event = async { vm.events.first() }
+            val event = awaitEvent(vm.events)
 
             vm.delete(heat)
 
@@ -207,7 +207,7 @@ class IssuesViewModelTest {
             val vm = viewModel()
             vm.awaitReady { it.counts != null }
             val heat = vm.issues(IssueFilter.Open).asSnapshot().single()
-            val event = async { vm.events.first() }
+            val event = awaitEvent(vm.events)
 
             vm.reopen(heat.copy(id = 99))
 

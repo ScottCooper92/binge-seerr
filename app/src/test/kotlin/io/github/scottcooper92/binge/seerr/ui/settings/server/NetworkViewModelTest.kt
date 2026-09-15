@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -101,8 +102,9 @@ class NetworkViewModelTest {
                     dnsCache = it.dnsCache?.copy(maxTtl = "600"),
                 )
             }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             val proxy = sent.getValue("proxy").jsonObject
@@ -130,8 +132,9 @@ class NetworkViewModelTest {
             assertNull(draft.dnsCache)
 
             vm.edit { it.copy(trustProxy = true) }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals(setOf("csrfProtection", "trustProxy"), sent.keys)
             assertEquals("true", sent.getValue("trustProxy").jsonPrimitive.content)

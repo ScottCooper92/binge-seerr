@@ -20,6 +20,18 @@ class AwaitEventTest {
             assertEquals("saved", awaited.await())
         }
 
+    @Test
+    fun `the predicate form lets the events before the one it wants go past`() =
+        runTest {
+            val events = MutableSharedFlow<String>(extraBufferCapacity = 1)
+
+            val awaited = awaitEvent(events) { it == "saved" }
+
+            events.emit("notice")
+            events.emit("saved")
+            assertEquals("saved", awaited.await())
+        }
+
     /** The bug the helper exists for: a queued collector has registered nothing, so the emission is dropped. */
     @Test
     fun `a plain async has not subscribed, and the emission it was waiting for is lost`() =

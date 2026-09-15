@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.data.UserEntity
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -86,8 +87,9 @@ class PermissionsViewModelTest {
             vm.toggle(ManageablePermission.ManageIssues)
             val expected = REQUEST or UNMANAGED_BIT or ManageablePermission.ManageIssues.bit
             seerr.serve("POST /api/v1/user/8/settings/permissions", """{"permissions":$expected}""")
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             assertEquals("""{"permissions":$expected}""", seerr.body("POST", "/api/v1/user/8/settings/permissions"))
             assertEquals(expected, vm.awaitReady().saved.original)

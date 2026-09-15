@@ -132,6 +132,12 @@ Events use a per-screen sealed type, held as a private `MutableSharedFlow(extraB
 and exposed with `asSharedFlow()`. Editors inherit `EditorViewModel`'s `uiState` and `events`.
 Never expose a `MutableStateFlow`. Collect with `collectAsStateWithLifecycle`.
 
+That flow has no replay, so **a test subscribes before the action, through `awaitEvent`**
+(`app/src/test/.../util/AwaitEvent.kt`). `act(); vm.events.first()` is a race the test loses by
+hanging, and a plain `async` before the action is the same race with a longer fuse: it is queued on
+the test scheduler and has registered nothing yet. `awaitEvent` starts undispatched, so it has
+subscribed by the time it returns.
+
 **Sharing.** The policy follows what the screen is:
 
 | Screen | Policy |

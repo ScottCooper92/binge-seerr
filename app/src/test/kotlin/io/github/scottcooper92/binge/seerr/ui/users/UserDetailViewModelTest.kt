@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuotaBucket
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -196,9 +197,10 @@ class UserDetailViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
+            val userDeleted = awaitEvent(vm.events)
             vm.deleteUser()
 
-            assertEquals(UserDetailEvent.UserDeleted, vm.events.first())
+            assertEquals(UserDetailEvent.UserDeleted, userDeleted.await())
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/user/8" })
             assertEquals(listOf(9), cache.rows.map { it.id })
         }

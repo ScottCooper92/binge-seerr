@@ -20,3 +20,14 @@ import kotlinx.coroutines.flow.first
  * registering. A plain `async` is queued on the test scheduler and has registered nothing yet.
  */
 fun <T> CoroutineScope.awaitEvent(events: Flow<T>): Deferred<T> = async(start = CoroutineStart.UNDISPATCHED) { events.first() }
+
+/**
+ * Subscribes to [events] before returning, and awaits the first one matching [predicate].
+ *
+ * The same guarantee as the overload above, for a test that must wait for one particular event
+ * because others can arrive first — a save's `Saved` behind a test's late `Notice`, say.
+ */
+fun <T> CoroutineScope.awaitEvent(
+    events: Flow<T>,
+    predicate: suspend (T) -> Boolean,
+): Deferred<T> = async(start = CoroutineStart.UNDISPATCHED) { events.first(predicate) }

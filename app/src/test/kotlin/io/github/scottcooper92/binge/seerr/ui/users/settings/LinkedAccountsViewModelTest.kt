@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.seerr.PlexTvApi
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -100,8 +101,9 @@ class LinkedAccountsViewModelTest {
             assertFalse((vm.awaitReady { it.link != null }.link as LinkFlow.Plex).launchPending)
 
             seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","plexId":77,"plexUsername":"ana_plex","userType":3}""")
+            val linked = awaitEvent(vm.events)
             approved = true
-            assertEquals(LinkedAccountsEvent.Linked, vm.events.first())
+            assertEquals(LinkedAccountsEvent.Linked, linked.await())
             assertEquals("""{"authToken":"tok"}""", seerr.body("POST", "/api/v1/user/8/settings/linked-accounts/plex"))
             val after = vm.awaitReady()
             assertEquals("ana_plex", after.plex.linkedAs)
@@ -120,8 +122,9 @@ class LinkedAccountsViewModelTest {
 
             seerr.serve("POST /api/v1/auth/jellyfin/quickconnect/initiate", """{"code":"123456","secret":"s3cret"}""")
             seerr.serve("GET /api/v1/auth/jellyfin/quickconnect/check", code = 404)
+            val linkExpired = awaitEvent(vm.events)
             vm.linkQuickConnect()
-            assertEquals(LinkedAccountsEvent.LinkExpired, vm.events.first())
+            assertEquals(LinkedAccountsEvent.LinkExpired, linkExpired.await())
         }
 
     @Test
@@ -134,13 +137,15 @@ class LinkedAccountsViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
+            val linkedByQuickConnect = awaitEvent(vm.events)
             vm.linkQuickConnect()
-            assertEquals(LinkedAccountsEvent.Linked, vm.events.first())
+            assertEquals(LinkedAccountsEvent.Linked, linkedByQuickConnect.await())
             assertEquals("""{"secret":"s3cret"}""", seerr.body("POST", "/api/v1/user/8/settings/linked-accounts/jellyfin/quickconnect"))
 
             vm.awaitReady()
+            val linkedByCredentials = awaitEvent(vm.events)
             vm.linkJellyfin(" ana ", "pw")
-            assertEquals(LinkedAccountsEvent.Linked, vm.events.first())
+            assertEquals(LinkedAccountsEvent.Linked, linkedByCredentials.await())
             assertEquals("""{"username":"ana","password":"pw"}""", seerr.body("POST", "/api/v1/user/8/settings/linked-accounts/jellyfin"))
         }
 
@@ -152,8 +157,9 @@ class LinkedAccountsViewModelTest {
             vm.awaitReady()
 
             seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","userType":3}""")
+            val unlinked = awaitEvent(vm.events)
             vm.unlinkMediaServer()
-            assertEquals(LinkedAccountsEvent.Unlinked, vm.events.first())
+            assertEquals(LinkedAccountsEvent.Unlinked, unlinked.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/user/8/settings/linked-accounts/jellyfin"))
             assertFalse(vm.awaitReady().mediaServer?.linked == true)
         }

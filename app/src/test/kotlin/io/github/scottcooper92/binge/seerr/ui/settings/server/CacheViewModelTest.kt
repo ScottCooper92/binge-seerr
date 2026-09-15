@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -83,14 +84,16 @@ class CacheViewModelTest {
             )
             assertEquals(19L, ready.dns?.hits)
 
+            val flushed = awaitEvent(vm.events)
             vm.flush("tmdb")
-            assertEquals(EditorEvent.Notice(R.string.server_settings_cache_flushed), vm.events.first())
+            assertEquals(EditorEvent.Notice(R.string.server_settings_cache_flushed), flushed.await())
             assertEquals(1, seerr.count("POST", "/api/v1/settings/cache/tmdb/flush"))
             assertEquals(2, seerr.count("GET", "/api/v1/settings/cache"))
             assertTrue(vm.awaitReady().busyIds.isEmpty())
 
+            val dnsFlushed = awaitEvent(vm.events)
             vm.flushDnsEntry("image.tmdb.org")
-            assertEquals(EditorEvent.Notice(R.string.server_settings_cache_flushed), vm.events.first())
+            assertEquals(EditorEvent.Notice(R.string.server_settings_cache_flushed), dnsFlushed.await())
             assertEquals(1, seerr.count("POST", "/api/v1/settings/cache/dns/image.tmdb.org/flush"))
         }
 
@@ -105,8 +108,9 @@ class CacheViewModelTest {
             assertNull(ready.dns)
             assertEquals(1, ready.imageCaches.size)
 
+            val failed = awaitEvent(vm.events)
             vm.flush("tmdb")
-            assertTrue(vm.events.first() is EditorEvent.Failed)
+            assertTrue(failed.await() is EditorEvent.Failed)
             assertTrue(vm.awaitReady().busyIds.isEmpty())
         }
 }

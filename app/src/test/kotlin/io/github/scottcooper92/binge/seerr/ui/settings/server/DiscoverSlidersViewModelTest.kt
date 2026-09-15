@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -87,8 +88,9 @@ class DiscoverSlidersViewModelTest {
             vm.move(3, up = true)
             vm.move(1, up = false)
             vm.toggle(2)
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/discover")).jsonArray.map { it.jsonObject }
             assertEquals(
@@ -112,8 +114,9 @@ class DiscoverSlidersViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
             vm.move(3, up = true)
+            val notice = awaitEvent(vm.events)
             vm.reset()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), vm.events.first())
+            assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())
             assertEquals(1, seerr.count("GET", "/api/v1/settings/discover/reset"))
             val ready = vm.uiState.first { it is EditorUiState.Ready && !it.dirty } as EditorUiState.Ready<List<DiscoverSlider>>
             assertEquals(listOf(1, 2, 3, 4), ready.draft.map { it.id })

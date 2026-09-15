@@ -5,6 +5,7 @@ import androidx.paging.PagingData
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -103,7 +104,7 @@ class LogsViewModelTest {
             val vm = viewModel()
             vm.refreshMillis = 1_000
             val events = mutableListOf<LogsEvent>()
-            backgroundScope.launch { vm.events.collect { events += it } }
+            backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { events += it } }
 
             vm.setFollowing(true)
             advanceTimeBy(2_500)

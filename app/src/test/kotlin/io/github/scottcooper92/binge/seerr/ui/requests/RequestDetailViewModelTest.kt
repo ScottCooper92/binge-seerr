@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -512,12 +513,15 @@ class RequestDetailViewModelTest {
             assertEquals(1, received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" })
             serve("/api/v1/auth/me", """{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
 
+            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
             vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
-            vm.moderation.events.first { it == ModerationEvent.MediaStatusSet }
+            statusSet.await()
+            val filesDeleted = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
-            vm.moderation.events.first { it == ModerationEvent.MediaFilesDeleted }
+            filesDeleted.await()
+            val cleared = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaCleared }
             vm.moderation.clearMedia(11, 900)
-            vm.moderation.events.first { it == ModerationEvent.MediaCleared }
+            cleared.await()
 
             val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
             assertEquals("false", status.url.queryParameter("is4k"))
@@ -559,10 +563,12 @@ class RequestDetailViewModelTest {
             assertEquals("https://jellyfin.example.com/item/1-4k", fourK.mediaServerUrl)
             assertEquals(WatchStats(3, 1, 2, emptyList()), fourK.watch)
 
+            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
             vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = true)
-            vm.moderation.events.first { it == ModerationEvent.MediaStatusSet }
+            statusSet.await()
+            val filesDeleted = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = true)
-            vm.moderation.events.first { it == ModerationEvent.MediaFilesDeleted }
+            filesDeleted.await()
 
             val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
             assertEquals("true", status.url.queryParameter("is4k"))
