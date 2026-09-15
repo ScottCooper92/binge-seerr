@@ -69,7 +69,7 @@ class RequestEditor(
                     serverId = request.serverId,
                     profileId = request.profileId,
                     rootFolder = request.rootFolder,
-                    tagIds = request.tags.toSet(),
+                    tagIds = request.tags.orEmpty().toSet(),
                     loadingChoices = true,
                 )
             } else {
