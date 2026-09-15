@@ -16,6 +16,13 @@ data class CreateUserDraft(
             email.contains('@') &&
                 username.isNotBlank() &&
                 (generatePassword || password.length >= PasswordSettings.MIN_PASSWORD_LENGTH)
+
+    /**
+     * Typed something, and it is still too short. Blank is untouched rather than wrong, so the field
+     * opens quiet instead of red; the server is asked to generate one and the field is gone.
+     */
+    val passwordTooShort: Boolean
+        get() = !generatePassword && password.isNotEmpty() && password.length < PasswordSettings.MIN_PASSWORD_LENGTH
 }
 
 /** One media-server account offered for import: what to show, and the id the import takes. */

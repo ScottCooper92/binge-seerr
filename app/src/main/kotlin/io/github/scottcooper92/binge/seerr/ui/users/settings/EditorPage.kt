@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -48,6 +49,9 @@ import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
+
+/** M3's disabled content alpha, which it exposes no token for. */
+private const val DISABLED_CONTENT_ALPHA = 0.38f
 
 /** What every editor page hands its screen: leave, retry the load, change the draft, and save it. */
 class EditorActions<T>(
@@ -188,6 +192,17 @@ internal fun EditorTextField(
     )
 }
 
+/**
+ * A label beside a control that may be disabled. M3 dims the control and leaves text at full
+ * strength, so a row reads as live while the thing it belongs to does not; there is no public token
+ * for the 38% it dims to, which is where the constant comes from.
+ */
+@Composable
+internal fun rowLabelColor(
+    enabled: Boolean,
+    color: Color = MaterialTheme.colorScheme.onSurface,
+): Color = if (enabled) color else color.copy(alpha = DISABLED_CONTENT_ALPHA)
+
 @Composable
 internal fun EditorSwitchRow(
     label: String,
@@ -204,7 +219,12 @@ internal fun EditorSwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = rowLabelColor(enabled),
+            modifier = Modifier.weight(1f),
+        )
         Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }

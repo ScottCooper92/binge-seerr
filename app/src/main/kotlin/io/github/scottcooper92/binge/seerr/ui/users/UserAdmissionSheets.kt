@@ -35,6 +35,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PasswordSettings
+import io.github.scottcooper92.binge.seerr.ui.users.settings.rowLabelColor
 import com.binge.designsystem.R as DesR
 
 class UserAdmissionActions(
@@ -124,64 +125,95 @@ private fun CreateUserSheet(
     actions: UserAdmissionActions,
 ) {
     BingeBottomSheet(onDismissRequest = actions.onCancel, gesturesEnabled = !saving) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        ) {
-            Text(stringResource(R.string.users_create_title), style = MaterialTheme.typography.titleLarge)
+        CreateUserSheetContent(
+            draft = draft,
+            saving = saving,
+            onEditDraft = actions.onEditDraft,
+            onCreate = actions.onCreate,
+        )
+    }
+}
+
+/** The sheet's body, stateless so a frame can render it: the modal window itself does not capture. */
+@Composable
+internal fun CreateUserSheetContent(
+    draft: CreateUserDraft,
+    saving: Boolean,
+    onEditDraft: ((CreateUserDraft) -> CreateUserDraft) -> Unit,
+    onCreate: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        Text(stringResource(R.string.users_create_title), style = MaterialTheme.typography.titleLarge)
+        EditorTextField(
+            draft.email,
+            stringResource(R.string.setup_email),
+            enabled = !saving,
+            keyboardType = KeyboardType.Email,
+            placeholder = stringResource(R.string.placeholder_email),
+        ) { value ->
+            onEditDraft { it.copy(email = value) }
+        }
+        EditorTextField(
+            draft.username,
+            stringResource(R.string.setup_username),
+            enabled = !saving,
+            autoCorrect = false,
+            placeholder = stringResource(R.string.users_create_username_placeholder),
+        ) { value ->
+            onEditDraft { it.copy(username = value) }
+        }
+        if (!draft.generatePassword) {
             EditorTextField(
-                draft.email,
-                stringResource(R.string.setup_email),
+                value = draft.password,
+                label = stringResource(R.string.setup_password),
                 enabled = !saving,
-                keyboardType = KeyboardType.Email,
-                placeholder = stringResource(R.string.placeholder_email),
-            ) { value ->
-                actions.onEditDraft { it.copy(email = value) }
-            }
-            EditorTextField(draft.username, stringResource(R.string.setup_username), enabled = !saving, autoCorrect = false) { value ->
-                actions.onEditDraft { it.copy(username = value) }
-            }
-            if (!draft.generatePassword) {
-                EditorTextField(
-                    value = draft.password,
-                    label = stringResource(R.string.setup_password),
-                    enabled = !saving,
-                    secret = true,
-                    supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
-                ) { value -> actions.onEditDraft { it.copy(password = value) } }
-            }
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .toggleable(
-                            value = draft.generatePassword,
-                            enabled = !saving && draft.canGeneratePassword,
-                            role = Role.Checkbox,
-                            onValueChange = { value -> actions.onEditDraft { it.copy(generatePassword = value) } },
-                        ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            ) {
-                Checkbox(checked = draft.generatePassword, onCheckedChange = null, enabled = !saving && draft.canGeneratePassword)
-                Column {
-                    Text(stringResource(R.string.users_create_generate), style = MaterialTheme.typography.bodyMedium)
-                    if (!draft.canGeneratePassword) {
-                        Text(
-                            stringResource(R.string.users_create_generate_unavailable),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                secret = true,
+                supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
+                isError = draft.passwordTooShort,
+            ) { value -> onEditDraft { it.copy(password = value) } }
+        }
+        val canGenerate = !saving && draft.canGeneratePassword
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = draft.generatePassword,
+                        enabled = canGenerate,
+                        role = Role.Checkbox,
+                        onValueChange = { value -> onEditDraft { it.copy(generatePassword = value) } },
+                    ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        ) {
+            Checkbox(checked = draft.generatePassword, onCheckedChange = null, enabled = canGenerate)
+            Column {
+                Text(
+                    stringResource(R.string.users_create_generate),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = rowLabelColor(canGenerate),
+                )
+                // The caption is the reason the row is off, so it stays legible rather than
+                // following the label down to the disabled alpha.
+                if (!draft.canGeneratePassword) {
+                    Text(
+                        stringResource(R.string.users_create_generate_unavailable),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
-            BingeSheetFooter(
-                label = stringResource(R.string.users_create_submit),
-                onClick = actions.onCreate,
-                enabled = !saving && draft.valid,
-                loading = saving,
-            )
         }
+        BingeSheetFooter(
+            label = stringResource(R.string.users_create_submit),
+            onClick = onCreate,
+            enabled = !saving && draft.valid,
+            loading = saving,
+        )
     }
 }
 
