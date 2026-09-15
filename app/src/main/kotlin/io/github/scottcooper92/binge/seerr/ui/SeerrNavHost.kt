@@ -28,7 +28,6 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
-import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 
@@ -264,19 +263,9 @@ private fun SettingsEntry(
             SettingsActions(
                 onBack = onBack,
                 onEditConnection = { backStack.add(EditConnectionRoute) },
-                onOpenServerSettings = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.General)) },
-                onOpenMediaServer = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.MediaServer)) },
-                onOpenServices = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Services)) },
+                onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
                 onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
-                onOpenAgents = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.NotificationAgents)) },
                 onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
-                onOpenSliders = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.DiscoverSliders)) },
-                onOpenNetwork = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Network)) },
-                onOpenMetadata = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Metadata)) },
-                onOpenJobs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Jobs)) },
-                onOpenCache = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Cache)) },
-                onOpenLogs = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.Logs)) },
-                onOpenAbout = { backStack.add(ServerSettingsPageRoute(ServerSettingsPage.About)) },
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
