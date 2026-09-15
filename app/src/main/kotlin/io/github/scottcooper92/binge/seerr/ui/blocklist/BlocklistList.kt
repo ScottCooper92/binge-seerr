@@ -32,6 +32,7 @@ import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -41,7 +42,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import com.binge.designsystem.R as DesR
 
@@ -67,7 +67,11 @@ internal fun BlocklistBody(
                 BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding.belowPinnedLine())
             }
         lazyItems.itemCount > 0 -> BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
-        refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
+        refresh is LoadState.Loading ->
+            ListRowSkeletonColumn(
+                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                modifier = modifier,
+            )
         refresh is LoadState.Error ->
             PagedRefreshError(
                 refresh.error,

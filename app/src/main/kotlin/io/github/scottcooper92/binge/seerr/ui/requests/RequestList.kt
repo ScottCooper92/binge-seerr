@@ -34,12 +34,12 @@ import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
@@ -71,7 +71,11 @@ internal fun RequestsBody(
                 RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding.belowPinnedLine())
             }
         lazyItems.itemCount > 0 -> RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding)
-        refreshState is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
+        refreshState is LoadState.Loading ->
+            ListRowSkeletonColumn(
+                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                modifier = modifier,
+            )
         refreshState is LoadState.Error ->
             PagedRefreshError(
                 refreshState.error,
