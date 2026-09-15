@@ -72,7 +72,10 @@ internal fun RequestsBody(
             }
         lazyItems.itemCount > 0 -> RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding)
         refreshState is LoadState.Loading ->
-            ListRowSkeletonColumn(contentPadding = contentPadding, modifier = modifier)
+            ListRowSkeletonColumn(
+                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                modifier = modifier,
+            )
         refreshState is LoadState.Error ->
             PagedRefreshError(
                 refreshState.error,

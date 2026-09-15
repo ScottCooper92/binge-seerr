@@ -68,7 +68,10 @@ internal fun BlocklistBody(
             }
         lazyItems.itemCount > 0 -> BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
         refresh is LoadState.Loading ->
-            ListRowSkeletonColumn(contentPadding = contentPadding, modifier = modifier)
+            ListRowSkeletonColumn(
+                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                modifier = modifier,
+            )
         refresh is LoadState.Error ->
             PagedRefreshError(
                 refresh.error,

@@ -73,7 +73,10 @@ internal fun IssuesBody(
             }
         lazyItems.itemCount > 0 -> IssueList(lazyItems, onOpen, onReconnect, contentPadding)
         remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
-            ListRowSkeletonColumn(contentPadding = contentPadding, modifier = modifier)
+            ListRowSkeletonColumn(
+                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                modifier = modifier,
+            )
         remote is LoadState.Error ->
             PagedRefreshError(
                 remote.error,
