@@ -8,6 +8,7 @@ import com.binge.designsystem.preview.ScreenshotThemeWrapper
 import com.binge.designsystem.tv.preview.TV_PREVIEW_HEIGHT_DP
 import com.binge.designsystem.tv.preview.TV_PREVIEW_WIDTH_DP
 import com.binge.designsystem.tv.preview.TvScreenshotThemeOnBlackWrapper
+import com.binge.designsystem.tv.preview.TvScreenshotThemeWrapper
 
 /**
  * The declared default locale, pinned on every frame.
@@ -97,14 +98,18 @@ annotation class SeerrListPanePreview
 annotation class SeerrComponentPreviews
 
 /**
- * The television cell: one device class, one theme, and [DEFAULT_LOCALE] pinned.
+ * A television surface, pinned to [DEFAULT_LOCALE].
  *
- * The design system's own `@TvPreviews` is the same panel and the same wrapper, but it declares no
- * locale, because it lives in a library module that generates no pseudolocales. Taking it directly
- * here would record every TV frame in **en-XA** for the reason the file header gives — so this
- * mirrors its cell and adds the locale, exactly as the phone annotations above do.
+ * The design system's `@TvPreviews` pair is the same matrix and cannot be used here: it pins no
+ * locale, so a frame taking it records the pseudolocale for the reason the header explains. The
+ * device spec is the submodule's own constants, so these stay one cell for one cell with it.
+ *
+ * [SeerrTvPreviews] is a component against the theme's own surface; [SeerrTvScreenPreviews] bakes
+ * the window's black behind it, for a screen root that paints no base of its own. Which one a frame
+ * takes is the same question the submodule documents — a baseline that moves between them names a
+ * surface relying on the harness to paint for it.
  */
-@PreviewWrapper(TvScreenshotThemeOnBlackWrapper::class)
+@PreviewWrapper(TvScreenshotThemeWrapper::class)
 @Preview(
     name = "tv",
     device = "spec:width=${TV_PREVIEW_WIDTH_DP}dp,height=${TV_PREVIEW_HEIGHT_DP}dp,orientation=landscape",
@@ -112,3 +117,13 @@ annotation class SeerrComponentPreviews
     locale = DEFAULT_LOCALE,
 )
 annotation class SeerrTvPreviews
+
+/** [SeerrTvPreviews] with the window's black painted behind it, for a screen root. */
+@PreviewWrapper(TvScreenshotThemeOnBlackWrapper::class)
+@Preview(
+    name = "tv",
+    device = "spec:width=${TV_PREVIEW_WIDTH_DP}dp,height=${TV_PREVIEW_HEIGHT_DP}dp,orientation=landscape",
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+annotation class SeerrTvScreenPreviews
