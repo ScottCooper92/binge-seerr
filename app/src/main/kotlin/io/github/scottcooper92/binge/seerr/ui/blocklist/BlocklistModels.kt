@@ -50,6 +50,8 @@ sealed interface BlocklistUiState {
         val filter: BlocklistFilter,
         val search: String,
         val counts: BlocklistCounts?,
+        /** Bumped by a removal or a collection change; each filter's page refreshes once it trails this. */
+        val listVersion: Int,
         /** Seerr 3.0+: the manual and tagged chips; Jellyseerr 2.x has one list. */
         val hasFilters: Boolean,
         val canManage: Boolean,
@@ -58,7 +60,8 @@ sealed interface BlocklistUiState {
         /** The server's web root, for opening a title there. */
         val webRoot: String,
     ) : BlocklistUiState {
-        val isFiltered: Boolean get() = filter != BlocklistFilter.All || search.isNotBlank()
+        /** Per page, not per selection: an empty page says why it is empty, and a swiped-to page is its own. */
+        fun isFiltered(filter: BlocklistFilter): Boolean = filter != BlocklistFilter.All || search.isNotBlank()
     }
 }
 
