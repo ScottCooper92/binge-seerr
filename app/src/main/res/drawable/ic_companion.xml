@@ -1,13 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    The mark, at its own scale and with no background: the launcher icon composes this into an
+    adaptive tile, the hub card draws it tinted, and Binge reads it off the Service's meta-data to
+    name this companion in its own list. One shape for all three.
+
+    The arc is drawn at a single colour rather than the launcher's gradient, because two of those
+    three uses tint it flat and a gradient would be thrown away.
+
+    A flat tint also collapses the disc and the ring into one shape — the ring's hole reveals the
+    disc beneath it, not the background — so before the arc the hub card drew this as a plain
+    circle. The arc is the only part of the mark that survives being tinted, which is most of why
+    it earns its place here rather than only on the launcher.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp"
     android:height="48dp"
     android:viewportWidth="48"
     android:viewportHeight="48">
+
+    <!-- Track ring, r=21 @ 24,24 -->
+    <path
+        android:pathData="M24,3 A21,21 0 1,0 24,45 A21,21 0 1,0 24,3 Z"
+        android:strokeColor="#6366F1"
+        android:strokeAlpha="0.16"
+        android:strokeWidth="4"/>
+
+    <!-- The three-quarter arc -->
+    <path
+        android:pathData="M24,3 A21,21 0 1,1 24,45 A21,21 0 1,1 24,3 Z"
+        android:strokeColor="#6366F1"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:trimPathStart="0"
+        android:trimPathEnd="0.75"/>
+
+    <!-- The disc and its ring, unchanged in shape and shrunk to r=14 to clear the arc. -->
     <path
         android:fillColor="#6366F1"
-        android:pathData="M24,4a20,20 0 1,0 0,40a20,20 0 1,0 0,-40z" />
+        android:pathData="M24,10 a14,14 0 1,0 0,28 a14,14 0 1,0 0,-28 z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M24,14a10,10 0 1,0 0,20a10,10 0 1,0 0,-20zM24,18a6,6 0 1,1 0,12a6,6 0 1,1 0,-12z" />
+        android:pathData="M24,17 a7,7 0 1,0 0,14 a7,7 0 1,0 0,-14 z M24,20.2 a3.8,3.8 0 1,1 0,7.6 a3.8,3.8 0 1,1 0,-7.6 z" />
+
 </vector>

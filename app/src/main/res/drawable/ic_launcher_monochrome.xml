@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+        One colour, for Material You themed icons (Android 13+). The disc keeps its centre punched
+        out rather than filled: at one colour a filled disc behind a filled ring is a solid blob,
+        and the hole is what carries the mark's shape once the launcher has taken the colour away.
+    -->
+
+    <path
+        android:pathData="M54,22 A32,32 0 1,0 54,86 A32,32 0 1,0 54,22 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.25"
+        android:strokeWidth="6"/>
+
+    <path
+        android:pathData="M54,22 A32,32 0 1,1 54,86 A32,32 0 1,1 54,22 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:trimPathStart="0"
+        android:trimPathEnd="0.75"/>
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,35 a19,19 0 1,0 0,38 a19,19 0 1,0 0,-38 z M54,44.5 a9.5,9.5 0 1,1 0,19 a9.5,9.5 0 1,1 0,-19 z"/>
+
+</vector>
