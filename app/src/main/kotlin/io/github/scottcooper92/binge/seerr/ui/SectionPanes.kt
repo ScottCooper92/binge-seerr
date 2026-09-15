@@ -7,9 +7,8 @@ import androidx.navigation3.runtime.NavKey
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 
 /**
- * The entry metadata that makes a section a detail pane beside the hub. The hub's own metadata is
- * built in [SeerrNavHost], because it is a list pane only while a server is connected — setup and
- * the connection problem take the whole window.
+ * The entry metadata that makes a section a detail pane beside the hub. The hub is the list pane
+ * beside it, on [HubRoute], a route of its own because setup takes the whole window.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal val SectionDetailPane: Map<String, Any> = ListDetailSceneStrategy.detailPane()
