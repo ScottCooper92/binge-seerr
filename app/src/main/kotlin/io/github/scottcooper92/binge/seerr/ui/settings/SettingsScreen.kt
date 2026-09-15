@@ -19,27 +19,23 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
+/**
+ * Twelve of these rows opened a server-settings page, and each had its own callback naming that
+ * page in the nav host instead of at the row. [onOpenPage] carries the page, so a row says which
+ * one it opens and a new page needs no new callback.
+ */
 class SettingsActions(
     val onBack: () -> Unit,
     val onEditConnection: () -> Unit,
-    val onOpenServerSettings: () -> Unit,
-    val onOpenMediaServer: () -> Unit,
-    val onOpenServices: () -> Unit,
+    val onOpenPage: (ServerSettingsPage) -> Unit,
     val onOpenInstance: (ServiceType, Int) -> Unit,
-    val onOpenAgents: () -> Unit,
-    val onOpenSliders: () -> Unit,
-    val onOpenNetwork: () -> Unit,
-    val onOpenMetadata: () -> Unit,
-    val onOpenJobs: () -> Unit,
-    val onOpenCache: () -> Unit,
-    val onOpenLogs: () -> Unit,
-    val onOpenAbout: () -> Unit,
     val onOpenAgent: (ServerAgent) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
@@ -79,31 +75,29 @@ private fun SettingsContent(
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Group(
             stringResource(R.string.settings_group_connection),
-            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenAbout),
+            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage),
         )
         config?.general?.let {
             Group(
                 stringResource(R.string.settings_group_general),
-                generalRows(it, actions.onOpenServerSettings, actions.onOpenSliders, actions.onOpenNetwork, actions.onOpenMetadata),
+                generalRows(it, actions.onOpenPage),
             )
         }
-        if (config !=
-            null
-        ) {
-            Group(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server, actions.onOpenMediaServer))
+        if (config != null) {
+            Group(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server, actions.onOpenPage))
         }
         config?.services?.let {
-            Group(stringResource(R.string.settings_group_services), serviceRows(it, actions.onOpenServices, actions.onOpenInstance))
+            Group(stringResource(R.string.settings_group_services), serviceRows(it, actions.onOpenPage, actions.onOpenInstance))
         }
         config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
         state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
         config?.agents?.let {
-            Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenAgents, actions.onOpenAgent))
+            Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenPage, actions.onOpenAgent))
         }
         config?.system?.let {
             Group(
                 stringResource(R.string.settings_group_system),
-                systemRows(it, actions.onOpenJobs, actions.onOpenCache, actions.onOpenLogs),
+                systemRows(it, actions.onOpenPage),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
