@@ -15,6 +15,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
@@ -22,7 +27,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
@@ -149,6 +157,9 @@ internal fun EditorEventSnackbarEffect(
  *
  * [contentType] is null by default because most of these fields hold a server's secret rather than
  * the user's own credential, and a credential provider should only be offered the latter.
+ *
+ * A [secret] field carries its own reveal toggle, so a long pasted key can be checked before it is
+ * saved. It is not optional: a masked field with no way out of it is the thing being fixed.
  */
 @Composable
 internal fun EditorTextField(
@@ -166,6 +177,9 @@ internal fun EditorTextField(
     contentType: ContentType? = null,
     onValueChange: (String) -> Unit,
 ) {
+    // remember rather than rememberSaveable: a field left revealed comes back masked after the app
+    // is backgrounded, which is a small leak closed for no loss.
+    var revealed by remember { mutableStateOf(false) }
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -175,7 +189,13 @@ internal fun EditorTextField(
         singleLine = singleLine,
         isError = isError,
         supportingText = supporting?.let { { Text(it) } },
-        visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
+        trailingIcon =
+            if (secret) {
+                { RevealToggle(revealed = revealed, enabled = enabled) { revealed = !revealed } }
+            } else {
+                null
+            },
+        visualTransformation = if (secret && !revealed) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions =
             KeyboardOptions(
                 keyboardType = if (secret) KeyboardType.Password else keyboardType,
@@ -186,6 +206,26 @@ internal fun EditorTextField(
                 .fillMaxWidth()
                 .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier),
     )
+}
+
+/**
+ * The eye in a masked field's trailing slot. Its description names what the tap will do rather than
+ * what the field holds, so a screen reader announces the action and the label is not read twice.
+ *
+ * It follows the field's own [enabled], which is off only while a save is in flight.
+ */
+@Composable
+private fun RevealToggle(
+    revealed: Boolean,
+    enabled: Boolean,
+    onToggle: () -> Unit,
+) {
+    IconButton(onClick = onToggle, enabled = enabled) {
+        Icon(
+            imageVector = if (revealed) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+            contentDescription = stringResource(if (revealed) R.string.field_secret_hide else R.string.field_secret_show),
+        )
+    }
 }
 
 @Composable
