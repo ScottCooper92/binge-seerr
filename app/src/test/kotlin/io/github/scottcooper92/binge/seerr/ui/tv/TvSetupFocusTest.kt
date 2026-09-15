@@ -40,7 +40,7 @@ import org.robolectric.annotation.Config
  * names the control that stopped answering rather than the last one that did.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w960dp-h540dp-television-xhdpi", application = android.app.Application::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvSetupFocusTest {
     @get:Rule
     val composeTestRule = createComposeRule()

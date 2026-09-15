@@ -6,11 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /** The one runtime check that selects the TV shell, off the mode bits alone: the night bit must not confuse it. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class TvDeviceTest {
     @Test
     fun aTelevisionModeIsATelevisionWhateverTheNightBit() {

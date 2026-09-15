@@ -9,7 +9,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * What a credential provider hands back, and what the sign-in form is willing to take from it. The
@@ -18,7 +17,6 @@ import org.robolectric.annotation.Config
  * `android.credentials` starts at API 34, so the request half is only asked for there.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class SignInCredentialsTest {
     @Test
     fun `a saved password becomes the account and the secret the form fills`() {

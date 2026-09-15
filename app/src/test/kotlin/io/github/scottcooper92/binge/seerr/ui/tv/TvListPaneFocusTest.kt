@@ -30,7 +30,7 @@ private const val OPTION_DISCONNECT = "Disconnect now"
  * the pane's option, ← returns to the row the option belongs to, and OK on an option commits it.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w960dp-h540dp-television-xhdpi", application = android.app.Application::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvListPaneFocusTest {
     @get:Rule
     val composeTestRule = createComposeRule()

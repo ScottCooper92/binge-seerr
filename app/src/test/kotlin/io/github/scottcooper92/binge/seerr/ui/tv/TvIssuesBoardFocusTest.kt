@@ -45,7 +45,7 @@ private const val HORSES = "Slow Horses"
  * reporter's own row against someone else's when the viewer is no manager.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w960dp-h540dp-television-xhdpi", application = android.app.Application::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvIssuesBoardFocusTest {
     @get:Rule
     val composeTestRule = createComposeRule()

@@ -25,14 +25,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * The requests browser as swipeable filter pages. A pager composes a page before the selection lands
  * on it, so each page must show its own filter's rows, and only the selected page may refresh.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class RequestsPagerTest {
     @get:Rule
     val composeTestRule = createComposeRule()

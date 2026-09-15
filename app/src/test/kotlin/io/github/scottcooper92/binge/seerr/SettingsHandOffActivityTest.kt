@@ -11,7 +11,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 
 /**
  * The host's "manage" affordance. The action string is the whole contract here — a typo reads to
@@ -19,7 +18,6 @@ import org.robolectric.annotation.Config
  * SDK's own constant rather than written out a second time.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class SettingsHandOffActivityTest {
     private val context = RuntimeEnvironment.getApplication()
 

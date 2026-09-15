@@ -45,7 +45,7 @@ private const val BEAR = "The Bear"
  * pager, so nothing here waits on paging.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w960dp-h540dp-television-xhdpi", application = android.app.Application::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvRequestsBoardFocusTest {
     @get:Rule
     val composeTestRule = createComposeRule()

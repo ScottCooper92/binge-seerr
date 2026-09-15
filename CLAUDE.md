@@ -107,6 +107,12 @@ to design; the server's API is versioned by release because it is not.
 - Tests are JUnit 4, matching what the extracted code brings with it. Scope Gradle
   to a module (`:app:test`) rather than running the whole tree when you are checking
   one thing.
+- A Robolectric test needs no `@Config` for the SDK: `app/src/test/resources/robolectric.properties`
+  pins `sdk=34` and a plain `Application` for the whole module, and `RobolectricDefaultsTest`
+  asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
+  varies — a `qualifiers` string, say. The pin matters because the fallback is `targetSdk`
+  36, whose sandbox requires Java 21: unpinned, a test passes on a JDK 21 machine and dies
+  in CI on JDK 17 before its body runs.
 
 ## Screens and ViewModels
 
