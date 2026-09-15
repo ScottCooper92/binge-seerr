@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthReporter
 import kotlinx.serialization.json.Json
+import okhttp3.ConnectionPool
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -122,8 +123,16 @@ class SeerrApiFactory(
         }
     }
 
+    /**
+     * The pool's idle timeout is the load-bearing setting here, not a tuning knob. Seerr servers
+     * advertise `Keep-Alive: timeout=5` and hang up an idle connection after it; OkHttp's default
+     * pool holds one for five minutes. Retiring ours first means a request is never written onto a
+     * connection the server is about to close — which OkHttp does not recover from, because its
+     * retry looks for another route and a single server offers none (#254).
+     */
     private fun OkHttpClient.Builder.finish(debugLevel: HttpLoggingInterceptor.Level): OkHttpClient =
         addNetworkInterceptor(loggingInterceptor(debugLevel))
+            .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
@@ -186,6 +195,8 @@ class SeerrApiFactory(
         const val API_KEY_HEADER = "X-Api-Key"
         const val CONTENT_TYPE = "application/json; charset=UTF-8"
         const val TIMEOUT_SECONDS = 15L
+        const val MAX_IDLE_CONNECTIONS = 5
+        const val IDLE_TIMEOUT_SECONDS = 3L
         val REDACTED_HEADERS = listOf(API_KEY_HEADER, "Authorization", "Cookie", "Set-Cookie")
     }
 }
