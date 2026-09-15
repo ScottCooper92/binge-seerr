@@ -2,27 +2,23 @@ package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeSheetFooter
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
 import com.binge.designsystem.R as DesR
 
 /**
@@ -86,10 +82,15 @@ internal fun PermissionsEditorContent(
                 )
                 permissions.forEach { permission ->
                     val implied = permission !in selected && ManageablePermission.isGranted(permission, selected)
-                    PermissionRow(
+                    EditorSwitchRow(
                         label = stringResource(permission.labelRes()),
                         checked = permission in selected || implied,
                         enabled = !saving && !implied && permission !in locked,
+                        contentPadding =
+                            PaddingValues(
+                                horizontal = dimensionResource(DesR.dimen.padding_m),
+                                vertical = dimensionResource(DesR.dimen.padding_xs),
+                            ),
                         onToggle = { onToggle(permission) },
                     )
                 }
@@ -102,27 +103,5 @@ internal fun PermissionsEditorContent(
             loading = saving,
             modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
         )
-    }
-}
-
-@Composable
-private fun PermissionRow(
-    label: String,
-    checked: Boolean,
-    enabled: Boolean,
-    onToggle: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = { onToggle() })
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m), vertical = dimensionResource(DesR.dimen.padding_xs)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
