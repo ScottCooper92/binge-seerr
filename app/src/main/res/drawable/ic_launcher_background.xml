@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+        Binge's launcher background, in this app's own indigo rather than its greys: the same dark
+        radial gradient lit from the top left, tinted towards the #1C1B2E the TV banner already
+        uses, so the two apps read as a pair without this one pretending to be that one.
+    -->
+    <path android:pathData="M0,0 H108 V108 H0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="30"
+                android:centerY="24"
+                android:gradientRadius="113">
+                <item android:offset="0.0" android:color="#FF1C1B2E"/>
+                <item android:offset="0.6" android:color="#FF131226"/>
+                <item android:offset="1.0" android:color="#FF0B0A16"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Indigo bloom in the bottom-right corner, matching the amber one on Binge's at the same 5%. -->
+    <path
+        android:pathData="M136,92 A44,44,0,1,1,48,92 A44,44,0,1,1,136,92 Z"
+        android:fillColor="#0D6366F1"/>
+
+</vector>

@@ -198,6 +198,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.activity.compose)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.viewmodel.savedstate)
     implementation(libs.lifecycle.runtime.compose)
