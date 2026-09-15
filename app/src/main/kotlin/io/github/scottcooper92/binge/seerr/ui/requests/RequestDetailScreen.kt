@@ -17,8 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ReportProblem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -35,6 +33,9 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailOverlayTopBar
+import com.binge.designsystem.component.ExpressiveIconButton
+import com.binge.designsystem.component.IconButtonTone
+import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -202,14 +203,24 @@ internal fun RequestDetailPage(
         }
         DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
             onOpen?.let {
-                IconButton(onClick = it) {
-                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = stringResource(R.string.request_open_elsewhere))
-                }
+                ExpressiveIconButton(
+                    onClick = it,
+                    icon = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = stringResource(R.string.request_open_elsewhere),
+                    tint = BingeTheme.colors.onScrim,
+                    tone = IconButtonTone.Glass,
+                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                )
             }
             onReport?.let {
-                IconButton(onClick = it) {
-                    Icon(Icons.Filled.ReportProblem, contentDescription = stringResource(R.string.issue_report_title))
-                }
+                ExpressiveIconButton(
+                    onClick = it,
+                    icon = Icons.Filled.ReportProblem,
+                    contentDescription = stringResource(R.string.issue_report_title),
+                    tint = BingeTheme.colors.onScrim,
+                    tone = IconButtonTone.Glass,
+                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                )
             }
         }
     }
