@@ -95,6 +95,9 @@ private fun Ready(
     var reporting by rememberSaveable { mutableStateOf(false) }
     var moderating by rememberSaveable { mutableStateOf(false) }
     var managing by rememberSaveable { mutableStateOf(false) }
+    // Which instance the status sheet is marking, keyed by is4k because that is what tells the
+    // two apart — and because a Boolean survives process death where MediaInstance would not.
+    var marking by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).windowInsetsPadding(pageEdgeInsets())) {
         DetailHero(
@@ -135,7 +138,23 @@ private fun Ready(
     state.edit?.let { edit -> EditRequestSheet(item = item, edit = edit, actions = actions.edit) }
     val media = detail.media
     if (managing && media != null) {
-        ManageMediaSheet(media = media, actions = actions.media, onDismiss = { managing = false })
+        ManageMediaSheet(
+            media = media,
+            actions = actions.media,
+            onMarkStatus = { is4k -> marking = is4k },
+            onDismiss = { managing = false },
+        )
+    }
+    if (media != null) {
+        marking?.let { is4k ->
+            media.instances.firstOrNull { it.is4k == is4k }?.let { instance ->
+                MediaStatusSheet(
+                    instance = instance,
+                    onSelect = { status -> actions.media.onSetStatus(media.mediaId, status, is4k) },
+                    onDismiss = { marking = null },
+                )
+            }
+        }
     }
     if (reporting) {
         ReportIssueSheet(
