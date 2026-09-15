@@ -121,7 +121,8 @@
     <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
     <string name="request_state_queued">Queued</string>
     <string name="media_type_movie">Movie</string>
-    <string name="request_open_title">Open the title</string>
+    <string name="request_open_binge">Open in Binge</string>
+    <string name="request_open_elsewhere">Open elsewhere</string>
     <string name="request_open_web">Open on the server</string>
     <string name="request_open_media_server">Open in media server</string>
     <string name="request_requested_by">Requested by</string>
@@ -157,6 +158,8 @@
     <string name="request_retried">Request retried</string>
     <string name="request_edited">Request updated</string>
     <string name="request_edit_title">Edit request</string>
+    <string name="request_primary_review">Review request</string>
+    <string name="request_primary_manage">Manage</string>
     <string name="request_edit_save">Save changes</string>
     <string name="media_manage">Manage media</string>
     <string name="media_instance_standard">Standard</string>
@@ -166,7 +169,7 @@
     <string name="media_open_sonarr">Open in Sonarr</string>
     <string name="media_watch_title">Watch data</string>
     <string name="media_watch_plays">%1$d plays · %2$d in the last 7 days · %3$d in the last 30 days</string>
-    <string name="media_watch_users">Watched by %1$s</string>
+    <string name="media_watch_users_label">Watched by</string>
     <string name="media_clear_data">Clear data</string>
     <string name="media_clear_confirm_title">Clear media data?</string>
     <string name="media_clear_confirm_message">The server forgets this title: its status and every request for it. Anyone can request it again.</string>

@@ -2,7 +2,6 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,29 +14,32 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.InfoRowEntry
 import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.openInBrowser
-import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
 import com.binge.designsystem.R as DesR
 
-/** The request's own state, what it is, and where the title can be opened. */
+/**
+ * The request's own state, and what the title is about.
+ *
+ * [initiallyOverflowing] seeds the overview's toggle for a frame: the component only learns it
+ * overflowed from `onTextLayout`, which fires after the screenshot lane has captured.
+ */
 @Composable
 internal fun RequestHeadline(
     detail: RequestDetail,
     modifier: Modifier = Modifier,
+    initiallyOverflowing: Boolean = false,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         val chip = detail.item.statusChip()
@@ -48,14 +50,7 @@ internal fun RequestHeadline(
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
             if (detail.item.is4k) Text(stringResource(R.string.settings_service_4k), style = MaterialTheme.typography.labelMedium)
         }
-        detail.overview?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        OpenLinks(detail)
+        detail.overview?.let { ExpandableOverview(text = it, initiallyOverflowing = initiallyOverflowing) }
     }
 }
 
@@ -82,8 +77,44 @@ internal fun RequestFacts(detail: RequestDetail) {
                         it.joinToString(", "),
                     )
                 },
-            ),
+            ) + watchRows(detail),
     )
+}
+
+/**
+ * What the server's own watch tracking says. A read-out rather than an action, so it belongs beside
+ * Requested by and Updated rather than inside a sheet of things that change something.
+ *
+ * The instance is named only where the server holds two, since "Watch data · 4K" on a title with one
+ * copy says nothing the row above it has not.
+ */
+@Composable
+private fun watchRows(detail: RequestDetail): List<InfoRowEntry> {
+    val instances =
+        detail.media
+            ?.instances
+            .orEmpty()
+            .filter { it.watch != null }
+    val separator = stringResource(R.string.hub_meta_separator)
+    val named = instances.size > 1
+    return instances.flatMap { instance ->
+        val watch = instance.watch ?: return@flatMap emptyList()
+        val suffix =
+            if (named) {
+                separator + stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard)
+            } else {
+                ""
+            }
+        listOfNotNull(
+            InfoRowEntry(
+                stringResource(R.string.media_watch_title) + suffix,
+                stringResource(R.string.media_watch_plays, watch.playCount, watch.playCount7Days, watch.playCount30Days),
+            ),
+            watch.users.takeIf { it.isNotEmpty() }?.let {
+                InfoRowEntry(stringResource(R.string.media_watch_users_label) + suffix, it.joinToString(separator))
+            },
+        )
+    }
 }
 
 /** The seasons the request asked for, and what is downloading now; each section is dropped when empty. */
@@ -96,43 +127,6 @@ internal fun RequestSections(detail: RequestDetail) {
     if (detail.downloads.isNotEmpty()) {
         SectionHeader(title = stringResource(R.string.request_downloads))
         detail.downloads.forEach { download -> DownloadRow(download) }
-    }
-}
-
-/** The title elsewhere: the server's web client, the media server, and Radarr or Sonarr, as the server knows them. */
-@Composable
-internal fun OpenLinks(detail: RequestDetail) {
-    val context = LocalContext.current
-    val links =
-        listOfNotNull(
-            R.string.request_open_title to null,
-            detail.mediaServerUrl?.let { R.string.request_open_media_server to it },
-            detail.serviceUrl?.let {
-                (
-                    if (detail.item.mediaType ==
-                        RequestMediaType.Tv
-                    ) {
-                        R.string.media_open_sonarr
-                    } else {
-                        R.string.media_open_radarr
-                    }
-                ) to
-                    it
-            },
-        )
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        links.forEach { (labelRes, url) ->
-            BingeOutlinedButton(
-                label = stringResource(labelRes),
-                // The title itself hands off to Binge where it is installed; the rest are the server's own links.
-                onClick = {
-                    url?.let(context::openInBrowser) ?: context.openTitle(detail.item.mediaType, detail.item.tmdbId, detail.webUrl)
-                },
-            )
-        }
     }
 }
 

@@ -85,3 +85,12 @@ fun RequestItem.actions(scope: ModerationScope): RequestActions {
         canBlock = scope.hasBlocklist && scope.permissions.canManageBlocklist && mediaStatus != SeerrMediaStatusCode.Blocklisted,
     )
 }
+
+internal fun MediaStatusChoice.labelRes(): Int =
+    when (this) {
+        MediaStatusChoice.Available -> R.string.media_state_available
+        MediaStatusChoice.PartiallyAvailable -> R.string.media_state_partially_available
+        MediaStatusChoice.Processing -> R.string.media_state_processing
+        MediaStatusChoice.Pending -> R.string.request_state_pending
+        MediaStatusChoice.Unknown -> R.string.media_state_unknown
+    }

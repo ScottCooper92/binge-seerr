@@ -40,16 +40,24 @@ object BingeHandOff {
     ): TitleTarget = if (bingeAnswers) TitleTarget.Binge(titleUri(mediaType, tmdbId)) else TitleTarget.Web(webUrl)
 }
 
+/** Whether Binge is installed and would answer the title hand-off link, per the manifest's `queries`. */
+fun Context.bingeAnswersTitleLink(
+    mediaType: RequestMediaType,
+    tmdbId: Int,
+): Boolean = Intent(Intent.ACTION_VIEW, BingeHandOff.titleUri(mediaType, tmdbId).toUri()).resolveActivity(packageManager) != null
+
 /** Opens a title in Binge where it is installed and answers, else at [webUrl] on the server. */
 fun Context.openTitle(
     mediaType: RequestMediaType,
     tmdbId: Int,
     webUrl: String,
 ) {
-    val intent = Intent(Intent.ACTION_VIEW, BingeHandOff.titleUri(mediaType, tmdbId).toUri())
-    val answers = intent.resolveActivity(packageManager) != null
+    val answers = bingeAnswersTitleLink(mediaType, tmdbId)
     when (val target = BingeHandOff.target(answers, mediaType, tmdbId, webUrl)) {
-        is TitleTarget.Binge -> runCatching { startActivity(intent) }.onFailure { openInBrowser(webUrl) }
+        is TitleTarget.Binge ->
+            runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, target.uri.toUri()))
+            }.onFailure { openInBrowser(webUrl) }
         is TitleTarget.Web -> openInBrowser(target.url)
     }
 }
