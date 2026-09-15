@@ -14,7 +14,6 @@
     <ID>TooManyFunctions:IssueDetailViewModel.kt$IssueDetailViewModel : ViewModel</ID>
     <ID>TooManyFunctions:RequestEditor.kt$RequestEditor</ID>
     <ID>TooManyFunctions:SeerrConnection.kt$SeerrConnection</ID>
-    <ID>TooManyFunctions:SeerrRequestService.kt$SeerrRequestService : RequestServiceCoroutineImplBase</ID>
     <ID>UnusedPrivateMember:UserAdmission.kt$private fun SeerrJellyfinUserDto.toCandidate(): ImportCandidate</ID>
     <ID>UnusedPrivateMember:UserAdmission.kt$private fun SeerrPlexUserDto.toCandidate(): ImportCandidate</ID>
   </CurrentIssues>
