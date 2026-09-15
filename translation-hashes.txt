@@ -149,6 +149,7 @@ app:media_open_radarr  e669d99f5781
 app:media_open_sonarr  5055bbebb9bf
 app:media_state_available  e674447337e8
 app:media_state_blocklisted  18f2a0947f9d
+app:media_state_deleted  b48ff39c2e0f
 app:media_state_partially_available  274cb11aa892
 app:media_state_processing  37b345555d7e
 app:media_state_unknown  b764cdc0eab7

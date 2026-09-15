@@ -1,8 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.state
 
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class RequestStateChipTest {
@@ -23,5 +25,18 @@ class RequestStateChipTest {
         assertEquals(RequestStateTone.Success, SeerrMediaStatusCode.PartiallyAvailable.tone())
         assertEquals(RequestStateTone.Success, SeerrMediaStatusCode.Available.tone())
         assertEquals(RequestStateTone.Blocked, SeerrMediaStatusCode.Blocklisted.tone())
+    }
+
+    @Test
+    fun `a deleted title reads as deleted and blocked, not as pending`() {
+        assertEquals(RequestStateTone.Blocked, SeerrMediaStatusCode.Deleted.tone())
+        assertEquals(R.string.media_state_deleted, SeerrMediaStatusCode.Deleted.labelRes())
+        assertNotEquals(R.string.request_state_pending, SeerrMediaStatusCode.Deleted.labelRes())
+    }
+
+    @Test
+    fun `a media status past the ones we model still falls back to pending`() {
+        assertEquals(RequestStateTone.Pending, SeerrMediaStatusCode(99).tone())
+        assertEquals(R.string.request_state_pending, SeerrMediaStatusCode(99).labelRes())
     }
 }

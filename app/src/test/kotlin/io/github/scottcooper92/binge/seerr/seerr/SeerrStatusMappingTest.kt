@@ -81,6 +81,11 @@ class SeerrStatusMappingTest {
     }
 
     @Test
+    fun `a deleted title is offered to the host as not requested`() {
+        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, SeerrMediaStatusCode.Deleted.toAvailability())
+    }
+
+    @Test
     fun `unknown statuses read as the safe defaults`() {
         assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, SeerrMediaStatusCode(99).toAvailability())
         assertEquals(ApprovalState.APPROVAL_STATE_PENDING, SeerrRequestStatusCode(99).toApprovalState())
