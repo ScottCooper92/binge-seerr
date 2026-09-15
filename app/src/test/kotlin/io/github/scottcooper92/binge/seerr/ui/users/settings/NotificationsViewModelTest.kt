@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -97,8 +98,9 @@ class NotificationsViewModelTest {
                     .update(NotificationAgent.Discord) { it.copy(enabled = true, types = NotificationType.MediaApproved.bit) }
                     .update(NotificationAgent.Email) { it.copy(types = it.types or NotificationType.IssueComment.bit) }
             }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
             assertEquals("true", sent.getValue("discordEnabled").jsonPrimitive.content)

@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -72,8 +73,9 @@ class DiscoverSliderViewModelTest {
             val vm = viewModel(id = null)
             assertFalse(vm.awaitReady().draft.valid)
             vm.edit { it.copy(type = SliderType.Network, title = " HBO ", data = "49") }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/discover/add")).jsonObject
             assertEquals("18", sent.getValue("type").jsonPrimitive.content)
@@ -91,8 +93,9 @@ class DiscoverSliderViewModelTest {
             assertEquals("10051,9882", draft.data)
 
             vm.edit { it.copy(title = "Heists", data = "10051") }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             assertEquals(
                 "10051",
                 Json
@@ -121,8 +124,9 @@ class DiscoverSliderViewModelTest {
         runTest {
             val vm = viewModel(id = 3)
             vm.awaitReady()
+            val deleted = awaitEvent(vm.events)
             vm.delete()
-            assertEquals(EditorEvent.Deleted, vm.events.first())
+            assertEquals(EditorEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/discover/3"))
         }
 }

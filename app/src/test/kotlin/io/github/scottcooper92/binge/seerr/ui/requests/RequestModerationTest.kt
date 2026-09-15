@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -90,9 +91,10 @@ class RequestModerationTest {
         runTest {
             val sut = moderation()
 
+            val approved = awaitEvent(sut.events)
             sut.approve(11)
 
-            assertEquals(ModerationEvent.Approved, sut.events.first())
+            assertEquals(ModerationEvent.Approved, approved.await())
             assertEquals("/api/v1/request/11/approve", received.last { it.method == "POST" }.url.encodedPath)
             assertEquals(1, moderated)
             assertTrue(sut.actingIds.value.isEmpty())
@@ -103,9 +105,10 @@ class RequestModerationTest {
         runTest {
             val sut = moderation()
 
+            val declinedAndBlocked = awaitEvent(sut.events)
             sut.decline(item, blockTitle = true)
 
-            assertEquals(ModerationEvent.DeclinedAndBlocked, sut.events.first())
+            assertEquals(ModerationEvent.DeclinedAndBlocked, declinedAndBlocked.await())
             val posts = received.filter { it.method == "POST" }.map { it.url.encodedPath }
             assertEquals(listOf("/api/v1/request/11/decline", "/api/v1/blacklist"), posts.takeLast(2))
             val block =
@@ -124,14 +127,16 @@ class RequestModerationTest {
             codes["/api/v1/blacklist"] = 500
             val sut = moderation()
 
+            val removedButBlockFailed = awaitEvent(sut.events)
             sut.remove(item, blockTitle = true)
-            assertEquals(ModerationEvent.RemovedButBlockFailed, sut.events.first())
+            assertEquals(ModerationEvent.RemovedButBlockFailed, removedButBlockFailed.await())
             assertEquals("DELETE", received.first { it.url.encodedPath == "/api/v1/request/11" }.method)
             assertEquals(1, moderated)
 
             codes["/api/v1/request/12/approve"] = 401
+            val failed = awaitEvent(sut.events)
             sut.approve(12)
-            assertEquals(ModerationEvent.Failed(SeerrError.Unauthorized), sut.events.first())
+            assertEquals(ModerationEvent.Failed(SeerrError.Unauthorized), failed.await())
             assertEquals(1, moderated)
         }
 

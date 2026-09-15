@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -135,8 +136,9 @@ class OverrideRuleViewModelTest {
             vm.toggleUser(3)
             vm.toggleTag(2)
             vm.edit { it.copy(languages = "en, de", genres = " ", keywords = "abc") }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/overrideRule")).jsonObject
             assertEquals("1", sent.getValue("radarrServiceId").jsonPrimitive.content)
@@ -155,8 +157,9 @@ class OverrideRuleViewModelTest {
             seerr.serve("DELETE /api/v1/overrideRule/11")
             val vm = viewModel(id = 11)
             vm.awaitReady()
+            val deleted = awaitEvent(vm.events)
             vm.delete()
-            assertEquals(EditorEvent.Deleted, vm.events.first())
+            assertEquals(EditorEvent.Deleted, deleted.await())
         }
 
     @Test
@@ -168,12 +171,14 @@ class OverrideRuleViewModelTest {
             vm.awaitReady()
             vm.selectInstance(vm.extras.first { it.instances.isNotEmpty() }.instances[0])
             vm.extras.first { it.choices != null }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             assertEquals(12, vm.awaitReady().saved.id)
 
+            val deleted = awaitEvent(vm.events)
             vm.delete()
-            assertEquals(EditorEvent.Deleted, vm.events.first())
+            assertEquals(EditorEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/overrideRule/12"))
         }
 }

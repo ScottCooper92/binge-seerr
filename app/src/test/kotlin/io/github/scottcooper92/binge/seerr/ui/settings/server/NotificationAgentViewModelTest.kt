@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -104,8 +105,9 @@ class NotificationAgentViewModelTest {
             vm.setOption(AgentOption.EmailSecure, "false")
             vm.setOption(AgentOption.EmailAuthUser, " mailer ")
             vm.toggleType(NotificationType.MediaAvailable.bit)
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email")).jsonObject
             assertEquals("true", sent.getValue("enabled").jsonPrimitive.content)
@@ -137,8 +139,9 @@ class NotificationAgentViewModelTest {
 
             vm.setEnabled(false)
             assertTrue(vm.awaitReady().draft.valid)
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email")).jsonObject
             assertEquals("false", sent.getValue("enabled").jsonPrimitive.content)
             assertEquals("6", sent.getValue("types").jsonPrimitive.content)
@@ -167,8 +170,9 @@ class NotificationAgentViewModelTest {
             assertEquals("5", vm.awaitReady().draft.option(AgentOption.NtfyPriority))
 
             vm.setOption(AgentOption.NtfyPriority, "")
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/ntfy")).jsonObject
             assertEquals(JsonNull, sent.getValue("options").jsonObject.getValue("priority"))
@@ -209,8 +213,9 @@ class NotificationAgentViewModelTest {
             assertEquals(EmailEncryption.StartTlsAlways, EmailEncryption.of(vm.awaitReady().draft))
 
             vm.setEncryption(EmailEncryption.None)
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val options =
                 Json
@@ -229,8 +234,9 @@ class NotificationAgentViewModelTest {
             val vm = viewModel(ServerAgent.Email)
             vm.awaitReady()
             vm.setOption(AgentOption.EmailSenderName, "Test sender")
+            val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(R.string.server_settings_agent_tested), vm.events.first())
+            assertEquals(EditorEvent.Notice(R.string.server_settings_agent_tested), notice.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email/test")).jsonObject
             assertEquals(
                 "Test sender",
@@ -243,8 +249,9 @@ class NotificationAgentViewModelTest {
             assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
 
             seerr.serve("POST /api/v1/settings/notifications/email/test", """{"message":"boom"}""", code = 500)
+            val failed = awaitEvent(vm.events)
             vm.test()
-            assertTrue(vm.events.first() is EditorEvent.Failed)
+            assertTrue(failed.await() is EditorEvent.Failed)
             // `test()` reports the outcome before it clears `testing`, so await the flag rather
             // than sampling it the moment the event lands.
             assertFalse(vm.extras.first { !it.testing }.testing)
@@ -290,8 +297,9 @@ class NotificationAgentViewModelTest {
             assertEquals(template, vm.awaitReady().draft.option(AgentOption.WebhookJsonPayload))
 
             vm.setOption(AgentOption.WebhookJsonPayload, "{\"event\": \"{{event}}\"}")
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/webhook")).jsonObject
             val payload =
                 sent

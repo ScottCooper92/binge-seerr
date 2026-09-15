@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -116,8 +117,9 @@ class GeneralSettingsViewModelTest {
 
             vm.edit { it.copy(tvQuotaLimit = "3") }
             seerr.serve("GET /api/v1/user/8/settings/main", """{"username":"Ana B","tvQuotaLimit":3,"tvQuotaDays":7}""")
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
             assertEquals("Ana B", sent.getValue("username").jsonPrimitive.content)

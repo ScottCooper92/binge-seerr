@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -119,8 +120,9 @@ class ServerGeneralViewModelTest {
             seerr.serve("POST /api/v1/settings/main", LINEAGE_MAIN.replace("\"Home\"", "\"Cinema\""))
 
             vm.edit { it.copy(applicationTitle = "Cinema", hideAvailable = false) }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertEquals("Cinema", sent.getValue("applicationTitle").jsonPrimitive.content)
@@ -156,8 +158,9 @@ class ServerGeneralViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
+            val notice = awaitEvent(vm.events)
             vm.regenerateApiKey()
-            assertTrue(vm.events.first() is EditorEvent.Notice)
+            assertTrue(notice.await() is EditorEvent.Notice)
 
             assertEquals(
                 "new-key",

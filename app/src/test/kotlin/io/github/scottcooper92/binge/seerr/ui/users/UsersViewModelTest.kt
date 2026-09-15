@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -169,9 +170,10 @@ class UsersViewModelTest {
                 vm.awaitReady { it.edit?.selected?.size == 3 }.edit?.selected,
             )
 
+            val permissionsSaved = awaitEvent(vm.events)
             vm.applyBulkEdit()
 
-            assertEquals(UsersEvent.PermissionsSaved(1), vm.events.first())
+            assertEquals(UsersEvent.PermissionsSaved(1), permissionsSaved.await())
             val put =
                 received
                     .single { it.method == "PUT" }
@@ -233,9 +235,10 @@ class UsersViewModelTest {
             vm.togglePermission(ManageablePermission.CreateIssues)
             vm.awaitReady { it.edit?.selected?.size == 3 }
 
+            val permissionsSaved = awaitEvent(vm.events)
             vm.applyBulkEdit()
 
-            assertEquals(UsersEvent.PermissionsSaved(2), vm.events.first())
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
             val puts = received.filter { it.method == "PUT" }
             assertEquals(2, puts.size)
 

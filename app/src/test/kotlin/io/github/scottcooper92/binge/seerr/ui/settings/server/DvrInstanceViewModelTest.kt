@@ -7,8 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.async
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -104,9 +103,10 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Radarr, id = null)
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", useSsl = true, apiKey = "r-key", baseUrl = "/radarr") }
+            val notice = awaitEvent(vm.events)
             vm.test()
 
-            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), notice.await())
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/radarr/test")).jsonObject
             assertEquals("radarr.local", sent.getValue("hostname").jsonPrimitive.content)
             assertEquals("7878", sent.getValue("port").jsonPrimitive.content)
@@ -135,13 +135,12 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Radarr, id = null)
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
+            val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), notice.await())
             vm.extras.first { it.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
-            // `events` has no replay, so subscribe before saving rather than after: subscribing
-            // afterwards can miss the save's own event, or catch `test()`'s notice arriving late.
-            val saved = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first { it is EditorEvent.Saved } }
+            val saved = awaitEvent(vm.events) { it is EditorEvent.Saved }
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())
 
@@ -182,9 +181,7 @@ class DvrInstanceViewModelTest {
             assertEquals(1, seerr.count("POST", "/api/v1/settings/sonarr/test"))
 
             vm.edit { it.copy(seasonFolders = false) }
-            // `events` has no replay, so subscribe before saving rather than after: subscribing
-            // afterwards can miss the save's own event, or catch `test()`'s notice arriving late.
-            val saved = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first { it is EditorEvent.Saved } }
+            val saved = awaitEvent(vm.events) { it is EditorEvent.Saved }
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
@@ -204,11 +201,13 @@ class DvrInstanceViewModelTest {
             assertEquals("all", vm.awaitReady().draft.monitorNewItems)
 
             vm.edit { it.copy(name = "Main", host = "sonarr.local", apiKey = "s-key") }
+            val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), notice.await())
             vm.extras.first { it.choices != null }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/sonarr")).jsonObject
             assertEquals("all", sent.getValue("monitorNewItems").jsonPrimitive.content)
@@ -231,8 +230,9 @@ class DvrInstanceViewModelTest {
 
             vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
             assertTrue(vm.awaitReady().draft.valid)
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("HD", sent.getValue("activeProfileName").jsonPrimitive.content)
@@ -257,8 +257,9 @@ class DvrInstanceViewModelTest {
             assertFalse(ready.dirty)
 
             vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("5", sent.getValue("activeProfileId").jsonPrimitive.content)
             assertEquals("/tv", sent.getValue("activeDirectory").jsonPrimitive.content)
@@ -270,8 +271,9 @@ class DvrInstanceViewModelTest {
             seerr.serve("DELETE /api/v1/settings/sonarr/3")
             val vm = viewModel(ServiceType.Sonarr, id = 3)
             vm.awaitReady()
+            val deleted = awaitEvent(vm.events)
             vm.delete()
-            assertEquals(EditorEvent.Deleted, vm.events.first())
+            assertEquals(EditorEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/sonarr/3"))
         }
 
@@ -286,15 +288,18 @@ class DvrInstanceViewModelTest {
             val vm = viewModel(ServiceType.Radarr, id = null)
             vm.awaitReady()
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
+            val notice = awaitEvent(vm.events)
             vm.test()
-            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), vm.events.first())
+            assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), notice.await())
             vm.extras.first { it.choices != null }
+            val saved = awaitEvent(vm.events)
             vm.save()
-            assertEquals(EditorEvent.Saved, vm.events.first())
+            assertEquals(EditorEvent.Saved, saved.await())
             assertEquals(7, vm.awaitReady().saved.id)
 
+            val deleted = awaitEvent(vm.events)
             vm.delete()
-            assertEquals(EditorEvent.Deleted, vm.events.first())
+            assertEquals(EditorEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/radarr/7"))
         }
 }

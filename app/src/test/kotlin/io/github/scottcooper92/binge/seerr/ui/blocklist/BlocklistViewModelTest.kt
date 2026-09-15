@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -111,8 +112,9 @@ class BlocklistViewModelTest {
             val item = vm.items.asSnapshot().single()
             val probes = received("GET", "/api/v1/blocklist").size
 
+            val removed = awaitEvent(vm.events)
             vm.remove(item)
-            assertEquals(BlocklistEvent.Removed, vm.events.first())
+            assertEquals(BlocklistEvent.Removed, removed.await())
             assertEquals(1, received("DELETE", "/api/v1/blocklist/100").size)
             vm.awaitReady { it.actingTmdbIds.isEmpty() }
             seerr.awaitCount("GET", "/api/v1/blocklist", moreThan = probes)
@@ -123,8 +125,9 @@ class BlocklistViewModelTest {
         runTest {
             val vm = viewModel()
             vm.awaitReady { it.canBlockCollections }
+            val collectionChanged = awaitEvent(vm.events)
             vm.setCollectionBlocked(5, blocked = true)
-            assertEquals(BlocklistEvent.CollectionChanged(blocked = true), vm.events.first())
+            assertEquals(BlocklistEvent.CollectionChanged(blocked = true), collectionChanged.await())
             assertEquals(1, received("POST", "/api/v1/blocklist/collection/5").size)
 
             seerr.viewer(id = 1, permissions = ADMIN, version = "3.1.0")
