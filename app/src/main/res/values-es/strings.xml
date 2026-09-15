@@ -844,6 +844,7 @@
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
     <string name="tv_hub_stat_open_issues">Incidencias abiertas</string>
     <string name="tv_hub_reconnect">Reconectar</string>
+    <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
     <string name="tv_list_load_failed">No se pudo cargar la lista.</string>
     <string name="tv_list_load_more_failed">No se pudo cargar más. Pulsa OK para reintentar.</string>
