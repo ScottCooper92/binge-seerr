@@ -77,7 +77,12 @@ private const val HTTP_CONFLICT = 409
  * (its lineage and version, `SeerrServerProfile`), so the host offers exactly what this user may
  * do on this server. Every failure leaves as a gRPC status code (`SeerrErrors.kt`), and every
  * gated rpc re-checks its capability rather than trusting the host to have honoured the handshake.
+ *
+ * One function per rpc, which is why the function count is suppressed rather than reduced: REQUEST
+ * v1 decides this surface, and a companion that implements fewer of them is a companion that does
+ * not implement the contract.
  */
+@Suppress("TooManyFunctions")
 class SeerrRequestService(
     private val connection: SeerrConnection,
     private val versionName: String,
