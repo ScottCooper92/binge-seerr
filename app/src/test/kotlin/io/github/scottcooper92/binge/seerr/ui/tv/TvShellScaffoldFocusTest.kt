@@ -37,7 +37,7 @@ private const val PAST_SETTLE_MILLIS = CONTENT_SETTLE_MILLIS + 100L
  * Every destination is a full-bleed focusable box, the one property of a board the shell reacts to.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w960dp-h540dp-television-xhdpi", application = android.app.Application::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvShellScaffoldFocusTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()

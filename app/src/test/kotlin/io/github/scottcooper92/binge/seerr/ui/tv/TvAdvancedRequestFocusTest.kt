@@ -31,7 +31,7 @@ import org.robolectric.annotation.Config
  * committing exactly the row it lands on.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w960dp-h540dp-television-xhdpi", application = android.app.Application::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvAdvancedRequestFocusTest {
     @get:Rule
     val composeTestRule = createComposeRule()

@@ -6,7 +6,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * That the meta separator keeps the spaces it is declared with (#247).
@@ -18,7 +17,6 @@ import org.robolectric.annotation.Config
  * silently to a surface no baseline covers.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class MetaSeparatorTest {
     @Test
     fun `the meta separator survives aapt with a space either side`() {

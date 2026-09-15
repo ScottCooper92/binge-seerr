@@ -18,11 +18,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /** The issues browser as swipeable filter pages: a page composed before it is selected shows its own filter's rows. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class IssuesPagerTest {
     @get:Rule
     val composeTestRule = createComposeRule()
