@@ -71,6 +71,22 @@ annotation class SeerrScreenPreviews
 @Preview(name = "phone", device = "spec:width=411dp,height=891dp,orientation=portrait", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)
 annotation class SeerrScreenStatePreview
 
+/**
+ * One cell on a **wide** window, for a screen rendered inside a pane rather than across the window.
+ *
+ * The window is what a resource qualifier resolves against, so this is the only cell where a pane's
+ * own width and the qualifier's answer disagree — which is the bug it exists to hold (#285). The
+ * frame constrains the composable to the pane's width itself; this only supplies the window.
+ */
+@PreviewWrapper(ScreenshotThemeWrapper::class)
+@Preview(
+    name = "pane",
+    device = "spec:width=840dp,height=1180dp,orientation=portrait",
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+annotation class SeerrListPanePreview
+
 /** A component against both themes, at the size its content asks for. */
 @PreviewWrapper(ScreenshotThemeWrapper::class)
 @Preview(name = "dark", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)

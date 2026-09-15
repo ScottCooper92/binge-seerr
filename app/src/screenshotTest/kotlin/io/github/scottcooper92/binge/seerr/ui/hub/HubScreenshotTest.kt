@@ -1,7 +1,12 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.SeerrListPanePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 
@@ -49,6 +54,27 @@ class HubScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun readyIdle() = HubScreen(state = previewReady(downloading = emptyList()), actions = previewActions())
+
+    /**
+     * The hub as the list pane: a wide window, but the hub itself only as wide as the pane it sits in.
+     *
+     * The other wide frames render it across the whole window, where `screen_content_inset`'s 32dp
+     * looks right — so none of them could see #285, where that same 32dp was applied across a
+     * phone-width pane. The width is pinned here rather than taken from a scaffold because the
+     * scaffold is the scene's, not this composable's.
+     */
+    @PreviewTest
+    @SeerrListPanePreview
+    @Composable
+    fun readyAsListPane() =
+        Box(modifier = Modifier.width(360.dp)) {
+            HubScreen(
+                state = previewReady(),
+                actions = previewActions(),
+                selectedSection = HubSection.Requests,
+                asListPane = true,
+            )
+        }
 
     /** Server gone: the retry route out. */
     @PreviewTest
