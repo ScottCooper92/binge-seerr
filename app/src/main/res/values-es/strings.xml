@@ -105,7 +105,7 @@
     <string name="requests_load_more_failed">No se pudo cargar más. Toca para reintentar.</string>
     <string name="request_state_queued">En cola</string>
     <string name="media_type_movie">Película</string>
-    <string name="request_open_title">Abrir el título</string>
+    <string name="request_open_binge">Abrir en Binge</string>
     <string name="request_open_elsewhere">Abrir en otro lugar</string>
     <string name="request_open_web">Abrir en el servidor</string>
     <string name="request_open_media_server">Abrir en el servidor multimedia</string>

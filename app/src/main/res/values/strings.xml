@@ -121,7 +121,7 @@
     <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
     <string name="request_state_queued">Queued</string>
     <string name="media_type_movie">Movie</string>
-    <string name="request_open_title">Open the title</string>
+    <string name="request_open_binge">Open in Binge</string>
     <string name="request_open_elsewhere">Open elsewhere</string>
     <string name="request_open_web">Open on the server</string>
     <string name="request_open_media_server">Open in media server</string>

@@ -212,9 +212,9 @@ app:request_edit_title  c5a6b24b7a28
 app:request_edited  933d05a95a03
 app:request_episodes  b3135dd43c57
 app:request_modified_by  4e2b82eba8f4
+app:request_open_binge  2552918b1ba6
 app:request_open_elsewhere  72e56d08d9d1
 app:request_open_media_server  831a97c87049
-app:request_open_title  7c1a6ea3e5f5
 app:request_open_web  04596d372701
 app:request_primary_manage  5a23444828db
 app:request_primary_review  dcea8abbdff0
