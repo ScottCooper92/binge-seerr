@@ -178,11 +178,15 @@ class MediaServerViewModel
             if (scanPoll?.isActive == true) return
             scanPoll =
                 viewModelScope.launch {
-                    while (true) {
+                    var running = true
+                    while (running) {
                         delay(scanPollMillis)
-                        val latest = runCatching { connection.api().scanStatus(kind.apiSegment).toScan() }.getOrNull() ?: continue
-                        extrasState.update { it.copy(scan = latest) }
-                        if (!latest.running) break
+                        // A failed poll is not an answer: the last state stands and the next tick asks again.
+                        val latest = runCatching { connection.api().scanStatus(kind.apiSegment).toScan() }.getOrNull()
+                        if (latest != null) {
+                            extrasState.update { it.copy(scan = latest) }
+                            running = latest.running
+                        }
                     }
                 }
         }
