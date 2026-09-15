@@ -75,7 +75,10 @@ class HubViewModel
                 downloadsPoller.downloading,
                 refreshedPendingCount,
             ) { server, health, overview, downloading, pending ->
-                if (server == null) {
+                // Not loaded is not ready: the overview carries the user's permissions, and every
+                // manage row is gated on one, so a Ready built on the placeholder is a hub with
+                // Requests alone — a settled-looking menu that then grows rows under a finger.
+                if (server == null || !overview.loaded) {
                     HubUiState.Loading
                 } else {
                     HubUiState.Ready(

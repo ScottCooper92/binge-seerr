@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -129,7 +130,7 @@ class HubViewModelTest {
             val vm = viewModel()
             vm.setScreenVisible(true)
 
-            val ready = vm.awaitReady { it.overview.loaded && it.downloading.isNotEmpty() && it.overview.blocklistCount != null }
+            val ready = vm.awaitReady { it.downloading.isNotEmpty() && it.overview.blocklistCount != null }
 
             assertEquals("Family", ready.server.title)
             assertEquals(SeerrVariant.Seerr, ready.server.variant)
@@ -157,7 +158,7 @@ class HubViewModelTest {
             healthyServer(permissions = REQUEST)
             val vm = viewModel()
 
-            val ready = vm.awaitReady { it.overview.loaded }
+            val ready = vm.awaitReady()
 
             assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
             assertNull(ready.overview.userCount)
@@ -193,7 +194,7 @@ class HubViewModelTest {
         runTest {
             val vm = viewModelAfterAuthMeAnswers(401)
 
-            val ready = vm.awaitReady { it.overview.loaded }
+            val ready = vm.awaitReady()
 
             assertEquals(ConnectionHealth.Unauthorized, ready.health)
             assertNull(ready.overview.account)
@@ -204,7 +205,7 @@ class HubViewModelTest {
         runTest {
             val vm = viewModelAfterAuthMeAnswers(503)
 
-            val ready = vm.awaitReady { it.overview.loaded }
+            val ready = vm.awaitReady()
 
             assertEquals(ConnectionHealth.CouldNotLoad, ready.health)
             assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
@@ -215,11 +216,30 @@ class HubViewModelTest {
         runTest {
             healthyServer()
             val vm = viewModel()
-            vm.awaitReady { it.overview.loaded }
+            vm.awaitReady()
 
             vm.disconnect()
 
             assertNull(connection.credentials.first { it == null })
+        }
+
+    /**
+     * The placeholder overview is fail-closed — `SeerrPermissions()` grants nothing — so a Ready
+     * built on it is not a security problem but a settled-looking hub with Requests alone, the one
+     * section with no visibility gate. Ready waits for the real one.
+     */
+    @Test
+    fun `a placeholder overview never reaches Ready`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel()
+            val states = mutableListOf<HubUiState>()
+            backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
+
+            val ready = vm.awaitReady()
+
+            assertTrue(ready.overview.loaded)
+            assertTrue(states.filterIsInstance<HubUiState.Ready>().all { it.overview.loaded })
         }
 
     /** The same instance survives a disconnect + reconnect: the nav host reuses it across the swap. */
@@ -228,7 +248,7 @@ class HubViewModelTest {
         runTest {
             healthyServer()
             val vm = viewModel()
-            vm.awaitReady { it.server.title == "Family" && it.overview.loaded }
+            vm.awaitReady { it.server.title == "Family" }
 
             vm.disconnect()
             connection.credentials.first { it == null }
@@ -238,7 +258,7 @@ class HubViewModelTest {
 
             val ready =
                 withContext(Dispatchers.Default.limitedParallelism(1)) {
-                    withTimeout(5.seconds) { vm.awaitReady { it.server.title == "Second Home" && it.overview.loaded } }
+                    withTimeout(5.seconds) { vm.awaitReady { it.server.title == "Second Home" } }
                 }
 
             assertEquals(0, ready.overview.movieRequestCount)
