@@ -40,7 +40,7 @@ private const val ISSUE = "issue 3"
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class, qualifiers = "w1000dp-h800dp")
+@Config(qualifiers = "w1000dp-h800dp")
 class DetailPaneStackTest {
     @get:Rule
     val rule = createComposeRule()
