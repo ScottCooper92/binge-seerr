@@ -135,6 +135,7 @@ private fun ColumnScope.TvHubDashboard(
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    overview.account?.let { TvHubAccount(account = it, quota = overview.quota) }
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_stat_tile_gap)),

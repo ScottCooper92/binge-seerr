@@ -5,6 +5,9 @@ import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewWrapper
 import com.binge.designsystem.preview.ScreenshotThemeWrapper
+import com.binge.designsystem.tv.preview.TV_PREVIEW_HEIGHT_DP
+import com.binge.designsystem.tv.preview.TV_PREVIEW_WIDTH_DP
+import com.binge.designsystem.tv.preview.TvScreenshotThemeOnBlackWrapper
 
 /**
  * The declared default locale, pinned on every frame.
@@ -92,3 +95,20 @@ annotation class SeerrListPanePreview
 @Preview(name = "dark", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)
 @Preview(name = "light", uiMode = UI_MODE_NIGHT_NO, locale = DEFAULT_LOCALE)
 annotation class SeerrComponentPreviews
+
+/**
+ * The television cell: one device class, one theme, and [DEFAULT_LOCALE] pinned.
+ *
+ * The design system's own `@TvPreviews` is the same panel and the same wrapper, but it declares no
+ * locale, because it lives in a library module that generates no pseudolocales. Taking it directly
+ * here would record every TV frame in **en-XA** for the reason the file header gives — so this
+ * mirrors its cell and adds the locale, exactly as the phone annotations above do.
+ */
+@PreviewWrapper(TvScreenshotThemeOnBlackWrapper::class)
+@Preview(
+    name = "tv",
+    device = "spec:width=${TV_PREVIEW_WIDTH_DP}dp,height=${TV_PREVIEW_HEIGHT_DP}dp,orientation=landscape",
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+annotation class SeerrTvPreviews

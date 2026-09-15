@@ -102,3 +102,26 @@ internal fun previewReady(
     overview: HubOverview = previewAdminOverview(),
     downloading: List<HubDownload> = previewDownloads(),
 ) = HubUiState.Ready(server = previewServer(), health = health, overview = overview, downloading = downloading)
+
+/**
+ * A user the server meters on both types, with movies spent.
+ *
+ * One exhausted bucket beside a partly-used one puts both halves of the "how many left?" answer in
+ * a single frame — including the exhausted copy, which no other fixture reaches.
+ */
+internal fun previewLimitedOverview() =
+    previewRestrictedOverview().copy(
+        account = HubAccount(id = 7, name = "Grace Hopper", isAdmin = false, avatarUrl = null),
+        quota =
+            HubQuota(
+                movie = HubQuotaBucket(limit = 5, remaining = 0, days = 7),
+                tv = HubQuotaBucket(limit = 8, remaining = 5, days = 7),
+            ),
+    )
+
+/** A user the server meters on neither type: both buckets absent, which is what unlimited is. */
+internal fun previewUnlimitedOverview() =
+    previewRestrictedOverview().copy(
+        account = HubAccount(id = 8, name = "Katherine Johnson", isAdmin = false, avatarUrl = null),
+        quota = HubQuota(movie = null, tv = null),
+    )
