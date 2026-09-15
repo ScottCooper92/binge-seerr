@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -248,6 +249,7 @@ internal fun EditorSwitchRow(
     label: String,
     checked: Boolean,
     enabled: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(),
     onToggle: (Boolean) -> Unit,
 ) {
     Row(
@@ -255,7 +257,9 @@ internal fun EditorSwitchRow(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onToggle),
+                .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onToggle)
+                // Inside the toggleable, so a row that insets itself keeps the whole inset tappable.
+                .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
