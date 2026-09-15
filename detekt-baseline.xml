@@ -2,10 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:UserSettingsViewModel.kt$localSignIn &amp;&amp; (isSelf || !target.isAdmin || permissions.isAdmin)</ID>
-    <ID>LongMethod:ServerSettingsEntries.kt$@Composable internal fun ServerSettingsPageEntry( page: ServerSettingsPage, onBack: () -&gt; Unit, onOpenPage: (ServerSettingsPage) -&gt; Unit, onOpenInstance: (ServiceType, Int?) -&gt; Unit, onOpenRule: (Int?) -&gt; Unit, onOpenAgent: (ServerAgent) -&gt; Unit, onOpenSlider: (Int?) -&gt; Unit, )</ID>
-    <ID>LoopWithTooManyJumpStatements:MediaServerViewModel.kt$MediaServerViewModel$while</ID>
-    <ID>ThrowsCount:PlexPinFlow.kt$PlexPinFlow$suspend fun awaitToken(pin: PlexPin): String</ID>
     <ID>TooManyFunctions:IssueDetailViewModel.kt$IssueDetailViewModel : ViewModel</ID>
     <ID>TooManyFunctions:SeerrConnection.kt$SeerrConnection</ID>
     <ID>UnusedPrivateMember:UserAdmission.kt$private fun SeerrJellyfinUserDto.toCandidate(): ImportCandidate</ID>
