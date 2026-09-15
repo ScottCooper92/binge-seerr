@@ -119,6 +119,26 @@ class HomeRootSwapTest {
         assertEquals(false, shows(HUB))
     }
 
+    /**
+     * The bug in #277: the hub is the list pane, so the spinner it drew while the connection was
+     * unresolved rendered beside the detail placeholder. A saved server restores the hub at the root,
+     * so this was the state a cold start actually showed, not a frame.
+     */
+    @Test
+    fun `a restored hub shows the spinner full width until the connection resolves`() {
+        val backStack = show(HubRoute)
+
+        assertEquals(listOf<NavKey>(HomeRoute), backStack.toList())
+        assertEquals(true, shows(LOADING))
+        assertEquals(false, shows(PLACEHOLDER))
+
+        resolve(connected = true)
+
+        assertEquals(listOf<NavKey>(HubRoute), backStack.toList())
+        assertEquals(true, shows(HUB))
+        assertEquals(true, shows(PLACEHOLDER))
+    }
+
     @Test
     fun `a saved server brings the hub in beside the placeholder`() {
         val backStack = show(HomeRoute)
