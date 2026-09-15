@@ -6,6 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * That the meta separator keeps the spaces it is declared with (#247).
@@ -17,6 +18,7 @@ import org.robolectric.RobolectricTestRunner
  * silently to a surface no baseline covers.
  */
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], application = android.app.Application::class)
 class MetaSeparatorTest {
     @Test
     fun `the meta separator survives aapt with a space either side`() {
@@ -31,8 +33,9 @@ class MetaSeparatorTest {
     @Test
     fun `a joined meta line reads with spaces around the glyph`() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        val line = listOf("4.3 GB", "About 18 min left")
-            .joinToString(context.getString(R.string.hub_meta_separator))
+        val line =
+            listOf("4.3 GB", "About 18 min left")
+                .joinToString(context.getString(R.string.hub_meta_separator))
         assertEquals("4.3 GB · About 18 min left", line)
     }
 }
