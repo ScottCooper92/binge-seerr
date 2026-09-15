@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.binge.designsystem.component.BingeSnackbarHost
-import com.binge.designsystem.component.BingeTopBar
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -21,7 +19,8 @@ import kotlinx.coroutines.flow.Flow
 /**
  * The frame of a server page whose actions are immediate rather than a draft: a title, and a snackbar for each outcome.
  *
- * [content] is handed the navigation bar's inset: a body that scrolls folds it into its scroll, and one that does not pads by it.
+ * [content] is handed the space above and below it, the transparent top bar and the navigation bar: a body that scrolls
+ * folds it into its scroll, and one that does not pads by it.
  */
 @Composable
 internal fun ServerActionPage(
@@ -32,7 +31,7 @@ internal fun ServerActionPage(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
-    Scaffold(snackbarHost = { BingeSnackbarHost(snackbarHostState) }, topBar = { BingeTopBar(title = title, onBack = onBack) }) { padding ->
+    ScreenScaffold(title = title, onBack = onBack, snackbarHostState = snackbarHostState) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) { content(padding.innerPadding()) }
     }
 }

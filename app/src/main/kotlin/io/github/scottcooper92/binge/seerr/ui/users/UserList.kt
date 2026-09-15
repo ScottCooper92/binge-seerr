@@ -35,6 +35,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import com.binge.designsystem.R as DesR
 
 /** The rows with the states the pager reports, as the issues browser shows them. */
@@ -50,11 +51,13 @@ internal fun UsersBody(
 ) {
     val remote = lazyItems.loadState.mediator?.refresh ?: lazyItems.loadState.refresh
     when {
-        lazyItems.itemCount > 0 ->
-            Column(modifier.fillMaxSize()) {
-                if (remote is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
+        lazyItems.itemCount > 0 && remote is LoadState.Loading ->
+            // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
+            Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding.belowPinnedLine())
             }
+        lazyItems.itemCount > 0 -> UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
         remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         remote is LoadState.Error ->
             PagedRefreshError(
