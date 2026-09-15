@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,9 +50,7 @@ import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeInitialsAvatar
-import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.MediaCard
@@ -72,6 +69,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestRow
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
@@ -117,20 +115,16 @@ fun UserDetailScreen(
     }
     var managing by rememberSaveable { mutableStateOf(false) }
     val ready = state as? UserDetailUiState.Ready
-    Scaffold(
-        snackbarHost = { BingeSnackbarHost(snackbarHostState) },
-        topBar = {
-            BingeTopBar(
-                title = ready?.detail?.item?.name ?: stringResource(R.string.user_detail_title),
-                onBack = actions.onBack,
-                actions = {
-                    if (ready != null) {
-                        IconButton(onClick = { managing = true }) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.user_actions_cd))
-                        }
-                    }
-                },
-            )
+    ScreenScaffold(
+        title = ready?.detail?.item?.name ?: stringResource(R.string.user_detail_title),
+        onBack = actions.onBack,
+        snackbarHostState = snackbarHostState,
+        actions = {
+            if (ready != null) {
+                IconButton(onClick = { managing = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.user_actions_cd))
+                }
+            }
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {

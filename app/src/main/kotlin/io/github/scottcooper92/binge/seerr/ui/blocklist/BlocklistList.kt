@@ -42,6 +42,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import com.binge.designsystem.R as DesR
 
 /** The rows with the states the pager reports; a filter or search that matches nothing reads differently from an empty list. */
@@ -59,11 +60,13 @@ internal fun BlocklistBody(
 ) {
     val refresh = lazyItems.loadState.refresh
     when {
-        lazyItems.itemCount > 0 ->
-            Column(modifier.fillMaxSize()) {
-                if (refresh is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
+        lazyItems.itemCount > 0 && refresh is LoadState.Loading ->
+            // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
+            Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding.belowPinnedLine())
             }
+        lazyItems.itemCount > 0 -> BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
         refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
         refresh is LoadState.Error ->
             PagedRefreshError(

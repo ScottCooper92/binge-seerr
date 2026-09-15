@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,7 +39,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeSearchField
-import com.binge.designsystem.component.BingeTopBar
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
@@ -50,6 +48,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
@@ -82,8 +81,10 @@ fun LogsScreen(
             }
         }
     }
-    Scaffold(topBar = { BingeTopBar(title = stringResource(R.string.server_settings_logs), onBack = actions.onBack) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding.outerPadding())) {
+    ScreenScaffold(
+        title = stringResource(R.string.server_settings_logs),
+        onBack = actions.onBack,
+        header = {
             BingeSearchField(
                 query = state.search,
                 onQueryChange = actions.onSearchChange,
@@ -96,8 +97,9 @@ fun LogsScreen(
                 selectedIndex = state.level.ordinal,
                 onSelect = { actions.onLevelChange(LogLevel.entries[it]) },
             )
-            LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize(), padding.innerPadding())
-        }
+        },
+    ) { padding ->
+        LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize().padding(padding.outerPadding()), padding.innerPadding())
     }
 }
 
