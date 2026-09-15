@@ -32,6 +32,7 @@ import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -43,7 +44,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import com.binge.designsystem.R as DesR
@@ -72,7 +72,8 @@ internal fun IssuesBody(
                 IssueList(lazyItems, onOpen, onReconnect, contentPadding.belowPinnedLine())
             }
         lazyItems.itemCount > 0 -> IssueList(lazyItems, onOpen, onReconnect, contentPadding)
-        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
+        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
+            ListRowSkeletonColumn(contentPadding = contentPadding, modifier = modifier)
         remote is LoadState.Error ->
             PagedRefreshError(
                 remote.error,
