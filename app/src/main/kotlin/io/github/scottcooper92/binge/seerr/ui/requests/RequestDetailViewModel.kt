@@ -11,11 +11,13 @@ import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaDetailsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
+import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchDataDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchStatsDto
 import io.github.scottcooper92.binge.seerr.seerr.arrServer
@@ -107,7 +109,23 @@ class RequestDetailViewModel
                 if (ready.report == IssueReport.Sending) ready else ready.copy(report = IssueReport.Idle)
             }
 
-        private suspend fun load(): RequestDetail =
+        private suspend fun load(): RequestDetail {
+            val sources = fetchSources()
+            editSource =
+                EditSource(
+                    request = sources.dto,
+                    details = sources.details,
+                    canEditDestination = sources.canEditDestination,
+                )
+            return sources.toDetail()
+        }
+
+        /**
+         * Everything the page reads, fetched together. The request comes first because the rest is
+         * keyed on what it names; the title lookup, the destination's names and the watch data are
+         * best-effort, so a title the server no longer tracks still renders the request.
+         */
+        private suspend fun fetchSources(): DetailSources =
             coroutineScope {
                 val api = connection.api()
                 val profile = async { connection.profile() }
@@ -125,102 +143,18 @@ class RequestDetailViewModel
                             null
                         }
                     }
-                val detailsDto = details.await()
-                val hydrated = detailsDto?.let { HydratedTitle(it.displayTitle, it.posterPath?.toTmdbPosterUrl(), it.year) }
-                val item =
-                    checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
-                        "Unrenderable media type"
-                    }
-                val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
-                val scope =
-                    ModerationScope(
-                        permissions.await(),
-                        currentUserId = user.await()?.id,
-                        hasBlocklist = profile.await().hasBlocklist,
-                    )
-                val pending = dto.status == null || dto.status == SeerrRequestStatusCode.Pending
-                val own = dto.requestedBy?.id != null && dto.requestedBy.id == scope.currentUserId
-                val canEditDestination = pending && scope.permissions.canRequestAdvanced
-                editSource = EditSource(request = dto, details = detailsDto, canEditDestination = canEditDestination)
-                RequestDetail(
-                    item = item,
-                    actions = item.actions(scope),
-                    canEdit = pending && (scope.permissions.canManageRequests || own),
-                    canEditDestination = canEditDestination,
-                    backdropUrl = detailsDto?.backdropPath?.toTmdbBackdropUrl(),
-                    overview = detailsDto?.overview?.takeIf { it.isNotBlank() },
-                    modifiedBy =
-                        dto.modifiedBy?.let {
-                            listOfNotNull(it.displayName, it.username).firstOrNull { name ->
-                                name.isNotBlank()
-                            }
-                        },
-                    updatedAtMillis = dto.updatedAt?.toEpochMillisOrNull(),
-                    seasons =
-                        dto.seasons.map { requested ->
-                            val season = detailsDto?.seasons?.firstOrNull { it.seasonNumber == requested.seasonNumber }
-                            SeasonState(requested.seasonNumber, season?.name, season?.episodeCount, requested.status)
-                        },
+                DetailSources(
+                    api = api,
+                    dto = dto,
+                    details = details.await(),
+                    profile = profile.await(),
+                    user = user.await(),
+                    permissions = permissions.await(),
                     destination = destination.await(),
-                    downloads =
-                        statuses.map { status ->
-                            DetailDownload(
-                                title = status.title,
-                                fraction = listOf(status).downloadFraction(),
-                                totalBytes = status.size?.toLong()?.takeIf { it > 0 },
-                                etaMinutes = listOf(status).etaMinutes(System.currentTimeMillis()),
-                            )
-                        },
-                    mediaId = dto.media.id,
-                    canReportIssue = profile.await().hasIssues && permissions.await().canCreateIssues && dto.media.id != null,
-                    webUrl = connection.current().baseUrl + dto.media.mediaType + "/" + dto.media.tmdbId,
-                    mediaServerUrl =
-                        (if (dto.is4k) dto.media.mediaUrl4k ?: dto.media.mediaUrl else dto.media.mediaUrl)?.takeIf {
-                            it
-                                .isWebUrl()
-                        },
-                    serviceUrl =
-                        (if (dto.is4k) dto.media.serviceUrl4k ?: dto.media.serviceUrl else dto.media.serviceUrl)?.takeIf {
-                            it
-                                .isWebUrl()
-                        },
-                    media = dto.mediaRecord(scope.permissions, profile.await(), watch.await()),
+                    watch = watch.await(),
+                    webRoot = connection.current().baseUrl,
                 )
             }
-
-        /** The 4K instance is listed only where the server holds one, or the request itself is 4K. */
-        private fun SeerrRequestDto.mediaRecord(
-            permissions: SeerrPermissions,
-            profile: SeerrServerProfile,
-            watch: SeerrWatchDataDto?,
-        ): MediaRecord? {
-            val mediaId = media.id ?: return null
-            val has4k = is4k || (media.status4k != null && media.status4k != SeerrMediaStatusCode.Unknown)
-            return MediaRecord(
-                mediaId = mediaId,
-                isTv = media.mediaType != SEERR_MEDIA_TYPE_MOVIE,
-                instances =
-                    listOfNotNull(
-                        MediaInstance(
-                            false,
-                            media.status,
-                            media.serviceUrl?.takeIf { it.isWebUrl() },
-                            media.mediaUrl?.takeIf { it.isWebUrl() },
-                            watch?.data?.toWatchStats(),
-                        ),
-                        MediaInstance(
-                            true,
-                            media.status4k,
-                            media.serviceUrl4k?.takeIf { it.isWebUrl() },
-                            media.mediaUrl4k?.takeIf { it.isWebUrl() },
-                            watch?.data4k?.toWatchStats(),
-                        ).takeIf { has4k },
-                    ),
-                canSetStatus = permissions.canManageRequests,
-                canClearData = permissions.canManageRequests,
-                canDeleteFiles = permissions.canManageRequests && profile.hasDeleteMediaFiles,
-            )
-        }
 
         /** The service lists name the ids the request carries; a service the admin removed leaves the id unnamed. */
         private suspend fun SeerrRequestDto.destination(api: SeerrApi): RequestDestination? {
@@ -251,3 +185,119 @@ private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
         playCount30Days = playCount30Days,
         users = users.mapNotNull { user -> listOfNotNull(user.displayName, user.username).firstOrNull { it.isNotBlank() } },
     )
+
+/**
+ * The server's answers for one request page, before they are shaped into a [RequestDetail]. Split
+ * from the fetch so the page's rules read as rules rather than as one long constructor call.
+ */
+private class DetailSources(
+    val api: SeerrApi,
+    val dto: SeerrRequestDto,
+    val details: SeerrMediaDetailsDto?,
+    val profile: SeerrServerProfile,
+    val user: SeerrUserDto?,
+    val permissions: SeerrPermissions,
+    val destination: RequestDestination?,
+    val watch: SeerrWatchDataDto?,
+    val webRoot: String,
+) {
+    val scope: ModerationScope
+        get() = ModerationScope(permissions, currentUserId = user?.id, hasBlocklist = profile.hasBlocklist)
+
+    /** A request the server has not answered yet, which is what makes it editable at all. */
+    val pending: Boolean get() = dto.status == null || dto.status == SeerrRequestStatusCode.Pending
+
+    val canEditDestination: Boolean get() = pending && permissions.canRequestAdvanced
+
+    suspend fun toDetail(): RequestDetail {
+        val hydrated = details?.let { HydratedTitle(it.displayTitle, it.posterPath?.toTmdbPosterUrl(), it.year) }
+        val item =
+            checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
+                "Unrenderable media type"
+            }
+        val own = dto.requestedBy?.id != null && dto.requestedBy.id == user?.id
+        return RequestDetail(
+            item = item,
+            actions = item.actions(scope),
+            canEdit = pending && (permissions.canManageRequests || own),
+            canEditDestination = canEditDestination,
+            backdropUrl = details?.backdropPath?.toTmdbBackdropUrl(),
+            overview = details?.overview?.takeIf { it.isNotBlank() },
+            modifiedBy = dto.modifiedByName(),
+            updatedAtMillis = dto.updatedAt?.toEpochMillisOrNull(),
+            seasons = seasons(),
+            destination = destination,
+            downloads = downloads(),
+            mediaId = dto.media.id,
+            canReportIssue = profile.hasIssues && permissions.canCreateIssues && dto.media.id != null,
+            webUrl = webRoot + dto.media.mediaType + "/" + dto.media.tmdbId,
+            mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
+            serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),
+            media = dto.mediaRecord(permissions, profile, watch),
+        )
+    }
+
+    /** The season the request asked for, named from the title's own list where that loaded. */
+    private fun seasons(): List<SeasonState> =
+        dto.seasons.map { requested ->
+            val season = details?.seasons?.firstOrNull { it.seasonNumber == requested.seasonNumber }
+            SeasonState(requested.seasonNumber, season?.name, season?.episodeCount, requested.status)
+        }
+
+    private fun downloads(): List<DetailDownload> {
+        val statuses = if (dto.is4k) dto.media.downloadStatus4k else dto.media.downloadStatus
+        val now = System.currentTimeMillis()
+        return statuses.map { status ->
+            DetailDownload(
+                title = status.title,
+                fraction = listOf(status).downloadFraction(),
+                totalBytes = status.size?.toLong()?.takeIf { it > 0 },
+                etaMinutes = listOf(status).etaMinutes(now),
+            )
+        }
+    }
+
+    /** A 4K request prefers the 4K link and falls back to the standard one; anything else takes the standard. */
+    private fun preferred(
+        standard: String?,
+        fourK: String?,
+    ): String? = (if (dto.is4k) fourK ?: standard else standard)?.takeIf { it.isWebUrl() }
+}
+
+/** The name the server shows for whoever last changed the request, preferring the display name. */
+private fun SeerrRequestDto.modifiedByName(): String? =
+    modifiedBy?.let { listOfNotNull(it.displayName, it.username).firstOrNull { name -> name.isNotBlank() } }
+
+/** The 4K instance is listed only where the server holds one, or the request itself is 4K. */
+private fun SeerrRequestDto.mediaRecord(
+    permissions: SeerrPermissions,
+    profile: SeerrServerProfile,
+    watch: SeerrWatchDataDto?,
+): MediaRecord? {
+    val mediaId = media.id ?: return null
+    val has4k = is4k || (media.status4k != null && media.status4k != SeerrMediaStatusCode.Unknown)
+    return MediaRecord(
+        mediaId = mediaId,
+        isTv = media.mediaType != SEERR_MEDIA_TYPE_MOVIE,
+        instances =
+            listOfNotNull(
+                MediaInstance(
+                    false,
+                    media.status,
+                    media.serviceUrl?.takeIf { it.isWebUrl() },
+                    media.mediaUrl?.takeIf { it.isWebUrl() },
+                    watch?.data?.toWatchStats(),
+                ),
+                MediaInstance(
+                    true,
+                    media.status4k,
+                    media.serviceUrl4k?.takeIf { it.isWebUrl() },
+                    media.mediaUrl4k?.takeIf { it.isWebUrl() },
+                    watch?.data4k?.toWatchStats(),
+                ).takeIf { has4k },
+            ),
+        canSetStatus = permissions.canManageRequests,
+        canClearData = permissions.canManageRequests,
+        canDeleteFiles = permissions.canManageRequests && profile.hasDeleteMediaFiles,
+    )
+}

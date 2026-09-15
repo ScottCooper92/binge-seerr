@@ -33,6 +33,7 @@ import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import java.util.Locale
 
 /**
@@ -44,7 +45,7 @@ internal fun connectionRows(
     connection: ConnectionSummary,
     server: ServerSummary,
     onEditConnection: () -> Unit,
-    onOpenAbout: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
 ): List<SettingsRow> {
     val context = LocalContext.current
     return listOf(
@@ -80,7 +81,7 @@ internal fun connectionRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_about),
             detail = stringResource(R.string.settings_about_caption),
-            onClick = onOpenAbout,
+            onClick = { onOpenPage(ServerSettingsPage.About) },
         ),
         SettingsRow(
             icon = Icons.Filled.Edit,
@@ -108,7 +109,7 @@ private fun ServerSummary.versionDetail(): String {
 @Composable
 internal fun mediaServerRows(
     server: ServerSummary,
-    onOpen: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
 ): List<SettingsRow> =
     listOf(
         SettingsRow(
@@ -123,7 +124,7 @@ internal fun mediaServerRows(
                     },
                 ),
             detail = stringResource(R.string.server_settings_media_server_caption),
-            onClick = onOpen,
+            onClick = { onOpenPage(ServerSettingsPage.MediaServer) },
         ),
     )
 
@@ -131,10 +132,7 @@ internal fun mediaServerRows(
 @Composable
 internal fun generalRows(
     general: GeneralSettings,
-    onEdit: () -> Unit,
-    onOpenSliders: () -> Unit,
-    onOpenNetwork: () -> Unit,
-    onOpenMetadata: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
 ): List<SettingsRow> {
     val context = LocalContext.current
     return listOfNotNull(
@@ -143,7 +141,7 @@ internal fun generalRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_edit),
             detail = stringResource(R.string.server_settings_edit_caption),
-            onClick = onEdit,
+            onClick = { onOpenPage(ServerSettingsPage.General) },
         ),
         general.applicationUrl?.takeIf { it.isWebUrl() }?.let { url ->
             SettingsRow(
@@ -176,7 +174,7 @@ internal fun generalRows(
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_sliders),
                 detail = stringResource(R.string.server_settings_sliders_caption),
-                onClick = onOpenSliders,
+                onClick = { onOpenPage(ServerSettingsPage.DiscoverSliders) },
             )
         } else {
             null
@@ -187,7 +185,7 @@ internal fun generalRows(
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_network),
                 detail = stringResource(R.string.server_settings_network_caption),
-                onClick = onOpenNetwork,
+                onClick = { onOpenPage(ServerSettingsPage.Network) },
             )
         } else {
             null
@@ -198,7 +196,7 @@ internal fun generalRows(
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_metadata),
                 detail = stringResource(R.string.server_settings_metadata_caption),
-                onClick = onOpenMetadata,
+                onClick = { onOpenPage(ServerSettingsPage.Metadata) },
             )
         } else {
             null
@@ -210,7 +208,7 @@ internal fun generalRows(
 @Composable
 internal fun serviceRows(
     services: List<ServerService>,
-    onOpenServices: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
     onOpenInstance: (ServiceType, Int) -> Unit,
 ): List<SettingsRow> {
     val context = LocalContext.current
@@ -220,7 +218,7 @@ internal fun serviceRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_services_manage),
             detail = stringResource(R.string.server_settings_services_manage_caption),
-            onClick = onOpenServices,
+            onClick = { onOpenPage(ServerSettingsPage.Services) },
         )
     return listOf(manage) +
         services.map { service ->
@@ -299,7 +297,7 @@ private fun RequestLimit?.limitText(): String =
 @Composable
 internal fun agentRows(
     agents: NotificationAgents,
-    onOpenAgents: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
     onOpenAgent: (ServerAgent) -> Unit,
 ): List<SettingsRow> =
     listOfNotNull(
@@ -308,7 +306,7 @@ internal fun agentRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_agents_manage),
             detail = stringResource(R.string.server_settings_agents_manage_caption),
-            onClick = onOpenAgents,
+            onClick = { onOpenPage(ServerSettingsPage.NotificationAgents) },
         ),
         agents.emailEnabled?.let { on ->
             agentRow(Icons.Filled.Email, stringResource(R.string.settings_agent_email), on) { onOpenAgent(ServerAgent.Email) }
@@ -338,9 +336,7 @@ private fun agentRow(
 @Composable
 internal fun systemRows(
     system: SystemInfo,
-    onOpenJobs: () -> Unit,
-    onOpenCache: () -> Unit,
-    onOpenLogs: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
 ): List<SettingsRow> =
     system.jobs.map { job ->
         SettingsRow(
@@ -354,7 +350,7 @@ internal fun systemRows(
                         formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
                             ?: stringResource(R.string.settings_value_unknown)
                 },
-            onClick = onOpenJobs,
+            onClick = { onOpenPage(ServerSettingsPage.Jobs) },
         )
     } +
         SettingsRow(
@@ -362,14 +358,14 @@ internal fun systemRows(
             iconTint = BingeSentiment.Neutral.fill(),
             label = stringResource(R.string.server_settings_cache),
             detail = stringResource(R.string.server_settings_cache_caption),
-            onClick = onOpenCache,
+            onClick = { onOpenPage(ServerSettingsPage.Cache) },
         ) +
         SettingsRow(
             icon = Icons.Filled.Article,
             iconTint = BingeSentiment.Neutral.fill(),
             label = stringResource(R.string.server_settings_logs),
             detail = stringResource(R.string.server_settings_logs_caption),
-            onClick = onOpenLogs,
+            onClick = { onOpenPage(ServerSettingsPage.Logs) },
         )
 
 internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off
