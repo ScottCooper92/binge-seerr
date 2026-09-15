@@ -256,7 +256,7 @@ internal fun DeleteButton(onDelete: () -> Unit) {
     BingeOutlinedButton(
         label = stringResource(R.string.server_settings_delete),
         onClick = { confirming = true },
-        contentColor = MaterialTheme.colorScheme.error,
+        destructive = true,
         modifier = Modifier.fillMaxWidth(),
     )
     if (confirming) {

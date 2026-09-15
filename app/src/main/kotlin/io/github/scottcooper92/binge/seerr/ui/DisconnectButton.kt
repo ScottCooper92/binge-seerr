@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,7 @@ internal fun DisconnectButton(
     BingeOutlinedButton(
         label = stringResource(R.string.hub_disconnect),
         onClick = { confirming = true },
-        contentColor = MaterialTheme.colorScheme.error,
+        destructive = true,
         modifier = modifier.fillMaxWidth(),
     )
     if (confirming) {
