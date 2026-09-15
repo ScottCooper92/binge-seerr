@@ -173,10 +173,12 @@ private fun accountRow(
             },
         clickable = false,
         trailingContent = {
+            // One button for both directions, so the tone follows which one it currently is.
             BingeTextButton(
                 label = stringResource(if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link),
                 onClick = if (account.linked) onUnlink else onLink,
                 enabled = !busy,
+                contentColor = if (account.linked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             )
         },
     )
