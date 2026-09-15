@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
@@ -39,6 +40,7 @@ import com.binge.designsystem.R as DesR
 @Composable
 internal fun HubCard(
     modifier: Modifier = Modifier,
+    inset: Dp = dimensionResource(DesR.dimen.screen_content_inset),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -46,7 +48,7 @@ internal fun HubCard(
             modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                    horizontal = inset,
                     vertical = dimensionResource(DesR.dimen.padding_s),
                 ),
         shape = MaterialTheme.shapes.large,
@@ -66,8 +68,9 @@ internal fun ServerCard(
     server: HubServer,
     overview: HubOverview,
     modifier: Modifier = Modifier,
+    inset: Dp = dimensionResource(DesR.dimen.screen_content_inset),
 ) {
-    HubCard(modifier) {
+    HubCard(modifier, inset) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(R.drawable.ic_companion),
@@ -154,9 +157,10 @@ internal fun AccountCard(
     account: HubAccount,
     quota: HubQuota?,
     modifier: Modifier = Modifier,
+    inset: Dp = dimensionResource(DesR.dimen.screen_content_inset),
     onClick: (() -> Unit)? = null,
 ) {
-    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier) {
+    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, inset) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = account.name,

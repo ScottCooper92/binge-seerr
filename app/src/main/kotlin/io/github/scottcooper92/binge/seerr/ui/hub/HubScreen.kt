@@ -86,13 +86,18 @@ private fun Dashboard(
 ) {
     val inset = dimensionResource(if (asListPane) R.dimen.hub_list_pane_inset else DesR.dimen.screen_content_inset)
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        ServerCard(server = state.server, overview = state.overview)
+        ServerCard(server = state.server, overview = state.overview, inset = inset)
         state.overview.account?.let { account ->
-            AccountCard(account = account, quota = state.overview.quota, onClick = { actions.onOpenAccount(account.id) })
+            AccountCard(
+                account = account,
+                quota = state.overview.quota,
+                inset = inset,
+                onClick = { actions.onOpenAccount(account.id) },
+            )
         }
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
-            DownloadingStrip(state.downloading)
+            DownloadingStrip(state.downloading, inset = inset)
         }
         SectionHeader(title = stringResource(R.string.hub_manage))
         SettingsGroup(
