@@ -21,34 +21,63 @@ class SectionPanesTest {
 
     @Test
     fun `a route that is not a section names none`() {
-        assertNull(HomeRoute.hubSection())
+        assertNull(HubRoute.hubSection())
         assertNull(RequestDetailRoute(7).hubSection())
         assertNull(EditConnectionRoute.hubSection())
     }
 
     @Test
     fun `opening a section from the hub pushes it`() {
-        val stack = backStack(HomeRoute)
-        stack.openSection(HubSection.Requests)
-        assertEquals(listOf(HomeRoute, RequestsRoute), stack.toList())
+        val stack = backStack(HubRoute)
+        stack.openSection(HubSection.Issues, defaultShowing = false)
+        assertEquals(listOf(HubRoute, IssuesRoute), stack.toList())
     }
 
-    /** The whole point beside the hub: Back returns to the hub, not to the section before this one. */
+    /** Back from the new section returns to the hub, not to the section or the detail before it. */
     @Test
-    fun `opening a second section replaces the first`() {
-        val stack = backStack(HomeRoute)
-        stack.openSection(HubSection.Requests)
-        stack.openSection(HubSection.Issues)
-        stack.openSection(HubSection.Users)
-        assertEquals(listOf(HomeRoute, UsersRoute), stack.toList())
+    fun `opening a section replaces the open one and everything it stacked`() {
+        val stack = backStack(HubRoute, RequestsRoute, RequestDetailRoute(7))
+        stack.openSection(HubSection.Users, defaultShowing = false)
+        assertEquals(listOf(HubRoute, UsersRoute), stack.toList())
     }
 
-    /** A section with no screen of its own is still a section, so it replaces and is replaced. */
+    /** On a narrow window the hub is alone on screen, so even the default section is a push. */
     @Test
-    fun `the placeholder section replaces like any other`() {
-        val stack = backStack(HomeRoute)
-        stack.openSection(HubSection.Requests)
-        stack.openSection(HubSection.Blocklist)
-        assertEquals(listOf(HomeRoute, BlocklistRoute), stack.toList())
+    fun `the default section is pushed when nothing stands in for it`() {
+        val stack = backStack(HubRoute)
+        stack.openSection(DefaultSection, defaultShowing = false)
+        assertEquals(listOf(HubRoute, DefaultSection.route()), stack.toList())
+    }
+
+    @Test
+    fun `beside the hub, opening the default section clears the pane back to it`() {
+        val stack = backStack(HubRoute, IssuesRoute, IssueDetailRoute(3))
+        stack.openSection(DefaultSection, defaultShowing = true)
+        assertEquals(listOf(HubRoute), stack.toList())
+
+        stack.openSection(DefaultSection, defaultShowing = true)
+        assertEquals(listOf(HubRoute), stack.toList())
+    }
+
+    @Test
+    fun `beside the hub, any other section is pushed`() {
+        val stack = backStack(HubRoute)
+        stack.openSection(HubSection.Settings, defaultShowing = true)
+        assertEquals(listOf(HubRoute, SettingsRoute), stack.toList())
+    }
+
+    @Test
+    fun `the hub marks the section on the stack, even under what it opened`() {
+        val stack = backStack(HubRoute, UsersRoute, UserDetailRoute(9), UserSettingsRoute(9))
+        assertEquals(HubSection.Users, stack.selectedSection(defaultShowing = true))
+        assertEquals(HubSection.Users, stack.selectedSection(defaultShowing = false))
+    }
+
+    @Test
+    fun `the default section is marked only while it stands in beside the hub`() {
+        assertEquals(DefaultSection, backStack(HubRoute).selectedSection(defaultShowing = true))
+        assertNull(backStack(HubRoute).selectedSection(defaultShowing = false))
+        // The account card opens a user with no section under it: the pane shows that, not the default.
+        assertNull(backStack(HubRoute, UserDetailRoute(1)).selectedSection(defaultShowing = true))
     }
 }
