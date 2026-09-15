@@ -816,6 +816,7 @@
     <string name="media_state_partially_available">Parcialmente disponible</string>
     <string name="media_state_available">Disponible</string>
     <string name="media_state_blocklisted">Bloqueado</string>
+    <string name="media_state_deleted">Eliminado</string>
     <plurals name="download_eta_minutes">
         <item quantity="one">Queda %1$d min aprox.</item>
         <item quantity="many">Quedan %1$d min aprox.</item>

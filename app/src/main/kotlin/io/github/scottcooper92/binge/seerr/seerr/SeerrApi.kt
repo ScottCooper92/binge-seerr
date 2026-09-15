@@ -718,6 +718,9 @@ interface SeerrApi {
 /**
  * Seerr's `MediaStatus` enum, a plain int on the wire. Typed so it cannot be confused with
  * [SeerrRequestStatusCode], which shares the same raw range.
+ *
+ * Deleted is reached only on Jellyseerr and Seerr: Overseerr has no delete-files route and its
+ * enum stops at Available.
  */
 @JvmInline
 @Serializable
@@ -731,6 +734,7 @@ value class SeerrMediaStatusCode(
         val PartiallyAvailable = SeerrMediaStatusCode(4)
         val Available = SeerrMediaStatusCode(5)
         val Blocklisted = SeerrMediaStatusCode(6)
+        val Deleted = SeerrMediaStatusCode(7)
     }
 }
 

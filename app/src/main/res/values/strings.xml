@@ -838,6 +838,7 @@
     <string name="media_state_partially_available">Partly available</string>
     <string name="media_state_available">Available</string>
     <string name="media_state_blocklisted">Blocked</string>
+    <string name="media_state_deleted">Deleted</string>
 
     <plurals name="download_eta_minutes">
         <item quantity="one">About %1$d min left</item>

@@ -40,6 +40,12 @@ fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
     return builder.build()
 }
 
+/**
+ * Deleted reads as not requested, which is what the server means by it: Jellyseerr's request
+ * creation groups Deleted with Unknown and resets the row to Pending, and its duplicate guard
+ * exempts completed requests, so the rows that survive a delete do not block a fresh one. The
+ * contract has no Deleted of its own and does not need one for this.
+ */
 fun SeerrMediaStatusCode?.toAvailability(): Availability =
     when (this) {
         SeerrMediaStatusCode.Pending -> Availability.AVAILABILITY_PENDING
@@ -47,6 +53,7 @@ fun SeerrMediaStatusCode?.toAvailability(): Availability =
         SeerrMediaStatusCode.PartiallyAvailable -> Availability.AVAILABILITY_PARTIALLY_AVAILABLE
         SeerrMediaStatusCode.Available -> Availability.AVAILABILITY_AVAILABLE
         SeerrMediaStatusCode.Blocklisted -> Availability.AVAILABILITY_BLOCKLISTED
+        SeerrMediaStatusCode.Deleted -> Availability.AVAILABILITY_NOT_REQUESTED
         else -> Availability.AVAILABILITY_NOT_REQUESTED
     }
 
