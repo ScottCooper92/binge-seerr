@@ -18,14 +18,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * The blocklist as swipeable source pages: a page composed before it is selected shows its own
  * filter's rows, and a server without the source chips shows the one list it has.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class BlocklistPagerTest {
     @get:Rule
     val composeTestRule = createComposeRule()

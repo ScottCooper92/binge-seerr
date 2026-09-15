@@ -31,13 +31,28 @@ class HomeRootTest {
         assertEquals(listOf(HomeRoute), stack.toList())
     }
 
+    /**
+     * Unresolved is home, not "leave it alone": the hub is the list pane, so a spinner left there
+     * renders beside the detail placeholder. A saved server restores the hub at the root before the
+     * answer arrives, which is why this is the case a user meets rather than a frame.
+     */
     @Test
-    fun `an unresolved connection leaves either root alone`() {
-        listOf(HomeRoute, HubRoute).forEach { root ->
-            val stack = backStack(root)
-            stack.settleHome(connected = null)
-            assertEquals(listOf(root), stack.toList())
-        }
+    fun `an unresolved connection puts home at the root`() {
+        val restored = backStack(HubRoute)
+        restored.settleHome(connected = null)
+        assertEquals(listOf(HomeRoute), restored.toList())
+
+        val alreadyHome = backStack(HomeRoute)
+        alreadyHome.settleHome(connected = null)
+        assertEquals(listOf(HomeRoute), alreadyHome.toList())
+    }
+
+    /** Only the root moves, so a link's section and detail survive the connecting state too. */
+    @Test
+    fun `an unresolved connection leaves the routes above the root`() {
+        val stack = backStack(HubRoute, RequestsRoute, RequestDetailRoute(7))
+        stack.settleHome(connected = null)
+        assertEquals(listOf(HomeRoute, RequestsRoute, RequestDetailRoute(7)), stack.toList())
     }
 
     @Test

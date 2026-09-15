@@ -18,14 +18,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * The logs page as swipeable level pages: a page composed before it is selected shows its own
  * level's lines, and following is reported by the selected page rather than by one swiped past.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = android.app.Application::class)
 class LogsPagerTest {
     @get:Rule
     val composeTestRule = createComposeRule()

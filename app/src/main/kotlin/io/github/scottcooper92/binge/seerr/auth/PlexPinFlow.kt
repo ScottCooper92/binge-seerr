@@ -58,16 +58,22 @@ class PlexPinFlow(
         val api = apis(pin.identity)
         while (true) {
             if (pin.expiresAt?.let { it <= now() } == true) throw PlexPinExpiredException()
-            val polled =
-                try {
-                    api.pin(pin.id)
-                } catch (e: HttpException) {
-                    if (e.code() == HTTP_NOT_FOUND) throw PlexPinExpiredException() else throw e
-                }
-            polled.authToken?.takeIf { it.isNotBlank() }?.let { return it }
+            api
+                .poll(pin.id)
+                .authToken
+                ?.takeIf { it.isNotBlank() }
+                ?.let { return it }
             delay(pollInterval)
         }
     }
+
+    /** plex.tv answers 404 for a PIN it has already dropped, which is expiry reported as absence. */
+    private suspend fun PlexTvApi.poll(id: Long): PlexPinDto =
+        try {
+            pin(id)
+        } catch (e: HttpException) {
+            if (e.code() == HTTP_NOT_FOUND) throw PlexPinExpiredException() else throw e
+        }
 
     private fun PlexPinDto.toPin(identity: PlexClientIdentity): PlexPin =
         PlexPin(

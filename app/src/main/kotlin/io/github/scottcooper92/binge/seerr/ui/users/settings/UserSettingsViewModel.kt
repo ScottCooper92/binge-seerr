@@ -77,7 +77,8 @@ internal fun settingsPagesFor(
     return buildList {
         add(UserSettingsPage.General)
         val localSignIn = profile.settings.localLogin || permissions.canManageSettings
-        if (localSignIn && (isSelf || !target.isAdmin || permissions.isAdmin)) add(UserSettingsPage.Password)
+        val ownerOfThisPassword = isSelf || !target.isAdmin || permissions.isAdmin
+        if (localSignIn && ownerOfThisPassword) add(UserSettingsPage.Password)
         add(UserSettingsPage.Notifications)
         if (permissions.canManageUsers && (!isSelf || viewer.id == OWNER_USER_ID)) add(UserSettingsPage.Permissions)
         if (isSelf && profile.hasLinkedAccounts) add(UserSettingsPage.LinkedAccounts)
