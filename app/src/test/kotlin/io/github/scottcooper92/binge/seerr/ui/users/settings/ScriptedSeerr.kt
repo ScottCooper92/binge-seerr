@@ -18,6 +18,7 @@ import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -63,6 +64,28 @@ internal class ScriptedSeerr(
         code: Int = 200,
     ) {
         responses[key] = { MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
+    }
+
+    /**
+     * Answers from the request itself, for a route whose response depends on what was asked.
+     *
+     * [delayMillis] holds the answer back, so a test can have a second call arrive and queue while
+     * this one is still in flight.
+     */
+    fun serveFrom(
+        key: String,
+        delayMillis: Long = 0,
+        body: (RecordedRequest) -> String,
+    ) {
+        responses[key] = { request ->
+            MockResponse
+                .Builder()
+                .code(200)
+                .headers(headersOf("Content-Type", "application/json"))
+                .body(body(request))
+                .headersDelay(delayMillis, TimeUnit.MILLISECONDS)
+                .build()
+        }
     }
 
     /** Answers an offset-paged endpoint: the body for the page the request's `skip` lands in. */
