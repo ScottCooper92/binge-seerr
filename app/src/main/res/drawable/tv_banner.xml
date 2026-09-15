@@ -27,7 +27,7 @@
             android:strokeWidth="4"
             android:strokeLineCap="round"
             android:trimPathStart="0"
-            android:trimPathEnd="0.75" />
+            android:trimPathEnd="0.84" />
         <path
             android:fillColor="#6366F1"
             android:pathData="M24,10 a14,14 0 1,0 0,28 a14,14 0 1,0 0,-28 z" />

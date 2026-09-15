@@ -23,7 +23,7 @@
         android:strokeWidth="6"
         android:strokeLineCap="round"
         android:trimPathStart="0"
-        android:trimPathEnd="0.75"/>
+        android:trimPathEnd="0.84"/>
 
     <path
         android:fillColor="#FFFFFF"

@@ -25,14 +25,14 @@
         android:strokeAlpha="0.16"
         android:strokeWidth="4"/>
 
-    <!-- The three-quarter arc -->
+    <!-- The arc, at Binge's 0.84 -->
     <path
         android:pathData="M24,3 A21,21 0 1,1 24,45 A21,21 0 1,1 24,3 Z"
         android:strokeColor="#6366F1"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:trimPathStart="0"
-        android:trimPathEnd="0.75"/>
+        android:trimPathEnd="0.84"/>
 
     <!-- The disc and its ring, unchanged in shape and shrunk to r=14 to clear the arc. -->
     <path

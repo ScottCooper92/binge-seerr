@@ -8,9 +8,8 @@
 
     <!--
         This app's own mark — the indigo disc with the ring cut out of it — inside Binge's progress
-        arc. Same construction as Binge's launcher foreground so the two sit together on a home
-        screen; the arc is indigo rather than amber, and it stops at three quarters rather than
-        Binge's 0.84, because this one reports on a server rather than on a binge.
+        arc. Same construction as Binge's launcher foreground, and the same 0.84, so the two sit
+        together on a home screen as one family; the colour is what separates them.
     -->
 
     <!-- Faint track ring (full circle, r=32 @ 54,54) -->
@@ -21,9 +20,9 @@
         android:strokeWidth="6"/>
 
     <!--
-        The three-quarter arc. Named so avd_launcher_ring can sweep trimPathEnd up to this same 0.75
-        on the splash: the resting value here is the end state, so the splash finishes on the
-        launcher icon exactly rather than on a copy of it.
+        The arc. Named so avd_launcher_ring can sweep trimPathEnd up to this same 0.84 on the
+        splash: the resting value here is the end state, so the splash finishes on the launcher
+        icon exactly rather than on a copy of it. The two move together or the hand-off jumps.
     -->
     <path
         android:name="progressArc"
@@ -31,7 +30,7 @@
         android:strokeWidth="6"
         android:strokeLineCap="round"
         android:trimPathStart="0"
-        android:trimPathEnd="0.75">
+        android:trimPathEnd="0.84">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"
