@@ -119,6 +119,7 @@ class TvIssuesBoardFocusTest {
                     events = emptyFlow(),
                     actions =
                         TvIssuesActions(
+                            onSortChange = {},
                             onFilterChange = {},
                             onOpenActions = { state = state.copy(actionItem = it) },
                             onDismissActions = {

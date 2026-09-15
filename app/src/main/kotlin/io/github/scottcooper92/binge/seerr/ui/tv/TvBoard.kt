@@ -119,6 +119,44 @@ internal fun TvBoardDivider(modifier: Modifier = Modifier) {
 }
 
 /**
+ * The band above a board: what to show, then how to order it, on one D-pad line.
+ *
+ * Both halves are [TvFilterBand] rather than a picker, because a board's sort is two mutually
+ * exclusive values and an overlay to choose between two is a worse trade on a remote than one press
+ * right. The sort half is labelled because two rows of identical pills would not say which is which.
+ */
+@Composable
+internal fun <F, S> TvBoardBands(
+    filters: List<Pair<F, String>>,
+    selectedFilter: F,
+    onFilterChange: (F) -> Unit,
+    sorts: List<Pair<S, String>>,
+    selectedSort: S,
+    onSortChange: (S) -> Unit,
+    modifier: Modifier = Modifier,
+    initialFocusedLabel: String? = null,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_filter_band_gap)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TvFilterBand(
+            filters = filters,
+            selected = selectedFilter,
+            onSelect = onFilterChange,
+            initialFocusedLabel = initialFocusedLabel,
+        )
+        Text(
+            text = stringResource(R.string.sort_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TvFilterBand(filters = sorts, selected = selectedSort, onSelect = onSortChange)
+    }
+}
+
+/**
  * A row of mutually exclusive filters where OK is the commit: passing over one changes nothing, since
  * changing a filter replaces the list beneath. [initialFocusedLabel] seeds a pill for a preview.
  */
