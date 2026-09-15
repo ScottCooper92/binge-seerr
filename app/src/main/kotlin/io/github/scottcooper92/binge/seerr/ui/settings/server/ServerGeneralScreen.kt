@@ -215,7 +215,7 @@ private fun ApiKeySection(
             onClick = { confirming = true },
             enabled = !apiKey.regenerating,
             loading = apiKey.regenerating,
-            contentColor = MaterialTheme.colorScheme.error,
+            destructive = true,
         )
     }
     if (confirming) {

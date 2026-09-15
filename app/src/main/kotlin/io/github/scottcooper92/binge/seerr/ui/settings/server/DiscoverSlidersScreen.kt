@@ -120,7 +120,7 @@ private fun ResetButton(
         label = stringResource(R.string.server_settings_sliders_reset),
         onClick = { confirming = true },
         enabled = enabled,
-        contentColor = MaterialTheme.colorScheme.error,
+        destructive = true,
         modifier = Modifier.fillMaxWidth(),
     )
     if (confirming) {

@@ -181,7 +181,7 @@ private fun DestructiveActions(
         BingeOutlinedButton(
             label = stringResource(labelRes),
             onClick = onClick,
-            contentColor = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            destructive = destructive,
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -214,7 +214,7 @@ private fun MediaGroup(
             BingeOutlinedButton(
                 label = stringResource(R.string.media_delete_files),
                 onClick = { callbacks.onDeleteFiles(instance.is4k) },
-                contentColor = MaterialTheme.colorScheme.error,
+                destructive = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -223,7 +223,7 @@ private fun MediaGroup(
         BingeOutlinedButton(
             label = stringResource(R.string.media_clear_data),
             onClick = callbacks.onClearData,
-            contentColor = MaterialTheme.colorScheme.error,
+            destructive = true,
             modifier = Modifier.fillMaxWidth(),
         )
     }

@@ -178,7 +178,7 @@ private fun accountRow(
                 label = stringResource(if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link),
                 onClick = if (account.linked) onUnlink else onLink,
                 enabled = !busy,
-                contentColor = if (account.linked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                destructive = account.linked,
             )
         },
     )
