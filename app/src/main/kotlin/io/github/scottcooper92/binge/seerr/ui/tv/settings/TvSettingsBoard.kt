@@ -124,7 +124,7 @@ private fun tvSettingGroups(
             ),
         )
         config?.general?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it, {}, {}, {}, {}), readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it) {}, readOnly))
         }
         if (config != null) {
             add(readOnlyGroup(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server) {}, readOnly))
@@ -134,7 +134,7 @@ private fun tvSettingGroups(
         }
         config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it), readOnly)) }
         config?.system?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, {}, {}, {}), readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it) {}, readOnly))
         }
     }.filter { it.rows.isNotEmpty() }
 }
