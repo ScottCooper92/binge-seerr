@@ -9,6 +9,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -170,9 +171,11 @@ private fun TvRequestDetailOverlay(
     val context = LocalContext.current
     val detail = (state as? RequestDetailUiState.Ready)?.detail
     val onOpenInBinge =
-        detail?.let { ready ->
-            { context.openTitleInBinge(ready.item.mediaType, ready.item.tmdbId) }
-                .takeIf { context.bingeAnswersTitleLink(ready.item.mediaType, ready.item.tmdbId) }
+        remember(context, detail) {
+            detail?.let { ready ->
+                { context.openTitleInBinge(ready.item.mediaType, ready.item.tmdbId) }
+                    .takeIf { context.bingeAnswersTitleLink(ready.item.mediaType, ready.item.tmdbId) }
+            }
         }
     TvRequestDetailScreen(
         state = state,
