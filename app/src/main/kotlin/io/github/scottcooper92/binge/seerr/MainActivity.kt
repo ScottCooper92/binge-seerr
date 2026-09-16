@@ -8,9 +8,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation3.runtime.rememberNavBackStack
-import com.binge.designsystem.theme.BingeExpressiveTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
+import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.DeepLinkNavigator
 import io.github.scottcooper92.binge.seerr.ui.HomeRoute
 import io.github.scottcooper92.binge.seerr.ui.SeerrNavHost
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                     backStack.addAll(routes)
                 }
             }
-            BingeExpressiveTheme {
+            SeerrTheme {
                 SeerrNavHost(backStack = backStack)
             }
         }

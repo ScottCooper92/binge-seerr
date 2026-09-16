@@ -36,10 +36,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
-import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import com.binge.designsystem.R as DesR
 
 /** The three whole-screen states every ported screen renders around its content. */
@@ -184,11 +184,11 @@ internal fun SeerrError.messageRes(): Int =
 @Preview(showBackground = true)
 @Composable
 private fun PreviewErrorScreen() {
-    BingeExpressiveTheme { ErrorScreen(error = SeerrError.Unreachable, onRetry = {}) }
+    SeerrTheme { ErrorScreen(error = SeerrError.Unreachable, onRetry = {}) }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun PreviewEmptyScreen() {
-    BingeExpressiveTheme { EmptyScreen(message = "No requests yet.") }
+    SeerrTheme { EmptyScreen(message = "No requests yet.") }
 }

@@ -4,11 +4,8 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewWrapper
-import com.binge.designsystem.preview.ScreenshotThemeWrapper
 import com.binge.designsystem.tv.preview.TV_PREVIEW_HEIGHT_DP
 import com.binge.designsystem.tv.preview.TV_PREVIEW_WIDTH_DP
-import com.binge.designsystem.tv.preview.TvScreenshotThemeOnBlackWrapper
-import com.binge.designsystem.tv.preview.TvScreenshotThemeWrapper
 
 /**
  * The declared default locale, pinned on every frame.
@@ -35,7 +32,7 @@ private const val DEFAULT_LOCALE = "en-rGB"
  * | `foldable`    | 840×1180 port | dark  |
  * | `tablet`      | 1280×800 land | dark  |
  */
-@PreviewWrapper(ScreenshotThemeWrapper::class)
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "phone", device = "spec:width=411dp,height=891dp,orientation=portrait", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)
 @Preview(
     name = "phone-light",
@@ -71,7 +68,7 @@ annotation class SeerrScreenPreviews
  * changes content within that layout, and its foldable and tablet cells re-answer a settled question
  * at the two most expensive render sizes in the suite.
  */
-@PreviewWrapper(ScreenshotThemeWrapper::class)
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "phone", device = "spec:width=411dp,height=891dp,orientation=portrait", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)
 annotation class SeerrScreenStatePreview
 
@@ -82,7 +79,7 @@ annotation class SeerrScreenStatePreview
  * own width and the qualifier's answer disagree — which is the bug it exists to hold (#285). The
  * frame constrains the composable to the pane's width itself; this only supplies the window.
  */
-@PreviewWrapper(ScreenshotThemeWrapper::class)
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(
     name = "pane",
     device = "spec:width=840dp,height=1180dp,orientation=portrait",
@@ -92,7 +89,7 @@ annotation class SeerrScreenStatePreview
 annotation class SeerrListPanePreview
 
 /** A component against both themes, at the size its content asks for. */
-@PreviewWrapper(ScreenshotThemeWrapper::class)
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "dark", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)
 @Preview(name = "light", uiMode = UI_MODE_NIGHT_NO, locale = DEFAULT_LOCALE)
 annotation class SeerrComponentPreviews
@@ -109,7 +106,7 @@ annotation class SeerrComponentPreviews
  * takes is the same question the submodule documents — a baseline that moves between them names a
  * surface relying on the harness to paint for it.
  */
-@PreviewWrapper(TvScreenshotThemeWrapper::class)
+@PreviewWrapper(SeerrTvScreenshotThemeWrapper::class)
 @Preview(
     name = "tv",
     device = "spec:width=${TV_PREVIEW_WIDTH_DP}dp,height=${TV_PREVIEW_HEIGHT_DP}dp,orientation=landscape",
@@ -119,7 +116,7 @@ annotation class SeerrComponentPreviews
 annotation class SeerrTvPreviews
 
 /** [SeerrTvPreviews] with the window's black painted behind it, for a screen root. */
-@PreviewWrapper(TvScreenshotThemeOnBlackWrapper::class)
+@PreviewWrapper(SeerrTvScreenshotThemeOnBlackWrapper::class)
 @Preview(
     name = "tv",
     device = "spec:width=${TV_PREVIEW_WIDTH_DP}dp,height=${TV_PREVIEW_HEIGHT_DP}dp,orientation=landscape",

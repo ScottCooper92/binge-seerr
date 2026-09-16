@@ -6,13 +6,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 
 /**
  * Colour roles for a status chip, named for what the state means: amber waiting, blue in motion,
@@ -105,5 +105,5 @@ private fun RequestStateTone.sentiment(): BingeSentiment =
 @Preview(showBackground = true)
 @Composable
 private fun PreviewRequestStateChip() {
-    BingeExpressiveTheme { RequestStateChip(status = SeerrRequestStatusCode.Approved) }
+    SeerrTheme { RequestStateChip(status = SeerrRequestStatusCode.Approved) }
 }

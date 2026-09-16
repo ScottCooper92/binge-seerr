@@ -34,8 +34,11 @@ the Play listing under `docs/listing/` waits on its screenshots.
 The contracts and the SDK are consumed as source: `binge-integrations/` is a git
 submodule and `settings.gradle.kts` includes it as a composite build. So is the
 shared design system, `design-system/` (binge-design-system): the screens are built
-from its theme and components, which is what makes this app read as part of Binge
-without depending on it. `.gitmodules` is an agent-governed path, so an author
+from its theme and components, which is what makes this app read as part of Binge's
+family without depending on it. The brand deliberately does not follow — `theme/SeerrTheme.kt`
+passes the design system's `BingeExpressiveTheme`/`BingeTvTheme` this app's own indigo
+`BingeBrand` in place of Binge's amber (#281), so the two apps share every component and
+still read as two products at a glance. `.gitmodules` is an agent-governed path, so an author
 bot's commit can revert a change to it — bump a submodule in a commit of its own,
 and check both pins after any bot push.
 
