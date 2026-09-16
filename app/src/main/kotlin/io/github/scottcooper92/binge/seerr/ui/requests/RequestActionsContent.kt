@@ -21,6 +21,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeTextButton
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import com.binge.designsystem.R as DesR
@@ -84,7 +85,7 @@ internal fun RequestActionsContent(
         val requestGroup: @Composable () -> Unit = {
             PositiveAction(model.actions, callbacks.onApprove, callbacks.onRetry)
             if (model.canEdit) {
-                BingeOutlinedButton(
+                BingeTextButton(
                     label = stringResource(R.string.request_edit_title),
                     onClick = callbacks.onEdit,
                     modifier = Modifier.fillMaxWidth(),
@@ -156,8 +157,9 @@ private fun BlockTitleRow(
  * Decline and remove. The label carries the toggle rather than the toggle being a separate
  * confirmation, so what the button is about to do is on the button.
  *
- * Removing deletes the request and is always toned. A plain decline is a decision the request
- * survives, so it takes the error tone only once the toggle has added the block that outlives it.
+ * Both are always toned: declining and removing are each a decision about the request in front
+ * of you, whether or not the toggle adds a block on top. Remove sits below decline as a text
+ * button — lower emphasis than the outlined decline, since it is the more final of the two.
  */
 @Composable
 private fun DestructiveActions(
@@ -166,22 +168,21 @@ private fun DestructiveActions(
     onDecline: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    val choices =
-        buildList {
-            if (actions.canDecline) {
-                val label = if (blockTitle) R.string.request_decline_and_block else R.string.request_decline
-                add(Triple(label, blockTitle, onDecline))
-            }
-            if (actions.canRemove) {
-                val label = if (blockTitle) R.string.request_remove_and_block else R.string.request_remove
-                add(Triple(label, true, onRemove))
-            }
-        }
-    choices.forEach { (labelRes, destructive, onClick) ->
+    if (actions.canDecline) {
+        val label = if (blockTitle) R.string.request_decline_and_block else R.string.request_decline
         BingeOutlinedButton(
-            label = stringResource(labelRes),
-            onClick = onClick,
-            destructive = destructive,
+            label = stringResource(label),
+            onClick = onDecline,
+            destructive = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+    if (actions.canRemove) {
+        val label = if (blockTitle) R.string.request_remove_and_block else R.string.request_remove
+        BingeTextButton(
+            label = stringResource(label),
+            onClick = onRemove,
+            destructive = true,
             modifier = Modifier.fillMaxWidth(),
         )
     }
