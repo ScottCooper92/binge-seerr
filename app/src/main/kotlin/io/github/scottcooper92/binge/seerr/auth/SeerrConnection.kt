@@ -15,11 +15,13 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.attempt
+import io.github.scottcooper92.binge.seerr.seerr.hasExplicitPort
 import io.github.scottcooper92.binge.seerr.seerr.inspectProfile
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.readProfile
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
+import io.github.scottcooper92.binge.seerr.seerr.withDefaultSeerrPort
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -64,6 +66,23 @@ data class SeerrQuickConnect(
     val code: String,
     val secret: String,
 )
+
+/**
+ * Runs [probe] against [baseUrl], and, when [baseUrl] carries no explicit port, retries against
+ * [String.withDefaultSeerrPort] on any failure — an unreachable address or one that answered but
+ * not as wanted. The retry's success wins; if it also fails, the first attempt's failure is what's
+ * reported, since that is the address the user actually typed. Free of any dependency on the class
+ * below so the retry ordering is unit-testable with no network at all.
+ */
+internal suspend fun <T> withPortFallback(
+    baseUrl: String,
+    probe: suspend (String) -> Result<T>,
+): Result<T> {
+    val primary = probe(baseUrl)
+    if (primary.isSuccess || baseUrl.hasExplicitPort()) return primary
+    val fallbackUrl = baseUrl.withDefaultSeerrPort() ?: return primary
+    return probe(fallbackUrl).recoverCatching { primary.getOrThrow() }
+}
 
 /**
  * The one connected server: connecting, logging in, disconnecting, and the API for the saved
@@ -154,11 +173,24 @@ class SeerrConnection(
      * What [rawBaseUrl] is, before any credential: its profile and, best-effort, its artwork. Fails
      * with the `/status` error when the address answers neither profile call, so the form can say
      * "unreachable" before asking for a password it would only reject.
+     *
+     * A portless address is retried at `:5055` ([withPortFallback]) on either failure kind, since
+     * every fork's Docker image defaults there and a bare host otherwise resolves to port 80.
+     * [SeerrServerPreview.baseUrl] is whichever candidate answered.
      */
     suspend fun inspect(rawBaseUrl: String): Result<SeerrServerPreview> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return runCatching {
+        return withPortFallback(baseUrl, ::inspectCandidate)
+    }
+
+    /**
+     * Probes one candidate base URL, anonymous, for its profile and artwork. On success
+     * [SeerrServerPreview.baseUrl] is exactly [baseUrl] — the candidate that answered — so
+     * [withPortFallback]'s retry carries forward whichever address actually worked.
+     */
+    private suspend fun inspectCandidate(baseUrl: String): Result<SeerrServerPreview> =
+        runCatching {
             apis.anonymous(baseUrl) { api ->
                 val profile =
                     api.inspectProfile(SeerrVariant.Unknown).getOrElse { failure ->
@@ -168,7 +200,6 @@ class SeerrConnection(
                 SeerrServerPreview(baseUrl, profile, backdrops.map { it.toTmdbBackdropUrl() })
             }
         }
-    }
 
     /**
      * Validates [rawBaseUrl] + [auth] against the live server and persists them only if the probe

@@ -73,6 +73,30 @@ fun String.isInsecurePublicUrl(): Boolean {
     return host != null && !host.isLocalOrPrivateHost()
 }
 
+private const val DEFAULT_SEERR_PORT = 5055
+
+/**
+ * Whether the already scheme-normalised [this] (see [normaliseBaseUrl]) names an explicit port.
+ * The normaliser guarantees a scheme and a trailing slash, so the authority is exactly what sits
+ * between `://` and the next `/` — bracketed for IPv6 — and a port is a `:` right after it.
+ */
+internal fun String.hasExplicitPort(): Boolean {
+    val authority = substringAfter("://", "").substringBefore("/")
+    return if (authority.startsWith("[")) authority.substringAfter("]").startsWith(":") else authority.contains(":")
+}
+
+/**
+ * [this], already normalised and portless, with [DEFAULT_SEERR_PORT] — the port every fork's
+ * Docker image serves on — added. The second candidate `SeerrConnection.inspect` tries when the
+ * entered address carried no port of its own.
+ */
+internal fun String.withDefaultSeerrPort(): String? =
+    toHttpUrlOrNull()
+        ?.newBuilder()
+        ?.port(DEFAULT_SEERR_PORT)
+        ?.build()
+        ?.toString()
+
 private val PRIVATE_CLASS_B = Regex("""172\.(1[6-9]|2\d|3[01])\..*""")
 private val CGNAT_TAILSCALE = Regex("""100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\..*""")
 
