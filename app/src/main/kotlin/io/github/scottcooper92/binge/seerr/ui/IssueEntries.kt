@@ -46,6 +46,7 @@ internal fun IssuesEntry(
 internal fun IssueDetailEntry(
     issueId: Int,
     onBack: () -> Unit,
+    showBack: Boolean,
     viewModel: IssueDetailViewModel =
         hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
 ) {
@@ -53,6 +54,7 @@ internal fun IssueDetailEntry(
     IssueDetailScreen(
         state = state,
         events = viewModel.events,
+        showBack = showBack,
         actions =
             IssueDetailActions(
                 onBack = onBack,

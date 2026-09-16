@@ -28,14 +28,24 @@ class UserSettingsActions(
     val onOpenPage: (UserSettingsPage) -> Unit,
 )
 
-/** The index of one user's settings: a row per page the viewer may open. */
+/**
+ * The index of one user's settings: a row per page the viewer may open.
+ *
+ * @param showBack false when this index is the only thing in the detail pane beside the hub, where a
+ * back arrow to the hub is redundant. Always true today — reached only from a user's own detail page
+ * — kept in step with the other detail-pane screens for when that changes.
+ */
 @Composable
 fun UserSettingsScreen(
     state: UserSettingsUiState,
     actions: UserSettingsActions,
+    showBack: Boolean = true,
 ) {
     val ready = state as? UserSettingsUiState.Ready
-    ScreenScaffold(title = ready?.index?.userName ?: stringResource(R.string.user_settings_title), onBack = actions.onBack) { padding ->
+    ScreenScaffold(
+        title = ready?.index?.userName ?: stringResource(R.string.user_settings_title),
+        onBack = actions.onBack.takeIf { showBack },
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when (state) {
