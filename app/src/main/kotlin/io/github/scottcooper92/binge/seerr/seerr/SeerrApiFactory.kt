@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Cookie
 import okhttp3.CookieJar
+import okhttp3.Dispatcher
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -28,6 +29,13 @@ class SeerrApiFactory(
     private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
+    /**
+     * Every client this factory builds shares one [Dispatcher]. Production leaves this at OkHttp's
+     * own default (a real thread pool); a test against a real `MockWebServer` supplies one backed by
+     * a same-thread `ExecutorService` instead, so a call resumes its coroutine inline rather than
+     * from a thread that can outlive the test (#177).
+     */
+    private val dispatcher: Dispatcher = Dispatcher(),
 ) {
     /**
      * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
@@ -132,6 +140,7 @@ class SeerrApiFactory(
      */
     private fun OkHttpClient.Builder.finish(debugLevel: HttpLoggingInterceptor.Level): OkHttpClient =
         addNetworkInterceptor(loggingInterceptor(debugLevel))
+            .dispatcher(dispatcher)
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)

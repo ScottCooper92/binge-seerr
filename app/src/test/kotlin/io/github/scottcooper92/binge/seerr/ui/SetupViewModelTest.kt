@@ -13,14 +13,12 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.plexTvApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.synchronousDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -31,7 +29,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -46,8 +43,10 @@ import kotlin.time.Duration.Companion.milliseconds
  * scripted Seerr and, for the Plex flow, a scripted plex.tv. Every outcome that crosses a thread is
  * awaited by its shape rather than read off the state, which would read whatever was there last.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 class SetupViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @get:Rule
     val folder = TemporaryFolder()
 
@@ -60,13 +59,6 @@ class SetupViewModelTest {
     /** Counts the Quick Connect initiates, so a resume can be told from a second sign-in started. */
     private val initiates = AtomicInteger(0)
 
-    @Before
-    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
     fun tearDown() {
         viewModels.clear()
@@ -91,7 +83,7 @@ class SetupViewModelTest {
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                             PlainCipher,
                         ),
-                    apis = SeerrApiFactory(logRequests = false),
+                    apis = SeerrApiFactory(logRequests = false, dispatcher = synchronousDispatcher()),
                     quickConnectPollInterval = 10.milliseconds,
                 )
         }
@@ -101,7 +93,7 @@ class SetupViewModelTest {
                 plex =
                     PlexPinFlow(
                         identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
-                        apis = { plexTvApi(it, plex.url("/").toString()) },
+                        apis = { plexTvApi(it, plex.url("/").toString(), dispatcher = synchronousDispatcher()) },
                         pollInterval = 10.milliseconds,
                     ),
                 savedState = savedState,

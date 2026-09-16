@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Dispatcher
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -60,10 +61,15 @@ data class PlexClientIdentity(
 private const val PLEX_TV_BASE_URL = "https://plex.tv/"
 private const val TIMEOUT_SECONDS = 15L
 
-/** A [PlexTvApi] presenting [identity] on every call; [baseUrl] is a parameter so a test can script plex.tv. */
+/**
+ * A [PlexTvApi] presenting [identity] on every call; [baseUrl] is a parameter so a test can script
+ * plex.tv. [dispatcher] follows [SeerrApiFactory]'s own reasoning (#177): production leaves it at
+ * OkHttp's default, a test against a real `MockWebServer` supplies a same-thread one instead.
+ */
 fun plexTvApi(
     identity: PlexClientIdentity,
     baseUrl: String = PLEX_TV_BASE_URL,
+    dispatcher: Dispatcher = Dispatcher(),
 ): PlexTvApi {
     val client =
         OkHttpClient
@@ -81,7 +87,8 @@ fun plexTvApi(
                         .header("X-Plex-Device", identity.device)
                         .build(),
                 )
-            }.connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            }.dispatcher(dispatcher)
+            .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
     val json = Json { ignoreUnknownKeys = true }

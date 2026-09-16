@@ -14,13 +14,13 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuotaBucket
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.synchronousDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -41,8 +41,11 @@ private const val ADMIN = 2
 private const val MANAGE_USERS = 1 shl 3
 private const val REQUEST = 1 shl 5
 
-/** The user page over a real connection into a path-scripted Seerr; Main is real-time, as for the hub. */
+/** The user page over a real connection into a path-scripted Seerr. */
 class UserDetailViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @get:Rule
     val folder = TemporaryFolder()
 
@@ -55,7 +58,6 @@ class UserDetailViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.dispatcher =
             object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest): MockResponse {
@@ -66,10 +68,6 @@ class UserDetailViewModelTest {
         seerr.start()
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
     fun tearDown() {
         viewModels.clear()
@@ -115,7 +113,7 @@ class UserDetailViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, dispatcher = synchronousDispatcher()),
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = UserDetailViewModel(connection, TitleCache(), cache, userId)

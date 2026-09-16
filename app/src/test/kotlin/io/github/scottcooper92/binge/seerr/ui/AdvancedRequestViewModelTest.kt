@@ -10,14 +10,12 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.synchronousDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Headers.Companion.headersOf
@@ -25,7 +23,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -45,20 +42,15 @@ private const val DETAILS = """{
 }"""
 
 /** The hand-off's state over a real connection into a scripted server, as the setup screen's test does. */
-@OptIn(ExperimentalCoroutinesApi::class)
 class AdvancedRequestViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @get:Rule
     val folder = TemporaryFolder()
 
     private val seerr = MockWebServer().apply { start() }
 
-    @Before
-    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
     fun tearDown() {
         seerr.close()
@@ -193,7 +185,11 @@ class AdvancedRequestViewModelTest {
                 PlainCipher,
             )
         if (connected) store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.Seerr))
-        val vm = AdvancedRequestViewModel(SeerrConnection(store, SeerrApiFactory(logRequests = false)), request)
+        val vm =
+            AdvancedRequestViewModel(
+                SeerrConnection(store, SeerrApiFactory(logRequests = false, dispatcher = synchronousDispatcher())),
+                request,
+            )
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }

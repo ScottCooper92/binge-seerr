@@ -22,17 +22,20 @@ import org.junit.runner.Description
  * advance, and `runTest` cannot tell when the ViewModel's work has finished — which pushes a test
  * towards sampling state instead of awaiting it, and sampling is where the races live.
  *
- * Ten files keep their own `setMain` with no reset, and the reason is not the real socket they
- * drive: twenty-five other files drive a `MockWebServer` through this rule. Two separate causes,
- * both since measured (#177).
+ * Three files still keep their own `setMain` with no reset (#177): a real `MockWebServer` call
+ * cancelled by `ViewModelStore.clear` can still resume on OkHttp's own thread afterwards, and
+ * dispatching that resume to an absent Main throws — resetting is what makes it visible, not what
+ * causes it. Every other file that drives a `MockWebServer` takes this rule safely instead, by
+ * giving `SeerrApiFactory` (or `plexTvApi`) [synchronousDispatcher] in place of OkHttp's own thread
+ * pool: a call resumes its coroutine inline, with nothing left to outlive the test. That is not
+ * available to the three left:
  *
- * `HubViewModelTest` hangs, because it turns on `DownloadsPoller`, whose loop is
- * `while (true) { …; delay(…) }` - a virtual clock drives that forever and `runTest` never goes
- * idle. The other nine do not hang; taking Main away exposes work that outlives their teardown,
- * which the leaked dispatcher had been masking. A Retrofit call cancelled by `ViewModelStore.clear`
- * still resumes on OkHttp's thread afterwards, and dispatching that resume to an absent Main
- * throws. Resetting is what makes it visible, so the fix is for nothing to outlive the test - not
- * for Main to stay leaked.
+ * - `HubViewModelTest` turns on `DownloadsPoller`, whose loop is `while (true) { …; delay(…) }` — a
+ *   virtual clock drives that forever and `runTest` never goes idle, same-thread or not.
+ * - `IssueDetailViewModelTest` and `RequestDetailViewModelTest` each hold a response back with a
+ *   blocking `CountDownLatch` so a second, overlapping action can run while the first is still in
+ *   flight (mid-send cancellation). A same-thread dispatcher would block the test's own thread for
+ *   the held call, so the later `countDown()` that is supposed to release it would never run.
  */
 class MainDispatcherRule(
     val dispatcher: TestDispatcher = UnconfinedTestDispatcher(),

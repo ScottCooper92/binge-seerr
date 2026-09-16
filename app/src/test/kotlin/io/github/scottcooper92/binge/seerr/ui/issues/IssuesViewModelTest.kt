@@ -11,13 +11,13 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.synchronousDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -37,8 +37,11 @@ import java.util.concurrent.atomic.AtomicInteger
 private const val ADMIN = 2
 private const val CREATE_ISSUES = 1 shl 22
 
-/** The browser over a real connection into a path-scripted Seerr, paging through the fake cache; Main is real-time. */
+/** The browser over a real connection into a path-scripted Seerr, paging through the fake cache. */
 class IssuesViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @get:Rule
     val folder = TemporaryFolder()
 
@@ -48,14 +51,9 @@ class IssuesViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         seerr.start()
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
     fun tearDown() {
         viewModels.clear()
@@ -98,7 +96,7 @@ class IssuesViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("i.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, dispatcher = synchronousDispatcher()),
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = IssuesViewModel(connection, TitleCache(), FakeIssueStore())
