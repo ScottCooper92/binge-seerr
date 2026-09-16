@@ -46,17 +46,18 @@ import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 import kotlinx.coroutines.flow.emptyFlow
 
 /*
- * The rail's boards, one frame per state and one per focused control. Rendered by the preview pane; this
- * repository has no screenshot suite.
+ * The rail's boards, one frame per state and one per focused control. The `@TvPreviewsOnBlack` functions
+ * below are IDE-only preview tooling; the fixtures above them are `internal` so the screenshotTest suite
+ * (`ui/tv/requests`, `ui/tv/issues`, `ui/tv/settings`) can reuse them instead of duplicating sample data.
  */
 
-private const val HOUR_MILLIS = 3_600_000L
-private const val DAY_MILLIS = 24 * HOUR_MILLIS
-private val NOW = System.currentTimeMillis()
+internal const val HOUR_MILLIS = 3_600_000L
+internal const val DAY_MILLIS = 24 * HOUR_MILLIS
+internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {}, {}, {})
-private val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {})
-private val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {})
+internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
     HubServer(
@@ -93,7 +94,7 @@ private fun hub(
     downloading: List<HubDownload> = SampleDownloads,
 ) = HubUiState.Ready(server = SampleServer, health = health, overview = SampleOverview, downloading = downloading)
 
-private fun request(
+internal fun request(
     id: Int,
     title: String,
     status: SeerrRequestStatusCode,
@@ -116,16 +117,17 @@ private fun request(
     is4k = id % 2 == 0,
 )
 
-private val SampleRequests =
+internal val SampleRequests =
     listOf(
         request(1, "Heat", SeerrRequestStatusCode.Pending),
         request(2, "The Bear", SeerrRequestStatusCode.Approved, seasons = listOf(1, 2), download = RequestDownload(0.4f, 12, true)),
         request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined),
     )
 
-private val ManagerScope = ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 7, hasBlocklist = true)
+internal val ManagerScope =
+    ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 7, hasBlocklist = true)
 
-private fun requestsReady(actionItem: RequestItem? = null) =
+internal fun requestsReady(actionItem: RequestItem? = null) =
     RequestsUiState.Ready(
         filter = RequestFilter.All,
         sort = RequestSort.Added,
@@ -136,9 +138,9 @@ private fun requestsReady(actionItem: RequestItem? = null) =
         actionItem = actionItem,
     )
 
-private fun <T> rows(items: List<T>) = TvPagedRows(count = items.size, at = { items.getOrNull(it) })
+internal fun <T> rows(items: List<T>) = TvPagedRows(count = items.size, at = { items.getOrNull(it) })
 
-private fun issue(
+internal fun issue(
     id: Int,
     title: String,
     status: IssueStatus,
@@ -161,9 +163,9 @@ private fun issue(
     problemEpisode = 4,
 )
 
-private val SampleIssues = listOf(issue(11, "Severance", IssueStatus.Open), issue(12, "Slow Horses", IssueStatus.Resolved))
+internal val SampleIssues = listOf(issue(11, "Severance", IssueStatus.Open), issue(12, "Slow Horses", IssueStatus.Resolved))
 
-private fun issuesReady(actionItem: IssueItem? = null) =
+internal fun issuesReady(actionItem: IssueItem? = null) =
     IssuesUiState.Ready(
         filter = IssueFilter.Open,
         sort = IssueSort.Added,
@@ -172,7 +174,7 @@ private fun issuesReady(actionItem: IssueItem? = null) =
         actionItem = actionItem,
     )
 
-private val SampleSettings =
+internal val SampleSettings =
     SettingsUiState.Ready(
         connection = ConnectionSummary(baseUrl = "http://seerr.lan:5055", signInKind = SignInKind.Session, userName = "Scott"),
         server =
