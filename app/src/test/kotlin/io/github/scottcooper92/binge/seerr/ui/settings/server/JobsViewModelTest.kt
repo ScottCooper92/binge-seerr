@@ -121,6 +121,41 @@ class JobsViewModelTest {
         }
 
     @Test
+    fun `a tap before the load resolves waits for it rather than being dropped`() =
+        runTest {
+            seerr.serveFrom("GET /api/v1/settings/jobs", delayMillis = 50) { JOBS }
+            seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = false))
+            val vm = viewModel()
+            val notice = awaitEvent(vm.events)
+            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
+            assertEquals(EditorEvent.Notice(R.string.tv_settings_scan_started), notice.await())
+        }
+
+    @Test
+    fun `a tap on a failed load retries it once, then runs once that retry lands`() =
+        runTest {
+            seerr.serve("GET /api/v1/settings/jobs", """{"message":"boom"}""", code = 500)
+            seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = false))
+            val vm = viewModel()
+            vm.uiState.first { it is JobsUiState.Error }
+            seerr.serve("GET /api/v1/settings/jobs", JOBS)
+            val notice = awaitEvent(vm.events)
+            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
+            assertEquals(EditorEvent.Notice(R.string.tv_settings_scan_started), notice.await())
+        }
+
+    @Test
+    fun `a tap on a load still failing after the retry reports the failure rather than doing nothing`() =
+        runTest {
+            seerr.serve("GET /api/v1/settings/jobs", """{"message":"boom"}""", code = 500)
+            val vm = viewModel()
+            vm.uiState.first { it is JobsUiState.Error }
+            val failed = awaitEvent(vm.events)
+            vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
+            assertTrue(failed.await() is EditorEvent.Failed)
+        }
+
+    @Test
     fun `a preset encodes as the six-field cron the server takes, and a failure is reported`() =
         runTest {
             seerr.serve("POST /api/v1/settings/jobs/download-sync/schedule", job("download-sync", running = false))

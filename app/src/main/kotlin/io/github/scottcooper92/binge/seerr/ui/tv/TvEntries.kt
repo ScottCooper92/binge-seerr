@@ -30,6 +30,7 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
@@ -167,7 +168,6 @@ private fun TvIssuesEntry(
 private fun TvSettingsEntry(
     onEditConnection: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
-    jobsViewModel: JobsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // Refetched on every arrival, so returning from Edit connection shows the new server.
@@ -175,13 +175,31 @@ private fun TvSettingsEntry(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
+    // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
+    // gate as the row itself — so a non-admin viewer never pays for a `/settings/jobs` fetch they cannot use.
+    if ((state as? SettingsUiState.Ready)?.config != null) {
+        TvAdminSettingsEntry(state = state, onEditConnection = onEditConnection, onDisconnect = viewModel::disconnect)
+    } else {
+        TvSettingsBoard(state = state, onEditConnection = onEditConnection, onDisconnect = viewModel::disconnect)
+    }
+}
+
+@Composable
+private fun TvAdminSettingsEntry(
+    state: SettingsUiState,
+    onEditConnection: () -> Unit,
+    onDisconnect: () -> Unit,
+    jobsViewModel: JobsViewModel = hiltViewModel(),
+) {
     TvSettingsBoard(
         state = state,
         onEditConnection = onEditConnection,
-        onDisconnect = viewModel::disconnect,
+        onDisconnect = onDisconnect,
         // The phone Jobs page's own run action, reused rather than a second call to the same endpoint:
         // this board has no jobs list of its own, so the notice is what tells the admin it started.
-        onStartLibraryScan = { jobsViewModel.run(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started) },
+        // `runWhenReady`, not `run`: this view model's own load races the row becoming visible, so an
+        // early tap has to wait it out (and retry once from a failed one) rather than being dropped.
+        onStartLibraryScan = { jobsViewModel.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started) },
         libraryScanEvents = jobsViewModel.events,
     )
 }
