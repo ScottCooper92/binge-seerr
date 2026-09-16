@@ -61,3 +61,16 @@ fun Context.openTitle(
         is TitleTarget.Web -> openInBrowser(target.url)
     }
 }
+
+/**
+ * Opens a title in Binge on a television, which has no browser to fall back to: the caller checks
+ * [bingeAnswersTitleLink] first and hides the affordance where it is false, so this only ever fires
+ * where Binge is expected to answer. A launch that still fails is swallowed rather than opened
+ * anywhere else.
+ */
+fun Context.openTitleInBinge(
+    mediaType: RequestMediaType,
+    tmdbId: Int,
+) {
+    runCatching { startActivity(Intent(Intent.ACTION_VIEW, BingeHandOff.titleUri(mediaType, tmdbId).toUri())) }
+}

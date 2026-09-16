@@ -56,7 +56,7 @@ internal const val DAY_MILLIS = 24 * HOUR_MILLIS
 internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {}, {}, {})
-internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {}, {}, { _, _ -> }, { _, _ -> }, {}, {})
+internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {})
 internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
@@ -220,7 +220,6 @@ internal fun TvRequestsBoardPreview() {
     TvRequestsBoard(
         state = requestsReady(),
         rows = rows(SampleRequests),
-        events = emptyFlow(),
         actions = NoRequestsActions,
         initialFocusedRowId = 1,
     )
@@ -228,19 +227,8 @@ internal fun TvRequestsBoardPreview() {
 
 @TvPreviewsOnBlack
 @Composable
-internal fun TvRequestsSheetPreview() {
-    TvRequestsBoard(
-        state = requestsReady(actionItem = SampleRequests.first()),
-        rows = rows(SampleRequests),
-        events = emptyFlow(),
-        actions = NoRequestsActions,
-    )
-}
-
-@TvPreviewsOnBlack
-@Composable
 internal fun TvRequestsEmptyPreview() {
-    TvRequestsBoard(state = requestsReady(), rows = rows(emptyList()), events = emptyFlow(), actions = NoRequestsActions)
+    TvRequestsBoard(state = requestsReady(), rows = rows(emptyList()), actions = NoRequestsActions)
 }
 
 @TvPreviewsOnBlack
@@ -249,7 +237,6 @@ internal fun TvRequestsFailedPreview() {
     TvRequestsBoard(
         state = requestsReady(),
         rows = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)),
-        events = emptyFlow(),
         actions = NoRequestsActions,
     )
 }
