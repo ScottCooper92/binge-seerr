@@ -9,10 +9,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.binge.integration.sdk.toAdvancedRequest
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
+import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestScreen
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestViewModel
@@ -73,7 +73,7 @@ class AdvancedRequestActivity : ComponentActivity() {
                 )
                 return@setContent
             }
-            BingeExpressiveTheme {
+            SeerrTheme {
                 AdvancedRequestScreen(
                     state = state,
                     onSelectServer = viewModel::selectServer,
