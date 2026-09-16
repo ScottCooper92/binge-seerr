@@ -16,6 +16,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestSummaryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchDataDto
@@ -23,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrWatchStatsDto
 import io.github.scottcooper92.binge.seerr.seerr.arrServer
 import io.github.scottcooper92.binge.seerr.seerr.arrServers
 import io.github.scottcooper92.binge.seerr.seerr.details
+import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
@@ -178,6 +180,15 @@ class RequestDetailViewModel
         }
     }
 
+private fun SeerrRequestSummaryDto.toSibling(): SiblingRequest =
+    SiblingRequest(
+        id = id,
+        status = status,
+        requestedBy = requestedBy?.displayString(),
+        requestedAtMillis = createdAt?.toEpochMillisOrNull(),
+        is4k = is4k,
+    )
+
 private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
     WatchStats(
         playCount = playCount,
@@ -234,6 +245,13 @@ private class DetailSources(
             mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
             serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),
             media = dto.mediaRecord(permissions, profile, watch),
+            siblings =
+                details
+                    ?.mediaInfo
+                    ?.requests
+                    .orEmpty()
+                    .filter { it.id != dto.id }
+                    .map { it.toSibling() },
         )
     }
 

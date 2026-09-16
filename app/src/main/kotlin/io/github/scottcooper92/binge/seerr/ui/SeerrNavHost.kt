@@ -176,7 +176,11 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         // request page never notices in practice — it is only ever stacked above a section or above
         // UserDetailEntry, never pushed straight onto [HubRoute], so its pane depth is always > 1.
         // Gating it for real is a design-system change (DetailOverlayTopBar's onBack is non-nullable).
-        RequestDetailEntry(route.requestId, onBack = { backStack.removeLastOrNull() })
+        RequestDetailEntry(
+            route.requestId,
+            onBack = { backStack.removeLastOrNull() },
+            onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
+        )
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
         IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }, showBack = showBack())
