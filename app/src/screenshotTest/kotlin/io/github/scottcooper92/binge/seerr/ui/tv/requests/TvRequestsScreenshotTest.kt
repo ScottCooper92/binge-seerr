@@ -2,7 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.requests
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
-import io.github.scottcooper92.binge.seerr.preview.SeerrTvPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.tv.NoRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleRequests
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.emptyFlow
  */
 class TvRequestsScreenshotTest {
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Board() {
         TvRequestsBoard(
@@ -30,7 +30,7 @@ class TvRequestsScreenshotTest {
     }
 
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Sheet() {
         TvRequestsBoard(
@@ -42,14 +42,14 @@ class TvRequestsScreenshotTest {
     }
 
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Empty() {
         TvRequestsBoard(state = requestsReady(), rows = rows(emptyList()), events = emptyFlow(), actions = NoRequestsActions)
     }
 
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Failed() {
         TvRequestsBoard(

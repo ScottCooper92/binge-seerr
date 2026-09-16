@@ -2,7 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.settings
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
-import io.github.scottcooper92.binge.seerr.preview.SeerrTvPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettings
 
 /**
@@ -11,14 +11,14 @@ import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettings
  */
 class TvSettingsScreenshotTest {
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Board() {
         TvSettingsBoard(state = SampleSettings, onEditConnection = {}, onDisconnect = {}, initialListHasFocus = true)
     }
 
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Disconnect() {
         TvSettingsBoard(

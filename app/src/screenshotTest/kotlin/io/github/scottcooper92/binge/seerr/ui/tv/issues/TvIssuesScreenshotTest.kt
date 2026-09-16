@@ -2,7 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.issues
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
-import io.github.scottcooper92.binge.seerr.preview.SeerrTvPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.tv.NoIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleIssues
 import io.github.scottcooper92.binge.seerr.ui.tv.issuesReady
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.emptyFlow
  */
 class TvIssuesScreenshotTest {
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Board() {
         TvIssuesBoard(
@@ -28,7 +28,7 @@ class TvIssuesScreenshotTest {
     }
 
     @PreviewTest
-    @SeerrTvPreviews
+    @SeerrTvScreenPreviews
     @Composable
     fun Sheet() {
         TvIssuesBoard(
