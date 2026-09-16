@@ -21,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import retrofit2.HttpException
+import java.io.IOException
 import kotlin.time.Duration.Companion.milliseconds
 
 /** Connecting, logging in and the cached user, against a real HTTP server on the JVM. */
@@ -267,7 +268,95 @@ class SeerrConnectionTest {
 
             server.close()
 
-            assertTrue(sut.inspect(baseUrl).exceptionOrNull() is java.io.IOException)
+            assertTrue(sut.inspect(baseUrl).exceptionOrNull() is IOException)
+        }
+
+    @Test
+    fun `inspect retries a portless address at the default Seerr port when the default port is unreachable`() =
+        runTest {
+            val fallback = MockWebServer().apply { start(5055) }
+            try {
+                fallback.enqueue(json("""{"version":"3.4.0"}"""))
+                fallback.enqueue(json("""{"mediaServerType":2}"""))
+                fallback.enqueue(json("""[]"""))
+                val sut = connection(backgroundScope)
+
+                // "127.0.0.1" carries no port, so the normalised primary candidate is
+                // "http://127.0.0.1/" — port 80, which nothing listens on here.
+                val preview = sut.inspect("127.0.0.1").getOrThrow()
+
+                assertEquals("http://127.0.0.1:5055/", preview.baseUrl)
+                assertEquals(SeerrVersion(3, 4, 0), preview.profile.version)
+            } finally {
+                fallback.close()
+            }
+        }
+
+    @Test
+    fun `withPortFallback tries an explicit-port address exactly once, whatever it fails with`() =
+        runTest {
+            var calls = 0
+
+            val result =
+                withPortFallback("http://192.168.1.10:5055/") { candidate ->
+                    calls++
+                    assertEquals("http://192.168.1.10:5055/", candidate)
+                    Result.failure<Unit>(NotSeerrServerException(IllegalStateException("boom")))
+                }
+
+            assertTrue(result.isFailure)
+            assertEquals(1, calls)
+        }
+
+    @Test
+    fun `withPortFallback retries a portless address on an unreachable primary`() =
+        runTest {
+            val attempts = mutableListOf<String>()
+
+            val result =
+                withPortFallback("http://192.168.1.10/") { candidate ->
+                    attempts += candidate
+                    if (candidate == "http://192.168.1.10:5055/") Result.success("ok") else Result.failure(IOException("refused"))
+                }
+
+            assertEquals("ok", result.getOrNull())
+            assertEquals(listOf("http://192.168.1.10/", "http://192.168.1.10:5055/"), attempts)
+        }
+
+    @Test
+    fun `withPortFallback retries a portless address that answered but was not a Seerr server too`() =
+        runTest {
+            val attempts = mutableListOf<String>()
+
+            val result =
+                withPortFallback("http://192.168.1.10/") { candidate ->
+                    attempts += candidate
+                    if (candidate == "http://192.168.1.10:5055/") {
+                        Result.success("ok")
+                    } else {
+                        Result.failure(NotSeerrServerException(IllegalStateException("not seerr")))
+                    }
+                }
+
+            assertEquals("ok", result.getOrNull())
+            assertEquals(2, attempts.size)
+        }
+
+    @Test
+    fun `withPortFallback reports the primary's failure when the retry fails too`() =
+        runTest {
+            val primaryFailure = IOException("refused")
+
+            val result =
+                withPortFallback<Unit>("http://192.168.1.10/") { candidate ->
+                    if (candidate == "http://192.168.1.10:5055/") {
+                        Result.failure(NotSeerrServerException(IllegalStateException("also not seerr")))
+                    } else {
+                        Result.failure(primaryFailure)
+                    }
+                }
+
+            assertEquals(primaryFailure, result.exceptionOrNull())
         }
 
     @Test
