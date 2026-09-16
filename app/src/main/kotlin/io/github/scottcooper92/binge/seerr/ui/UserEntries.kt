@@ -65,6 +65,7 @@ internal fun UsersEntry(
 internal fun UserDetailEntry(
     userId: Int,
     onBack: () -> Unit,
+    showBack: Boolean,
     onOpenRequest: (Int) -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: UserDetailViewModel =
@@ -75,6 +76,7 @@ internal fun UserDetailEntry(
         state = state,
         requests = viewModel.requests,
         events = viewModel.events,
+        showBack = showBack,
         actions =
             UserDetailActions(
                 onBack = onBack,

@@ -26,12 +26,17 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.editorActions
 internal fun UserSettingsEntry(
     userId: Int,
     onBack: () -> Unit,
+    showBack: Boolean,
     onOpenPage: (UserSettingsPage) -> Unit,
     viewModel: UserSettingsViewModel =
         hiltViewModel<UserSettingsViewModel, UserSettingsViewModel.Factory>(creationCallback = { factory -> factory.create(userId) }),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    UserSettingsScreen(state = state, actions = UserSettingsActions(onBack = onBack, onRetry = viewModel::reload, onOpenPage = onOpenPage))
+    UserSettingsScreen(
+        state = state,
+        showBack = showBack,
+        actions = UserSettingsActions(onBack = onBack, onRetry = viewModel::reload, onOpenPage = onOpenPage),
+    )
 }
 
 /** Each page has its own ViewModel; the route's page picks which, and the entry wires the editor calls the same way for all. */
