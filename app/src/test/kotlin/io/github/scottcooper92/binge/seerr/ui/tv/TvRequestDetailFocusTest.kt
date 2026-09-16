@@ -12,6 +12,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -89,6 +90,76 @@ class TvRequestDetailFocusTest {
         assertEquals(listOf(1), approved)
         settleFocusRestore()
         manageButton().assertIsFocused()
+    }
+
+    /**
+     * The read-only case the board's row doesn't reach: an already-available title with no active downloads,
+     * no moderation this viewer can do, and no Open in Binge to hand off to. Arrival has nothing in reading
+     * order to offer focus to, so it must fall back to the content column itself rather than leaving the
+     * D-pad dead.
+     */
+    @Test
+    fun arrivalFallsBackToTheContentColumnWhenNothingElseIsFocusable() {
+        val item =
+            RequestItem(
+                id = 2,
+                tmdbId = 2,
+                mediaType = RequestMediaType.Movie,
+                title = HEAT,
+                posterUrl = null,
+                year = "1995",
+                requestedBy = "ana",
+                requestedById = 3,
+                requestedAtMillis = null,
+                status = SeerrRequestStatusCode.Approved,
+                mediaStatus = null,
+                download = null,
+                seasonNumbers = emptyList(),
+                is4k = false,
+            )
+        val detail =
+            RequestDetail(
+                item = item,
+                actions = RequestActions(),
+                canEdit = false,
+                canEditDestination = false,
+                backdropUrl = null,
+                overview = null,
+                modifiedBy = null,
+                updatedAtMillis = null,
+                seasons = emptyList(),
+                destination = null,
+                downloads = emptyList(),
+                mediaId = 9,
+                canReportIssue = false,
+                webUrl = "https://seerr.example/movie/2",
+                mediaServerUrl = null,
+                serviceUrl = null,
+                media = null,
+            )
+        composeTestRule.setContent {
+            BingeTvTheme {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    TvRequestDetailScreen(
+                        state = RequestDetailUiState.Ready(detail),
+                        events = emptyFlow(),
+                        actions =
+                            TvRequestDetailActions(
+                                onBack = {},
+                                onRetry = {},
+                                onOpenInBinge = null,
+                                onApprove = {},
+                                onRetryRequest = {},
+                                onDecline = {},
+                                onRemove = {},
+                            ),
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNode(isFocused()).assertExists()
     }
 
     private fun setContent() {

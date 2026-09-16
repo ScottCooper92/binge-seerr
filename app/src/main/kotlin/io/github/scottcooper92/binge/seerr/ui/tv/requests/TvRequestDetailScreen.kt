@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.requests
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -105,8 +106,9 @@ internal fun TvRequestDetailScreen(
 /**
  * The loaded page's content: a fixed-width reading column so a title's meta line does not stretch across a
  * ten-foot screen. Arrival focus lands on the first focusable thing in reading order — a season, a
- * download, or (failing either) the primary button — never on the trailing action so opening the page
- * never jumps the scroll straight to its foot.
+ * download, the primary button, or (failing all three) Open in Binge — and if the request offers none of
+ * those either, the reading column itself takes focus so the page is never left with nowhere for the D-pad
+ * to land.
  */
 @Composable
 private fun TvRequestDetailContent(
@@ -120,7 +122,7 @@ private fun TvRequestDetailContent(
     TvArrivalFocusEffect(arrival)
     val manageFocus = remember { FocusRequester() }
     val closer = rememberTvOverlayCloser(restoreTo = manageFocus, onClose = { acting = false })
-    val onFirst = firstFocusableSection(detail)
+    val onFirst = firstFocusableSection(detail, hasOpenInBinge = actions.onOpenInBinge != null)
 
     TvStableFocusScroll {
         Column(
@@ -132,7 +134,9 @@ private fun TvRequestDetailContent(
                     .padding(
                         horizontal = dimensionResource(TvR.dimen.tv_overscan_horizontal),
                         vertical = dimensionResource(TvR.dimen.tv_overscan_vertical),
-                    ),
+                    ).let {
+                        if (onFirst == TvDetailSection.Content) it.tvArrivalTarget(arrival).focusable() else it
+                    },
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_detail_section_gap)),
         ) {
             val item = detail.item
@@ -150,6 +154,7 @@ private fun TvRequestDetailContent(
                 onManage = { acting = true },
                 manageFocus = manageFocus,
                 arrivalOnManage = onFirst == TvDetailSection.Manage,
+                arrivalOnOpen = onFirst == TvDetailSection.OpenInBinge,
                 arrival = arrival,
             )
             event?.let {
@@ -163,15 +168,25 @@ private fun TvRequestDetailContent(
     if (acting) TvRequestDetailSheet(detail = detail, actions = actions, closer = closer)
 }
 
-/** In reading order, whichever renders first: never the trailing Open-in-Binge, so the button never leads. */
-private enum class TvDetailSection { Seasons, Downloads, Manage }
+/**
+ * In reading order, whichever renders first. [Content] is the last resort, for a request with no seasons,
+ * no downloads, no moderation this viewer can do, and no Open in Binge to hand off to — otherwise arrival
+ * has nothing to offer focus to, and the page's D-pad silently goes dead (the read-only case: an
+ * already-available title with no active downloads, viewed by someone with no approve/decline/retry/remove
+ * permission).
+ */
+private enum class TvDetailSection { Seasons, Downloads, Manage, OpenInBinge, Content }
 
-private fun firstFocusableSection(detail: RequestDetail): TvDetailSection? =
+private fun firstFocusableSection(
+    detail: RequestDetail,
+    hasOpenInBinge: Boolean,
+): TvDetailSection =
     when {
         detail.seasons.isNotEmpty() -> TvDetailSection.Seasons
         detail.downloads.isNotEmpty() -> TvDetailSection.Downloads
         detail.actions.any -> TvDetailSection.Manage
-        else -> null
+        hasOpenInBinge -> TvDetailSection.OpenInBinge
+        else -> TvDetailSection.Content
     }
 
 @Composable
@@ -245,6 +260,7 @@ private fun TvRequestDetailButtons(
     onManage: () -> Unit,
     manageFocus: FocusRequester,
     arrivalOnManage: Boolean,
+    arrivalOnOpen: Boolean,
     arrival: TvArrivalFocus,
 ) {
     val reviewable = detail.actions.canApprove || detail.actions.canRetry
@@ -259,7 +275,6 @@ private fun TvRequestDetailButtons(
             )
         }
         actions.onOpenInBinge?.let { onOpen ->
-            val arrivalOnOpen = !arrivalOnManage && !manageVisible
             TvButton(
                 label = stringResource(R.string.request_open_binge),
                 onClick = onOpen,
