@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.binge.designsystem.tv.theme.BingeTvTheme
+import io.github.scottcooper92.binge.seerr.theme.SeerrTvTheme
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.actions
@@ -15,7 +15,7 @@ import io.github.scottcooper92.binge.seerr.ui.actions
  */
 @Composable
 internal fun TvSeerrShell(viewModel: TvHomeViewModel = hiltViewModel()) {
-    BingeTvTheme {
+    SeerrTvTheme {
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         when (state) {
             TvHomeUiState.Loading -> TvLoadingPlate()
@@ -37,7 +37,7 @@ internal fun TvAdvancedRequestShell(
     state: AdvancedRequestUiState,
     actions: TvAdvancedRequestActions,
 ) {
-    BingeTvTheme {
+    SeerrTvTheme {
         TvAdvancedRequestScreen(state = state, actions = actions)
     }
 }
