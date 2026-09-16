@@ -31,6 +31,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
+import io.github.scottcooper92.binge.seerr.ui.settings.ServerConfig
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SignInKind
@@ -42,6 +43,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_DISCONNECT
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_MEDIA_SERVER
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -188,6 +190,9 @@ internal val SampleSettings =
         config = null,
     )
 
+/** Same server, but as an admin sees it: the config is non-null, so the media server row's scan option shows. */
+internal val SampleSettingsAdmin = SampleSettings.copy(config = ServerConfig())
+
 @TvPreviewsOnBlack
 @Composable
 internal fun TvShellHubPreview() {
@@ -292,5 +297,18 @@ internal fun TvSettingsDisconnectPreview() {
         onDisconnect = {},
         initialFocusedKey = KEY_DISCONNECT,
         initialFocusedOptionLabel = "Disconnect",
+    )
+}
+
+/** The admin-only board: the media server row now carries the library scan option. */
+@TvPreviewsOnBlack
+@Composable
+internal fun TvSettingsMediaServerPreview() {
+    TvSettingsBoard(
+        state = SampleSettingsAdmin,
+        onEditConnection = {},
+        onDisconnect = {},
+        initialFocusedKey = KEY_MEDIA_SERVER,
+        initialFocusedOptionLabel = "Start library scan",
     )
 }

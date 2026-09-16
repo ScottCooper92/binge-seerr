@@ -855,6 +855,8 @@
     <string name="tv_issue_action_failed">No se pudo actualizar la incidencia. Inténtalo de nuevo.</string>
     <string name="tv_settings_read_only_note">Cámbialo en la app del móvil o en el cliente web.</string>
     <string name="tv_settings_disconnect_confirm">Sí, desconectar</string>
+    <string name="tv_settings_start_library_scan">Iniciar escaneo de la biblioteca</string>
+    <string name="tv_settings_scan_started">Escaneo de la biblioteca iniciado</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <string name="field_secret_show">Mostrar el valor</string>
     <string name="field_secret_hide">Ocultar el valor</string>

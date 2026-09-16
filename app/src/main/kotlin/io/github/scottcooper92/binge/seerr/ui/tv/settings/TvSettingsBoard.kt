@@ -29,6 +29,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.mediaServerRows
 import io.github.scottcooper92.binge.seerr.ui.settings.requestPolicyRows
 import io.github.scottcooper92.binge.seerr.ui.settings.serviceRows
 import io.github.scottcooper92.binge.seerr.ui.settings.systemRows
+import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
@@ -37,17 +38,23 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvListPaneBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneOption
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneRow
+import io.github.scottcooper92.binge.seerr.ui.tv.rememberTvTransientEvent
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 internal const val KEY_SERVER = "server"
 internal const val KEY_SIGNED_IN = "signed-in"
 internal const val KEY_VERSION = "version"
 internal const val KEY_EDIT_CONNECTION = "edit-connection"
 internal const val KEY_DISCONNECT = "disconnect"
+internal const val KEY_MEDIA_SERVER = "media-server"
 
 /**
  * Settings as the list/pane board: the connection and the two things a television can do about it — edit
  * it and disconnect — then the admin's read of the server, each row a read-out with a note saying where it
- * is changed. The editing pages stay on the phone.
+ * is changed. The editing pages stay on the phone; the one exception is the media server row's library
+ * scan, a confirmed action rather than a form.
  */
 @Composable
 internal fun TvSettingsBoard(
@@ -55,6 +62,8 @@ internal fun TvSettingsBoard(
     onEditConnection: () -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
+    onStartLibraryScan: () -> Unit = {},
+    libraryScanEvents: Flow<EditorEvent> = emptyFlow(),
     initialFocusedKey: String? = null,
     initialListHasFocus: Boolean = false,
     initialFocusedOptionLabel: String? = null,
@@ -72,12 +81,16 @@ internal fun TvSettingsBoard(
     // The Disconnect option that opened the confirm sheet, so the closer has somewhere to hand focus back to.
     val disconnectFocus = remember { FocusRequester() }
     val closer = rememberTvOverlayCloser(restoreTo = disconnectFocus, onClose = { confirmingDisconnect = false })
+    // A newer notice supersedes the one still showing, same as the board's paged-list toasts.
+    val scanNote = rememberTvTransientEvent(libraryScanEvents).tvNoteOrNull()
     val groups =
         tvSettingGroups(
             ready,
             onEditConnection = onEditConnection,
             onDisconnect = { confirmingDisconnect = true },
             disconnectFocus = disconnectFocus,
+            onStartLibraryScan = onStartLibraryScan,
+            scanNote = scanNote,
         )
     val describedKey = focusedKey?.takeIf { key -> groups.any { group -> group.rows.any { it.key == key } } } ?: KEY_SERVER
     Box(modifier = modifier.fillMaxSize()) {
@@ -113,6 +126,8 @@ private fun tvSettingGroups(
     onEditConnection: () -> Unit,
     onDisconnect: () -> Unit,
     disconnectFocus: FocusRequester,
+    onStartLibraryScan: () -> Unit,
+    scanNote: String?,
 ): List<TvPaneGroup> {
     val config = state.config
     val readOnly = stringResource(R.string.tv_settings_read_only_note)
@@ -126,8 +141,10 @@ private fun tvSettingGroups(
         config?.general?.let {
             add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it) {}, readOnly))
         }
+        // Admin-only, same as the phone: this is the one section that also gets an action, so it is
+        // built by hand rather than through the read-only mapping every other section shares.
         if (config != null) {
-            add(readOnlyGroup(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server) {}, readOnly))
+            add(mediaServerGroup(state.server, onStartLibraryScan, note = scanNote ?: readOnly))
         }
         config?.services?.let {
             add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it, {}) { _, _ -> }, readOnly))
@@ -138,6 +155,48 @@ private fun tvSettingGroups(
         }
     }.filter { it.rows.isNotEmpty() }
 }
+
+/**
+ * The media server row, with one option beside its read-out: start the library scan job the phone's
+ * Jobs page runs, the "it downloaded but isn't showing" fix from the sofa. [note] is the scan's own
+ * outcome while it is still showing, else the same "change this on the phone" note every other row here
+ * carries.
+ */
+@Composable
+private fun mediaServerGroup(
+    server: ServerSummary,
+    onStartLibraryScan: () -> Unit,
+    note: String,
+): TvPaneGroup {
+    val row = mediaServerRows(server) {}.first()
+    return TvPaneGroup(
+        title = stringResource(R.string.server_settings_media_server),
+        rows =
+            listOf(
+                TvPaneRow(
+                    key = KEY_MEDIA_SERVER,
+                    label = row.label,
+                    body = row.detail.orEmpty(),
+                    note = note,
+                    options =
+                        listOf(
+                            TvPaneOption(label = stringResource(R.string.tv_settings_start_library_scan), onSelect = onStartLibraryScan),
+                        ),
+                    icon = row.icon,
+                ),
+            ),
+    )
+}
+
+/** The line to show for a job outcome; null for an event this row never emits (a save or a delete). */
+@Composable
+private fun EditorEvent?.tvNoteOrNull(): String? =
+    when (this) {
+        null -> null
+        is EditorEvent.Notice -> stringResource(messageRes)
+        is EditorEvent.Failed -> stringResource(error.messageRes())
+        EditorEvent.Saved, EditorEvent.Deleted -> null
+    }
 
 /** The phone's rows as read-outs: the label and its detail, and where to change it. */
 private fun readOnlyGroup(
