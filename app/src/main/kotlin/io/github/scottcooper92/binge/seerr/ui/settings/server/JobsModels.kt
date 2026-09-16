@@ -14,6 +14,13 @@ import kotlinx.serialization.json.JsonObject
 /** How often a job runs by design: [Fixed] ones keep the server's own interval and offer no schedule. */
 enum class JobInterval { Short, Long, Fixed }
 
+/**
+ * The job id the media server's full library scan runs under. The Seerr API names it after Plex
+ * regardless of whether the connected server is Plex, Jellyfin or Emby — a naming quirk upstream,
+ * not something this app chose.
+ */
+const val MEDIA_SERVER_SCAN_JOB_ID = "plex-full-scan"
+
 data class ServerJob(
     val id: String,
     val name: String,

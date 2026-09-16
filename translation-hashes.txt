@@ -665,6 +665,8 @@ app:tv_loading  ba3bbbe10d8b
 app:tv_rail_hub  3a78695388b3
 app:tv_settings_disconnect_confirm  ff9c95dc28f5
 app:tv_settings_read_only_note  5dc9a6be3289
+app:tv_settings_scan_started  69b83dfae9a6
+app:tv_settings_start_library_scan  c29ac31b6000
 app:tv_setup_address_body  ac3b484e44ad
 app:tv_setup_checking  86d5ab0a7412
 app:tv_setup_connecting  72021eb70e91

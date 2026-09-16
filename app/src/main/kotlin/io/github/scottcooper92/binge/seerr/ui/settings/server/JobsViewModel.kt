@@ -58,6 +58,16 @@ class JobsViewModel
 
         fun run(id: String) = act(id) { api -> api.runJob(id) }
 
+        /**
+         * Same call as [run], but with a notice on success — for a caller with no jobs list of its own
+         * to read the outcome off (the TV settings board's one confirmed option), which needs telling
+         * rather than a row it does not render.
+         */
+        fun run(
+            id: String,
+            noticeRes: Int,
+        ) = act(id, noticeRes) { api -> api.runJob(id) }
+
         fun cancel(id: String) = act(id) { api -> api.cancelJob(id) }
 
         fun schedule(

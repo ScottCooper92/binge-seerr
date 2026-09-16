@@ -19,6 +19,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import androidx.tv.material3.MaterialTheme
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
@@ -30,6 +31,8 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
@@ -164,6 +167,7 @@ private fun TvIssuesEntry(
 private fun TvSettingsEntry(
     onEditConnection: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
+    jobsViewModel: JobsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // Refetched on every arrival, so returning from Edit connection shows the new server.
@@ -171,7 +175,15 @@ private fun TvSettingsEntry(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
-    TvSettingsBoard(state = state, onEditConnection = onEditConnection, onDisconnect = viewModel::disconnect)
+    TvSettingsBoard(
+        state = state,
+        onEditConnection = onEditConnection,
+        onDisconnect = viewModel::disconnect,
+        // The phone Jobs page's own run action, reused rather than a second call to the same endpoint:
+        // this board has no jobs list of its own, so the notice is what tells the admin it started.
+        onStartLibraryScan = { jobsViewModel.run(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started) },
+        libraryScanEvents = jobsViewModel.events,
+    )
 }
 
 /** The setup form on the live connection, above the rail; leaves once new credentials are saved, or on Back. */

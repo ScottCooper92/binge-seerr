@@ -880,6 +880,8 @@
     <string name="tv_issue_action_failed">The issue could not be updated. Try again.</string>
     <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
+    <string name="tv_settings_start_library_scan">Start library scan</string>
+    <string name="tv_settings_scan_started">Library scan started</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
     <string name="field_secret_show">Show the value</string>
