@@ -169,12 +169,11 @@ private fun RequestRowMeta(
     val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
     Column(modifier = modifier.padding(top = dimensionResource(DesR.dimen.detail_meta_spacing))) {
         val chip = item.statusChip()
-        ListRowHeader(
-            title = item.title ?: stringResource(item.mediaType.labelRes()),
-            trailing = { RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone) },
-        )
+        ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
         Spacer(Modifier.height(gap))
         Row(verticalAlignment = Alignment.CenterVertically) {
+            RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
+            Spacer(Modifier.width(gap))
             MediaTypeTag(type = if (item.mediaType == RequestMediaType.Movie) MediaTypeTagType.Movie else MediaTypeTagType.Tv)
             if (item.is4k) {
                 Spacer(Modifier.width(gap))
@@ -186,7 +185,12 @@ private fun RequestRowMeta(
             }
             item.year?.let { year ->
                 Spacer(Modifier.width(gap))
-                Text(year, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                Text(
+                    year,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
             }
         }
         if (item.seasonNumbers.isNotEmpty()) {
