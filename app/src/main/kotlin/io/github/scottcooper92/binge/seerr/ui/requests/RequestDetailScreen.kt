@@ -52,6 +52,8 @@ class RequestDetailActions(
     val onDecline: (Boolean) -> Unit,
     val onRemove: (Boolean) -> Unit,
     val onStartEdit: () -> Unit,
+    /** Opens a sibling request's own page — another request against this same title. */
+    val onOpenSibling: (Int) -> Unit,
     val edit: EditRequestActions,
     val media: ManageMediaActions,
 )
@@ -109,6 +111,7 @@ private fun Ready(
         onOpen = { opening = true }.takeIf { links.isNotEmpty() },
         onReport = { reporting = true }.takeIf { detail.canReportIssue },
         onPrimary = { acting = true },
+        onOpenSibling = actions.onOpenSibling,
     )
     if (acting) {
         RequestActionsSheet(
@@ -168,6 +171,7 @@ internal fun RequestDetailPage(
     onOpen: (() -> Unit)?,
     onReport: (() -> Unit)?,
     onPrimary: () -> Unit,
+    onOpenSibling: (Int) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     initiallyOverflowing: Boolean = false,
@@ -199,6 +203,7 @@ internal fun RequestDetailPage(
             RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
             RequestFacts(detail)
             RequestSections(detail)
+            RequestSiblings(detail, onOpenSibling)
             RequestPrimaryAction(detail, onPrimary, Modifier.padding(inset))
         }
         DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {

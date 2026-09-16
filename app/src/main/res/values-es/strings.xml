@@ -120,6 +120,8 @@
     <string name="request_seasons">Temporadas</string>
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_downloads">Descargando</string>
+    <string name="request_siblings_title">También solicitado</string>
+    <string name="request_siblings_clear_data_note">Borrar los datos de este título elimina todas las peticiones que tiene, incluidas las anteriores.</string>
     <plurals name="request_episodes">
         <item quantity="one">%1$d episodio</item>
         <item quantity="many">%1$d episodios</item>

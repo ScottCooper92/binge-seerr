@@ -5,12 +5,16 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 
 private const val REQUESTED_AT_MILLIS = 1_759_000_000_000L
 private const val UPDATED_AT_MILLIS = 1_759_500_000_000L
+private const val SIBLING_DECLINED_AT_MILLIS = 1_744_000_000_000L
+private const val SIBLING_COMPLETED_AT_MILLIS = 1_749_000_000_000L
 private const val PLAYS = 12
 private const val PLAYS_7 = 3
 private const val PLAYS_30 = 8
 private const val TMDB_ID = 1396
 private const val MEDIA_ID = 900
 private const val REQUEST_ID = 11
+private const val SIBLING_REQUEST_ID = 12
+private const val OTHER_SIBLING_REQUEST_ID = 13
 private const val EPISODE_COUNT = 13
 
 private const val OVERVIEW =
@@ -37,11 +41,57 @@ internal fun settledDetail(): RequestDetail =
         canEdit = false,
     )
 
+/**
+ * The settled request with two siblings against the same title: one declined, one completed in 4K.
+ *
+ * Trimmed of the destination and watch-data facts [detail] carries — with those in, the "Also
+ * requested" section falls below the single `phone`-height frame this state takes, so this fixture
+ * would render no differently whether the mapping worked or not.
+ */
+internal fun detailWithSiblings(): RequestDetail =
+    detail(
+        actions = RequestActions(canRemove = true, canBlock = true),
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.Available,
+        canEdit = false,
+        modifiedBy = null,
+        updatedAtMillis = null,
+        destination = null,
+        watch = null,
+        seasons = emptyList(),
+        overview = null,
+        siblings =
+            listOf(
+                SiblingRequest(
+                    id = SIBLING_REQUEST_ID,
+                    status = SeerrRequestStatusCode.Declined,
+                    requestedBy = "Grace",
+                    requestedAtMillis = SIBLING_DECLINED_AT_MILLIS,
+                    is4k = false,
+                ),
+                SiblingRequest(
+                    id = OTHER_SIBLING_REQUEST_ID,
+                    status = SeerrRequestStatusCode.Completed,
+                    requestedBy = null,
+                    requestedAtMillis = SIBLING_COMPLETED_AT_MILLIS,
+                    is4k = true,
+                ),
+            ),
+    )
+
 private fun detail(
     actions: RequestActions,
     status: SeerrRequestStatusCode,
     mediaStatus: SeerrMediaStatusCode,
     canEdit: Boolean,
+    modifiedBy: String? = "Grace",
+    updatedAtMillis: Long? = UPDATED_AT_MILLIS,
+    destination: RequestDestination? =
+        RequestDestination(serverName = "Sonarr", profileName = "HD-1080p", rootFolder = "/tv", tags = listOf("kids")),
+    watch: WatchStats? = WatchStats(PLAYS, PLAYS_7, PLAYS_30, listOf("Ada", "Grace")),
+    seasons: List<SeasonState> = listOf(SeasonState(number = 1, name = null, episodeCount = EPISODE_COUNT, status = mediaStatus)),
+    overview: String? = OVERVIEW,
+    siblings: List<SiblingRequest> = emptyList(),
 ): RequestDetail =
     RequestDetail(
         item =
@@ -65,11 +115,11 @@ private fun detail(
         canEdit = canEdit,
         canEditDestination = false,
         backdropUrl = null,
-        overview = OVERVIEW,
-        modifiedBy = "Grace",
-        updatedAtMillis = UPDATED_AT_MILLIS,
-        seasons = listOf(SeasonState(number = 1, name = null, episodeCount = EPISODE_COUNT, status = mediaStatus)),
-        destination = RequestDestination(serverName = "Sonarr", profileName = "HD-1080p", rootFolder = "/tv", tags = listOf("kids")),
+        overview = overview,
+        modifiedBy = modifiedBy,
+        updatedAtMillis = updatedAtMillis,
+        seasons = seasons,
+        destination = destination,
         downloads = emptyList(),
         mediaId = MEDIA_ID,
         canReportIssue = true,
@@ -87,11 +137,12 @@ private fun detail(
                             status = mediaStatus,
                             serviceUrl = "https://sonarr.example/series/breaking-bad",
                             mediaServerUrl = "https://jellyfin.example/web/#/details?id=a1",
-                            watch = WatchStats(PLAYS, PLAYS_7, PLAYS_30, listOf("Ada", "Grace")),
+                            watch = watch,
                         ),
                     ),
                 canSetStatus = true,
                 canClearData = true,
                 canDeleteFiles = true,
             ),
+        siblings = siblings,
     )

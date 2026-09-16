@@ -136,6 +136,8 @@
     <string name="request_seasons">Seasons</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_downloads">Downloading</string>
+    <string name="request_siblings_title">Also requested</string>
+    <string name="request_siblings_clear_data_note">Clearing this title\'s data removes every request for it, including the ones above.</string>
     <plurals name="request_episodes">
         <item quantity="one">%1$d episode</item>
         <item quantity="other">%1$d episodes</item>
