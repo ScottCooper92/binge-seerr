@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.binge.designsystem.tv.preview.TvPreviewsOnBlack
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
@@ -31,6 +32,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
+import io.github.scottcooper92.binge.seerr.ui.settings.ServerConfig
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SignInKind
@@ -42,6 +44,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_DISCONNECT
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_MEDIA_SERVER
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -99,6 +102,7 @@ internal fun request(
     title: String,
     status: SeerrRequestStatusCode,
     seasons: List<Int> = emptyList(),
+    mediaStatus: SeerrMediaStatusCode? = null,
     download: RequestDownload? = null,
 ) = RequestItem(
     id = id,
@@ -111,7 +115,7 @@ internal fun request(
     requestedById = 3,
     requestedAtMillis = NOW - id * HOUR_MILLIS,
     status = status,
-    mediaStatus = null,
+    mediaStatus = mediaStatus,
     download = download,
     seasonNumbers = seasons,
     is4k = id % 2 == 0,
@@ -120,7 +124,14 @@ internal fun request(
 internal val SampleRequests =
     listOf(
         request(1, "Heat", SeerrRequestStatusCode.Pending),
-        request(2, "The Bear", SeerrRequestStatusCode.Approved, seasons = listOf(1, 2), download = RequestDownload(0.4f, 12, true)),
+        request(
+            2,
+            "The Bear",
+            SeerrRequestStatusCode.Approved,
+            seasons = listOf(1, 2),
+            mediaStatus = SeerrMediaStatusCode.Processing,
+            download = RequestDownload(0.4f, 12, true),
+        ),
         request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined),
     )
 
@@ -187,6 +198,9 @@ internal val SampleSettings =
             ),
         config = null,
     )
+
+/** Same server, but as an admin sees it: the config is non-null, so the media server row's scan option shows. */
+internal val SampleSettingsAdmin = SampleSettings.copy(config = ServerConfig())
 
 @TvPreviewsOnBlack
 @Composable
@@ -279,5 +293,18 @@ internal fun TvSettingsDisconnectPreview() {
         onDisconnect = {},
         initialFocusedKey = KEY_DISCONNECT,
         initialFocusedOptionLabel = "Disconnect",
+    )
+}
+
+/** The admin-only board: the media server row now carries the library scan option. */
+@TvPreviewsOnBlack
+@Composable
+internal fun TvSettingsMediaServerPreview() {
+    TvSettingsBoard(
+        state = SampleSettingsAdmin,
+        onEditConnection = {},
+        onDisconnect = {},
+        initialFocusedKey = KEY_MEDIA_SERVER,
+        initialFocusedOptionLabel = "Start library scan",
     )
 }

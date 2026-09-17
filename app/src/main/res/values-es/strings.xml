@@ -120,6 +120,8 @@
     <string name="request_seasons">Temporadas</string>
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_downloads">Descargando</string>
+    <string name="request_siblings_title">También solicitado</string>
+    <string name="request_siblings_clear_data_note">Borrar los datos de este título elimina todas las peticiones que tiene, incluidas las anteriores.</string>
     <plurals name="request_episodes">
         <item quantity="one">%1$d episodio</item>
         <item quantity="many">%1$d episodios</item>
@@ -855,6 +857,8 @@
     <string name="tv_issue_action_failed">No se pudo actualizar la incidencia. Inténtalo de nuevo.</string>
     <string name="tv_settings_read_only_note">Cámbialo en la app del móvil o en el cliente web.</string>
     <string name="tv_settings_disconnect_confirm">Sí, desconectar</string>
+    <string name="tv_settings_start_library_scan">Iniciar escaneo de la biblioteca</string>
+    <string name="tv_settings_scan_started">Escaneo de la biblioteca iniciado</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <string name="field_secret_show">Mostrar el valor</string>
     <string name="field_secret_hide">Ocultar el valor</string>

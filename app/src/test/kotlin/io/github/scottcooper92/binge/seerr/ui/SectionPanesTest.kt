@@ -80,4 +80,44 @@ class SectionPanesTest {
         // The account card opens a user with no section under it: the pane shows that, not the default.
         assertNull(backStack(HubRoute, UserDetailRoute(1)).selectedSection(defaultShowing = true))
     }
+
+    @Test
+    fun `pane depth counts what is stacked above the hub`() {
+        assertEquals(1, backStack(HubRoute, RequestsRoute).paneDepth())
+        assertEquals(1, backStack(HubRoute, UserDetailRoute(1)).paneDepth())
+        assertEquals(2, backStack(HubRoute, UsersRoute, UserDetailRoute(1)).paneDepth())
+        assertEquals(2, backStack(HubRoute, UserDetailRoute(1), RequestDetailRoute(7)).paneDepth())
+    }
+
+    @Test
+    fun `pane depth is the whole stack when the hub is not on it`() {
+        assertEquals(1, backStack(HomeRoute).paneDepth())
+    }
+
+    /** The issue's own table (#335), checked directly against the two inputs the rule takes. */
+    @Test
+    fun `the back-arrow rule matches the issue's table`() {
+        // [Hub, Requests]: depth 1, hidden — matches today.
+        assertEquals(false, paneShowsBack(hubBeside = true, paneDepth = 1))
+        // [Hub, UserDetail] opened from the hub: depth 1, hidden — the fix.
+        assertEquals(false, paneShowsBack(hubBeside = true, paneDepth = 1))
+        // [Hub, Users, UserDetail]: depth 2, shown — correct today.
+        assertEquals(true, paneShowsBack(hubBeside = true, paneDepth = 2))
+        // [Hub, UserDetail, RequestDetail]: depth 2, shown — correct.
+        assertEquals(true, paneShowsBack(hubBeside = true, paneDepth = 2))
+        // Narrow window, anything: shown, hubBeside false, regardless of depth.
+        assertEquals(true, paneShowsBack(hubBeside = false, paneDepth = 1))
+        assertEquals(true, paneShowsBack(hubBeside = false, paneDepth = 4))
+    }
+
+    /**
+     * The section rule this replaces was `!hubBeside` alone, which only ever agreed with the general
+     * one because a section beside the hub is always exactly the one entry above it — never stacked
+     * deeper. This is that assumption, checked directly.
+     */
+    @Test
+    fun `a section beside the hub is always at pane depth 1`() {
+        assertEquals(1, backStack(HubRoute, RequestsRoute).paneDepth())
+        assertEquals(1, backStack(HubRoute, SettingsRoute).paneDepth())
+    }
 }

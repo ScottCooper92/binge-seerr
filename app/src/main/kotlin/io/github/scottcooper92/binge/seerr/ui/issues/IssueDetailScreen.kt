@@ -76,12 +76,17 @@ class IssueDetailActions(
 /**
  * One issue as a page: the title it is about, the report, the thread, and the composer. The
  * title itself opens in the server's web client, as the request page does.
+ *
+ * @param showBack false when this issue is the only thing in the detail pane beside the hub, where a
+ * back arrow to the hub is redundant. Always true today — an issue is only ever stacked above the
+ * Issues section — kept in step with the other detail-pane screens for when that changes.
  */
 @Composable
 fun IssueDetailScreen(
     state: IssueDetailUiState,
     events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
+    showBack: Boolean = true,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -110,7 +115,7 @@ fun IssueDetailScreen(
     val ready = state as? IssueDetailUiState.Ready
     ScreenScaffold(
         title = ready?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
-        onBack = actions.onBack,
+        onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
         actions = {
             if (ready != null) {

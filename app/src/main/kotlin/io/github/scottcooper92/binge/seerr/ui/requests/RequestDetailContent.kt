@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +27,7 @@ import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
@@ -193,5 +198,85 @@ internal fun DownloadRow(download: DetailDownload) {
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_xs)))
             Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+/**
+ * Other requests against this title — Seerr allows more than one, e.g. declined and requested
+ * again later — dropped entirely when this is the only one. Tapping a row opens its own page.
+ *
+ * [MediaRecord.canClearData]'s note is surfaced here rather than only in the manage sheet: a
+ * sibling being visible is exactly where a user would want to know that clearing data removes
+ * every request for the title, this one and the ones listed above it.
+ */
+@Composable
+internal fun RequestSiblings(
+    detail: RequestDetail,
+    onOpen: (Int) -> Unit,
+) {
+    if (detail.siblings.isEmpty()) return
+    SectionHeader(title = stringResource(R.string.request_siblings_title))
+    detail.siblings.forEach { sibling -> SiblingRow(sibling, onClick = { onOpen(sibling.id) }) }
+    if (detail.media?.canClearData == true) {
+        Text(
+            stringResource(R.string.request_siblings_clear_data_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier =
+                Modifier.fillMaxWidth().padding(
+                    horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                    vertical = dimensionResource(DesR.dimen.padding_s),
+                ),
+        )
+    }
+}
+
+@Composable
+private fun SiblingRow(
+    sibling: SiblingRequest,
+    onClick: () -> Unit,
+) {
+    val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(
+                    horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                    vertical = dimensionResource(DesR.dimen.padding_s),
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RequestStateChip(status = sibling.status ?: SeerrRequestStatusCode.Pending)
+                if (sibling.is4k) {
+                    Spacer(Modifier.width(gap))
+                    Text(
+                        stringResource(R.string.settings_service_4k),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Spacer(Modifier.height(gap))
+            Text(
+                listOfNotNull(
+                    sibling.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    formatRelativeOrAbsolute(sibling.requestedAtMillis),
+                ).joinToString(stringResource(R.string.hub_meta_separator)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_s)))
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

@@ -5,6 +5,8 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
+import io.github.scottcooper92.binge.seerr.ui.state.labelRes
+import io.github.scottcooper92.binge.seerr.ui.state.tone
 
 @StringRes
 internal fun RequestFilter.labelRes(): Int =
@@ -51,8 +53,12 @@ data class RequestRowChip(
 )
 
 /**
- * The row's one status pill, folding the request's decision and the title's availability: a
- * decision that ended it, then an outcome, then the bare approval state.
+ * The row's one status pill. `mediaStatus` is the source of truth for the title's own outcome —
+ * available, blocklisted, deleted, processing — and wins over the request's own decision in every
+ * case but a terminal one; `download` only refines a `Processing` chip with what Radarr/Sonarr's
+ * queue adds (an active fraction/ETA), never stands in for reading `mediaStatus` at all. Only once
+ * neither the request nor the media has anything more specific to say does the bare `Approved`
+ * request status get to speak for itself, and only a still-unrecognised `mediaStatus` lets it.
  */
 fun RequestItem.statusChip(): RequestRowChip =
     when {
@@ -61,9 +67,18 @@ fun RequestItem.statusChip(): RequestRowChip =
         mediaStatus == SeerrMediaStatusCode.Available -> RequestRowChip(R.string.media_state_available, RequestStateTone.Success)
         mediaStatus == SeerrMediaStatusCode.PartiallyAvailable ->
             RequestRowChip(R.string.media_state_partially_available, RequestStateTone.Success)
-        download?.downloading == true -> RequestRowChip(R.string.media_state_processing, RequestStateTone.Active)
-        download != null -> RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending)
-        status == SeerrRequestStatusCode.Approved || status == SeerrRequestStatusCode.Completed ->
+        mediaStatus == SeerrMediaStatusCode.Blocklisted ->
+            RequestRowChip(SeerrMediaStatusCode.Blocklisted.labelRes(), SeerrMediaStatusCode.Blocklisted.tone())
+        mediaStatus == SeerrMediaStatusCode.Deleted ->
+            RequestRowChip(SeerrMediaStatusCode.Deleted.labelRes(), SeerrMediaStatusCode.Deleted.tone())
+        mediaStatus == SeerrMediaStatusCode.Processing && download?.downloading == true ->
+            RequestRowChip(R.string.media_state_processing, RequestStateTone.Active)
+        mediaStatus == SeerrMediaStatusCode.Processing && download != null ->
+            RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending)
+        mediaStatus == SeerrMediaStatusCode.Processing ->
+            RequestRowChip(SeerrMediaStatusCode.Processing.labelRes(), SeerrMediaStatusCode.Processing.tone())
+        (status == SeerrRequestStatusCode.Approved || status == SeerrRequestStatusCode.Completed) &&
+            (mediaStatus == null || mediaStatus == SeerrMediaStatusCode.Unknown) ->
             RequestRowChip(R.string.request_state_approved, RequestStateTone.Success)
         else -> RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending)
     }

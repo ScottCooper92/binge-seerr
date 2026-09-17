@@ -136,6 +136,8 @@
     <string name="request_seasons">Seasons</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_downloads">Downloading</string>
+    <string name="request_siblings_title">Also requested</string>
+    <string name="request_siblings_clear_data_note">Clearing this title\'s data removes every request for it, including the ones above.</string>
     <plurals name="request_episodes">
         <item quantity="one">%1$d episode</item>
         <item quantity="other">%1$d episodes</item>
@@ -880,6 +882,8 @@
     <string name="tv_issue_action_failed">The issue could not be updated. Try again.</string>
     <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
+    <string name="tv_settings_start_library_scan">Start library scan</string>
+    <string name="tv_settings_scan_started">Library scan started</string>
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
     <string name="field_secret_show">Show the value</string>

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,6 +43,7 @@ class JobsViewModel
 
         internal var runningRefreshMillis = RUNNING_REFRESH_MILLIS
         private var refresh: Job? = null
+        private var readyWait: Job? = null
 
         init {
             reload()
@@ -57,6 +59,40 @@ class JobsViewModel
         }
 
         fun run(id: String) = act(id) { api -> api.runJob(id) }
+
+        /**
+         * Same call as [run], but with a notice on success — for a caller with no jobs list of its own
+         * to read the outcome off (the TV settings board's one confirmed option), which needs telling
+         * rather than a row it does not render.
+         */
+        fun run(
+            id: String,
+            noticeRes: Int,
+        ) = act(id, noticeRes) { api -> api.runJob(id) }
+
+        /**
+         * Same as [run] with a notice, but for a caller whose first tap can land before the one-shot
+         * [reload] in [init] resolves: the media server row appears as soon as `SettingsViewModel`'s
+         * own, separately-cached state is `Ready`, which races this view model's own fresh fetch. A tap
+         * that lands on [JobsUiState.Loading] waits it out instead of being silently dropped; one that
+         * lands on [JobsUiState.Error] retries the load once before reporting that failure. Concurrent
+         * taps join the wait already in flight rather than stacking retries.
+         */
+        fun runWhenReady(
+            id: String,
+            noticeRes: Int,
+        ) {
+            if (readyWait?.isActive == true) return
+            readyWait =
+                viewModelScope.launch {
+                    if (state.value is JobsUiState.Error) reload()
+                    when (val settled = state.first { it !is JobsUiState.Loading }) {
+                        JobsUiState.Loading -> Unit
+                        is JobsUiState.Ready -> run(id, noticeRes)
+                        is JobsUiState.Error -> eventFlow.emit(EditorEvent.Failed(settled.error))
+                    }
+                }
+        }
 
         fun cancel(id: String) = act(id) { api -> api.cancelJob(id) }
 

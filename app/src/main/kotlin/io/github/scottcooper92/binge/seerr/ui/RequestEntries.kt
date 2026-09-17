@@ -19,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
 internal fun RequestDetailEntry(
     requestId: Int,
     onBack: () -> Unit,
+    onOpenRequest: (Int) -> Unit,
     viewModel: RequestDetailViewModel =
         hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
 ) {
@@ -39,6 +40,7 @@ internal fun RequestDetailEntry(
                 },
                 onRemove = { block -> (state as? RequestDetailUiState.Ready)?.let { viewModel.moderation.remove(it.detail.item, block) } },
                 onStartEdit = viewModel::startEdit,
+                onOpenSibling = onOpenRequest,
                 edit =
                     EditRequestActions(
                         onToggleSeason = viewModel.editor::toggleSeason,
