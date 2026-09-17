@@ -54,6 +54,8 @@ class RequestDetailActions(
     val onStartEdit: () -> Unit,
     /** Opens a sibling request's own page — another request against this same title. */
     val onOpenSibling: (Int) -> Unit,
+    /** Opens the requester's, or the moderator's, own user detail screen. */
+    val onOpenUser: (Int) -> Unit,
     val edit: EditRequestActions,
     val media: ManageMediaActions,
 )
@@ -112,6 +114,7 @@ private fun Ready(
         onReport = { reporting = true }.takeIf { detail.canReportIssue },
         onPrimary = { acting = true },
         onOpenSibling = actions.onOpenSibling,
+        onOpenUser = actions.onOpenUser,
     )
     if (acting) {
         RequestActionsSheet(
@@ -172,6 +175,7 @@ internal fun RequestDetailPage(
     onReport: (() -> Unit)?,
     onPrimary: () -> Unit,
     onOpenSibling: (Int) -> Unit,
+    onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     initiallyOverflowing: Boolean = false,
@@ -201,7 +205,7 @@ internal fun RequestDetailPage(
                 richBackdrop = true,
             )
             RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
-            RequestFacts(detail)
+            RequestFacts(detail, onOpenUser)
             RequestSections(detail)
             RequestSiblings(detail, onOpenSibling)
             RequestPrimaryAction(detail, onPrimary, Modifier.padding(inset))

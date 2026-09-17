@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.InfoRowEntry
 import com.binge.designsystem.component.InfoRowList
+import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
@@ -61,17 +62,31 @@ internal fun RequestHeadline(
 
 /** Who asked, when, and where it was sent — each row dropped where the server does not say. */
 @Composable
-internal fun RequestFacts(detail: RequestDetail) {
+internal fun RequestFacts(
+    detail: RequestDetail,
+    onOpenUser: (Int) -> Unit,
+) {
     val item = detail.item
     InfoRowList(
         entries =
             listOfNotNull(
                 InfoRowEntry(
                     stringResource(R.string.request_requested_by),
-                    item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    linkedOrPlain(
+                        item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                        item.requestedById,
+                        detail.viewerId,
+                        detail.canManageUsers,
+                        onOpenUser,
+                    ),
                 ),
                 InfoRowEntry(stringResource(R.string.request_requested_at), formatRelativeOrAbsolute(item.requestedAtMillis)),
-                detail.modifiedBy?.let { InfoRowEntry(stringResource(R.string.request_modified_by), it) },
+                detail.modifiedBy?.let {
+                    InfoRowEntry(
+                        stringResource(R.string.request_modified_by),
+                        linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
+                    )
+                },
                 detail.updatedAtMillis?.let { InfoRowEntry(stringResource(R.string.request_updated_at), formatRelativeOrAbsolute(it)) },
                 detail.destination?.serverName?.let { InfoRowEntry(stringResource(R.string.request_server), it) },
                 detail.destination?.profileName?.let { InfoRowEntry(stringResource(R.string.request_profile), it) },
@@ -85,6 +100,25 @@ internal fun RequestFacts(detail: RequestDetail) {
             ) + watchRows(detail),
     )
 }
+
+/**
+ * A name as a link to that user's detail screen where the viewer may actually open it — their own
+ * id, or any id at all with `MANAGE_USERS` — plain text otherwise. `SeerrApi.user()` refuses
+ * anyone else's id without that permission, so an ungated link would be a dead end rather than a
+ * shortcut.
+ */
+internal fun linkedOrPlain(
+    text: String,
+    id: Int?,
+    viewerId: Int?,
+    canManageUsers: Boolean,
+    onOpenUser: (Int) -> Unit,
+): InfoValue =
+    if (id != null && (id == viewerId || canManageUsers)) {
+        InfoValue.Link(text, onClick = { onOpenUser(id) })
+    } else {
+        InfoValue.Plain(text)
+    }
 
 /**
  * What the server's own watch tracking says. A read-out rather than an action, so it belongs beside

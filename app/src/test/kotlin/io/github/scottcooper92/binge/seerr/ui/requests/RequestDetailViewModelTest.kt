@@ -86,7 +86,7 @@ class RequestDetailViewModelTest {
         serve(
             "/api/v1/request/11",
             """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
-               "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+               "requestedBy":{"id":7,"displayName":"scott"},"modifiedBy":{"id":9,"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
                "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
                "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"mediaUrl":"https://jellyfin.example.com/item/1",
                  "downloadStatus":[{"title":"Severance.S02","size":1000,"sizeLeft":250,"status":"downloading","timeLeft":"00:10:00"}]}}""",
@@ -148,6 +148,8 @@ class RequestDetailViewModelTest {
             assertEquals("https://image.tmdb.org/t/p/w1280/sev-bd.jpg", detail.backdropUrl)
             assertEquals("Work-life balance.", detail.overview)
             assertEquals("admin", detail.modifiedBy)
+            assertEquals(9, detail.modifiedById)
+            assertEquals(7, detail.item.requestedById)
             assertEquals(
                 listOf(
                     SeasonState(1, "Season 1", 9, SeerrMediaStatusCode.Available),
@@ -164,6 +166,21 @@ class RequestDetailViewModelTest {
             assertTrue(detail.canReportIssue)
             assertEquals(seerr.url("/").toString() + "tv/200", detail.webUrl)
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
+        }
+
+    @Test
+    fun `a plain viewer who did not make the request reads their own id, but not MANAGE_USERS, off the page`() =
+        runTest {
+            server(REQUEST)
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Other","permissions":$REQUEST}""")
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            // The request was made by user 7 and moderated by user 9; this viewer, 8, is neither and
+            // has no MANAGE_USERS, so `linkedOrPlain` must not link either name to `GET /user/{id}`.
+            assertEquals(8, detail.viewerId)
+            assertFalse(detail.canManageUsers)
         }
 
     @Test

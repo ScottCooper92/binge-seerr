@@ -134,6 +134,10 @@ data class RequestDetail(
     val backdropUrl: String?,
     val overview: String?,
     val modifiedBy: String?,
+    val modifiedById: Int?,
+    /** The viewer's own id, and whether `MANAGE_USERS` lets them open anyone else's — what a name gates on before it links. */
+    val viewerId: Int?,
+    val canManageUsers: Boolean,
     val updatedAtMillis: Long?,
     val seasons: List<SeasonState>,
     val destination: RequestDestination?,
