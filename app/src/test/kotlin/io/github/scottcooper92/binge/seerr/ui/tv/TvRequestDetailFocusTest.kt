@@ -136,6 +136,7 @@ class TvRequestDetailFocusTest {
                 mediaServerUrl = null,
                 serviceUrl = null,
                 media = null,
+                siblings = emptyList(),
             )
         composeTestRule.setContent {
             BingeTvTheme {
@@ -199,6 +200,7 @@ class TvRequestDetailFocusTest {
                 mediaServerUrl = null,
                 serviceUrl = null,
                 media = null,
+                siblings = emptyList(),
             )
         composeTestRule.setContent {
             var openId by remember { mutableStateOf<Int?>(null) }

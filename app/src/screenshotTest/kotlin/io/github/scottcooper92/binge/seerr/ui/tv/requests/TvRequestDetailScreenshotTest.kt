@@ -59,6 +59,7 @@ private fun seriesDetail(): RequestDetail =
         mediaServerUrl = null,
         serviceUrl = null,
         media = null,
+        siblings = emptyList(),
     )
 
 /** A film: no seasons, no downloads, already available, and nothing for this viewer to moderate. */
@@ -97,6 +98,7 @@ private fun filmDetail(): RequestDetail =
         mediaServerUrl = null,
         serviceUrl = null,
         media = null,
+        siblings = emptyList(),
     )
 
 private fun actions(onOpenInBinge: (() -> Unit)?) =
