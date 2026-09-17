@@ -25,6 +25,12 @@ class RequestDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun settled() = Frame(settledDetail())
+
+    /** A title with a second request against it: the "Also requested" section, and the clear-data note. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withSiblings() = Frame(detailWithSiblings())
 }
 
 @Composable
@@ -35,6 +41,7 @@ private fun Frame(detail: RequestDetail) {
         onOpen = {},
         onReport = {},
         onPrimary = {},
+        onOpenSibling = {},
         initiallyOverflowing = true,
     )
 }

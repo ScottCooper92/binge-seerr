@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueTypeCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 
 /** One season of a requested show: the request asked for it, and this is where the server has it. */
@@ -111,6 +112,18 @@ data class MediaRecord(
     val canManage: Boolean get() = canSetStatus || canClearData || canDeleteFiles || instances.any { it.watch != null }
 }
 
+/**
+ * Another request against this same title — Seerr allows more than one (declined, then requested
+ * again later) — named well enough to open its own detail page.
+ */
+data class SiblingRequest(
+    val id: Int,
+    val status: SeerrRequestStatusCode?,
+    val requestedBy: String?,
+    val requestedAtMillis: Long?,
+    val is4k: Boolean,
+)
+
 data class RequestDetail(
     val item: RequestItem,
     val actions: RequestActions,
@@ -135,6 +148,8 @@ data class RequestDetail(
     val serviceUrl: String?,
     /** Null for a title the server no longer tracks. */
     val media: MediaRecord?,
+    /** Other requests against this title, excluding this one; empty when this is the only one. */
+    val siblings: List<SiblingRequest>,
 )
 
 sealed interface IssueReport {

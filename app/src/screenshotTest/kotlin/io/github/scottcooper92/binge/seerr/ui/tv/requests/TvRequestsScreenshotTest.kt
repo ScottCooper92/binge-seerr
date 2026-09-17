@@ -9,11 +9,11 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.requestsReady
 import io.github.scottcooper92.binge.seerr.ui.tv.rows
-import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * The television requests board: the loaded list, the moderation sheet open on a row, the empty arm and
- * the failed-load plate. Mirrors the states already sketched in `TvBoardPreviews.kt`.
+ * The television requests board: the loaded list, the empty arm and the failed-load plate. A row's own
+ * moderation sheet is framed on `TvRequestDetailScreenshotTest` now, off the detail page that owns it.
+ * Mirrors the states already sketched in `TvBoardPreviews.kt`.
  */
 class TvRequestsScreenshotTest {
     @PreviewTest
@@ -23,7 +23,6 @@ class TvRequestsScreenshotTest {
         TvRequestsBoard(
             state = requestsReady(),
             rows = rows(SampleRequests),
-            events = emptyFlow(),
             actions = NoRequestsActions,
             initialFocusedRowId = 1,
         )
@@ -32,20 +31,8 @@ class TvRequestsScreenshotTest {
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun Sheet() {
-        TvRequestsBoard(
-            state = requestsReady(actionItem = SampleRequests.first()),
-            rows = rows(SampleRequests),
-            events = emptyFlow(),
-            actions = NoRequestsActions,
-        )
-    }
-
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
     fun Empty() {
-        TvRequestsBoard(state = requestsReady(), rows = rows(emptyList()), events = emptyFlow(), actions = NoRequestsActions)
+        TvRequestsBoard(state = requestsReady(), rows = rows(emptyList()), actions = NoRequestsActions)
     }
 
     @PreviewTest
@@ -55,7 +42,6 @@ class TvRequestsScreenshotTest {
         TvRequestsBoard(
             state = requestsReady(),
             rows = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)),
-            events = emptyFlow(),
             actions = NoRequestsActions,
         )
     }

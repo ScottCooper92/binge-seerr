@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -30,6 +31,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 
@@ -162,6 +164,55 @@ class RequestDetailViewModelTest {
             assertTrue(detail.canReportIssue)
             assertEquals(seerr.url("/").toString() + "tv/200", detail.webUrl)
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
+        }
+
+    @Test
+    fun `sibling requests against the same title exclude this one and map their id, status, requester, date and 4K flag`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","posterPath":"/sev.jpg","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":4,
+                  "requests":[{"id":11,"status":2,"seasons":[{"seasonNumber":1},{"seasonNumber":2}]},
+                    {"id":12,"status":3,"createdAt":"2025-04-12T09:00:00.000Z","requestedBy":{"displayName":"Grace"}},
+                    {"id":13,"status":5,"createdAt":"2026-06-12T09:00:00.000Z","is4k":true}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":2,"name":"Season 2","episodeCount":10}]}""",
+            )
+            val vm = viewModel()
+
+            val siblings = vm.awaitReady().detail.siblings
+
+            assertEquals(
+                listOf(
+                    SiblingRequest(
+                        id = 12,
+                        status = SeerrRequestStatusCode.Declined,
+                        requestedBy = "Grace",
+                        requestedAtMillis = Instant.parse("2025-04-12T09:00:00.000Z").toEpochMilli(),
+                        is4k = false,
+                    ),
+                    SiblingRequest(
+                        id = 13,
+                        status = SeerrRequestStatusCode.Completed,
+                        requestedBy = null,
+                        requestedAtMillis = Instant.parse("2026-06-12T09:00:00.000Z").toEpochMilli(),
+                        is4k = true,
+                    ),
+                ),
+                siblings,
+            )
+        }
+
+    /** A title the app has never seen with a second request still shows no siblings section: nothing to read. */
+    @Test
+    fun `a title lookup that fails to load reads as having no sibling requests`() =
+        runTest {
+            server(ADMIN)
+            responses.remove("/api/v1/tv/200")
+            val vm = viewModel()
+
+            assertEquals(emptyList<SiblingRequest>(), vm.awaitReady().detail.siblings)
         }
 
     /** The hub reads a size with no remaining bytes as complete; the page shares its helper, so it must agree. */

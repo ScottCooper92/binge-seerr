@@ -28,8 +28,9 @@ private const val HALF = 0.5f
 
 /**
  * The transparent top bar every phone screen wears, through [ScreenScaffold]. The screens' own frames
- * all show it at rest, where it looks exactly like the opaque bar it replaced, so these two pin what
- * changed: the glass back button, and the scrim and title colour once rows are under the bar.
+ * all show it at rest, where it looks exactly like the opaque bar it replaced, so these frames pin
+ * what changed: the glass back button, its absence when a pane screen has nowhere to go back to, and
+ * the scrim and title colour once rows are under the bar.
  */
 class ScreenScaffoldScreenshotTest {
     /** At rest: nothing under the bar, so no scrim, and the first row starts below it. */
@@ -43,6 +44,16 @@ class ScreenScaffoldScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun scrolledUnder() = Frame(collapsed = HALF, firstRow = SCROLLED_ROW)
+
+    /**
+     * The pane-depth-1 case: a screen opened straight onto the hub, such as the user detail page from
+     * the hub's own account card, draws no back arrow at all — there is nowhere for it to go back to
+     * that is not already on screen.
+     */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun noBack() = Frame(collapsed = 0f, firstRow = 0, onBack = null)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,13 +61,14 @@ class ScreenScaffoldScreenshotTest {
 private fun Frame(
     collapsed: Float,
     firstRow: Int,
+    onBack: (() -> Unit)? = {},
 ) {
     val limit = with(LocalDensity.current) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
     val barState = rememberTopAppBarState(initialHeightOffsetLimit = -limit, initialHeightOffset = -limit * collapsed)
     Box(Modifier.height(420.dp)) {
         ScreenScaffold(
             title = "Requests",
-            onBack = {},
+            onBack = onBack,
             scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(barState),
             actions = {
                 IconButton(onClick = {}) { Icon(Icons.Filled.SwapVert, contentDescription = null) }

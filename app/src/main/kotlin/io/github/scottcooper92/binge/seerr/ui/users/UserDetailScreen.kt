@@ -89,6 +89,9 @@ class UserDetailActions(
  * One user as a page: who they are, their quota and permissions, their requests, and, where the
  * server has them, what they watched and want to watch. A title opens on the server, as the
  * request page's does.
+ *
+ * @param showBack false when this user is the only thing in the detail pane beside the hub — opened
+ * from the hub's own account card — where a back arrow to the hub is redundant.
  */
 @Composable
 fun UserDetailScreen(
@@ -96,6 +99,7 @@ fun UserDetailScreen(
     requests: Flow<PagingData<RequestItem>>,
     events: Flow<UserDetailEvent>,
     actions: UserDetailActions,
+    showBack: Boolean = true,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -117,7 +121,7 @@ fun UserDetailScreen(
     val ready = state as? UserDetailUiState.Ready
     ScreenScaffold(
         title = ready?.detail?.item?.name ?: stringResource(R.string.user_detail_title),
-        onBack = actions.onBack,
+        onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
         actions = {
             if (ready != null) {

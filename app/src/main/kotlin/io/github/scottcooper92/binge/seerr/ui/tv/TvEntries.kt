@@ -9,9 +9,11 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
@@ -25,9 +27,13 @@ import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.actions
+import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
+import io.github.scottcooper92.binge.seerr.ui.openTitleInBinge
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
@@ -38,6 +44,8 @@ import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
+import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
@@ -50,10 +58,24 @@ import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 internal fun TvConnectedShell() {
     var selected by rememberSaveable { mutableStateOf(TvDestination.Hub) }
     var editingConnection by rememberSaveable { mutableStateOf(false) }
+    // The requests board's open detail page, above the rail exactly as the connection form is. The two
+    // overlays are mutually exclusive by construction — nothing opens one while the other is showing.
+    var openRequestId by rememberSaveable { mutableStateOf<Int?>(null) }
     TvShellScaffold(
         selected = selected,
         onSelect = { selected = it },
-        overlay = if (editingConnection) ({ TvEditConnectionOverlay(onDone = { editingConnection = false }) }) else null,
+        overlay =
+            when {
+                editingConnection ->
+                    {
+                        { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
+                    }
+                openRequestId != null ->
+                    {
+                        { TvRequestDetailOverlay(requestId = requireNotNull(openRequestId), onDone = { openRequestId = null }) }
+                    }
+                else -> null
+            },
     ) { destination ->
         when (destination) {
             TvDestination.Hub ->
@@ -62,7 +84,12 @@ internal fun TvConnectedShell() {
                     onOpenIssues = { selected = TvDestination.Issues },
                     onReconnect = { editingConnection = true },
                 )
-            TvDestination.Requests -> TvRequestsEntry(onReconnect = { editingConnection = true })
+            TvDestination.Requests ->
+                TvRequestsEntry(
+                    onReconnect = { editingConnection = true },
+                    openRequestId = openRequestId,
+                    onOpenRequest = { openRequestId = it },
+                )
             TvDestination.Issues -> TvIssuesEntry(onReconnect = { editingConnection = true })
             TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true })
         }
@@ -98,6 +125,8 @@ private fun TvHubEntry(
 @Composable
 private fun TvRequestsEntry(
     onReconnect: () -> Unit,
+    openRequestId: Int?,
+    onOpenRequest: (Int) -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -116,19 +145,54 @@ private fun TvRequestsEntry(
     TvRequestsBoard(
         state = state,
         rows = lazyItems.toRows { it.id },
-        events = viewModel.moderation.events,
+        openRequestId = openRequestId,
         actions =
             TvRequestsActions(
                 onFilterChange = viewModel::setFilter,
                 onSortChange = viewModel::setSort,
-                onOpenActions = viewModel::openActions,
-                onDismissActions = viewModel::dismissActions,
-                onApprove = viewModel.moderation::approve,
-                onRetry = viewModel.moderation::retry,
-                onDecline = viewModel.moderation::decline,
-                onRemove = viewModel.moderation::remove,
+                onOpenDetail = { item -> onOpenRequest(item.id) },
                 onRetryLoad = { lazyItems?.retry() },
                 onReconnect = onReconnect,
+            ),
+    )
+}
+
+/**
+ * A request's read-only page, above the rail exactly as the connection form is: the same
+ * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds, and a fresh instance per request id since
+ * [requestId] rides Hilt's `creationCallback`. Open in Binge checks whether Binge would answer the link once
+ * per detail load — this surface has no browser to fall back to, so the button is hidden rather than tried
+ * and abandoned.
+ */
+@Composable
+private fun TvRequestDetailOverlay(
+    requestId: Int,
+    onDone: () -> Unit,
+    viewModel: RequestDetailViewModel =
+        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val detail = (state as? RequestDetailUiState.Ready)?.detail
+    val onOpenInBinge =
+        remember(context, detail) {
+            detail?.let { ready ->
+                { context.openTitleInBinge(ready.item.mediaType, ready.item.tmdbId) }
+                    .takeIf { context.bingeAnswersTitleLink(ready.item.mediaType, ready.item.tmdbId) }
+            }
+        }
+    TvRequestDetailScreen(
+        state = state,
+        events = viewModel.moderation.events,
+        actions =
+            TvRequestDetailActions(
+                onBack = onDone,
+                onRetry = viewModel::reload,
+                onOpenInBinge = onOpenInBinge,
+                onApprove = { viewModel.moderation.approve(requestId) },
+                onRetryRequest = { viewModel.moderation.retry(requestId) },
+                onDecline = { block -> detail?.let { viewModel.moderation.decline(it.item, block) } },
+                onRemove = { block -> detail?.let { viewModel.moderation.remove(it.item, block) } },
             ),
     )
 }

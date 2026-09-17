@@ -23,6 +23,7 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeTextButton
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import com.binge.designsystem.R as DesR
 
@@ -211,7 +212,7 @@ private fun MediaGroup(
         if (media.canSetStatus) {
             MarkAsRow { callbacks.onMarkStatus(instance.is4k) }
         }
-        if (media.canDeleteFiles) {
+        if (media.canDeleteFiles && instance.status.hasFiles()) {
             BingeOutlinedButton(
                 label = stringResource(R.string.media_delete_files),
                 onClick = { callbacks.onDeleteFiles(instance.is4k) },
@@ -229,6 +230,14 @@ private fun MediaGroup(
         )
     }
 }
+
+/**
+ * Whether an instance in this state has files to delete. [MediaRecord.canDeleteFiles] is who may
+ * delete at all; this is what there currently is to delete. `Processing` counts as a download
+ * already in flight, and a null status (the server has nothing for this instance) does not.
+ */
+private fun SeerrMediaStatusCode?.hasFiles(): Boolean =
+    this == SeerrMediaStatusCode.Processing || this == SeerrMediaStatusCode.PartiallyAvailable || this == SeerrMediaStatusCode.Available
 
 /**
  * Opens [MediaStatusSheet]. It carries no value of its own: the instance header above already reads

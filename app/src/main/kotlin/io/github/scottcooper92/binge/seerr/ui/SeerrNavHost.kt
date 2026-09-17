@@ -53,6 +53,10 @@ fun SeerrNavHost(
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
     LaunchedEffect(connected, root) { backStack.settleHome(connected) }
+    // The one back-arrow rule (paneShowsBack), fed the stack's own shape (paneDepth) alongside
+    // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
+    // fixed when it is built, so what the stack looks like later has to be read inside the content.
+    val showBack = { paneShowsBack(hubBeside.value, backStack.paneDepth()) }
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
@@ -70,8 +74,8 @@ fun SeerrNavHost(
         entryProvider =
             entryProvider {
                 homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
-                sectionEntries(backStack, showBack = { !hubBeside.value })
-                detailEntries(backStack)
+                sectionEntries(backStack, showBack = showBack)
+                detailEntries(backStack, showBack = showBack)
                 serverSettingsEntries(backStack)
             },
     )
@@ -155,18 +159,37 @@ private fun SectionContent(
     }
 }
 
-/** What a section's rows open: one request, one issue, one user and their settings. They stack in the detail pane. */
-private fun EntryProviderScope<NavKey>.detailEntries(backStack: NavBackStack<NavKey>) {
+/**
+ * What a section's rows open: one request, one issue, one user and their settings. Most of these
+ * stack above a section, where pane depth is always > 1 and the arrow is always right — but
+ * [UserDetailRoute] and [EditConnectionRoute] are also opened straight off the hub itself (an
+ * account card, a reconnect prompt), so they take [showBack] too. The rest accept it where wiring it
+ * is a one-line forward to an existing [io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold];
+ * see [UserSettingsPageEntry] below for the one that does not.
+ */
+private fun EntryProviderScope<NavKey>.detailEntries(
+    backStack: NavBackStack<NavKey>,
+    showBack: () -> Boolean,
+) {
     entry<RequestDetailRoute>(metadata = DetailPane) { route ->
-        RequestDetailEntry(route.requestId, onBack = { backStack.removeLastOrNull() })
+        // No showBack: the hero's DetailOverlayTopBar renders its back arrow unconditionally, which a
+        // request page never notices in practice — it is only ever stacked above a section or above
+        // UserDetailEntry, never pushed straight onto [HubRoute], so its pane depth is always > 1.
+        // Gating it for real is a design-system change (DetailOverlayTopBar's onBack is non-nullable).
+        RequestDetailEntry(
+            route.requestId,
+            onBack = { backStack.removeLastOrNull() },
+            onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
+        )
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
-        IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() })
+        IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }, showBack = showBack())
     }
     entry<UserDetailRoute>(metadata = DetailPane) { route ->
         UserDetailEntry(
             route.userId,
             onBack = { backStack.removeLastOrNull() },
+            showBack = showBack(),
             onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
             onOpenSettings = { backStack.add(UserSettingsRoute(route.userId)) },
         )
@@ -175,16 +198,26 @@ private fun EntryProviderScope<NavKey>.detailEntries(backStack: NavBackStack<Nav
         UserSettingsEntry(
             route.userId,
             onBack = { backStack.removeLastOrNull() },
+            showBack = showBack(),
             onOpenPage = { page -> backStack.add(UserSettingsPageRoute(route.userId, page)) },
         )
     }
     entry<UserSettingsPageRoute>(metadata = DetailPane) { route ->
+        // No showBack: every page here is stacked above UserSettingsRoute, which is itself never
+        // pushed straight onto [HubRoute] (only from UserDetailEntry), so pane depth is always > 1.
         UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
     }
-    entry<EditConnectionRoute>(metadata = DetailPane) { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }) }
+    entry<EditConnectionRoute>(metadata = DetailPane) {
+        EditConnectionEntry(onDone = { backStack.removeLastOrNull() }, showBack = showBack())
+    }
 }
 
-/** The server's own settings pages and the editors they open. They stack in the detail pane too. */
+/**
+ * The server's own settings pages and the editors they open. They stack in the detail pane too, and
+ * every one of them is reached by way of [SettingsRoute] first, so pane depth here is always > 1 and
+ * none of them take [showBack] — unlike [detailEntries], where two routes are reachable straight off
+ * the hub. Wire a future route in here the same way [detailEntries] wires those two, if it changes that.
+ */
 private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {
     entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
         ServerSettingsPageEntry(
@@ -283,10 +316,15 @@ private fun SettingsEntry(
 /**
  * The setup form on the live connection, prefilled with its address. The connection stays in
  * place until new credentials are saved, so a rejected edit changes nothing; success pops.
+ *
+ * Reachable straight off the hub's own reconnect prompt as well as from Settings, so [showBack]
+ * follows the same rule as everywhere else in the detail pane: hidden only when this is the one
+ * thing standing between the viewer and the hub they never left.
  */
 @Composable
 private fun EditConnectionEntry(
     onDone: () -> Unit,
+    showBack: Boolean,
     viewModel: SetupViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -296,7 +334,7 @@ private fun EditConnectionEntry(
         state = state,
         actions = viewModel.actions(),
         title = stringResource(R.string.settings_edit_connection),
-        onBack = onDone,
+        onBack = onDone.takeIf { showBack },
     )
 }
 

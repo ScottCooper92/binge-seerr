@@ -4,7 +4,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTextExactly
@@ -26,7 +25,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
-import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -40,9 +38,10 @@ private const val HEAT = "Heat"
 private const val BEAR = "The Bear"
 
 /**
- * The requests board under a real D-pad: the band to the rows, a row to its sheet, the sheet's first
- * action, and the way back. The rows come from a plain list decomposed the way the entry decomposes the
- * pager, so nothing here waits on paging.
+ * The requests board under a real D-pad: the band to the rows, a row to its detail page (OK now opens the
+ * page rather than the moderation sheet directly — see `TvRequestDetailFocusTest` for that round trip), and
+ * the row regaining focus once the open request id clears. The rows come from a plain list decomposed the
+ * way the entry decomposes the pager, so nothing here waits on paging.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -50,9 +49,7 @@ class TvRequestsBoardFocusTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val approved = mutableListOf<Int>()
-    private val declined = mutableListOf<Pair<Int, Boolean>>()
-    private var dismissed = 0
+    private val opened = mutableListOf<Int>()
     private var filters = mutableListOf<RequestFilter>()
     private var sorts = mutableListOf<RequestSort>()
 
@@ -117,55 +114,19 @@ class TvRequestsBoardFocusTest {
     }
 
     @Test
-    fun okOnARowOpensItsSheetOnTheFirstActionAndOkApproves() {
+    fun okOnARowOpensItsDetailPage() {
         setBoard(manager)
         focusBand()
         pressDown()
 
         pressOk()
-        sheetRow(R.string.request_approve).assertIsFocused()
-        pressOk()
 
-        assertEquals(listOf(1), approved)
-        assertEquals(1, dismissed)
+        assertEquals(listOf(1), opened)
     }
 
     @Test
-    fun leftOnTheSheetDismissesIt() {
-        setBoard(manager)
-        focusBand()
-        pressDown()
-        pressOk()
-        sheetRow(R.string.request_approve).assertIsFocused()
-
-        pressLeft()
-
-        assertEquals(1, dismissed)
-        assertTrue(approved.isEmpty())
-        settleFocusRestore()
-        row(HEAT).assertIsFocused()
-    }
-
-    @Test
-    fun aDestructiveActionConfirmsFirstAndLandsOnCancel() {
-        setBoard(manager)
-        focusBand()
-        pressDown()
-        pressOk()
-
-        pressDown()
-        pressDown()
-        sheetRow(R.string.request_decline_and_block).assertIsFocused()
-        pressOk()
-        sheetRow(com.binge.designsystem.R.string.action_cancel).assertIsFocused()
-        pressUp()
-        pressOk()
-
-        assertEquals(listOf(1 to true), declined)
-    }
-
-    @Test
-    fun aRowTheViewerCannotActOnStaysInTheWalkButOpensNothing() {
+    fun aRowTheViewerCannotModerateStillOpensItsDetailPage() {
+        // The page is read-only detail, not moderation, so every row opens it regardless of scope.
         setBoard(bystander)
         focusBand()
         pressDown()
@@ -173,45 +134,52 @@ class TvRequestsBoardFocusTest {
 
         pressOk()
 
-        assertEquals(0, dismissed)
-        composeTestRule.onAllNodes(hasText(string(R.string.request_approve))).assertCountEquals(0)
-        pressDown()
-        row(BEAR).assertIsFocused()
+        assertEquals(listOf(1), opened)
     }
+
+    @Test
+    fun theRowRegainsFocusOnceTheOpenRequestClears() {
+        setBoard(manager)
+        focusBand()
+        pressDown()
+        row(HEAT).assertIsFocused()
+        pressOk()
+        assertEquals(listOf(1), opened)
+
+        // The overlay above the rail owns closing itself; the board only reacts to openRequestId clearing.
+        openRequestId = null
+        settleFocusRestore()
+
+        row(HEAT).assertIsFocused()
+    }
+
+    private var openRequestId: Int? by mutableStateOf(null)
 
     private fun setBoard(scope: ModerationScope) {
         val items = listOf(request(1, HEAT), request(2, BEAR))
         composeTestRule.setContent {
-            var state by androidx.compose.runtime.remember {
-                mutableStateOf(
-                    RequestsUiState.Ready(
-                        filter = RequestFilter.All,
-                        sort = RequestSort.Added,
-                        counts = null,
-                        scope = scope,
-                        actingIds = emptySet(),
-                        listVersion = 0,
-                    ),
+            val state =
+                RequestsUiState.Ready(
+                    filter = RequestFilter.All,
+                    sort = RequestSort.Added,
+                    counts = null,
+                    scope = scope,
+                    actingIds = emptySet(),
+                    listVersion = 0,
                 )
-            }
             BingeTvTheme {
                 TvRequestsBoard(
                     state = state,
                     rows = TvPagedRows(count = items.size, at = { items.getOrNull(it) }),
-                    events = emptyFlow(),
+                    openRequestId = openRequestId,
                     actions =
                         TvRequestsActions(
                             onFilterChange = { filters += it },
                             onSortChange = { sorts += it },
-                            onOpenActions = { state = state.copy(actionItem = it) },
-                            onDismissActions = {
-                                dismissed++
-                                state = state.copy(actionItem = null)
+                            onOpenDetail = { item ->
+                                opened += item.id
+                                openRequestId = item.id
                             },
-                            onApprove = { approved += it },
-                            onRetry = {},
-                            onDecline = { item, block -> declined += item.id to block },
-                            onRemove = { _, _ -> },
                             onRetryLoad = {},
                             onReconnect = {},
                         ),
@@ -231,11 +199,7 @@ class TvRequestsBoardFocusTest {
 
     private fun row(title: String) = composeTestRule.onNode(hasText(title) and isFocusable())
 
-    private fun sheetRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
-
     private fun pressDown() = press(Key.DirectionDown)
-
-    private fun pressUp() = press(Key.DirectionUp)
 
     private fun pressLeft() = press(Key.DirectionLeft)
 
@@ -243,7 +207,7 @@ class TvRequestsBoardFocusTest {
 
     private fun pressOk() = press(Key.DirectionCenter)
 
-    /** The closer hands focus back one frame after the sheet's nodes go, so the walk resumes from the row that opened it. */
+    /** The board offers focus back one frame after the open request id clears, as the old sheet closer did. */
     private fun settleFocusRestore() {
         composeTestRule.mainClock.advanceTimeByFrame()
         composeTestRule.waitForIdle()

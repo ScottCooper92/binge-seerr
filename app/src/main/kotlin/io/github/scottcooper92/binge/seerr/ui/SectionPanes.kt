@@ -86,3 +86,26 @@ internal fun NavBackStack<NavKey>.openSection(
  */
 internal fun List<NavKey>.selectedSection(defaultShowing: Boolean): HubSection? =
     firstNotNullOfOrNull { it.hubSection() } ?: DefaultSection.takeIf { defaultShowing && size == 1 }
+
+/**
+ * How many entries sit above [HubRoute] on the way to whatever is on screen now: 1 for a screen
+ * pushed directly onto the hub, more for one stacked further above that. [HubRoute] not being on the
+ * stack at all (a narrow window's own screens, or setup) counts as every entry being "above" it,
+ * which is harmless: [paneShowsBack] only reads this once its own `hubBeside` is already true.
+ */
+internal fun List<NavKey>.paneDepth(): Int {
+    val hubIndex = indexOfLast { it == HubRoute }
+    return if (hubIndex == -1) size else size - hubIndex - 1
+}
+
+/**
+ * The one back-arrow rule for the detail pane, whatever is filling it: hidden only when the hub is
+ * showing beside the pane and this is the only thing stacked above it, because popping there would
+ * not return the viewer anywhere they came from — the hub never left the screen. A section beside the
+ * hub is always exactly that one entry, so this is the same rule the section screens already applied,
+ * expressed once instead of twice.
+ */
+internal fun paneShowsBack(
+    hubBeside: Boolean,
+    paneDepth: Int,
+): Boolean = !hubBeside || paneDepth > 1
