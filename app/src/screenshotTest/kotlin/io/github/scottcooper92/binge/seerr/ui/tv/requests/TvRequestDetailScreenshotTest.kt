@@ -45,6 +45,7 @@ private fun seriesDetail(): RequestDetail =
         backdropUrl = null,
         overview = null,
         modifiedBy = null,
+        modifiedById = null,
         updatedAtMillis = null,
         seasons =
             listOf(
@@ -88,6 +89,7 @@ private fun filmDetail(): RequestDetail =
         backdropUrl = null,
         overview = null,
         modifiedBy = null,
+        modifiedById = null,
         updatedAtMillis = null,
         seasons = emptyList(),
         destination = null,

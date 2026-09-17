@@ -235,6 +235,7 @@ private class DetailSources(
             backdropUrl = details?.backdropPath?.toTmdbBackdropUrl(),
             overview = details?.overview?.takeIf { it.isNotBlank() },
             modifiedBy = dto.modifiedByName(),
+            modifiedById = dto.modifiedBy?.id,
             updatedAtMillis = dto.updatedAt?.toEpochMillisOrNull(),
             seasons = seasons(),
             destination = destination,

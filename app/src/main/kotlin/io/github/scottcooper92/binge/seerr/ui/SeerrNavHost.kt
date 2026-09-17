@@ -180,6 +180,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             route.requestId,
             onBack = { backStack.removeLastOrNull() },
             onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
+            onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
         )
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->

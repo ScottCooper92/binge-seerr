@@ -134,6 +134,7 @@ data class RequestDetail(
     val backdropUrl: String?,
     val overview: String?,
     val modifiedBy: String?,
+    val modifiedById: Int?,
     val updatedAtMillis: Long?,
     val seasons: List<SeasonState>,
     val destination: RequestDestination?,

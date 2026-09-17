@@ -42,6 +42,7 @@ private fun Frame(detail: RequestDetail) {
         onReport = {},
         onPrimary = {},
         onOpenSibling = {},
+        onOpenUser = {},
         initiallyOverflowing = true,
     )
 }

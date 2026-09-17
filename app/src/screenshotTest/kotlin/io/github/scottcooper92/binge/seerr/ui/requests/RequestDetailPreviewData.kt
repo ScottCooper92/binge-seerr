@@ -16,6 +16,8 @@ private const val REQUEST_ID = 11
 private const val SIBLING_REQUEST_ID = 12
 private const val OTHER_SIBLING_REQUEST_ID = 13
 private const val EPISODE_COUNT = 13
+private const val REQUESTER_ID = 7
+private const val MODERATOR_ID = 9
 
 private const val OVERVIEW =
     "A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing to secure his " +
@@ -55,6 +57,7 @@ internal fun detailWithSiblings(): RequestDetail =
         mediaStatus = SeerrMediaStatusCode.Available,
         canEdit = false,
         modifiedBy = null,
+        modifiedById = null,
         updatedAtMillis = null,
         destination = null,
         watch = null,
@@ -85,6 +88,7 @@ private fun detail(
     mediaStatus: SeerrMediaStatusCode,
     canEdit: Boolean,
     modifiedBy: String? = "Grace",
+    modifiedById: Int? = MODERATOR_ID,
     updatedAtMillis: Long? = UPDATED_AT_MILLIS,
     destination: RequestDestination? =
         RequestDestination(serverName = "Sonarr", profileName = "HD-1080p", rootFolder = "/tv", tags = listOf("kids")),
@@ -103,7 +107,7 @@ private fun detail(
                 posterUrl = null,
                 year = "2008",
                 requestedBy = "Ada",
-                requestedById = 7,
+                requestedById = REQUESTER_ID,
                 requestedAtMillis = REQUESTED_AT_MILLIS,
                 status = status,
                 mediaStatus = mediaStatus,
@@ -117,6 +121,7 @@ private fun detail(
         backdropUrl = null,
         overview = overview,
         modifiedBy = modifiedBy,
+        modifiedById = modifiedById,
         updatedAtMillis = updatedAtMillis,
         seasons = seasons,
         destination = destination,
