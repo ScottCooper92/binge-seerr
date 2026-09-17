@@ -82,5 +82,6 @@ jobs:
             **/build/reports/tests/**
             **/build/reports/lint-results-*.html
             **/build/reports/ktlint/**
+            **/build/outputs/screenshotTest-results/**
           if-no-files-found: ignore
           retention-days: 1
