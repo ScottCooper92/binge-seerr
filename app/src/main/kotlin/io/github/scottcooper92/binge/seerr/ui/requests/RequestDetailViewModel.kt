@@ -236,6 +236,8 @@ private class DetailSources(
             overview = details?.overview?.takeIf { it.isNotBlank() },
             modifiedBy = dto.modifiedByName(),
             modifiedById = dto.modifiedBy?.id,
+            viewerId = user?.id,
+            canManageUsers = permissions.canManageUsers,
             updatedAtMillis = dto.updatedAt?.toEpochMillisOrNull(),
             seasons = seasons(),
             destination = destination,

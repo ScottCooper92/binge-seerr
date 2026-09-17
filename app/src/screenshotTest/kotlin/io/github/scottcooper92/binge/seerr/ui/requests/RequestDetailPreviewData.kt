@@ -122,6 +122,10 @@ private fun detail(
         overview = overview,
         modifiedBy = modifiedBy,
         modifiedById = modifiedById,
+        // A moderator's own page: their id links "Requested by" (it is their own request), and
+        // `MANAGE_USERS` links "Moderated by" too.
+        viewerId = REQUESTER_ID,
+        canManageUsers = true,
         updatedAtMillis = updatedAtMillis,
         seasons = seasons,
         destination = destination,

@@ -46,6 +46,8 @@ private fun seriesDetail(): RequestDetail =
         overview = null,
         modifiedBy = null,
         modifiedById = null,
+        viewerId = 7,
+        canManageUsers = false,
         updatedAtMillis = null,
         seasons =
             listOf(
@@ -90,6 +92,8 @@ private fun filmDetail(): RequestDetail =
         overview = null,
         modifiedBy = null,
         modifiedById = null,
+        viewerId = 3,
+        canManageUsers = false,
         updatedAtMillis = null,
         seasons = emptyList(),
         destination = null,

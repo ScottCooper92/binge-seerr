@@ -169,6 +169,21 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `a plain viewer who did not make the request reads their own id, but not MANAGE_USERS, off the page`() =
+        runTest {
+            server(REQUEST)
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Other","permissions":$REQUEST}""")
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            // The request was made by user 7 and moderated by user 9; this viewer, 8, is neither and
+            // has no MANAGE_USERS, so `linkedOrPlain` must not link either name to `GET /user/{id}`.
+            assertEquals(8, detail.viewerId)
+            assertFalse(detail.canManageUsers)
+        }
+
+    @Test
     fun `sibling requests against the same title exclude this one and map their id, status, requester, date and 4K flag`() =
         runTest {
             server(ADMIN)

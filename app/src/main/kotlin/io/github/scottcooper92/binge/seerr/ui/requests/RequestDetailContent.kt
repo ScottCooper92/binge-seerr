@@ -72,11 +72,20 @@ internal fun RequestFacts(
             listOfNotNull(
                 InfoRowEntry(
                     stringResource(R.string.request_requested_by),
-                    linkedOrPlain(item.requestedBy ?: stringResource(R.string.requests_requester_unknown), item.requestedById, onOpenUser),
+                    linkedOrPlain(
+                        item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                        item.requestedById,
+                        detail.viewerId,
+                        detail.canManageUsers,
+                        onOpenUser,
+                    ),
                 ),
                 InfoRowEntry(stringResource(R.string.request_requested_at), formatRelativeOrAbsolute(item.requestedAtMillis)),
                 detail.modifiedBy?.let {
-                    InfoRowEntry(stringResource(R.string.request_modified_by), linkedOrPlain(it, detail.modifiedById, onOpenUser))
+                    InfoRowEntry(
+                        stringResource(R.string.request_modified_by),
+                        linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
+                    )
                 },
                 detail.updatedAtMillis?.let { InfoRowEntry(stringResource(R.string.request_updated_at), formatRelativeOrAbsolute(it)) },
                 detail.destination?.serverName?.let { InfoRowEntry(stringResource(R.string.request_server), it) },
@@ -92,12 +101,24 @@ internal fun RequestFacts(
     )
 }
 
-/** A name as a link to that user's detail screen where the server named an id, plain text otherwise. */
-private fun linkedOrPlain(
+/**
+ * A name as a link to that user's detail screen where the viewer may actually open it — their own
+ * id, or any id at all with `MANAGE_USERS` — plain text otherwise. `SeerrApi.user()` refuses
+ * anyone else's id without that permission, so an ungated link would be a dead end rather than a
+ * shortcut.
+ */
+internal fun linkedOrPlain(
     text: String,
     id: Int?,
+    viewerId: Int?,
+    canManageUsers: Boolean,
     onOpenUser: (Int) -> Unit,
-): InfoValue = if (id != null) InfoValue.Link(text, onClick = { onOpenUser(id) }) else InfoValue.Plain(text)
+): InfoValue =
+    if (id != null && (id == viewerId || canManageUsers)) {
+        InfoValue.Link(text, onClick = { onOpenUser(id) })
+    } else {
+        InfoValue.Plain(text)
+    }
 
 /**
  * What the server's own watch tracking says. A read-out rather than an action, so it belongs beside
