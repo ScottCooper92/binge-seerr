@@ -41,8 +41,8 @@ private const val PERCENT = 100
 
 /**
  * One request as a focusable row: poster, title and what kind of title, who asked and when, and its state
- * on the trailing edge. OK opens the row's actions where the viewer has any; a row with none stays in the
- * walk as a read-out. A row with a write in flight dims and takes no press.
+ * on the trailing edge. OK opens the row's read-only detail page; a row with a write in flight dims and
+ * takes no press.
  */
 @Composable
 internal fun TvRequestRow(
