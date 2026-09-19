@@ -35,6 +35,7 @@ import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.SetupLinkSheet
 import io.github.scottcooper92.binge.seerr.ui.savedLoginRequest
@@ -121,7 +122,7 @@ private fun LinkedAccountsContent(
             },
         )
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        SettingsGroup(title = null, rows = rows, modifier = Modifier.padding(dimensionResource(DesR.dimen.screen_content_inset)))
+        SettingsGroup(title = null, rows = rows, modifier = Modifier.padding(resolvedContentInset()))
     }
     unlinking?.let { origin ->
         BingeConfirmDialog(
@@ -196,7 +197,7 @@ private fun MediaServerLinkSheet(
     var password by rememberSaveable { mutableStateOf("") }
     BingeBottomSheet(onDismissRequest = onDismiss) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+            modifier = Modifier.fillMaxWidth().padding(resolvedContentInset()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             Text(

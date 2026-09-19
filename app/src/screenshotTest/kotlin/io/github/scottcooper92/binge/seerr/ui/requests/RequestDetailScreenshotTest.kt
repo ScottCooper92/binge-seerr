@@ -3,9 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.LocalPaneWidth
 import io.github.scottcooper92.binge.seerr.preview.SeerrListPanePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
@@ -47,14 +49,17 @@ class RequestDetailScreenshotTest {
     /**
      * Pending, in a pane narrower than the window (#343): the footer spans the pane it sits in rather
      * than the whole window it is measured against, exactly as [io.github.scottcooper92.binge.seerr.ui.hub.HubScreenshotTest.readyAsListPane]
-     * proves for the hub.
+     * proves for the hub. [LocalPaneWidth] is what `SeerrNavHost` would provide for a pane at that
+     * width (#291) — without it the hero and the info rows would still take the window's 32dp.
      */
     @PreviewTest
     @SeerrListPanePreview
     @Composable
     fun asPane() =
-        Box(modifier = Modifier.width(360.dp)) {
-            Frame(pendingDetail())
+        CompositionLocalProvider(LocalPaneWidth provides 360.dp) {
+            Box(modifier = Modifier.width(360.dp)) {
+                Frame(pendingDetail())
+            }
         }
 
     /** Type, availability and 4K as three chips on the headline row, wrapping rather than clipping (#340). */

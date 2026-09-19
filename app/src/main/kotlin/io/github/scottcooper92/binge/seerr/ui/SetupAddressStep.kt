@@ -19,6 +19,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 
@@ -37,7 +38,7 @@ internal fun SetupAddressStep(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
-                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
+                .padding(resolvedContentInset()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(R.string.setup_intro), style = MaterialTheme.typography.bodyMedium)

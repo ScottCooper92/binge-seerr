@@ -32,6 +32,7 @@ import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
@@ -202,7 +203,7 @@ internal fun SeasonRow(season: SeasonState) {
     Column(
         modifier =
             Modifier.fillMaxWidth().padding(
-                horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                horizontal = resolvedContentInset(),
                 vertical = dimensionResource(DesR.dimen.padding_s),
             ),
     ) {
@@ -239,7 +240,7 @@ internal fun DownloadRow(download: DetailDownload) {
     Column(
         modifier =
             Modifier.fillMaxWidth().padding(
-                horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                horizontal = resolvedContentInset(),
                 vertical = dimensionResource(DesR.dimen.padding_s),
             ),
     ) {
@@ -288,7 +289,7 @@ internal fun RequestSiblings(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier =
                 Modifier.fillMaxWidth().padding(
-                    horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                    horizontal = resolvedContentInset(),
                     vertical = dimensionResource(DesR.dimen.padding_s),
                 ),
         )
@@ -307,7 +308,7 @@ private fun SiblingRow(
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .padding(
-                    horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                    horizontal = resolvedContentInset(),
                     vertical = dimensionResource(DesR.dimen.padding_s),
                 ),
         verticalAlignment = Alignment.CenterVertically,

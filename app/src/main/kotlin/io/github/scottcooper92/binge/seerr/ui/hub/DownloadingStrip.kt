@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import coil3.compose.SubcomposeAsyncImage
 import com.binge.designsystem.CARD_ASPECT_RATIO
 import com.binge.designsystem.component.ImagePlaceholder
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
@@ -40,7 +41,7 @@ import com.binge.designsystem.R as DesR
 internal fun DownloadingStrip(
     items: List<HubDownload>,
     modifier: Modifier = Modifier,
-    inset: Dp = dimensionResource(DesR.dimen.screen_content_inset),
+    inset: Dp = resolvedContentInset(),
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),

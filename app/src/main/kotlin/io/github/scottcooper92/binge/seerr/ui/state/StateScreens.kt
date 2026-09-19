@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -101,7 +102,7 @@ private fun StateLayout(
     action: @Composable (() -> Unit)? = null,
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
+        modifier = modifier.fillMaxSize().padding(horizontal = resolvedContentInset()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

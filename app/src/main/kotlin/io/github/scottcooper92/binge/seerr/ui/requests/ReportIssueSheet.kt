@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilterChip
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
@@ -54,7 +55,7 @@ internal fun ReportIssueContent(
                 .fillMaxWidth()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
+                .padding(resolvedContentInset()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(R.string.issue_report_title), style = MaterialTheme.typography.titleLarge)

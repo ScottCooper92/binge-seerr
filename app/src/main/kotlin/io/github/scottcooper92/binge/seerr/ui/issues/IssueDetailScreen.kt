@@ -44,6 +44,7 @@ import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
@@ -154,7 +155,7 @@ private fun Ready(
 ) {
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
     val detail = state.detail
-    val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    val inset = resolvedContentInset()
     // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
     // the thread's scroll where there is not.
     val pinnedBar = detail.canComment || detail.canResolve

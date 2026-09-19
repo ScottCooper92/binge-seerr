@@ -5,6 +5,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.binge.designsystem.LocalPaneWidth
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
@@ -57,28 +59,34 @@ fun SeerrNavHost(
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
     val showBack = { paneShowsBack(hubBeside.value, backStack.paneDepth()) }
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier,
-        onBack = { backStack.removeLastOrNull() },
-        sceneStrategies = listOf(rememberSeerrPaneStrategy(directive)),
-        entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-        // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
-        // long as the key is on the stack. A value captured here is the value from the frame the entry
-        // was built in. So what changes later is handed over as a provider and read inside the content,
-        // where reading the state is what recomposes it.
-        entryProvider =
-            entryProvider {
-                homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
-                sectionEntries(backStack, showBack = showBack)
-                detailEntries(backStack, showBack = showBack)
-                serverSettingsEntries(backStack)
-            },
-    )
+    // The directive's own preferred pane width (#291) — not the window's — so a screen's side
+    // padding is correct in whichever pane it actually renders in. Null when the hub isn't beside
+    // anything, which is what lets resolvedContentInset() fall back to the window value unchanged.
+    val paneWidth = if (hubBeside.value) directive.defaultPanePreferredWidth else null
+    CompositionLocalProvider(LocalPaneWidth provides paneWidth) {
+        NavDisplay(
+            backStack = backStack,
+            modifier = modifier,
+            onBack = { backStack.removeLastOrNull() },
+            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive)),
+            entryDecorators =
+                listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+            // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
+            // long as the key is on the stack. A value captured here is the value from the frame the entry
+            // was built in. So what changes later is handed over as a provider and read inside the content,
+            // where reading the state is what recomposes it.
+            entryProvider =
+                entryProvider {
+                    homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
+                    sectionEntries(backStack, showBack = showBack)
+                    detailEntries(backStack, showBack = showBack)
+                    serverSettingsEntries(backStack)
+                },
+        )
+    }
 }
 
 /**
@@ -112,7 +120,6 @@ private fun EntryProviderScope<NavKey>.homeEntries(
         // And the other way: after a disconnect, settleHome is already swapping setup back in.
         if (connected() == true) {
             HubEntry(
-                asListPane = hubBeside(),
                 selectedSection = backStack.selectedSection(defaultShowing = hubBeside()),
                 onOpenSection = { section -> backStack.openSection(section, defaultShowing = hubBeside()) },
                 onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
@@ -247,7 +254,6 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
 
 @Composable
 private fun HubEntry(
-    asListPane: Boolean,
     selectedSection: HubSection?,
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
@@ -265,7 +271,6 @@ private fun HubEntry(
     HubScreen(
         state = state,
         selectedSection = selectedSection,
-        asListPane = asListPane,
         actions =
             HubActions(
                 onOpenSection = onOpenSection,
