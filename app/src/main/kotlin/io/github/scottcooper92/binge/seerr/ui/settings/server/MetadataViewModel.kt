@@ -4,9 +4,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +22,8 @@ class MetadataViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-    ) : EditorViewModel<MetadataForm>() {
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+    ) : EditorViewModel<MetadataForm>(dispatcher) {
         private val extrasState = MutableStateFlow(MetadataExtras())
         val extras: StateFlow<MetadataExtras> = extrasState.asStateFlow()
 
@@ -36,7 +39,7 @@ class MetadataViewModel
             val draft = ready()?.draft ?: return
             if (extrasState.value.testing) return
             extrasState.update { it.copy(testing = true) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val outcome = runCatching { connection.api().testMetadataProviders(draft.testBody()) }
                 extrasState.update { it.copy(testing = false) }
                 outcome

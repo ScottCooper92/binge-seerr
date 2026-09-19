@@ -7,10 +7,12 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,8 +36,9 @@ class NotificationAgentViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted val agent: ServerAgent,
-    ) : EditorViewModel<AgentForm>() {
+    ) : EditorViewModel<AgentForm>(dispatcher) {
         private val extrasState = MutableStateFlow(AgentExtras())
         val extras: StateFlow<AgentExtras> = extrasState.asStateFlow()
 
@@ -43,7 +46,7 @@ class NotificationAgentViewModel
 
         init {
             reload()
-            if (agent == ServerAgent.Pushover) viewModelScope.launch { followPushoverToken() }
+            if (agent == ServerAgent.Pushover) viewModelScope.launch(dispatcher) { followPushoverToken() }
         }
 
         override suspend fun load(): AgentForm = connection.api().notificationAgent(agent.segment).toForm(agent)
@@ -80,7 +83,7 @@ class NotificationAgentViewModel
             val draft = ready()?.draft ?: return
             if (extrasState.value.testing) return
             extrasState.update { it.copy(testing = true) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val outcome =
                     runCatching {
                         val response = connection.api().testNotificationAgent(agent.segment, draft.toDto())

@@ -63,7 +63,7 @@ class ServerGeneralViewModelTest {
 
     private suspend fun TestScope.viewModel(): ServerGeneralViewModel {
         connection = seerr.connection(this)
-        val vm = ServerGeneralViewModel(connection)
+        val vm = ServerGeneralViewModel(connection, mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

@@ -2,12 +2,14 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PermissionSettings
 import io.github.scottcooper92.binge.seerr.ui.users.settings.lockedFor
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
@@ -22,7 +24,8 @@ class DefaultPermissionsViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-    ) : EditorViewModel<PermissionSettings>() {
+        @IoDispatcher dispatcher: CoroutineDispatcher,
+    ) : EditorViewModel<PermissionSettings>(dispatcher) {
         init {
             reload()
         }

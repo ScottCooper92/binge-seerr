@@ -40,7 +40,7 @@ class PasswordViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): PasswordViewModel {
-        val vm = PasswordViewModel(seerr.connection(this), 8)
+        val vm = PasswordViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
