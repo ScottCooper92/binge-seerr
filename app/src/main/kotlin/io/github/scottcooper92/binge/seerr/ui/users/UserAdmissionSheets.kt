@@ -29,10 +29,10 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeLoadingIndicator
-import com.binge.designsystem.component.BingeSheetFooter
 import com.binge.designsystem.component.BingeTextButton
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
@@ -216,7 +216,7 @@ internal fun CreateUserSheetContent(
                 }
             }
         }
-        BingeSheetFooter(
+        BingeActionFooter(
             label = stringResource(R.string.users_create_submit),
             onClick = onCreate,
             enabled = !saving && draft.valid,
@@ -272,7 +272,7 @@ private fun ImportUsersSheet(
                         }
                     }
                     val count = picker.selected.size
-                    BingeSheetFooter(
+                    BingeActionFooter(
                         label = pluralStringResource(R.plurals.users_import_submit, count, count),
                         onClick = actions.onImport,
                         enabled = !saving && count > 0,
