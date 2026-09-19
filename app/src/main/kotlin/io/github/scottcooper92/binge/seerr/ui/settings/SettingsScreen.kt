@@ -76,7 +76,7 @@ private fun SettingsContent(
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         ServerAddressPlate(
             baseUrl = state.connection.baseUrl,
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
+            modifier = Modifier.padding(horizontal = resolvedContentInset()),
         )
         Group(
             stringResource(R.string.settings_group_connection),
