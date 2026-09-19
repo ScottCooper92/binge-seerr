@@ -16,8 +16,9 @@ import io.github.scottcooper92.binge.seerr.ui.SignInForm
 
 /*
  * The television frames, one per state a remote can reach and one per focused control, on the design
- * system's TV panel. Rendered by Android Studio's preview pane: this repository has no screenshot suite,
- * so the frames are the review surface rather than a gate.
+ * system's TV panel. Rendered by Android Studio's preview pane: these particular frames aren't wired
+ * into a `@PreviewTest`, unlike the dedicated TV screenshot tests under this package's `screenshotTest`
+ * source set, so they're the review surface here rather than part of `validateDebugScreenshotTest`.
  */
 
 private val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
