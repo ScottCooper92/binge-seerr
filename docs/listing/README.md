@@ -12,9 +12,10 @@ what the app does. Each file maps to one part of the Play Console.
 
 ## What is not here
 
-**Screenshots and the feature graphic.** This repository has no screenshot suite (see `CLAUDE.md`),
-so the frames come from the app on a device. Capture, in this order, on a phone at 1080×1920 or
-larger:
+**Screenshots and the feature graphic.** These are Play Store listing captures, a different thing
+from the `@PreviewTest` screenshot suite CLAUDE.md's Gates section gates — nothing captures these
+automatically, so the frames come from the app on a device. Capture, in this order, on a phone at
+1080×1920 or larger:
 
 1. The hub, connected, with a pending count, a downloading strip and the four sections.
 2. The requests browser with the filter band and a few rows in mixed states.
