@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import com.binge.designsystem.component.MediaTypeTagType
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
@@ -112,6 +113,12 @@ class RequestMappingsTest {
             RequestRowChip(R.string.media_state_processing, RequestStateTone.Active),
             item(SeerrRequestStatusCode.Approved, SeerrMediaStatusCode.Processing).statusChip(),
         )
+    }
+
+    @Test
+    fun `each request media type maps to its own design-system tag type`() {
+        assertEquals(MediaTypeTagType.Movie, RequestMediaType.Movie.toTagType())
+        assertEquals(MediaTypeTagType.Tv, RequestMediaType.Tv.toTagType())
     }
 
     @Test
