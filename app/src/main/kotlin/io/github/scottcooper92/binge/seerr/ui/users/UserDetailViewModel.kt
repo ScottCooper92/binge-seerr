@@ -12,6 +12,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.UserStore
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
@@ -22,6 +23,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.toHubQuota
 import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.toRequestMediaTypeOrNull
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -50,6 +52,7 @@ class UserDetailViewModel
         private val connection: SeerrConnection,
         private val titles: TitleCache,
         private val store: UserStore,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<UserDetailUiState>(UserDetailUiState.Loading)
@@ -69,7 +72,7 @@ class UserDetailViewModel
 
         fun reload() {
             if (state.value !is UserDetailUiState.Ready) state.value = UserDetailUiState.Loading
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { load() }
                     .onSuccess { detail -> state.value = UserDetailUiState.Ready(detail) }
                     .onFailure { failure ->
@@ -83,7 +86,7 @@ class UserDetailViewModel
             val ready = state.value as? UserDetailUiState.Ready ?: return
             if (ready.deleting || !ready.detail.canDelete) return
             state.value = ready.copy(deleting = true)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().deleteUser(userId)
                     store.delete(userId)

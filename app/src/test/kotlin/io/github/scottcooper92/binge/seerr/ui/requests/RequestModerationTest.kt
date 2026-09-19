@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -65,7 +66,11 @@ class RequestModerationTest {
                 apis = SeerrApiFactory(logRequests = false),
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        return RequestModeration(scope = backgroundScope, connection = connection) { moderated++ }
+        return RequestModeration(
+            scope = backgroundScope,
+            dispatcher = UnconfinedTestDispatcher(testScheduler),
+            connection = connection,
+        ) { moderated++ }
     }
 
     private val item =

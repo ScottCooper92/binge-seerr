@@ -55,7 +55,7 @@ class UserAdmissionTest {
     }
 
     private suspend fun TestScope.viewModel(): UsersViewModel {
-        val vm = UsersViewModel(seerr.connection(this), cache)
+        val vm = UsersViewModel(seerr.connection(this), cache, mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

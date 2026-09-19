@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.auth.QuickConnectExpiredException
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -20,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.isInsecurePublicUrl
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -53,12 +55,14 @@ class SetupViewModel
         plex: PlexPinFlow,
         savedState: SavedStateHandle,
         cipher: SecretCipher,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val draft = MutableStateFlow(Draft())
 
         private val links =
             SetupLinks(
                 scope = viewModelScope,
+                dispatcher = dispatcher,
                 connection = connection,
                 plex = plex,
                 savedState = savedState,
@@ -99,7 +103,7 @@ class SetupViewModel
         /** Settings' Edit connection: the form on the live server, prefilled and read, with that connection kept until a new one saves. */
         fun beginEdit() {
             if (draft.value.editing != null) return
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val saved = runCatching { connection.current() }.getOrNull() ?: return@launch
                 draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl) }
                 inspect()
@@ -112,7 +116,7 @@ class SetupViewModel
             val url = draft.value.serverUrl
             if (url.isBlank() || draft.value.busy) return
             draft.update { it.copy(busy = true, error = null) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 connection
                     .inspect(url)
                     .onSuccess { preview ->
@@ -160,7 +164,7 @@ class SetupViewModel
             val server = current.server ?: return
             if (!current.form.canRequestReset || current.busy) return
             draft.update { it.copy(busy = true, error = null, notice = null) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 connection
                     .requestPasswordReset(server.baseUrl, current.form.email.trim())
                     .onSuccess { draft.update { it.copy(notice = SetupNotice.ResetEmailSent) } }
@@ -173,7 +177,7 @@ class SetupViewModel
             server: SetupServer,
             form: SignInForm,
         ) {
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val result =
                     when (form.mode) {
                         SeerrSignInMode.ApiKey -> connection.connect(server.baseUrl, SeerrAuth.ApiKey(form.apiKey.trim()))
@@ -195,7 +199,7 @@ class SetupViewModel
         private fun restore() {
             val pending = links.pending() ?: return
             draft.update { it.copy(serverUrl = pending.serverUrl, busy = true) }
-            viewModelScope.launch { resume(pending) }
+            viewModelScope.launch(dispatcher) { resume(pending) }
         }
 
         private suspend fun resume(pending: PendingLink) {

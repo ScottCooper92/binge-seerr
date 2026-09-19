@@ -6,9 +6,11 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 
 /** One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. */
@@ -17,8 +19,9 @@ class DiscoverSliderViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
-    ) : EditorViewModel<SliderForm>() {
+    ) : EditorViewModel<SliderForm>(dispatcher) {
         init {
             reload()
         }
@@ -51,7 +54,7 @@ class DiscoverSliderViewModel
 
         fun delete() {
             val existing = id ?: return
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteDiscoverSlider(existing) }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
