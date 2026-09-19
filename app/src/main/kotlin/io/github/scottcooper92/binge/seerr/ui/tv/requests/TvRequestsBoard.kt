@@ -57,6 +57,7 @@ internal fun TvRequestsBoard(
     openRequestId: Int? = null,
     initialFocusedRowId: Int? = null,
     initialFocusedFilterLabel: String? = null,
+    now: Long = System.currentTimeMillis(),
 ) {
     val ready = state as? RequestsUiState.Ready
     val restoreFocus = remember { FocusRequester() }
@@ -96,6 +97,7 @@ internal fun TvRequestsBoard(
                     },
                     isActing = item.id in ready.actingIds,
                     initiallyFocused = item.id == initialFocusedRowId,
+                    now = now,
                     modifier = if (item.id == restoreRowId) Modifier.focusRequester(restoreFocus) else Modifier,
                 )
             }
