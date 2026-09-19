@@ -40,6 +40,9 @@ import com.binge.designsystem.R as DesR
  *
  * [initiallyOverflowing] seeds the overview's toggle for a frame: the component only learns it
  * overflowed from `onTextLayout`, which fires after the screenshot lane has captured.
+ *
+ * The chip reads the title's own status across every request, not this request's own seasons —
+ * see [RequestSections] below, and the caption this composable adds where the two can disagree.
  */
 @Composable
 internal fun RequestHeadline(
@@ -55,6 +58,13 @@ internal fun RequestHeadline(
         ) {
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
             if (detail.item.is4k) Text(stringResource(R.string.settings_service_4k), style = MaterialTheme.typography.labelMedium)
+        }
+        if (detail.seasons.isNotEmpty()) {
+            Text(
+                stringResource(R.string.request_title_status_caption),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         detail.overview?.let { ExpandableOverview(text = it, initiallyOverflowing = initiallyOverflowing) }
     }
@@ -169,33 +179,41 @@ internal fun RequestSections(detail: RequestDetail) {
     }
 }
 
+/**
+ * A read-out, not a destination: there is no per-season page in this app, so this deliberately does
+ * not take the shape of this app's tappable rows (a text column with a status chip pinned to the
+ * row's far trailing edge — [SiblingRow] below is that shape, and it opens something). The chip
+ * instead sits inline with the season's own name, and there is no leading visual and no chevron.
+ */
 @Composable
 internal fun SeasonRow(season: SeasonState) {
-    Row(
+    Column(
         modifier =
             Modifier.fillMaxWidth().padding(
                 horizontal = dimensionResource(DesR.dimen.screen_content_inset),
                 vertical = dimensionResource(DesR.dimen.padding_s),
             ),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        ) {
             Text(
                 season.name ?: stringResource(R.string.request_season_number, season.number),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
             )
-            season.episodeCount?.let {
-                Text(
-                    pluralStringResourceEpisodes(it),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            season.status?.let { MediaStateChip(status = it) }
         }
-        Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_s)))
-        season.status?.let { MediaStateChip(status = it) }
+        season.episodeCount?.let {
+            Text(
+                pluralStringResourceEpisodes(it),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

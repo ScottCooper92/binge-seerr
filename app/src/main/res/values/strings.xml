@@ -133,8 +133,9 @@
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
     <string name="request_tags">Tags</string>
-    <string name="request_seasons">Seasons</string>
+    <string name="request_seasons">Seasons requested</string>
     <string name="request_season_number">Season %1$d</string>
+    <string name="request_title_status_caption">The title\'s overall status — this request\'s season may differ below.</string>
     <string name="request_downloads">Downloading</string>
     <string name="request_siblings_title">Also requested</string>
     <string name="request_siblings_clear_data_note">Clearing this title\'s data removes every request for it, including the ones above.</string>
@@ -166,6 +167,7 @@
     <string name="media_manage">Manage media</string>
     <string name="media_instance_standard">Standard</string>
     <string name="media_mark_as">Mark as</string>
+    <string name="media_mark_as_scope_caption">Changes what every request for this title shows.</string>
     <string name="media_state_unknown">Unknown</string>
     <string name="media_open_radarr">Open in Radarr</string>
     <string name="media_open_sonarr">Open in Sonarr</string>
@@ -177,7 +179,7 @@
     <string name="media_clear_confirm_message">The server forgets this title: its status and every request for it. Anyone can request it again.</string>
     <string name="media_delete_files">Delete files</string>
     <string name="media_delete_files_confirm_title">Delete the files?</string>
-    <string name="media_delete_files_confirm_message">The downloaded files are removed from the download client, and the title is marked unknown.</string>
+    <string name="media_delete_files_confirm_message">The downloaded files are removed from the download client, and the title is marked unknown for every request against it.</string>
     <string name="media_delete_files_second_title">Delete from %1$s?</string>
     <string name="media_delete_files_second_message">%1$s deletes the files from disk. This cannot be undone.</string>
     <string name="media_client_radarr" translatable="false">Radarr</string>

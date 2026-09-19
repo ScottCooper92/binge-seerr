@@ -56,6 +56,15 @@ class RequestDetailScreenshotTest {
         Box(modifier = Modifier.width(360.dp)) {
             Frame(pendingDetail())
         }
+
+    /**
+     * #342: the title chip and the season chip disagree — the headline caption and the season
+     * row's own shape are what make that read as coherent rather than contradictory.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun partiallyAvailablePendingSeason() = Frame(partiallyAvailablePendingSeasonDetail())
 }
 
 @Composable
