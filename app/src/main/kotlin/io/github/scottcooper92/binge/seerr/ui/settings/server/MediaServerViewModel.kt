@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.HTTP_NOT_FOUND
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryEnabledBody
@@ -11,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrScanCommandBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +38,8 @@ class MediaServerViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-    ) : EditorViewModel<MediaServerForm>() {
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+    ) : EditorViewModel<MediaServerForm>(dispatcher) {
         /** Test seam for the scan's poll; the constructor is Hilt's. */
         internal var scanPollMillis: Long = SCAN_POLL_MILLIS
 
@@ -95,7 +98,7 @@ class MediaServerViewModel
         ) {
             if (id in extrasState.value.busyLibraryIds) return
             extrasState.update { it.copy(busyLibraryIds = it.busyLibraryIds + id) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val result =
                     runCatching {
                         val api = connection.api()
@@ -149,7 +152,7 @@ class MediaServerViewModel
         fun syncLibraries() {
             if (extrasState.value.syncingLibraries) return
             extrasState.update { it.copy(syncingLibraries = true) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     val api = connection.api()
                     orOnNotFound(
@@ -184,7 +187,7 @@ class MediaServerViewModel
         fun cancelScan() = command(SeerrScanCommandBody(cancel = true))
 
         private fun command(body: SeerrScanCommandBody) {
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().scan(kind.apiSegment, body).toScan() }
                     .onSuccess { applyScan(it) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
@@ -201,7 +204,7 @@ class MediaServerViewModel
             }
             if (scanPoll?.isActive == true) return
             scanPoll =
-                viewModelScope.launch {
+                viewModelScope.launch(dispatcher) {
                     var running = true
                     while (running) {
                         delay(scanPollMillis)
@@ -217,7 +220,7 @@ class MediaServerViewModel
 
         fun openServerPicker() {
             extrasState.update { it.copy(picker = PlexServerPicker.Loading) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val picker =
                     runCatching { connection.api().plexServers().toChoices() }
                         .fold(onSuccess = { PlexServerPicker.Ready(it) }, onFailure = { PlexServerPicker.Failed(it.toSeerrError()) })

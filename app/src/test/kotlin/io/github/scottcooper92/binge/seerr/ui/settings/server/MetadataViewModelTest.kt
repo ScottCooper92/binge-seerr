@@ -49,7 +49,7 @@ class MetadataViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): MetadataViewModel {
-        val vm = MetadataViewModel(seerr.connection(this))
+        val vm = MetadataViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

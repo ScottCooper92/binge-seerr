@@ -23,10 +23,23 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
 import io.github.scottcooper92.binge.seerr.notifications.WorkManagerNotificationScheduler
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+/**
+ * The dispatcher a ViewModel launches its network work on, instead of inheriting
+ * `Dispatchers.Main.immediate` from `viewModelScope`. A coroutine launched this way never touches
+ * `Dispatchers.Main` at all, including after `ViewModelStore.clear()` cancels it and its
+ * in-flight call still resumes: it resumes on this dispatcher, not on a Main a test may have
+ * already reset. See `MainDispatcherRule`'s KDoc and #177.
+ */
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class IoDispatcher
 
 private val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
 
@@ -65,6 +78,10 @@ object SeerrModule {
     @Singleton
     @ApplicationScope
     fun applicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    @Provides
+    @IoDispatcher
+    fun ioDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @Provides
     @Singleton

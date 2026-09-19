@@ -5,9 +5,11 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNotificationTypesDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserNotificationSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -21,8 +23,9 @@ class NotificationsViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
-    ) : EditorViewModel<NotificationSettings>() {
+    ) : EditorViewModel<NotificationSettings>(dispatcher) {
         init {
             reload()
         }

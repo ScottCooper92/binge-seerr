@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -27,9 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailOverlayTopBar
@@ -166,6 +166,13 @@ private fun Ready(
  * The hero draws no chrome; [DetailOverlayTopBar] floats over it with back and the two navigation
  * actions, and brings its scrim in as the hero's tail passes under it. A null [onOpen] or
  * [onReport] is an action this viewer, or this title, does not have.
+ *
+ * [RequestPrimaryAction] is a fixed-height sibling below a `weight(1f, fill = false)` scroll
+ * ([hasPrimaryAction]) rather than pinned over it, so `Column`'s own measure policy — not a
+ * remembered pixel height fed back through `onSizeChanged` — sizes the scroll to clear it, correctly
+ * on the very first frame including one restored mid-scroll. The no-action case drops the footer and
+ * lets the scroll carry the safe-drawing bottom inset itself, exactly as it did before the footer
+ * existed.
  */
 @Composable
 internal fun RequestDetailPage(
@@ -183,30 +190,37 @@ internal fun RequestDetailPage(
     val item = detail.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    val hasPrimaryAction = detail.hasPrimaryAction
     Box(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
-        ) {
-            DetailHero(
-                title = title,
-                backdropUrl = detail.backdropUrl,
-                tagline = null,
-                // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
-                // read here, and reads deliberately rather than as a leftover fragment of a joined string.
-                metaText = item.year.orEmpty(),
-                onBack = onBack,
-                showChrome = false,
-                richBackdrop = true,
-            )
-            RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
-            RequestFacts(detail, onOpenUser)
-            RequestSections(detail)
-            RequestSiblings(detail, onOpenSibling)
-            RequestPrimaryAction(detail, onPrimary, Modifier.padding(inset))
+        Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(scrollState)
+                        .let {
+                            if (hasPrimaryAction) it else it.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                        },
+            ) {
+                DetailHero(
+                    title = title,
+                    backdropUrl = detail.backdropUrl,
+                    tagline = null,
+                    // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
+                    // read here, and reads deliberately rather than as a leftover fragment of a joined string.
+                    metaText = item.year.orEmpty(),
+                    onBack = onBack,
+                    showChrome = false,
+                    richBackdrop = true,
+                )
+                RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
+                RequestFacts(detail, onOpenUser)
+                RequestSections(detail)
+                RequestSiblings(detail, onOpenSibling)
+            }
+            if (hasPrimaryAction) {
+                RequestPrimaryAction(detail = detail, onClick = onPrimary)
+            }
         }
         DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
             onOpen?.let {
@@ -234,9 +248,14 @@ internal fun RequestDetailPage(
 }
 
 /**
- * One button, opening one sheet. Its label follows the request's state rather than being a generic
- * "Manage": approving a pending request is the hottest path here, and a label that does not say so
- * buries it behind a tap on exactly what an admin opened the app to do.
+ * One action, pinned in a sheet-style footer over the page's own background. Its label follows the
+ * request's state rather than being a generic "Manage": approving a pending request is the hottest
+ * path here, and a label that does not say so buries it behind a tap on exactly what an admin opened
+ * the app to do.
+ *
+ * [BingeActionFooter] defaults to a sheet's own container colour, which is invisible inside one; a
+ * page passes [Color.Transparent] so its own background shows through instead of a banded surface
+ * the page has no reason to show.
  */
 @Composable
 private fun RequestPrimaryAction(
@@ -245,11 +264,11 @@ private fun RequestPrimaryAction(
     modifier: Modifier = Modifier,
 ) {
     val reviewable = detail.actions.canApprove || detail.actions.canRetry
-    if (!detail.actions.any && detail.media?.canManage != true && !detail.canEdit) return
-    BingeFilledButton(
+    BingeActionFooter(
         label = stringResource(if (reviewable) R.string.request_primary_review else R.string.request_primary_manage),
         onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        containerColor = Color.Transparent,
+        modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
     )
 }
 

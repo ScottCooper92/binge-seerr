@@ -20,9 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilterChip
-import com.binge.designsystem.component.BingeSheetFooter
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
@@ -85,7 +85,7 @@ internal fun ReportIssueContent(
             IssueReport.Sent -> RequestStateChip(label = stringResource(R.string.issue_report_sent), tone = RequestStateTone.Success)
             IssueReport.Idle, IssueReport.Sending -> Unit
         }
-        BingeSheetFooter(
+        BingeActionFooter(
             label = stringResource(R.string.issue_report_send),
             onClick = { onSend(type, message) },
             enabled = message.isNotBlank() && report != IssueReport.Sending && report != IssueReport.Sent,

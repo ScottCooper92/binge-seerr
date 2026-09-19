@@ -53,7 +53,7 @@ class NetworkViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): NetworkViewModel {
-        val vm = NetworkViewModel(seerr.connection(this))
+        val vm = NetworkViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

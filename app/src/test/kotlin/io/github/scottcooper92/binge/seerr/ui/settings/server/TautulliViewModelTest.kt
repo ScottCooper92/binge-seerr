@@ -47,7 +47,7 @@ class TautulliViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): TautulliViewModel {
-        val vm = TautulliViewModel(seerr.connection(this))
+        val vm = TautulliViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

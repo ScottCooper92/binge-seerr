@@ -20,14 +20,19 @@ import com.binge.designsystem.component.BingeBottomSheet
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 
-/** A sort picker over any order: the choices as radio rows; picking one applies it and dismisses. */
+/**
+ * A single-select picker over any list: the choices as radio rows; picking one applies it and
+ * dismisses. [title] defaults to the sort picker's own copy — its first and still most common
+ * caller — so a differently-titled caller (`ChoiceRow`) is the only one that has to pass one.
+ */
 @Composable
 fun <T> SortSheet(
     choices: List<T>,
-    selected: T,
+    selected: T?,
     label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
     onDismiss: () -> Unit,
+    title: String = stringResource(R.string.sort_title),
 ) {
     BingeBottomSheet(onDismissRequest = onDismiss) {
         SortContent(
@@ -38,6 +43,7 @@ fun <T> SortSheet(
                 onSelect(it)
                 onDismiss()
             },
+            title = title,
         )
     }
 }
@@ -45,14 +51,15 @@ fun <T> SortSheet(
 @Composable
 fun <T> SortContent(
     choices: List<T>,
-    selected: T,
+    selected: T?,
     label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    title: String = stringResource(R.string.sort_title),
 ) {
     Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
         Text(
-            text = stringResource(R.string.sort_title),
+            text = title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier =

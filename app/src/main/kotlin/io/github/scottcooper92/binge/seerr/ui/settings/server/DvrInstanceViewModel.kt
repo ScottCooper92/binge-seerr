@@ -7,11 +7,13 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,9 +31,10 @@ class DvrInstanceViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val type: ServiceType,
         @Assisted private val id: Int?,
-    ) : EditorViewModel<DvrForm>() {
+    ) : EditorViewModel<DvrForm>(dispatcher) {
         private val extrasState = MutableStateFlow(DvrExtras())
         val extras: StateFlow<DvrExtras> = extrasState.asStateFlow()
 
@@ -73,7 +76,7 @@ class DvrInstanceViewModel
             val draft = ready()?.draft ?: return
             if (!draft.connectionValid || extrasState.value.testing) return
             extrasState.update { it.copy(testing = true) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().testDvr(type.apiSegment, draft.toTestBody()).toChoices() }
                     .onSuccess { choices ->
                         extrasState.update { it.copy(choices = choices, testing = false) }
@@ -88,7 +91,7 @@ class DvrInstanceViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }

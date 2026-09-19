@@ -86,7 +86,7 @@ class MediaServerViewModelTest {
     private fun plexServer() = seerr.viewer(id = 1, permissions = ADMIN, settings = """{"mediaServerType":1}""")
 
     private suspend fun TestScope.viewModel(): MediaServerViewModel {
-        val vm = MediaServerViewModel(seerr.connection(this))
+        val vm = MediaServerViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         vm.scanPollMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }

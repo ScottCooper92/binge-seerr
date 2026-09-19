@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrQuickConnect
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -22,9 +23,14 @@ private const val PENDING_LINK = "pendingLink"
  * the wait and the [PendingLink] that outlives the process while the user is over there — [start]
  * begins one, [resume] picks up the one a process that has since died left behind, and either ends
  * in [onFinished] with what went wrong or nothing.
+ *
+ * Every launch below runs on [dispatcher] rather than `scope`'s own - #177's reason applies here
+ * too, and it leaves [awaitQuickConnect]'s poll loop's relationship to a test's virtual clock
+ * exactly as it already was, since a test still passes the same dispatcher instance it puts on Main.
  */
 internal class SetupLinks(
     private val scope: CoroutineScope,
+    private val dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
     private val plex: PlexPinFlow,
     private val savedState: SavedStateHandle,
@@ -49,7 +55,7 @@ internal class SetupLinks(
         editing: Boolean,
     ) {
         job =
-            scope.launch {
+            scope.launch(dispatcher) {
                 val pin = attempt { plex.start() }.getOrElse { failure -> return@launch finished(failure) }
                 keep(
                     PendingLink.Plex(
@@ -70,7 +76,7 @@ internal class SetupLinks(
         editing: Boolean,
     ) {
         job =
-            scope.launch {
+            scope.launch(dispatcher) {
                 val session = connection.startQuickConnect(server.baseUrl).getOrElse { failure -> return@launch finished(failure) }
                 keep(
                     PendingLink.QuickConnect(
@@ -91,7 +97,7 @@ internal class SetupLinks(
         pending: PendingLink,
     ) {
         job =
-            scope.launch {
+            scope.launch(dispatcher) {
                 when (pending) {
                     is PendingLink.Plex -> resumePlex(server, pending)
                     is PendingLink.QuickConnect -> {

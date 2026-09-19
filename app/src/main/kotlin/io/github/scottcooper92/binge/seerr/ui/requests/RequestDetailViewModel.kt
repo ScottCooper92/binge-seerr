@@ -7,6 +7,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
@@ -33,6 +34,7 @@ import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,21 +49,26 @@ import kotlinx.coroutines.launch
  * One request as a page. The request itself, its title's lookup, and the destination's names are
  * read together on open; the destination and the lookup are best-effort, so a title the server no
  * longer tracks or a service it has since removed still shows the request.
+ *
+ * [dispatcher] carries every network launch below, [moderation] and [editor] included, instead of
+ * `viewModelScope`'s own `Dispatchers.Main.immediate` - see [IoDispatcher] and #177.
  */
 @HiltViewModel(assistedFactory = RequestDetailViewModel.Factory::class)
 class RequestDetailViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val requestId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
         /** A moderation reloads the page, so the chip and the history show the server's new answer. */
-        val moderation = RequestModeration(scope = viewModelScope, connection = connection, onModerated = ::reload)
+        val moderation =
+            RequestModeration(scope = viewModelScope, dispatcher = dispatcher, connection = connection, onModerated = ::reload)
 
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
-        val editor = RequestEditor(scope = viewModelScope, connection = connection, moderation = moderation)
+        val editor = RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderation)
 
         val uiState: StateFlow<RequestDetailUiState> =
             combine(state, editor.state) { page, edit -> (page as? RequestDetailUiState.Ready)?.copy(edit = edit) ?: page }
@@ -80,7 +87,7 @@ class RequestDetailViewModel
 
         fun reload() {
             if (state.value !is RequestDetailUiState.Ready) state.value = RequestDetailUiState.Loading
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 state.value =
                     runCatching { load() }
                         .fold({ RequestDetailUiState.Ready(it) }, { RequestDetailUiState.Error(it.toSeerrError()) })
@@ -96,7 +103,7 @@ class RequestDetailViewModel
             val mediaId = ready.detail.mediaId ?: return
             if (ready.report == IssueReport.Sending) return
             state.value = ready.copy(report = IssueReport.Sending)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val outcome =
                     runCatching { connection.api().createIssue(SeerrCreateIssueBody(mediaId, type.code, message.trim())) }
                         .fold({ IssueReport.Sent }, { IssueReport.Failed(it.toSeerrError()) })
