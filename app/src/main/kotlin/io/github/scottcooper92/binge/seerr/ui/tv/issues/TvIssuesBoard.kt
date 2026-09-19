@@ -67,6 +67,7 @@ internal fun TvIssuesBoard(
     actions: TvIssuesActions,
     modifier: Modifier = Modifier,
     initialFocusedRowId: Int? = null,
+    now: Long = System.currentTimeMillis(),
 ) {
     val ready = state as? IssuesUiState.Ready
     val event = rememberTvTransientEvent(events)
@@ -105,6 +106,7 @@ internal fun TvIssuesBoard(
                         }.takeIf { item.canBeActedOn(ready.scope) },
                     isActing = item.id in ready.actingIds,
                     initiallyFocused = item.id == initialFocusedRowId,
+                    now = now,
                     modifier = if (item.id == restoreRowId) Modifier.focusRequester(restoreFocus) else Modifier,
                 )
             }
