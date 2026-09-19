@@ -8,15 +8,21 @@ CI is one job:
 
 | Job | Runs |
 | --- | --- |
-| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint` |
+| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint`, `checkTranslationStaleness`, `koverVerify`, `validateDebugScreenshotTest` |
 
-The last three arrive through `check`, which `build` depends on. Nothing in the
-repository names them, so a red run whose log ends in a lint report is still the
-`build` job, not a second gate that appeared from somewhere.
+The last seven arrive through `check` or are wired onto `build` by hand — the
+screenshot plugin does the latter, per `CLAUDE.md`'s Gates section — but `build`
+pulls in either way. Nothing in the repository names them separately, so a red run
+whose log ends in a lint report, a coverage report or a screenshot diff is still
+the `build` job, not a second gate that appeared from somewhere.
 
-There is no coverage floor, no screenshot suite and no `buf` here. If the log shows
-a failure that is not in the table below, that is a **stop**, not an invitation to
-improvise.
+There is a coverage floor (`koverVerify`, 78% of `:app`'s lines) and a screenshot
+suite (`validateDebugScreenshotTest`), and both are real, gating checks. There is
+no `buf` here. `koverVerify` has no row below: raising coverage means writing a
+real test, which is a judgment call about what to test, not a mechanical repair, so
+a coverage-floor miss is a **stop** like any other failure the table does not name.
+If the log shows a failure that is not in the table below, that is a **stop**, not
+an invitation to improvise.
 
 ## The table
 
@@ -28,6 +34,7 @@ improvise.
 | Android `lint` reports `NewApi` | Code uses an API above `minSdk` 26 | Guard it with a version check or use the AndroidX-compatible call. Raising `minSdk` to make it pass is a **stop** — that is a product decision and it narrows who can install the companion |
 | Kotlin compile error | Ordinary | Fix it. If a symbol from the contract stubs "does not exist", the app and the contract version it builds against disagree — fix the app, and if the contract is genuinely wrong that is a PR against binge-integrations, not a change here |
 | `:app:test` — a unit test fails | Ordinary | Fix the code the test is describing. Changing an assertion to match new behaviour is only correct when the PR deliberately changed that behaviour and says so |
+| `validateDebugScreenshotTest` reports a diff | A `@PreviewTest` frame no longer renders like its committed reference PNG | **Stop.** Accepting a regenerated baseline is a judgment call a human should make, not a mechanical repair. Leave the working tree clean and name the remedy in a PR comment instead: `./gradlew :app:updateDebugScreenshotTest`, look at the regenerated PNGs, then commit them alongside the code that changed them |
 | `Failed to apply plugin 'org.jetbrains.kotlin.android'` | AGP 9 has built-in Kotlin support and rejects the plugin being applied to a module | Remove the `apply` from the module that applies it. The root build's own `apply false` declaration is intentional — it puts a compatible Kotlin version on AGP's classpath — and is not the plugin this error is about; do not remove that one. Do not downgrade AGP. See the comment in `libs.versions.toml` |
 | Manifest merger failure | Two manifests declare conflicting attributes | Read the merger report it points at. Resolve by making the declarations agree; `tools:replace` is a last resort and needs saying why in the PR |
 | Gradle "could not resolve" / dependency failure | Usually transient, or a catalog edit | If the diff touched `libs.versions.toml`, fix that. Otherwise it is infrastructure — **stop** and say so |
