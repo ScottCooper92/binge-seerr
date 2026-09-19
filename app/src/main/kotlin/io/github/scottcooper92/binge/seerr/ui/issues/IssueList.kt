@@ -34,7 +34,6 @@ import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
-import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -43,6 +42,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
+import io.github.scottcooper92.binge.seerr.ui.requests.toTagType
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
@@ -166,7 +166,7 @@ private fun IssueRowMeta(
         )
         Spacer(Modifier.height(gap))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            MediaTypeTag(type = if (item.mediaType == RequestMediaType.Movie) MediaTypeTagType.Movie else MediaTypeTagType.Tv)
+            MediaTypeTag(type = item.mediaType.toTagType())
             Spacer(Modifier.width(gap))
             Text(
                 listOfNotNull(

@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.annotation.StringRes
+import com.binge.designsystem.component.MediaTypeTagType
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
@@ -45,6 +46,13 @@ internal fun RequestMediaType.labelRes(): Int =
     when (this) {
         RequestMediaType.Movie -> R.string.media_type_movie
         RequestMediaType.Tv -> R.string.media_type_tv
+    }
+
+/** Both are Movie/Tv enums, but distinct types — this app's request model and the design system's tag. */
+internal fun RequestMediaType.toTagType(): MediaTypeTagType =
+    when (this) {
+        RequestMediaType.Movie -> MediaTypeTagType.Movie
+        RequestMediaType.Tv -> MediaTypeTagType.Tv
     }
 
 data class RequestRowChip(
