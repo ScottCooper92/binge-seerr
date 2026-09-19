@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * One issue as a page: the report, the thread, and the composer. Posting is optimistic: the
@@ -57,8 +58,12 @@ class IssueDetailViewModel
 
         private var nextLocalId = 1L
 
-        /** The in-flight [send] for each outbox entry, so an edit or a drop can cancel a still-running one. */
-        private val outboxJobs = mutableMapOf<Long, Job>()
+        /**
+         * The in-flight [send] for each outbox entry, so an edit or a drop can cancel a still-running
+         * one. A [ConcurrentHashMap] because [send] itself removes its own entry from the IO dispatcher
+         * it runs on, while every other mutator here runs on Main.
+         */
+        private val outboxJobs = ConcurrentHashMap<Long, Job>()
 
         init {
             reload()

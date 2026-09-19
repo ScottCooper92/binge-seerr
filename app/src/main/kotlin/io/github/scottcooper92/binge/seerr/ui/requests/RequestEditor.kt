@@ -51,6 +51,9 @@ class RequestEditor(
     val state: StateFlow<EditState?> = edit.asStateFlow()
 
     private var source: EditSource? = null
+
+    /** @Volatile: written by [loadServers] on [dispatcher], read by [selectServer] on the caller's thread. */
+    @Volatile
     private var servers: List<SeerrServerDto> = emptyList()
 
     init {
