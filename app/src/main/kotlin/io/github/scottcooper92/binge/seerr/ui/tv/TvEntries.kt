@@ -29,6 +29,7 @@ import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.actions
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.openTitleInBinge
@@ -42,6 +43,8 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailActions
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
@@ -61,6 +64,8 @@ internal fun TvConnectedShell() {
     // The requests board's open detail page, above the rail exactly as the connection form is. The two
     // overlays are mutually exclusive by construction — nothing opens one while the other is showing.
     var openRequestId by rememberSaveable { mutableStateOf<Int?>(null) }
+    // The issues board's own read-only detail page, on the same footing.
+    var openIssueId by rememberSaveable { mutableStateOf<Int?>(null) }
     TvShellScaffold(
         selected = selected,
         onSelect = { selected = it },
@@ -73,6 +78,10 @@ internal fun TvConnectedShell() {
                 openRequestId != null ->
                     {
                         { TvRequestDetailOverlay(requestId = requireNotNull(openRequestId), onDone = { openRequestId = null }) }
+                    }
+                openIssueId != null ->
+                    {
+                        { TvIssueDetailOverlay(issueId = requireNotNull(openIssueId), onDone = { openIssueId = null }) }
                     }
                 else -> null
             },
@@ -90,7 +99,12 @@ internal fun TvConnectedShell() {
                     openRequestId = openRequestId,
                     onOpenRequest = { openRequestId = it },
                 )
-            TvDestination.Issues -> TvIssuesEntry(onReconnect = { editingConnection = true })
+            TvDestination.Issues ->
+                TvIssuesEntry(
+                    onReconnect = { editingConnection = true },
+                    openIssueId = openIssueId,
+                    onOpenIssue = { openIssueId = it },
+                )
             TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true })
         }
     }
@@ -200,6 +214,8 @@ private fun TvRequestDetailOverlay(
 @Composable
 private fun TvIssuesEntry(
     onReconnect: () -> Unit,
+    openIssueId: Int?,
+    onOpenIssue: (Int) -> Unit,
     viewModel: IssuesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -213,18 +229,39 @@ private fun TvIssuesEntry(
         state = state,
         rows = lazyItems.toRows { it.id },
         events = viewModel.events,
+        openIssueId = openIssueId,
         actions =
             TvIssuesActions(
                 onFilterChange = viewModel::setFilter,
                 onSortChange = viewModel::setSort,
                 onOpenActions = viewModel::openActions,
                 onDismissActions = viewModel::dismissActions,
+                onOpenDetail = { item -> onOpenIssue(item.id) },
                 onResolve = viewModel::resolve,
                 onReopen = viewModel::reopen,
                 onDelete = viewModel::delete,
                 onRetryLoad = { lazyItems?.retry() },
                 onReconnect = onReconnect,
             ),
+    )
+}
+
+/**
+ * An issue's read-only page, above the rail exactly as the connection form is: the same
+ * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, and a fresh instance per issue id since
+ * [issueId] rides Hilt's `creationCallback`.
+ */
+@Composable
+private fun TvIssueDetailOverlay(
+    issueId: Int,
+    onDone: () -> Unit,
+    viewModel: IssueDetailViewModel =
+        hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TvIssueDetailScreen(
+        state = state,
+        actions = TvIssueDetailActions(onBack = onDone, onRetry = viewModel::reload),
     )
 }
 

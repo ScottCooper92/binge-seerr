@@ -52,6 +52,7 @@ class TvIssuesBoardFocusTest {
 
     private val resolved = mutableListOf<Int>()
     private val deleted = mutableListOf<Int>()
+    private val opened = mutableListOf<Int>()
     private var dismissed = 0
 
     private val manager = IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 7)
@@ -100,10 +101,28 @@ class TvIssuesBoardFocusTest {
         settleFocusRestore()
         row(SEVERANCE).assertIsFocused()
 
+        // The reporter isn't a manager of the other user's issue, so its row has nothing to offer but
+        // the read page — no sheet, no confirm step, straight to the page.
         pressDown()
         row(HORSES).assertIsFocused()
         pressOk()
         assertEquals(1, dismissed)
+        assertEquals(listOf(12), opened)
+    }
+
+    @Test
+    fun theSheetsReadCommentsRowOpensTheDetailPage() {
+        setBoard(manager)
+        focusFirstRow()
+
+        pressOk()
+        pressDown()
+        pressDown()
+        sheetRow(R.string.tv_issue_read_comments).assertIsFocused()
+        pressOk()
+
+        assertEquals(listOf(11), opened)
+        assertTrue(resolved.isEmpty())
     }
 
     private fun setBoard(scope: IssueListScope) {
@@ -126,6 +145,7 @@ class TvIssuesBoardFocusTest {
                                 dismissed++
                                 state = state.copy(actionItem = null)
                             },
+                            onOpenDetail = { opened += it.id },
                             onResolve = { resolved += it.id },
                             onReopen = {},
                             onDelete = { deleted += it.id },
