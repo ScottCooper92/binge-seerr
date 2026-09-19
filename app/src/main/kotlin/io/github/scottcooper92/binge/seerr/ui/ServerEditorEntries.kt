@@ -31,11 +31,9 @@ internal fun DvrInstanceEntry(
     val viewModel =
         hiltViewModel<DvrInstanceViewModel, DvrInstanceViewModel.Factory>(creationCallback = { factory -> factory.create(type, id) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val extras by viewModel.extras.collectAsStateWithLifecycle()
     LeaveOnDeleted(viewModel.events, onBack)
     DvrInstanceScreen(
         state = state,
-        extras = extras,
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
         onTest = viewModel::test,
@@ -96,11 +94,9 @@ internal fun OverrideRuleEntry(
             factory.create(id)
         })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val extras by viewModel.extras.collectAsStateWithLifecycle()
     LeaveOnDeleted(viewModel.events, onBack)
     OverrideRuleScreen(
         state = state,
-        extras = extras,
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
         ruleActions =

@@ -74,6 +74,10 @@ class EditorActions<T>(
 fun <T> EditorViewModel<T>.editorActions(onBack: () -> Unit): EditorActions<T> =
     EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
 
+/** Same as above, for an editor whose page renders extras beside its draft. */
+fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): EditorActions<T> =
+    EditorActions(onBack = onBack, onRetry = ::reload, onEdit = ::edit, onSave = ::save)
+
 /**
  * The frame every per-user settings page shares: the title, a Save action live only while the
  * draft differs from the record and passes [canSave], and a snackbar for the outcome. [scrolling]
