@@ -14,17 +14,15 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuotaBucket
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
+import io.github.scottcooper92.binge.seerr.util.FakeRequest
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -41,46 +39,37 @@ private const val ADMIN = 2
 private const val MANAGE_USERS = 1 shl 3
 private const val REQUEST = 1 shl 5
 
-/** The user page over a real connection into a path-scripted Seerr; Main is real-time, as for the hub. */
+/** The user page over an in-memory connection into a path-scripted Seerr. */
 class UserDetailViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer()
-    private val received = CopyOnWriteArrayList<RecordedRequest>()
-    private val responses = mutableMapOf<String, () -> MockResponse>()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val received = CopyOnWriteArrayList<FakeRequest>()
+    private val responses = mutableMapOf<String, () -> FakeResponse>()
     private val viewModels = ViewModelStore()
     private val cache = FakeUserStore()
     private var stores = 0
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-        seerr.dispatcher =
-            object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest): MockResponse {
-                    received += request
-                    return responses[request.method + " " + request.url.encodedPath]?.invoke() ?: MockResponse(code = 404)
-                }
-            }
-        seerr.start()
+        seerr.dispatcher = { request ->
+            received += request
+            responses[request.method + " " + request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404)
+        }
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     private fun serve(
         key: String,
         body: String,
     ) {
-        responses[key] = { MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body) }
+        responses[key] = { FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body) }
     }
 
     private fun server(
@@ -115,9 +104,9 @@ class UserDetailViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
-        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = UserDetailViewModel(connection, TitleCache(), cache, userId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -149,7 +138,7 @@ class UserDetailViewModelTest {
             assertEquals("Severance", detail.watchlist.single().title)
             assertFalse(detail.isSelf)
             assertTrue(detail.canDelete)
-            assertEquals(seerr.url("/").toString() + "users/8", detail.webUrl)
+            assertEquals(seerr.url("/") + "users/8", detail.webUrl)
 
             val requests = vm.requests.asSnapshot()
             assertEquals("Heat", requests.single().title)

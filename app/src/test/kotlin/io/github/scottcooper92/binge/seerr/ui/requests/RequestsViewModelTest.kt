@@ -9,6 +9,10 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.util.FakeRequest
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -16,20 +20,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -43,55 +41,42 @@ private const val POLL_MILLIS = 10L
 private const val ADMIN = 2
 private const val REQUEST = 32
 
-/** The browser over a real connection into a path-scripted Seerr; Main is real-time, as for the hub. */
+/** The browser over an in-memory connection into a path-scripted Seerr. */
 class RequestsViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer()
-    private val received = CopyOnWriteArrayList<RecordedRequest>()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val received = CopyOnWriteArrayList<FakeRequest>()
     private val viewModels = ViewModelStore()
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-        seerr.start()
-    }
-
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
 
     private fun server(permissions: Int) {
         viewerPermissions.set(permissions)
-        seerr.dispatcher =
-            object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest): MockResponse {
-                    received += request
-                    return when (request.url.encodedPath) {
-                        "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
-                        "/api/v1/status" -> json("""{"version":"3.1.0"}""")
-                        "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
-                        "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
-                        "/api/v1/request" ->
-                            json(
-                                """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
-                            )
-                        "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
-                        "/api/v1/request/11/approve" -> json("{}")
-                        else -> MockResponse(code = 404)
-                    }
-                }
+        seerr.dispatcher = { request ->
+            received += request
+            when (request.url.encodedPath) {
+                "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                "/api/v1/status" -> json("""{"version":"3.1.0"}""")
+                "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
+                "/api/v1/request" ->
+                    json(
+                        """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
+                    )
+                "/api/v1/movie/100" -> json("""{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
+                "/api/v1/request/11/approve" -> json("{}")
+                else -> FakeResponse(code = 404)
             }
+        }
     }
 
     private suspend fun TestScope.viewModel(): RequestsViewModel {
@@ -102,9 +87,9 @@ class RequestsViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
-        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = RequestsViewModel(connection, TitleCache())
         viewModels.put("requests", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -199,24 +184,21 @@ class RequestsViewModelTest {
         runTest {
             val authShouldFail = AtomicBoolean(false)
             val authFailed = CompletableDeferred<Unit>()
-            seerr.dispatcher =
-                object : Dispatcher() {
-                    override fun dispatch(request: RecordedRequest): MockResponse {
-                        received += request
-                        return when (request.url.encodedPath) {
-                            "/api/v1/auth/me" ->
-                                if (authShouldFail.get()) {
-                                    MockResponse(code = 500).also { authFailed.complete(Unit) }
-                                } else {
-                                    json("""{"id":7,"displayName":"Scott","permissions":$REQUEST}""")
-                                }
-                            "/api/v1/status" -> json("""{"version":"3.1.0"}""")
-                            "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
-                            "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
-                            else -> MockResponse(code = 404)
+            seerr.dispatcher = { request ->
+                received += request
+                when (request.url.encodedPath) {
+                    "/api/v1/auth/me" ->
+                        if (authShouldFail.get()) {
+                            FakeResponse(code = 500).also { authFailed.complete(Unit) }
+                        } else {
+                            json("""{"id":7,"displayName":"Scott","permissions":$REQUEST}""")
                         }
-                    }
+                    "/api/v1/status" -> json("""{"version":"3.1.0"}""")
+                    "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                    "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
+                    else -> FakeResponse(code = 404)
                 }
+            }
 
             val connection =
                 SeerrConnection(
@@ -225,9 +207,9 @@ class RequestsViewModelTest {
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
                             PlainCipher,
                         ),
-                    apis = SeerrApiFactory(logRequests = false),
+                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
                 )
-            connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
 
             // Fail only the ViewModel's own resolve, not the connect() probe above.
             authShouldFail.set(true)
@@ -261,7 +243,7 @@ class RequestsViewModelTest {
             withTimeout(REQUEST_WAIT_MILLIS) { while (authReads() <= moreThan) delay(POLL_MILLIS) }
         }
 
-    private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+    private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
