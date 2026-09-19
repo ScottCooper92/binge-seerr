@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.seerr.isTv
 import io.github.scottcooper92.binge.seerr.seerr.preferred
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,9 +36,14 @@ class EditSource(
  * `REQUEST_ADVANCED`, where it goes. Saving sends the whole new season set and the destination in
  * one `PUT`; the moderation events say how it went, so the editor closes on [ModerationEvent.Edited]
  * and unlocks again on a failure.
+ *
+ * Every launch below runs on [dispatcher] rather than `scope`'s own, for the same reason
+ * [RequestModeration] does (#177): `loadServers`/`loadChoices` are exactly the "editor's own load"
+ * PR #365 found still able to outlive a cleared [scope].
  */
 class RequestEditor(
     private val scope: CoroutineScope,
+    private val dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
     private val moderation: RequestModeration,
 ) {
@@ -48,7 +54,7 @@ class RequestEditor(
     private var servers: List<SeerrServerDto> = emptyList()
 
     init {
-        scope.launch {
+        scope.launch(dispatcher) {
             moderation.events.collect { event ->
                 when (event) {
                     ModerationEvent.Edited -> edit.value = null
@@ -77,7 +83,7 @@ class RequestEditor(
             }
         val seasonsUnknown = request.isTv && source.details == null
         edit.value = EditState(seasons = source.seasonChoices(), destination = destination, seasonsUnknown = seasonsUnknown)
-        if (destination != null) scope.launch { loadServers(request) }
+        if (destination != null) scope.launch(dispatcher) { loadServers(request) }
     }
 
     fun cancel() {
@@ -97,7 +103,7 @@ class RequestEditor(
             changed = true
             destination.onServer(server)
         }
-        if (changed) scope.launch { loadChoices(id) }
+        if (changed) scope.launch(dispatcher) { loadChoices(id) }
     }
 
     fun selectProfile(id: Int) = updateDestination { it.copy(profileId = id) }

@@ -18,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrSeasonStatusDto
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
@@ -101,8 +102,9 @@ class RequestEditorTest {
                 apis = SeerrApiFactory(logRequests = false),
             )
         connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val moderation = RequestModeration(scope = backgroundScope, connection = connection) {}
-        return RequestEditor(scope = backgroundScope, connection = connection, moderation = moderation)
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+        val moderation = RequestModeration(scope = backgroundScope, dispatcher = dispatcher, connection = connection) {}
+        return RequestEditor(scope = backgroundScope, dispatcher = dispatcher, connection = connection, moderation = moderation)
     }
 
     private suspend fun RequestEditor.awaitLoaded(): EditState =
