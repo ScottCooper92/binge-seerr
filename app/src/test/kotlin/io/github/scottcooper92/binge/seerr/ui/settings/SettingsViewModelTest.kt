@@ -114,7 +114,7 @@ class SettingsViewModelTest {
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         }
         prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
-        val vm = SettingsViewModel(connection, SettingsLoader(connection), prefs, scheduler, notifier)
+        val vm = SettingsViewModel(connection, SettingsLoader(connection), prefs, scheduler, notifier, mainDispatcherRule.dispatcher)
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)

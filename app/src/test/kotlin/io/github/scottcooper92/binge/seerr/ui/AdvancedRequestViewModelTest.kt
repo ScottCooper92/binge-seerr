@@ -176,6 +176,7 @@ class AdvancedRequestViewModelTest {
         val vm =
             AdvancedRequestViewModel(
                 SeerrConnection(store, SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor)),
+                mainDispatcherRule.dispatcher,
                 request,
             )
         backgroundScope.launch { vm.uiState.collect {} }

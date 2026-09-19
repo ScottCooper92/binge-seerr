@@ -107,7 +107,7 @@ class UserDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = UserDetailViewModel(connection, TitleCache(), cache, userId)
+        val vm = UserDetailViewModel(connection, TitleCache(), cache, mainDispatcherRule.dispatcher, userId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

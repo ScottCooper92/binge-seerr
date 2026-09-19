@@ -6,12 +6,14 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,8 +35,9 @@ class OverrideRuleViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
-    ) : EditorViewModel<OverrideRuleForm>() {
+    ) : EditorViewModel<OverrideRuleForm>(dispatcher) {
         private val extrasState = MutableStateFlow(OverrideRuleExtras())
         val extras: StateFlow<OverrideRuleExtras> = extrasState.asStateFlow()
 
@@ -87,7 +90,7 @@ class OverrideRuleViewModel
 
         fun selectInstance(instance: DvrSummary) {
             edit { it.copy(serviceType = instance.type, serviceId = instance.id, profileId = null, rootFolder = null, tagIds = emptySet()) }
-            viewModelScope.launch { loadChoices(instance.type, instance.id) }
+            viewModelScope.launch(dispatcher) { loadChoices(instance.type, instance.id) }
         }
 
         fun toggleUser(userId: Int) = edit { it.copy(userIds = it.userIds.toggled(userId)) }
@@ -96,7 +99,7 @@ class OverrideRuleViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteOverrideRule(existing) }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
