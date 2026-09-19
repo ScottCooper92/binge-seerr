@@ -36,6 +36,7 @@ import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
@@ -69,7 +70,7 @@ internal fun BlocklistBody(
         lazyItems.itemCount > 0 -> BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
         refresh is LoadState.Loading ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
                 modifier = modifier,
             )
         refresh is LoadState.Error ->
@@ -100,7 +101,7 @@ private fun BlocklistList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+        contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

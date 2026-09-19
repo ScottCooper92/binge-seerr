@@ -15,6 +15,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
@@ -101,7 +102,7 @@ private fun SettingsContent(
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)))
+        DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = resolvedContentInset()))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     }
 }
@@ -114,5 +115,5 @@ private fun Group(
 ) {
     if (rows.isEmpty()) return
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-    SettingsGroup(title = title, rows = rows, modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)))
+    SettingsGroup(title = title, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
 }

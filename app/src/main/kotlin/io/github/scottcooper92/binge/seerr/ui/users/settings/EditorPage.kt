@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -123,7 +124,7 @@ internal fun <T> EditorPage(
                                 .imePadding()
                                 .then(if (scrolling) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                                 .padding(inner)
-                                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
+                                .padding(resolvedContentInset()),
                         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
                     ) {
                         content(state.draft, !state.saving)

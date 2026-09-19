@@ -36,6 +36,7 @@ import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -74,7 +75,7 @@ internal fun IssuesBody(
         lazyItems.itemCount > 0 -> IssueList(lazyItems, onOpen, onReconnect, contentPadding)
         remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
                 modifier = modifier,
             )
         remote is LoadState.Error ->
@@ -109,7 +110,7 @@ private fun RefreshFailedLine(
                 .fillMaxWidth()
                 .clickable { if (rejected) onReconnect() else onRetry() }
                 .padding(
-                    horizontal = dimensionResource(DesR.dimen.screen_content_inset),
+                    horizontal = resolvedContentInset(),
                     vertical = dimensionResource(DesR.dimen.padding_s),
                 ),
     )
@@ -124,7 +125,7 @@ private fun IssueList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+        contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

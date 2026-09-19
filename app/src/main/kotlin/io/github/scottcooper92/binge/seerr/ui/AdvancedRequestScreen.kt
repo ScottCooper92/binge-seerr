@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
@@ -69,7 +70,7 @@ private fun OptionsForm(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
-                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
+                .padding(resolvedContentInset()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(R.string.advanced_intro), style = MaterialTheme.typography.bodyMedium)
@@ -147,7 +148,7 @@ private fun FailurePanel(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        modifier = modifier.fillMaxSize().padding(resolvedContentInset()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(error.messageRes()), style = MaterialTheme.typography.bodyMedium)

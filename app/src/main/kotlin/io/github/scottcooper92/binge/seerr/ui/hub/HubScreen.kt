@@ -25,6 +25,7 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
@@ -49,15 +50,12 @@ class HubActions(
  *
  * @param selectedSection the section open beside the hub, marked in the Manage group. Null on a
  * window narrow enough that the hub is alone on screen, where nothing is open beside it.
- * @param asListPane true when the hub is the list pane rather than the whole window, which decides
- * its side padding: a resource qualifier resolves against the window, and a pane is a fraction of it.
  */
 @Composable
 fun HubScreen(
     state: HubUiState,
     actions: HubActions,
     selectedSection: HubSection? = null,
-    asListPane: Boolean = false,
 ) {
     val ready = state as? HubUiState.Ready
     ScreenScaffold(title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
@@ -67,7 +65,7 @@ fun HubScreen(
                 ready == null -> LoadingScreen(Modifier.padding(inner))
                 ready.health.isProblem() ->
                     ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))
-                else -> Dashboard(ready, actions, selectedSection, asListPane, contentPadding = inner)
+                else -> Dashboard(ready, actions, selectedSection, contentPadding = inner)
             }
         }
     }
@@ -81,10 +79,9 @@ private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
     selectedSection: HubSection?,
-    asListPane: Boolean,
     contentPadding: PaddingValues,
 ) {
-    val inset = dimensionResource(if (asListPane) R.dimen.hub_list_pane_inset else DesR.dimen.screen_content_inset)
+    val inset = resolvedContentInset()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         ServerCard(server = state.server, overview = state.overview, inset = inset)
         state.overview.account?.let { account ->

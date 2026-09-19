@@ -9,10 +9,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
@@ -20,7 +20,6 @@ import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
-import com.binge.designsystem.R as DesR
 
 class UserSettingsActions(
     val onBack: () -> Unit,
@@ -82,7 +81,7 @@ private fun PageList(
         SettingsGroup(
             title = stringResource(R.string.user_settings_title),
             rows = rows,
-            modifier = Modifier.padding(dimensionResource(DesR.dimen.screen_content_inset)),
+            modifier = Modifier.padding(resolvedContentInset()),
         )
     }
 }

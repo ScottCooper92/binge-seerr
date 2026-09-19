@@ -35,6 +35,7 @@ import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailOverlayTopBar
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
@@ -189,7 +190,7 @@ internal fun RequestDetailPage(
 ) {
     val item = detail.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
-    val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    val inset = resolvedContentInset()
     val hasPrimaryAction = detail.hasPrimaryAction
     Box(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
         Column(modifier = Modifier.fillMaxSize()) {

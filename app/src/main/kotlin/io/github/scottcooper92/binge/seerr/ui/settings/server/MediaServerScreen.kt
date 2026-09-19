@@ -19,6 +19,7 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -250,7 +251,7 @@ private fun PlexServerSheet(
 ) {
     BingeBottomSheet(onDismissRequest = actions.onCloseServerPicker) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
+            modifier = Modifier.fillMaxWidth().padding(resolvedContentInset()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             Text(stringResource(R.string.server_settings_plex_pick), style = MaterialTheme.typography.titleLarge)
