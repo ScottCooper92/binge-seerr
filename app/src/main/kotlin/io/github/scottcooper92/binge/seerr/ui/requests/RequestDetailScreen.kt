@@ -21,16 +21,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
@@ -171,11 +167,12 @@ private fun Ready(
  * actions, and brings its scrim in as the hero's tail passes under it. A null [onOpen] or
  * [onReport] is an action this viewer, or this title, does not have.
  *
- * [RequestPrimaryAction] is pinned bottom-aligned rather than scrolled with the rest of the content
- * ([hasPrimaryAction]), so its measured height becomes the scroll's own bottom content padding —
- * the last section clears the footer instead of ending up underneath it. The no-action case renders
- * neither the footer nor that padding; the safe-drawing bottom inset it would otherwise have carried
- * goes straight back onto the scroll, exactly as it did before the footer existed.
+ * [RequestPrimaryAction] is a fixed-height sibling below a `weight(1f, fill = false)` scroll
+ * ([hasPrimaryAction]) rather than pinned over it, so `Column`'s own measure policy — not a
+ * remembered pixel height fed back through `onSizeChanged` — sizes the scroll to clear it, correctly
+ * on the very first frame including one restored mid-scroll. The no-action case drops the footer and
+ * lets the scroll carry the safe-drawing bottom inset itself, exactly as it did before the footer
+ * existed.
  */
 @Composable
 internal fun RequestDetailPage(
@@ -194,37 +191,36 @@ internal fun RequestDetailPage(
     val title = item.title ?: stringResource(item.mediaType.labelRes())
     val inset = dimensionResource(DesR.dimen.screen_content_inset)
     val hasPrimaryAction = detail.hasPrimaryAction
-    val density = LocalDensity.current
-    var footerHeightPx by remember { mutableIntStateOf(0) }
     Box(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .then(
-                        if (hasPrimaryAction) {
-                            Modifier.padding(bottom = with(density) { footerHeightPx.toDp() })
-                        } else {
-                            Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+        Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(scrollState)
+                        .let {
+                            if (hasPrimaryAction) it else it.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
                         },
-                    ),
-        ) {
-            DetailHero(
-                title = title,
-                backdropUrl = detail.backdropUrl,
-                tagline = null,
-                // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
-                // read here, and reads deliberately rather than as a leftover fragment of a joined string.
-                metaText = item.year.orEmpty(),
-                onBack = onBack,
-                showChrome = false,
-                richBackdrop = true,
-            )
-            RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
-            RequestFacts(detail, onOpenUser)
-            RequestSections(detail)
-            RequestSiblings(detail, onOpenSibling)
+            ) {
+                DetailHero(
+                    title = title,
+                    backdropUrl = detail.backdropUrl,
+                    tagline = null,
+                    // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
+                    // read here, and reads deliberately rather than as a leftover fragment of a joined string.
+                    metaText = item.year.orEmpty(),
+                    onBack = onBack,
+                    showChrome = false,
+                    richBackdrop = true,
+                )
+                RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
+                RequestFacts(detail, onOpenUser)
+                RequestSections(detail)
+                RequestSiblings(detail, onOpenSibling)
+            }
+            if (hasPrimaryAction) {
+                RequestPrimaryAction(detail = detail, onClick = onPrimary)
+            }
         }
         DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
             onOpen?.let {
@@ -247,16 +243,6 @@ internal fun RequestDetailPage(
                     size = dimensionResource(DesR.dimen.top_bar_icon_size),
                 )
             }
-        }
-        if (hasPrimaryAction) {
-            RequestPrimaryAction(
-                detail = detail,
-                onClick = onPrimary,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .onSizeChanged { size -> footerHeightPx = size.height },
-            )
         }
     }
 }
