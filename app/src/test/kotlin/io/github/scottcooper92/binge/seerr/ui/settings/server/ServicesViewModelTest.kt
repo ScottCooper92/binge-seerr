@@ -42,7 +42,7 @@ class ServicesViewModelTest {
     fun `lists every saved instance and the rules, naming a rule's instance or its id where gone`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
-            val vm = ServicesViewModel(seerr.connection(this))
+            val vm = ServicesViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
             vm.reload()
             val ready = vm.uiState.first { it is ServicesUiState.Ready } as ServicesUiState.Ready
 
@@ -57,7 +57,7 @@ class ServicesViewModelTest {
     fun `an overseerr has no rules, and is not asked for them`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN, version = "1.33.2", settings = "{}")
-            val vm = ServicesViewModel(seerr.connection(this))
+            val vm = ServicesViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
             vm.reload()
             val ready = vm.uiState.first { it is ServicesUiState.Ready } as ServicesUiState.Ready
             assertNull(ready.rules)

@@ -8,6 +8,8 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -43,6 +45,7 @@ class LogsViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val state = MutableStateFlow(LogsUiState())
         val uiState: StateFlow<LogsUiState> = state.asStateFlow()
@@ -73,7 +76,7 @@ class LogsViewModel
         init {
             // collectLatest, so the wait is cancelled the moment following stops rather than
             // firing one more time on the interval already under way.
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 following.collectLatest { on ->
                     while (on) {
                         delay(refreshMillis)

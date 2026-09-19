@@ -57,7 +57,7 @@ class JobsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): JobsViewModel {
-        val vm = JobsViewModel(seerr.connection(this))
+        val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         vm.runningRefreshMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }

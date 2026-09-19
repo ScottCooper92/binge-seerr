@@ -7,6 +7,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -14,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
 import io.github.scottcooper92.binge.seerr.ui.users.UserItem
 import io.github.scottcooper92.binge.seerr.ui.users.toUserItem
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +29,7 @@ class UserSettingsViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<UserSettingsUiState>(UserSettingsUiState.Loading)
@@ -38,7 +41,7 @@ class UserSettingsViewModel
 
         fun reload() {
             state.value = UserSettingsUiState.Loading
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { load() }
                     .onSuccess { state.value = UserSettingsUiState.Ready(it) }
                     .onFailure { state.value = UserSettingsUiState.Error(it.toSeerrError()) }

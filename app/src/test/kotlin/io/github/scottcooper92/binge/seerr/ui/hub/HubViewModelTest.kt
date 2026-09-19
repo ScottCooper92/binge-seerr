@@ -114,7 +114,7 @@ class HubViewModelTest {
                 healthMonitor = monitor,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = HubViewModel(connection, HubOverviewLoader(connection), boundedTicker)
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), mainDispatcherRule.dispatcher, boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -189,7 +189,7 @@ class HubViewModelTest {
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         serve("/api/v1/auth/me", "", code = code)
-        val vm = HubViewModel(connection, HubOverviewLoader(connection), boundedTicker)
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), mainDispatcherRule.dispatcher, boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

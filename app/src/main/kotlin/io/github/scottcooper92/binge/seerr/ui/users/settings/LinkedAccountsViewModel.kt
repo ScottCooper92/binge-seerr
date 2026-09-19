@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.auth.PlexPinExpiredException
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.QuickConnectExpiredException
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLinkJellyfinBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLinkPlexBody
@@ -19,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +42,7 @@ class LinkedAccountsViewModel
     constructor(
         private val connection: SeerrConnection,
         private val plex: PlexPinFlow,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<LinkedAccountsUiState>(LinkedAccountsUiState.Loading)
@@ -56,7 +59,7 @@ class LinkedAccountsViewModel
 
         fun reload() {
             state.value = LinkedAccountsUiState.Loading
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { load() }
                     .onSuccess { state.value = it }
                     .onFailure { state.value = LinkedAccountsUiState.Error(it.toSeerrError()) }
@@ -113,7 +116,7 @@ class LinkedAccountsViewModel
             val ready = state.value as? LinkedAccountsUiState.Ready ?: return null
             if (ready.busy) return null
             state.value = ready.copy(busy = true)
-            return viewModelScope.launch {
+            return viewModelScope.launch(dispatcher) {
                 val outcome = attempt { block(connection.api()) }
                 linkJob = null
                 outcome

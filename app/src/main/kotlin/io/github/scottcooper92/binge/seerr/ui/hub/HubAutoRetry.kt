@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -21,15 +22,19 @@ private const val MAX_AUTO_RETRIES = 5
  * exponential backoff, so a network that comes up a moment after launch recovers by itself.
  * `collectLatest` restarts on every change, so leaving the retryable set or the screen cancels the
  * in-flight delay and a later relapse gets a fresh budget.
+ *
+ * Runs on [dispatcher] rather than [scope]'s own, for the same reason `UserAdmission` does (#177/#370):
+ * [backoffRetries]'s [retry] call would otherwise resume on `viewModelScope`'s `Dispatchers.Main.immediate`.
  */
 class HubAutoRetry(
     scope: CoroutineScope,
     health: Flow<ConnectionHealth>,
     visible: Flow<Boolean>,
+    dispatcher: CoroutineDispatcher,
     private val retry: () -> Unit,
 ) {
     init {
-        scope.launch {
+        scope.launch(dispatcher) {
             // The re-probe's own Checking must not restart the backoff, or the loop never reaches its bound.
             combine(health.filter { it != ConnectionHealth.Checking }, visible) { current, onScreen -> onScreen && current.isRetryable() }
                 .distinctUntilChanged()
