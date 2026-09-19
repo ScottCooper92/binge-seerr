@@ -30,11 +30,11 @@ import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ListRow
+import com.binge.designsystem.component.ListRowSkeletonColumn
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import com.binge.designsystem.R as DesR
 
@@ -58,7 +58,12 @@ internal fun UsersBody(
                 UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding.belowPinnedLine())
             }
         lazyItems.itemCount > 0 -> UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
-        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
+        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
+            ListRowSkeletonColumn(
+                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                height = dimensionResource(R.dimen.users_row_skeleton_height),
+                modifier = modifier,
+            )
         remote is LoadState.Error ->
             PagedRefreshError(
                 remote.error,
