@@ -24,7 +24,8 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -34,17 +35,18 @@ import kotlinx.coroutines.flow.Flow
  */
 @Composable
 fun DvrInstanceScreen(
-    state: EditorUiState<DvrForm>,
-    extras: DvrExtras,
+    state: ExtrasEditorUiState<DvrForm, DvrExtras>,
     events: Flow<EditorEvent>,
     actions: EditorActions<DvrForm>,
     onTest: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val title = (state as? EditorUiState.Ready)?.draft?.let { if (it.id == null) null else it.name.ifBlank { it.type.name } }
+    val ready = state as? ExtrasEditorUiState.Ready<DvrForm, DvrExtras>
+    val extras = ready?.extras ?: DvrExtras()
+    val title = ready?.draft?.let { if (it.id == null) null else it.name.ifBlank { it.type.name } }
     EditorPage(
         title = title ?: stringResource(R.string.server_settings_dvr_new),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
         canSave = { it.valid },

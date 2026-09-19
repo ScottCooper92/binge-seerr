@@ -11,11 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -31,10 +27,7 @@ class DvrInstanceViewModel
         private val connection: SeerrConnection,
         @Assisted private val type: ServiceType,
         @Assisted private val id: Int?,
-    ) : EditorViewModel<DvrForm>() {
-        private val extrasState = MutableStateFlow(DvrExtras())
-        val extras: StateFlow<DvrExtras> = extrasState.asStateFlow()
-
+    ) : ExtrasEditorViewModel<DvrForm, DvrExtras>(DvrExtras()) {
         init {
             reload()
         }
@@ -54,14 +47,14 @@ class DvrInstanceViewModel
             if (!form.connectionValid) return form
             val choices =
                 runCatching { connection.api().testDvr(type.apiSegment, form.toTestBody()).toChoices() }
-                    .onSuccess { choices -> extrasState.update { it.copy(choices = choices) } }
+                    .onSuccess { choices -> editExtras { it.copy(choices = choices) } }
                     .getOrNull()
             return choices?.let { form.reconciledWith(it) } ?: form
         }
 
         override suspend fun write(draft: DvrForm): DvrForm {
             val api = connection.api()
-            val body = draft.toDto(extrasState.value.choices)
+            val body = draft.toDto(currentExtras().choices)
             val answered = if (draft.id == null) api.createDvr(type.apiSegment, body) else api.updateDvr(type.apiSegment, draft.id, body)
             return answered.toForm(type)
         }
@@ -71,16 +64,16 @@ class DvrInstanceViewModel
         /** Reaches the instance with what is typed; a pick made against an earlier test is kept where it still exists. */
         fun test() {
             val draft = ready()?.draft ?: return
-            if (!draft.connectionValid || extrasState.value.testing) return
-            extrasState.update { it.copy(testing = true) }
+            if (!draft.connectionValid || currentExtras().testing) return
+            editExtras { it.copy(testing = true) }
             viewModelScope.launch {
                 runCatching { connection.api().testDvr(type.apiSegment, draft.toTestBody()).toChoices() }
                     .onSuccess { choices ->
-                        extrasState.update { it.copy(choices = choices, testing = false) }
+                        editExtras { it.copy(choices = choices, testing = false) }
                         edit { form -> form.reconciledWith(choices) }
                         notify(EditorEvent.Notice(R.string.server_settings_dvr_tested))
                     }.onFailure { failure ->
-                        extrasState.update { it.copy(testing = false) }
+                        editExtras { it.copy(testing = false) }
                         notify(EditorEvent.Failed(failure.toSeerrError()))
                     }
             }
