@@ -16,6 +16,7 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeOutlinedButton
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
+import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -139,14 +140,14 @@ private fun DestinationFields(
             enabled = enabled,
         )
     }
-    ChoicePicker(
+    ChoiceRow(
         title = stringResource(R.string.advanced_profile),
         choices = choices.profiles.map { it.id to it.label },
         selected = draft.profileId,
         onSelect = { id -> actions.onEdit { it.copy(profileId = id) } },
         enabled = enabled,
     )
-    ChoicePicker(
+    ChoiceRow(
         title = stringResource(R.string.advanced_root_folder),
         choices = choices.rootFolders.map { it to it },
         selected = draft.rootFolder,
@@ -154,7 +155,7 @@ private fun DestinationFields(
         enabled = enabled,
     )
     choices.languageProfiles?.let { profiles ->
-        ChoicePicker(
+        ChoiceRow(
             title = stringResource(R.string.server_settings_dvr_language_profile),
             choices = profiles.map { it.id to it.label },
             selected = draft.languageProfileId,
@@ -193,14 +194,14 @@ private fun SonarrFields(
         onSelect = { value -> actions.onEdit { it.copy(animeSeriesType = value) } },
         enabled = enabled,
     )
-    ChoicePicker(
+    ChoiceRow(
         title = stringResource(R.string.advanced_profile),
         choices = choices.profiles.map { it.id to it.label },
         selected = draft.animeProfileId,
         onSelect = { id -> actions.onEdit { it.copy(animeProfileId = id) } },
         enabled = enabled,
     )
-    ChoicePicker(
+    ChoiceRow(
         title = stringResource(R.string.advanced_root_folder),
         choices = choices.rootFolders.map { it to it },
         selected = draft.animeRootFolder,
