@@ -101,7 +101,7 @@ class IssueDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = IssueDetailViewModel(connection, TitleCache(), cache, 31)
+        val vm = IssueDetailViewModel(connection, TitleCache(), cache, mainDispatcherRule.dispatcher, 31)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

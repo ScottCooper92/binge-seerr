@@ -10,6 +10,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
@@ -19,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.seerr.forRequest
 import io.github.scottcooper92.binge.seerr.seerr.preferred
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,6 +67,7 @@ class AdvancedRequestViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val request: AdvancedRequest,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<AdvancedRequestUiState>(AdvancedRequestUiState.Loading)
@@ -74,7 +77,7 @@ class AdvancedRequestViewModel
         private var servers: List<SeerrServerDto> = emptyList()
 
         init {
-            viewModelScope.launch { load() }
+            viewModelScope.launch(dispatcher) { load() }
         }
 
         private suspend fun load() {
@@ -103,7 +106,7 @@ class AdvancedRequestViewModel
             val server = servers.firstOrNull { it.id == id } ?: return
             if (server.id == ready.destination.serverId) return
             _uiState.value = ready.copy(destination = ready.destination.onServer(server), error = null)
-            viewModelScope.launch { loadChoices(server) }
+            viewModelScope.launch(dispatcher) { loadChoices(server) }
         }
 
         fun selectProfile(id: Int) = updateDestination { it.copy(profileId = id) }
@@ -114,7 +117,7 @@ class AdvancedRequestViewModel
             val ready = ready() ?: return
             if (!ready.canSubmit) return
             _uiState.value = ready.copy(isSubmitting = true, error = null)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     val response = connection.api().requestMedia(ready.toBody())
                     // A 409 is a title the server already tracks: nothing to change, and nothing to tell.
