@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrImportPlexBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJellyfinUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPlexUserDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,9 +28,13 @@ private const val ALL_USERS_TAKE = 1000
  * Adding users: a local account, or an import of the media server's accounts. The plex.tv list
  * arrives already filtered to the unknown; the Jellyfin one does not, so it is filtered here
  * against the server's users. [onAdmitted] fires after a success so the owner can refresh the list.
+ *
+ * Every launch below runs on [dispatcher] rather than `scope`'s own (#177), for the same reason
+ * [RequestModeration] does.
  */
 class UserAdmission(
     private val scope: CoroutineScope,
+    private val dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
     private val onAdmitted: () -> Unit,
 ) {
@@ -62,7 +67,7 @@ class UserAdmission(
         val draft = creating.draft
         if (creating.saving || !draft.valid) return
         stateFlow.value = creating.copy(saving = true)
-        scope.launch {
+        scope.launch(dispatcher) {
             runCatching {
                 val body =
                     SeerrCreateUserBody(
@@ -84,7 +89,7 @@ class UserAdmission(
 
     fun startImport(source: UserOrigin) {
         stateFlow.value = UserAdmissionState.Importing(ImportPicker(source))
-        scope.launch {
+        scope.launch(dispatcher) {
             val candidates =
                 runCatching {
                     val api = connection.api()
@@ -134,7 +139,7 @@ class UserAdmission(
         val ids = importing.picker.selected.toList()
         if (importing.saving || ids.isEmpty()) return
         stateFlow.value = importing.copy(saving = true)
-        scope.launch {
+        scope.launch(dispatcher) {
             runCatching {
                 val api = connection.api()
                 when (importing.picker.source) {

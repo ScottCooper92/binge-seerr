@@ -13,11 +13,13 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.USERS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.data.UsersRemoteMediator
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBulkUsersBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
@@ -57,6 +60,7 @@ class UsersViewModel
     constructor(
         private val connection: SeerrConnection,
         private val store: UserStore,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val selectedSort = MutableStateFlow(UserSort.Created)
         private val selection = MutableStateFlow<Set<Int>>(emptySet())
@@ -67,7 +71,10 @@ class UsersViewModel
         /** Refreshes the list through the mediator: a new user is on the server, not in the cache. */
         private val listVersion = MutableStateFlow(0)
 
-        val admission = UserAdmission(scope = viewModelScope, connection = connection) { listVersion.update { it + 1 } }
+        val admission =
+            UserAdmission(scope = viewModelScope, dispatcher = dispatcher, connection = connection) {
+                listVersion.update { it + 1 }
+            }
 
         val events: SharedFlow<UsersEvent> = merge(eventFlow, admission.events).shareIn(viewModelScope, SharingStarted.Lazily)
 
@@ -98,7 +105,8 @@ class UsersViewModel
                             ),
                         )
                     }
-                }.stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
+                }.flowOn(dispatcher)
+                .stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
 
         val users: Flow<PagingData<UserItem>> =
             combine(selectedSort, listVersion) { sort, _ -> sort }
@@ -158,7 +166,7 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (ids.isEmpty() || edit.value != null) return
             edit.value = BulkEdit(saving = true)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val selected =
                     store.permissionsFor(ids).values.fold(emptySet<ManageablePermission>()) { acc, bitmask ->
                         acc + ManageablePermission.decode(bitmask)
@@ -193,7 +201,7 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     // Each id's own cached bitmask is the baseline for that id alone, so an unmanaged
                     // bit only some of the selection holds is never carried onto the rest. Ids whose

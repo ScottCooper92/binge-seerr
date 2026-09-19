@@ -50,7 +50,7 @@ class DefaultPermissionsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): DefaultPermissionsViewModel {
-        val vm = DefaultPermissionsViewModel(seerr.connection(this))
+        val vm = DefaultPermissionsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

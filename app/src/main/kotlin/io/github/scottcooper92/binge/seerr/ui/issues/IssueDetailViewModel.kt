@@ -8,6 +8,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.IssueStore
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
@@ -19,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * One issue as a page: the report, the thread, and the composer. Posting is optimistic: the
@@ -44,6 +47,7 @@ class IssueDetailViewModel
         private val connection: SeerrConnection,
         private val titles: TitleCache,
         private val store: IssueStore,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val issueId: Int,
     ) : ViewModel() {
         private val state = MutableStateFlow<IssueDetailUiState>(IssueDetailUiState.Loading)
@@ -54,8 +58,12 @@ class IssueDetailViewModel
 
         private var nextLocalId = 1L
 
-        /** The in-flight [send] for each outbox entry, so an edit or a drop can cancel a still-running one. */
-        private val outboxJobs = mutableMapOf<Long, Job>()
+        /**
+         * The in-flight [send] for each outbox entry, so an edit or a drop can cancel a still-running
+         * one. A [ConcurrentHashMap] because [send] itself removes its own entry from the IO dispatcher
+         * it runs on, while every other mutator here runs on Main.
+         */
+        private val outboxJobs = ConcurrentHashMap<Long, Job>()
 
         init {
             reload()
@@ -63,7 +71,7 @@ class IssueDetailViewModel
 
         fun reload() {
             if (state.value !is IssueDetailUiState.Ready) state.value = IssueDetailUiState.Loading
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { load() }
                     .onSuccess { detail ->
                         state.update { current ->
@@ -99,14 +107,14 @@ class IssueDetailViewModel
                     state = SendState.Sending,
                 )
             state.value = ready.copy(draft = "", outbox = ready.outbox + entry)
-            outboxJobs[entry.localId] = viewModelScope.launch { send(entry.localId, message) }
+            outboxJobs[entry.localId] = viewModelScope.launch(dispatcher) { send(entry.localId, message) }
         }
 
         fun retryOutbox(localId: Long) {
             val entry = outbox(localId) ?: return
             outboxJobs.remove(localId)?.cancel()
             updateOutbox(localId) { it.copy(state = SendState.Sending) }
-            outboxJobs[localId] = viewModelScope.launch { send(localId, entry.message) }
+            outboxJobs[localId] = viewModelScope.launch(dispatcher) { send(localId, entry.message) }
         }
 
         /**
@@ -122,7 +130,7 @@ class IssueDetailViewModel
             if (trimmed.isEmpty() || outbox(localId) == null) return
             outboxJobs.remove(localId)?.cancel()
             updateOutbox(localId) { it.copy(message = trimmed, state = SendState.Sending) }
-            outboxJobs[localId] = viewModelScope.launch { send(localId, trimmed) }
+            outboxJobs[localId] = viewModelScope.launch(dispatcher) { send(localId, trimmed) }
         }
 
         /** Cancels a send still in flight, so a discarded comment can never land after the fact. */
@@ -139,7 +147,7 @@ class IssueDetailViewModel
             val trimmed = message.trim()
             if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Editing(commentId))
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                     .onSuccess {
                         val reloadFailure = reloadAfterWrite()
@@ -159,7 +167,7 @@ class IssueDetailViewModel
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canResolve) return
             val resolving = ready.detail.item.status == IssueStatus.Open
             state.value = ready.copy(action = IssueAction.UpdatingStatus)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().setIssueStatus(issueId, if (resolving) STATUS_RESOLVED else STATUS_OPEN)
                     store.updateStatus(issueId, (if (resolving) IssueStatus.Resolved else IssueStatus.Open).name)
@@ -181,7 +189,7 @@ class IssueDetailViewModel
             val ready = ready() ?: return
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canDelete) return
             state.value = ready.copy(action = IssueAction.Deleting)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().deleteIssue(issueId)
                     store.delete(issueId)
@@ -197,7 +205,7 @@ class IssueDetailViewModel
             val ready = ready() ?: return
             if (ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Deleting(commentId))
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {
                         val reloadFailure = reloadAfterWrite()

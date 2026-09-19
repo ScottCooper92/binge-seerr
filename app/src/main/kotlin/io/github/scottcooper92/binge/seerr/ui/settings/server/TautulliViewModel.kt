@@ -2,7 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Inject
 
 /**
@@ -14,7 +16,8 @@ class TautulliViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-    ) : EditorViewModel<TautulliForm>() {
+        @IoDispatcher dispatcher: CoroutineDispatcher,
+    ) : EditorViewModel<TautulliForm>(dispatcher) {
         init {
             reload()
         }

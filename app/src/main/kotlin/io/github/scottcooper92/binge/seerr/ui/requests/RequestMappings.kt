@@ -101,6 +101,10 @@ fun RequestItem.actions(scope: ModerationScope): RequestActions {
     )
 }
 
+/** Whether the page has a primary action to pin: something reviewable, a media record to manage, or an edit. */
+internal val RequestDetail.hasPrimaryAction: Boolean
+    get() = actions.any || media?.canManage == true || canEdit
+
 internal fun MediaStatusChoice.labelRes(): Int =
     when (this) {
         MediaStatusChoice.Available -> R.string.media_state_available

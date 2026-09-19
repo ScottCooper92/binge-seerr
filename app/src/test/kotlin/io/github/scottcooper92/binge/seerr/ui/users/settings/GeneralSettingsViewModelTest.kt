@@ -50,7 +50,7 @@ class GeneralSettingsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): GeneralSettingsViewModel {
-        val vm = GeneralSettingsViewModel(seerr.connection(this), 8)
+        val vm = GeneralSettingsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

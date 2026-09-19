@@ -85,7 +85,7 @@ class IssuesViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = IssuesViewModel(connection, TitleCache(), FakeIssueStore())
+        val vm = IssuesViewModel(connection, TitleCache(), FakeIssueStore(), mainDispatcherRule.dispatcher)
         viewModels.put("issues", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)

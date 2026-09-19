@@ -111,7 +111,7 @@ class RequestDetailViewModelTest {
         connection: SeerrConnection,
         requestId: Int = 11,
     ): RequestDetailViewModel {
-        val vm = RequestDetailViewModel(connection, requestId)
+        val vm = RequestDetailViewModel(connection, mainDispatcherRule.dispatcher, requestId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

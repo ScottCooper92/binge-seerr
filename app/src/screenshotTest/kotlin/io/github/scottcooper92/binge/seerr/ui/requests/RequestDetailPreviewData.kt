@@ -44,6 +44,20 @@ internal fun settledDetail(): RequestDetail =
     )
 
 /**
+ * The settled request with nothing left for this viewer to do: no moderation action, no media record
+ * to manage, and no edit — the one arm the pinned footer renders neither itself nor the scroll's
+ * matching bottom padding for.
+ */
+internal fun noPrimaryActionDetail(): RequestDetail =
+    detail(
+        actions = RequestActions(),
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.Available,
+        canEdit = false,
+        canManageMedia = false,
+    )
+
+/**
  * Partly available in 4K: the longest availability label plus a third chip on the headline row —
  * the case the "row survives a narrow window" done-when item (#340) asks to wrap rather than clip.
  */
@@ -122,6 +136,7 @@ private fun detail(
     seasons: List<SeasonState> = listOf(SeasonState(number = 1, name = null, episodeCount = EPISODE_COUNT, status = mediaStatus)),
     overview: String? = OVERVIEW,
     siblings: List<SiblingRequest> = emptyList(),
+    canManageMedia: Boolean = true,
     is4k: Boolean = false,
 ): RequestDetail =
     RequestDetail(
@@ -173,12 +188,12 @@ private fun detail(
                             status = mediaStatus,
                             serviceUrl = "https://sonarr.example/series/breaking-bad",
                             mediaServerUrl = "https://jellyfin.example/web/#/details?id=a1",
-                            watch = watch,
+                            watch = if (canManageMedia) watch else null,
                         ),
                     ),
-                canSetStatus = true,
-                canClearData = true,
-                canDeleteFiles = true,
+                canSetStatus = canManageMedia,
+                canClearData = canManageMedia,
+                canDeleteFiles = canManageMedia,
             ),
         siblings = siblings,
     )
