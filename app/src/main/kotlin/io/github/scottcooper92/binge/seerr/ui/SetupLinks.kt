@@ -50,13 +50,15 @@ internal class SetupLinks(
         return runCatching { Json.decodeFromString<PendingLink>(stored) }.getOrNull()?.decrypted(cipher)
     }
 
+    /** [forLink] is the television's flow: a short PIN typed at plex.tv/link rather than opened in a browser. */
     fun startPlex(
         server: SetupServer,
         editing: Boolean,
+        forLink: Boolean = false,
     ) {
         job =
             scope.launch(dispatcher) {
-                val pin = attempt { plex.start() }.getOrElse { failure -> return@launch finished(failure) }
+                val pin = attempt { plex.start(forLink) }.getOrElse { failure -> return@launch finished(failure) }
                 keep(
                     PendingLink.Plex(
                         serverUrl = server.baseUrl,

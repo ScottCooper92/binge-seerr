@@ -11,17 +11,24 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 /**
  * The two plex.tv calls behind a Plex sign-in: mint a PIN, then poll it until the user has
- * approved it in their browser and it carries a token. Seerr's own `auth/plex` takes that token.
- * Not a Seerr endpoint: it is plex.tv's public API, spoken to directly, as Seerr's web client does.
+ * approved it and it carries a token. Seerr's own `auth/plex` takes that token. Not a Seerr
+ * endpoint: it is plex.tv's public API, spoken to directly, as Seerr's web client does.
+ *
+ * [createPin]'s `strong` flag picks which PIN plex.tv mints: `true` is the long one meant to be
+ * embedded in a browser URL and approved with a click, never read by the user; `false` is the
+ * short one meant to be typed by hand at plex.tv/link, which is what a television flow needs.
  */
 interface PlexTvApi {
-    @POST("api/v2/pins?strong=true")
-    suspend fun createPin(): PlexPinDto
+    @POST("api/v2/pins")
+    suspend fun createPin(
+        @Query("strong") strong: Boolean,
+    ): PlexPinDto
 
     @GET("api/v2/pins/{id}")
     suspend fun pin(

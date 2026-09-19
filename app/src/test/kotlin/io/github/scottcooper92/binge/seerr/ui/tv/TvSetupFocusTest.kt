@@ -103,15 +103,12 @@ class TvSetupFocusTest {
     }
 
     @Test
-    fun theSignInStepOffersOnlyTheModesARemoteCanType() {
+    fun theSignInStepOffersEveryModeIncludingPlexAndQuickConnect() {
         setScreen(signIn(modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.Local, SeerrSignInMode.ApiKey)))
 
+        modeRow(R.string.setup_mode_plex).assertIsDisplayed()
         modeRow(R.string.setup_mode_local).assertIsDisplayed()
         modeRow(R.string.setup_mode_api_key).assertIsDisplayed()
-        assertTrue(
-            "Plex finishes on another device, so the TV must not offer it",
-            composeTestRule.onAllNodes(hasText(string(R.string.setup_mode_plex))).fetchSemanticsNodes().isEmpty(),
-        )
     }
 
     @Test
@@ -119,6 +116,13 @@ class TvSetupFocusTest {
         setScreen(signIn(modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect)))
 
         modeRow(R.string.setup_mode_quick_connect).assertIsDisplayed()
+    }
+
+    @Test
+    fun plexIsOfferedBecauseItsCodeIsTypedAtPlexTvSlashLink() {
+        setScreen(signIn(modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.Plex)))
+
+        modeRow(R.string.setup_mode_plex).assertIsDisplayed()
     }
 
     @Test
@@ -140,6 +144,20 @@ class TvSetupFocusTest {
     }
 
     @Test
+    fun aPlexLinkTakesThePageAndShowsTheCodeWithTheTelevisionsOwnCopy() {
+        setScreen(
+            signIn(
+                modes = listOf(SeerrSignInMode.Plex),
+                link = LinkFlow.Plex(code = "JKLM", authUrl = "https://app.plex.tv/auth", launchPending = false),
+            ),
+        )
+
+        composeTestRule.onNodeWithText("JKLM").assertIsDisplayed()
+        // Not the phone sheet's "opens in your browser" copy: this surface has none to open.
+        composeTestRule.onNodeWithText(string(R.string.tv_link_plex_body)).assertIsDisplayed()
+    }
+
+    @Test
     fun theLinkPlateLandsOnCancelSoARemoteCanBackOut() {
         setScreen(
             signIn(
@@ -158,7 +176,7 @@ class TvSetupFocusTest {
     fun theSignInStepWalksModesThenTheFieldThenConnect() {
         setScreen(
             signIn(
-                modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
+                modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
                 form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = "k3y"),
             ),
         )
@@ -206,23 +224,28 @@ class TvSetupFocusTest {
         assertTrue("re-pressing the chosen mode must not re-commit it", formEdits.isEmpty())
     }
 
+    /**
+     * A resumed pending link can carry a mode the server no longer offers — its own set changed, or
+     * this is a different server than it was minted against — and every current mode is finishable,
+     * so there is no unfinishable mode left to test this with; an unoffered one stands in instead.
+     */
     @Test
-    fun aModeTheTvCannotFinishIsReplacedByOneItCan() {
+    fun aModeThisServerDoesNotOfferIsReplacedByOneItDoes() {
         setScreen(
             signIn(
-                modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.ApiKey),
-                form = SignInForm(mode = SeerrSignInMode.Plex),
+                modes = listOf(SeerrSignInMode.ApiKey),
+                form = SignInForm(mode = SeerrSignInMode.Local),
             ),
         )
 
-        val applied = formEdits.fold(SignInForm(mode = SeerrSignInMode.Plex)) { form, edit -> form.edit() }
+        val applied = formEdits.fold(SignInForm(mode = SeerrSignInMode.Local)) { form, edit -> form.edit() }
         assertEquals(SeerrSignInMode.ApiKey, applied.mode)
     }
 
-    /** Plex alone is the only "nothing here" case left: Quick Connect is finishable, and it is not Plex. */
+    /** Every known mode finishes on TV now; a server profile with none recognised is the one thing left to guard. */
     @Test
-    fun aPlexOnlyServerSaysSoAndLandsOnChangeServer() {
-        setScreen(signIn(modes = listOf(SeerrSignInMode.Plex)))
+    fun aServerWithNoRecognisedModesSaysSoAndLandsOnChangeServer() {
+        setScreen(signIn(modes = emptyList(), form = SignInForm()))
 
         composeTestRule.onNodeWithText(string(R.string.tv_setup_no_modes_here)).assertIsDisplayed()
         button(R.string.setup_change_server).assertIsFocused()

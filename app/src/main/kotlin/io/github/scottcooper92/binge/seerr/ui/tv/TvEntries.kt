@@ -26,7 +26,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
-import io.github.scottcooper92.binge.seerr.ui.actions
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
@@ -52,6 +51,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
+import io.github.scottcooper92.binge.seerr.ui.tvActions
 
 /**
  * The connected television: the rail with a board per destination, each bound to the same ViewModel as
@@ -316,7 +316,7 @@ private fun TvEditConnectionOverlay(
     LaunchedEffect(state) { if (state is SetupUiState.Connected) onDone() }
     BackHandler(onBack = onDone)
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TvSetupScreen(state = state, actions = viewModel.actions())
+        TvSetupScreen(state = state, actions = viewModel.tvActions())
     }
 }
 

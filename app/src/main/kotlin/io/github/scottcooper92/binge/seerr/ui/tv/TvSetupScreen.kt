@@ -29,9 +29,9 @@ internal enum class TvSetupFocus { Address, Continue, Credential, Connect }
 
 /**
  * The two steps to a connection, on a television: the address, then the sign-ins a remote can finish.
- * The same ViewModel and the same [SetupUiState] as the phone's setup. Quick Connect is finished here
- * too — its code is approved in another Jellyfin app, so the television shows it and waits — while a
- * Plex sign-in wants a browser and stays on the phone.
+ * The same ViewModel and the same [SetupUiState] as the phone's setup. Quick Connect and Plex both
+ * finish elsewhere rather than typed — a code approved in another Jellyfin app, or typed at
+ * plex.tv/link — so the television only has to show the code and wait.
  */
 @Composable
 internal fun TvSetupScreen(
@@ -93,16 +93,16 @@ private fun TvSetupAddressStep(
 }
 
 /**
- * The sign-ins a remote can finish. A key or an account typed on screen, and Quick Connect — its code
- * is approved in any Jellyfin app the user is already signed into, so the television only has to show
- * it and wait. Plex is the one left out: it finishes in a browser, which this surface does not have.
+ * The sign-ins a remote can finish — which, now, is all of them. A key or an account typed on
+ * screen; Quick Connect, whose code is approved in any Jellyfin app the user is already signed
+ * into; and Plex, whose code is typed at plex.tv/link on another device rather than opened in a
+ * browser this surface does not have. The television only has to show a code and wait either way.
  */
 internal val SeerrSignInMode.finishableOnTv: Boolean
     get() =
         when (this) {
             SeerrSignInMode.ApiKey, SeerrSignInMode.Local, SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> true
-            SeerrSignInMode.QuickConnect -> true
-            SeerrSignInMode.Plex -> false
+            SeerrSignInMode.QuickConnect, SeerrSignInMode.Plex -> true
         }
 
 @Composable
@@ -213,7 +213,7 @@ private fun TvModeFields(
             )
             TvPasswordField(form, onEdit)
         }
-        // Filtered out above; a mode the LaunchedEffect is about to replace renders nothing for a frame.
+        // Neither needs typed fields: pressing Connect below mints its code, and the plate above takes over.
         SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect -> Unit
     }
 }

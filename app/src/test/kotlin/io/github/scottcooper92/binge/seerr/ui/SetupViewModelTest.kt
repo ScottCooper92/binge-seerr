@@ -392,6 +392,27 @@ class SetupViewModelTest {
         }
 
     @Test
+    fun `the television's connect mints plex's short link pin, not the browser's long one`() =
+        runTest {
+            val vm = viewModel()
+            vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true}""")
+            repeat(3) { seerr.takeRequest() }
+            plex.enqueue(json("""{"id":41,"code":"JKLM","expiresAt":"2099-01-01T00:00:00Z"}"""))
+            plex.enqueue(json("""{"id":41,"code":"JKLM","authToken":"tok3n"}"""))
+            seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
+            seerr.enqueue(json("""{"version":"1.33.2"}"""))
+            seerr.enqueue(json("""{"localLogin":true}"""))
+
+            vm.connect(forLink = true)
+
+            val link = vm.awaitSignIn { it.link != null }.link as LinkFlow.Plex
+            assertEquals("JKLM", link.code)
+            val mint = plex.takeRequest()
+            assertEquals("/api/v2/pins?strong=false", mint.url.encodedPath + "?" + mint.url.encodedQuery)
+            assertEquals(SeerrVariant.Overseerr, vm.awaitConnected().credentials.variant)
+        }
+
+    @Test
     fun `a plex sign-in the process died during is picked up where the user left it`() =
         runTest {
             // plex.tv answers by path rather than from the queue here: two ViewModels poll the same
