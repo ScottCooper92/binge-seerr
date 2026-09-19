@@ -44,6 +44,19 @@ internal fun settledDetail(): RequestDetail =
     )
 
 /**
+ * Partly available in 4K: the longest availability label plus a third chip on the headline row —
+ * the case the "row survives a narrow window" done-when item (#340) asks to wrap rather than clip.
+ */
+internal fun partiallyAvailable4kDetail(): RequestDetail =
+    detail(
+        actions = RequestActions(canRemove = true, canBlock = true),
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.PartiallyAvailable,
+        canEdit = false,
+        is4k = true,
+    )
+
+/**
  * The title reads partly available because another season is on the server already — this request's
  * own season is still pending. What #342 asks the headline caption and the season row to make legible.
  */
@@ -109,6 +122,7 @@ private fun detail(
     seasons: List<SeasonState> = listOf(SeasonState(number = 1, name = null, episodeCount = EPISODE_COUNT, status = mediaStatus)),
     overview: String? = OVERVIEW,
     siblings: List<SiblingRequest> = emptyList(),
+    is4k: Boolean = false,
 ): RequestDetail =
     RequestDetail(
         item =
@@ -126,7 +140,7 @@ private fun detail(
                 mediaStatus = mediaStatus,
                 download = null,
                 seasonNumbers = listOf(1),
-                is4k = false,
+                is4k = is4k,
             ),
         actions = actions,
         canEdit = canEdit,
