@@ -5,7 +5,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -69,8 +69,12 @@ class ServerGeneralViewModelTest {
         return vm
     }
 
-    private suspend fun ServerGeneralViewModel.awaitReady(): EditorUiState.Ready<ServerGeneralSettings> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<ServerGeneralSettings>
+    private suspend fun ServerGeneralViewModel.awaitReady(
+        where: (ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>) -> Boolean = { true },
+    ): ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras> =
+        uiState.first {
+            it is ExtrasEditorUiState.Ready && !it.saving && where(it)
+        } as ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>
 
     @Test
     fun `the jellyseerr lineage shows both regions and its own switches, never the proxy ones`() =
@@ -88,7 +92,7 @@ class ServerGeneralViewModelTest {
             assertNull(draft.trustProxy)
             assertNull(draft.csrfProtection)
             assertNull(draft.versionCheck)
-            val extras = vm.extras.first { it.visitor != null }
+            val extras = vm.awaitReady { it.extras.visitor != null }.extras
             assertEquals("old-key", extras.apiKey.key)
             assertFalse(extras.apiKey.revealed)
             assertEquals(true, extras.visitor?.localLogin)
@@ -164,9 +168,9 @@ class ServerGeneralViewModelTest {
 
             assertEquals(
                 "new-key",
-                vm.extras
-                    .first { it.apiKey.key == "new-key" }
-                    .apiKey.key,
+                vm
+                    .awaitReady { it.extras.apiKey.key == "new-key" }
+                    .extras.apiKey.key,
             )
             assertEquals(SeerrAuth.ApiKey("new-key"), connection.current().auth)
             val probe = seerr.received.last { it.url.encodedPath == "/api/v1/auth/me" }

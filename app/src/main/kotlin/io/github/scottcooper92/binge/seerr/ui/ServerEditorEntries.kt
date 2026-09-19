@@ -65,10 +65,8 @@ internal fun NotificationAgentEntry(
             factory.create(agent)
         })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val extras by viewModel.extras.collectAsStateWithLifecycle()
     NotificationAgentScreen(
         state = state,
-        extras = extras,
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
         agentActions =
