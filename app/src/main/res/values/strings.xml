@@ -541,7 +541,7 @@
     <string name="settings_edit_connection">Edit connection</string>
     <string name="settings_edit_connection_caption">Change the server or sign in again</string>
     <string name="settings_address_plate_title">Server address</string>
-    <string name="settings_address_plate_caption">Setting up on a television? Read this across instead of typing it from memory.</string>
+    <string name="settings_address_plate_caption">Setting up on a television? Read this across the room instead of typing it from memory.</string>
     <string name="settings_value_unknown">Unknown</string>
     <string name="settings_value_on">On</string>
     <string name="settings_value_off">Off</string>

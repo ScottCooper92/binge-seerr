@@ -523,7 +523,7 @@
     <string name="settings_edit_connection">Editar la conexión</string>
     <string name="settings_edit_connection_caption">Cambiar de servidor o iniciar sesión de nuevo</string>
     <string name="settings_address_plate_title">Dirección del servidor</string>
-    <string name="settings_address_plate_caption">¿Configurando un televisor? Léela en voz alta en lugar de escribirla de memoria.</string>
+    <string name="settings_address_plate_caption">¿Configurando un televisor? Léela desde el otro lado de la habitación en lugar de escribirla de memoria.</string>
     <string name="settings_value_unknown">Desconocido</string>
     <string name="settings_value_on">Activado</string>
     <string name="settings_value_off">Desactivado</string>

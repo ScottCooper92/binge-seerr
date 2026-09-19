@@ -552,7 +552,7 @@ app:server_settings_youtube_url_hint  a5e06ab9a284
 app:settings_about  4efca0d10c5f
 app:settings_about_caption  2711ac1f33da
 app:settings_about_version  b65bfa7f1eb0
-app:settings_address_plate_caption  d1dd5bd8e304
+app:settings_address_plate_caption  fc69fa581c03
 app:settings_address_plate_title  8be89710b2f1
 app:settings_agent_email  969ccbd3cf63
 app:settings_agent_webhook  4814f62c108d
