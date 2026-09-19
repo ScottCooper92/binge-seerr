@@ -195,11 +195,9 @@ internal fun RequestDetailPage(
                 title = title,
                 backdropUrl = detail.backdropUrl,
                 tagline = null,
-                metaText =
-                    listOfNotNull(
-                        stringResource(item.mediaType.labelRes()),
-                        item.year,
-                    ).joinToString(stringResource(R.string.hub_meta_separator)),
+                // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
+                // read here, and reads deliberately rather than as a leftover fragment of a joined string.
+                metaText = item.year.orEmpty(),
                 onBack = onBack,
                 showChrome = false,
                 richBackdrop = true,

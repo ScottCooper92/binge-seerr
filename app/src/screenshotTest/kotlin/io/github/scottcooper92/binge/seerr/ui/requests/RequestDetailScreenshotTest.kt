@@ -31,6 +31,12 @@ class RequestDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun withSiblings() = Frame(detailWithSiblings())
+
+    /** Type, availability and 4K as three chips on the headline row, wrapping rather than clipping (#340). */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun partiallyAvailable4k() = Frame(partiallyAvailable4kDetail())
 }
 
 @Composable
