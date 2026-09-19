@@ -324,8 +324,7 @@ class SetupViewModelTest {
             val vm = viewModel(savedState = saved, cipher = ReversingCipher)
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
+            scriptPendingQuickConnect()
 
             vm.connect()
             vm.awaitSignIn { it.link != null }
@@ -524,6 +523,26 @@ class SetupViewModelTest {
             }
         }
 
+    /**
+     * A Quick Connect initiate plus a check that never approves, scripted by path rather than a
+     * fixed queue depth. The poll loop's `delay` shares the test's own virtual clock, so any number
+     * of extra iterations can run before a test reads state or cancels — with a fixed-size queue,
+     * one running dry mid-test drains into an unscripted 404, which `SeerrConnection` reads as the
+     * code having expired and forgets the pending link out from under the assertion (#378). Scripted
+     * by path, an extra poll iteration is just another "not yet" rather than a queue underrun.
+     */
+    private fun scriptPendingQuickConnect(
+        code: String = "123456",
+        secret: String = "abcdef12",
+    ) {
+        seerr.dispatcher = { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/auth/jellyfin/quickconnect/initiate" -> json("""{"code":"$code","secret":"$secret"}""")
+                else -> json("""{"authenticated":false}""")
+            }
+        }
+    }
+
     @Test
     fun `a cancelled link is forgotten, so the next start does not resume into it`() =
         runTest {
@@ -531,8 +550,7 @@ class SetupViewModelTest {
             val vm = viewModel(savedState = saved)
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
+            scriptPendingQuickConnect()
             vm.connect()
             vm.awaitSignIn { it.link != null }
 
@@ -549,8 +567,7 @@ class SetupViewModelTest {
             val vm = viewModel()
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
+            scriptPendingQuickConnect()
             vm.connect()
             vm.awaitSignIn { it.link != null }
 
