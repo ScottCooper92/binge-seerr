@@ -61,7 +61,7 @@ internal fun UsersBody(
         lazyItems.itemCount > 0 -> UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
         remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
                 height = dimensionResource(R.dimen.users_row_skeleton_height),
                 modifier = modifier,
             )
