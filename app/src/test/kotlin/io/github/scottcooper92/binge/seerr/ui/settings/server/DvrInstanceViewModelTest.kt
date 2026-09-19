@@ -71,7 +71,7 @@ class DvrInstanceViewModelTest {
         type: ServiceType,
         id: Int?,
     ): DvrInstanceViewModel {
-        val vm = DvrInstanceViewModel(seerr.connection(this), type, id)
+        val vm = DvrInstanceViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, type, id)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

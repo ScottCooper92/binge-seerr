@@ -660,6 +660,7 @@ app:tv_hub_reconnect  bf8a9eab9e7e
 app:tv_hub_stat_open_issues  28aa0023dce4
 app:tv_issue_action_failed  bf50ec855e19
 app:tv_issue_deleted  0187e4800963
+app:tv_issue_read_comments  79d21d7114ec
 app:tv_issue_reopen  17b1eb39b270
 app:tv_issue_resolve  a02552f9c783
 app:tv_list_load_failed  718a36e76415

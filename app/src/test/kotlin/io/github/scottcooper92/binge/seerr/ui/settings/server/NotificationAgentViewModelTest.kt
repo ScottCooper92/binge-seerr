@@ -72,7 +72,7 @@ class NotificationAgentViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(agent: ServerAgent): NotificationAgentViewModel {
-        val vm = NotificationAgentViewModel(seerr.connection(this), agent)
+        val vm = NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent)
         vm.soundsDebounceMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }

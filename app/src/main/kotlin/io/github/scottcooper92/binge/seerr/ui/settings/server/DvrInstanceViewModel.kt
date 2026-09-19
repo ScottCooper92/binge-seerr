@@ -7,11 +7,13 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 
 /**
@@ -25,9 +27,10 @@ class DvrInstanceViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val type: ServiceType,
         @Assisted private val id: Int?,
-    ) : ExtrasEditorViewModel<DvrForm, DvrExtras>(DvrExtras()) {
+    ) : ExtrasEditorViewModel<DvrForm, DvrExtras>(DvrExtras(), dispatcher) {
         init {
             reload()
         }
@@ -66,7 +69,7 @@ class DvrInstanceViewModel
             val draft = ready()?.draft ?: return
             if (!draft.connectionValid || currentExtras().testing) return
             editExtras { it.copy(testing = true) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().testDvr(type.apiSegment, draft.toTestBody()).toChoices() }
                     .onSuccess { choices ->
                         editExtras { it.copy(choices = choices, testing = false) }
@@ -81,7 +84,7 @@ class DvrInstanceViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }

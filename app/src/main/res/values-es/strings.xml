@@ -857,6 +857,7 @@
     <string name="tv_issue_reopen">Reabrir la incidencia</string>
     <string name="tv_issue_deleted">Incidencia eliminada</string>
     <string name="tv_issue_action_failed">No se pudo actualizar la incidencia. Inténtalo de nuevo.</string>
+    <string name="tv_issue_read_comments">Leer comentarios</string>
     <string name="tv_settings_read_only_note">Cámbialo en la app del móvil o en el cliente web.</string>
     <string name="tv_settings_disconnect_confirm">Sí, desconectar</string>
     <string name="tv_settings_start_library_scan">Iniciar escaneo de la biblioteca</string>

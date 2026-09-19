@@ -51,7 +51,7 @@ class NotificationsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): NotificationsViewModel {
-        val vm = NotificationsViewModel(seerr.connection(this), 8)
+        val vm = NotificationsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +70,7 @@ sealed interface ModerationEvent {
  */
 class RequestModeration(
     private val scope: CoroutineScope,
+    private val dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
     private val onModerated: () -> Unit,
 ) {
@@ -146,6 +148,10 @@ class RequestModeration(
     /**
      * Acting is raised before the launch so a second tap is swallowed at once, and cleared as soon
      * as the action settles, before the refresh and the longer block follow-up.
+     *
+     * Launched on [dispatcher] rather than inheriting `scope`'s own, so [onModerated]'s reload and
+     * this launch's own state updates never touch `Dispatchers.Main` - including the tail end of a
+     * call still in flight after the owning screen is gone (#177).
      */
     private fun actThenMaybeBlock(
         item: RequestItem?,
@@ -158,7 +164,7 @@ class RequestModeration(
     ) {
         if (requestId in acting.value) return
         acting.update { it + requestId }
-        scope.launch {
+        scope.launch(dispatcher) {
             val result = runCatching { action(requestId) }
             acting.update { it - requestId }
             result

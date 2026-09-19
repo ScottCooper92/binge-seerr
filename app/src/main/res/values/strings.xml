@@ -882,6 +882,7 @@
     <string name="tv_issue_reopen">Reopen issue</string>
     <string name="tv_issue_deleted">Issue deleted</string>
     <string name="tv_issue_action_failed">The issue could not be updated. Try again.</string>
+    <string name="tv_issue_read_comments">Read comments</string>
     <string name="tv_settings_read_only_note">Change this in the phone app or the web client.</string>
     <string name="tv_settings_disconnect_confirm">Yes, disconnect</string>
     <string name="tv_settings_start_library_scan">Start library scan</string>

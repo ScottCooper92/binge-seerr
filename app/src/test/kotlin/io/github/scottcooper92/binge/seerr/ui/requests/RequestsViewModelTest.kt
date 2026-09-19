@@ -90,7 +90,7 @@ class RequestsViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = RequestsViewModel(connection, TitleCache())
+        val vm = RequestsViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher)
         viewModels.put("requests", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -214,7 +214,7 @@ class RequestsViewModelTest {
             // Fail only the ViewModel's own resolve, not the connect() probe above.
             authShouldFail.set(true)
             val probes = authReads()
-            val vm = RequestsViewModel(connection, TitleCache())
+            val vm = RequestsViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher)
             viewModels.put("requests", vm)
             // Every emission, not the current value: Loading is also stateIn's seed, so sampling
             // uiState cannot tell "held at Loading" apart from "has not propagated yet".

@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -38,6 +41,7 @@ class SettingsViewModel
         private val prefs: NotificationPrefs,
         scheduler: NotificationScheduler,
         private val notifier: SeerrNotifier,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val fetchTrigger = MutableStateFlow(0)
 
@@ -83,7 +87,8 @@ class SettingsViewModel
                 } else {
                     SettingsUiState.Ready(summary, server, config, notifications)
                 }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, SettingsUiState.Loading)
+            }.flowOn(dispatcher)
+                .stateIn(viewModelScope, SharingStarted.Lazily, SettingsUiState.Loading)
 
         fun setScreenVisible(visible: Boolean) {
             if (visible) {
@@ -101,10 +106,10 @@ class SettingsViewModel
             signal: NotificationSignal,
             value: Boolean,
         ) {
-            viewModelScope.launch { prefs.setEnabled(signal, value) }
+            viewModelScope.launch(dispatcher) { prefs.setEnabled(signal, value) }
         }
 
         fun disconnect() {
-            viewModelScope.launch { connection.disconnect() }
+            viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
     }
