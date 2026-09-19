@@ -197,7 +197,7 @@ private fun MediaServerLinkSheet(
     var password by rememberSaveable { mutableStateOf("") }
     BingeBottomSheet(onDismissRequest = onDismiss) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(resolvedContentInset()),
+            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             Text(

@@ -19,7 +19,6 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 
@@ -44,7 +43,7 @@ internal fun SetupLinkSheet(
     }
     BingeBottomSheet(onDismissRequest = onCancel) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(resolvedContentInset()),
+            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

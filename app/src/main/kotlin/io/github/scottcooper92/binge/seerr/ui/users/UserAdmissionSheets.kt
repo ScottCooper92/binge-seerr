@@ -34,7 +34,6 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
@@ -153,7 +152,7 @@ internal fun CreateUserSheetContent(
                 .fillMaxWidth()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(resolvedContentInset()),
+                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(R.string.users_create_title), style = MaterialTheme.typography.titleLarge)
