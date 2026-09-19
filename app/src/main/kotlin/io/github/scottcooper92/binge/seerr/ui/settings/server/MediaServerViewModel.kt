@@ -11,14 +11,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryEnabledBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanCommandBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -28,7 +24,7 @@ import javax.inject.Inject
 /**
  * The media-server page: the connection as an editor over `settings/plex` or `settings/jellyfin`
  * (which the server's kind decides), with the libraries, the full scan and the Plex server picker
- * beside it in [extras]. The two library writes exist in two shapes — `develop` grew a per-library
+ * beside it in the extras. The two library writes exist in two shapes — `develop` grew a per-library
  * `PUT` and a `library/sync`, a released server still takes `enable=` and `sync=` on the `GET` —
  * so each tries the newer one first and falls back on a 404, which is how a released server says
  * the route is not there.
@@ -39,12 +35,9 @@ class MediaServerViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
-    ) : EditorViewModel<MediaServerForm>(dispatcher) {
+    ) : ExtrasEditorViewModel<MediaServerForm, MediaServerExtras>(MediaServerExtras(), dispatcher) {
         /** Test seam for the scan's poll; the constructor is Hilt's. */
         internal var scanPollMillis: Long = SCAN_POLL_MILLIS
-
-        private val extrasState = MutableStateFlow(MediaServerExtras())
-        val extras: StateFlow<MediaServerExtras> = extrasState.asStateFlow()
 
         private var kind = MediaServerKind.Plex
         private var scanPoll: Job? = null
@@ -96,8 +89,8 @@ class MediaServerViewModel
             id: String,
             enabled: Boolean,
         ) {
-            if (id in extrasState.value.busyLibraryIds) return
-            extrasState.update { it.copy(busyLibraryIds = it.busyLibraryIds + id) }
+            if (id in currentExtras().busyLibraryIds) return
+            editExtras { it.copy(busyLibraryIds = it.busyLibraryIds + id) }
             viewModelScope.launch(dispatcher) {
                 val result =
                     runCatching {
@@ -111,14 +104,15 @@ class MediaServerViewModel
                             released = {
                                 libraryWriteMutex.withLock {
                                     val enabledIds =
-                                        extrasState.value.libraries
+                                        currentExtras()
+                                            .libraries
                                             .filter { if (it.id == id) enabled else it.enabled }
                                             .map { it.id }
                                     val libraries = api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
                                     // Folded into local state before the lock is released, so the next
                                     // waiting toggle computes its enabled set from this one's result
                                     // rather than the snapshot from before it landed.
-                                    extrasState.update {
+                                    editExtras {
                                         it.copy(
                                             libraries = libraries.map { dto -> dto.toLibrary() },
                                             busyLibraryIds = it.busyLibraryIds - id,
@@ -132,7 +126,7 @@ class MediaServerViewModel
                 result.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
                 // Libraries and busyLibraryIds must land in the same emission: a collector observing
                 // libraries updated but the id still busy (or vice versa) is an inconsistent state.
-                extrasState.update {
+                editExtras {
                     it.copy(
                         libraries = result.getOrNull()?.map { dto -> dto.toLibrary() } ?: it.libraries,
                         busyLibraryIds = it.busyLibraryIds - id,
@@ -150,8 +144,8 @@ class MediaServerViewModel
          * Overseerr's own web client does, and reads them under the same lock a toggle takes.
          */
         fun syncLibraries() {
-            if (extrasState.value.syncingLibraries) return
-            extrasState.update { it.copy(syncingLibraries = true) }
+            if (currentExtras().syncingLibraries) return
+            editExtras { it.copy(syncingLibraries = true) }
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     val api = connection.api()
@@ -160,7 +154,8 @@ class MediaServerViewModel
                         released = {
                             libraryWriteMutex.withLock {
                                 val enabledIds =
-                                    extrasState.value.libraries
+                                    currentExtras()
+                                        .libraries
                                         .filter { it.enabled }
                                         .map { it.id }
                                 // Nothing enabled needs no parameter: the route's own answer to an absent
@@ -178,7 +173,7 @@ class MediaServerViewModel
                     setLibraries(libraries)
                     notify(EditorEvent.Notice(R.string.server_settings_libraries_synced))
                 }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
-                extrasState.update { it.copy(syncingLibraries = false) }
+                editExtras { it.copy(syncingLibraries = false) }
             }
         }
 
@@ -196,7 +191,7 @@ class MediaServerViewModel
 
         /** A running scan is followed until it stops; the poll lives with the page and ends with it. */
         private fun applyScan(scan: LibraryScan) {
-            extrasState.update { it.copy(scan = scan) }
+            editExtras { it.copy(scan = scan) }
             if (!scan.running) {
                 scanPoll?.cancel()
                 scanPoll = null
@@ -211,7 +206,7 @@ class MediaServerViewModel
                         // A failed poll is not an answer: the last state stands and the next tick asks again.
                         val latest = runCatching { connection.api().scanStatus(kind.apiSegment).toScan() }.getOrNull()
                         if (latest != null) {
-                            extrasState.update { it.copy(scan = latest) }
+                            editExtras { it.copy(scan = latest) }
                             running = latest.running
                         }
                     }
@@ -219,16 +214,16 @@ class MediaServerViewModel
         }
 
         fun openServerPicker() {
-            extrasState.update { it.copy(picker = PlexServerPicker.Loading) }
+            editExtras { it.copy(picker = PlexServerPicker.Loading) }
             viewModelScope.launch(dispatcher) {
                 val picker =
                     runCatching { connection.api().plexServers().toChoices() }
                         .fold(onSuccess = { PlexServerPicker.Ready(it) }, onFailure = { PlexServerPicker.Failed(it.toSeerrError()) })
-                extrasState.update { current -> if (current.picker == null) current else current.copy(picker = picker) }
+                editExtras { current -> if (current.picker == null) current else current.copy(picker = picker) }
             }
         }
 
-        fun closeServerPicker() = extrasState.update { it.copy(picker = null) }
+        fun closeServerPicker() = editExtras { it.copy(picker = null) }
 
         /** Fills the address from a picked connection; the name follows once the server reaches it on save. */
         fun chooseConnection(
@@ -240,12 +235,12 @@ class MediaServerViewModel
         }
 
         private fun setLibraries(libraries: List<SeerrLibraryDto>) =
-            extrasState.update {
+            editExtras {
                 it.copy(libraries = libraries.map { dto -> dto.toLibrary() })
             }
 
         private fun replace(updated: SeerrLibraryDto): List<SeerrLibraryDto> =
-            extrasState.value.libraries.map { library ->
+            currentExtras().libraries.map { library ->
                 if (library.id ==
                     updated.id
                 ) {
