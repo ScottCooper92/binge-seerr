@@ -137,7 +137,7 @@ app:media_clear_confirm_title  9ff8d543b40a
 app:media_clear_data  a45086979c4a
 app:media_cleared  e7884daadd4a
 app:media_delete_files  d3146291f128
-app:media_delete_files_confirm_message  c995cd570b20
+app:media_delete_files_confirm_message  69ff418b0c08
 app:media_delete_files_confirm_title  5c024d2120d2
 app:media_delete_files_second_message  ee49c02e3821
 app:media_delete_files_second_title  22d3e0dbdfd6
@@ -145,6 +145,7 @@ app:media_files_deleted  dad1dd4af3f4
 app:media_instance_standard  ef6691545d2c
 app:media_manage  d82d731503ec
 app:media_mark_as  74fc19463b2e
+app:media_mark_as_scope_caption  0e7a1f06ebe3
 app:media_open_radarr  e669d99f5781
 app:media_open_sonarr  5055bbebb9bf
 app:media_state_available  e674447337e8
@@ -234,7 +235,7 @@ app:request_retried  14fef0857e6c
 app:request_retry  0bc82cc4bfeb
 app:request_root_folder  6d92528b34e3
 app:request_season_number  957bef5ec63a
-app:request_seasons  c15527b19b99
+app:request_seasons  fe23b7eda6f7
 app:request_server  aef7de28d529
 app:request_siblings_clear_data_note  e2ff59b20a28
 app:request_siblings_title  3977dd16bba5
@@ -245,6 +246,7 @@ app:request_state_failed  031a8f0f659d
 app:request_state_pending  331551b0de41
 app:request_state_queued  661ff40a07e0
 app:request_tags  1331275bc537
+app:request_title_status_caption  4ae0d8f6b950
 app:request_updated_at  3a5ecca188c0
 app:requests_empty_all  8e80748e202b
 app:requests_empty_approved  8a0902e6b88f

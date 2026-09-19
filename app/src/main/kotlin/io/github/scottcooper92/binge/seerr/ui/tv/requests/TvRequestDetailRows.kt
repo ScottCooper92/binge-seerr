@@ -39,9 +39,17 @@ import io.github.scottcooper92.binge.seerr.ui.state.tone
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
 import com.binge.designsystem.R as DesR
 
-/** The request's own state (and 4K), then who asked and when. */
+/**
+ * The request's own state (and 4K), then who asked and when.
+ *
+ * [hasSeasons] mirrors the phone screen's [io.github.scottcooper92.binge.seerr.ui.requests.RequestHeadline]
+ * caption: the chip is the title's own status across every request, not the seasons below.
+ */
 @Composable
-internal fun TvRequestDetailFacts(item: RequestItem) {
+internal fun TvRequestDetailFacts(
+    item: RequestItem,
+    hasSeasons: Boolean,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xxs))) {
         val chip = item.statusChip()
         Row(
@@ -56,6 +64,13 @@ internal fun TvRequestDetailFacts(item: RequestItem) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        if (hasSeasons) {
+            Text(
+                text = stringResource(R.string.request_title_status_caption),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         Text(
             text =
