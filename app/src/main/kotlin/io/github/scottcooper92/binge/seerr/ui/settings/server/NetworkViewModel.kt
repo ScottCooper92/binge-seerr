@@ -2,7 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Inject
 
 /** The network page: the switches, and on Seerr 3 the proxy and the DNS cache, saved as one record. */
@@ -11,7 +13,8 @@ class NetworkViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-    ) : EditorViewModel<NetworkForm>() {
+        @IoDispatcher dispatcher: CoroutineDispatcher,
+    ) : EditorViewModel<NetworkForm>(dispatcher) {
         init {
             reload()
         }

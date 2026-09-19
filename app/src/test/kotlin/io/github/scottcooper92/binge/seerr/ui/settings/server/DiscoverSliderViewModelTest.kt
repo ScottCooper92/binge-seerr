@@ -58,7 +58,7 @@ class DiscoverSliderViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(id: Int?): DiscoverSliderViewModel {
-        val vm = DiscoverSliderViewModel(seerr.connection(this), id)
+        val vm = DiscoverSliderViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, id)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

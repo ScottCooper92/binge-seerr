@@ -4,10 +4,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +30,8 @@ class ServerGeneralViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-    ) : EditorViewModel<ServerGeneralSettings>() {
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+    ) : EditorViewModel<ServerGeneralSettings>(dispatcher) {
         private val extrasState = MutableStateFlow(ServerGeneralExtras())
         val extras: StateFlow<ServerGeneralExtras> = extrasState.asStateFlow()
 
@@ -70,7 +73,7 @@ class ServerGeneralViewModel
         fun regenerateApiKey() {
             if (extrasState.value.apiKey.regenerating) return
             extrasState.update { it.copy(apiKey = it.apiKey.copy(regenerating = true)) }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection
                         .api()

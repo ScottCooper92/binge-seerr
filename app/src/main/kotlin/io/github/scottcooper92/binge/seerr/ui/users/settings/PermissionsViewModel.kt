@@ -6,9 +6,11 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.UserStore
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserPermissionsBody
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -23,8 +25,9 @@ class PermissionsViewModel
     constructor(
         private val connection: SeerrConnection,
         private val store: UserStore,
+        @IoDispatcher dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
-    ) : EditorViewModel<PermissionSettings>() {
+    ) : EditorViewModel<PermissionSettings>(dispatcher) {
         init {
             reload()
         }

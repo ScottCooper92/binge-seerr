@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -51,8 +52,13 @@ sealed interface EditorEvent {
  * The shape every per-user settings page shares: load a record, edit a draft of it, save the
  * draft and adopt what the server answered as the new baseline. A page supplies the two calls
  * and, where the server's answer is not the record, what to adopt.
+ *
+ * [dispatcher] carries [reload] and [save] instead of `viewModelScope`'s own
+ * `Dispatchers.Main.immediate` — see `RequestModeration`'s KDoc and #177/#370.
  */
-abstract class EditorViewModel<T> : ViewModel() {
+abstract class EditorViewModel<T>(
+    private val dispatcher: CoroutineDispatcher,
+) : ViewModel() {
     private val state = MutableStateFlow<EditorUiState<T>>(EditorUiState.Loading)
     val uiState: StateFlow<EditorUiState<T>> = state.asStateFlow()
 
@@ -69,7 +75,7 @@ abstract class EditorViewModel<T> : ViewModel() {
 
     fun reload() {
         state.value = EditorUiState.Loading
-        viewModelScope.launch {
+        viewModelScope.launch(dispatcher) {
             runCatching { load() }
                 .onSuccess { state.value = EditorUiState.Ready(draft = it, saved = it) }
                 .onFailure { state.value = EditorUiState.Error(it.toSeerrError()) }
@@ -86,7 +92,7 @@ abstract class EditorViewModel<T> : ViewModel() {
         val ready = state.value as? EditorUiState.Ready<T> ?: return
         if (ready.saving || !ready.dirty || !canSave(ready.draft)) return
         state.value = ready.copy(saving = true)
-        viewModelScope.launch {
+        viewModelScope.launch(dispatcher) {
             runCatching { write(ready.draft) }
                 .onSuccess { adopted ->
                     state.value = EditorUiState.Ready(draft = adopted, saved = adopted)

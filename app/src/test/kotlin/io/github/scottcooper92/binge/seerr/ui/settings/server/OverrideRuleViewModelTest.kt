@@ -66,7 +66,7 @@ class OverrideRuleViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(id: Int?): OverrideRuleViewModel {
-        val vm = OverrideRuleViewModel(seerr.connection(this), id)
+        val vm = OverrideRuleViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, id)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

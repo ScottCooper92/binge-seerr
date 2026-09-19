@@ -8,8 +8,10 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -45,6 +48,7 @@ class RequestsViewModel
     constructor(
         private val connection: SeerrConnection,
         private val titles: TitleCache,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
@@ -61,7 +65,7 @@ class RequestsViewModel
         private val refreshedVersions = ConcurrentHashMap<RequestFilter, Int>()
 
         val moderation =
-            RequestModeration(scope = viewModelScope, connection = connection) {
+            RequestModeration(scope = viewModelScope, dispatcher = dispatcher, connection = connection) {
                 countsRefresh.value++
                 listVersionState.update { it + 1 }
             }
@@ -83,6 +87,10 @@ class RequestsViewModel
          * permission changed in the web client; null while unresolved (including after a failed
          * re-resolve), so nothing downstream acts on a guessed, all-permissive scope. The profile is
          * not re-read: `hasBlocklist` follows the server's version, which an upgrade restarts anyway.
+         *
+         * `flowOn(dispatcher)` for the same reason [moderation] takes one (#177): without it, this
+         * flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`, which
+         * can outlive a cleared scope same as a plain `launch` would.
          */
         private val scope: StateFlow<ListScope?> =
             refreshTrigger
@@ -101,7 +109,8 @@ class RequestsViewModel
                             },
                         )
                     }
-                }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+                }.flowOn(dispatcher)
+                .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
         private val streams: Map<RequestFilter, Flow<PagingData<RequestItem>>> =
             RequestFilter.entries.associateWith { filter ->
@@ -131,7 +140,8 @@ class RequestsViewModel
                                 ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) },
                         )
                     }
-                }.onStart { emit(null) }
+                }.flowOn(dispatcher)
+                .onStart { emit(null) }
 
         val uiState: StateFlow<RequestsUiState> =
             combine(

@@ -14,9 +14,11 @@ import io.github.scottcooper92.binge.seerr.data.ISSUES_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.data.IssueListQuery
 import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.data.IssuesRemoteMediator
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -48,6 +51,7 @@ class IssuesViewModel
         private val connection: SeerrConnection,
         private val titles: TitleCache,
         private val store: IssueStore,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(IssueFilter.Open)
         private val selectedSort = MutableStateFlow(IssueSort.Added)
@@ -72,7 +76,8 @@ class IssuesViewModel
                         val user = runCatching { connection.refreshAuthenticatedUser() }.getOrNull()
                         emit(IssueListScope(permissions = user.toPermissions(), currentUserId = user?.id))
                     }
-                }.stateIn(viewModelScope, SharingStarted.Lazily, IssueListScope())
+                }.flowOn(dispatcher)
+                .stateIn(viewModelScope, SharingStarted.Lazily, IssueListScope())
 
         private val streams: Map<IssueFilter, Flow<PagingData<IssueItem>>> =
             IssueFilter.entries.associateWith { filter ->
@@ -105,7 +110,8 @@ class IssuesViewModel
                             },
                         )
                     }
-                }.onStart { emit(null) }
+                }.flowOn(dispatcher)
+                .onStart { emit(null) }
 
         val uiState: StateFlow<IssuesUiState> =
             combine(
@@ -160,7 +166,7 @@ class IssuesViewModel
         ) {
             if (item.id in actingState.value) return
             actingState.update { it + item.id }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val result = runCatching { write() }
                 actingState.update { it - item.id }
                 result
