@@ -56,7 +56,10 @@ class SettingsViewModelTest {
     }
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
 
     private fun serve(
         path: String,
@@ -106,7 +109,7 @@ class SettingsViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("s.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         if (session) {
             connection.logIn(seerr.url("/"), SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()

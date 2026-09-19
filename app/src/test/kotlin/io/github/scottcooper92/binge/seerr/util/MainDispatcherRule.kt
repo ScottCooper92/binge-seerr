@@ -26,10 +26,12 @@ import org.junit.runner.Description
  * ones driving a real `MockWebServer` - moved to an in-memory transport ([FakeSeerrServer])
  * instead: `HubViewModelTest`'s hang on `DownloadsPoller`'s unbounded loop is gone (it takes a
  * test-visible `DownloadsPollerTicker` now), and the other nine no longer resume a Retrofit call
- * on a real socket's thread after teardown. A smaller version of that second race can still occur
- * - OkHttp still answers on its own thread, so a call a test never awaits directly can still
- * outlive `ViewModelStore.clear()` - which is why #177 stays open rather than closing on the
- * transport move alone; see it for the residual shape and the harder fix.
+ * on a real socket's thread after teardown. OkHttp still answers each call on its own thread even
+ * against the in-memory fake, though, so a call a test never awaits directly - a fire-and-forget
+ * `launch` - could still be resuming when this rule reset Main. Each of the ten files' teardown
+ * now calls `FakeSeerrServer.awaitIdle` after clearing its view models: it drains every OkHttp
+ * dispatcher a test built before this rule's `finished()` runs, so that resumption always finds a
+ * live Main to land on rather than racing its reset (#177).
  */
 class MainDispatcherRule(
     val dispatcher: TestDispatcher = UnconfinedTestDispatcher(),

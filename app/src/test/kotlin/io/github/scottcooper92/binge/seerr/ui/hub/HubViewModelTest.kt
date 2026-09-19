@@ -62,7 +62,10 @@ class HubViewModelTest {
     }
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
 
     private fun serve(
         path: String,
@@ -101,7 +104,13 @@ class HubViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, health = monitor, testTransport = seerr::interceptor),
+                apis =
+                    SeerrApiFactory(
+                        logRequests = false,
+                        health = monitor,
+                        testTransport = seerr::interceptor,
+                        testDispatcher = seerr::newDispatcher,
+                    ),
                 healthMonitor = monitor,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
@@ -169,7 +178,13 @@ class HubViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, health = monitor, testTransport = seerr::interceptor),
+                apis =
+                    SeerrApiFactory(
+                        logRequests = false,
+                        health = monitor,
+                        testTransport = seerr::interceptor,
+                        testDispatcher = seerr::newDispatcher,
+                    ),
                 healthMonitor = monitor,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
