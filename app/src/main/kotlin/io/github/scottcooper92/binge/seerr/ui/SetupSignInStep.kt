@@ -34,6 +34,7 @@ import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
@@ -46,7 +47,7 @@ internal fun SetupSignInStep(
     actions: SetupActions,
     contentPadding: PaddingValues,
 ) {
-    val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    val inset = resolvedContentInset()
     Column(
         modifier =
             Modifier
@@ -102,7 +103,7 @@ private fun ServerHeader(
             modifier =
                 Modifier
                     .align(Alignment.BottomStart)
-                    .padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
+                    .padding(horizontal = resolvedContentInset()),
         ) {
             Text(server.title, style = MaterialTheme.typography.headlineSmall)
             Text(

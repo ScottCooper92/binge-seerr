@@ -26,6 +26,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -66,7 +67,7 @@ private fun AboutContent(
     onOpenUrl: (String) -> Unit,
     contentPadding: PaddingValues,
 ) {
-    val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    val inset = resolvedContentInset()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         SettingsGroup(

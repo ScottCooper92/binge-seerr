@@ -59,6 +59,7 @@ import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.QuotaSection
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
@@ -160,7 +161,7 @@ private fun UserDetailContent(
     contentPadding: PaddingValues,
 ) {
     val context = LocalContext.current
-    val inset = dimensionResource(DesR.dimen.screen_content_inset)
+    val inset = resolvedContentInset()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = dimensionResource(DesR.dimen.padding_l)) + contentPadding,

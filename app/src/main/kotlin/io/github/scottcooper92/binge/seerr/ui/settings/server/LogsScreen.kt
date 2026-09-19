@@ -46,6 +46,7 @@ import com.binge.designsystem.component.BingeFilterChipPager
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import io.github.scottcooper92.binge.seerr.R
@@ -101,7 +102,7 @@ fun LogsScreen(
                     onQueryChange = actions.onSearchChange,
                     onClear = { actions.onSearchChange("") },
                     placeholder = stringResource(R.string.server_settings_logs_search),
-                    modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
+                    modifier = Modifier.padding(horizontal = resolvedContentInset()),
                 )
             },
             headerBackground = Color.Transparent,
@@ -166,7 +167,7 @@ private fun LogsBody(
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
             ) {
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

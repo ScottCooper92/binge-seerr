@@ -14,6 +14,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -49,7 +50,7 @@ fun NotificationAgentsScreen(
                         SettingsGroup(
                             title = stringResource(R.string.settings_group_notifications),
                             rows = state.agents.map { agentRow(it, actions) },
-                            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
+                            modifier = Modifier.padding(horizontal = resolvedContentInset()),
                         )
                         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
                     }

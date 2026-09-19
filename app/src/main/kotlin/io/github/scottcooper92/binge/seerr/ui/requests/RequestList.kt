@@ -37,6 +37,7 @@ import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
@@ -72,7 +73,7 @@ internal fun RequestsBody(
         lazyItems.itemCount > 0 -> RequestList(lazyItems, scope, actingIds, onOpen, onOpenActions, onReconnect, contentPadding)
         refreshState is LoadState.Loading ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
                 modifier = modifier,
             )
         refreshState is LoadState.Error ->
@@ -103,7 +104,7 @@ private fun RequestList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(DesR.dimen.screen_content_inset)) + contentPadding,
+        contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
