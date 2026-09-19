@@ -92,6 +92,7 @@ class SetupViewModelTest {
                     ),
                 savedState = savedState,
                 cipher = cipher,
+                dispatcher = mainDispatcherRule.dispatcher,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect { state -> seen?.add(state) } }
