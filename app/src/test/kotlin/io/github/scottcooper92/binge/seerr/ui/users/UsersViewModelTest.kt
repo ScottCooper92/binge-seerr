@@ -78,7 +78,10 @@ class UsersViewModelTest {
     }
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
 
     private suspend fun TestScope.viewModel(): UsersViewModel {
         val connection =
@@ -88,7 +91,7 @@ class UsersViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("u.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = UsersViewModel(connection, cache, mainDispatcherRule.dispatcher)

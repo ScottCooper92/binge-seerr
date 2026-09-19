@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -19,7 +20,13 @@ class HubAutoRetryTest {
         health: MutableStateFlow<ConnectionHealth>,
         visible: MutableStateFlow<Boolean> = MutableStateFlow(true),
         retry: () -> Unit,
-    ) = HubAutoRetry(scope = backgroundScope, health = health, visible = visible, retry = retry)
+    ) = HubAutoRetry(
+        scope = backgroundScope,
+        health = health,
+        visible = visible,
+        dispatcher = UnconfinedTestDispatcher(testScheduler),
+        retry = retry,
+    )
 
     @Test
     fun `retries on a bounded backoff while unreachable or not loaded, and never while healthy or hidden`() =

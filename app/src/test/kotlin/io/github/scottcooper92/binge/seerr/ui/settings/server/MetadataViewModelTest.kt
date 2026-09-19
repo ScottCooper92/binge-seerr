@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -55,8 +55,8 @@ class MetadataViewModelTest {
         return vm
     }
 
-    private suspend fun MetadataViewModel.awaitReady(): EditorUiState.Ready<MetadataForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<MetadataForm>
+    private suspend fun MetadataViewModel.awaitReady(): ExtrasEditorUiState.Ready<MetadataForm, MetadataExtras> =
+        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving } as ExtrasEditorUiState.Ready<MetadataForm, MetadataExtras>
 
     @Test
     fun `the providers are read and put back by their codes`() =

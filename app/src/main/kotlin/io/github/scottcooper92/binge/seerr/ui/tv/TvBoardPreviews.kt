@@ -60,7 +60,7 @@ internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {}, {}, {})
 internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {})
-internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
     HubServer(
@@ -104,6 +104,7 @@ internal fun request(
     seasons: List<Int> = emptyList(),
     mediaStatus: SeerrMediaStatusCode? = null,
     download: RequestDownload? = null,
+    now: Long = NOW,
 ) = RequestItem(
     id = id,
     tmdbId = id,
@@ -113,7 +114,7 @@ internal fun request(
     year = "2023",
     requestedBy = "ana",
     requestedById = 3,
-    requestedAtMillis = NOW - id * HOUR_MILLIS,
+    requestedAtMillis = now - id * HOUR_MILLIS,
     status = status,
     mediaStatus = mediaStatus,
     download = download,

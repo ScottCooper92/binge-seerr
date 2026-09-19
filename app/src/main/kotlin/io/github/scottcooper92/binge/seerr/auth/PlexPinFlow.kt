@@ -26,9 +26,9 @@ data class PlexPin(
 
 /**
  * The plex.tv side of a Plex sign-in. [start] mints a PIN and [awaitToken] polls it until the
- * user approves it in the browser, or plex.tv expires it. The token then goes to Seerr's
- * `auth/plex` through [SeerrConnection.logInWithPlex]; nothing here talks to the Seerr server.
- * The identity is resolved per flow because its identifier is minted on first use.
+ * user approves it, or plex.tv expires it. The token then goes to Seerr's `auth/plex` through
+ * [SeerrConnection.logInWithPlex]; nothing here talks to the Seerr server. The identity is
+ * resolved per flow because its identifier is minted on first use.
  */
 class PlexPinFlow(
     private val identity: suspend () -> PlexClientIdentity,
@@ -36,9 +36,13 @@ class PlexPinFlow(
     private val pollInterval: Duration = 2.seconds,
     private val now: () -> Instant = Instant::now,
 ) {
-    suspend fun start(): PlexPin {
+    /**
+     * [forLink] mints the short PIN meant to be typed at plex.tv/link — a television, with no
+     * browser to open — rather than the long one the phone embeds in a URL and opens directly.
+     */
+    suspend fun start(forLink: Boolean = false): PlexPin {
         val identity = identity()
-        return apis(identity).createPin().toPin(identity)
+        return apis(identity).createPin(strong = !forLink).toPin(identity)
     }
 
     /**

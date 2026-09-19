@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -32,6 +35,7 @@ class HubViewModel
     constructor(
         private val connection: SeerrConnection,
         private val loader: HubOverviewLoader,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val pollerTicker: DownloadsPollerTicker = DownloadsPollerTicker(),
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
@@ -42,21 +46,24 @@ class HubViewModel
         private val reloadTrigger: Flow<Unit> =
             combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, _ -> Unit }
 
+        /** `flowOn(dispatcher)` per #177/#370: without it, [HubOverviewLoader.server]'s suspend call resumes on Main. */
         private val server: Flow<HubServer?> =
-            reloadTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }
+            reloadTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }.flowOn(dispatcher)
 
         private val health: Flow<ConnectionHealth> =
             combine(connection.health, isProbing) { health, probing ->
                 if (probing) ConnectionHealth.Checking else health.toConnectionHealth()
             }
 
+        /** Same `flowOn(dispatcher)` reason as [server]: [HubOverviewLoader.load] suspends too. */
         private val overview: Flow<HubOverview> =
-            reloadTrigger.flatMapLatest {
-                flow {
-                    emit(HubOverview())
-                    emit(loader.load())
-                }
-            }
+            reloadTrigger
+                .flatMapLatest {
+                    flow {
+                        emit(HubOverview())
+                        emit(loader.load())
+                    }
+                }.flowOn(dispatcher)
 
         /** A count read on becoming visible, overriding the overview's until the next re-check reloads everything. */
         private val refreshedPendingCount = MutableStateFlow<Int?>(null)
@@ -65,6 +72,7 @@ class HubViewModel
             DownloadsPoller(
                 scope = viewModelScope,
                 healthy = connection.health.map { it == SeerrConnectionHealth.Healthy },
+                dispatcher = dispatcher,
                 fetch = loader::activeDownloads,
                 ticker = pollerTicker,
             )
@@ -96,19 +104,27 @@ class HubViewModel
             uiState.map { (it as? HubUiState.Ready)?.health ?: ConnectionHealth.Checking }
 
         init {
-            HubAutoRetry(scope = viewModelScope, health = effectiveHealth, visible = screenVisible, retry = ::recheck)
+            HubAutoRetry(
+                scope = viewModelScope,
+                health = effectiveHealth,
+                visible = screenVisible,
+                dispatcher = dispatcher,
+                retry = ::recheck,
+            )
         }
 
         fun setScreenVisible(visible: Boolean) {
             screenVisible.value = visible
             downloadsPoller.setScreenVisible(visible)
-            if (visible) viewModelScope.launch { loader.pendingRequestCount()?.let { refreshedPendingCount.value = it } }
+            if (visible) {
+                viewModelScope.launch(dispatcher) { loader.pendingRequestCount()?.let { refreshedPendingCount.value = it } }
+            }
         }
 
         /** Re-probes the server and reloads the overview: the "can't reach server" retry. */
         fun recheck() {
             refreshedPendingCount.value = null
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 isProbing.value = true
                 try {
                     // The probe's outcome reaches health through the cached client's interceptor.
@@ -121,7 +137,7 @@ class HubViewModel
         }
 
         fun disconnect() {
-            viewModelScope.launch { connection.disconnect() }
+            viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
     }
 

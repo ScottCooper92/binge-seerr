@@ -38,7 +38,7 @@ class LinkedAccountsViewModelTest {
     private var approved = false
     private val plexTv =
         object : PlexTvApi {
-            override suspend fun createPin(): PlexPinDto = PlexPinDto(id = 5, code = "ABCD")
+            override suspend fun createPin(strong: Boolean): PlexPinDto = PlexPinDto(id = 5, code = "ABCD")
 
             override suspend fun pin(id: Long): PlexPinDto = PlexPinDto(id = id, code = "ABCD", authToken = "tok".takeIf { approved })
         }
@@ -63,7 +63,7 @@ class LinkedAccountsViewModelTest {
                 apis = { plexTv },
                 pollInterval = 10.milliseconds,
             )
-        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, 8)
+        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, mainDispatcherRule.dispatcher, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

@@ -62,7 +62,10 @@ class HubViewModelTest {
     }
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
 
     private fun serve(
         path: String,
@@ -101,11 +104,17 @@ class HubViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, health = monitor, testTransport = seerr::interceptor),
+                apis =
+                    SeerrApiFactory(
+                        logRequests = false,
+                        health = monitor,
+                        testTransport = seerr::interceptor,
+                        testDispatcher = seerr::newDispatcher,
+                    ),
                 healthMonitor = monitor,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = HubViewModel(connection, HubOverviewLoader(connection), boundedTicker)
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), mainDispatcherRule.dispatcher, boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -169,12 +178,18 @@ class HubViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, health = monitor, testTransport = seerr::interceptor),
+                apis =
+                    SeerrApiFactory(
+                        logRequests = false,
+                        health = monitor,
+                        testTransport = seerr::interceptor,
+                        testDispatcher = seerr::newDispatcher,
+                    ),
                 healthMonitor = monitor,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         serve("/api/v1/auth/me", "", code = code)
-        val vm = HubViewModel(connection, HubOverviewLoader(connection), boundedTicker)
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), mainDispatcherRule.dispatcher, boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

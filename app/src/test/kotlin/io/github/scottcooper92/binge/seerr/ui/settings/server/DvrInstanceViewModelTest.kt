@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -77,8 +77,10 @@ class DvrInstanceViewModelTest {
         return vm
     }
 
-    private suspend fun DvrInstanceViewModel.awaitReady(): EditorUiState.Ready<DvrForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<DvrForm>
+    private suspend fun DvrInstanceViewModel.awaitReady(
+        where: (ExtrasEditorUiState.Ready<DvrForm, DvrExtras>) -> Boolean = { true },
+    ): ExtrasEditorUiState.Ready<DvrForm, DvrExtras> =
+        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving && where(it) } as ExtrasEditorUiState.Ready<DvrForm, DvrExtras>
 
     @Test
     fun `a new radarr starts on its port with nothing to pick from, and cannot be saved before a test`() =
@@ -88,7 +90,7 @@ class DvrInstanceViewModelTest {
             assertEquals("7878", draft.port)
             assertEquals("released", draft.minimumAvailability)
             assertNull(draft.seriesType)
-            assertNull(vm.extras.first().choices)
+            assertNull(vm.awaitReady().extras.choices)
             assertEquals(0, seerr.count("POST", "/api/v1/settings/radarr/test"))
 
             vm.edit { it.copy(name = "Movies", host = "radarr.local", apiKey = "r-key") }
@@ -114,7 +116,7 @@ class DvrInstanceViewModelTest {
             assertEquals("/radarr", sent.getValue("baseUrl").jsonPrimitive.content)
             assertEquals("r-key", sent.getValue("apiKey").jsonPrimitive.content)
 
-            val choices = vm.extras.first { it.choices != null }.choices
+            val choices = vm.awaitReady { it.extras.choices != null }.extras.choices
             assertEquals(listOf("HD-1080p", "Ultra-HD"), choices?.profiles?.map { it.label })
             assertEquals(listOf("/movies", "/movies-4k"), choices?.rootFolders)
             assertNull(choices?.languageProfiles)
@@ -138,7 +140,7 @@ class DvrInstanceViewModelTest {
             val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), notice.await())
-            vm.extras.first { it.choices != null }
+            vm.awaitReady { it.extras.choices != null }
             vm.edit { it.copy(profileId = 6, rootFolder = "/movies-4k", tagIds = setOf(2), is4k = true, minimumAvailability = "inCinemas") }
             val saved = awaitEvent(vm.events) { it is EditorEvent.Saved }
             vm.save()
@@ -172,9 +174,9 @@ class DvrInstanceViewModelTest {
             assertNull(ready.draft.minimumAvailability)
             assertEquals(
                 listOf("English"),
-                vm.extras
-                    .first { it.choices != null }
-                    .choices
+                vm
+                    .awaitReady { it.extras.choices != null }
+                    .extras.choices
                     ?.languageProfiles
                     ?.map { it.label },
             )
@@ -204,7 +206,7 @@ class DvrInstanceViewModelTest {
             val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), notice.await())
-            vm.extras.first { it.choices != null }
+            vm.awaitReady { it.extras.choices != null }
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())
@@ -226,7 +228,7 @@ class DvrInstanceViewModelTest {
             seerr.serve("PUT /api/v1/settings/sonarr/3", recordWithAnimeName)
             val vm = viewModel(ServiceType.Sonarr, id = 3)
             val ready = vm.awaitReady()
-            assertNull(vm.extras.first().choices)
+            assertNull(ready.extras.choices)
 
             vm.edit { it.copy(syncEnabled = !ready.draft.syncEnabled) }
             assertTrue(vm.awaitReady().draft.valid)
@@ -291,7 +293,7 @@ class DvrInstanceViewModelTest {
             val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(EditorEvent.Notice(io.github.scottcooper92.binge.seerr.R.string.server_settings_dvr_tested), notice.await())
-            vm.extras.first { it.choices != null }
+            vm.awaitReady { it.extras.choices != null }
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())

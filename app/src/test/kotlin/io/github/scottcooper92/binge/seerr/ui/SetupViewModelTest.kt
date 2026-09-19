@@ -58,7 +58,11 @@ class SetupViewModelTest {
     private val initiates = AtomicInteger(0)
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+        plex.awaitIdle()
+    }
 
     private lateinit var connection: SeerrConnection
 
@@ -77,7 +81,7 @@ class SetupViewModelTest {
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                             PlainCipher,
                         ),
-                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
+                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
                     quickConnectPollInterval = 10.milliseconds,
                 )
         }
@@ -87,7 +91,14 @@ class SetupViewModelTest {
                 plex =
                     PlexPinFlow(
                         identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
-                        apis = { plexTvApi(it, plex.url("/"), testTransport = plex.interceptor()) },
+                        apis = {
+                            plexTvApi(
+                                it,
+                                plex.url("/"),
+                                testTransport = plex.interceptor(),
+                                testDispatcher = plex.newDispatcher(),
+                            )
+                        },
                         pollInterval = 10.milliseconds,
                     ),
                 savedState = savedState,
@@ -313,8 +324,7 @@ class SetupViewModelTest {
             val vm = viewModel(savedState = saved, cipher = ReversingCipher)
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
+            scriptPendingQuickConnect()
 
             vm.connect()
             vm.awaitSignIn { it.link != null }
@@ -389,6 +399,27 @@ class SetupViewModelTest {
             val login = seerr.takeRequest()
             assertEquals("/api/v1/auth/plex", login.url.encodedPath)
             assertTrue(login.body.contains("tok3n"))
+        }
+
+    @Test
+    fun `the television's connect mints plex's short link pin, not the browser's long one`() =
+        runTest {
+            val vm = viewModel()
+            vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true}""")
+            repeat(3) { seerr.takeRequest() }
+            plex.enqueue(json("""{"id":41,"code":"JKLM","expiresAt":"2099-01-01T00:00:00Z"}"""))
+            plex.enqueue(json("""{"id":41,"code":"JKLM","authToken":"tok3n"}"""))
+            seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
+            seerr.enqueue(json("""{"version":"1.33.2"}"""))
+            seerr.enqueue(json("""{"localLogin":true}"""))
+
+            vm.connect(forLink = true)
+
+            val link = vm.awaitSignIn { it.link != null }.link as LinkFlow.Plex
+            assertEquals("JKLM", link.code)
+            val mint = plex.takeRequest()
+            assertEquals("/api/v2/pins?strong=false", mint.url.encodedPath + "?" + mint.url.encodedQuery)
+            assertEquals(SeerrVariant.Overseerr, vm.awaitConnected().credentials.variant)
         }
 
     @Test
@@ -513,6 +544,26 @@ class SetupViewModelTest {
             }
         }
 
+    /**
+     * A Quick Connect initiate plus a check that never approves, scripted by path rather than a
+     * fixed queue depth. The poll loop's `delay` shares the test's own virtual clock, so any number
+     * of extra iterations can run before a test reads state or cancels — with a fixed-size queue,
+     * one running dry mid-test drains into an unscripted 404, which `SeerrConnection` reads as the
+     * code having expired and forgets the pending link out from under the assertion (#378). Scripted
+     * by path, an extra poll iteration is just another "not yet" rather than a queue underrun.
+     */
+    private fun scriptPendingQuickConnect(
+        code: String = "123456",
+        secret: String = "abcdef12",
+    ) {
+        seerr.dispatcher = { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/auth/jellyfin/quickconnect/initiate" -> json("""{"code":"$code","secret":"$secret"}""")
+                else -> json("""{"authenticated":false}""")
+            }
+        }
+    }
+
     @Test
     fun `a cancelled link is forgotten, so the next start does not resume into it`() =
         runTest {
@@ -520,8 +571,7 @@ class SetupViewModelTest {
             val vm = viewModel(savedState = saved)
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
+            scriptPendingQuickConnect()
             vm.connect()
             vm.awaitSignIn { it.link != null }
 
@@ -538,8 +588,7 @@ class SetupViewModelTest {
             val vm = viewModel()
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
-            seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(json("""{"authenticated":false}"""))
+            scriptPendingQuickConnect()
             vm.connect()
             vm.awaitSignIn { it.link != null }
 

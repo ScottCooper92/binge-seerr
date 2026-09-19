@@ -157,10 +157,8 @@ private fun NetworkPage(onBack: () -> Unit) {
 private fun MetadataPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<MetadataViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val extras by viewModel.extras.collectAsStateWithLifecycle()
     MetadataScreen(
         state = state,
-        extras = extras,
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
         onTest = viewModel::test,
@@ -237,12 +235,10 @@ private fun GeneralPage(
 ) {
     val viewModel = hiltViewModel<ServerGeneralViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val extras by viewModel.extras.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val keyLabel = stringResource(R.string.server_settings_api_key)
     ServerGeneralScreen(
         state = state,
-        extras = extras,
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
         keyActions =
@@ -263,10 +259,8 @@ private fun MediaServerPage(
 ) {
     val viewModel = hiltViewModel<MediaServerViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val extras by viewModel.extras.collectAsStateWithLifecycle()
     MediaServerScreen(
         state = state,
-        extras = extras,
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
         serverActions =

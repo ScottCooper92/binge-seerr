@@ -39,7 +39,7 @@ class AboutViewModelTest {
     fun tearDown() = seerr.close()
 
     private suspend fun TestScope.ready(): AboutInfo {
-        val vm = AboutViewModel(seerr.connection(this))
+        val vm = AboutViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         return (vm.uiState.first { it is AboutUiState.Ready } as AboutUiState.Ready).info
     }
 

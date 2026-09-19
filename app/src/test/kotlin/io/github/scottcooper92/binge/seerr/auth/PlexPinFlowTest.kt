@@ -51,6 +51,19 @@ class PlexPinFlowTest {
         }
 
     @Test
+    fun `a link pin asks plex for the short typed code, not the long browser one`() =
+        runTest {
+            plex.enqueue(json("""{"id":41,"code":"ABCD","authToken":null}"""))
+            val sut = flow()
+
+            val pin = sut.start(forLink = true)
+
+            assertEquals("ABCD", pin.code)
+            val mint = plex.takeRequest()
+            assertEquals("/api/v2/pins?strong=false", mint.url.encodedPath + "?" + mint.url.encodedQuery)
+        }
+
+    @Test
     fun `a pin past its deadline, or one plex has forgotten, is expired`() =
         runTest {
             plex.enqueue(json("""{"id":41,"code":"ABCD","expiresAt":"2020-01-01T00:00:00Z"}"""))

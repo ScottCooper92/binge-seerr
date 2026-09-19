@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -48,6 +49,14 @@ class AdvancedRequestViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val seerr = FakeSeerrServer()
+
+    /**
+     * No [androidx.lifecycle.ViewModelStore] here - this file never clears its view models - but
+     * a call the test never awaited can still be resuming on OkHttp's own thread when the test
+     * method returns, so draining before `MainDispatcherRule` resets Main matters just the same (#177).
+     */
+    @After
+    fun tearDown() = seerr.awaitIdle()
 
     @Test
     fun `the picker opens on the default server of the title's kind, with that server's defaults`() =
@@ -175,7 +184,10 @@ class AdvancedRequestViewModelTest {
         if (connected) store.save(SeerrCredentials(seerr.url("/"), SeerrAuth.ApiKey("k3y"), SeerrVariant.Seerr))
         val vm =
             AdvancedRequestViewModel(
-                SeerrConnection(store, SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor)),
+                SeerrConnection(
+                    store,
+                    SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
+                ),
                 mainDispatcherRule.dispatcher,
                 request,
             )

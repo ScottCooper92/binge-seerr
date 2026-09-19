@@ -52,7 +52,7 @@ class BlocklistViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): BlocklistViewModel {
-        val vm = BlocklistViewModel(seerr.connection(this), TitleCache())
+        val vm = BlocklistViewModel(seerr.connection(this), TitleCache(), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

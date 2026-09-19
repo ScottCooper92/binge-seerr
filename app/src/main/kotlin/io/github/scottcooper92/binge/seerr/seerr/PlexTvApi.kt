@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Dispatcher
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -11,17 +12,24 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 /**
  * The two plex.tv calls behind a Plex sign-in: mint a PIN, then poll it until the user has
- * approved it in their browser and it carries a token. Seerr's own `auth/plex` takes that token.
- * Not a Seerr endpoint: it is plex.tv's public API, spoken to directly, as Seerr's web client does.
+ * approved it and it carries a token. Seerr's own `auth/plex` takes that token. Not a Seerr
+ * endpoint: it is plex.tv's public API, spoken to directly, as Seerr's web client does.
+ *
+ * [createPin]'s `strong` flag picks which PIN plex.tv mints: `true` is the long one meant to be
+ * embedded in a browser URL and approved with a click, never read by the user; `false` is the
+ * short one meant to be typed by hand at plex.tv/link, which is what a television flow needs.
  */
 interface PlexTvApi {
-    @POST("api/v2/pins?strong=true")
-    suspend fun createPin(): PlexPinDto
+    @POST("api/v2/pins")
+    suspend fun createPin(
+        @Query("strong") strong: Boolean,
+    ): PlexPinDto
 
     @GET("api/v2/pins/{id}")
     suspend fun pin(
@@ -64,12 +72,15 @@ private const val TIMEOUT_SECONDS = 15L
 /**
  * A [PlexTvApi] presenting [identity] on every call; [baseUrl] is a parameter so a test can script
  * plex.tv. [testTransport] is a second, narrower seam for that: no socket exists when it is set,
- * since every call is answered by it instead of the network (#337).
+ * since every call is answered by it instead of the network (#337). [testDispatcher] goes with it
+ * - a fresh one per call, tracked so a test can drain OkHttp's own thread before resetting
+ * `Dispatchers.Main` (#177) - see `FakeSeerrServer.awaitIdle`.
  */
 fun plexTvApi(
     identity: PlexClientIdentity,
     baseUrl: String = PLEX_TV_BASE_URL,
     testTransport: Interceptor? = null,
+    testDispatcher: Dispatcher? = null,
 ): PlexTvApi {
     val client =
         OkHttpClient
@@ -88,6 +99,7 @@ fun plexTvApi(
                         .build(),
                 )
             }.apply { testTransport?.let(::addInterceptor) }
+            .apply { testDispatcher?.let(::dispatcher) }
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()

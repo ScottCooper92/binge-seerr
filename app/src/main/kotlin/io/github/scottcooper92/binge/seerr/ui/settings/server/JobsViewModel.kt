@@ -5,11 +5,13 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobScheduleBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,6 +36,7 @@ class JobsViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val state = MutableStateFlow<JobsUiState>(JobsUiState.Loading)
         val uiState: StateFlow<JobsUiState> = state.asStateFlow()
@@ -51,7 +54,7 @@ class JobsViewModel
 
         fun reload() {
             state.value = JobsUiState.Loading
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().jobs().map { it.toServerJob() } }
                     .onSuccess { jobs -> setJobs(jobs) }
                     .onFailure { state.value = JobsUiState.Error(it.toSeerrError()) }
@@ -84,7 +87,7 @@ class JobsViewModel
         ) {
             if (readyWait?.isActive == true) return
             readyWait =
-                viewModelScope.launch {
+                viewModelScope.launch(dispatcher) {
                     if (state.value is JobsUiState.Error) reload()
                     when (val settled = state.first { it !is JobsUiState.Loading }) {
                         JobsUiState.Loading -> Unit
@@ -109,7 +112,7 @@ class JobsViewModel
             val ready = state.value as? JobsUiState.Ready ?: return
             if (id in ready.busyIds) return
             state.value = ready.copy(busyIds = ready.busyIds + id)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val outcome = runCatching { call(connection.api()).toServerJob() }
                 outcome.onSuccess { updated -> setJobs(jobs().map { if (it.id == updated.id) updated else it }) }
                 // Before the event, not after it: a terminal event is this action's last observable
@@ -132,7 +135,7 @@ class JobsViewModel
         private fun followRunning() {
             if (refresh?.isActive == true) return
             refresh =
-                viewModelScope.launch {
+                viewModelScope.launch(dispatcher) {
                     while (jobs().any { it.running }) {
                         delay(runningRefreshMillis)
                         runCatching { connection.api().jobs().map { it.toServerJob() } }.onSuccess { jobs ->

@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -93,8 +93,12 @@ class MediaServerViewModelTest {
         return vm
     }
 
-    private suspend fun MediaServerViewModel.awaitReady(): EditorUiState.Ready<MediaServerForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<MediaServerForm>
+    private suspend fun MediaServerViewModel.awaitReady(
+        where: (ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>) -> Boolean = { true },
+    ): ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras> =
+        uiState.first {
+            it is ExtrasEditorUiState.Ready && !it.saving && where(it)
+        } as ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>
 
     @Test
     fun `a plex server reads its record and libraries, with no jellyfin-only fields`() =
@@ -111,7 +115,7 @@ class MediaServerViewModelTest {
             assertEquals("https://app.plex.tv", draft.externalUrl)
             assertNull(draft.urlBase)
             assertNull(draft.apiKey)
-            val extras = vm.extras.first { it.libraries.isNotEmpty() }
+            val extras = vm.awaitReady { it.extras.libraries.isNotEmpty() }.extras
             assertEquals(listOf("Movies", "Shows"), extras.libraries.map { it.name })
             assertEquals(LibraryType.Movies, extras.libraries[0].type)
             assertEquals(1_700_000_000_000L, extras.libraries[0].lastScanMillis)
@@ -172,14 +176,17 @@ class MediaServerViewModelTest {
             plexServer()
             val vm = viewModel()
             vm.awaitReady()
-            vm.extras.first { it.libraries.isNotEmpty() }
+            vm.awaitReady { it.extras.libraries.isNotEmpty() }
             seerr.serve(
                 "GET /api/v1/settings/plex/library",
                 PLEX.substringAfter("\"libraries\":").dropLast(1).replace("\"enabled\":false", "\"enabled\":true"),
             )
 
             vm.setLibraryEnabled("2", true)
-            val extras = vm.extras.first { it.libraries.all { library -> library.enabled } && it.busyLibraryIds.isEmpty() }
+            val extras =
+                vm
+                    .awaitReady { it.extras.libraries.all { library -> library.enabled } && it.extras.busyLibraryIds.isEmpty() }
+                    .extras
 
             assertEquals(1, seerr.count("PUT", "/api/v1/settings/plex/library/2"))
             val read = seerr.received.last { it.url.encodedPath == "/api/v1/settings/plex/library" }
@@ -194,10 +201,10 @@ class MediaServerViewModelTest {
             seerr.serve("PUT /api/v1/settings/plex/library/2", """{"id":"2","name":"Shows","enabled":true,"type":"show"}""")
             val vm = viewModel()
             vm.awaitReady()
-            vm.extras.first { it.libraries.isNotEmpty() }
+            vm.awaitReady { it.extras.libraries.isNotEmpty() }
 
             vm.setLibraryEnabled("2", true)
-            val extras = vm.extras.first { it.libraries.all { library -> library.enabled } }
+            val extras = vm.awaitReady { it.extras.libraries.all { library -> library.enabled } }.extras
 
             assertEquals("""{"enabled":true}""", seerr.body("PUT", "/api/v1/settings/plex/library/2"))
             assertEquals(0, seerr.count("GET", "/api/v1/settings/plex/library"))
@@ -215,10 +222,10 @@ class MediaServerViewModelTest {
             )
             val vm = viewModel()
             vm.awaitReady()
-            vm.extras.first { it.libraries.isNotEmpty() }
+            vm.awaitReady { it.extras.libraries.isNotEmpty() }
 
             vm.syncLibraries()
-            val extras = vm.extras.first { it.libraries.any { library -> library.id == "3" } }
+            val extras = vm.awaitReady { it.extras.libraries.any { library -> library.id == "3" } }.extras
 
             assertEquals(0, seerr.count("GET", "/api/v1/settings/plex/library"))
             assertEquals(listOf("1", "3"), extras.libraries.map { it.id })
@@ -238,10 +245,10 @@ class MediaServerViewModelTest {
             seerr.serveFrom("GET /api/v1/settings/plex/library") { request -> libraryRoute(request) }
             val vm = viewModel()
             vm.awaitReady()
-            vm.extras.first { it.libraries.isNotEmpty() }
+            vm.awaitReady { it.extras.libraries.isNotEmpty() }
 
             vm.syncLibraries()
-            val extras = vm.extras.first { it.libraries.any { library -> library.id == "3" } }
+            val extras = vm.awaitReady { it.extras.libraries.any { library -> library.id == "3" } }.extras
 
             assertEquals(1, seerr.count("GET", "/api/v1/settings/plex/library"))
             val read = seerr.received.last { it.url.encodedPath == "/api/v1/settings/plex/library" }
@@ -265,12 +272,12 @@ class MediaServerViewModelTest {
             seerr.serveFrom("GET /api/v1/settings/plex/library", delayMillis = LIBRARY_HOLD_MILLIS) { libraryRoute(it) }
             val vm = viewModel()
             vm.awaitReady()
-            vm.extras.first { it.libraries.isNotEmpty() }
+            vm.awaitReady { it.extras.libraries.isNotEmpty() }
 
             vm.setLibraryEnabled("2", enabled = true)
             seerr.awaitCount("GET", "/api/v1/settings/plex/library", moreThan = 0)
             vm.syncLibraries()
-            val extras = vm.extras.first { it.libraries.any { library -> library.id == "3" } }
+            val extras = vm.awaitReady { it.extras.libraries.any { library -> library.id == "3" } }.extras
 
             val sync = seerr.received.last { it.url.encodedPath == "/api/v1/settings/plex/library" }
             assertEquals("1,2", sync.url.queryParameter("enable"))
@@ -290,12 +297,12 @@ class MediaServerViewModelTest {
             )
 
             vm.startScan()
-            val midway = vm.extras.first { it.scan?.progress == 1 }
+            val midway = vm.awaitReady { it.extras.scan?.progress == 1 }.extras
             assertEquals("Movies", midway.scan?.currentLibrary)
             assertEquals("""{"start":true}""", seerr.body("POST", "/api/v1/settings/plex/sync"))
 
             seerr.serve("GET /api/v1/settings/plex/sync", """{"running":false,"progress":2,"total":2}""")
-            val done = vm.extras.first { it.scan?.running == false }
+            val done = vm.awaitReady { it.extras.scan?.running == false }.extras
             assertEquals(2, done.scan?.progress)
         }
 
@@ -314,7 +321,7 @@ class MediaServerViewModelTest {
             vm.awaitReady()
 
             vm.openServerPicker()
-            val picker = vm.extras.first { it.picker is PlexServerPicker.Ready }.picker as PlexServerPicker.Ready
+            val picker = vm.awaitReady { it.extras.picker is PlexServerPicker.Ready }.extras.picker as PlexServerPicker.Ready
             assertEquals(listOf("Home"), picker.servers.map { it.name })
             assertEquals(
                 listOf(true, false),
@@ -330,6 +337,6 @@ class MediaServerViewModelTest {
             assertEquals("1.2.3.4", draft.host)
             assertEquals("32400", draft.port)
             assertTrue(draft.useSsl)
-            assertNull(vm.extras.first().picker)
+            assertNull(vm.awaitReady().extras.picker)
         }
 }

@@ -30,7 +30,8 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -48,15 +49,15 @@ class MediaServerActions(
 
 @Composable
 fun MediaServerScreen(
-    state: EditorUiState<MediaServerForm>,
-    extras: MediaServerExtras,
+    state: ExtrasEditorUiState<MediaServerForm, MediaServerExtras>,
     events: Flow<EditorEvent>,
     actions: EditorActions<MediaServerForm>,
     serverActions: MediaServerActions,
 ) {
+    val extras = (state as? ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>)?.extras ?: MediaServerExtras()
     EditorPage(
         title = stringResource(R.string.server_settings_media_server),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
         canSave = { it.valid },

@@ -7,12 +7,8 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,10 +19,7 @@ class MetadataViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
-    ) : EditorViewModel<MetadataForm>(dispatcher) {
-        private val extrasState = MutableStateFlow(MetadataExtras())
-        val extras: StateFlow<MetadataExtras> = extrasState.asStateFlow()
-
+    ) : ExtrasEditorViewModel<MetadataForm, MetadataExtras>(MetadataExtras(), dispatcher) {
         init {
             reload()
         }
@@ -37,11 +30,11 @@ class MetadataViewModel
 
         fun test() {
             val draft = ready()?.draft ?: return
-            if (extrasState.value.testing) return
-            extrasState.update { it.copy(testing = true) }
+            if (currentExtras().testing) return
+            editExtras { it.copy(testing = true) }
             viewModelScope.launch(dispatcher) {
                 val outcome = runCatching { connection.api().testMetadataProviders(draft.testBody()) }
-                extrasState.update { it.copy(testing = false) }
+                editExtras { it.copy(testing = false) }
                 outcome
                     .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_metadata_tested)) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }

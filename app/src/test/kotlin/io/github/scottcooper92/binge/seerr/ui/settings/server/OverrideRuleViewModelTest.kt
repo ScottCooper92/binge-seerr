@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -72,8 +72,11 @@ class OverrideRuleViewModelTest {
         return vm
     }
 
-    private suspend fun OverrideRuleViewModel.awaitReady(): EditorUiState.Ready<OverrideRuleForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<OverrideRuleForm>
+    private suspend fun OverrideRuleViewModel.awaitReady(
+        where: (ExtrasEditorUiState.Ready<OverrideRuleForm, OverrideRuleExtras>) -> Boolean = { true },
+    ): ExtrasEditorUiState.Ready<OverrideRuleForm, OverrideRuleExtras> =
+        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving && where(it) }
+            as ExtrasEditorUiState.Ready<OverrideRuleForm, OverrideRuleExtras>
 
     @Test
     fun `an existing rule decodes its conditions and loads its instance's choices with the stored key`() =
@@ -89,7 +92,7 @@ class OverrideRuleViewModelTest {
             assertEquals(6, draft.profileId)
             assertEquals(setOf(1, 2), draft.tagIds)
 
-            val extras = vm.extras.first { it.choices != null && !it.loadingChoices }
+            val extras = vm.awaitReady { it.extras.choices != null && !it.extras.loadingChoices }.extras
             assertEquals(listOf("Movies", "Movies 4K"), extras.instances.map { it.name })
             assertEquals(listOf("Ann", "bob"), extras.users.map { it.label })
             assertEquals(
@@ -109,17 +112,17 @@ class OverrideRuleViewModelTest {
             val vm = viewModel(id = null)
             val ready = vm.awaitReady()
             assertFalse(ready.draft.valid)
-            assertNull(vm.extras.first().choices)
+            assertNull(ready.extras.choices)
 
-            vm.selectInstance(vm.extras.first { it.instances.isNotEmpty() }.instances[0])
+            vm.selectInstance(vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances[0])
             val draft = vm.awaitReady().draft
             assertEquals(1, draft.serviceId)
             assertNull(draft.profileId)
             assertEquals(
                 listOf("HD-1080p", "Ultra-HD"),
-                vm.extras
-                    .first { it.choices != null }
-                    .choices
+                vm
+                    .awaitReady { it.extras.choices != null }
+                    .extras.choices
                     ?.profiles
                     ?.map { it.label },
             )
@@ -131,8 +134,8 @@ class OverrideRuleViewModelTest {
             seerr.serve("POST /api/v1/overrideRule", """{"id":12,"radarrServiceId":1,"users":"3","language":"en|de","tags":"2"}""")
             val vm = viewModel(id = null)
             vm.awaitReady()
-            vm.selectInstance(vm.extras.first { it.instances.isNotEmpty() }.instances[0])
-            vm.extras.first { it.choices != null }
+            vm.selectInstance(vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances[0])
+            vm.awaitReady { it.extras.choices != null }
             vm.toggleUser(3)
             vm.toggleTag(2)
             vm.edit { it.copy(languages = "en, de", genres = " ", keywords = "abc") }
@@ -169,8 +172,8 @@ class OverrideRuleViewModelTest {
             seerr.serve("DELETE /api/v1/overrideRule/12")
             val vm = viewModel(id = null)
             vm.awaitReady()
-            vm.selectInstance(vm.extras.first { it.instances.isNotEmpty() }.instances[0])
-            vm.extras.first { it.choices != null }
+            vm.selectInstance(vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances[0])
+            vm.awaitReady { it.extras.choices != null }
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())

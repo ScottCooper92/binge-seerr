@@ -49,7 +49,7 @@ internal fun IssueItem.canBeActedOn(scope: IssueListScope): Boolean =
 /**
  * One issue as a focusable row: poster, title, what kind of problem and where in the show, the opening
  * line, who filed it and when, and its state on the trailing edge. OK opens the row's actions where the
- * viewer may act on it; a row they may not stays in the walk as a read-out.
+ * viewer may act on it; a row they may not opens its read-only detail page instead.
  */
 @Composable
 internal fun TvIssueRow(

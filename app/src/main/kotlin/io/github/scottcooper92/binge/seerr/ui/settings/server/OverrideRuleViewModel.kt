@@ -12,14 +12,10 @@ import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Matches `UserAdmission`'s `ALL_USERS_TAKE`: the "requested by" picker needs every user, not one page of them. */
@@ -37,10 +33,7 @@ class OverrideRuleViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
-    ) : EditorViewModel<OverrideRuleForm>(dispatcher) {
-        private val extrasState = MutableStateFlow(OverrideRuleExtras())
-        val extras: StateFlow<OverrideRuleExtras> = extrasState.asStateFlow()
-
+    ) : ExtrasEditorViewModel<OverrideRuleForm, OverrideRuleExtras>(OverrideRuleExtras(), dispatcher) {
         /** Filled by [load] so [loadChoices] can reuse the same fetch instead of re-fetching per instance pick. */
         private var radarrRecords: List<SeerrServiceSettingsDto> = emptyList()
         private var sonarrRecords: List<SeerrServiceSettingsDto> = emptyList()
@@ -69,12 +62,8 @@ class OverrideRuleViewModel
                 val instances =
                     radarrRecords.mapNotNull { it.toSummary(ServiceType.Radarr) } +
                         sonarrRecords.mapNotNull { it.toSummary(ServiceType.Sonarr) }
-                extrasState.update {
-                    it.copy(
-                        instances = instances,
-                        users = users.await().map { user -> Choice(user.id, user.displayName ?: user.username ?: user.id.toString()) },
-                    )
-                }
+                val userChoices = users.await().map { user -> Choice(user.id, user.displayName ?: user.username ?: user.id.toString()) }
+                editExtras { it.copy(instances = instances, users = userChoices) }
                 form.serviceId?.let { serviceId -> form.serviceType?.let { type -> loadChoices(type, serviceId) } }
                 form
             }
@@ -111,14 +100,14 @@ class OverrideRuleViewModel
             type: ServiceType,
             serviceId: Int,
         ) {
-            extrasState.update { it.copy(choices = null, loadingChoices = true) }
+            editExtras { it.copy(choices = null, loadingChoices = true) }
             val records = if (type == ServiceType.Radarr) radarrRecords else sonarrRecords
             val choices =
                 runCatching {
                     val record = records.firstOrNull { it.id == serviceId } ?: throw NoSuchElementException("instance $serviceId")
                     connection.api().testDvr(type.apiSegment, record.toForm(type).toTestBody()).toChoices()
                 }.getOrNull()
-            extrasState.update { it.copy(choices = choices, loadingChoices = false) }
+            editExtras { it.copy(choices = choices, loadingChoices = false) }
         }
 
         @AssistedFactory

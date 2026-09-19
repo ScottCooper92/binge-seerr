@@ -16,7 +16,8 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 
 class OverrideRuleActions(
@@ -29,15 +30,15 @@ class OverrideRuleActions(
 /** One override rule: the instance it applies to, the conditions a request must meet, and the overrides it gets. */
 @Composable
 fun OverrideRuleScreen(
-    state: EditorUiState<OverrideRuleForm>,
-    extras: OverrideRuleExtras,
+    state: ExtrasEditorUiState<OverrideRuleForm, OverrideRuleExtras>,
     events: Flow<EditorEvent>,
     actions: EditorActions<OverrideRuleForm>,
     ruleActions: OverrideRuleActions,
 ) {
+    val extras = (state as? ExtrasEditorUiState.Ready<OverrideRuleForm, OverrideRuleExtras>)?.extras ?: OverrideRuleExtras()
     EditorPage(
         title = stringResource(R.string.server_settings_rule_title),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
         canSave = { it.valid },
