@@ -20,9 +20,10 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.labelRes
+import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -41,16 +42,16 @@ class AgentActions(
  */
 @Composable
 fun NotificationAgentScreen(
-    state: EditorUiState<AgentForm>,
-    extras: AgentExtras,
+    state: ExtrasEditorUiState<AgentForm, AgentExtras>,
     events: Flow<EditorEvent>,
     actions: EditorActions<AgentForm>,
     agentActions: AgentActions,
     agent: ServerAgent,
 ) {
+    val extras = (state as? ExtrasEditorUiState.Ready<AgentForm, AgentExtras>)?.extras ?: AgentExtras()
     EditorPage(
         title = stringResource(agent.labelRes()),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
         canSave = { it.valid },

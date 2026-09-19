@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
@@ -79,8 +79,12 @@ class NotificationAgentViewModelTest {
         return vm
     }
 
-    private suspend fun NotificationAgentViewModel.awaitReady(): EditorUiState.Ready<AgentForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<AgentForm>
+    private suspend fun NotificationAgentViewModel.awaitReady(
+        where: (ExtrasEditorUiState.Ready<AgentForm, AgentExtras>) -> Boolean = { true },
+    ): ExtrasEditorUiState.Ready<AgentForm, AgentExtras> =
+        uiState.first {
+            it is ExtrasEditorUiState.Ready && !it.saving && where(it)
+        } as ExtrasEditorUiState.Ready<AgentForm, AgentExtras>
 
     @Test
     fun `only the options holding a username opt out of autocorrect`() {
@@ -254,22 +258,21 @@ class NotificationAgentViewModelTest {
             assertTrue(failed.await() is EditorEvent.Failed)
             // `test()` reports the outcome before it clears `testing`, so await the flag rather
             // than sampling it the moment the event lands.
-            assertFalse(vm.extras.first { !it.testing }.testing)
+            assertFalse(vm.awaitReady { !it.extras.testing }.extras.testing)
         }
 
     @Test
     fun `pushover asks for the sounds of the application token once it is typed`() =
         runTest {
             val vm = viewModel(ServerAgent.Pushover)
-            vm.awaitReady()
             assertTrue(
-                vm.extras
-                    .first()
-                    .sounds
+                vm
+                    .awaitReady()
+                    .extras.sounds
                     .isEmpty(),
             )
             vm.setOption(AgentOption.PushoverAccessToken, "app-token")
-            val sounds = vm.extras.first { it.sounds.isNotEmpty() }.sounds
+            val sounds = vm.awaitReady { it.extras.sounds.isNotEmpty() }.extras.sounds
             assertEquals(listOf("pushover", "bike"), sounds.map { it.name })
             assertEquals(
                 "app-token",

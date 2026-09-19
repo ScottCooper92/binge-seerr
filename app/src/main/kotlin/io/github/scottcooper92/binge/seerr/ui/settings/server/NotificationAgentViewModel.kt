@@ -10,17 +10,13 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
@@ -38,10 +34,7 @@ class NotificationAgentViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted val agent: ServerAgent,
-    ) : EditorViewModel<AgentForm>(dispatcher) {
-        private val extrasState = MutableStateFlow(AgentExtras())
-        val extras: StateFlow<AgentExtras> = extrasState.asStateFlow()
-
+    ) : ExtrasEditorViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher) {
         internal var soundsDebounceMillis = SOUNDS_DEBOUNCE_MILLIS
 
         init {
@@ -81,15 +74,15 @@ class NotificationAgentViewModel
         /** Sends a test through the draft; the server answers only with a status, so success is the absence of one. */
         fun test() {
             val draft = ready()?.draft ?: return
-            if (extrasState.value.testing) return
-            extrasState.update { it.copy(testing = true) }
+            if (currentExtras().testing) return
+            editExtras { it.copy(testing = true) }
             viewModelScope.launch(dispatcher) {
                 val outcome =
                     runCatching {
                         val response = connection.api().testNotificationAgent(agent.segment, draft.toDto())
                         if (!response.isSuccessful) throw HttpException(response)
                     }
-                extrasState.update { it.copy(testing = false) }
+                editExtras { it.copy(testing = false) }
                 outcome
                     .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_agent_tested)) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
@@ -99,16 +92,16 @@ class NotificationAgentViewModel
         private suspend fun followPushoverToken() {
             if (!connection.profile().hasPushoverSounds) return
             uiState
-                .map { (it as? EditorUiState.Ready<AgentForm>)?.draft?.option(AgentOption.PushoverAccessToken)?.trim() }
+                .map { (it as? ExtrasEditorUiState.Ready<AgentForm, AgentExtras>)?.draft?.option(AgentOption.PushoverAccessToken)?.trim() }
                 .distinctUntilChanged()
                 .collectLatest { token ->
                     if (token.isNullOrEmpty()) {
-                        extrasState.update { it.copy(sounds = emptyList()) }
+                        editExtras { it.copy(sounds = emptyList()) }
                         return@collectLatest
                     }
                     delay(soundsDebounceMillis)
                     val sounds = runCatching { connection.api().pushoverSounds(token).map { it.toSound() } }.getOrDefault(emptyList())
-                    extrasState.update { it.copy(sounds = sounds) }
+                    editExtras { it.copy(sounds = sounds) }
                 }
         }
 
