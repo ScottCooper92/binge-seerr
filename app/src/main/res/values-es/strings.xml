@@ -840,9 +840,10 @@
     <string name="tv_setup_headline">Conectar un servidor</string>
     <string name="tv_setup_address_body">Escribe la dirección de tu servidor Seerr, Jellyseerr u Overseerr, o léela en Ajustes de la app del móvil si ya has iniciado sesión allí. Pulsa el botón central sobre un campo para abrir el teclado.</string>
     <string name="tv_setup_checking">Comprobando el servidor…</string>
-    <string name="tv_setup_sign_in_body">Inicia sesión con una clave de API, una cuenta escrita desde el mando o Quick Connect. El inicio de sesión con Plex está por ahora en la app del móvil.</string>
+    <string name="tv_setup_sign_in_body">Inicia sesión con una clave de API, una cuenta escrita desde el mando, Quick Connect o un código de Plex.</string>
     <string name="tv_setup_mode_title">Iniciar sesión con</string>
-    <string name="tv_setup_no_modes_here">El único inicio de sesión de este servidor requiere un navegador web, que este televisor no tiene. Conéctalo desde la app del móvil.</string>
+    <string name="tv_setup_no_modes_here">Este servidor no tiene ningún inicio de sesión que este televisor reconozca. Conéctalo desde la app del móvil.</string>
+    <string name="tv_link_plex_body">En tu móvil u ordenador, ve a plex.tv/link e introduce este código.</string>
     <string name="tv_setup_connecting">Conectando…</string>
     <string name="tv_loading">Cargando…</string>
     <string name="tv_advanced_submitting">Enviando la petición…</string>

@@ -665,6 +665,7 @@ app:tv_issue_deleted  0187e4800963
 app:tv_issue_read_comments  79d21d7114ec
 app:tv_issue_reopen  17b1eb39b270
 app:tv_issue_resolve  a02552f9c783
+app:tv_link_plex_body  87fe288ab29e
 app:tv_list_load_failed  718a36e76415
 app:tv_list_load_more_failed  7eb20f178f1f
 app:tv_list_loading_more  964e5f88d036
@@ -679,8 +680,8 @@ app:tv_setup_checking  86d5ab0a7412
 app:tv_setup_connecting  72021eb70e91
 app:tv_setup_headline  a438d2cf9dd8
 app:tv_setup_mode_title  11aaa14268df
-app:tv_setup_no_modes_here  51af275d7b06
-app:tv_setup_sign_in_body  f1096e71bcda
+app:tv_setup_no_modes_here  972f8dfe0600
+app:tv_setup_sign_in_body  9cdf108e0656
 app:user_actions_cd  33634352212a
 app:user_delete  58363fd94240
 app:user_delete_confirm_message  a02ad34c7a48
