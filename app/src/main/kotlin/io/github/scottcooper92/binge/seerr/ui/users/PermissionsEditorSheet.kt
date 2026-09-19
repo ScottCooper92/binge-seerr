@@ -14,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
-import com.binge.designsystem.component.BingeSheetFooter
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
@@ -96,7 +96,7 @@ internal fun PermissionsEditorContent(
                 }
             }
         }
-        BingeSheetFooter(
+        BingeActionFooter(
             label = stringResource(R.string.users_edit_permissions_save),
             onClick = onSave,
             enabled = !saving,
