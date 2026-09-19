@@ -117,8 +117,9 @@
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>
     <string name="request_tags">Etiquetas</string>
-    <string name="request_seasons">Temporadas</string>
+    <string name="request_seasons">Temporadas solicitadas</string>
     <string name="request_season_number">Temporada %1$d</string>
+    <string name="request_title_status_caption">El estado general del título; la temporada de esta solicitud puede diferir a continuación.</string>
     <string name="request_downloads">Descargando</string>
     <string name="request_siblings_title">También solicitado</string>
     <string name="request_siblings_clear_data_note">Borrar los datos de este título elimina todas las peticiones que tiene, incluidas las anteriores.</string>
@@ -151,6 +152,7 @@
     <string name="media_manage">Gestionar el contenido</string>
     <string name="media_instance_standard">Estándar</string>
     <string name="media_mark_as">Marcar como</string>
+    <string name="media_mark_as_scope_caption">Cambia lo que muestra cada solicitud de este título.</string>
     <string name="media_state_unknown">Desconocido</string>
     <string name="media_open_radarr">Abrir en Radarr</string>
     <string name="media_open_sonarr">Abrir en Sonarr</string>
@@ -162,7 +164,7 @@
     <string name="media_clear_confirm_message">El servidor olvida este título: su estado y todas sus peticiones. Cualquiera puede volver a solicitarlo.</string>
     <string name="media_delete_files">Eliminar los archivos</string>
     <string name="media_delete_files_confirm_title">¿Eliminar los archivos?</string>
-    <string name="media_delete_files_confirm_message">Los archivos descargados se eliminan del cliente de descargas y el título se marca como desconocido.</string>
+    <string name="media_delete_files_confirm_message">Los archivos descargados se eliminan del cliente de descargas y el título se marca como desconocido en cada solicitud que lo tenga.</string>
     <string name="media_delete_files_second_title">¿Eliminar de %1$s?</string>
     <string name="media_delete_files_second_message">%1$s elimina los archivos del disco. Esto no se puede deshacer.</string>
     <string name="media_status_set">Estado del contenido actualizado</string>
