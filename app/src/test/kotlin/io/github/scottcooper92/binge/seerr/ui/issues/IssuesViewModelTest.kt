@@ -50,7 +50,10 @@ class IssuesViewModelTest {
     private val viewerPermissions = AtomicInteger(0)
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
 
     private fun server(permissions: Int) {
         viewerPermissions.set(permissions)
@@ -82,7 +85,7 @@ class IssuesViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("i.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = IssuesViewModel(connection, TitleCache(), FakeIssueStore(), mainDispatcherRule.dispatcher)

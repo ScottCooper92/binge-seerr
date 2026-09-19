@@ -10,21 +10,22 @@ import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 
 /** The metadata page: a provider for series and one for anime, and a test that reaches the ones the draft would use. */
 @Composable
 fun MetadataScreen(
-    state: EditorUiState<MetadataForm>,
-    extras: MetadataExtras,
+    state: ExtrasEditorUiState<MetadataForm, MetadataExtras>,
     events: Flow<EditorEvent>,
     actions: EditorActions<MetadataForm>,
     onTest: () -> Unit,
 ) {
+    val extras = (state as? ExtrasEditorUiState.Ready<MetadataForm, MetadataExtras>)?.extras ?: MetadataExtras()
     EditorPage(
         title = stringResource(R.string.server_settings_metadata),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
     ) { draft, enabled ->

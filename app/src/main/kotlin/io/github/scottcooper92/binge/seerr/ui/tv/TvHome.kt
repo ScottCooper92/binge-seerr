@@ -7,7 +7,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.theme.SeerrTvTheme
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
-import io.github.scottcooper92.binge.seerr.ui.actions
+import io.github.scottcooper92.binge.seerr.ui.tvActions
 
 /**
  * The television shell of the app's own UI: setup while no server is saved, and once one is, the rail
@@ -28,7 +28,7 @@ internal fun TvSeerrShell(viewModel: TvHomeViewModel = hiltViewModel()) {
 @Composable
 private fun TvSetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    TvSetupScreen(state = state, actions = viewModel.actions())
+    TvSetupScreen(state = state, actions = viewModel.tvActions())
 }
 
 /** The hand-off's television shell: the same state and callbacks as the phone's picker, under the TV theme. */

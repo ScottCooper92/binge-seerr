@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,10 +23,14 @@ private const val STRIP_MAX_ITEMS = 5
  * and then on an interval that adapts to whether anything is downloading. Gating on health, not
  * merely on being connected, keeps the loop off a server the monitor already knows is down. The
  * ViewModel owns one on its scope, so the loop dies with it.
+ *
+ * Runs on [dispatcher] rather than [scope]'s own, for the same reason `UserAdmission` does (#177/#370):
+ * `refresh()`'s suspend calls would otherwise resume on `viewModelScope`'s `Dispatchers.Main.immediate`.
  */
 class DownloadsPoller(
     scope: CoroutineScope,
     healthy: Flow<Boolean>,
+    private val dispatcher: CoroutineDispatcher,
     private val ticker: DownloadsPollerTicker = DownloadsPollerTicker(),
     private val fetch: suspend () -> Result<List<HubDownload>>,
 ) {
@@ -34,7 +39,7 @@ class DownloadsPoller(
     val downloading: StateFlow<List<HubDownload>> = state.asStateFlow()
 
     init {
-        scope.launch {
+        scope.launch(dispatcher) {
             combine(screenVisible, healthy) { visible, healthy -> visible && healthy }
                 .distinctUntilChanged()
                 .collectLatest { shouldPoll -> if (shouldPoll) poll() }

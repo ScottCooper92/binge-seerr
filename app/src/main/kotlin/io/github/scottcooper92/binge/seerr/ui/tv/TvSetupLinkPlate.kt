@@ -59,8 +59,9 @@ private fun LinkFlow.titleRes(): Int =
         is LinkFlow.QuickConnect -> R.string.link_quick_connect_title
     }
 
+/** Plex's body is the television's own, not the phone sheet's: no browser opens here to hand the code to. */
 private fun LinkFlow.bodyRes(): Int =
     when (this) {
-        is LinkFlow.Plex -> R.string.link_plex_body
+        is LinkFlow.Plex -> R.string.tv_link_plex_body
         is LinkFlow.QuickConnect -> R.string.link_quick_connect_body
     }

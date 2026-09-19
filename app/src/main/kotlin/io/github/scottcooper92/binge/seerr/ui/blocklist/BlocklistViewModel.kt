@@ -8,10 +8,12 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -62,6 +65,7 @@ class BlocklistViewModel
     constructor(
         private val connection: SeerrConnection,
         private val titles: TitleCache,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(BlocklistFilter.All)
         private val search = MutableStateFlow("")
@@ -82,6 +86,10 @@ class BlocklistViewModel
         /**
          * Resolved once per connection, and nothing downstream runs before it: the list's path is
          * the profile's, so a page fetched against a guessed one would be a request to the wrong place.
+         *
+         * `flowOn(dispatcher)` for the same reason every `launch` here takes one (#177/#370): without
+         * it, this flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`,
+         * which can outlive a cleared scope same as a plain `launch` would.
          */
         private val scope: Flow<BlocklistScope> =
             flow {
@@ -96,7 +104,8 @@ class BlocklistViewModel
                         webRoot = runCatching { connection.current().baseUrl }.getOrDefault(""),
                     ),
                 )
-            }.shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
+            }.flowOn(dispatcher)
+                .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
         /** A blank query needs no debounce, so the first page is not held back. */
         private val query: Flow<String> =
@@ -135,6 +144,7 @@ class BlocklistViewModel
         private val counts: Flow<BlocklistCounts?> =
             combine(countsRefresh, scope) { _, scope -> scope }
                 .flatMapLatest { scope -> flow { emit(if (scope.hasFilters) fetchCounts(scope.path) else null) } }
+                .flowOn(dispatcher)
                 .onStart { emit(null) }
 
         val uiState: StateFlow<BlocklistUiState> =
@@ -174,7 +184,7 @@ class BlocklistViewModel
         fun remove(item: BlocklistItem) {
             if (item.tmdbId in acting.value) return
             acting.update { it + item.tmdbId }
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().removeFromBlocklist(connection.profile().blocklistPath, item.tmdbId) }
                     .onSuccess {
                         countsRefresh.update { it + 1 }
@@ -190,7 +200,7 @@ class BlocklistViewModel
             collectionId: Int,
             blocked: Boolean,
         ) {
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 val profile = connection.profile()
                 val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
                 if (!profile.canBlockCollections || !permissions.canManageBlocklist) return@launch

@@ -25,7 +25,8 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -42,16 +43,17 @@ class ApiKeyActions(
  */
 @Composable
 fun ServerGeneralScreen(
-    state: EditorUiState<ServerGeneralSettings>,
-    extras: ServerGeneralExtras,
+    state: ExtrasEditorUiState<ServerGeneralSettings, ServerGeneralExtras>,
     events: Flow<EditorEvent>,
     actions: EditorActions<ServerGeneralSettings>,
     keyActions: ApiKeyActions,
     onOpenDefaultPermissions: () -> Unit,
 ) {
+    val extras =
+        (state as? ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>)?.extras ?: ServerGeneralExtras()
     EditorPage(
         title = stringResource(R.string.server_settings_general_title),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
         canSave = { it.urlValid },

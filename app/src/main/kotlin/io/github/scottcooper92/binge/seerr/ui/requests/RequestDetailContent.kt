@@ -29,7 +29,6 @@ import com.binge.designsystem.component.InfoRowEntry
 import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.MediaTypeTag
-import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
@@ -68,7 +67,7 @@ internal fun RequestHeadline(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            MediaTypeTag(type = if (item.mediaType == RequestMediaType.Movie) MediaTypeTagType.Movie else MediaTypeTagType.Tv)
+            MediaTypeTag(type = item.mediaType.toTagType())
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
             if (item.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
         }

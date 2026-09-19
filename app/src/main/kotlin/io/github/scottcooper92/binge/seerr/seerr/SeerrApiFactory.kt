@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Cookie
 import okhttp3.CookieJar
+import okhttp3.Dispatcher
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
@@ -34,6 +35,12 @@ class SeerrApiFactory(
      * interceptor it returns for that call's cookie jar, instead of the network. Test-only (#337).
      */
     internal val testTransport: ((CookieJar) -> Interceptor)? = null,
+    /**
+     * A fresh [Dispatcher] for every client this factory builds, when set. Test-only (#177): it
+     * is how a test drains OkHttp's own thread before resetting `Dispatchers.Main` - see
+     * `FakeSeerrServer.awaitIdle`.
+     */
+    internal val testDispatcher: (() -> Dispatcher)? = null,
 ) {
     /**
      * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
@@ -142,6 +149,7 @@ class SeerrApiFactory(
         cookieJar: CookieJar?,
     ): OkHttpClient =
         apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
+            .apply { testDispatcher?.let { dispatcher(it()) } }
             .addNetworkInterceptor(loggingInterceptor(debugLevel))
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)

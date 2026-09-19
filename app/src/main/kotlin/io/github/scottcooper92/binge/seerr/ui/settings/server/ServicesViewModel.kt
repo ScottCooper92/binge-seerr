@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrOverrideRuleDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,13 +26,14 @@ class ServicesViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val state = MutableStateFlow<ServicesUiState>(ServicesUiState.Loading)
         val uiState: StateFlow<ServicesUiState> = state.asStateFlow()
 
         fun reload() {
             state.value = ServicesUiState.Loading
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching { load() }
                     .onSuccess { state.value = it }
                     .onFailure { state.value = ServicesUiState.Error(it.toSeerrError()) }

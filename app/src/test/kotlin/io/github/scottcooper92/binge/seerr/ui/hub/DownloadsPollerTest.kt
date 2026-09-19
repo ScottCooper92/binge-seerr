@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -18,7 +19,7 @@ class DownloadsPollerTest {
     private var answer: Result<List<HubDownload>> = Result.success(listOf(download(1)))
 
     private fun TestScope.poller() =
-        DownloadsPoller(scope = backgroundScope, healthy = healthy) {
+        DownloadsPoller(scope = backgroundScope, healthy = healthy, dispatcher = UnconfinedTestDispatcher(testScheduler)) {
             fetches++
             answer
         }

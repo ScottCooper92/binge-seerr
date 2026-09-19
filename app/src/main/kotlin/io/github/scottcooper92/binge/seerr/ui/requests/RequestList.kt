@@ -36,7 +36,6 @@ import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
-import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
@@ -175,7 +174,7 @@ private fun RequestRowMeta(
         Row(verticalAlignment = Alignment.CenterVertically) {
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
             Spacer(Modifier.width(gap))
-            MediaTypeTag(type = if (item.mediaType == RequestMediaType.Movie) MediaTypeTagType.Movie else MediaTypeTagType.Tv)
+            MediaTypeTag(type = item.mediaType.toTagType())
             if (item.is4k) {
                 Spacer(Modifier.width(gap))
                 Text(

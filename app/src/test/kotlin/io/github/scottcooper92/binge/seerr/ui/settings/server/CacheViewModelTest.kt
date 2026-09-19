@@ -54,7 +54,7 @@ class CacheViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): CacheViewModel {
-        val vm = CacheViewModel(seerr.connection(this))
+        val vm = CacheViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

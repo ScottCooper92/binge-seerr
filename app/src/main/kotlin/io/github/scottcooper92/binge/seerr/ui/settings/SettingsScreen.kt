@@ -74,6 +74,10 @@ private fun SettingsContent(
 ) {
     val config = state.config
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        ServerAddressPlate(
+            baseUrl = state.connection.baseUrl,
+            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.screen_content_inset)),
+        )
         Group(
             stringResource(R.string.settings_group_connection),
             connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage),

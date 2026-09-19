@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.dimensionResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.ListRowSkeletonColumn
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -50,9 +51,6 @@ class StateScreensScreenshotTest {
      * What the requests, issues and blocklist roots show while their first page loads. One frame
      * rather than three: all three pass the same two arguments to the same shared component, so a
      * second frame would re-render this one under another name.
-     *
-     * The users root is deliberately absent — its rows are avatar-leading and shorter than this
-     * column reserves, so it keeps the spinner until a skeleton that matches it exists.
      */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -60,5 +58,19 @@ class StateScreensScreenshotTest {
     fun listRootSkeleton() =
         ListRowSkeletonColumn(
             contentPadding = PaddingValues(dimensionResource(DesR.dimen.padding_m)),
+        )
+
+    /**
+     * What the users root shows while its first page loads. Its own frame, not a share of
+     * [listRootSkeleton]: its rows are avatar-leading and shorter, so it passes a shorter
+     * [height][ListRowSkeletonColumn].
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun usersRootSkeleton() =
+        ListRowSkeletonColumn(
+            contentPadding = PaddingValues(dimensionResource(DesR.dimen.padding_m)),
+            height = dimensionResource(R.dimen.users_row_skeleton_height),
         )
 }

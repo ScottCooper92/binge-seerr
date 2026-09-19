@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -26,6 +28,7 @@ class CacheViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val state = MutableStateFlow<CacheUiState>(CacheUiState.Loading)
         val uiState: StateFlow<CacheUiState> = state.asStateFlow()
@@ -39,7 +42,7 @@ class CacheViewModel
 
         fun reload() {
             state.value = CacheUiState.Loading
-            viewModelScope.launch { state.value = read() }
+            viewModelScope.launch(dispatcher) { state.value = read() }
         }
 
         fun flush(cacheId: String) = flushing(cacheId) { api -> api.flushCache(cacheId) }
@@ -53,7 +56,7 @@ class CacheViewModel
             val ready = state.value as? CacheUiState.Ready ?: return
             if (key in ready.busyIds) return
             state.value = ready.copy(busyIds = ready.busyIds + key)
-            viewModelScope.launch {
+            viewModelScope.launch(dispatcher) {
                 runCatching {
                     val response = call(connection.api())
                     if (!response.isSuccessful) throw HttpException(response)

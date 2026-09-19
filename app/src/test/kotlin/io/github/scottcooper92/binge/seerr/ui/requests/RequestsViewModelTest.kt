@@ -54,7 +54,10 @@ class RequestsViewModelTest {
     private val viewModels = ViewModelStore()
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
 
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
@@ -87,7 +90,7 @@ class RequestsViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = RequestsViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher)
@@ -207,7 +210,7 @@ class RequestsViewModelTest {
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
                             PlainCipher,
                         ),
-                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
+                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
                 )
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
 

@@ -41,7 +41,7 @@ class NotificationAgentsViewModelTest {
     fun tearDown() = seerr.close()
 
     private suspend fun TestScope.ready(): AgentsUiState.Ready {
-        val vm = NotificationAgentsViewModel(seerr.connection(this))
+        val vm = NotificationAgentsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         vm.reload()
         return vm.uiState.first { it is AgentsUiState.Ready } as AgentsUiState.Ready
     }

@@ -37,7 +37,7 @@ class UserSettingsViewModelTest {
     }
 
     private suspend fun TestScope.pages(userId: Int = 8): List<UserSettingsPage> {
-        val vm = UserSettingsViewModel(seerr.connection(this), userId)
+        val vm = UserSettingsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, userId)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         val ready = vm.uiState.first { it is UserSettingsUiState.Ready } as UserSettingsUiState.Ready

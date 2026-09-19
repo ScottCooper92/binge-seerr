@@ -135,14 +135,19 @@ class SetupViewModel
         fun editForm(transform: SignInForm.() -> SignInForm) =
             draft.update { it.copy(form = it.form.transform(), error = null, notice = null) }
 
-        fun connect() {
+        /**
+         * [forLink] is the television screen's own Connect: a Plex sign-in mints the short PIN
+         * typed at plex.tv/link rather than the one the phone embeds in a browser URL. It changes
+         * nothing for any other mode.
+         */
+        fun connect(forLink: Boolean = false) {
             val current = draft.value
             val server = current.server ?: return
             if (!current.form.canSubmit || current.busy || current.link != null) return
             draft.update { it.copy(busy = true, error = null, notice = null) }
             val editing = current.editing != null
             when (current.form.mode) {
-                SeerrSignInMode.Plex -> links.startPlex(server, editing)
+                SeerrSignInMode.Plex -> links.startPlex(server, editing, forLink)
                 SeerrSignInMode.QuickConnect -> links.startQuickConnect(server, editing)
                 else -> signIn(server, current.form)
             }
