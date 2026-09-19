@@ -46,7 +46,7 @@ class LogsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): LogsViewModel {
-        val vm = LogsViewModel(seerr.connection(this))
+        val vm = LogsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         return vm
     }

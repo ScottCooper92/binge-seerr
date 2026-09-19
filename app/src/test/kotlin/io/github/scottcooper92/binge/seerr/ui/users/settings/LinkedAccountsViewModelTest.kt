@@ -63,7 +63,7 @@ class LinkedAccountsViewModelTest {
                 apis = { plexTv },
                 pollInterval = 10.milliseconds,
             )
-        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, 8)
+        val vm = LinkedAccountsViewModel(seerr.connection(this), plex, mainDispatcherRule.dispatcher, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
