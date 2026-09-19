@@ -57,6 +57,19 @@ internal fun partiallyAvailable4kDetail(): RequestDetail =
     )
 
 /**
+ * The title reads partly available because another season is on the server already — this request's
+ * own season is still pending. What #342 asks the headline caption and the season row to make legible.
+ */
+internal fun partiallyAvailablePendingSeasonDetail(): RequestDetail =
+    detail(
+        actions = RequestActions(canRemove = true, canBlock = true),
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.PartiallyAvailable,
+        canEdit = false,
+        seasons = listOf(SeasonState(number = 1, name = null, episodeCount = EPISODE_COUNT, status = SeerrMediaStatusCode.Pending)),
+    )
+
+/**
  * The settled request with two siblings against the same title: one declined, one completed in 4K.
  *
  * Trimmed of the destination and watch-data facts [detail] carries — with those in, the "Also

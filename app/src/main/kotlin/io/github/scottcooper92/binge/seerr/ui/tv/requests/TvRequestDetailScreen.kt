@@ -145,7 +145,7 @@ private fun TvRequestDetailContent(
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            TvRequestDetailFacts(item)
+            TvRequestDetailFacts(item, hasSeasons = detail.seasons.isNotEmpty())
             TvSeasonsSection(detail.seasons, arrivalOnFirst = onFirst == TvDetailSection.Seasons, arrival = arrival)
             TvDownloadsSection(detail.downloads, arrivalOnFirst = onFirst == TvDetailSection.Downloads, arrival = arrival)
             TvRequestDetailButtons(
