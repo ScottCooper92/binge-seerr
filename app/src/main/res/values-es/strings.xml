@@ -522,6 +522,8 @@
     <string name="settings_version_behind">%1$s · %2$d commits por detrás</string>
     <string name="settings_edit_connection">Editar la conexión</string>
     <string name="settings_edit_connection_caption">Cambiar de servidor o iniciar sesión de nuevo</string>
+    <string name="settings_address_plate_title">Dirección del servidor</string>
+    <string name="settings_address_plate_caption">¿Configurando un televisor? Léela en voz alta en lugar de escribirla de memoria.</string>
     <string name="settings_value_unknown">Desconocido</string>
     <string name="settings_value_on">Activado</string>
     <string name="settings_value_off">Desactivado</string>
@@ -836,7 +838,7 @@
         <item quantity="other">Quedan %1$d h aprox.</item>
     </plurals>
     <string name="tv_setup_headline">Conectar un servidor</string>
-    <string name="tv_setup_address_body">Escribe la dirección de tu servidor Seerr, Jellyseerr u Overseerr. Pulsa el botón central sobre un campo para abrir el teclado.</string>
+    <string name="tv_setup_address_body">Escribe la dirección de tu servidor Seerr, Jellyseerr u Overseerr, o léela en Ajustes de la app del móvil si ya has iniciado sesión allí. Pulsa el botón central sobre un campo para abrir el teclado.</string>
     <string name="tv_setup_checking">Comprobando el servidor…</string>
     <string name="tv_setup_sign_in_body">Inicia sesión con una clave de API, una cuenta escrita desde el mando o Quick Connect. El inicio de sesión con Plex está por ahora en la app del móvil.</string>
     <string name="tv_setup_mode_title">Iniciar sesión con</string>

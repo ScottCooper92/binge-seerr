@@ -540,6 +540,8 @@
     <string name="settings_version_behind">%1$s · %2$d commits behind</string>
     <string name="settings_edit_connection">Edit connection</string>
     <string name="settings_edit_connection_caption">Change the server or sign in again</string>
+    <string name="settings_address_plate_title">Server address</string>
+    <string name="settings_address_plate_caption">Setting up on a television? Read this across instead of typing it from memory.</string>
     <string name="settings_value_unknown">Unknown</string>
     <string name="settings_value_on">On</string>
     <string name="settings_value_off">Off</string>
@@ -859,7 +861,7 @@
 
     <!-- The television surface: setup and the advanced picker, driven from a remote. -->
     <string name="tv_setup_headline">Connect a server</string>
-    <string name="tv_setup_address_body">Type the address of your Seerr, Jellyseerr or Overseerr server. Press the centre button on a field to bring up the keyboard.</string>
+    <string name="tv_setup_address_body">Type the address of your Seerr, Jellyseerr or Overseerr server, or read it from the phone app\'s Settings if you\'re already signed in there. Press the centre button on a field to bring up the keyboard.</string>
     <string name="tv_setup_checking">Checking the server…</string>
     <string name="tv_setup_sign_in_body">Sign in with an API key, an account typed on the remote, or Quick Connect. Plex sign-in is on the phone app for now.</string>
     <string name="tv_setup_mode_title">Sign in with</string>

@@ -552,6 +552,8 @@ app:server_settings_youtube_url_hint  a5e06ab9a284
 app:settings_about  4efca0d10c5f
 app:settings_about_caption  2711ac1f33da
 app:settings_about_version  b65bfa7f1eb0
+app:settings_address_plate_caption  d1dd5bd8e304
+app:settings_address_plate_title  8be89710b2f1
 app:settings_agent_email  969ccbd3cf63
 app:settings_agent_webhook  4814f62c108d
 app:settings_application_url  96884337d874
@@ -671,7 +673,7 @@ app:tv_settings_disconnect_confirm  ff9c95dc28f5
 app:tv_settings_read_only_note  5dc9a6be3289
 app:tv_settings_scan_started  69b83dfae9a6
 app:tv_settings_start_library_scan  c29ac31b6000
-app:tv_setup_address_body  ac3b484e44ad
+app:tv_setup_address_body  81cf96eadcf6
 app:tv_setup_checking  86d5ab0a7412
 app:tv_setup_connecting  72021eb70e91
 app:tv_setup_headline  a438d2cf9dd8
