@@ -155,6 +155,7 @@ internal fun issue(
     id: Int,
     title: String,
     status: IssueStatus,
+    now: Long = NOW,
 ) = IssueItem(
     id = id,
     tmdbId = id,
@@ -167,8 +168,8 @@ internal fun issue(
     reportedBy = "ana",
     reportedById = 3,
     commentCount = 2,
-    createdAtMillis = NOW - id * DAY_MILLIS,
-    updatedAtMillis = NOW - id * HOUR_MILLIS,
+    createdAtMillis = now - id * DAY_MILLIS,
+    updatedAtMillis = now - id * HOUR_MILLIS,
     problem = "The subtitles run about two seconds late.",
     problemSeason = 1,
     problemEpisode = 4,
