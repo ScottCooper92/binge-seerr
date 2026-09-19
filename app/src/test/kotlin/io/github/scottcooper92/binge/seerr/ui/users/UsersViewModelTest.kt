@@ -10,17 +10,15 @@ import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.util.FakeRequest
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -43,13 +41,16 @@ private const val UNMANAGED_4K_MOVIE_BIT = 1 shl 11
 private val ANA_INITIAL =
     ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit or UNMANAGED_4K_MOVIE_BIT
 
-/** The browser over a real connection into a path-scripted Seerr, paging through the fake cache; Main is real-time. */
+/** The browser over an in-memory connection into a path-scripted Seerr, paging through the fake cache. */
 class UsersViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer()
-    private val received = CopyOnWriteArrayList<RecordedRequest>()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val received = CopyOnWriteArrayList<FakeRequest>()
     private val viewModels = ViewModelStore()
     private val cache = FakeUserStore()
 
@@ -58,38 +59,26 @@ class UsersViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-        seerr.dispatcher =
-            object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest): MockResponse {
-                    received += request
-                    return when (request.method + " " + request.url.encodedPath) {
-                        "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
-                        "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
-                        "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
-                        "GET /api/v1/user" ->
-                            json(
-                                """{"pageInfo":{"pages":1,"results":2},"results":[
-                                   {"id":7,"displayName":"Scott","permissions":2,"userType":3,"requestCount":12},
-                                   {"id":8,"displayName":"Ana","email":"ana@example.com","permissions":$ANA_INITIAL,"userType":3,"requestCount":3}]}""",
-                            )
-                        "PUT /api/v1/user" -> json("[]")
-                        else -> MockResponse(code = 404)
-                    }
-                }
+        seerr.dispatcher = { request ->
+            received += request
+            when (request.method + " " + request.url.encodedPath) {
+                "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
+                "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                "GET /api/v1/user" ->
+                    json(
+                        """{"pageInfo":{"pages":1,"results":2},"results":[
+                           {"id":7,"displayName":"Scott","permissions":2,"userType":3,"requestCount":12},
+                           {"id":8,"displayName":"Ana","email":"ana@example.com","permissions":$ANA_INITIAL,"userType":3,"requestCount":3}]}""",
+                    )
+                "PUT /api/v1/user" -> json("[]")
+                else -> FakeResponse(code = 404)
             }
-        seerr.start()
+        }
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     private suspend fun TestScope.viewModel(): UsersViewModel {
         val connection =
@@ -99,9 +88,9 @@ class UsersViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("u.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
-        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = UsersViewModel(connection, cache)
         viewModels.put("users", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -174,12 +163,7 @@ class UsersViewModelTest {
             vm.applyBulkEdit()
 
             assertEquals(UsersEvent.PermissionsSaved(1), permissionsSaved.await())
-            val put =
-                received
-                    .single { it.method == "PUT" }
-                    .body
-                    ?.utf8()
-                    .orEmpty()
+            val put = received.single { it.method == "PUT" }.body
             val expected = ANA_INITIAL or ManageablePermission.CreateIssues.bit
             assertTrue(put, put.contains("\"ids\":[8]"))
             assertTrue(put, put.contains("\"permissions\":$expected"))
@@ -198,26 +182,23 @@ class UsersViewModelTest {
             // propagate. Jo alone has the unmanaged 4K-movie bit. A shared, OR-folded baseline would
             // leak that bit onto Ida's write even though Ida never had it and the editor never showed it.
             val sharedManaged = ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit
-            seerr.dispatcher =
-                object : Dispatcher() {
-                    override fun dispatch(request: RecordedRequest): MockResponse {
-                        received += request
-                        return when (request.method + " " + request.url.encodedPath) {
-                            "GET /api/v1/auth/me" -> json("""{"id":1,"displayName":"Admin","permissions":$ADMIN}""")
-                            "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
-                            "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
-                            "GET /api/v1/user" ->
-                                json(
-                                    """{"pageInfo":{"pages":1,"results":2},"results":[
-                                       {"id":10,"displayName":"Ida","permissions":$sharedManaged,"userType":3,"requestCount":0},
-                                       {"id":11,"displayName":"Jo","permissions":${sharedManaged or UNMANAGED_4K_MOVIE_BIT},
-                                        "userType":3,"requestCount":0}]}""",
-                                )
-                            "PUT /api/v1/user" -> json("[]")
-                            else -> MockResponse(code = 404)
-                        }
-                    }
+            seerr.dispatcher = { request ->
+                received += request
+                when (request.method + " " + request.url.encodedPath) {
+                    "GET /api/v1/auth/me" -> json("""{"id":1,"displayName":"Admin","permissions":$ADMIN}""")
+                    "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
+                    "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                    "GET /api/v1/user" ->
+                        json(
+                            """{"pageInfo":{"pages":1,"results":2},"results":[
+                               {"id":10,"displayName":"Ida","permissions":$sharedManaged,"userType":3,"requestCount":0},
+                               {"id":11,"displayName":"Jo","permissions":${sharedManaged or UNMANAGED_4K_MOVIE_BIT},
+                                "userType":3,"requestCount":0}]}""",
+                        )
+                    "PUT /api/v1/user" -> json("[]")
+                    else -> FakeResponse(code = 404)
                 }
+            }
 
             val vm = viewModel()
             vm.awaitReady()
@@ -245,20 +226,10 @@ class UsersViewModelTest {
             val idaExpected = sharedManaged or ManageablePermission.CreateIssues.bit
             val joExpected = idaExpected or UNMANAGED_4K_MOVIE_BIT
 
-            val idaPut =
-                puts
-                    .single { it.body?.utf8()?.contains("\"ids\":[10]") == true }
-                    .body
-                    ?.utf8()
-                    .orEmpty()
+            val idaPut = puts.single { it.body.contains("\"ids\":[10]") }.body
             assertTrue(idaPut, idaPut.contains("\"permissions\":$idaExpected"))
 
-            val joPut =
-                puts
-                    .single { it.body?.utf8()?.contains("\"ids\":[11]") == true }
-                    .body
-                    ?.utf8()
-                    .orEmpty()
+            val joPut = puts.single { it.body.contains("\"ids\":[11]") }.body
             assertTrue(joPut, joPut.contains("\"permissions\":$joExpected"))
 
             vm.awaitReady { it.edit == null }
@@ -266,7 +237,7 @@ class UsersViewModelTest {
             assertEquals(joExpected, cache.rows.first { it.id == 11 }.permissions)
         }
 
-    private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+    private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext

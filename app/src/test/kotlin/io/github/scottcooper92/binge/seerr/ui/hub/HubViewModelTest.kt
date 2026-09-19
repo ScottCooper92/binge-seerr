@@ -9,19 +9,15 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -31,54 +27,49 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import kotlin.time.Duration.Companion.seconds
 
 private const val ADMIN = 2
 private const val REQUEST = 32
 
 /**
- * The hub over a real connection: DataStore in a temp file, HTTP into a Seerr scripted by path,
- * because the overview fans its calls out concurrently and a queue would answer them in the wrong
- * order. Main is a real-time dispatcher here, not the test scheduler: the ViewModel owns polling
- * loops, and virtual time would spin them while the body waits on the network.
+ * The hub over an in-memory connection, scripted by path, because the overview fans its calls out
+ * concurrently and a queue would answer them in the wrong order. [DownloadsPoller] is bounded to its
+ * first refresh: its own poll loop is covered by [DownloadsPollerTest], and a real `delay` loop would
+ * spin forever under this test's virtual clock (#337).
  */
 class HubViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer()
-    private val responses = mutableMapOf<String, () -> MockResponse>()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val responses = mutableMapOf<String, () -> FakeResponse>()
 
     /** Every ViewModel goes in here and is cleared on teardown, so no poll or probe outlives its test. */
     private val viewModels = ViewModelStore()
 
+    /** One refresh, then never again: the strip only needs its first read, and this keeps the poll loop bounded. */
+    private val boundedTicker =
+        object : DownloadsPollerTicker() {
+            override suspend fun await(intervalMs: Long) = awaitCancellation()
+        }
+
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-        seerr.dispatcher =
-            object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest): MockResponse =
-                    responses[request.url.encodedPath]?.invoke() ?: MockResponse(code = 404)
-            }
-        seerr.start()
+        seerr.dispatcher = { request -> responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404) }
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     private fun serve(
         path: String,
         body: String,
         code: Int = 200,
     ) {
-        responses[path] = { MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
+        responses[path] = { FakeResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
     }
 
     /** An admin on a Seerr 3.4 with one request downloading and a quota. */
@@ -110,11 +101,11 @@ class HubViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, health = monitor),
+                apis = SeerrApiFactory(logRequests = false, health = monitor, testTransport = seerr::interceptor),
                 healthMonitor = monitor,
             )
-        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = HubViewModel(connection, HubOverviewLoader(connection))
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -178,12 +169,12 @@ class HubViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, health = monitor),
+                apis = SeerrApiFactory(logRequests = false, health = monitor, testTransport = seerr::interceptor),
                 healthMonitor = monitor,
             )
-        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         serve("/api/v1/auth/me", "", code = code)
-        val vm = HubViewModel(connection, HubOverviewLoader(connection))
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -254,12 +245,9 @@ class HubViewModelTest {
             connection.credentials.first { it == null }
             serve("/api/v1/settings/public", """{"applicationTitle":"Second Home","mediaServerType":2}""")
             serve("/api/v1/request/count", """{"total":0,"movie":0,"tv":0,"pending":0,"processing":0}""")
-            connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y-2")).getOrThrow()
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y-2")).getOrThrow()
 
-            val ready =
-                withContext(Dispatchers.Default.limitedParallelism(1)) {
-                    withTimeout(5.seconds) { vm.awaitReady { it.server.title == "Second Home" } }
-                }
+            val ready = vm.awaitReady { it.server.title == "Second Home" }
 
             assertEquals(0, ready.overview.movieRequestCount)
         }

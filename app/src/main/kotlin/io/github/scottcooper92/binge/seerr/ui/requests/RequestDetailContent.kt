@@ -1,8 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,10 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.InfoRowEntry
 import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.InfoValue
+import com.binge.designsystem.component.MediaTypeTag
+import com.binge.designsystem.component.MediaTypeTagType
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
@@ -38,12 +43,17 @@ import com.binge.designsystem.R as DesR
 /**
  * The request's own state, and what the title is about.
  *
+ * What classifies the title — its media type, its availability, and 4K where it applies — are all
+ * chips on one wrapping line, so a narrow window drops a chip to a second line rather than clipping
+ * it (#340).
+ *
  * [initiallyOverflowing] seeds the overview's toggle for a frame: the component only learns it
  * overflowed from `onTextLayout`, which fires after the screenshot lane has captured.
  *
  * The chip reads the title's own status across every request, not this request's own seasons —
  * see [RequestSections] below, and the caption this composable adds where the two can disagree.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun RequestHeadline(
     detail: RequestDetail,
@@ -51,13 +61,15 @@ internal fun RequestHeadline(
     initiallyOverflowing: Boolean = false,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        val chip = detail.item.statusChip()
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        val item = detail.item
+        val chip = item.statusChip()
+        FlowRow(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
+            MediaTypeTag(type = if (item.mediaType == RequestMediaType.Movie) MediaTypeTagType.Movie else MediaTypeTagType.Tv)
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
-            if (detail.item.is4k) Text(stringResource(R.string.settings_service_4k), style = MaterialTheme.typography.labelMedium)
+            if (item.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
         }
         if (detail.seasons.isNotEmpty()) {
             Text(

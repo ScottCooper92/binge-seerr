@@ -32,6 +32,7 @@ class HubViewModel
     constructor(
         private val connection: SeerrConnection,
         private val loader: HubOverviewLoader,
+        private val pollerTicker: DownloadsPollerTicker = DownloadsPollerTicker(),
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)
@@ -65,6 +66,7 @@ class HubViewModel
                 scope = viewModelScope,
                 healthy = connection.health.map { it == SeerrConnectionHealth.Healthy },
                 fetch = loader::activeDownloads,
+                ticker = pollerTicker,
             )
 
         val uiState: StateFlow<HubUiState> =
