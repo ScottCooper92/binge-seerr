@@ -162,7 +162,12 @@ abstract class ExtrasEditorViewModel<T, X>(
     private val eventFlow = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<EditorEvent> = eventFlow.asSharedFlow()
 
-    private var extras: X = initialExtras
+    /**
+     * Backs [extras][editExtras] with a [MutableStateFlow] rather than a plain `var`: [editExtras] can be
+     * called from independent [dispatcher] coroutines at once (a poll tick racing a picker result, say),
+     * and [update]'s compare-and-set retry is what stops one write from silently discarding the other (#387).
+     */
+    private val extrasState = MutableStateFlow(initialExtras)
 
     protected abstract suspend fun load(): T
 
@@ -176,7 +181,7 @@ abstract class ExtrasEditorViewModel<T, X>(
         state.value = ExtrasEditorUiState.Loading
         viewModelScope.launch(dispatcher) {
             runCatching { load() }
-                .onSuccess { state.value = ExtrasEditorUiState.Ready(draft = it, saved = it, extras = extras) }
+                .onSuccess { state.value = ExtrasEditorUiState.Ready(draft = it, saved = it, extras = extrasState.value) }
                 .onFailure { state.value = ExtrasEditorUiState.Error(it.toSeerrError()) }
         }
     }
@@ -194,7 +199,7 @@ abstract class ExtrasEditorViewModel<T, X>(
         viewModelScope.launch(dispatcher) {
             runCatching { write(ready.draft) }
                 .onSuccess { adopted ->
-                    state.value = ExtrasEditorUiState.Ready(draft = adopted, saved = adopted, extras = extras)
+                    state.value = ExtrasEditorUiState.Ready(draft = adopted, saved = adopted, extras = extrasState.value)
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saving = false) ?: current }
@@ -206,14 +211,17 @@ abstract class ExtrasEditorViewModel<T, X>(
     protected fun ready(): ExtrasEditorUiState.Ready<T, X>? = state.value as? ExtrasEditorUiState.Ready<T, X>
 
     /** What the next [ExtrasEditorUiState.Ready] adopts extras from; for [write], reached while still [saving]. */
-    protected fun currentExtras(): X = extras
+    protected fun currentExtras(): X = extrasState.value
 
     /** Updates extras alone, leaving the draft untouched — a test's answer, a picked choice, a poll tick. */
     protected fun editExtras(transform: (X) -> X) {
-        extras = transform(extras)
+        extrasState.update(transform)
         state.update { current ->
             val ready = current as? ExtrasEditorUiState.Ready<T, X> ?: return@update current
-            ready.copy(extras = extras)
+            // Re-read extrasState here rather than closing over the value update() just produced: a
+            // concurrent editExtras's own extrasState.update can land between the two lines above, and
+            // reading fresh is what stops this call's state.update from then overwriting it with a stale copy.
+            ready.copy(extras = extrasState.value)
         }
     }
 
