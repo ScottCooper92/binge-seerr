@@ -60,7 +60,7 @@ internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {}, {}, {})
 internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {})
-internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
     HubServer(

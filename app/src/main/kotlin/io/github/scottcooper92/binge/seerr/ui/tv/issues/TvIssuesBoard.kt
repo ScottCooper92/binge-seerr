@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.issues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,6 +14,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
+import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
@@ -47,6 +49,7 @@ internal class TvIssuesActions(
     val onSortChange: (IssueSort) -> Unit,
     val onOpenActions: (IssueItem) -> Unit,
     val onDismissActions: () -> Unit,
+    val onOpenDetail: (IssueItem) -> Unit,
     val onResolve: (IssueItem) -> Unit,
     val onReopen: (IssueItem) -> Unit,
     val onDelete: (IssueItem) -> Unit,
@@ -56,8 +59,14 @@ internal class TvIssuesActions(
 
 /**
  * The issues browser as a television board: the filters as a band, the selected filter's rows beneath,
- * and a row's actions — resolve or reopen, and delete — on the end-edge sheet. Same shape as the requests
- * board; the comment thread stays on the phone for now.
+ * and a row's actions — resolve or reopen, and delete — on the end-edge sheet. Every row also opens the
+ * read-only issue page (an overlay above the rail, not owned by this board) — from the sheet for a row
+ * this viewer may act on, where resolving, reopening and deleting stay; directly for one they may not,
+ * where the sheet has nothing else to offer.
+ *
+ * [openIssueId] is the id of the issue whose detail page is currently showing, or null once it has
+ * closed — on that transition the board offers focus back to the row that opened it, one frame after
+ * the page's own disposal, the same round trip the requests board runs for its detail page.
  */
 @Composable
 internal fun TvIssuesBoard(
@@ -66,16 +75,21 @@ internal fun TvIssuesBoard(
     events: Flow<IssueListEvent>,
     actions: TvIssuesActions,
     modifier: Modifier = Modifier,
+    openIssueId: Int? = null,
     initialFocusedRowId: Int? = null,
     now: Long = System.currentTimeMillis(),
 ) {
     val ready = state as? IssuesUiState.Ready
     val event = rememberTvTransientEvent(events)
     val restoreFocus = remember { FocusRequester() }
-    // Pinned to the row that opened the sheet, not the open action item: by the time the closer requests
-    // the return the item is already null, and the requester must still be attached somewhere.
+    // Pinned to the row that opened the sheet or the page, not the open action item or issue id: by the
+    // time either closer requests the return the source it carried is already null, and the requester
+    // must still be attached somewhere.
     var restoreRowId by rememberSaveable { mutableStateOf<Int?>(null) }
     val closer = rememberTvOverlayCloser(restoreTo = restoreFocus, onClose = actions.onDismissActions)
+    LaunchedEffect(openIssueId) {
+        if (openIssueId == null && restoreRowId != null) restoreTvOverlayFocus(restoreFocus)
+    }
     Box(modifier = modifier.fillMaxSize()) {
         TvBoardFrame(title = stringResource(R.string.hub_section_issues)) {
             if (ready == null) {
@@ -99,11 +113,10 @@ internal fun TvIssuesBoard(
             ) { item ->
                 TvIssueRow(
                     item = item,
-                    onSelect =
-                        {
-                            restoreRowId = item.id
-                            actions.onOpenActions(item)
-                        }.takeIf { item.canBeActedOn(ready.scope) },
+                    onSelect = {
+                        restoreRowId = item.id
+                        if (item.canBeActedOn(ready.scope)) actions.onOpenActions(item) else actions.onOpenDetail(item)
+                    },
                     isActing = item.id in ready.actingIds,
                     initiallyFocused = item.id == initialFocusedRowId,
                     now = now,
@@ -132,6 +145,14 @@ internal fun TvIssuesBoard(
                     actions.onDelete(item)
                     closer.close()
                 },
+                // Not `closer.close()`: that would request focus back onto this (now hidden) row one frame
+                // after the sheet disposes, racing the detail page's own arrival focus for the same beat.
+                // The board's `openIssueId` effect above is the one restore this path needs, once the page
+                // the viewer is going to actually closes.
+                onOpenDetail = {
+                    actions.onDismissActions()
+                    actions.onOpenDetail(item)
+                },
                 onDismiss = closer::close,
             )
         }
@@ -141,13 +162,18 @@ internal fun TvIssuesBoard(
 /** The actions that take a second step before they land. */
 private enum class Pending { Resolve, Reopen, Delete }
 
-/** An issue's actions on the end-edge sheet: close or reopen it, and delete it, each confirmed. */
+/**
+ * An issue's actions on the end-edge sheet, for a row this viewer may act on: close or reopen it, and
+ * delete it, each confirmed, then read its comment thread. Entry focus stays on the first management
+ * row exactly as before — Read comments is appended last, an addition rather than a reordering.
+ */
 @Composable
 internal fun TvIssueActionsSheet(
     item: IssueItem,
     onResolve: () -> Unit,
     onReopen: () -> Unit,
     onDelete: () -> Unit,
+    onOpenDetail: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -198,6 +224,7 @@ internal fun TvIssueActionsSheet(
                     onClick = { pending = Pending.Delete },
                     destructive = true,
                 )
+                TvActionSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
                 TvActionSheetStepFocus(entryFocus)
             }
         }
