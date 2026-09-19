@@ -58,7 +58,11 @@ class SetupViewModelTest {
     private val initiates = AtomicInteger(0)
 
     @After
-    fun tearDown() = viewModels.clear()
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+        plex.awaitIdle()
+    }
 
     private lateinit var connection: SeerrConnection
 
@@ -77,7 +81,7 @@ class SetupViewModelTest {
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                             PlainCipher,
                         ),
-                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
+                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
                     quickConnectPollInterval = 10.milliseconds,
                 )
         }
@@ -87,7 +91,14 @@ class SetupViewModelTest {
                 plex =
                     PlexPinFlow(
                         identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
-                        apis = { plexTvApi(it, plex.url("/"), testTransport = plex.interceptor()) },
+                        apis = {
+                            plexTvApi(
+                                it,
+                                plex.url("/"),
+                                testTransport = plex.interceptor(),
+                                testDispatcher = plex.newDispatcher(),
+                            )
+                        },
                         pollInterval = 10.milliseconds,
                     ),
                 savedState = savedState,
