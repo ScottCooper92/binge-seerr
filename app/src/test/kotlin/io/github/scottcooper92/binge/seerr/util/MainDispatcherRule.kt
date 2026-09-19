@@ -22,17 +22,14 @@ import org.junit.runner.Description
  * advance, and `runTest` cannot tell when the ViewModel's work has finished — which pushes a test
  * towards sampling state instead of awaiting it, and sampling is where the races live.
  *
- * Ten files keep their own `setMain` with no reset, and the reason is not the real socket they
- * drive: twenty-five other files drive a `MockWebServer` through this rule. Two separate causes,
- * both since measured (#177).
- *
- * `HubViewModelTest` hangs, because it turns on `DownloadsPoller`, whose loop is
- * `while (true) { …; delay(…) }` - a virtual clock drives that forever and `runTest` never goes
- * idle. The other nine do not hang; taking Main away exposes work that outlives their teardown,
- * which the leaked dispatcher had been masking. A Retrofit call cancelled by `ViewModelStore.clear`
- * still resumes on OkHttp's thread afterwards, and dispatching that resume to an absent Main
- * throws. Resetting is what makes it visible, so the fix is for nothing to outlive the test - not
- * for Main to stay leaked.
+ * Every file in the module takes this rule now (#337). The ten that used to be exempted - the
+ * ones driving a real `MockWebServer` - moved to an in-memory transport ([FakeSeerrServer])
+ * instead: `HubViewModelTest`'s hang on `DownloadsPoller`'s unbounded loop is gone (it takes a
+ * test-visible `DownloadsPollerTicker` now), and the other nine no longer resume a Retrofit call
+ * on a real socket's thread after teardown. A smaller version of that second race can still occur
+ * - OkHttp still answers on its own thread, so a call a test never awaits directly can still
+ * outlive `ViewModelStore.clear()` - which is why #177 stays open rather than closing on the
+ * transport move alone; see it for the residual shape and the harder fix.
  */
 class MainDispatcherRule(
     val dispatcher: TestDispatcher = UnconfinedTestDispatcher(),

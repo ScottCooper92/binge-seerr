@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +26,7 @@ private const val STRIP_MAX_ITEMS = 5
 class DownloadsPoller(
     scope: CoroutineScope,
     healthy: Flow<Boolean>,
+    private val ticker: DownloadsPollerTicker = DownloadsPollerTicker(),
     private val fetch: suspend () -> Result<List<HubDownload>>,
 ) {
     private val screenVisible = MutableStateFlow(false)
@@ -48,7 +48,7 @@ class DownloadsPoller(
     private suspend fun poll() {
         while (true) {
             refresh()
-            delay(if (state.value.isEmpty()) IDLE_POLL_INTERVAL_MS else ACTIVE_POLL_INTERVAL_MS)
+            ticker.await(if (state.value.isEmpty()) IDLE_POLL_INTERVAL_MS else ACTIVE_POLL_INTERVAL_MS)
         }
     }
 

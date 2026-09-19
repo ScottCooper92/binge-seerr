@@ -10,17 +10,15 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.util.FakeRequest
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,45 +36,36 @@ import java.util.concurrent.CountDownLatch
 private const val ADMIN = 2
 private const val REQUEST = 32
 
-/** The request page over a real connection into a path-scripted Seerr; Main is real-time, as for the hub. */
+/** The request page over an in-memory connection into a path-scripted Seerr. */
 class RequestDetailViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer()
-    private val received = CopyOnWriteArrayList<RecordedRequest>()
-    private val responses = mutableMapOf<String, () -> MockResponse>()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val received = CopyOnWriteArrayList<FakeRequest>()
+    private val responses = mutableMapOf<String, () -> FakeResponse>()
     private val viewModels = ViewModelStore()
     private var stores = 0
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-        seerr.dispatcher =
-            object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest): MockResponse {
-                    received += request
-                    return responses[request.url.encodedPath]?.invoke() ?: MockResponse(code = 404)
-                }
-            }
-        seerr.start()
+        seerr.dispatcher = { request ->
+            received += request
+            responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404)
+        }
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     private fun serve(
         path: String,
         body: String,
     ) {
-        responses[path] = { MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body) }
+        responses[path] = { FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body) }
     }
 
     private fun server(permissions: Int) {
@@ -112,9 +101,9 @@ class RequestDetailViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
-        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         return connection
     }
 
@@ -164,7 +153,7 @@ class RequestDetailViewModelTest {
             assertEquals(10, download.etaMinutes)
             assertEquals(900, detail.mediaId)
             assertTrue(detail.canReportIssue)
-            assertEquals(seerr.url("/").toString() + "tv/200", detail.webUrl)
+            assertEquals(seerr.url("/") + "tv/200", detail.webUrl)
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
         }
 
@@ -259,19 +248,14 @@ class RequestDetailViewModelTest {
             vm.reportIssue(IssueType.Subtitles, " Missing subs ")
 
             assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
-            val posted =
-                received
-                    .last { it.url.encodedPath == "/api/v1/issue" }
-                    .body
-                    ?.utf8()
-                    .orEmpty()
+            val posted = received.last { it.url.encodedPath == "/api/v1/issue" }.body
             assertTrue(posted.contains("\"mediaId\":900"))
             assertTrue(posted.contains("\"issueType\":3"))
             assertTrue(posted.contains("\"message\":\"Missing subs\""))
 
             responses["/api/v1/auth/me"] =
                 {
-                    MockResponse(
+                    FakeResponse(
                         code = 200,
                         headers = headersOf("Content-Type", "application/json"),
                         body = """{"id":8,"permissions":$REQUEST}""",
@@ -286,7 +270,7 @@ class RequestDetailViewModelTest {
         runTest {
             server(ADMIN)
             val connection = connection()
-            responses["/api/v1/auth/me"] = { MockResponse(code = 500) }
+            responses["/api/v1/auth/me"] = { FakeResponse(code = 500) }
             val vm = viewModel(connection)
 
             val detail = vm.awaitReady().detail
@@ -304,7 +288,7 @@ class RequestDetailViewModelTest {
             val release = CountDownLatch(1)
             responses["/api/v1/issue"] = {
                 release.await()
-                MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
             }
             val vm = viewModel()
             vm.awaitReady()
@@ -414,7 +398,7 @@ class RequestDetailViewModelTest {
 
             vm.awaitReady { it.edit == null }
             val put = received.last { it.method == "PUT" && it.url.encodedPath == "/api/v1/request/11" }
-            val body = put.body?.utf8().orEmpty()
+            val body = put.body
             assertTrue(body, body.contains("\"mediaType\":\"tv\""))
             assertTrue(body, body.contains("\"seasons\":[1]"))
             assertTrue(body, body.contains("\"serverId\":1"))

@@ -11,18 +11,16 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
+import io.github.scottcooper92.binge.seerr.util.FakeRequest
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,49 +36,40 @@ import java.util.concurrent.CountDownLatch
 private const val ADMIN = 2
 private const val CREATE_ISSUES = 1 shl 22
 
-/** The issue page over a real connection into a path-scripted Seerr; Main is real-time, as for the hub. */
+/** The issue page over an in-memory connection into a path-scripted Seerr. */
 class IssueDetailViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer()
-    private val received = CopyOnWriteArrayList<RecordedRequest>()
-    private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val received = CopyOnWriteArrayList<FakeRequest>()
+    private val responses = mutableMapOf<String, (FakeRequest) -> FakeResponse>()
     private val viewModels = ViewModelStore()
     private var stores = 0
     private val cache = FakeIssueStore()
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-        seerr.dispatcher =
-            object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest): MockResponse {
-                    received += request
-                    return responses[request.method + " " + request.url.encodedPath]?.invoke(request)
-                        ?: responses["* " + request.url.encodedPath]?.invoke(request)
-                        ?: MockResponse(code = 404)
-                }
-            }
-        seerr.start()
+        seerr.dispatcher = { request ->
+            received += request
+            responses[request.method + " " + request.url.encodedPath]?.invoke(request)
+                ?: responses["* " + request.url.encodedPath]?.invoke(request)
+                ?: FakeResponse(code = 404)
+        }
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     private fun serve(
         key: String,
         body: String,
         code: Int = 200,
     ) {
-        responses[key] = { MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
+        responses[key] = { FakeResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
     }
 
     private fun issueJson(
@@ -109,9 +98,9 @@ class IssueDetailViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
-        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm = IssueDetailViewModel(connection, TitleCache(), cache, 31)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -140,7 +129,7 @@ class IssueDetailViewModelTest {
             assertTrue(detail.canComment)
             assertTrue(detail.canManage)
             assertTrue(detail.canActOn(reply))
-            assertEquals(seerr.url("/").toString() + "issues/31", detail.webUrl)
+            assertEquals(seerr.url("/") + "issues/31", detail.webUrl)
             assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
         }
 
@@ -167,12 +156,7 @@ class IssueDetailViewModelTest {
             val mine = confirmed.detail.comments.last()
             assertEquals("On it", mine.message)
             assertTrue(mine.isMine)
-            val posted =
-                received
-                    .last { it.method == "POST" }
-                    .body
-                    ?.utf8()
-                    .orEmpty()
+            val posted = received.last { it.method == "POST" }.body
             assertTrue(posted, posted.contains("\"message\":\"On it\""))
 
             serve("POST /api/v1/issue/31/comment", "", code = 503)
@@ -235,7 +219,7 @@ class IssueDetailViewModelTest {
                     firstPostReceived.complete(Unit)
                     releaseFirstPost.await()
                 }
-                MockResponse(
+                FakeResponse(
                     code = 200,
                     headers = headersOf("Content-Type", "application/json"),
                     body =
@@ -286,7 +270,7 @@ class IssueDetailViewModelTest {
                     firstPostReceived.complete(Unit)
                     releaseFirstPost.await()
                 }
-                MockResponse(
+                FakeResponse(
                     code = 200,
                     headers = headersOf("Content-Type", "application/json"),
                     body =
@@ -322,7 +306,7 @@ class IssueDetailViewModelTest {
             responses["POST /api/v1/issue/31/comment"] = {
                 postReceived.complete(Unit)
                 releasePost.await()
-                MockResponse(
+                FakeResponse(
                     code = 200,
                     headers = headersOf("Content-Type", "application/json"),
                     body =
@@ -354,9 +338,9 @@ class IssueDetailViewModelTest {
             var issueCalls = 0
             responses["GET /api/v1/issue/31"] = {
                 if (++issueCalls == 1) {
-                    MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = issueJson())
+                    FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = issueJson())
                 } else {
-                    MockResponse(code = 503)
+                    FakeResponse(code = 503)
                 }
             }
             val vm = viewModel()
@@ -387,7 +371,7 @@ class IssueDetailViewModelTest {
             val commentEdited = awaitEvent(vm.events)
             vm.editComment(2, "Same here, fixed now")
             assertEquals(IssueDetailEvent.CommentEdited, commentEdited.await())
-            assertTrue(received.any { it.method == "PUT" && it.body?.utf8()?.contains("fixed now") == true })
+            assertTrue(received.any { it.method == "PUT" && it.body.contains("fixed now") })
 
             val commentDeleted = awaitEvent(vm.events)
             vm.deleteComment(2)
@@ -442,9 +426,9 @@ class IssueDetailViewModelTest {
             var issueCalls = 0
             responses["GET /api/v1/issue/31"] = {
                 if (++issueCalls == 1) {
-                    MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = issueJson())
+                    FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = issueJson())
                 } else {
-                    MockResponse(code = 503)
+                    FakeResponse(code = 503)
                 }
             }
             val vm = viewModel()
@@ -505,7 +489,7 @@ class IssueDetailViewModelTest {
             assertFalse(stranger.canDelete)
         }
 
-    private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+    private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext

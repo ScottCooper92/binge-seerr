@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -60,10 +61,15 @@ data class PlexClientIdentity(
 private const val PLEX_TV_BASE_URL = "https://plex.tv/"
 private const val TIMEOUT_SECONDS = 15L
 
-/** A [PlexTvApi] presenting [identity] on every call; [baseUrl] is a parameter so a test can script plex.tv. */
+/**
+ * A [PlexTvApi] presenting [identity] on every call; [baseUrl] is a parameter so a test can script
+ * plex.tv. [testTransport] is a second, narrower seam for that: no socket exists when it is set,
+ * since every call is answered by it instead of the network (#337).
+ */
 fun plexTvApi(
     identity: PlexClientIdentity,
     baseUrl: String = PLEX_TV_BASE_URL,
+    testTransport: Interceptor? = null,
 ): PlexTvApi {
     val client =
         OkHttpClient
@@ -81,7 +87,8 @@ fun plexTvApi(
                         .header("X-Plex-Device", identity.device)
                         .build(),
                 )
-            }.connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            }.apply { testTransport?.let(::addInterceptor) }
+            .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
     val json = Json { ignoreUnknownKeys = true }

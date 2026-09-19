@@ -7,6 +7,7 @@ import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -28,6 +29,11 @@ class SeerrApiFactory(
     private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
+    /**
+     * No socket exists when this is set: every client this factory builds is answered by the
+     * interceptor it returns for that call's cookie jar, instead of the network. Test-only (#337).
+     */
+    internal val testTransport: ((CookieJar) -> Interceptor)? = null,
 ) {
     /**
      * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
@@ -58,7 +64,7 @@ class SeerrApiFactory(
                         .addInterceptor(SeerrHealthInterceptor(health))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .applyAuth(auth, baseUrl)
-                        .finish(HttpLoggingInterceptor.Level.BODY)
+                        .finish(HttpLoggingInterceptor.Level.BODY, sessionCookieJarOrNull(auth, baseUrl))
                 CachedApi(baseUrl, auth, client, retrofit(baseUrl, client)).also { cached = it }.api
             }
         }
@@ -80,7 +86,8 @@ class SeerrApiFactory(
         auth: SeerrAuth,
         block: suspend (SeerrApi) -> T,
     ): T {
-        val client = OkHttpClient.Builder().applyAuth(auth, baseUrl).finish(HttpLoggingInterceptor.Level.BODY)
+        val client =
+            OkHttpClient.Builder().applyAuth(auth, baseUrl).finish(HttpLoggingInterceptor.Level.BODY, sessionCookieJarOrNull(auth, baseUrl))
         return try {
             block(retrofit(baseUrl, client))
         } finally {
@@ -98,7 +105,7 @@ class SeerrApiFactory(
         block: suspend (SeerrApi) -> T,
     ): SeerrLoginResult<T> {
         val capture = CapturingCookieJar()
-        val client = OkHttpClient.Builder().cookieJar(capture).finish(HttpLoggingInterceptor.Level.HEADERS)
+        val client = OkHttpClient.Builder().cookieJar(capture).finish(HttpLoggingInterceptor.Level.HEADERS, capture)
         return try {
             SeerrLoginResult(value = block(retrofit(baseUrl, client)), sessionCookie = capture.sessionCookie)
         } finally {
@@ -115,7 +122,7 @@ class SeerrApiFactory(
         baseUrl: String,
         block: suspend (SeerrApi) -> T,
     ): T {
-        val client = OkHttpClient.Builder().finish(HttpLoggingInterceptor.Level.HEADERS)
+        val client = OkHttpClient.Builder().finish(HttpLoggingInterceptor.Level.HEADERS, cookieJar = null)
         return try {
             block(retrofit(baseUrl, client))
         } finally {
@@ -130,8 +137,12 @@ class SeerrApiFactory(
      * connection the server is about to close — which OkHttp does not recover from, because its
      * retry looks for another route and a single server offers none (#254).
      */
-    private fun OkHttpClient.Builder.finish(debugLevel: HttpLoggingInterceptor.Level): OkHttpClient =
-        addNetworkInterceptor(loggingInterceptor(debugLevel))
+    private fun OkHttpClient.Builder.finish(
+        debugLevel: HttpLoggingInterceptor.Level,
+        cookieJar: CookieJar?,
+    ): OkHttpClient =
+        apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
+            .addNetworkInterceptor(loggingInterceptor(debugLevel))
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -176,8 +187,14 @@ class SeerrApiFactory(
                             .build(),
                     )
                 }
-            is SeerrAuth.Session -> cookieJar(SessionCookieJar(baseUrl, auth.cookie))
+            is SeerrAuth.Session -> cookieJar(sessionCookieJarOrNull(auth, baseUrl) ?: CookieJar.NO_COOKIES)
         }
+
+    /** The same jar [applyAuth] sets for [SeerrAuth.Session], read back for [finish] to hand a test transport. */
+    private fun sessionCookieJarOrNull(
+        auth: SeerrAuth,
+        baseUrl: String,
+    ): CookieJar? = (auth as? SeerrAuth.Session)?.let { SessionCookieJar(baseUrl, it.cookie) }
 
     private fun OkHttpClient.release() {
         dispatcher.executorService.shutdown()

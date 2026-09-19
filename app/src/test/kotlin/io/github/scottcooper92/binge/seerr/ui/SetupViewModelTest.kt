@@ -13,25 +13,20 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.plexTvApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import io.github.scottcooper92.binge.seerr.util.FakeRequest
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -42,17 +37,19 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * The setup screen's two steps over a real connection: DataStore in a temp file, HTTP into a
+ * The setup screen's two steps over an in-memory connection: DataStore in a temp file, HTTP into a
  * scripted Seerr and, for the Plex flow, a scripted plex.tv. Every outcome that crosses a thread is
  * awaited by its shape rather than read off the state, which would read whatever was there last.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 class SetupViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer().apply { start() }
-    private val plex = MockWebServer().apply { start() }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val plex = FakeSeerrServer()
 
     /** Every ViewModel goes in here and is cleared on teardown, so no link poll outlives its test. */
     private val viewModels = ViewModelStore()
@@ -60,19 +57,8 @@ class SetupViewModelTest {
     /** Counts the Quick Connect initiates, so a resume can be told from a second sign-in started. */
     private val initiates = AtomicInteger(0)
 
-    @Before
-    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-        plex.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     private lateinit var connection: SeerrConnection
 
@@ -91,7 +77,7 @@ class SetupViewModelTest {
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                             PlainCipher,
                         ),
-                    apis = SeerrApiFactory(logRequests = false),
+                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
                     quickConnectPollInterval = 10.milliseconds,
                 )
         }
@@ -101,7 +87,7 @@ class SetupViewModelTest {
                 plex =
                     PlexPinFlow(
                         identity = { PlexClientIdentity(identifier = "cid", product = "Binge Seerr", version = "0.1.0", device = "Pixel") },
-                        apis = { plexTvApi(it, plex.url("/").toString()) },
+                        apis = { plexTvApi(it, plex.url("/"), testTransport = plex.interceptor()) },
                         pollInterval = 10.milliseconds,
                     ),
                 savedState = savedState,
@@ -131,7 +117,7 @@ class SetupViewModelTest {
         seerr.enqueue(json(settings))
         seerr.enqueue(json(backdrops))
         awaitAddress()
-        editAddress(seerr.url("/").toString())
+        editAddress(seerr.url("/"))
         inspect()
         return awaitSignIn()
     }
@@ -193,11 +179,11 @@ class SetupViewModelTest {
     @Test
     fun `an address that is not a Seerr server is said so before any credential is typed`() =
         runTest {
-            seerr.enqueue(MockResponse(code = 404))
-            seerr.enqueue(MockResponse(code = 404))
+            seerr.enqueue(FakeResponse(code = 404))
+            seerr.enqueue(FakeResponse(code = 404))
             val vm = viewModel()
             vm.awaitAddress()
-            vm.editAddress(seerr.url("/").toString())
+            vm.editAddress(seerr.url("/"))
 
             vm.inspect()
 
@@ -249,7 +235,7 @@ class SetupViewModelTest {
             val vm = viewModel()
             vm.inspect("""{"version":"3.0.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "bad") }
-            seerr.enqueue(MockResponse(code = 401))
+            seerr.enqueue(FakeResponse(code = 401))
 
             vm.connect()
 
@@ -289,12 +275,7 @@ class SetupViewModelTest {
             assertEquals(SetupNotice.ResetEmailSent, vm.awaitSignIn { it.notice != null }.notice)
             val reset = seerr.takeRequest()
             assertEquals("/api/v1/auth/reset-password", reset.url.encodedPath)
-            assertTrue(
-                reset.body
-                    ?.utf8()
-                    .orEmpty()
-                    .contains("s@example.com"),
-            )
+            assertTrue(reset.body.contains("s@example.com"))
         }
 
     @Test
@@ -374,7 +355,7 @@ class SetupViewModelTest {
             vm.inspect("""{"version":"3.4.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
             seerr.enqueue(json("""{"code":"123456","secret":"abcdef12"}"""))
-            seerr.enqueue(MockResponse(code = 404))
+            seerr.enqueue(FakeResponse(code = 404))
 
             vm.connect()
 
@@ -406,12 +387,7 @@ class SetupViewModelTest {
             assertEquals(SeerrVariant.Overseerr, vm.awaitConnected().credentials.variant)
             val login = seerr.takeRequest()
             assertEquals("/api/v1/auth/plex", login.url.encodedPath)
-            assertTrue(
-                login.body
-                    ?.utf8()
-                    .orEmpty()
-                    .contains("tok3n"),
-            )
+            assertTrue(login.body.contains("tok3n"))
         }
 
     @Test
@@ -420,15 +396,13 @@ class SetupViewModelTest {
             // plex.tv answers by path rather than from the queue here: two ViewModels poll the same
             // PIN across the restart, and which of them reads a given response is not the assertion.
             val token = AtomicReference<String?>(null)
-            plex.dispatcher =
-                object : Dispatcher() {
-                    override fun dispatch(request: RecordedRequest): MockResponse =
-                        if (request.method == "POST") {
-                            json("""{"id":41,"code":"ABCD","expiresAt":"2099-01-01T00:00:00Z"}""")
-                        } else {
-                            json("""{"id":41,"code":"ABCD","authToken":${token.get()?.let { "\"$it\"" } ?: "null"}}""")
-                        }
+            plex.dispatcher = { request ->
+                if (request.method == "POST") {
+                    json("""{"id":41,"code":"ABCD","expiresAt":"2099-01-01T00:00:00Z"}""")
+                } else {
+                    json("""{"id":41,"code":"ABCD","authToken":${token.get()?.let { "\"$it\"" } ?: "null"}}""")
                 }
+            }
             val saved = SavedStateHandle()
             val vm = viewModel(savedState = saved)
             vm.inspect("""{"version":"1.33.2"}""", """{"localLogin":true}""")
@@ -467,7 +441,7 @@ class SetupViewModelTest {
             val saved = SavedStateHandle()
             val vm = viewModel(savedState = saved)
             vm.awaitAddress()
-            vm.editAddress(seerr.url("/").toString())
+            vm.editAddress(seerr.url("/"))
             vm.inspect()
             vm.awaitSignIn()
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
@@ -494,7 +468,7 @@ class SetupViewModelTest {
             val saved = SavedStateHandle()
             val vm = viewModel(savedState = saved)
             vm.awaitAddress()
-            vm.editAddress(seerr.url("/").toString())
+            vm.editAddress(seerr.url("/"))
             vm.inspect()
             vm.awaitSignIn()
             vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
@@ -521,22 +495,21 @@ class SetupViewModelTest {
         }
 
     /** Quick Connect end to end, by path: initiate, the poll [approved] answers, then the session. */
-    private fun quickConnectServer(approved: AtomicBoolean) =
-        object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse =
-                when (request.url.encodedPath) {
-                    "/api/v1/status" -> json("""{"version":"3.4.0"}""")
-                    "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
-                    "/api/v1/backdrops" -> json("[]")
-                    "/api/v1/auth/jellyfin/quickconnect/initiate" -> {
-                        initiates.incrementAndGet()
-                        json("""{"code":"123456","secret":"abcdef12"}""")
-                    }
-                    "/api/v1/auth/jellyfin/quickconnect/check" -> json("""{"authenticated":${approved.get()}}""")
-                    "/api/v1/auth/jellyfin/quickconnect/authenticate" ->
-                        json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/"))
-                    else -> json("{}")
+    private fun quickConnectServer(approved: AtomicBoolean): (FakeRequest) -> FakeResponse =
+        { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/status" -> json("""{"version":"3.4.0"}""")
+                "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                "/api/v1/backdrops" -> json("[]")
+                "/api/v1/auth/jellyfin/quickconnect/initiate" -> {
+                    initiates.incrementAndGet()
+                    json("""{"code":"123456","secret":"abcdef12"}""")
                 }
+                "/api/v1/auth/jellyfin/quickconnect/check" -> json("""{"authenticated":${approved.get()}}""")
+                "/api/v1/auth/jellyfin/quickconnect/authenticate" ->
+                    json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/"))
+                else -> json("{}")
+            }
         }
 
     @Test
@@ -598,7 +571,7 @@ class SetupViewModelTest {
             val editing = editor.awaitSignIn { !it.isConnecting }
             assertEquals(original.baseUrl, editing.server.baseUrl)
 
-            seerr.enqueue(MockResponse(code = 401))
+            seerr.enqueue(FakeResponse(code = 401))
             editor.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "wrong") }
             editor.connect()
             assertEquals(SetupError.Rejected, editor.awaitSignIn { it.error != null }.error)
@@ -615,7 +588,7 @@ class SetupViewModelTest {
     private fun json(
         body: String,
         headers: okhttp3.Headers = headersOf(),
-    ): MockResponse = MockResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body)
+    ): FakeResponse = FakeResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body)
 
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext

@@ -10,22 +10,17 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
 import okhttp3.Headers.Companion.headersOf
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -44,25 +39,15 @@ private const val DETAILS = """{
   "rootFolders":[{"id":1,"path":"/media"},{"id":2,"path":"/kids"}]
 }"""
 
-/** The hand-off's state over a real connection into a scripted server, as the setup screen's test does. */
-@OptIn(ExperimentalCoroutinesApi::class)
+/** The hand-off's state over an in-memory connection into a scripted server, as the setup screen's test does. */
 class AdvancedRequestViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer().apply { start() }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
-    @Before
-    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
-    @After
-    fun tearDown() {
-        seerr.close()
-    }
+    private val seerr = FakeSeerrServer()
 
     @Test
     fun `the picker opens on the default server of the title's kind, with that server's defaults`() =
@@ -99,7 +84,7 @@ class AdvancedRequestViewModelTest {
             seerr.takeRequest()
             val posted = seerr.takeRequest()
             assertEquals("/api/v1/request", posted.url.encodedPath)
-            val body = posted.body?.utf8().orEmpty()
+            val body = posted.body
             assertTrue(body, body.contains("\"mediaType\":\"movie\""))
             assertTrue(body, body.contains("\"mediaId\":603"))
             assertTrue(body, body.contains("\"serverId\":1"))
@@ -122,12 +107,7 @@ class AdvancedRequestViewModelTest {
             vm.uiState.first { it is AdvancedRequestUiState.Submitted }
             assertEquals("/api/v1/service/sonarr", seerr.takeRequest().url.encodedPath)
             assertEquals("/api/v1/service/sonarr/1", seerr.takeRequest().url.encodedPath)
-            val body =
-                seerr
-                    .takeRequest()
-                    .body
-                    ?.utf8()
-                    .orEmpty()
+            val body = seerr.takeRequest().body
             assertTrue(body, body.contains("\"mediaType\":\"tv\""))
             assertTrue(body, body.contains("\"seasons\":[1,2]"))
         }
@@ -172,7 +152,7 @@ class AdvancedRequestViewModelTest {
         runTest {
             seerr.enqueue(json(SERVERS))
             seerr.enqueue(json(DETAILS))
-            seerr.enqueue(MockResponse(code = 403))
+            seerr.enqueue(FakeResponse(code = 403))
             val vm = viewModel(MOVIE)
             vm.awaitChoices()
 
@@ -192,8 +172,12 @@ class AdvancedRequestViewModelTest {
                 PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                 PlainCipher,
             )
-        if (connected) store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.Seerr))
-        val vm = AdvancedRequestViewModel(SeerrConnection(store, SeerrApiFactory(logRequests = false)), request)
+        if (connected) store.save(SeerrCredentials(seerr.url("/"), SeerrAuth.ApiKey("k3y"), SeerrVariant.Seerr))
+        val vm =
+            AdvancedRequestViewModel(
+                SeerrConnection(store, SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor)),
+                request,
+            )
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
@@ -206,7 +190,7 @@ class AdvancedRequestViewModelTest {
     private fun json(
         body: String,
         code: Int = 200,
-    ): MockResponse = MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body)
+    ): FakeResponse = FakeResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext

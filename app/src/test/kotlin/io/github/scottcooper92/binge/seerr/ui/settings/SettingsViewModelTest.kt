@@ -14,16 +14,13 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
-import kotlinx.coroutines.Dispatchers
+import io.github.scottcooper92.binge.seerr.util.FakeResponse
+import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -37,13 +34,16 @@ import org.junit.rules.TemporaryFolder
 private const val ADMIN = 2
 private const val REQUEST = 32
 
-/** Settings over a real connection into a Seerr scripted by path; Main is real-time, as for the hub. */
+/** Settings over an in-memory connection into a Seerr scripted by path. */
 class SettingsViewModelTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer()
-    private val responses = mutableMapOf<String, () -> MockResponse>()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val responses = mutableMapOf<String, () -> FakeResponse>()
     private val viewModels = ViewModelStore()
     private lateinit var connection: SeerrConnection
     private lateinit var prefs: NotificationPrefs
@@ -52,24 +52,11 @@ class SettingsViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-        seerr.dispatcher =
-            object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest): MockResponse =
-                    responses[request.url.encodedPath]?.invoke() ?: MockResponse(code = 404)
-            }
-        seerr.start()
+        seerr.dispatcher = { request -> responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404) }
     }
 
-    /**
-     * Main is set on every setup and never reset: a callback still in flight at teardown would
-     * otherwise dispatch into the unset window and be reported into whichever test runs next.
-     */
     @After
-    fun tearDown() {
-        viewModels.clear()
-        seerr.close()
-    }
+    fun tearDown() = viewModels.clear()
 
     private fun serve(
         path: String,
@@ -77,7 +64,7 @@ class SettingsViewModelTest {
         headers: okhttp3.Headers = headersOf(),
     ) {
         responses[path] =
-            { MockResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body) }
+            { FakeResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body) }
     }
 
     private fun server(permissions: Int) {
@@ -119,12 +106,12 @@ class SettingsViewModelTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("s.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor),
             )
         if (session) {
-            connection.logIn(seerr.url("/").toString(), SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+            connection.logIn(seerr.url("/"), SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
         } else {
-            connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         }
         prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
         val vm = SettingsViewModel(connection, SettingsLoader(connection), prefs, scheduler, notifier)
@@ -178,7 +165,7 @@ class SettingsViewModelTest {
     fun `a refused Radarr read still yields Sonarr's rows`() =
         runTest {
             server(ADMIN)
-            responses["/api/v1/settings/radarr"] = { MockResponse(code = 500) }
+            responses["/api/v1/settings/radarr"] = { FakeResponse(code = 500) }
             val vm = viewModel()
 
             val ready = vm.awaitReady { it.config?.services != null }
