@@ -350,12 +350,14 @@ private fun EditConnectionEntry(
     // update lands. Tracking observed-non-Connected locally (rather than trying to win that race)
     // means onDone only fires on a Connected reading that arrives AFTER editing has visibly begun,
     // which is the one that means "saved", regardless of how beginEdit()'s dispatch is scheduled.
+    // Loading is the StateFlow's seed value, read here before beginEdit()'s dispatch or the upstream
+    // combine have produced anything real, so it must not count as "editing has begun" either.
     var enteredEditing by remember { mutableStateOf(false) }
     LaunchedEffect(state) {
-        if (state is SetupUiState.Connected) {
-            if (enteredEditing) onDone()
-        } else {
-            enteredEditing = true
+        when (state) {
+            is SetupUiState.Connected -> if (enteredEditing) onDone()
+            is SetupUiState.Loading -> Unit
+            else -> enteredEditing = true
         }
     }
     SetupScreen(
