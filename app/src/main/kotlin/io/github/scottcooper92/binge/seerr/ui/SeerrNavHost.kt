@@ -8,7 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -342,7 +345,19 @@ private fun EditConnectionEntry(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.beginEdit() }
-    LaunchedEffect(state) { if (state is SetupUiState.Connected) onDone() }
+    // beginEdit()'s own update to `editing` is dispatched, so the very first `state` this collects
+    // can still read Connected - the pre-edit reading of the connection being edited - before that
+    // update lands. Tracking observed-non-Connected locally (rather than trying to win that race)
+    // means onDone only fires on a Connected reading that arrives AFTER editing has visibly begun,
+    // which is the one that means "saved", regardless of how beginEdit()'s dispatch is scheduled.
+    var enteredEditing by remember { mutableStateOf(false) }
+    LaunchedEffect(state) {
+        if (state is SetupUiState.Connected) {
+            if (enteredEditing) onDone()
+        } else {
+            enteredEditing = true
+        }
+    }
     SetupScreen(
         state = state,
         actions = viewModel.actions(),
