@@ -69,7 +69,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestRow
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -135,7 +134,7 @@ fun UserDetailScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when (state) {
-                UserDetailUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                UserDetailUiState.Loading -> UserDetailSkeleton(Modifier.padding(inner))
                 is UserDetailUiState.Error ->
                     ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
                 is UserDetailUiState.Ready -> UserDetailContent(state.detail, requests.collectAsLazyPagingItems(), actions, inner)
