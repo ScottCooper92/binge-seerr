@@ -26,6 +26,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.SettingsRowDestination
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -116,6 +117,7 @@ private fun versionRows(
                     else -> stringResource(R.string.server_settings_about_up_to_date)
                 },
             detail = stringResource(R.string.server_settings_about_release_notes),
+            destination = SettingsRowDestination.External,
             onClick = { onOpenUrl(info.variant.releaseNotesUrl()) },
         ),
         info.commitTag?.let { tag ->
@@ -187,6 +189,7 @@ private fun supportRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_docs),
             detail = info.variant.docsUrl(),
+            destination = SettingsRowDestination.External,
             onClick = { onOpenUrl(info.variant.docsUrl()) },
         ),
         SettingsRow(
@@ -194,6 +197,7 @@ private fun supportRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_discord),
             detail = info.variant.discordUrl(),
+            destination = SettingsRowDestination.External,
             onClick = { onOpenUrl(info.variant.discordUrl()) },
         ),
         SettingsRow(
@@ -201,6 +205,7 @@ private fun supportRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_github),
             detail = info.variant.githubUrl(),
+            destination = SettingsRowDestination.External,
             onClick = { onOpenUrl(info.variant.githubUrl()) },
         ),
     )
