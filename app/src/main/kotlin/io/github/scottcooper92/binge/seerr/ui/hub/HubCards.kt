@@ -63,7 +63,7 @@ internal fun HubCard(
     }
 }
 
-/** The hero: the server's name, its fork and version, whether an update is out, and the totals strip. */
+/** The hero: the server's name, its fork and version, its address, whether an update is out, and the totals strip. */
 @Composable
 internal fun ServerCard(
     server: HubServer,
@@ -100,6 +100,13 @@ internal fun ServerCard(
                             ?: stringResource(R.string.setup_server_development, server.variant.displayName),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = server.baseUrl,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_s)))
