@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,9 +23,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
-import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
@@ -80,45 +78,41 @@ private fun JobRow(
     actions: JobsActions,
 ) {
     var scheduling by rememberSaveable { mutableStateOf(false) }
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = BingeShapes.Medium,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier.padding(dimensionResource(DesR.dimen.padding_m)),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(job.name, style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    when {
-                        job.running -> stringResource(R.string.settings_job_running)
-                        else ->
-                            formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
-                                ?: stringResource(R.string.settings_value_unknown)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+    ListRow(
+        verticalAlignment = Alignment.CenterVertically,
+        trailing = {
+            Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+                if (job.schedulable) {
+                    BingeTextButton(
+                        label = stringResource(R.string.server_settings_job_schedule),
+                        onClick = { scheduling = true },
+                        enabled = !busy,
+                    )
+                }
+                if (job.running) {
+                    BingeTextButton(label = stringResource(R.string.server_settings_job_cancel), onClick = {
+                        actions.onCancel(job.id)
+                    }, enabled = !busy, loading = busy)
+                } else {
+                    BingeTextButton(label = stringResource(R.string.server_settings_job_run), onClick = {
+                        actions.onRun(job.id)
+                    }, enabled = !busy, loading = busy)
+                }
             }
-            if (job.schedulable) {
-                BingeTextButton(
-                    label = stringResource(R.string.server_settings_job_schedule),
-                    onClick = { scheduling = true },
-                    enabled = !busy,
-                )
-            }
-            if (job.running) {
-                BingeTextButton(label = stringResource(R.string.server_settings_job_cancel), onClick = {
-                    actions.onCancel(job.id)
-                }, enabled = !busy, loading = busy)
-            } else {
-                BingeTextButton(label = stringResource(R.string.server_settings_job_run), onClick = {
-                    actions.onRun(job.id)
-                }, enabled = !busy, loading = busy)
-            }
+        },
+    ) { modifier ->
+        Column(modifier = modifier) {
+            Text(job.name, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                when {
+                    job.running -> stringResource(R.string.settings_job_running)
+                    else ->
+                        formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
+                            ?: stringResource(R.string.settings_value_unknown)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
     if (scheduling) {
