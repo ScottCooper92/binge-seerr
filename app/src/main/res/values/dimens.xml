@@ -52,4 +52,8 @@
          (top + bottom) plus a titleMedium line, padding_xs and a bodySmall line — which happens to
          match avatar_size_md, since ListRow centres the avatar against that content column. -->
     <dimen name="users_row_skeleton_height">64dp</dimen>
+    <!-- RequestDetailSkeleton's headline chip row (#373): BingeTag has no fixed width of its own
+         (it sizes to its label), so the skeleton picks a plausible one for each of the two chips
+         every request headline shows (media type, request status). -->
+    <dimen name="request_skeleton_chip_width">72dp</dimen>
 </resources>

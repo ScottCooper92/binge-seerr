@@ -22,6 +22,12 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
  * toggle state — the only one a reader meets on a real synopsis — would never be in a baseline.
  */
 class RequestDetailScreenshotTest {
+    /** The Loading arm (#373): the hero, the headline's chips and overview, and the two unconditional facts rows. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = RequestDetailSkeleton()
+
     /** The layout, once: pending, so the primary reads as a review. */
     @PreviewTest
     @SeerrScreenPreviews
