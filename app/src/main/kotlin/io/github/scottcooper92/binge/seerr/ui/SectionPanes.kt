@@ -2,12 +2,12 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
-import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.binge.designsystem.PaneBackNavigationBehavior
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 
 /**
@@ -28,15 +28,15 @@ internal val DefaultSection: HubSection = HubSection.Requests
 /**
  * The scene strategy for the hub and the detail pane beside it.
  *
- * Back pops one screen at a time. The library's default pops until the layout changes, and with the
- * hub at the root of the stack there is no earlier layout to change to: Back beside the hub would
- * pass every stacked screen and leave the app.
+ * [PaneBackNavigationBehavior] (design-system, shared with Binge): the library's own default pops
+ * until the layout changes, and with the hub at the root of the stack there is no earlier layout to
+ * change to, so Back beside the hub would pass every stacked screen and leave the app.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun rememberSeerrPaneStrategy(directive: PaneScaffoldDirective): ListDetailSceneStrategy<NavKey> =
     rememberListDetailSceneStrategy(
-        backNavigationBehavior = BackNavigationBehavior.PopLatest,
+        backNavigationBehavior = PaneBackNavigationBehavior,
         directive = directive,
     )
 
