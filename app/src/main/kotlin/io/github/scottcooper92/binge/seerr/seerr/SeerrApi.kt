@@ -970,6 +970,8 @@ data class SeerrAddToBlocklistBody(
     @SerialName("tmdbId") val tmdbId: Int,
     @SerialName("mediaType") val mediaType: String,
     @SerialName("title") val title: String,
+    /** The blocking user's id. The server's own schema requires a number here; omitting it is a 500, not a 400. */
+    @SerialName("user") val user: Int,
 )
 
 /**

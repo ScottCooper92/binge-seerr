@@ -184,9 +184,10 @@ class RequestModeration(
     private suspend fun block(item: RequestItem): Boolean =
         runCatching {
             val mediaType = item.mediaType.seerrMediaType()
+            val user = connection.authenticatedUser().id
             connection.api().addToBlocklist(
                 connection.profile().blocklistPath,
-                SeerrAddToBlocklistBody(item.tmdbId, mediaType, item.title.orEmpty()),
+                SeerrAddToBlocklistBody(item.tmdbId, mediaType, item.title.orEmpty(), user),
             )
         }.isSuccess
 }
