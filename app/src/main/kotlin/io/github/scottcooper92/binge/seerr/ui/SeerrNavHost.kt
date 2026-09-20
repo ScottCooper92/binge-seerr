@@ -1,12 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui
 
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,7 +20,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.binge.designsystem.LocalPaneWidth
+import com.binge.designsystem.PaneContent
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
@@ -82,26 +80,6 @@ fun SeerrNavHost(
                 serverSettingsEntries(backStack)
             },
     )
-}
-
-/**
- * Provides [LocalPaneWidth] as the width this content is actually measured at (#291), rather than
- * one computed from [androidx.compose.material3.adaptive.layout.PaneScaffoldDirective]'s own
- * preferred-width arithmetic. The list pane and the detail pane get different real widths from the
- * same directive — the detail pane takes whatever the list pane does not, per
- * [androidx.compose.material3.adaptive.layout.ThreePaneScaffoldDefaults]'s pane priorities — so a
- * value derived from the directive alone cannot tell one screen's own pane from another's. Measuring
- * what NavDisplay actually placed this entry's content at sidesteps that, and it is content alone
- * that has the whole window when the hub is not beside it, which is what lets a screen fall back to
- * the window's own [com.binge.designsystem.R.dimen.screen_content_inset] unchanged there.
- */
-@Composable
-private fun PaneContent(content: @Composable () -> Unit) {
-    BoxWithConstraints {
-        CompositionLocalProvider(LocalPaneWidth provides maxWidth) {
-            content()
-        }
-    }
 }
 
 /**
