@@ -687,6 +687,7 @@
     <string name="server_settings_slider_edit">Editar la fila</string>
     <string name="server_settings_slider_move_up">Subir</string>
     <string name="server_settings_slider_move_down">Bajar</string>
+    <string name="server_settings_slider_reorder">Arrastrar para reordenar</string>
     <string name="server_settings_slider_built_in">Integrada</string>
     <string name="server_settings_slider_unknown_type">Fila de tipo %1$d</string>
     <string name="server_settings_slider_type">Tipo</string>
@@ -701,6 +702,8 @@
     <string name="server_settings_sliders_reset">Restablecer las predeterminadas</string>
     <string name="server_settings_sliders_reset_title">¿Restablecer las filas?</string>
     <string name="server_settings_sliders_reset_message">Las filas integradas vuelven a su orden predeterminado y todas las filas personalizadas se eliminan.</string>
+    <string name="server_settings_sliders_more_actions">Más acciones</string>
+    <string name="server_settings_sliders_reorder_hint">Mantén pulsado el asa para arrastrar una fila a su nueva posición.</string>
     <string name="server_settings_sliders_reset_done">Filas restablecidas</string>
     <string name="server_settings_slider_recently_added">Añadidos recientemente</string>
     <string name="server_settings_slider_recent_requests">Peticiones recientes</string>
