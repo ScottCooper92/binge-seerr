@@ -18,7 +18,9 @@ import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPageActionBar
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorPageInsets
 import com.binge.designsystem.R as DesR
 
 /**
@@ -58,9 +60,29 @@ internal fun PermissionsEditorContent(
     modifier: Modifier = Modifier,
     /** Toggles shown but not flippable: what the viewer may not grant. */
     locked: Set<ManageablePermission> = emptySet(),
+    /**
+     * False from the full-screen page, whose own [EditorPageActionBar] carries Save instead - true
+     * here still adds a sheet's own bottom breathing room on top of [LocalEditorPageInsets], which a
+     * sheet has none of to begin with.
+     */
+    showFooter: Boolean = true,
 ) {
+    // Zero from a sheet (no EditorPage above to provide it - a sheet has its own window chrome), the
+    // top/bottom bar insets from the full-screen page this same content also serves as
+    // EditorPage(scrolling = false)'s body, which leaves them for content to fold in itself. Neither
+    // the title nor the footer scroll - only the middle list does - so a plain Modifier.padding here
+    // is the right shape, unlike the sliders screen's own contentPadding on its own scrollable.
+    val insets = LocalEditorPageInsets.current
     Column(
-        modifier = modifier.fillMaxWidth().padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(
+                    top = insets.calculateTopPadding(),
+                    bottom =
+                        insets.calculateBottomPadding() +
+                            dimensionResource(if (showFooter) DesR.dimen.padding_l else DesR.dimen.zero),
+                ),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         Text(
@@ -96,12 +118,14 @@ internal fun PermissionsEditorContent(
                 }
             }
         }
-        BingeActionFooter(
-            label = stringResource(R.string.users_edit_permissions_save),
-            onClick = onSave,
-            enabled = !saving,
-            loading = saving,
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        )
+        if (showFooter) {
+            BingeActionFooter(
+                label = stringResource(R.string.users_edit_permissions_save),
+                onClick = onSave,
+                enabled = !saving,
+                loading = saving,
+                modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+            )
+        }
     }
 }

@@ -10,8 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * A permissions editor page: the browser's editor over a [PermissionSettings], saved from its own
- * footer. [titleRes] and [leadRes] are the only thing that differs between the per-user page and
- * the server's default-permissions page, so both are entries into this one.
+ * persistent [EditorPageActionBar]. [titleRes] and [leadRes] are the only thing that differs
+ * between the per-user page and the server's default-permissions page, so both are entries into
+ * this one.
  */
 @Composable
 fun PermissionsSettingsScreen(
@@ -22,6 +23,7 @@ fun PermissionsSettingsScreen(
     @StringRes titleRes: Int = R.string.user_permissions_title,
     @StringRes leadRes: Int = R.string.user_settings_permissions_lead,
 ) {
+    val ready = state as? EditorUiState.Ready<PermissionSettings>
     EditorPage(
         title = stringResource(titleRes),
         state = state,
@@ -29,6 +31,16 @@ fun PermissionsSettingsScreen(
         actions = actions,
         showSaveAction = false,
         scrolling = false,
+        bottomBar = {
+            if (ready != null) {
+                EditorPageActionBar(
+                    label = stringResource(R.string.users_edit_permissions_save),
+                    onClick = actions.onSave,
+                    enabled = !ready.saving,
+                    loading = ready.saving,
+                )
+            }
+        },
     ) { draft, enabled ->
         PermissionsEditorContent(
             offered = draft.offered,
@@ -38,6 +50,7 @@ fun PermissionsSettingsScreen(
             locked = draft.locked,
             onToggle = onToggle,
             onSave = actions.onSave,
+            showFooter = false,
         )
     }
 }
