@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.SettingsRowDestination
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -55,6 +56,7 @@ internal fun connectionRows(
             label = stringResource(R.string.settings_server),
             detail = connection.baseUrl,
             clickable = connection.baseUrl.isWebUrl(),
+            destination = SettingsRowDestination.External,
             onClick = { context.openInBrowser(connection.baseUrl) },
         ),
         SettingsRow(
@@ -74,6 +76,7 @@ internal fun connectionRows(
             label = stringResource(R.string.settings_version),
             detail = server.versionDetail(),
             clickable = server.updateAvailable,
+            destination = SettingsRowDestination.External,
             onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
         ),
         SettingsRow(
@@ -149,6 +152,7 @@ internal fun generalRows(
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.settings_application_url),
                 detail = url,
+                destination = SettingsRowDestination.External,
                 onClick = { context.openInBrowser(url) },
             )
         },
@@ -230,6 +234,9 @@ internal fun serviceRows(
                 label = service.label(),
                 detail = service.detail(),
                 clickable = id != null || url != null,
+                // In-app when the instance is known; otherwise this falls back to the service's own
+                // URL, which leaves the app - the row's icon has to say which before it's tapped.
+                destination = if (id != null) SettingsRowDestination.InApp else SettingsRowDestination.External,
                 onClick = { if (id != null) onOpenInstance(service.type, id) else url?.let { context.openInBrowser(it) } },
             )
         }
