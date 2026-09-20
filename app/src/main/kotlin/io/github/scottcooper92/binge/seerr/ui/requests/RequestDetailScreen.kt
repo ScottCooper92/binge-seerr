@@ -39,7 +39,6 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -86,7 +85,7 @@ fun RequestDetailScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (state) {
-                RequestDetailUiState.Loading -> LoadingScreen(Modifier.safeDrawingPadding())
+                RequestDetailUiState.Loading -> RequestDetailSkeleton()
                 is RequestDetailUiState.Error ->
                     ErrorScreen(error = state.error, modifier = Modifier.safeDrawingPadding(), onRetry = actions.onRetry)
                 is RequestDetailUiState.Ready -> Ready(state, actions)
