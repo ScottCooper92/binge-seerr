@@ -19,6 +19,7 @@ import com.binge.designsystem.component.BingeBottomSheet
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorPageInsets
 import com.binge.designsystem.R as DesR
 
 /**
@@ -59,8 +60,18 @@ internal fun PermissionsEditorContent(
     /** Toggles shown but not flippable: what the viewer may not grant. */
     locked: Set<ManageablePermission> = emptySet(),
 ) {
+    // Zero from a BingeBottomSheet caller, which sits outside EditorPage and needs no bar inset of
+    // its own; a scrolling = false EditorPage caller (PermissionsSettingsScreen) has none of its own
+    // top/bottom padding, so this content has to fold the bars' inset in itself - top for the title
+    // sitting right under the transparent top bar, bottom for the footer sitting above the gesture
+    // nav bar.
+    val insets = LocalEditorPageInsets.current
     Column(
-        modifier = modifier.fillMaxWidth().padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(top = insets.calculateTopPadding())
+                .padding(bottom = insets.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_l)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         Text(
