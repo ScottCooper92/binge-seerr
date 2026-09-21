@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
+import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.ListRow
@@ -165,13 +166,19 @@ private fun BlocklistRowMeta(
         val by = item.addedBy?.let { stringResource(R.string.blocklist_blocked_by, it) }
         listOfNotNull(by, at).takeIf { it.isNotEmpty() }?.let { parts ->
             Spacer(Modifier.height(gap))
-            Text(
-                parts.joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                item.addedBy?.let { addedBy ->
+                    BingeInitialsAvatar(name = addedBy)
+                    Spacer(Modifier.width(gap))
+                }
+                Text(
+                    parts.joinToString(stringResource(R.string.hub_meta_separator)),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         if (item.tags.isNotEmpty()) {
             Spacer(Modifier.height(gap))

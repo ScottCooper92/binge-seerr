@@ -29,6 +29,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
+import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
@@ -161,24 +162,24 @@ private fun IssueRowMeta(
 ) {
     val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
     Column(modifier = modifier.padding(top = dimensionResource(DesR.dimen.detail_meta_spacing))) {
-        ListRowHeader(
-            title = item.title ?: stringResource(item.mediaType.labelRes()),
-            trailing = { RequestStateChip(label = stringResource(item.status.labelRes()), tone = item.status.tone()) },
-        )
+        ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
         Spacer(Modifier.height(gap))
         Row(verticalAlignment = Alignment.CenterVertically) {
+            RequestStateChip(label = stringResource(item.status.labelRes()), tone = item.status.tone())
+            Spacer(Modifier.width(gap))
             MediaTypeTag(type = item.mediaType.toTagType())
             Spacer(Modifier.width(gap))
-            Text(
-                listOfNotNull(
-                    stringResource(item.type.labelRes()),
-                    issueAffectedLabel(item),
-                ).joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            BingeTag(label = stringResource(item.type.labelRes()))
+            issueAffectedLabel(item)?.let { affected ->
+                Spacer(Modifier.width(gap))
+                Text(
+                    affected,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         item.problem?.let { problem ->
             Spacer(Modifier.height(gap))

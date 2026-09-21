@@ -128,7 +128,6 @@
         <item quantity="many">%1$d episodios</item>
         <item quantity="other">%1$d episodios</item>
     </plurals>
-    <string name="request_actions_cd">Acciones de la petición</string>
     <string name="request_approve">Aprobar la petición</string>
     <string name="request_retry">Reintentar la petición</string>
     <string name="request_decline">Rechazar la petición</string>

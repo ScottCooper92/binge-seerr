@@ -40,6 +40,6 @@ class RequestListScreenshotTest {
 @Composable
 private fun Frame(item: RequestItem) {
     Box(Modifier.width(ROW_WIDTH).background(MaterialTheme.colorScheme.background)) {
-        RequestRow(item = item, onClick = {}, onActions = {}, now = ROW_NOW_MILLIS)
+        RequestRow(item = item, onClick = {}, onRemove = {}, now = ROW_NOW_MILLIS)
     }
 }

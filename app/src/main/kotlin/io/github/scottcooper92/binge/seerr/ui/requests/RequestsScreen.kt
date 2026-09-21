@@ -163,7 +163,7 @@ private fun RequestsPage(
         scope = state.scope,
         actingIds = state.actingIds,
         onOpen = actions.onOpen,
-        onOpenActions = actions.onOpenActions,
+        onRemove = { item -> actions.onRemove(item, false) },
         // A rejected session cannot be retried past: the hub owns reconnecting.
         onReconnect = actions.onBack,
         modifier = Modifier.fillMaxSize(),

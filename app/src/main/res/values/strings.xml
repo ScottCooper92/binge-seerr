@@ -143,7 +143,6 @@
         <item quantity="one">%1$d episode</item>
         <item quantity="other">%1$d episodes</item>
     </plurals>
-    <string name="request_actions_cd">Request actions</string>
     <string name="request_approve">Approve request</string>
     <string name="request_retry">Retry request</string>
     <string name="request_decline">Decline request</string>
