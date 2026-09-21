@@ -108,7 +108,12 @@ fun DiscoverSlidersScreen(
     ) { sliders, enabled ->
         val lazyListState = rememberLazyListState()
         val reorderableState =
-            rememberReorderableLazyListState(lazyListState) { from, to -> sliderActions.onMove(from.index, to.index) }
+            rememberReorderableLazyListState(lazyListState) { from, to ->
+                // from.index/to.index are absolute LazyColumn positions, one ahead of `sliders`'
+                // own indices because of the reorder-hint item below - shift both back before they
+                // reach a viewmodel that indexes straight into `sliders`.
+                sliderActions.onMove(from.index - 1, to.index - 1)
+            }
         // The top/bottom bar insets EditorPage itself leaves unapplied for a scrolling = false page
         // (see LocalEditorPageInsets) - folded in here as contentPadding rather than a Modifier.padding
         // around the list, so a row can still scroll fully under both transparent bars instead of
