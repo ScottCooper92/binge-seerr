@@ -245,7 +245,13 @@ class SeerrRequestService(
 
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated(Capability.CAPABILITY_BLOCK) {
-            val body = SeerrAddToBlocklistBody(request.media.tmdbId, request.media.seerrMediaType(), request.title)
+            val body =
+                SeerrAddToBlocklistBody(
+                    tmdbId = request.media.tmdbId,
+                    mediaType = request.media.seerrMediaType(),
+                    title = request.title,
+                    user = connection.authenticatedUser().id,
+                )
             connection.api().addToBlocklist(connection.profile().blocklistPath, body)
             BlockTitleResponse.getDefaultInstance()
         }
