@@ -1,41 +1,41 @@
 package io.github.scottcooper92.binge.seerr.service
 
-import com.binge.integration.contracts.request.v1.ApprovalState
-import com.binge.integration.contracts.request.v1.ApproveRequestRequest
-import com.binge.integration.contracts.request.v1.ApproveRequestResponse
-import com.binge.integration.contracts.request.v1.Attention
-import com.binge.integration.contracts.request.v1.Availability
-import com.binge.integration.contracts.request.v1.BlockTitleRequest
-import com.binge.integration.contracts.request.v1.BlockTitleResponse
-import com.binge.integration.contracts.request.v1.CancelRequestRequest
-import com.binge.integration.contracts.request.v1.CancelRequestResponse
-import com.binge.integration.contracts.request.v1.Capability
-import com.binge.integration.contracts.request.v1.DeclineRequestRequest
-import com.binge.integration.contracts.request.v1.DeclineRequestResponse
-import com.binge.integration.contracts.request.v1.EditRequestRequest
-import com.binge.integration.contracts.request.v1.EditRequestResponse
-import com.binge.integration.contracts.request.v1.GetAttentionRequest
-import com.binge.integration.contracts.request.v1.GetAttentionResponse
-import com.binge.integration.contracts.request.v1.GetStatusRequest
-import com.binge.integration.contracts.request.v1.GetStatusResponse
-import com.binge.integration.contracts.request.v1.HandshakeRequest
-import com.binge.integration.contracts.request.v1.HandshakeResponse
-import com.binge.integration.contracts.request.v1.IssueType
-import com.binge.integration.contracts.request.v1.ObserveAttentionRequest
-import com.binge.integration.contracts.request.v1.ObserveAttentionResponse
-import com.binge.integration.contracts.request.v1.ObserveStatusRequest
-import com.binge.integration.contracts.request.v1.ObserveStatusResponse
-import com.binge.integration.contracts.request.v1.ReportIssueRequest
-import com.binge.integration.contracts.request.v1.ReportIssueResponse
-import com.binge.integration.contracts.request.v1.RequestServiceGrpcKt
-import com.binge.integration.contracts.request.v1.RequestStatus
-import com.binge.integration.contracts.request.v1.RetryRequestRequest
-import com.binge.integration.contracts.request.v1.RetryRequestResponse
-import com.binge.integration.contracts.request.v1.SubmitRequestRequest
-import com.binge.integration.contracts.request.v1.SubmitRequestResponse
-import com.binge.integration.contracts.v1.MediaId
-import com.binge.integration.sdk.handshakeResponse
-import com.binge.integration.sdk.requireDeclared
+import com.binge.companion.contracts.request.v1.ApprovalState
+import com.binge.companion.contracts.request.v1.ApproveRequestRequest
+import com.binge.companion.contracts.request.v1.ApproveRequestResponse
+import com.binge.companion.contracts.request.v1.Attention
+import com.binge.companion.contracts.request.v1.Availability
+import com.binge.companion.contracts.request.v1.BlockTitleRequest
+import com.binge.companion.contracts.request.v1.BlockTitleResponse
+import com.binge.companion.contracts.request.v1.CancelRequestRequest
+import com.binge.companion.contracts.request.v1.CancelRequestResponse
+import com.binge.companion.contracts.request.v1.Capability
+import com.binge.companion.contracts.request.v1.DeclineRequestRequest
+import com.binge.companion.contracts.request.v1.DeclineRequestResponse
+import com.binge.companion.contracts.request.v1.EditRequestRequest
+import com.binge.companion.contracts.request.v1.EditRequestResponse
+import com.binge.companion.contracts.request.v1.GetAttentionRequest
+import com.binge.companion.contracts.request.v1.GetAttentionResponse
+import com.binge.companion.contracts.request.v1.GetStatusRequest
+import com.binge.companion.contracts.request.v1.GetStatusResponse
+import com.binge.companion.contracts.request.v1.HandshakeRequest
+import com.binge.companion.contracts.request.v1.HandshakeResponse
+import com.binge.companion.contracts.request.v1.IssueType
+import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
+import com.binge.companion.contracts.request.v1.ObserveAttentionResponse
+import com.binge.companion.contracts.request.v1.ObserveStatusRequest
+import com.binge.companion.contracts.request.v1.ObserveStatusResponse
+import com.binge.companion.contracts.request.v1.ReportIssueRequest
+import com.binge.companion.contracts.request.v1.ReportIssueResponse
+import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
+import com.binge.companion.contracts.request.v1.RequestStatus
+import com.binge.companion.contracts.request.v1.RetryRequestRequest
+import com.binge.companion.contracts.request.v1.RetryRequestResponse
+import com.binge.companion.contracts.request.v1.SubmitRequestRequest
+import com.binge.companion.contracts.request.v1.SubmitRequestResponse
+import com.binge.companion.contracts.v1.MediaId
+import com.binge.companion.sdk.handshakeResponse
+import com.binge.companion.sdk.requireDeclared
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
@@ -100,7 +100,7 @@ class SeerrRequestService(
             handshakeResponse(
                 capabilities = permissions().toCapabilities(profile),
                 providerName = profile.variant.displayName,
-                integrationVersionName = versionName,
+                companionVersionName = versionName,
             )
         }
 

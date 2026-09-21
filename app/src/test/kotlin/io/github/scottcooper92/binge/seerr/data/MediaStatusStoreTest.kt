@@ -1,7 +1,7 @@
 package io.github.scottcooper92.binge.seerr.data
 
-import com.binge.integration.contracts.request.v1.Availability
-import com.binge.integration.contracts.request.v1.RequestStatus
+import com.binge.companion.contracts.request.v1.Availability
+import com.binge.companion.contracts.request.v1.RequestStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

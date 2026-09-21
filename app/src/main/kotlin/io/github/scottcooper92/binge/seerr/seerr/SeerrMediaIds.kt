@@ -1,7 +1,7 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
-import com.binge.integration.contracts.v1.MediaId
-import com.binge.integration.contracts.v1.MediaType
+import com.binge.companion.contracts.v1.MediaId
+import com.binge.companion.contracts.v1.MediaType
 import io.grpc.Status
 import io.grpc.StatusException
 

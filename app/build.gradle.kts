@@ -173,8 +173,8 @@ tasks.named("check") { dependsOn("checkTranslationStaleness") }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.binge.integration.sdk)
-    implementation(libs.binge.integration.contracts)
+    implementation(libs.binge.companion.sdk)
+    implementation(libs.binge.companion.contracts)
     implementation(libs.binge.designsystem)
     // The television surface in ui/tv: tv-material and the phone's Material 3 are never mixed in one
     // file, so that package imports only this module's theme and units.

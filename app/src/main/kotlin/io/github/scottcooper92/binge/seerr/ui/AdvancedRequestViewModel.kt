@@ -2,9 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.binge.integration.contracts.v1.MediaId
-import com.binge.integration.contracts.v1.MediaType
-import com.binge.integration.sdk.AdvancedRequest
+import com.binge.companion.contracts.v1.MediaId
+import com.binge.companion.contracts.v1.MediaType
+import com.binge.companion.sdk.AdvancedRequest
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
