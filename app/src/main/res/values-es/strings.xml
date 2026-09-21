@@ -463,6 +463,7 @@
     <string name="server_settings_dvr_availability_in_cinemas">En cines</string>
     <string name="server_settings_dvr_availability_released">Estrenada</string>
     <string name="server_settings_dvr_language_profile">Perfil de idioma</string>
+    <string name="server_settings_dvr_anime_language_profile">Perfil de idioma de anime</string>
     <string name="server_settings_dvr_series_type">Tipo de serie</string>
     <string name="server_settings_dvr_series_standard">Estándar</string>
     <string name="server_settings_dvr_series_daily">Diaria</string>

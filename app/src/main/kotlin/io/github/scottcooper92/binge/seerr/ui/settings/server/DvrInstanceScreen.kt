@@ -210,6 +210,15 @@ private fun SonarrFields(
         onSelect = { path -> actions.onEdit { it.copy(animeRootFolder = path) } },
         enabled = enabled,
     )
+    choices.languageProfiles?.let { profiles ->
+        ChoiceRow(
+            title = stringResource(R.string.server_settings_dvr_anime_language_profile),
+            choices = profiles.map { it.id to it.label },
+            selected = draft.animeLanguageProfileId,
+            onSelect = { id -> actions.onEdit { it.copy(animeLanguageProfileId = id) } },
+            enabled = enabled,
+        )
+    }
     TagChips(choices.tags, draft.animeTagIds.orEmpty(), enabled) { id ->
         actions.onEdit { it.copy(animeTagIds = it.animeTagIds.orEmpty().toggled(id)) }
     }
