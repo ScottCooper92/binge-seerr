@@ -631,6 +631,64 @@ class RequestDetailViewModelTest {
             assertEquals("true", files.url.queryParameter("is4k"))
         }
 
+    @Test
+    fun `marking a show available also marks its own requested seasons available, not the whole show's`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+                   "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+
+            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(
+                11,
+                900,
+                MediaStatusChoice.Available,
+                is4k = false,
+                seasonNumbers = detail.seasons.map { it.number },
+            )
+            statusSet.await()
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("""{"is4k":false,"seasons":[{"seasonNumber":1},{"seasonNumber":2}]}""", status.body)
+        }
+
+    @Test
+    fun `a non-available status never carries seasons, since the server only reads them for available`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+                   "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":5}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4}}""",
+            )
+            serve("/api/v1/media/900/processing", "{}")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+
+            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(
+                11,
+                900,
+                MediaStatusChoice.Processing,
+                is4k = false,
+                seasonNumbers = detail.seasons.map { it.number },
+            )
+            statusSet.await()
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/processing" }
+            assertEquals("""{"is4k":false}""", status.body)
+        }
+
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
 

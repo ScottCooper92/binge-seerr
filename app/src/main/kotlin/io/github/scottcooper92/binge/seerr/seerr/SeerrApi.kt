@@ -982,11 +982,20 @@ data class SeerrCreateIssueBody(
 /**
  * `POST media/{id}/{status}`: which instance the new status is for. Always encoded, since the
  * server reads the flag off the body and a missing body is what the 500 comes from.
+ *
+ * [seasons] only takes effect for `status == available` on a TV title - the server marks each
+ * numbered season available there and ignores the field for every other status and for a movie.
  */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SeerrMediaStatusBody(
     @EncodeDefault @SerialName("is4k") val is4k: Boolean = false,
+    @SerialName("seasons") val seasons: List<SeerrMediaStatusSeasonBody>? = null,
+)
+
+@Serializable
+data class SeerrMediaStatusSeasonBody(
+    @SerialName("seasonNumber") val seasonNumber: Int,
 )
 
 @Serializable
