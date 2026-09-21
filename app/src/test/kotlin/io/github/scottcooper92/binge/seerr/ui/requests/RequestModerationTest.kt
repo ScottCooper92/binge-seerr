@@ -124,6 +124,7 @@ class RequestModerationTest {
                     .orEmpty()
             assertTrue(block.contains("\"tmdbId\":550"))
             assertTrue(block.contains("\"mediaType\":\"movie\""))
+            assertTrue(block.contains("\"user\":1"))
         }
 
     @Test

@@ -9,7 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeTextButton
 import io.github.scottcooper92.binge.seerr.R
 
 /** Disconnecting drops the saved server, so it asks first. The hub and Settings share it. */
@@ -19,7 +19,7 @@ internal fun DisconnectButton(
     modifier: Modifier = Modifier,
 ) {
     var confirming by rememberSaveable { mutableStateOf(false) }
-    BingeOutlinedButton(
+    BingeTextButton(
         label = stringResource(R.string.hub_disconnect),
         onClick = { confirming = true },
         destructive = true,

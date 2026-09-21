@@ -182,7 +182,14 @@ class SeerrRequestServiceTest {
                     .build(),
             )
 
-            assertEquals("/api/v1/blacklist", seerr.takeRequest().url.encodedPath)
+            val posted = seerr.takeRequest()
+            assertEquals("/api/v1/blacklist", posted.url.encodedPath)
+            assertTrue(
+                posted.body
+                    ?.utf8()
+                    .orEmpty()
+                    .contains("\"user\":1"),
+            )
         }
 
     @Test
@@ -199,7 +206,14 @@ class SeerrRequestServiceTest {
                     .build(),
             )
 
-            assertEquals("/api/v1/blocklist", seerr.takeRequest().url.encodedPath)
+            val posted = seerr.takeRequest()
+            assertEquals("/api/v1/blocklist", posted.url.encodedPath)
+            assertTrue(
+                posted.body
+                    ?.utf8()
+                    .orEmpty()
+                    .contains("\"user\":1"),
+            )
         }
 
     @Test

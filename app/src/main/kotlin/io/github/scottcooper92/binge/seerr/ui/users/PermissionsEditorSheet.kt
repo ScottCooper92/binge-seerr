@@ -67,30 +67,40 @@ internal fun PermissionsEditorContent(
      */
     showFooter: Boolean = true,
 ) {
-    // Zero from a sheet (no EditorPage above to provide it - a sheet has its own window chrome), the
-    // top/bottom bar insets from the full-screen page this same content also serves as
-    // EditorPage(scrolling = false)'s body, which leaves them for content to fold in itself. Neither
-    // the title nor the footer scroll - only the middle list does - so a plain Modifier.padding here
-    // is the right shape, unlike the sliders screen's own contentPadding on its own scrollable.
+    // Zero from a BingeBottomSheet caller, which sits outside EditorPage and needs no bar inset of
+    // its own; a scrolling = false EditorPage caller (PermissionsSettingsScreen) has none of its own
+    // top/bottom padding, so this content has to fold the bars' inset in itself. The top inset goes
+    // onto the scrollable Column's own content, after its verticalScroll(), with the title folded in
+    // as that scrollable's first item - the same shape LocalEditorPageInsets' KDoc requires and
+    // DiscoverSlidersScreen already uses, so the list can scroll fully under the transparent top bar
+    // rather than stopping dead at its edge. The footer below never scrolls, so when it is shown its
+    // bottom inset is a plain margin instead - the same thing EditorPageActionBar gets from
+    // navigationBarsPadding(). When there is no footer (the full-screen page, whose own
+    // EditorPageActionBar already clears that inset for its bottomBar slot), the bottom inset folds
+    // into the scrollable list itself instead, exactly like DiscoverSlidersScreen's own list does.
     val insets = LocalEditorPageInsets.current
     Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(
-                    top = insets.calculateTopPadding(),
-                    bottom =
-                        insets.calculateBottomPadding() +
-                            dimensionResource(if (showFooter) DesR.dimen.padding_l else DesR.dimen.zero),
-                ),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        )
-        Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    .padding(
+                        top = insets.calculateTopPadding(),
+                        bottom = if (showFooter) dimensionResource(DesR.dimen.zero) else insets.calculateBottomPadding(),
+                    ),
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier =
+                    Modifier
+                        .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                        .padding(bottom = dimensionResource(DesR.dimen.padding_s)),
+            )
             offered.groupBy { it.group }.forEach { (group, permissions) ->
                 Text(
                     stringResource(group.labelRes()).uppercase(),
@@ -124,7 +134,10 @@ internal fun PermissionsEditorContent(
                 onClick = onSave,
                 enabled = !saving,
                 loading = saving,
-                modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+                modifier =
+                    Modifier
+                        .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                        .padding(bottom = insets.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_l)),
             )
         }
     }
