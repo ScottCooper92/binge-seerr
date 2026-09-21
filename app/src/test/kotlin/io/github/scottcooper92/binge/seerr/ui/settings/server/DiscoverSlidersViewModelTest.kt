@@ -84,9 +84,9 @@ class DiscoverSlidersViewModelTest {
         runTest {
             val vm = viewModel()
             vm.awaitReady()
-            vm.move(3, up = true)
-            vm.move(3, up = true)
-            vm.move(1, up = false)
+            vm.move(from = 2, to = 1)
+            vm.move(from = 1, to = 0)
+            vm.move(from = 1, to = 2)
             vm.toggle(2)
             val saved = awaitEvent(vm.events)
             vm.save()
@@ -113,7 +113,7 @@ class DiscoverSlidersViewModelTest {
         runTest {
             val vm = viewModel()
             vm.awaitReady()
-            vm.move(3, up = true)
+            vm.move(from = 2, to = 1)
             val notice = awaitEvent(vm.events)
             vm.reset()
             assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())

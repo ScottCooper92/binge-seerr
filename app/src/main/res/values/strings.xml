@@ -706,6 +706,7 @@
     <string name="server_settings_slider_edit">Edit slider</string>
     <string name="server_settings_slider_move_up">Move up</string>
     <string name="server_settings_slider_move_down">Move down</string>
+    <string name="server_settings_slider_reorder">Drag to reorder</string>
     <string name="server_settings_slider_built_in">Built in</string>
     <string name="server_settings_slider_unknown_type">Slider type %1$d</string>
     <string name="server_settings_slider_type">Kind</string>
@@ -720,6 +721,8 @@
     <string name="server_settings_sliders_reset">Reset to defaults</string>
     <string name="server_settings_sliders_reset_title">Reset the sliders?</string>
     <string name="server_settings_sliders_reset_message">The built-in sliders go back to their default order and every custom slider is removed.</string>
+    <string name="server_settings_sliders_more_actions">More actions</string>
+    <string name="server_settings_sliders_reorder_hint">Press and hold the handle to drag a slider into place.</string>
     <string name="server_settings_sliders_reset_done">Sliders reset</string>
     <string name="server_settings_slider_recently_added">Recently added</string>
     <string name="server_settings_slider_recent_requests">Recent requests</string>

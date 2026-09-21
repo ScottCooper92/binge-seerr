@@ -63,6 +63,9 @@ workManager = "2.11.2"
 # The version binge-design-system pins: its components load their artwork with it, and a consumer
 # that includes that build has to agree with it or resolution silently picks one of the two.
 coil = "3.6.1"
+# Drag-to-reorder for LazyColumn, built on Modifier.animateItem() rather than a hand-rolled
+# animation. Published as a Kotlin Multiplatform artifact; this module resolves its Android variant.
+reorderable = "2.5.1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -118,6 +121,7 @@ androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "androi
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "androidxHilt" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "screenshot" }

@@ -30,14 +30,12 @@ class DiscoverSlidersViewModel
         override suspend fun write(draft: List<DiscoverSlider>): List<DiscoverSlider> =
             connection.api().updateDiscoverSliders(draft.map { it.toDto() }).mapNotNull { it.toSlider() }
 
-        /** Moves the slider one place; [up] towards the top of the Discover page. */
+        /** Moves the slider at [from] to [to] - a drag can cross more than one position in a gesture. */
         fun move(
-            id: Int,
-            up: Boolean,
+            from: Int,
+            to: Int,
         ) = edit { sliders ->
-            val from = sliders.indexOfFirst { it.id == id }
-            val to = if (up) from - 1 else from + 1
-            if (from < 0 || to !in sliders.indices) return@edit sliders
+            if (from !in sliders.indices || to !in sliders.indices) return@edit sliders
             sliders.toMutableList().apply { add(to, removeAt(from)) }
         }
 

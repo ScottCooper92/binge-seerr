@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -24,10 +26,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,10 +50,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -62,6 +69,54 @@ import com.binge.designsystem.R as DesR
 
 /** M3's disabled content alpha, which it exposes no token for. */
 private const val DISABLED_CONTENT_ALPHA = 0.38f
+
+/**
+ * The top-bar/bottom-bar insets a `scrolling = false` [EditorPage] does not itself apply. A
+ * `scrolling = true` page folds them into its own [androidx.compose.foundation.verticalScroll], so
+ * its content scrolls fully under both transparent bars the way every other screen's does; a page
+ * that scrolls itself has to fold them into its *own* scrollable the same way - as that scrollable's
+ * content padding, not a [Modifier.padding] wrapping it, or its content can only scroll up to the
+ * bars' edge rather than under it. Defaults to zero, so a page that reads it without checking
+ * `scrolling` first degrades to no inset rather than an exception.
+ */
+internal val LocalEditorPageInsets = compositionLocalOf { PaddingValues() }
+
+/**
+ * A `scrolling = false` [EditorPage]'s one primary action, anchored in its [EditorPage.bottomBar]
+ * slot rather than scrolling away with the rest of the draft - Discover Sliders' Add is the first
+ * user. The rounded, elevated band is this frame's equivalent of a scrolling page's
+ * [com.binge.designsystem.component.BingeActionFooter] - reached for here instead of that shared
+ * component because a `bottomBar` sits outside the Scaffold's own body and needs its background to
+ * extend full-bleed behind the gesture nav bar, which only the button inside clears.
+ */
+@Composable
+internal fun EditorPageActionBar(
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    loading: Boolean = false,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = BingeShapes.HeroTop,
+        tonalElevation = dimensionResource(DesR.dimen.snackbar_elevation),
+        modifier = modifier,
+    ) {
+        BingeFilledButton(
+            label = label,
+            onClick = onClick,
+            enabled = enabled,
+            loading = loading,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = resolvedContentInset())
+                    .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
+        )
+    }
+}
 
 /** What every editor page hands its screen: leave, retry the load, change the draft, and save it. */
 class EditorActions<T>(
@@ -83,6 +138,9 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  * The frame every per-user settings page shares: the title, a Save action live only while the
  * draft differs from the record and passes [canSave], and a snackbar for the outcome. [scrolling]
  * is off for a body that scrolls itself.
+ *
+ * [extraActions] composes into the same top-bar row as Save, after it - an overflow menu button,
+ * say. [bottomBar] is the page's own, passed straight through to [ScreenScaffold].
  */
 @Composable
 internal fun <T> EditorPage(
@@ -93,6 +151,8 @@ internal fun <T> EditorPage(
     canSave: (T) -> Boolean = { true },
     showSaveAction: Boolean = true,
     scrolling: Boolean = true,
+    bottomBar: @Composable () -> Unit = {},
+    extraActions: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.(draft: T, enabled: Boolean) -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -102,6 +162,7 @@ internal fun <T> EditorPage(
         title = title,
         onBack = actions.onBack,
         snackbarHostState = snackbarHostState,
+        bottomBar = bottomBar,
         actions = {
             if (showSaveAction && ready != null) {
                 BingeTextButton(
@@ -111,6 +172,7 @@ internal fun <T> EditorPage(
                     loading = ready.saving,
                 )
             }
+            extraActions()
         },
     ) { padding ->
         // The keyboard lifts the form rather than covering the field being typed in. The bars' insets are
@@ -126,12 +188,23 @@ internal fun <T> EditorPage(
                             Modifier
                                 .fillMaxSize()
                                 .imePadding()
-                                .then(if (scrolling) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                                .padding(inner)
-                                .padding(resolvedContentInset()),
+                                // scrolling: folded into the scroll itself, so content scrolls fully
+                                // under both bars like every other screen's. !scrolling: left for
+                                // content to fold into its own scrollable via LocalEditorPageInsets -
+                                // applied out here it would hard-clip that scrollable's viewport at
+                                // the bars' edge rather than let it scroll under them.
+                                .then(
+                                    if (scrolling) {
+                                        Modifier.verticalScroll(rememberScrollState()).padding(inner)
+                                    } else {
+                                        Modifier
+                                    },
+                                ).padding(resolvedContentInset()),
                         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
                     ) {
-                        content(state.draft, !state.saving)
+                        CompositionLocalProvider(LocalEditorPageInsets provides inner) {
+                            content(state.draft, !state.saving)
+                        }
                     }
             }
         }

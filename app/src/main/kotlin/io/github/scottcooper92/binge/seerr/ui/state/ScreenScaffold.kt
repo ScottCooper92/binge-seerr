@@ -36,6 +36,11 @@ import com.binge.designsystem.component.OverlaidHeaderContent
  *
  * [barScrim] is false only where something under the bar draws the scrim for it, such as a filter
  * pager's own header. The title still follows the collapse, so it stays legible on that scrim.
+ *
+ * [bottomBar] is for a screen's one primary action that has to stay reachable regardless of scroll
+ * position - a long editable list's "add", say, where the equivalent button buried at the list's own
+ * end would need a scroll to reach. Persistent rather than a floating action button so it cannot
+ * drift over a trailing control the last visible row already has, such as a switch.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +53,7 @@ internal fun ScreenScaffold(
     barScrim: Boolean = true,
     header: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
     content: @Composable (padding: PaddingValues) -> Unit,
 ) {
     val collapsed = scrollBehavior.state.collapsedFraction
@@ -64,6 +70,7 @@ internal fun ScreenScaffold(
                 actions = actions,
             )
         },
+        bottomBar = bottomBar,
         snackbarHost = { snackbarHostState?.let { BingeSnackbarHost(it) } },
     ) { padding ->
         if (header == null) {
