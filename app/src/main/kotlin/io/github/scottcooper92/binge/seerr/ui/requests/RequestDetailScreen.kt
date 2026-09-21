@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -26,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
@@ -36,6 +36,7 @@ import com.binge.designsystem.component.DetailOverlayTopBar
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
@@ -173,6 +174,12 @@ private fun Ready(
  * on the very first frame including one restored mid-scroll. The no-action case drops the footer and
  * lets the scroll carry the safe-drawing bottom inset itself, exactly as it did before the footer
  * existed.
+ *
+ * The horizontal safe-drawing inset scopes to the scroll and [DetailOverlayTopBar] alone, in the
+ * [Box] that wraps them, rather than the outer [Column] — so the footer's own raised surface reaches
+ * the true screen edge in landscape, the same as it does anywhere else [BingeActionFooter]'s raised
+ * shape appears, rather than stopping short of a display-cutout inset it does not need protecting
+ * from.
  */
 @Composable
 internal fun RequestDetailPage(
@@ -191,12 +198,18 @@ internal fun RequestDetailPage(
     val title = item.title ?: stringResource(item.mediaType.labelRes())
     val inset = resolvedContentInset()
     val hasPrimaryAction = detail.hasPrimaryAction
-    Box(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f, fill = false)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+        ) {
             Column(
                 modifier =
                     Modifier
-                        .weight(1f, fill = false)
+                        .fillMaxSize()
                         .verticalScroll(scrollState)
                         .let {
                             if (hasPrimaryAction) it else it.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
@@ -218,44 +231,46 @@ internal fun RequestDetailPage(
                 RequestSections(detail)
                 RequestSiblings(detail, onOpenSibling)
             }
-            if (hasPrimaryAction) {
-                RequestPrimaryAction(detail = detail, onClick = onPrimary)
+            DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
+                onOpen?.let {
+                    ExpressiveIconButton(
+                        onClick = it,
+                        icon = Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = stringResource(R.string.request_open_elsewhere),
+                        tint = BingeTheme.colors.onScrim,
+                        tone = IconButtonTone.Glass,
+                        size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                    )
+                }
+                onReport?.let {
+                    ExpressiveIconButton(
+                        onClick = it,
+                        icon = Icons.Filled.ReportProblem,
+                        contentDescription = stringResource(R.string.issue_report_title),
+                        tint = BingeTheme.colors.onScrim,
+                        tone = IconButtonTone.Glass,
+                        size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                    )
+                }
             }
         }
-        DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
-            onOpen?.let {
-                ExpressiveIconButton(
-                    onClick = it,
-                    icon = Icons.AutoMirrored.Filled.OpenInNew,
-                    contentDescription = stringResource(R.string.request_open_elsewhere),
-                    tint = BingeTheme.colors.onScrim,
-                    tone = IconButtonTone.Glass,
-                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
-                )
-            }
-            onReport?.let {
-                ExpressiveIconButton(
-                    onClick = it,
-                    icon = Icons.Filled.ReportProblem,
-                    contentDescription = stringResource(R.string.issue_report_title),
-                    tint = BingeTheme.colors.onScrim,
-                    tone = IconButtonTone.Glass,
-                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
-                )
-            }
+        if (hasPrimaryAction) {
+            RequestPrimaryAction(detail = detail, onClick = onPrimary)
         }
     }
 }
 
 /**
- * One action, pinned in a sheet-style footer over the page's own background. Its label follows the
- * request's state rather than being a generic "Manage": approving a pending request is the hottest
- * path here, and a label that does not say so buries it behind a tap on exactly what an admin opened
+ * One action, anchored below the page's own scrolling content. Its label follows the request's
+ * state rather than being a generic "Manage": approving a pending request is the hottest path
+ * here, and a label that does not say so buries it behind a tap on exactly what an admin opened
  * the app to do.
  *
- * [BingeActionFooter] defaults to a sheet's own container colour, which is invisible inside one; a
- * page passes [Color.Transparent] so its own background shows through instead of a banded surface
- * the page has no reason to show.
+ * Rounded and raised, the same [BingeShapes.HeroTop] container a Discover Sliders "Add" or a
+ * Permissions page's "Save" uses, so the same primary action reads the same way everywhere it
+ * appears rather than this screen showing a flatter band than the rest of the app.
+ * [BingeActionFooter.clearsNavigationBar] lets its background extend full-bleed behind the
+ * gesture nav bar, leaving only the button itself to clear it.
  */
 @Composable
 private fun RequestPrimaryAction(
@@ -267,8 +282,11 @@ private fun RequestPrimaryAction(
     BingeActionFooter(
         label = stringResource(if (reviewable) R.string.request_primary_review else R.string.request_primary_manage),
         onClick = onClick,
-        containerColor = Color.Transparent,
-        modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+        modifier = modifier,
+        shape = BingeShapes.HeroTop,
+        shadowElevation = dimensionResource(DesR.dimen.snackbar_elevation),
+        horizontalPadding = resolvedContentInset(),
+        clearsNavigationBar = true,
     )
 }
 
