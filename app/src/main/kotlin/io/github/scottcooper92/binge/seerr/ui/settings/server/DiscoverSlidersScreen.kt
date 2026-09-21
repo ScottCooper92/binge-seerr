@@ -144,7 +144,7 @@ fun DiscoverSlidersScreen(
                         lastIndex = sliders.lastIndex,
                         // draggableHandle()/longPressDraggableHandle() are extensions on this
                         // ReorderableCollectionItemScope, unreachable from SliderRow itself.
-                        handleModifier = Modifier.longPressDraggableHandle(interactionSource = interactionSource),
+                        handleModifier = Modifier.longPressDraggableHandle(enabled = enabled, interactionSource = interactionSource),
                     )
                 }
             }

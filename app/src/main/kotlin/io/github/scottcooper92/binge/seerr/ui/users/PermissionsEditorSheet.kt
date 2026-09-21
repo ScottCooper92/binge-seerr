@@ -62,24 +62,32 @@ internal fun PermissionsEditorContent(
 ) {
     // Zero from a BingeBottomSheet caller, which sits outside EditorPage and needs no bar inset of
     // its own; a scrolling = false EditorPage caller (PermissionsSettingsScreen) has none of its own
-    // top/bottom padding, so this content has to fold the bars' inset in itself - top for the title
-    // sitting right under the transparent top bar, bottom for the footer sitting above the gesture
-    // nav bar.
+    // top/bottom padding, so this content has to fold the bars' inset in itself. The top inset goes
+    // onto the scrollable Column's own content, after its verticalScroll(), with the title folded in
+    // as that scrollable's first item - the same shape LocalEditorPageInsets' KDoc requires and
+    // DiscoverSlidersScreen already uses, so the list can scroll fully under the transparent top bar
+    // rather than stopping dead at its edge. The footer below never scrolls, so its bottom inset is a
+    // plain margin instead - the same thing EditorPageActionBar gets from navigationBarsPadding().
     val insets = LocalEditorPageInsets.current
     Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(top = insets.calculateTopPadding())
-                .padding(bottom = insets.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_l)),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        )
-        Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = insets.calculateTopPadding()),
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier =
+                    Modifier
+                        .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                        .padding(bottom = dimensionResource(DesR.dimen.padding_s)),
+            )
             offered.groupBy { it.group }.forEach { (group, permissions) ->
                 Text(
                     stringResource(group.labelRes()).uppercase(),
@@ -112,7 +120,10 @@ internal fun PermissionsEditorContent(
             onClick = onSave,
             enabled = !saving,
             loading = saving,
-            modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+            modifier =
+                Modifier
+                    .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                    .padding(bottom = insets.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_l)),
         )
     }
 }
