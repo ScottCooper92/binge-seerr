@@ -18,6 +18,7 @@ import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPageActionBar
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorPageInsets
 import com.binge.designsystem.R as DesR
@@ -59,6 +60,12 @@ internal fun PermissionsEditorContent(
     modifier: Modifier = Modifier,
     /** Toggles shown but not flippable: what the viewer may not grant. */
     locked: Set<ManageablePermission> = emptySet(),
+    /**
+     * False from the full-screen page, whose own [EditorPageActionBar] carries Save instead - true
+     * here still adds a sheet's own bottom breathing room on top of [LocalEditorPageInsets], which a
+     * sheet has none of to begin with.
+     */
+    showFooter: Boolean = true,
 ) {
     // Zero from a BingeBottomSheet caller, which sits outside EditorPage and needs no bar inset of
     // its own; a scrolling = false EditorPage caller (PermissionsSettingsScreen) has none of its own
@@ -66,8 +73,11 @@ internal fun PermissionsEditorContent(
     // onto the scrollable Column's own content, after its verticalScroll(), with the title folded in
     // as that scrollable's first item - the same shape LocalEditorPageInsets' KDoc requires and
     // DiscoverSlidersScreen already uses, so the list can scroll fully under the transparent top bar
-    // rather than stopping dead at its edge. The footer below never scrolls, so its bottom inset is a
-    // plain margin instead - the same thing EditorPageActionBar gets from navigationBarsPadding().
+    // rather than stopping dead at its edge. The footer below never scrolls, so when it is shown its
+    // bottom inset is a plain margin instead - the same thing EditorPageActionBar gets from
+    // navigationBarsPadding(). When there is no footer (the full-screen page, whose own
+    // EditorPageActionBar already clears that inset for its bottomBar slot), the bottom inset folds
+    // into the scrollable list itself instead, exactly like DiscoverSlidersScreen's own list does.
     val insets = LocalEditorPageInsets.current
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -78,7 +88,10 @@ internal fun PermissionsEditorContent(
                 Modifier
                     .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState())
-                    .padding(top = insets.calculateTopPadding()),
+                    .padding(
+                        top = insets.calculateTopPadding(),
+                        bottom = if (showFooter) dimensionResource(DesR.dimen.zero) else insets.calculateBottomPadding(),
+                    ),
         ) {
             Text(
                 title,
@@ -115,15 +128,17 @@ internal fun PermissionsEditorContent(
                 }
             }
         }
-        BingeActionFooter(
-            label = stringResource(R.string.users_edit_permissions_save),
-            onClick = onSave,
-            enabled = !saving,
-            loading = saving,
-            modifier =
-                Modifier
-                    .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
-                    .padding(bottom = insets.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_l)),
-        )
+        if (showFooter) {
+            BingeActionFooter(
+                label = stringResource(R.string.users_edit_permissions_save),
+                onClick = onSave,
+                enabled = !saving,
+                loading = saving,
+                modifier =
+                    Modifier
+                        .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                        .padding(bottom = insets.calculateBottomPadding() + dimensionResource(DesR.dimen.padding_l)),
+            )
+        }
     }
 }
