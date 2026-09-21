@@ -79,7 +79,8 @@ internal fun SeerrUserMainSettingsDto.toGeneralSettings(
         email = email.orEmpty(),
         discordId = discordId.orEmpty(),
         locale = locale.orEmpty(),
-        region = region.orEmpty(),
+        region = (region ?: discoverRegion).orEmpty(),
+        streamingRegion = streamingRegion.orEmpty(),
         originalLanguage = originalLanguage.orEmpty(),
         movieQuotaLimit = movieQuotaLimit?.toString().orEmpty(),
         movieQuotaDays = movieQuotaDays?.toString().orEmpty(),
@@ -93,7 +94,12 @@ internal fun SeerrUserMainSettingsDto.toGeneralSettings(
         canEditEmail = canEditEmail,
     )
 
-/** A blank quota field is sent as null, which the server reads as "use the default". */
+/**
+ * A blank quota field is sent as null, which the server reads as "use the default". The one region
+ * field goes out under both lineages' names, and the streaming region this page does not show is
+ * sent back as it was read: the server assigns every key from the body, so one it does not find is
+ * cleared.
+ */
 internal fun GeneralSettings.toDto(): SeerrUserMainSettingsDto =
     SeerrUserMainSettingsDto(
         username = displayName.trim(),
@@ -101,6 +107,8 @@ internal fun GeneralSettings.toDto(): SeerrUserMainSettingsDto =
         discordId = discordId.trim(),
         locale = locale.trim(),
         region = region.trim(),
+        discoverRegion = region.trim(),
+        streamingRegion = streamingRegion.trim(),
         originalLanguage = originalLanguage.trim(),
         movieQuotaLimit = movieQuotaLimit.trim().toIntOrNull(),
         movieQuotaDays = movieQuotaDays.trim().toIntOrNull(),

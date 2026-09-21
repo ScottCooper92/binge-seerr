@@ -72,18 +72,7 @@ class RequestEditor(
         if (edit.value != null) return
         this.source = source
         val request = source.request
-        val destination =
-            if (source.canEditDestination) {
-                DestinationChoices(
-                    serverId = request.serverId,
-                    profileId = request.profileId,
-                    rootFolder = request.rootFolder,
-                    tagIds = request.tags.orEmpty().toSet(),
-                    loadingChoices = true,
-                )
-            } else {
-                null
-            }
+        val destination = if (source.canEditDestination) request.destination().copy(loadingChoices = true) else null
         val seasonsUnknown = request.isTv && source.details == null
         edit.value = EditState(seasons = source.seasonChoices(), destination = destination, seasonsUnknown = seasonsUnknown)
         if (destination != null) scope.launch(dispatcher) { loadServers(request) }
@@ -149,8 +138,14 @@ class RequestEditor(
         }
     }
 
-    private fun EditState.toBody(request: SeerrRequestDto): SeerrEditRequestBody =
-        SeerrEditRequestBody(
+    /**
+     * The server assigns the whole destination from the body, so a `PUT` that leaves one of its
+     * fields out clears it. A user who may not change the destination still edits seasons through
+     * here, and their request's own destination is what goes back with it.
+     */
+    private fun EditState.toBody(request: SeerrRequestDto): SeerrEditRequestBody {
+        val destination = destination ?: request.destination()
+        return SeerrEditRequestBody(
             mediaType = request.media.mediaType,
             seasons =
                 if (request.isTv && !seasonsUnknown) {
@@ -159,17 +154,27 @@ class RequestEditor(
                     null
                 },
             is4k = request.is4k,
-            serverId = destination?.serverId,
-            profileId = destination?.profileId,
-            rootFolder = destination?.rootFolder,
-            tags = destination?.tagIds?.toList(),
+            serverId = destination.serverId,
+            profileId = destination.profileId,
+            rootFolder = destination.rootFolder,
+            tags = destination.tagIds.toList(),
         )
+    }
 
     private fun update(transform: (EditState) -> EditState) = edit.update { it?.let(transform) }
 
     private fun updateDestination(transform: (DestinationChoices) -> DestinationChoices) =
         update { state -> state.copy(destination = state.destination?.let(transform)) }
 }
+
+/** Where the request already goes: what the editor opens on, and what a body that does not change it repeats. */
+private fun SeerrRequestDto.destination(): DestinationChoices =
+    DestinationChoices(
+        serverId = serverId,
+        profileId = profileId,
+        rootFolder = rootFolder,
+        tagIds = tags.orEmpty().toSet(),
+    )
 
 /**
  * A show's seasons as the checklist: specials and empty seasons are left out, this request's own

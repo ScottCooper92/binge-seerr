@@ -17,7 +17,7 @@ const val ISSUES_PAGE_SIZE = 20
 data class IssueListQuery(
     val filter: String,
     val sort: String,
-    val requestedBy: Int?,
+    val createdBy: Int?,
 ) {
     val listKey: String get() = "$filter:$sort"
 }
@@ -55,7 +55,7 @@ class IssuesRemoteMediator(
                     skip = skip,
                     filter = query.filter,
                     sort = query.sort,
-                    requestedBy = query.requestedBy,
+                    createdBy = query.createdBy,
                 )
             val rows =
                 coroutineScope {

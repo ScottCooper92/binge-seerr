@@ -465,10 +465,15 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `an edit sends the request's own media type with the new season set`() =
+    fun `an edit sends the request's own media type and destination with the new season set`() =
         runTest {
             val stub = connected(permissions = ADMIN)
-            seerr.enqueue(json("""{"id":7,"is4k":true,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(
+                json(
+                    """{"id":7,"is4k":true,"serverId":2,"profileId":6,"rootFolder":"/tv","tags":[4],
+                        "media":{"tmdbId":1399,"mediaType":"tv"}}""",
+                ),
+            )
             seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
 
             stub.editRequest(
@@ -489,6 +494,11 @@ class SeerrRequestServiceTest {
             assertTrue(body, """"mediaType":"tv"""" in body)
             assertTrue(body, """"seasons":[1,3]""" in body)
             assertTrue(body, """"is4k":true""" in body)
+            // The server assigns the destination from the body, so a field left out is one it clears.
+            assertTrue(body, """"serverId":2""" in body)
+            assertTrue(body, """"profileId":6""" in body)
+            assertTrue(body, """"rootFolder":"/tv"""" in body)
+            assertTrue(body, """"tags":[4]""" in body)
         }
 
     @Test

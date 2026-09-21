@@ -265,14 +265,14 @@ data class SeerrDnsCacheSettingsDto(
     @EncodeDefault @SerialName("forceMaxTtl") val forceMaxTtl: Int = -1,
 )
 
-/** The metadata providers (`settings/metadatas`, Seerr 3.0+): which of TMDB and TVDB serves series and anime. */
+/**
+ * The metadata providers (`settings/metadatas`, Seerr 3.0+): which of TMDB and TVDB serves series
+ * and anime. Both fields sit at the top level of the body and of the answer, not under a wrapper —
+ * the server reads `req.body.tv` and `req.body.anime`, and writes whatever it read, so a key it
+ * cannot see is a provider cleared rather than a provider left alone.
+ */
 @Serializable
 data class SeerrMetadataSettingsDto(
-    @SerialName("settings") val settings: SeerrMetadataProvidersDto = SeerrMetadataProvidersDto(),
-)
-
-@Serializable
-data class SeerrMetadataProvidersDto(
     @SerialName("tv") val tv: String? = null,
     @SerialName("anime") val anime: String? = null,
 )

@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -111,5 +112,34 @@ class NotificationsViewModelTest {
             assertEquals("4", types.getValue("discord").jsonPrimitive.content)
             assertEquals("${12 or (1 shl 9)}", types.getValue("email").jsonPrimitive.content)
             assertEquals("0", types.getValue("webpush").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `Seerr's list of Discord ids reads as the first, and the rest and the Telegram topic survive the save`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/user/8/settings/notifications",
+                """{"discordEnabled":true,"discordIds":["1234","5678"],"telegramEnabled":true,"telegramChatId":"99",
+                   "telegramMessageThreadId":"42","notificationTypes":{}}""",
+            )
+            val vm = viewModel()
+            assertEquals(
+                "1234",
+                vm
+                    .awaitReady()
+                    .draft
+                    .agent(NotificationAgent.Discord)
+                    .fields[AgentField.DiscordId],
+            )
+
+            vm.edit { it.update(NotificationAgent.Discord) { discord -> discord.copy(fields = mapOf(AgentField.DiscordId to "9999")) } }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
+            assertEquals("9999", sent.getValue("discordId").jsonPrimitive.content)
+            assertEquals(listOf("9999", "5678"), sent.getValue("discordIds").jsonArray.map { it.jsonPrimitive.content })
+            assertEquals("42", sent.getValue("telegramMessageThreadId").jsonPrimitive.content)
         }
 }

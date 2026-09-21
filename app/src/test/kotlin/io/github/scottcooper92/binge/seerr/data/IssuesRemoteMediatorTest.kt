@@ -77,7 +77,7 @@ class IssuesRemoteMediatorTest {
 
     private fun mediator(
         store: IssueStore,
-        query: IssueListQuery = IssueListQuery("open", "added", requestedBy = null),
+        query: IssueListQuery = IssueListQuery("open", "added", createdBy = null),
     ) = IssuesRemoteMediator(query = query, api = ::api, store = store) { dto, api, key, index ->
         dto.toIssueEntity(api, { a, type, id -> if (type == "movie") titleOf(a, id) else null }, key, index)
     }
@@ -119,7 +119,7 @@ class IssuesRemoteMediatorTest {
             val query = received.first { it.url.encodedPath == "/api/v1/issue" }.url
             assertEquals("open", query.queryParameter("filter"))
             assertEquals("added", query.queryParameter("sort"))
-            assertNull(query.queryParameter("requestedBy"))
+            assertNull(query.queryParameter("createdBy"))
         }
 
     @Test
@@ -148,8 +148,8 @@ class IssuesRemoteMediatorTest {
         runTest {
             start()
             val store = FakeIssueStore()
-            mediator(store, IssueListQuery("all", "modified", requestedBy = 7)).load(LoadType.REFRESH, pagingState)
-            assertEquals("7", received.last { it.url.encodedPath == "/api/v1/issue" }.url.queryParameter("requestedBy"))
+            mediator(store, IssueListQuery("all", "modified", createdBy = 7)).load(LoadType.REFRESH, pagingState)
+            assertEquals("7", received.last { it.url.encodedPath == "/api/v1/issue" }.url.queryParameter("createdBy"))
 
             pageBody = { MockResponse(code = 503) }
             val result = mediator(store).load(LoadType.REFRESH, pagingState)

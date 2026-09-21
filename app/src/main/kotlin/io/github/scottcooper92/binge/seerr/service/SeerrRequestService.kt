@@ -174,9 +174,10 @@ class SeerrRequestService(
 
     /**
      * The request is read first because Seerr's update wants the media type on the body and keeps
-     * nothing else stable across an edit without it; the 4K flag rides along unchanged. An empty set
-     * or a movie is refused here — the contract's INVALID_ARGUMENT — rather than sent for the server
-     * to reject in its own words.
+     * nothing else stable across an edit without it; the 4K flag and the destination ride along
+     * unchanged, since the server assigns each of them from the body and clears the ones it does not
+     * find. An empty set or a movie is refused here — the contract's INVALID_ARGUMENT — rather than
+     * sent for the server to reject in its own words.
      */
     override suspend fun editRequest(request: EditRequestRequest): EditRequestResponse =
         gated(Capability.CAPABILITY_EDIT_SEASONS) {
@@ -189,6 +190,10 @@ class SeerrRequestService(
                     mediaType = current.media.mediaType,
                     seasons = request.seasonNumbersList,
                     is4k = current.is4k,
+                    serverId = current.serverId,
+                    profileId = current.profileId,
+                    rootFolder = current.rootFolder,
+                    tags = current.tags,
                 )
             api.editRequest(request.requestId, body)
             EditRequestResponse.getDefaultInstance()
