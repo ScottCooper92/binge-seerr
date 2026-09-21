@@ -55,7 +55,15 @@ internal fun RequestDetailEntry(
                     ),
                 media =
                     ManageMediaActions(
-                        onSetStatus = { mediaId, status, is4k -> viewModel.moderation.setMediaStatus(requestId, mediaId, status, is4k) },
+                        onSetStatus = { mediaId, status, is4k ->
+                            val seasons =
+                                (state as? RequestDetailUiState.Ready)
+                                    ?.detail
+                                    ?.seasons
+                                    ?.map { it.number }
+                                    .orEmpty()
+                            viewModel.moderation.setMediaStatus(requestId, mediaId, status, is4k, seasons)
+                        },
                         onClearData = { mediaId -> viewModel.moderation.clearMedia(requestId, mediaId) },
                         onDeleteFiles = { mediaId, is4k -> viewModel.moderation.deleteMediaFiles(requestId, mediaId, is4k) },
                     ),

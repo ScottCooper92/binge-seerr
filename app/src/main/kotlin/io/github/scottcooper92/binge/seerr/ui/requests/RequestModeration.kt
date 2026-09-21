@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusSeasonBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -90,13 +91,21 @@ class RequestModeration(
         body: SeerrEditRequestBody,
     ) = moderate(requestId, ModerationEvent.Edited) { connection.api().editRequest(it, body) }
 
+    /**
+     * [seasonNumbers] is this request's own seasons - what marking *this* title available should
+     * mean here, rather than every season the show has. The server only reads it for
+     * [MediaStatusChoice.Available] on a TV title, so it is sent only then.
+     */
     fun setMediaStatus(
         requestId: Int,
         mediaId: Int,
         status: MediaStatusChoice,
         is4k: Boolean,
+        seasonNumbers: List<Int> = emptyList(),
     ) = moderate(requestId, ModerationEvent.MediaStatusSet) {
-        connection.api().setMediaStatus(mediaId, status.path, SeerrMediaStatusBody(is4k))
+        val seasons =
+            seasonNumbers.map { SeerrMediaStatusSeasonBody(it) }.takeIf { status == MediaStatusChoice.Available && it.isNotEmpty() }
+        connection.api().setMediaStatus(mediaId, status.path, SeerrMediaStatusBody(is4k, seasons))
     }
 
     /** The server removes every request for the title along with its record, this one included. */
