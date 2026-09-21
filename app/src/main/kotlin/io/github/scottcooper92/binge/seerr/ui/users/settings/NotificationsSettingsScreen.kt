@@ -42,9 +42,15 @@ private fun AgentSection(
     val current = settings.agent(agent)
     EditorSectionTitle(stringResource(agent.labelRes()))
     if (agent.hasToggle) {
-        EditorSwitchRow(stringResource(R.string.user_settings_agent_enabled), current.enabled, enabled = enabled) { value ->
-            onEdit { it.update(agent) { agentSettings -> agentSettings.copy(enabled = value) } }
-        }
+        // Neither Jellyseerr nor Overseerr reads this flag back from a user's own settings save -
+        // it only ever reports whether the server has the agent configured at all - so the switch
+        // is shown, not edited (#410).
+        EditorSwitchRow(stringResource(R.string.user_settings_agent_enabled), current.enabled, enabled = false) {}
+        Text(
+            stringResource(R.string.user_settings_agent_enabled_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
     if (agent == NotificationAgent.Telegram) {
         settings.telegramBotUsername?.let { bot ->

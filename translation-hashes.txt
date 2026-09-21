@@ -698,6 +698,7 @@ app:user_permissions_title  abccc78cc93c
 app:user_plays  725b66fb9f52
 app:user_recently_watched  eb33c3964529
 app:user_settings_agent_enabled  92c1cdfdf4cb
+app:user_settings_agent_enabled_hint  9fcb02497263
 app:user_settings_agent_webpush  d4f13b8b53e3
 app:user_settings_discord_id  13b2b9c7370e
 app:user_settings_discord_id_hint  55da41915c0d

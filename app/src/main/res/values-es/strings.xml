@@ -357,6 +357,7 @@
     <string name="user_settings_password_mismatch">Las contraseñas no coinciden.</string>
     <string name="user_settings_agent_webpush">Notificaciones push web</string>
     <string name="user_settings_agent_enabled">Activado</string>
+    <string name="user_settings_agent_enabled_hint">Lo configura el servidor para todos; no es por usuario</string>
     <string name="user_settings_field_pgp">Clave pública PGP</string>
     <string name="user_settings_field_telegram_chat">ID del chat</string>
     <string name="user_settings_field_pushbullet_token">Token de acceso</string>
