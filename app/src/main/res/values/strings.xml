@@ -373,6 +373,7 @@
     <string name="user_settings_agent_pushover" translatable="false">Pushover</string>
     <string name="user_settings_agent_webpush">Web push</string>
     <string name="user_settings_agent_enabled">Enabled</string>
+    <string name="user_settings_agent_enabled_hint">Set by the server for everyone; not per-user</string>
     <string name="user_settings_field_pgp">PGP public key</string>
     <string name="user_settings_field_telegram_chat">Chat ID</string>
     <string name="user_settings_field_pushbullet_token">Access token</string>
