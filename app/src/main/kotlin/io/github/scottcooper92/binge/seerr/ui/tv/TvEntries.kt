@@ -24,7 +24,6 @@ import androidx.tv.material3.MaterialTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
-import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
@@ -32,6 +31,7 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.openTitleInBinge
+import io.github.scottcooper92.binge.seerr.ui.rememberEnteredEditingGuard
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
@@ -313,21 +313,7 @@ private fun TvEditConnectionOverlay(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.beginEdit() }
-    // beginEdit()'s own update to `editing` is dispatched, so the very first `state` this collects
-    // can still read Connected - the pre-edit reading of the connection being edited - before that
-    // update lands. Tracking observed-non-Connected locally (rather than trying to win that race)
-    // means onDone only fires on a Connected reading that arrives AFTER editing has visibly begun,
-    // which is the one that means "saved", regardless of how beginEdit()'s dispatch is scheduled.
-    // Loading is the StateFlow's seed value, read here before beginEdit()'s dispatch or the upstream
-    // combine have produced anything real, so it must not count as "editing has begun" either.
-    var enteredEditing by remember { mutableStateOf(false) }
-    LaunchedEffect(state) {
-        when (state) {
-            is SetupUiState.Connected -> if (enteredEditing) onDone()
-            is SetupUiState.Loading -> Unit
-            else -> enteredEditing = true
-        }
-    }
+    rememberEnteredEditingGuard(state, onDone)
     BackHandler(onBack = onDone)
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TvSetupScreen(state = state, actions = viewModel.tvActions())
