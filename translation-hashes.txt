@@ -375,6 +375,7 @@ app:server_settings_dns_ttl_hint  8357d79eb688
 app:server_settings_dvr_4k  b9eca1fa10bc
 app:server_settings_dvr_add  28bbd103dc99
 app:server_settings_dvr_anime  3eac161518fc
+app:server_settings_dvr_anime_language_profile  d067aef1d659
 app:server_settings_dvr_availability_announced  07dfab861df1
 app:server_settings_dvr_availability_in_cinemas  c34a8470b933
 app:server_settings_dvr_availability_released  f33deea9b100

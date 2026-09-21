@@ -110,6 +110,7 @@ internal fun DvrForm.reconciledWith(choices: DvrChoices): DvrForm =
         animeRootFolder = animeRootFolder?.takeIf { it in choices.rootFolders },
         animeTagIds = animeTagIds?.filterTo(mutableSetOf()) { id -> choices.tags.any { it.id == id } },
         languageProfileId = languageProfileId?.takeIf { id -> choices.languageProfiles?.any { it.id == id } == true },
+        animeLanguageProfileId = animeLanguageProfileId?.takeIf { id -> choices.languageProfiles?.any { it.id == id } == true },
     )
 
 internal suspend fun io.github.scottcooper92.binge.seerr.seerr.SeerrApi.instances(type: ServiceType): List<SeerrServiceSettingsDto> =

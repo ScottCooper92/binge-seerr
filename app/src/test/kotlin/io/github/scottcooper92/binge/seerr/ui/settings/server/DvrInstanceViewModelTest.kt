@@ -39,7 +39,8 @@ private const val SONARR =
     """[{"id":3,"name":"Main","hostname":"sonarr.local","port":8989,"apiKey":"s-key","useSsl":false,
          "activeProfileId":5,"activeProfileName":"HD","activeDirectory":"/tv","tags":[9],"is4k":false,"isDefault":true,
          "seriesType":"standard","animeSeriesType":"anime","activeAnimeProfileId":5,"activeAnimeDirectory":"/anime",
-         "animeTags":[],"enableSeasonFolders":true,"activeLanguageProfileId":1,"monitorNewItems":"none"}]"""
+         "animeTags":[],"enableSeasonFolders":true,"activeLanguageProfileId":1,"activeAnimeLanguageProfileId":1,
+         "monitorNewItems":"none"}]"""
 
 class DvrInstanceViewModelTest {
     @get:Rule
@@ -171,6 +172,7 @@ class DvrInstanceViewModelTest {
             assertEquals("/anime", ready.draft.animeRootFolder)
             assertEquals(true, ready.draft.seasonFolders)
             assertEquals(1, ready.draft.languageProfileId)
+            assertEquals(1, ready.draft.animeLanguageProfileId)
             assertNull(ready.draft.minimumAvailability)
             assertEquals(
                 listOf("English"),
@@ -189,6 +191,9 @@ class DvrInstanceViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/sonarr/3")).jsonObject
             assertEquals("false", sent.getValue("enableSeasonFolders").jsonPrimitive.content)
             assertEquals("HD", sent.getValue("activeAnimeProfileName").jsonPrimitive.content)
+            // The instance's own anime language profile is not shown by this edit, but a save must
+            // still repeat it - the server replaces the whole record from the body (#411).
+            assertEquals("1", sent.getValue("activeAnimeLanguageProfileId").jsonPrimitive.content)
             assertEquals("none", sent.getValue("monitorNewItems").jsonPrimitive.content)
         }
 
