@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -26,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,7 +48,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
@@ -83,11 +81,11 @@ internal val LocalEditorPageInsets = compositionLocalOf { PaddingValues() }
 
 /**
  * A `scrolling = false` [EditorPage]'s one primary action, anchored in its [EditorPage.bottomBar]
- * slot rather than scrolling away with the rest of the draft - Discover Sliders' Add is the first
- * user. The rounded, elevated band is this frame's equivalent of a scrolling page's
- * [com.binge.designsystem.component.BingeActionFooter] - reached for here instead of that shared
- * component because a `bottomBar` sits outside the Scaffold's own body and needs its background to
- * extend full-bleed behind the gesture nav bar, which only the button inside clears.
+ * slot rather than scrolling away with the rest of the draft - Discover Sliders' Add and a
+ * Permissions page's Save both use this shape of [BingeActionFooter]: rounded and raised, since a
+ * `bottomBar` sits outside the Scaffold's own body and needs its background to extend full-bleed
+ * behind the gesture nav bar, which [BingeActionFooter.clearsNavigationBar] leaves to the button
+ * alone to clear.
  */
 @Composable
 internal fun EditorPageActionBar(
@@ -97,25 +95,18 @@ internal fun EditorPageActionBar(
     modifier: Modifier = Modifier,
     loading: Boolean = false,
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = BingeShapes.HeroTop,
-        tonalElevation = dimensionResource(DesR.dimen.snackbar_elevation),
+    BingeActionFooter(
+        label = label,
+        onClick = onClick,
+        enabled = enabled,
+        loading = loading,
         modifier = modifier,
-    ) {
-        BingeFilledButton(
-            label = label,
-            onClick = onClick,
-            enabled = enabled,
-            loading = loading,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = resolvedContentInset())
-                    .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
-        )
-    }
+        shape = BingeShapes.HeroTop,
+        shadowElevation = dimensionResource(DesR.dimen.snackbar_elevation),
+        bottomPadding = dimensionResource(DesR.dimen.padding_m),
+        horizontalPadding = resolvedContentInset(),
+        clearsNavigationBar = true,
+    )
 }
 
 /** What every editor page hands its screen: leave, retry the load, change the draft, and save it. */
