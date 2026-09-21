@@ -1,7 +1,7 @@
 package io.github.scottcooper92.binge.seerr.service
 
-import com.binge.integration.sdk.HostSecurityPolicy
-import com.binge.integration.sdk.IntegrationService
+import com.binge.companion.sdk.HostSecurityPolicy
+import com.binge.companion.sdk.IntegrationService
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.grpc.binder.SecurityPolicy
 import org.junit.Assert.assertFalse

@@ -68,8 +68,8 @@ coil = "3.6.1"
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 junit = { module = "junit:junit", version.ref = "junit" }
 # Version-less on purpose: both resolve to projects of the included binge-integrations build.
-binge-integration-contracts = { module = "io.github.scottcooper92:contracts" }
-binge-integration-sdk = { module = "io.github.scottcooper92:sdk" }
+binge-companion-contracts = { module = "io.github.scottcooper92:contracts" }
+binge-companion-sdk = { module = "io.github.scottcooper92:sdk" }
 # Version-less for the same reason: resolves to the included binge-design-system build.
 binge-designsystem = { module = "com.binge:designsystem" }
 binge-designsystem-tv = { module = "com.binge:designsystem-tv" }

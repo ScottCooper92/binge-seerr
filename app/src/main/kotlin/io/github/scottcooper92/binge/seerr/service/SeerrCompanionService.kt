@@ -1,8 +1,8 @@
 package io.github.scottcooper92.binge.seerr.service
 
-import com.binge.integration.sdk.BingeHosts
-import com.binge.integration.sdk.HostPolicy
-import com.binge.integration.sdk.IntegrationService
+import com.binge.companion.sdk.BingeHosts
+import com.binge.companion.sdk.HostPolicy
+import com.binge.companion.sdk.IntegrationService
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection

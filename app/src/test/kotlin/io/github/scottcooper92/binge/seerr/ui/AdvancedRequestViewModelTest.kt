@@ -1,8 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.binge.integration.contracts.v1.MediaType
-import com.binge.integration.sdk.AdvancedRequest
+import com.binge.companion.contracts.v1.MediaType
+import com.binge.companion.sdk.AdvancedRequest
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection

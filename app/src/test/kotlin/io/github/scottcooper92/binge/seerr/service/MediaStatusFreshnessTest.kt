@@ -1,9 +1,9 @@
 package io.github.scottcooper92.binge.seerr.service
 
-import com.binge.integration.contracts.request.v1.Availability
-import com.binge.integration.contracts.request.v1.DownloadProgress
-import com.binge.integration.contracts.request.v1.DownloadState
-import com.binge.integration.contracts.request.v1.RequestStatus
+import com.binge.companion.contracts.request.v1.Availability
+import com.binge.companion.contracts.request.v1.DownloadProgress
+import com.binge.companion.contracts.request.v1.DownloadState
+import com.binge.companion.contracts.request.v1.RequestStatus
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

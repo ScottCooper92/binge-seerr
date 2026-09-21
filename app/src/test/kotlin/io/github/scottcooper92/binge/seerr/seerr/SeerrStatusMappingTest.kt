@@ -1,8 +1,8 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
-import com.binge.integration.contracts.request.v1.ApprovalState
-import com.binge.integration.contracts.request.v1.Availability
-import com.binge.integration.contracts.request.v1.DownloadState
+import com.binge.companion.contracts.request.v1.ApprovalState
+import com.binge.companion.contracts.request.v1.Availability
+import com.binge.companion.contracts.request.v1.DownloadState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

@@ -1,7 +1,7 @@
 package io.github.scottcooper92.binge.seerr.data
 
-import com.binge.integration.contracts.request.v1.RequestStatus
-import com.binge.integration.contracts.v1.MediaId
+import com.binge.companion.contracts.request.v1.RequestStatus
+import com.binge.companion.contracts.v1.MediaId
 import java.util.Base64
 
 /** One cached status and the moment the server gave it. */

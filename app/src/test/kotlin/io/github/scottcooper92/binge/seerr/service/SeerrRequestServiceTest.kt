@@ -1,23 +1,23 @@
 package io.github.scottcooper92.binge.seerr.service
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.binge.integration.contracts.request.v1.ApproveRequestRequest
-import com.binge.integration.contracts.request.v1.Availability
-import com.binge.integration.contracts.request.v1.BlockTitleRequest
-import com.binge.integration.contracts.request.v1.CancelRequestRequest
-import com.binge.integration.contracts.request.v1.Capability
-import com.binge.integration.contracts.request.v1.EditRequestRequest
-import com.binge.integration.contracts.request.v1.GetAttentionRequest
-import com.binge.integration.contracts.request.v1.GetStatusRequest
-import com.binge.integration.contracts.request.v1.HandshakeRequest
-import com.binge.integration.contracts.request.v1.IssueType
-import com.binge.integration.contracts.request.v1.ObserveAttentionRequest
-import com.binge.integration.contracts.request.v1.ObserveStatusRequest
-import com.binge.integration.contracts.request.v1.ReportIssueRequest
-import com.binge.integration.contracts.request.v1.RequestServiceGrpcKt
-import com.binge.integration.contracts.request.v1.SubmitRequestRequest
-import com.binge.integration.contracts.v1.MediaId
-import com.binge.integration.contracts.v1.MediaType
+import com.binge.companion.contracts.request.v1.ApproveRequestRequest
+import com.binge.companion.contracts.request.v1.Availability
+import com.binge.companion.contracts.request.v1.BlockTitleRequest
+import com.binge.companion.contracts.request.v1.CancelRequestRequest
+import com.binge.companion.contracts.request.v1.Capability
+import com.binge.companion.contracts.request.v1.EditRequestRequest
+import com.binge.companion.contracts.request.v1.GetAttentionRequest
+import com.binge.companion.contracts.request.v1.GetStatusRequest
+import com.binge.companion.contracts.request.v1.HandshakeRequest
+import com.binge.companion.contracts.request.v1.IssueType
+import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
+import com.binge.companion.contracts.request.v1.ObserveStatusRequest
+import com.binge.companion.contracts.request.v1.ReportIssueRequest
+import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
+import com.binge.companion.contracts.request.v1.SubmitRequestRequest
+import com.binge.companion.contracts.v1.MediaId
+import com.binge.companion.contracts.v1.MediaType
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
@@ -530,7 +530,7 @@ class SeerrRequestServiceTest {
 
         override suspend fun put(
             media: MediaId,
-            status: com.binge.integration.contracts.request.v1.RequestStatus,
+            status: com.binge.companion.contracts.request.v1.RequestStatus,
             fetchedAtMillis: Long,
         ) {
             rows[media.mediaTypeValue to media.tmdbId] = CachedStatus(status, fetchedAtMillis)

@@ -1,9 +1,9 @@
 package io.github.scottcooper92.binge.seerr
 
 import android.content.Context
-import com.binge.integration.sdk.BingeHosts
-import com.binge.integration.sdk.HandOffCallerPolicy
-import com.binge.integration.sdk.HandOffPolicy
+import com.binge.companion.sdk.BingeHosts
+import com.binge.companion.sdk.HandOffCallerPolicy
+import com.binge.companion.sdk.HandOffPolicy
 
 private const val HAND_OFF_TAG = "SeerrCompanion"
 

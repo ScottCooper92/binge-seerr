@@ -1,7 +1,7 @@
 package io.github.scottcooper92.binge.seerr
 
 import android.content.Intent
-import com.binge.integration.sdk.CompanionManifest
+import com.binge.companion.sdk.CompanionManifest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue

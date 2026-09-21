@@ -85,7 +85,7 @@
             android:label="@string/advanced_title"
             android:theme="@style/Theme.Seerr">
             <intent-filter>
-                <action android:name="com.binge.integration.ADVANCED_REQUEST" />
+                <action android:name="com.binge.companion.ADVANCED_REQUEST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -103,7 +103,7 @@
             android:exported="true"
             android:theme="@style/Theme.SeerrHandOff">
             <intent-filter>
-                <action android:name="com.binge.integration.SETTINGS" />
+                <action android:name="com.binge.companion.SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -122,17 +122,17 @@
             android:name=".service.SeerrCompanionService"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.binge.integration.REQUEST" />
+                <action android:name="com.binge.companion.REQUEST" />
             </intent-filter>
 
             <meta-data
-                android:name="com.binge.integration.name"
+                android:name="com.binge.companion.name"
                 android:value="@string/companion_name" />
             <meta-data
-                android:name="com.binge.integration.icon"
+                android:name="com.binge.companion.icon"
                 android:resource="@drawable/ic_companion" />
             <meta-data
-                android:name="com.binge.integration.majors"
+                android:name="com.binge.companion.majors"
                 android:value="1" />
         </service>
     </application>
