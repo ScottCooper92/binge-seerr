@@ -48,7 +48,8 @@ class DiscoverSliderViewModelTest {
             "PUT /api/v1/settings/discover/3",
             """{"id":3,"type":13,"title":"Heists","isBuiltIn":false,"enabled":true,"data":"10051"}""",
         )
-        seerr.serve("DELETE /api/v1/settings/discover/3", SLIDERS.trim().removePrefix("[").removeSuffix("]"))
+        // The server answers a delete 204 with no body at all, which is why nothing is decoded from it.
+        seerr.serve("DELETE /api/v1/settings/discover/3", body = "", code = 204)
     }
 
     @After

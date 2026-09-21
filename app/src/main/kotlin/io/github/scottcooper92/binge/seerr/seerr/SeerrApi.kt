@@ -1,5 +1,7 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -139,14 +141,17 @@ interface SeerrApi {
     @GET("api/v1/issue/count")
     suspend fun issueCount(): SeerrIssueCountDto
 
-    /** A page of issues; [filter] is `all`, `open` or `resolved`, [sort] `added` or `modified`. */
+    /**
+     * A page of issues; [filter] is `all`, `open` or `resolved`, [sort] `added` or `modified`.
+     * The issue list narrows by its reporter, `createdBy` — not the request list's `requestedBy`.
+     */
     @GET("api/v1/issue")
     suspend fun issues(
         @Query("take") take: Int,
         @Query("skip") skip: Int = 0,
         @Query("filter") filter: String = "all",
         @Query("sort") sort: String = "added",
-        @Query("requestedBy") requestedBy: Int? = null,
+        @Query("createdBy") createdBy: Int? = null,
     ): SeerrIssuePageDto
 
     /** A user's own quota, or any user's with `MANAGE_USERS`. */
@@ -544,10 +549,11 @@ interface SeerrApi {
         @Body body: SeerrDiscoverSliderBody,
     ): SeerrDiscoverSliderDto
 
+    /** Answers 204 with no body, so nothing is decoded: a declared DTO return would fail every delete that worked. */
     @DELETE("api/v1/settings/discover/{sliderId}")
     suspend fun deleteDiscoverSlider(
         @Path("sliderId") sliderId: Int,
-    ): SeerrDiscoverSliderDto
+    )
 
     /** Puts the built-in sliders back in their default order and drops the custom ones. */
     @GET("api/v1/settings/discover/reset")
@@ -605,12 +611,16 @@ interface SeerrApi {
         @Path("requestId") requestId: Int,
     )
 
-    /** Marks the media record; [status] is one of [SeerrMediaStatusChoice]'s paths, per instance. */
+    /**
+     * Marks the media record; [status] is one of `MediaStatusChoice`'s paths, per instance. The
+     * instance is chosen by the body's `is4k`, not by a query parameter: the Jellyseerr lineage
+     * reads `req.body` here, and a bodyless call is a 500 there rather than a plain-instance write.
+     */
     @POST("api/v1/media/{mediaId}/{status}")
     suspend fun setMediaStatus(
         @Path("mediaId") mediaId: Int,
         @Path("status") status: String,
-        @Query("is4k") is4k: Boolean,
+        @Body body: SeerrMediaStatusBody,
     )
 
     /** Clears the server's record of a title, and every request for it with it. */
@@ -696,11 +706,15 @@ interface SeerrApi {
         @Query("search") search: String? = null,
     ): SeerrBlocklistPageDto
 
-    /** Keyed by TMDB id, not the entry's own; `MANAGE_BLOCKLIST`. */
+    /**
+     * Keyed by TMDB id, not the entry's own; `MANAGE_BLOCKLIST`. [mediaType] is `movie` or `tv`:
+     * Seerr 3.2 made it required and answers 400 without it, and an earlier server ignores it.
+     */
     @DELETE("api/v1/{path}/{tmdbId}")
     suspend fun removeFromBlocklist(
         @Path("path") path: String,
         @Path("tmdbId") tmdbId: Int,
+        @Query("mediaType") mediaType: String,
     )
 
     /** Seerr 3.2+: blocks or unblocks every movie of a TMDB collection at once; `MANAGE_BLOCKLIST`. */
@@ -963,6 +977,16 @@ data class SeerrCreateIssueBody(
     @SerialName("mediaId") val mediaId: Int,
     @SerialName("issueType") val issueType: SeerrIssueTypeCode,
     @SerialName("message") val message: String,
+)
+
+/**
+ * `POST media/{id}/{status}`: which instance the new status is for. Always encoded, since the
+ * server reads the flag off the body and a missing body is what the 500 comes from.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class SeerrMediaStatusBody(
+    @EncodeDefault @SerialName("is4k") val is4k: Boolean = false,
 )
 
 @Serializable

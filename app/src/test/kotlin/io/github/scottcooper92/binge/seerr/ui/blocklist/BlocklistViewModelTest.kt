@@ -117,7 +117,10 @@ class BlocklistViewModelTest {
             val removed = awaitEvent(vm.events)
             vm.remove(item)
             assertEquals(BlocklistEvent.Removed, removed.await())
-            assertEquals(1, received("DELETE", "/api/v1/blocklist/100").size)
+            val deletes = received("DELETE", "/api/v1/blocklist/100")
+            assertEquals(1, deletes.size)
+            // Seerr 3.2 made this required and answers 400 without it.
+            assertEquals("movie", deletes.single().url.queryParameter("mediaType"))
             vm.awaitReady { it.actingTmdbIds.isEmpty() }
             seerr.awaitCount("GET", "/api/v1/blocklist", moreThan = probes)
         }

@@ -216,6 +216,26 @@ class RequestEditorTest {
             assertTrue(loaded.canSave)
         }
 
+    @Test
+    fun `a season-only edit repeats the request's own destination, which the server would otherwise clear`() =
+        runTest {
+            val editor = editor()
+            val request =
+                tvRequest().copy(serverId = 2, profileId = 6, rootFolder = "/tv", tags = listOf(4))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.toggleSeason(2)
+            editor.save()
+            editor.awaitClosed()
+
+            val body = editBody()
+            assertEquals(2, body.getValue("serverId").jsonPrimitive.int)
+            assertEquals(6, body.getValue("profileId").jsonPrimitive.int)
+            assertEquals("/tv", body.getValue("rootFolder").jsonPrimitive.content)
+            assertEquals(listOf(4), body.getValue("tags").jsonArray.map { it.jsonPrimitive.int })
+        }
+
     private fun movieRequest(tags: List<Int> = emptyList()) =
         SeerrRequestDto(
             id = 11,

@@ -66,8 +66,8 @@ data class IssueListScope(
     val permissions: SeerrPermissions = SeerrPermissions(),
     val currentUserId: Int? = null,
 ) {
-    /** The `requestedBy` the list is narrowed to, or null for a user who may see everyone's. */
-    val requestedBy: Int? get() = currentUserId?.takeUnless { permissions.canManageIssues || permissions.canViewIssues }
+    /** The `createdBy` the list is narrowed to, or null for a user who may see everyone's. */
+    val createdBy: Int? get() = currentUserId?.takeUnless { permissions.canManageIssues || permissions.canViewIssues }
 }
 
 sealed interface IssuesUiState {

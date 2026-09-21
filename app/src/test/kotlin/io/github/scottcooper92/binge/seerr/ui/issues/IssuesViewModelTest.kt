@@ -106,7 +106,7 @@ class IssuesViewModelTest {
 
             val ready = vm.awaitReady { it.counts != null && it.scope.permissions.canManageIssues }
             assertEquals(IssueCounts(total = 3, open = 2, resolved = 1), ready.counts)
-            assertNull(ready.scope.requestedBy)
+            assertNull(ready.scope.createdBy)
 
             val rows = vm.issues(IssueFilter.Open).asSnapshot()
 
@@ -118,7 +118,7 @@ class IssuesViewModelTest {
             assertEquals("ana", heat.reportedBy)
             val listed = received.first { it.url.encodedPath == "/api/v1/issue" }.url
             assertEquals("open", listed.queryParameter("filter"))
-            assertNull(listed.queryParameter("requestedBy"))
+            assertNull(listed.queryParameter("createdBy"))
 
             vm.setSort(IssueSort.Modified)
             vm.awaitReady { it.sort == IssueSort.Modified }
@@ -131,13 +131,13 @@ class IssuesViewModelTest {
         runTest {
             server(CREATE_ISSUES)
             val vm = viewModel()
-            assertEquals(7, vm.awaitReady { it.scope.currentUserId != null }.scope.requestedBy)
+            assertEquals(7, vm.awaitReady { it.scope.currentUserId != null }.scope.createdBy)
 
             // Granted in the web client while this screen was elsewhere; the cached auth/me would miss it.
             viewerPermissions.set(ADMIN)
             vm.setScreenVisible(true)
 
-            assertNull(vm.awaitReady { it.scope.permissions.canManageIssues }.scope.requestedBy)
+            assertNull(vm.awaitReady { it.scope.permissions.canManageIssues }.scope.createdBy)
         }
 
     @Test
@@ -147,12 +147,12 @@ class IssuesViewModelTest {
             val vm = viewModel()
 
             val ready = vm.awaitReady { it.scope.currentUserId != null }
-            assertEquals(7, ready.scope.requestedBy)
+            assertEquals(7, ready.scope.createdBy)
 
             vm.issues(IssueFilter.All).asSnapshot()
 
             val listed = received.last { it.url.encodedPath == "/api/v1/issue" }.url
-            assertEquals("7", listed.queryParameter("requestedBy"))
+            assertEquals("7", listed.queryParameter("createdBy"))
             assertEquals("all", listed.queryParameter("filter"))
         }
 

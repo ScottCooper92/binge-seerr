@@ -81,7 +81,7 @@ class IssuesViewModel
 
         private val streams: Map<IssueFilter, Flow<PagingData<IssueItem>>> =
             IssueFilter.entries.associateWith { filter ->
-                combine(selectedSort, scope) { sort, scope -> IssueListQuery(filter.apiValue, sort.apiValue, scope.requestedBy) }
+                combine(selectedSort, scope) { sort, scope -> IssueListQuery(filter.apiValue, sort.apiValue, scope.createdBy) }
                     .flatMapLatest { query ->
                         Pager(
                             config = PagingConfig(pageSize = ISSUES_PAGE_SIZE),

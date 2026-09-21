@@ -59,7 +59,7 @@ internal fun SeerrUserNotificationSettingsDto.toNotificationSettings(isModerator
                 NotificationAgent.Discord to
                     AgentSettings(
                         enabled = discordEnabled == true,
-                        fields = fields(AgentField.DiscordId to discordId),
+                        fields = fields(AgentField.DiscordId to (discordId ?: discordIds?.firstOrNull())),
                         types = types.discord ?: 0,
                     ),
                 NotificationAgent.Telegram to
@@ -89,6 +89,8 @@ internal fun SeerrUserNotificationSettingsDto.toNotificationSettings(isModerator
                 NotificationAgent.WebPush to AgentSettings(enabled = webPushEnabled == true, types = types.webpush ?: 0),
             ),
         telegramBotUsername = telegramBotUsername?.takeIf { it.isNotBlank() },
+        otherDiscordIds = discordIds.orEmpty().drop(1),
+        telegramMessageThreadId = telegramMessageThreadId,
         isModerator = isModerator,
     )
 }
@@ -100,12 +102,14 @@ internal fun NotificationSettings.toDto(): SeerrUserNotificationSettingsDto {
         pgpKey = field(AgentField.PgpKey),
         discordEnabled = agent(NotificationAgent.Discord).enabled,
         discordId = field(AgentField.DiscordId),
+        discordIds = listOfNotNull(field(AgentField.DiscordId)) + otherDiscordIds,
         pushbulletAccessToken = field(AgentField.PushbulletToken),
         pushoverApplicationToken = field(AgentField.PushoverAppToken),
         pushoverUserKey = field(AgentField.PushoverUserKey),
         pushoverSound = field(AgentField.PushoverSound),
         telegramEnabled = agent(NotificationAgent.Telegram).enabled,
         telegramChatId = field(AgentField.TelegramChatId),
+        telegramMessageThreadId = telegramMessageThreadId,
         telegramSendSilently = agent(NotificationAgent.Telegram).sendSilently,
         webPushEnabled = agent(NotificationAgent.WebPush).enabled,
         notificationTypes =

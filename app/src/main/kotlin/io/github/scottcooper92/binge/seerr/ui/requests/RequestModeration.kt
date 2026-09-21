@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +95,9 @@ class RequestModeration(
         mediaId: Int,
         status: MediaStatusChoice,
         is4k: Boolean,
-    ) = moderate(requestId, ModerationEvent.MediaStatusSet) { connection.api().setMediaStatus(mediaId, status.path, is4k) }
+    ) = moderate(requestId, ModerationEvent.MediaStatusSet) {
+        connection.api().setMediaStatus(mediaId, status.path, SeerrMediaStatusBody(is4k))
+    }
 
     /** The server removes every request for the title along with its record, this one included. */
     fun clearMedia(

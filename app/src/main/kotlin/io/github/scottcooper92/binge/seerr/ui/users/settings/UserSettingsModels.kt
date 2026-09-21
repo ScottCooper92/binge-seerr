@@ -44,6 +44,8 @@ data class GeneralSettings(
     val discordId: String = "",
     val locale: String = "",
     val region: String = "",
+    /** Jellyseerr's second region, which this page does not edit; carried so a save does not clear it. */
+    val streamingRegion: String = "",
     val originalLanguage: String = "",
     val movieQuotaLimit: String = "",
     val movieQuotaDays: String = "",
@@ -135,6 +137,13 @@ enum class NotificationType(
 data class NotificationSettings(
     val agents: Map<NotificationAgent, AgentSettings> = emptyMap(),
     val telegramBotUsername: String? = null,
+    /**
+     * Seerr 3.3 turned the Discord mention id into a list. This page edits the first of them, and
+     * holds the rest so a save keeps the ones it never showed.
+     */
+    val otherDiscordIds: List<String> = emptyList(),
+    /** The Telegram topic id, which this page does not edit; carried so a save does not clear it. */
+    val telegramMessageThreadId: String? = null,
     /** Whether the user is told about moderation events at all: those toggles are hidden otherwise. */
     val isModerator: Boolean = false,
 ) {

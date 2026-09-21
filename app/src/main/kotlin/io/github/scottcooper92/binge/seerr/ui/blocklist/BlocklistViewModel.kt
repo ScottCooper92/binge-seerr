@@ -13,6 +13,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.requests.seerrMediaType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -185,12 +186,17 @@ class BlocklistViewModel
             if (item.tmdbId in acting.value) return
             acting.update { it + item.tmdbId }
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().removeFromBlocklist(connection.profile().blocklistPath, item.tmdbId) }
-                    .onSuccess {
-                        countsRefresh.update { it + 1 }
-                        listVersionState.update { it + 1 }
-                        eventFlow.emit(BlocklistEvent.Removed)
-                    }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
+                runCatching {
+                    connection.api().removeFromBlocklist(
+                        connection.profile().blocklistPath,
+                        item.tmdbId,
+                        item.mediaType.seerrMediaType(),
+                    )
+                }.onSuccess {
+                    countsRefresh.update { it + 1 }
+                    listVersionState.update { it + 1 }
+                    eventFlow.emit(BlocklistEvent.Removed)
+                }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
                 acting.update { it - item.tmdbId }
             }
         }

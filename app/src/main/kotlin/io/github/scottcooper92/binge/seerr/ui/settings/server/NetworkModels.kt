@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDnsCacheSettingsDto
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataProvidersDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataTestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNetworkSettingsDto
@@ -143,7 +142,6 @@ internal fun NetworkForm.toDto(): SeerrNetworkSettingsDto =
     )
 
 internal fun SeerrMetadataSettingsDto.toForm(): MetadataForm =
-    MetadataForm(tv = MetadataProvider.fromCode(settings.tv), anime = MetadataProvider.fromCode(settings.anime))
+    MetadataForm(tv = MetadataProvider.fromCode(tv), anime = MetadataProvider.fromCode(anime))
 
-internal fun MetadataForm.toDto(): SeerrMetadataSettingsDto =
-    SeerrMetadataSettingsDto(SeerrMetadataProvidersDto(tv = tv.code, anime = anime.code))
+internal fun MetadataForm.toDto(): SeerrMetadataSettingsDto = SeerrMetadataSettingsDto(tv = tv.code, anime = anime.code)

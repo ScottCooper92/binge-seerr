@@ -129,4 +129,26 @@ class GeneralSettingsViewModelTest {
             assertEquals("Ana B", ready.saved.displayName)
             assertFalse(ready.dirty)
         }
+
+    @Test
+    fun `the Jellyseerr lineage's split regions read and write, and the one this page hides survives the save`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve(
+                "GET /api/v1/user/8/settings/main",
+                """{"username":"Ana","discoverRegion":"GB","streamingRegion":"IE","locale":"en"}""",
+            )
+            val vm = viewModel()
+            assertEquals("GB", vm.awaitReady().draft.region)
+
+            vm.edit { it.copy(region = "US") }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
+            assertEquals("US", sent.getValue("discoverRegion").jsonPrimitive.content)
+            assertEquals("US", sent.getValue("region").jsonPrimitive.content)
+            assertEquals("IE", sent.getValue("streamingRegion").jsonPrimitive.content)
+        }
 }

@@ -579,7 +579,7 @@ class RequestDetailViewModelTest {
             cleared.await()
 
             val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
-            assertEquals("false", status.url.queryParameter("is4k"))
+            assertEquals("""{"is4k":false}""", status.body)
             val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
             assertEquals("false", files.url.queryParameter("is4k"))
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900" })
@@ -626,7 +626,7 @@ class RequestDetailViewModelTest {
             filesDeleted.await()
 
             val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
-            assertEquals("true", status.url.queryParameter("is4k"))
+            assertEquals("""{"is4k":true}""", status.body)
             val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
             assertEquals("true", files.url.queryParameter("is4k"))
         }

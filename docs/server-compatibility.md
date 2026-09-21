@@ -68,6 +68,32 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 
 "Always" means the endpoint was in the first release of that lineage.
 
+## Where the two lineages disagree on a body
+
+An endpoint can exist on both lineages and still not take the same body. Some of these writes
+**replace** rather than merge: the server assigns each field from what it read, so a key the body
+leaves out is that setting cleared, not left alone. That is why a body sends fields this app does
+not show, and why it sends both lineages' names for one value — each ignores the key it does not
+know.
+
+| Write | Overseerr | Jellyseerr / Seerr |
+|---|---|---|
+| `POST /user/{id}/settings/main` | `region`, `discordId` | `discoverRegion` and `streamingRegion`; `discordId` was dropped after Seerr 3.2 |
+| `POST /user/{id}/settings/notifications` | `discordId` | `discordId` up to Seerr 3.2, the list `discordIds` from 3.3; `telegramMessageThreadId` throughout |
+| `GET`/`PUT /settings/metadatas` | never | `{tv, anime}` at the top level, with no wrapper |
+
+`PUT /request/{id}` replaces the whole destination on both, so a season-only edit still sends the
+request's own `serverId`, `profileId`, `rootFolder` and `tags` back.
+
+Three more are about where a value travels rather than what it is called:
+
+- `POST /media/{id}/{status}` takes `is4k` on the **body**, on both lineages. As a query parameter
+  it is a plain-instance write on Overseerr and a 500 on the Jellyseerr lineage, whose Express 5
+  leaves `req.body` undefined for a bodyless call.
+- `DELETE /blocklist/{tmdbId}` takes a `mediaType` query parameter, required from Seerr 3.2 and
+  ignored before it. Without it the server answers 400.
+- `GET /issue` narrows by `createdBy`, not the request list's `requestedBy`.
+
 ## The blocklist path
 
 Jellyseerr 2.x serves the blocklist at `/blacklist`. Seerr 3.x serves it at `/blocklist` and

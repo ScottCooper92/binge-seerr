@@ -37,8 +37,11 @@ class MetadataViewModelTest {
     fun setUp() {
         seerr.start()
         seerr.viewer(id = 1, permissions = ADMIN)
-        seerr.serve("GET /api/v1/settings/metadatas", """{"settings":{"tv":"tvdb","anime":"tmdb"}}""")
-        seerr.serve("PUT /api/v1/settings/metadatas", """{"settings":{"tv":"tvdb","anime":"tvdb"}}""")
+        seerr.serve("GET /api/v1/settings/metadatas", """{"tv":"tvdb","anime":"tmdb"}""")
+        seerr.serve(
+            "PUT /api/v1/settings/metadatas",
+            """{"success":true,"tv":"tvdb","anime":"tvdb","tests":{"tvdb":"ok","tmdb":"not tested"}}""",
+        )
         seerr.serve("POST /api/v1/settings/metadatas/test", """{"message":"Successfully connected to TVDB"}""")
     }
 
@@ -70,13 +73,9 @@ class MetadataViewModelTest {
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())
-            val sent =
-                Json
-                    .parseToJsonElement(seerr.body("PUT", "/api/v1/settings/metadatas"))
-                    .jsonObject
-                    .getValue("settings")
-                    .jsonObject
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/metadatas")).jsonObject
             assertEquals("tvdb", sent.getValue("anime").jsonPrimitive.content)
+            assertEquals("tvdb", sent.getValue("tv").jsonPrimitive.content)
             assertEquals(MetadataProvider.Tvdb, vm.awaitReady().saved.anime)
         }
 
