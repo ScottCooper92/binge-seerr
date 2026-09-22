@@ -27,6 +27,7 @@ import com.binge.designsystem.centredReadingColumn
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.isLandscape
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
 
 /** Landscape's two panes: the hero, heading and answers against the points card. */
@@ -41,7 +42,7 @@ fun ConsentGate(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     when (state) {
-        ConsentUiState.Loading -> Unit
+        ConsentUiState.Loading -> LoadingScreen()
         ConsentUiState.Asking -> ConsentScreen(onChoice = viewModel::answer)
         ConsentUiState.Decided -> content()
     }

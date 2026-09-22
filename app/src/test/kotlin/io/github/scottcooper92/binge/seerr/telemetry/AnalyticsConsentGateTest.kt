@@ -86,4 +86,18 @@ class AnalyticsConsentGateTest {
             assertEquals(listOf(true), seen)
             assertTrue(released)
         }
+
+    @Test
+    fun `awaitRead returns once the stored answer is read, whichever it is`() =
+        runTest {
+            val gate = gate(TelemetryPrefs(InMemoryDataStore()))
+            var read = false
+            backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                gate.awaitRead()
+                read = true
+            }
+            testScheduler.runCurrent()
+            assertTrue(read)
+            assertFalse(gate.isGranted)
+        }
 }

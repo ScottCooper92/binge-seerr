@@ -25,8 +25,8 @@ import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 internal fun appRows(
     app: AppSettings,
     onToggleShakeToReport: (Boolean) -> Unit,
-    onToggleShareUsageData: (Boolean) -> Unit = {},
-    onToggleSendCrashReports: (Boolean) -> Unit = {},
+    onToggleShareUsageData: (Boolean) -> Unit,
+    onToggleSendCrashReports: (Boolean) -> Unit,
 ): List<SettingsRow> {
     val context = LocalContext.current
     return listOf(

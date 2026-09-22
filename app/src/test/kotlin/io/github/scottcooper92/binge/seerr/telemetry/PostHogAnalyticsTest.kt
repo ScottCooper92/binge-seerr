@@ -1,7 +1,14 @@
 package io.github.scottcooper92.binge.seerr.telemetry
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -29,22 +36,30 @@ class PostHogAnalyticsTest {
     }
 
     private val client = RecordingClient()
-    private val prefs = TelemetryPrefs(InMemoryDataStore())
+    private val store = InMemoryDataStore()
+    private val prefs = TelemetryPrefs(store)
 
-    private fun TestScope.gate() =
-        AnalyticsConsentGate(prefs, CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)))
+    private fun TestScope.scope() = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
+
+    private fun TestScope.gate(store: DataStore<Preferences> = this@PostHogAnalyticsTest.store) =
+        AnalyticsConsentGate(TelemetryPrefs(store), scope())
+
+    private fun TestScope.analytics(
+        client: AnalyticsClient? = this@PostHogAnalyticsTest.client,
+        gate: AnalyticsConsentGate = gate(),
+    ) = PostHogAnalytics(client, gate, scope())
 
     @Test
     fun `nothing is sent while undecided, and the client is closed against any opt-in it kept`() =
         runTest {
-            PostHogAnalytics(client, gate()).screen("requests")
+            analytics().screen("requests")
             assertEquals(listOf("optOut"), client.calls)
         }
 
     @Test
     fun `a grant opens the client before the first screen, and a decline closes it again`() =
         runTest {
-            val analytics = PostHogAnalytics(client, gate())
+            val analytics = analytics()
             prefs.setAnalyticsGranted(true)
             analytics.screen("requests")
             prefs.setAnalyticsGranted(false)
@@ -56,15 +71,40 @@ class PostHogAnalyticsTest {
     fun `an install that already agreed is opened at start, not closed first`() =
         runTest {
             prefs.setAnalyticsGranted(true)
-            PostHogAnalytics(client, gate()).screen("hub")
+            analytics().screen("hub")
             assertEquals(listOf("optIn", "screen:hub"), client.calls)
+        }
+
+    @Test
+    fun `a screen shown before the stored answer is read is held, then sent once a grant is read`() =
+        runTest {
+            val unread = UnreadDataStore()
+            TelemetryPrefs(unread).setAnalyticsGranted(true)
+            val analytics = analytics(gate = gate(unread))
+            analytics.screen("home")
+            assertEquals(listOf("optOut"), client.calls)
+
+            unread.release()
+            assertEquals(listOf("optOut", "optIn", "screen:home"), client.calls)
+        }
+
+    @Test
+    fun `a held screen is dropped when the stored answer is a decline`() =
+        runTest {
+            val unread = UnreadDataStore()
+            TelemetryPrefs(unread).setAnalyticsGranted(false)
+            val analytics = analytics(gate = gate(unread))
+            analytics.screen("home")
+            unread.release()
+            analytics.screen("settings")
+            assertEquals(listOf("optOut"), client.calls)
         }
 
     @Test
     fun `a build with no project key sends nothing and does not fail`() =
         runTest {
             prefs.setAnalyticsGranted(true)
-            PostHogAnalytics(null, gate()).screen("hub")
+            analytics(client = null).screen("hub")
         }
 
     @Test
@@ -73,5 +113,20 @@ class PostHogAnalyticsTest {
         assertTrue(config.optOut)
         assertFalse(config.captureScreenViews)
         assertFalse(config.captureDeepLinks)
+    }
+
+    /** A real store whose reads are held back until [release], as on a cold start before DataStore answers. */
+    private class UnreadDataStore : DataStore<Preferences> {
+        private val inner = InMemoryDataStore()
+        private val released = MutableStateFlow(false)
+
+        @OptIn(ExperimentalCoroutinesApi::class)
+        override val data: Flow<Preferences> = released.filter { it }.flatMapLatest { inner.data }
+
+        fun release() {
+            released.value = true
+        }
+
+        override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences = inner.updateData(transform)
     }
 }
