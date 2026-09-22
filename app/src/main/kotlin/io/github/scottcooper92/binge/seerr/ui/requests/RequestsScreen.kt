@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
@@ -100,9 +99,10 @@ fun RequestsScreen(
                 onSelectedIndexChange = { actions.onFilterChange(RequestFilter.entries[it]) },
                 modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
                 // The bar's height joins the pager's header, so the rows reach the top of the window and pass under both.
+                // Opaque header (the default), not transparent-with-a-scrim: matching Library's own
+                // chip-tabs-over-grid pattern, whose solid background never lets scrolled rows show
+                // through underneath it, rather than staying translucent once content scrolls under.
                 header = { Spacer(Modifier.height(padding.calculateTopPadding())) },
-                headerBackground = Color.Transparent,
-                scrimFraction = scrollBehavior.state.collapsedFraction,
             ) { pagePadding, page ->
                 RequestsPage(
                     filter = RequestFilter.entries[page],

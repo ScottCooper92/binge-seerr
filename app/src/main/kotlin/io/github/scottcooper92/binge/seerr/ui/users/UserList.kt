@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.People
@@ -31,12 +30,12 @@ import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowSkeletonColumn
-import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
+import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import com.binge.designsystem.R as DesR
 
 /** The rows with the states the pager reports, as the issues browser shows them. */
@@ -61,7 +60,7 @@ internal fun UsersBody(
         lazyItems.itemCount > 0 -> UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
         remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+                contentPadding = resolvedListContentPadding(contentPadding),
                 height = dimensionResource(R.dimen.users_row_skeleton_height),
                 modifier = modifier,
             )
@@ -92,7 +91,7 @@ private fun UserList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+        contentPadding = resolvedListContentPadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

@@ -52,7 +52,7 @@ internal fun ScreenScaffold(
     scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
     barScrim: Boolean = true,
     header: (@Composable () -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: @Composable RowScope.(glassBackgroundAlpha: Float) -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     content: @Composable (padding: PaddingValues) -> Unit,
 ) {

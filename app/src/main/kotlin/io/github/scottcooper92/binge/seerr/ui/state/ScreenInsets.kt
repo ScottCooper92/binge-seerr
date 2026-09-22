@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
+import com.binge.designsystem.resolvedContentInset
 
 /*
  * The window is drawn edge to edge and the top bar is transparent, so a Scaffold hands its body the
@@ -30,3 +31,21 @@ internal fun PaddingValues.innerPadding(): PaddingValues = PaddingValues(top = c
  * and this, the rest, goes to the list.
  */
 internal fun PaddingValues.belowPinnedLine(): PaddingValues = PaddingValues(bottom = calculateBottomPadding())
+
+/**
+ * [resolvedContentInset] folded onto a list sitting under an overlaid header (a [BingeFilterChipPager]'s
+ * chips, or similar): the sides, and an added bottom margin, but not the top. [contentPadding]'s top is
+ * already the header's own height, so stacking the inset onto it as well read as a gap far wider than
+ * the header's own dissolve strip — most visible once the header stopped fading rows in through it and
+ * started drawing an opaque ground instead.
+ */
+@Composable
+internal fun resolvedListContentPadding(contentPadding: PaddingValues): PaddingValues {
+    val inset = resolvedContentInset()
+    return PaddingValues(
+        start = inset,
+        top = contentPadding.calculateTopPadding(),
+        end = inset,
+        bottom = inset + contentPadding.calculateBottomPadding(),
+    )
+}

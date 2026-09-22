@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,7 +32,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -56,6 +54,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -96,6 +95,8 @@ fun LogsScreen(
             modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
             header = {
                 // The bar's height joins the header, so the lines reach the top of the window and pass under both.
+                // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
+                // through underneath it once it's pinned at the top.
                 Spacer(Modifier.height(padding.calculateTopPadding()))
                 BingeSearchField(
                     query = state.search,
@@ -105,8 +106,6 @@ fun LogsScreen(
                     modifier = Modifier.padding(horizontal = resolvedContentInset()),
                 )
             },
-            headerBackground = Color.Transparent,
-            scrimFraction = scrollBehavior.state.collapsedFraction,
         ) { pagePadding, page ->
             LogsPage(
                 level = LogLevel.entries[page],
@@ -167,7 +166,7 @@ private fun LogsBody(
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+                contentPadding = resolvedListContentPadding(contentPadding),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
             ) {
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
