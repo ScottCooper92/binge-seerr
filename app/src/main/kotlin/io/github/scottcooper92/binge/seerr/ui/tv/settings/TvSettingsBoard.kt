@@ -69,6 +69,8 @@ internal fun TvSettingsBoard(
     initialListHasFocus: Boolean = false,
     initialFocusedOptionLabel: String? = null,
     initialShowingBugReport: Boolean = false,
+    onToggleShareUsageData: (Boolean) -> Unit = {},
+    onToggleSendCrashReports: (Boolean) -> Unit = {},
 ) {
     val ready = state as? SettingsUiState.Ready
     if (ready == null) {
@@ -96,7 +98,16 @@ internal fun TvSettingsBoard(
             disconnectFocus = disconnectFocus,
             onStartLibraryScan = onStartLibraryScan,
             scanNote = scanNote,
-        ) + listOfNotNull(ready.app?.let { tvAppGroup(onShowBugReport = { showingBugReport = true }, optionFocus = bugReportFocus) })
+        ) +
+            listOfNotNull(
+                ready.app?.let { app ->
+                    tvAppGroup(
+                        app = app,
+                        actions = TvAppActions({ showingBugReport = true }, onToggleShareUsageData, onToggleSendCrashReports),
+                        optionFocus = bugReportFocus,
+                    )
+                },
+            )
     val describedKey = focusedKey?.takeIf { key -> groups.any { group -> group.rows.any { it.key == key } } } ?: KEY_SERVER
     Box(modifier = modifier.fillMaxSize()) {
         TvListPaneBoard(

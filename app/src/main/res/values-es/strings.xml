@@ -905,4 +905,26 @@
     <string name="tv_settings_report_bug_scan">Escanéalo con la cámara del teléfono. El informe se abre con la versión de la aplicación y los datos de esta TV ya rellenados.</string>
     <string name="tv_settings_report_bug_code_description">Código QR que abre un informe de error de esta aplicación en GitHub</string>
     <string name="tv_settings_report_bug_close">Cerrar</string>
+    <string name="consent_title">Ayuda a mejorar esta aplicación</string>
+    <string name="consent_subtitle">Comparte datos de uso para que veamos qué partes de la aplicación se usan y qué falla.</string>
+    <string name="consent_point_shared_title">Decide qué se arregla</string>
+    <string name="consent_point_shared_detail">Vemos qué pantallas se usan, para dedicar el trabajo a lo que importa.</string>
+    <string name="consent_point_never_title">Privado por diseño</string>
+    <string name="consent_point_never_detail">Solo nombres de pantallas. Nunca la dirección de tu servidor, tus solicitudes, sus títulos ni el nombre de nadie.</string>
+    <string name="consent_point_change_title">Se desactiva con un toque</string>
+    <string name="consent_point_change_detail">Cambia de opinión cuando quieras en Ajustes, en Esta aplicación.</string>
+    <string name="consent_accept">Compartir datos de uso</string>
+    <string name="consent_decline">Ahora no</string>
+    <string name="settings_share_usage_data">Compartir datos de uso</string>
+    <string name="settings_share_usage_data_caption">Qué pantallas y funciones usas. Nunca tu servidor ni lo que contiene.</string>
+    <string name="settings_send_crash_reports">Enviar informes de fallos</string>
+    <string name="settings_send_crash_reports_caption">Qué hacía la aplicación cuando falló, para poder corregirlo</string>
+    <string name="tv_settings_toggle_on">Activado</string>
+    <string name="tv_settings_toggle_off">Desactivado</string>
+    <string name="tv_settings_turn_on">Activar</string>
+    <string name="tv_settings_turn_off">Desactivar</string>
+    <string name="consent_kicker">Privacidad</string>
+    <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
+    <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
+    <string name="tv_consent_either_choice">Con cualquiera de las dos opciones sigues a la aplicación.</string>
 </resources>

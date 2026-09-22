@@ -57,4 +57,23 @@
          (it sizes to its label), so the skeleton picks a plausible one for each of the two chips
          every request headline shows (media type, request status). -->
     <dimen name="request_skeleton_chip_width">72dp</dimen>
+    <!-- The consent screen, after Binge's analytics step. -->
+    <dimen name="consent_content_max_width">600dp</dimen>
+    <dimen name="consent_hero_size">92dp</dimen>
+    <dimen name="consent_hero_icon_size">44dp</dimen>
+    <dimen name="consent_hero_badge_size">34dp</dimen>
+    <dimen name="consent_hero_badge_icon_size">16dp</dimen>
+    <dimen name="consent_point_icon_size">40dp</dimen>
+    <dimen name="consent_landscape_points_top">48dp</dimen>
+    <dimen name="tv_consent_band_spacing">30dp</dimen>
+    <dimen name="tv_consent_heading_gap">10dp</dimen>
+    <dimen name="tv_consent_copy_gap">18dp</dimen>
+    <dimen name="tv_consent_reassurance_gap">10dp</dimen>
+    <dimen name="tv_consent_footer_gap">14dp</dimen>
+    <dimen name="tv_consent_point_padding_h">26dp</dimen>
+    <dimen name="tv_consent_point_padding_v">22dp</dimen>
+    <dimen name="tv_consent_point_gap">16dp</dimen>
+    <dimen name="tv_consent_point_badge">48dp</dimen>
+    <dimen name="tv_consent_point_icon">24dp</dimen>
+    <dimen name="tv_consent_point_text_gap">6dp</dimen>
 </resources>

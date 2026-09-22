@@ -16,11 +16,13 @@ import io.github.scottcooper92.binge.seerr.ui.tvActions
 @Composable
 internal fun TvSeerrShell(viewModel: TvHomeViewModel = hiltViewModel()) {
     SeerrTvTheme {
-        val state by viewModel.uiState.collectAsStateWithLifecycle()
-        when (state) {
-            TvHomeUiState.Loading -> TvLoadingPlate()
-            TvHomeUiState.Setup -> TvSetupEntry()
-            TvHomeUiState.Connected -> TvConnectedShell()
+        TvConsentGate {
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            when (state) {
+                TvHomeUiState.Loading -> TvLoadingPlate()
+                TvHomeUiState.Setup -> TvSetupEntry()
+                TvHomeUiState.Connected -> TvConnectedShell()
+            }
         }
     }
 }

@@ -16,6 +16,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
+import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
@@ -51,6 +53,7 @@ class SettingsViewModelTest {
     private lateinit var connection: SeerrConnection
     private lateinit var prefs: NotificationPrefs
     private lateinit var feedbackPrefs: FeedbackPrefs
+    private lateinit var telemetryPrefs: TelemetryPrefs
     private val scheduler = FakeScheduler()
     private val notifier = FakeNotifier()
 
@@ -121,6 +124,7 @@ class SettingsViewModelTest {
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         }
         prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
+        telemetryPrefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") })
         feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
         val vm =
             SettingsViewModel(
@@ -130,6 +134,7 @@ class SettingsViewModelTest {
                 scheduler,
                 notifier,
                 feedbackPrefs,
+                telemetryPrefs,
                 BugReportLinks(),
                 mainDispatcherRule.dispatcher,
             )
@@ -219,6 +224,25 @@ class SettingsViewModelTest {
             vm.setShakeToReport(false)
             assertFalse(checkNotNull(vm.awaitReady { it.app?.shakeToReport == false }.app).shakeToReport)
             assertFalse(feedbackPrefs.shakeToReport.first())
+        }
+
+    @Test
+    fun `usage data is off until shared, crash reports on until stopped, and both toggles write through`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+
+            val app = checkNotNull(vm.awaitReady { it.app != null }.app)
+            assertFalse(app.shareUsageData)
+            assertTrue(app.sendCrashReports)
+
+            vm.setShareUsageData(true)
+            vm.awaitReady { it.app?.shareUsageData == true }
+            assertEquals(AnalyticsConsent.GRANTED, telemetryPrefs.analyticsConsent.first())
+
+            vm.setSendCrashReports(false)
+            vm.awaitReady { it.app?.sendCrashReports == false }
+            assertFalse(telemetryPrefs.crashReportingEnabled.first())
         }
 
     @Test

@@ -22,13 +22,21 @@ class SettingsAppGroupScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun appGroup() = SettingsGroup(title = stringResource(R.string.settings_group_app), rows = appRows(SampleApp) {})
+    fun appGroup() =
+        SettingsGroup(title = stringResource(R.string.settings_group_app), rows = appRows(SampleApp, onToggleShakeToReport = {}))
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun appGroupShakeOff() =
-        SettingsGroup(title = stringResource(R.string.settings_group_app), rows = appRows(SampleApp.copy(shakeToReport = false)) {})
+    fun appGroupToggled() =
+        SettingsGroup(
+            title = stringResource(R.string.settings_group_app),
+            rows =
+                appRows(
+                    SampleApp.copy(shakeToReport = false, shareUsageData = true, sendCrashReports = false),
+                    onToggleShakeToReport = {},
+                ),
+        )
 
     @PreviewTest
     @SeerrComponentPreviews

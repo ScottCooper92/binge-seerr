@@ -75,4 +75,18 @@ class TvSettingsScreenshotTest {
             initialShowingBugReport = true,
         )
     }
+
+    /** The usage data switch, off: its one option turns it on. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ShareUsageData() {
+        TvSettingsBoard(
+            state = SampleSettingsWithApp,
+            onEditConnection = {},
+            onDisconnect = {},
+            initialFocusedKey = KEY_SHARE_USAGE_DATA,
+            initialFocusedOptionLabel = "Turn on",
+        )
+    }
 }
