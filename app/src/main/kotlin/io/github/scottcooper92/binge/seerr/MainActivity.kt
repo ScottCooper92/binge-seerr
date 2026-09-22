@@ -7,8 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -19,13 +21,19 @@ import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.feedback.BugReportLinks
 import io.github.scottcooper92.binge.seerr.feedback.FeedbackPrefs
 import io.github.scottcooper92.binge.seerr.feedback.ShakeToReportPrompt
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.LocalAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.screenName
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.DeepLinkNavigator
 import io.github.scottcooper92.binge.seerr.ui.HomeRoute
 import io.github.scottcooper92.binge.seerr.ui.SeerrNavHost
+import io.github.scottcooper92.binge.seerr.ui.SeerrRoute
 import io.github.scottcooper92.binge.seerr.ui.consent.ConsentGate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvSeerrShell
 import io.github.scottcooper92.binge.seerr.ui.tv.isTelevision
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import javax.inject.Inject
 
 private const val KEY_CONSUMED_LINK = "consumed_link"
@@ -51,6 +59,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var bugReportLinks: BugReportLinks
 
+    @Inject
+    lateinit var analytics: Analytics
+
     private var consumedLink: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,10 +85,16 @@ class MainActivity : ComponentActivity() {
             // A television gets the D-pad shell, as Binge's MainActivity selects its own at runtime; the
             // notification links push phone routes, which the TV shell grows into with a later phase.
             if (LocalConfiguration.current.isTelevision()) {
-                TvSeerrShell()
+                CompositionLocalProvider(LocalAnalytics provides analytics) { TvSeerrShell() }
                 return@setContent
             }
             val backStack = rememberNavBackStack(HomeRoute)
+            LaunchedEffect(backStack) {
+                snapshotFlow { backStack.lastOrNull() as? SeerrRoute }
+                    .filterNotNull()
+                    .distinctUntilChanged()
+                    .collect { analytics.screen(it.screenName()) }
+            }
             LaunchedEffect(backStack) {
                 deepLinks.backStacks.collect { routes ->
                     backStack.clear()

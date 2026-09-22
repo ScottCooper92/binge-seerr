@@ -1,12 +1,8 @@
 package io.github.scottcooper92.binge.seerr.telemetry
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.emptyPreferences
+import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -21,15 +17,6 @@ import org.robolectric.RobolectricTestRunner
 /** Robolectric only because a throwing hook is logged through `android.util.Log`. */
 @RunWith(RobolectricTestRunner::class)
 class AnalyticsConsentGateTest {
-    /** A synchronous store, so each write has reached the gate by the time it returns. */
-    private class InMemoryDataStore : DataStore<Preferences> {
-        private val state = MutableStateFlow(emptyPreferences())
-        override val data: StateFlow<Preferences> = state
-
-        override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
-            transform(state.value).also { state.value = it }
-    }
-
     private fun TestScope.gate(prefs: TelemetryPrefs): AnalyticsConsentGate =
         AnalyticsConsentGate(prefs, CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)))
 

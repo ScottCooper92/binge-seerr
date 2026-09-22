@@ -13,6 +13,36 @@ plugins {
     alias(libs.plugins.screenshot)
 }
 
+// Crash reporting needs this app's own Firebase project, whose google-services.json is never
+// committed: release.yml writes it from a secret. Without it neither plugin is applied, so a fork
+// or a local build still builds, and crash reporting is simply off (FirebaseCrashReports).
+if (file("google-services.json").exists()) {
+    apply(
+        plugin =
+            libs.plugins.google.services
+                .get()
+                .pluginId,
+    )
+    apply(
+        plugin =
+            libs.plugins.firebase.crashlytics
+                .get()
+                .pluginId,
+    )
+}
+
+// PostHog's project key, from local.properties or the environment; blank means analytics is off.
+val localProperties =
+    Properties().apply {
+        val file = rootDir.resolve("local.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
+
+fun telemetryValue(
+    key: String,
+    default: String = "",
+): String = localProperties.getProperty(key) ?: System.getenv(key) ?: default
+
 // The exported schema is committed: a change to a table is a migration decision made in review.
 room {
     schemaDirectory("$projectDir/schemas")
@@ -36,6 +66,8 @@ android {
         // The device lane's tests take the object graph from Hilt, so the runner swaps in Hilt's test
         // Application; it is the only instrumentation this app runs.
         testInstrumentationRunner = "io.github.scottcooper92.binge.seerr.SeerrHiltTestRunner"
+        buildConfigField("String", "POSTHOG_API_KEY", "\"${telemetryValue("POSTHOG_API_KEY")}\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"${telemetryValue("POSTHOG_HOST", "https://eu.i.posthog.com")}\"")
     }
 
     // BuildConfig.DEBUG selects the caller policy: any caller on a debug build, the pinned Binge
@@ -193,6 +225,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.datastore.preferences)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.posthog.android)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)

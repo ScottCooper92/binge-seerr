@@ -6,6 +6,8 @@ import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPlanner
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.CrashReportingSwitch
 import javax.inject.Inject
 
 /**
@@ -27,11 +29,19 @@ class SeerrApp :
     @Inject
     lateinit var connectionRestore: ConnectionRestore
 
+    @Inject
+    lateinit var crashReporting: CrashReportingSwitch
+
+    /** Injected so it is built at start: building it is what registers it with the consent gate. */
+    @Inject
+    lateinit var analytics: Analytics
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
+        crashReporting.start()
         connectionRestore.start()
         planner.start()
     }
