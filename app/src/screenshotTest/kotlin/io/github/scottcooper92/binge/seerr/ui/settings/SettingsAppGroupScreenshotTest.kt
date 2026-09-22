@@ -23,7 +23,12 @@ class SettingsAppGroupScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun appGroup() =
-        SettingsGroup(title = stringResource(R.string.settings_group_app), rows = appRows(SampleApp, onToggleShakeToReport = {}))
+        SettingsGroup(
+            title = stringResource(R.string.settings_group_app),
+            rows =
+                appRows(SampleApp, onToggleShakeToReport = {
+                }, onToggleShareUsageData = {}, onToggleSendCrashReports = {}),
+        )
 
     @PreviewTest
     @SeerrComponentPreviews
@@ -35,6 +40,8 @@ class SettingsAppGroupScreenshotTest {
                 appRows(
                     SampleApp.copy(shakeToReport = false, shareUsageData = true, sendCrashReports = false),
                     onToggleShakeToReport = {},
+                    onToggleShareUsageData = {},
+                    onToggleSendCrashReports = {},
                 ),
         )
 

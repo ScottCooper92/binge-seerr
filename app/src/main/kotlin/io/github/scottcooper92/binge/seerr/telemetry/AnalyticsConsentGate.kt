@@ -42,6 +42,8 @@ class AnalyticsConsentGate
         /** True once consent is granted and every registered backend has opened for it. */
         val granted: StateFlow<Boolean> = grantedState.asStateFlow()
 
+        private val readState = MutableStateFlow(false)
+
         init {
             scope.launch {
                 prefs.analyticsConsent
@@ -62,6 +64,15 @@ class AnalyticsConsentGate
             if (isGranted) onConsentChanged.runIsolated(granted = true)
         }
 
+        /**
+         * Suspends until the stored answer has been read and every backend has reacted to it. Before
+         * then [isGranted] is false for an install that did agree, so a caller holding an event
+         * waits here rather than dropping it.
+         */
+        suspend fun awaitRead() {
+            readState.first { it }
+        }
+
         /** Suspends until [granted], for a caller whose next event must not be dropped. */
         suspend fun awaitGranted() {
             granted.first { it }
@@ -70,12 +81,14 @@ class AnalyticsConsentGate
         private fun publish(granted: Boolean) {
             // The first read of an unanswered or declined choice changes nothing: every backend
             // starts closed, and telling one to close would touch its SDK before the user answers.
-            if (granted == isGranted) return
-            // The flag first, so a hook's own reporting passes the gate it is opening; the
-            // observable last, so an awaiting caller cannot outrun a backend still opening.
-            isGranted = granted
-            hooks.forEach { it.runIsolated(granted) }
-            grantedState.value = granted
+            if (granted != isGranted) {
+                // The flag first, so a hook's own reporting passes the gate it is opening; the
+                // observable last, so an awaiting caller cannot outrun a backend still opening.
+                isGranted = granted
+                hooks.forEach { it.runIsolated(granted) }
+                grantedState.value = granted
+            }
+            readState.value = true
         }
 
         /**
