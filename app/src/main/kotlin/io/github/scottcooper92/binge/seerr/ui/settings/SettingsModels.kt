@@ -101,10 +101,15 @@ data class NotificationSettings(
     val nextRunMillis: Long?,
 )
 
-/** This app's own settings, not the server's: where to report a bug in it, and whether a shake offers to. */
+/**
+ * This app's own settings, not the server's: where to report a bug in it, whether a shake offers to,
+ * and what it may report on its own.
+ */
 data class AppSettings(
     val bugReportUrl: String,
     val shakeToReport: Boolean,
+    val shareUsageData: Boolean = false,
+    val sendCrashReports: Boolean = true,
 )
 
 sealed interface SettingsUiState {

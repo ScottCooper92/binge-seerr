@@ -279,9 +279,15 @@ private fun TvSettingsEntry(
     // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
     // gate as the row itself — so a non-admin viewer never pays for a `/settings/jobs` fetch they cannot use.
     if ((state as? SettingsUiState.Ready)?.config != null) {
-        TvAdminSettingsEntry(state = state, onEditConnection = onEditConnection, onDisconnect = viewModel::disconnect)
+        TvAdminSettingsEntry(state = state, onEditConnection = onEditConnection, viewModel = viewModel)
     } else {
-        TvSettingsBoard(state = state, onEditConnection = onEditConnection, onDisconnect = viewModel::disconnect)
+        TvSettingsBoard(
+            state = state,
+            onEditConnection = onEditConnection,
+            onDisconnect = viewModel::disconnect,
+            onToggleShareUsageData = viewModel::setShareUsageData,
+            onToggleSendCrashReports = viewModel::setSendCrashReports,
+        )
     }
 }
 
@@ -289,13 +295,15 @@ private fun TvSettingsEntry(
 private fun TvAdminSettingsEntry(
     state: SettingsUiState,
     onEditConnection: () -> Unit,
-    onDisconnect: () -> Unit,
+    viewModel: SettingsViewModel,
     jobsViewModel: JobsViewModel = hiltViewModel(),
 ) {
     TvSettingsBoard(
         state = state,
         onEditConnection = onEditConnection,
-        onDisconnect = onDisconnect,
+        onDisconnect = viewModel::disconnect,
+        onToggleShareUsageData = viewModel::setShareUsageData,
+        onToggleSendCrashReports = viewModel::setSendCrashReports,
         // The phone Jobs page's own run action, reused rather than a second call to the same endpoint:
         // this board has no jobs list of its own, so the notice is what tells the admin it started.
         // `runWhenReady`, not `run`: this view model's own load races the row becoming visible, so an

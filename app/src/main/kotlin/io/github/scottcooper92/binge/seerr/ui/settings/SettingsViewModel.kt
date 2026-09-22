@@ -11,6 +11,8 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
+import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -44,6 +46,7 @@ class SettingsViewModel
         scheduler: NotificationScheduler,
         private val notifier: SeerrNotifier,
         private val feedbackPrefs: FeedbackPrefs,
+        private val telemetryPrefs: TelemetryPrefs,
         bugReportLinks: BugReportLinks,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
@@ -85,7 +88,18 @@ class SettingsViewModel
             }
 
         private val app: Flow<AppSettings> =
-            feedbackPrefs.shakeToReport.map { shake -> AppSettings(bugReportUrl = bugReportLinks.url(), shakeToReport = shake) }
+            combine(
+                feedbackPrefs.shakeToReport,
+                telemetryPrefs.analyticsConsent,
+                telemetryPrefs.crashReportingEnabled,
+            ) { shake, consent, crashes ->
+                AppSettings(
+                    bugReportUrl = bugReportLinks.url(),
+                    shakeToReport = shake,
+                    shareUsageData = consent == AnalyticsConsent.GRANTED,
+                    sendCrashReports = crashes,
+                )
+            }
 
         val uiState: StateFlow<SettingsUiState> =
             combine(summary, server, config, notifications, app) { summary, server, config, notifications, app ->
@@ -118,6 +132,14 @@ class SettingsViewModel
 
         fun setShakeToReport(enabled: Boolean) {
             viewModelScope.launch(dispatcher) { feedbackPrefs.setShakeToReport(enabled) }
+        }
+
+        fun setShareUsageData(enabled: Boolean) {
+            viewModelScope.launch(dispatcher) { telemetryPrefs.setAnalyticsGranted(enabled) }
+        }
+
+        fun setSendCrashReports(enabled: Boolean) {
+            viewModelScope.launch(dispatcher) { telemetryPrefs.setCrashReportingEnabled(enabled) }
         }
 
         fun disconnect() {

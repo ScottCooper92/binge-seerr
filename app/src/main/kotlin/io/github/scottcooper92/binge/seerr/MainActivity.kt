@@ -23,6 +23,7 @@ import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.DeepLinkNavigator
 import io.github.scottcooper92.binge.seerr.ui.HomeRoute
 import io.github.scottcooper92.binge.seerr.ui.SeerrNavHost
+import io.github.scottcooper92.binge.seerr.ui.consent.ConsentGate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvSeerrShell
 import io.github.scottcooper92.binge.seerr.ui.tv.isTelevision
 import javax.inject.Inject
@@ -91,7 +92,7 @@ class MainActivity : ComponentActivity() {
                 // doesn't match this, so a two-pane gutter would otherwise show through as a
                 // different colour than the panes it sits between.
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    SeerrNavHost(backStack = backStack)
+                    ConsentGate { SeerrNavHost(backStack = backStack) }
                 }
             }
         }
