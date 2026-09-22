@@ -2,22 +2,12 @@ package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,10 +23,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.DetailHero
-import com.binge.designsystem.component.DetailOverlayTopBar
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
@@ -52,6 +39,8 @@ import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
+import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailPage
+import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -88,15 +77,8 @@ fun BlocklistDetailScreen(
             }
         }
     }
-    Scaffold(
-        // Full-bleed, matching RequestDetailScreen: no top bar of the Scaffold's own, and the
-        // overlay bar clears the status bar itself.
-        snackbarHost = { BingeSnackbarHost(snackbarHostState, Modifier.windowInsetsPadding(pageEdgeInsets())) },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            BlocklistDetailPage(state = state, onBack = actions.onBack, onPrimary = { confirming = true })
-        }
+    MediaHeroDetailScaffold(snackbarHostState = snackbarHostState) {
+        BlocklistDetailPage(state = state, onBack = actions.onBack, onPrimary = { confirming = true })
     }
     if (confirming) {
         BingeConfirmDialog(
@@ -117,10 +99,10 @@ fun BlocklistDetailScreen(
 }
 
 /**
- * The page itself, on the same shape [io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailPage]
- * uses: the hero draws no chrome, [DetailOverlayTopBar] floats over it with back and the open
- * action, and [BlocklistUnblockAction] is a fixed-height sibling below the scroll rather than
- * pinned over it, dropped entirely for a viewer without `MANAGE_BLOCKLIST`.
+ * The page itself, on the shape [MediaHeroDetailPage] shares with
+ * [io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailPage]: this composable is what feeds
+ * it — the title/backdrop/year, the open action, and [BlocklistUnblockAction] as the footer, dropped
+ * entirely for a viewer without `MANAGE_BLOCKLIST`.
  */
 @Composable
 internal fun BlocklistDetailPage(
@@ -132,54 +114,38 @@ internal fun BlocklistDetailPage(
 ) {
     val item = state.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
-    val inset = resolvedContentInset()
     val context = LocalContext.current
-    Column(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier =
-                Modifier
-                    .weight(1f, fill = false)
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .let {
-                            if (state.canManage) it else it.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                        },
-            ) {
-                DetailHero(
-                    title = title,
-                    backdropUrl = state.backdropUrl,
-                    tagline = null,
-                    metaText = item.year.orEmpty(),
-                    onBack = onBack,
-                    showChrome = false,
-                    richBackdrop = true,
-                )
-                state.overview?.let { overview -> ExpandableOverview(text = overview, modifier = Modifier.padding(inset)) }
-                BlocklistDetailFacts(item)
-            }
-            DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
-                if (state.webUrl.isNotEmpty()) {
-                    ExpressiveIconButton(
-                        onClick = { context.openTitle(item.mediaType, item.tmdbId, state.webUrl) },
-                        icon = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = stringResource(R.string.request_open_elsewhere),
-                        tint = BingeTheme.colors.onScrim,
-                        tone = IconButtonTone.Glass,
-                        size = dimensionResource(DesR.dimen.top_bar_icon_size),
-                    )
-                }
-            }
-        }
+    val footer: (@Composable () -> Unit)? =
         if (state.canManage) {
-            BlocklistUnblockAction(unblocking = state.unblocking, onClick = onPrimary)
+            { BlocklistUnblockAction(unblocking = state.unblocking, onClick = onPrimary) }
+        } else {
+            null
         }
-    }
+    MediaHeroDetailPage(
+        title = title,
+        backdropUrl = state.backdropUrl,
+        metaText = item.year.orEmpty(),
+        onBack = onBack,
+        modifier = modifier,
+        scrollState = scrollState,
+        topBarActions = {
+            if (state.webUrl.isNotEmpty()) {
+                ExpressiveIconButton(
+                    onClick = { context.openTitle(item.mediaType, item.tmdbId, state.webUrl) },
+                    icon = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = stringResource(R.string.request_open_elsewhere),
+                    tint = BingeTheme.colors.onScrim,
+                    tone = IconButtonTone.Glass,
+                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                )
+            }
+        },
+        footer = footer,
+        body = {
+            state.overview?.let { overview -> ExpandableOverview(text = overview, modifier = Modifier.padding(resolvedContentInset())) }
+            BlocklistDetailFacts(item)
+        },
+    )
 }
 
 /** Who blocked it, when, and the tags it fell to — the row's own facts, read as a page instead of a line. */
@@ -228,7 +194,3 @@ private fun BlocklistUnblockAction(
         clearsNavigationBar = true,
     )
 }
-
-/** The sides and the bottom of the window: what a page with no top bar and no Scaffold insets has to clear by hand. */
-@Composable
-private fun pageEdgeInsets(): WindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)

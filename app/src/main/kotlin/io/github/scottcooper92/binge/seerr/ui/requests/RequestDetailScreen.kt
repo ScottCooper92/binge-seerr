@@ -1,23 +1,12 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ReportProblem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,9 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
-import com.binge.designsystem.component.BingeSnackbarHost
-import com.binge.designsystem.component.DetailHero
-import com.binge.designsystem.component.DetailOverlayTopBar
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.resolvedContentInset
@@ -40,6 +26,8 @@ import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
+import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailPage
+import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailScaffold
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -78,19 +66,12 @@ fun RequestDetailScreen(
     LaunchedEffect(events) {
         events.collect { if (it.removesTheRequest) actions.onBack() }
     }
-    Scaffold(
-        // Full-bleed: no top bar of the Scaffold's own, and the overlay bar clears the status bar
-        // itself. What is left is the snackbar and the page's end clearing the navigation bar.
-        snackbarHost = { BingeSnackbarHost(snackbarHostState, Modifier.windowInsetsPadding(pageEdgeInsets())) },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            when (state) {
-                RequestDetailUiState.Loading -> RequestDetailSkeleton()
-                is RequestDetailUiState.Error ->
-                    ErrorScreen(error = state.error, modifier = Modifier.safeDrawingPadding(), onRetry = actions.onRetry)
-                is RequestDetailUiState.Ready -> Ready(state, actions)
-            }
+    MediaHeroDetailScaffold(snackbarHostState = snackbarHostState) {
+        when (state) {
+            RequestDetailUiState.Loading -> RequestDetailSkeleton()
+            is RequestDetailUiState.Error ->
+                ErrorScreen(error = state.error, modifier = Modifier.safeDrawingPadding(), onRetry = actions.onRetry)
+            is RequestDetailUiState.Ready -> Ready(state, actions)
         }
     }
 }
@@ -162,24 +143,11 @@ private fun Ready(
 }
 
 /**
- * The page itself, with no sheet state of its own so a frame can render it.
- *
- * The hero draws no chrome; [DetailOverlayTopBar] floats over it with back and the two navigation
- * actions, and brings its scrim in as the hero's tail passes under it. A null [onOpen] or
- * [onReport] is an action this viewer, or this title, does not have.
- *
- * [RequestPrimaryAction] is a fixed-height sibling below a `weight(1f, fill = false)` scroll
- * ([hasPrimaryAction]) rather than pinned over it, so `Column`'s own measure policy — not a
- * remembered pixel height fed back through `onSizeChanged` — sizes the scroll to clear it, correctly
- * on the very first frame including one restored mid-scroll. The no-action case drops the footer and
- * lets the scroll carry the safe-drawing bottom inset itself, exactly as it did before the footer
- * existed.
- *
- * The horizontal safe-drawing inset scopes to the scroll and [DetailOverlayTopBar] alone, in the
- * [Box] that wraps them, rather than the outer [Column] — so the footer's own raised surface reaches
- * the true screen edge in landscape, the same as it does anywhere else [BingeActionFooter]'s raised
- * shape appears, rather than stopping short of a display-cutout inset it does not need protecting
- * from.
+ * The page itself, with no sheet state of its own so a frame can render it. The hero, the overlay bar
+ * and the footer's own layout live in [MediaHeroDetailPage] — this composable is what feeds it: the
+ * title/backdrop/meta, the [onOpen]/[onReport] icon actions (null when this viewer, or this title,
+ * does not have the action), [RequestPrimaryAction] as the footer where [RequestDetail.hasPrimaryAction]
+ * is true, and the scrollable facts as the body.
  */
 @Composable
 internal fun RequestDetailPage(
@@ -196,68 +164,51 @@ internal fun RequestDetailPage(
 ) {
     val item = detail.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
-    val inset = resolvedContentInset()
-    val hasPrimaryAction = detail.hasPrimaryAction
-    Column(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier =
-                Modifier
-                    .weight(1f, fill = false)
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .let {
-                            if (hasPrimaryAction) it else it.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                        },
-            ) {
-                DetailHero(
-                    title = title,
-                    backdropUrl = detail.backdropUrl,
-                    tagline = null,
-                    // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
-                    // read here, and reads deliberately rather than as a leftover fragment of a joined string.
-                    metaText = item.year.orEmpty(),
-                    onBack = onBack,
-                    showChrome = false,
-                    richBackdrop = true,
+    val footer: (@Composable () -> Unit)? =
+        if (detail.hasPrimaryAction) {
+            { RequestPrimaryAction(detail = detail, onClick = onPrimary) }
+        } else {
+            null
+        }
+    MediaHeroDetailPage(
+        title = title,
+        backdropUrl = detail.backdropUrl,
+        // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
+        // read here, and reads deliberately rather than as a leftover fragment of a joined string.
+        metaText = item.year.orEmpty(),
+        onBack = onBack,
+        modifier = modifier,
+        scrollState = scrollState,
+        topBarActions = {
+            onOpen?.let {
+                ExpressiveIconButton(
+                    onClick = it,
+                    icon = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = stringResource(R.string.request_open_elsewhere),
+                    tint = BingeTheme.colors.onScrim,
+                    tone = IconButtonTone.Glass,
+                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
                 )
-                RequestHeadline(detail, Modifier.padding(inset), initiallyOverflowing)
-                RequestFacts(detail, onOpenUser)
-                RequestSections(detail)
-                RequestSiblings(detail, onOpenSibling)
             }
-            DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack) {
-                onOpen?.let {
-                    ExpressiveIconButton(
-                        onClick = it,
-                        icon = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = stringResource(R.string.request_open_elsewhere),
-                        tint = BingeTheme.colors.onScrim,
-                        tone = IconButtonTone.Glass,
-                        size = dimensionResource(DesR.dimen.top_bar_icon_size),
-                    )
-                }
-                onReport?.let {
-                    ExpressiveIconButton(
-                        onClick = it,
-                        icon = Icons.Filled.ReportProblem,
-                        contentDescription = stringResource(R.string.issue_report_title),
-                        tint = BingeTheme.colors.onScrim,
-                        tone = IconButtonTone.Glass,
-                        size = dimensionResource(DesR.dimen.top_bar_icon_size),
-                    )
-                }
+            onReport?.let {
+                ExpressiveIconButton(
+                    onClick = it,
+                    icon = Icons.Filled.ReportProblem,
+                    contentDescription = stringResource(R.string.issue_report_title),
+                    tint = BingeTheme.colors.onScrim,
+                    tone = IconButtonTone.Glass,
+                    size = dimensionResource(DesR.dimen.top_bar_icon_size),
+                )
             }
-        }
-        if (hasPrimaryAction) {
-            RequestPrimaryAction(detail = detail, onClick = onPrimary)
-        }
-    }
+        },
+        footer = footer,
+        body = {
+            RequestHeadline(detail, Modifier.padding(resolvedContentInset()), initiallyOverflowing)
+            RequestFacts(detail, onOpenUser)
+            RequestSections(detail)
+            RequestSiblings(detail, onOpenSibling)
+        },
+    )
 }
 
 /**
@@ -289,7 +240,3 @@ private fun RequestPrimaryAction(
         clearsNavigationBar = true,
     )
 }
-
-/** The sides and the bottom of the window: what a page with no top bar and no Scaffold insets has to clear by hand. */
-@Composable
-private fun pageEdgeInsets(): WindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
