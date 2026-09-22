@@ -2,7 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueReport
 import io.github.scottcooper92.binge.seerr.ui.requests.ReportIssueContent
 import org.junit.Assert.assertTrue
