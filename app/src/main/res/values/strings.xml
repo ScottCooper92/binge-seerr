@@ -93,6 +93,8 @@
     <string name="blocklist_removed">Unblocked</string>
     <string name="blocklist_collection_blocked">Collection blocked</string>
     <string name="blocklist_collection_unblocked">Collection unblocked</string>
+    <string name="blocklist_detail_blocked_by">Blocked by</string>
+    <string name="blocklist_detail_blocked_at">Blocked at</string>
     <string name="hub_section_settings">Settings</string>
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="section_coming_soon">This section arrives with a later phase.</string>

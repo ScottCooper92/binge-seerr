@@ -70,6 +70,7 @@ class BlocklistPagerTest {
                             onBack = {},
                             onFilterChange = onFilterChange,
                             onSearchChange = {},
+                            onOpen = { _, _ -> },
                             onRemove = {},
                         ),
                 )
@@ -90,7 +91,6 @@ class BlocklistPagerTest {
         canManage = true,
         canBlockCollections = false,
         actingTmdbIds = emptySet(),
-        webRoot = "",
     )
 
     private fun rowsFor(filter: BlocklistFilter): Flow<PagingData<BlocklistItem>> = flowOf(PagingData.from(listOf(item(filter))))

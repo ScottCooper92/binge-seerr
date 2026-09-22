@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
+import kotlinx.serialization.Serializable
 
 /** The browser's filters, each carrying the server's `filter` value; [All] sends none. */
 enum class BlocklistFilter(
@@ -16,7 +17,11 @@ enum class BlocklistFilter(
  * One blocklisted title. [title] is the hydrated one, or the one the blocker gave when the
  * lookup failed; [tags] are the labels a tag rule blocked it under, empty for a manual block.
  * [tmdbId] keys the removal, since the server's DELETE is keyed that way rather than by [id].
+ *
+ * [Serializable] because it travels whole as a `BlocklistDetailRoute` navigation key: there is no
+ * `GET` for a single blocklist entry, only the paged list this app already read it off of.
  */
+@Serializable
 data class BlocklistItem(
     val id: Int,
     val tmdbId: Int,
@@ -57,8 +62,6 @@ sealed interface BlocklistUiState {
         val canManage: Boolean,
         val canBlockCollections: Boolean,
         val actingTmdbIds: Set<Int>,
-        /** The server's web root, for opening a title there. */
-        val webRoot: String,
     ) : BlocklistUiState {
         /** Per page, not per selection: an empty page says why it is empty, and a swiped-to page is its own. */
         fun isFiltered(filter: BlocklistFilter): Boolean = filter != BlocklistFilter.All || search.isNotBlank()

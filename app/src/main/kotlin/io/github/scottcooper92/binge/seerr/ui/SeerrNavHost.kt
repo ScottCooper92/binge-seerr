@@ -157,7 +157,12 @@ private fun SectionContent(
             RequestsEntry(onBack = onBack, showBack = showBack, onOpen = { id -> backStack.add(RequestDetailRoute(id)) })
         HubSection.Issues ->
             IssuesEntry(onBack = onBack, showBack = showBack, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
-        HubSection.Blocklist -> BlocklistEntry(onBack = onBack, showBack = showBack)
+        HubSection.Blocklist ->
+            BlocklistEntry(
+                onBack = onBack,
+                showBack = showBack,
+                onOpen = { item, canManage -> backStack.add(BlocklistDetailRoute(item, canManage)) },
+            )
         HubSection.Users ->
             UsersEntry(onBack = onBack, showBack = showBack, onOpen = { id -> backStack.add(UserDetailRoute(id)) })
         HubSection.Settings -> SettingsEntry(backStack, showBack = showBack)
@@ -192,6 +197,13 @@ private fun EntryProviderScope<NavKey>.detailEntries(
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
         PaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }, showBack = showBack()) }
+    }
+    entry<BlocklistDetailRoute>(metadata = DetailPane) { route ->
+        PaneContent {
+            // No showBack: like RequestDetailRoute, this is only ever stacked above BlocklistRoute, so
+            // its pane depth is always > 1 and the hero's DetailOverlayTopBar back arrow is never redundant.
+            BlocklistDetailEntry(route.item, route.canManage, onBack = { backStack.removeLastOrNull() })
+        }
     }
     entry<UserDetailRoute>(metadata = DetailPane) { route ->
         PaneContent {

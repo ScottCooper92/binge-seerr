@@ -49,7 +49,6 @@ private data class BlocklistScope(
     val hasFilters: Boolean = false,
     val canManage: Boolean = false,
     val canBlockCollections: Boolean = false,
-    val webRoot: String = "",
 )
 
 /**
@@ -102,7 +101,6 @@ class BlocklistViewModel
                         hasFilters = profile?.hasBlocklistFilters == true,
                         canManage = permissions.canManageBlocklist,
                         canBlockCollections = profile?.canBlockCollections == true && permissions.canManageBlocklist,
-                        webRoot = runCatching { connection.current().baseUrl }.getOrDefault(""),
                     ),
                 )
             }.flowOn(dispatcher)
@@ -165,7 +163,6 @@ class BlocklistViewModel
                     canManage = scope.canManage,
                     canBlockCollections = scope.canBlockCollections,
                     actingTmdbIds = acting,
-                    webRoot = scope.webRoot,
                 )
             }.stateIn(viewModelScope, SharingStarted.Lazily, BlocklistUiState.Loading)
 
@@ -177,9 +174,18 @@ class BlocklistViewModel
             search.value = query
         }
 
-        /** The counts are low-velocity totals: refetched on entry and after a change, never polled. */
+        /**
+         * The counts are low-velocity totals: refetched on entry and after a change, never polled.
+         * The list version bumps too, so a title unblocked from its own detail page — a separate nav
+         * entry with its own `ViewModelStore`, so nothing here saw that removal happen — refreshes the
+         * selected page's stale row the moment the browser is back on screen, the same as a removal
+         * made from this screen's own row already does.
+         */
         fun setScreenVisible(visible: Boolean) {
-            if (visible) countsRefresh.update { it + 1 }
+            if (visible) {
+                countsRefresh.update { it + 1 }
+                listVersionState.update { it + 1 }
+            }
         }
 
         fun remove(item: BlocklistItem) {

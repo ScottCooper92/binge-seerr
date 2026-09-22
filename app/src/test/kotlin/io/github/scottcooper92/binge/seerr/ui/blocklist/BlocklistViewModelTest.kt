@@ -70,7 +70,6 @@ class BlocklistViewModelTest {
             assertTrue(ready.hasFilters)
             assertTrue(ready.canBlockCollections)
             assertEquals(BlocklistCounts(all = 1, manual = 1, tagged = 1), ready.counts)
-            assertEquals(seerr.server.url("/").toString(), ready.webRoot)
 
             assertEquals(
                 "Heat",
