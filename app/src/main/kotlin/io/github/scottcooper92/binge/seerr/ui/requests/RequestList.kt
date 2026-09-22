@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -43,12 +42,12 @@ import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.formatRelativeOrAbsolute
-import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
+import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import com.binge.designsystem.R as DesR
 
 /**
@@ -79,7 +78,7 @@ internal fun RequestsBody(
         lazyItems.itemCount > 0 -> RequestList(lazyItems, scope, actingIds, onOpen, onRemove, onReconnect, contentPadding)
         refreshState is LoadState.Loading ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+                contentPadding = resolvedListContentPadding(contentPadding),
                 modifier = modifier,
             )
         refreshState is LoadState.Error ->
@@ -110,7 +109,7 @@ private fun RequestList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+        contentPadding = resolvedListContentPadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

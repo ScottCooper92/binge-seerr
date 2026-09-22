@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
@@ -100,7 +99,7 @@ fun BlocklistScreen(
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
         scrollBehavior = scrollBehavior,
-        // The overlay below draws the one scrim over the bar, the search field and the chips together.
+        // The overlay below draws the one opaque background over the bar, the search field and the chips together.
         barScrim = ready == null,
     ) { padding ->
         if (ready == null) {
@@ -113,7 +112,6 @@ fun BlocklistScreen(
                 actions = actions,
                 barHeight = padding.calculateTopPadding(),
                 bottomPadding = padding.calculateBottomPadding(),
-                scrimFraction = scrollBehavior.state.collapsedFraction,
                 modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
             )
         }
@@ -129,7 +127,6 @@ private fun BlocklistPages(
     actions: BlocklistActions,
     barHeight: Dp,
     bottomPadding: Dp,
-    scrimFraction: Float,
     modifier: Modifier = Modifier,
 ) {
     val filters = if (state.hasFilters) BlocklistFilter.entries else listOf(BlocklistFilter.All)
@@ -141,10 +138,10 @@ private fun BlocklistPages(
         )
     OverlaidHeaderContent(
         modifier = modifier,
-        headerBackground = Color.Transparent,
-        scrimFraction = scrimFraction,
         header = {
             // The bar's height joins the header, so the rows reach the top of the window and pass under both.
+            // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
+            // through underneath it once it's pinned at the top.
             Spacer(Modifier.height(barHeight))
             BingeSearchField(
                 query = state.search,

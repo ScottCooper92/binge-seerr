@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -48,6 +47,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.toTagType
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
+import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import com.binge.designsystem.R as DesR
 
 /**
@@ -76,7 +76,7 @@ internal fun IssuesBody(
         lazyItems.itemCount > 0 -> IssueList(lazyItems, onOpen, onReconnect, contentPadding)
         remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+                contentPadding = resolvedListContentPadding(contentPadding),
                 modifier = modifier,
             )
         remote is LoadState.Error ->
@@ -126,7 +126,7 @@ private fun IssueList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+        contentPadding = resolvedListContentPadding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

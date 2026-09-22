@@ -4,7 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -69,7 +73,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
             SeerrTheme {
-                SeerrNavHost(backStack = backStack)
+                // The window's own background (the platform default, since Theme.Seerr sets none)
+                // doesn't match this, so a two-pane gutter would otherwise show through as a
+                // different colour than the panes it sits between.
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    SeerrNavHost(backStack = backStack)
+                }
             }
         }
     }

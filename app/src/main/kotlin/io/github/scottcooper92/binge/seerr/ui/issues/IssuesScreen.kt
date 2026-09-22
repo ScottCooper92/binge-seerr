@@ -17,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -58,7 +57,7 @@ fun IssuesScreen(
         title = stringResource(R.string.hub_section_issues),
         onBack = actions.onBack.takeIf { showBack },
         scrollBehavior = scrollBehavior,
-        // The pager's header draws the one scrim over the bar and the chips together.
+        // The pager's header draws the one opaque background over the bar and the chips together.
         barScrim = ready == null,
         actions = {
             if (ready != null) {
@@ -80,9 +79,9 @@ fun IssuesScreen(
                 onSelectedIndexChange = { actions.onFilterChange(IssueFilter.entries[it]) },
                 modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
                 // The bar's height joins the pager's header, so the rows reach the top of the window and pass under both.
+                // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
+                // through underneath it once it's pinned at the top.
                 header = { Spacer(Modifier.height(padding.calculateTopPadding())) },
-                headerBackground = Color.Transparent,
-                scrimFraction = scrollBehavior.state.collapsedFraction,
             ) { pagePadding, page ->
                 // Its own filter, never the selected one: the pager composes a page while it is swiped into view.
                 val filter = IssueFilter.entries[page]
