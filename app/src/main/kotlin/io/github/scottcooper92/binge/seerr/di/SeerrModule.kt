@@ -17,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.data.RoomMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.RoomUserStore
 import io.github.scottcooper92.binge.seerr.data.SeerrCacheDatabase
 import io.github.scottcooper92.binge.seerr.data.UserStore
+import io.github.scottcooper92.binge.seerr.feedback.FeedbackPrefs
 import io.github.scottcooper92.binge.seerr.notifications.AndroidNotifier
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
@@ -46,9 +47,11 @@ private val Context.notificationsDataStore: DataStore<Preferences> by preference
 
 private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_telemetry")
 
+private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_feedback")
+
 /**
  * The wiring that is not the connection's: the cache, the notification plumbing, the reporting
- * preferences and the scope the background work runs on. [AuthModule] holds everything that reaches the server.
+ * and feedback preferences and the scope the background work runs on. [AuthModule] holds everything that reaches the server.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -97,6 +100,12 @@ object SeerrModule {
     fun telemetryPrefs(
         @ApplicationContext context: Context,
     ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore)
+
+    @Provides
+    @Singleton
+    fun feedbackPrefs(
+        @ApplicationContext context: Context,
+    ): FeedbackPrefs = FeedbackPrefs(context.feedbackDataStore)
 
     @Provides
     @Singleton

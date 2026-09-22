@@ -939,4 +939,16 @@
     <string name="server_settings_agent_topic_hint">Anyone who knows the topic can read what is sent to it, so pick one that is hard to guess.</string>
     <string name="server_settings_agent_priority_hint">1 (min) to 5 (max). Blank sends at the default, 3.</string>
     <string name="server_settings_agent_profile_name_hint">Only needed where the server does not use the default profile.</string>
+    <string name="settings_group_app">This app</string>
+    <string name="settings_report_bug">Report a bug</string>
+    <string name="settings_report_bug_caption">Opens a new issue on GitHub with your app and device details filled in</string>
+    <string name="settings_shake_to_report">Shake to report</string>
+    <string name="settings_shake_to_report_caption">Shake your phone to report a bug in this app</string>
+    <string name="shake_report_title">Report a bug?</string>
+    <string name="shake_report_message">This opens a new issue on this app\'s GitHub page, with your app version and device filled in. Nothing about your server is included.</string>
+    <string name="tv_settings_report_bug_body">Found something wrong with this app? Show a code and scan it with your phone to report it on GitHub.</string>
+    <string name="tv_settings_report_bug_show_code">Show code</string>
+    <string name="tv_settings_report_bug_scan">Scan it with your phone\'s camera. The report opens with this app\'s version and this TV\'s details filled in.</string>
+    <string name="tv_settings_report_bug_code_description">QR code that opens a bug report for this app on GitHub</string>
+    <string name="tv_settings_report_bug_close">Close</string>
 </resources>

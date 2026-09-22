@@ -893,4 +893,16 @@
     <string name="server_settings_agent_topic_hint">Cualquiera que conozca el tema puede leer lo que se envía, así que elige uno difícil de adivinar.</string>
     <string name="server_settings_agent_priority_hint">De 1 (mínima) a 5 (máxima). En blanco, se envía con la predeterminada, 3.</string>
     <string name="server_settings_agent_profile_name_hint">Solo hace falta si el servidor no usa el perfil predeterminado.</string>
+    <string name="settings_group_app">Esta aplicación</string>
+    <string name="settings_report_bug">Informar de un error</string>
+    <string name="settings_report_bug_caption">Abre una incidencia nueva en GitHub con los datos de la aplicación y del dispositivo ya rellenados</string>
+    <string name="settings_shake_to_report">Agitar para informar</string>
+    <string name="settings_shake_to_report_caption">Agita el teléfono para informar de un error en esta aplicación</string>
+    <string name="shake_report_title">¿Informar de un error?</string>
+    <string name="shake_report_message">Se abrirá una incidencia nueva en la página de GitHub de esta aplicación, con la versión de la aplicación y el dispositivo ya rellenados. No se incluye nada sobre tu servidor.</string>
+    <string name="tv_settings_report_bug_body">¿Algo no funciona en esta aplicación? Muestra un código y escanéalo con el teléfono para informar en GitHub.</string>
+    <string name="tv_settings_report_bug_show_code">Mostrar código</string>
+    <string name="tv_settings_report_bug_scan">Escanéalo con la cámara del teléfono. El informe se abre con la versión de la aplicación y los datos de esta TV ya rellenados.</string>
+    <string name="tv_settings_report_bug_code_description">Código QR que abre un informe de error de esta aplicación en GitHub</string>
+    <string name="tv_settings_report_bug_close">Cerrar</string>
 </resources>

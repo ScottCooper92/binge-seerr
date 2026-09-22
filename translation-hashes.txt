@@ -569,6 +569,7 @@ app:settings_default_permissions  43fc0abd72ea
 app:settings_display_language  11a045e402c3
 app:settings_edit_connection  047f9f951500
 app:settings_edit_connection_caption  bc5acad237f1
+app:settings_group_app  0982cb1775e6
 app:settings_group_connection  639a40e82b9a
 app:settings_group_general  c910d474dcd7
 app:settings_group_notifications  d6d14bda33a3
@@ -584,6 +585,8 @@ app:settings_notifications_blocked_caption  1d84fd334ac3
 app:settings_notifications_last_run  c2fbf9a33a20
 app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3
+app:settings_report_bug  f75e0bd8ff23
+app:settings_report_bug_caption  ef1fad4d5823
 app:settings_request_limit  d05f269db0cd
 app:settings_request_limit_movie  03bd4b8cbd52
 app:settings_request_limit_tv  cfeb1bf41637
@@ -591,6 +594,8 @@ app:settings_request_limit_unlimited  11dde17d6c3e
 app:settings_request_limit_value  9c7f4dc9bdd6
 app:settings_server  aef7de28d529
 app:settings_service_default  21b111cbfe6e
+app:settings_shake_to_report  6897cd64a477
+app:settings_shake_to_report_caption  e790e2d415e9
 app:settings_signal_approved  70ad8a17e448
 app:settings_signal_approved_caption  bb1a57aa8545
 app:settings_signal_available  560462b1f23b
@@ -638,6 +643,8 @@ app:setup_sign_in_plex  bf7f8a232706
 app:setup_start_quick_connect  b6dbd8215798
 app:setup_username  e3b89e9d33f8
 app:setup_username_placeholder  43c6c81836dc
+app:shake_report_message  e30de55e532d
+app:shake_report_title  0ea0e0de374e
 app:sort_title  c9129025bd3f
 app:state_empty_title  49abaf804ab3
 app:state_error_forbidden_message  f70b28bf6c5c
@@ -678,6 +685,11 @@ app:tv_loading  ba3bbbe10d8b
 app:tv_rail_hub  3a78695388b3
 app:tv_settings_disconnect_confirm  ff9c95dc28f5
 app:tv_settings_read_only_note  5dc9a6be3289
+app:tv_settings_report_bug_body  60f9974a8bf0
+app:tv_settings_report_bug_close  7d9eb7acb13e
+app:tv_settings_report_bug_code_description  f9ec3a4be5c3
+app:tv_settings_report_bug_scan  788e6d3aaded
+app:tv_settings_report_bug_show_code  c9eab29c97b9
 app:tv_settings_scan_started  69b83dfae9a6
 app:tv_settings_start_library_scan  c29ac31b6000
 app:tv_setup_address_body  81cf96eadcf6

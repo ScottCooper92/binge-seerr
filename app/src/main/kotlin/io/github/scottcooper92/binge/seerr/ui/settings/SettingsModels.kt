@@ -101,6 +101,12 @@ data class NotificationSettings(
     val nextRunMillis: Long?,
 )
 
+/** This app's own settings, not the server's: where to report a bug in it, and whether a shake offers to. */
+data class AppSettings(
+    val bugReportUrl: String,
+    val shakeToReport: Boolean,
+)
+
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState
 
@@ -110,5 +116,6 @@ sealed interface SettingsUiState {
         /** Null for a user who may not read the server's settings, or until they load. */
         val config: ServerConfig?,
         val notifications: NotificationSettings? = null,
+        val app: AppSettings? = null,
     ) : SettingsUiState
 }

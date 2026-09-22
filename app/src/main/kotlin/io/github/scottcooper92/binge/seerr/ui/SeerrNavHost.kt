@@ -330,6 +330,7 @@ private fun SettingsEntry(
                 onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
                 onToggleSignal = viewModel::setSignal,
                 onNotificationAccessChanged = viewModel::recheckNotificationAccess,
+                onToggleShakeToReport = viewModel::setShakeToReport,
                 // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
                 onDisconnect = {
                     viewModel.disconnect()

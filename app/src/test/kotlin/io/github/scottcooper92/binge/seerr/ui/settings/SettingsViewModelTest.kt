@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.feedback.BugReportLinks
+import io.github.scottcooper92.binge.seerr.feedback.FeedbackPrefs
 import io.github.scottcooper92.binge.seerr.notifications.FakeNotifier
 import io.github.scottcooper92.binge.seerr.notifications.FakeScheduler
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
@@ -24,6 +26,7 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -47,6 +50,7 @@ class SettingsViewModelTest {
     private val viewModels = ViewModelStore()
     private lateinit var connection: SeerrConnection
     private lateinit var prefs: NotificationPrefs
+    private lateinit var feedbackPrefs: FeedbackPrefs
     private val scheduler = FakeScheduler()
     private val notifier = FakeNotifier()
 
@@ -117,7 +121,18 @@ class SettingsViewModelTest {
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         }
         prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
-        val vm = SettingsViewModel(connection, SettingsLoader(connection), prefs, scheduler, notifier, mainDispatcherRule.dispatcher)
+        feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
+        val vm =
+            SettingsViewModel(
+                connection,
+                SettingsLoader(connection),
+                prefs,
+                scheduler,
+                notifier,
+                feedbackPrefs,
+                BugReportLinks(),
+                mainDispatcherRule.dispatcher,
+            )
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -189,6 +204,21 @@ class SettingsViewModelTest {
             responses["/api/v1/settings/main"] = { error("A restricted user must not read the settings") }
             vm.setScreenVisible(true)
             assertNull(vm.awaitReady { it.connection.userName != null }.config)
+        }
+
+    @Test
+    fun `every user gets this app's group, and the shake toggle writes through to the prefs`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+
+            val app = checkNotNull(vm.awaitReady { it.app != null }.app)
+            assertTrue(app.shakeToReport)
+            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml"))
+
+            vm.setShakeToReport(false)
+            assertFalse(checkNotNull(vm.awaitReady { it.app?.shakeToReport == false }.app).shakeToReport)
+            assertFalse(feedbackPrefs.shakeToReport.first())
         }
 
     @Test

@@ -8,12 +8,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
+import io.github.scottcooper92.binge.seerr.feedback.BugReportLinks
+import io.github.scottcooper92.binge.seerr.feedback.FeedbackPrefs
+import io.github.scottcooper92.binge.seerr.feedback.ShakeToReportPrompt
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.DeepLinkNavigator
 import io.github.scottcooper92.binge.seerr.ui.HomeRoute
@@ -38,6 +43,12 @@ class MainActivity : ComponentActivity() {
     /** Only read for the splash's hold condition; the screens observe it through HomeViewModel. */
     @Inject
     lateinit var connectionRestore: ConnectionRestore
+
+    @Inject
+    lateinit var feedbackPrefs: FeedbackPrefs
+
+    @Inject
+    lateinit var bugReportLinks: BugReportLinks
 
     private var consumedLink: String? = null
 
@@ -72,7 +83,10 @@ class MainActivity : ComponentActivity() {
                     backStack.addAll(routes)
                 }
             }
+            // Phone only: a television has no accelerometer, and reports a bug from Settings instead.
+            val shakeToReport by feedbackPrefs.shakeToReport.collectAsStateWithLifecycle(initialValue = false)
             SeerrTheme {
+                ShakeToReportPrompt(enabled = shakeToReport, bugReportUrl = bugReportLinks::url)
                 // The window's own background (the platform default, since Theme.Seerr sets none)
                 // doesn't match this, so a two-pane gutter would otherwise show through as a
                 // different colour than the panes it sits between.

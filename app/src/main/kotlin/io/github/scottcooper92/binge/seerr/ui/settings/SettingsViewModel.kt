@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.feedback.BugReportLinks
+import io.github.scottcooper92.binge.seerr.feedback.FeedbackPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
@@ -26,8 +28,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Settings: the connection, the server, the poll's toggles, and the admin's read-only view of the
- * server's configuration. Every fetch re-runs on the screen becoming visible, so returning from
+ * Settings: the connection, the server, the poll's toggles, the admin's read-only view of the
+ * server's configuration, and this app's own bug reporting. Every fetch re-runs on the screen becoming visible, so returning from
  * Edit connection shows the new server; each flow's null seed holds the previous value while a
  * refetch is in flight rather than blanking its rows.
  */
@@ -41,6 +43,8 @@ class SettingsViewModel
         private val prefs: NotificationPrefs,
         scheduler: NotificationScheduler,
         private val notifier: SeerrNotifier,
+        private val feedbackPrefs: FeedbackPrefs,
+        bugReportLinks: BugReportLinks,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
         private val fetchTrigger = MutableStateFlow(0)
@@ -80,12 +84,15 @@ class SettingsViewModel
                 }
             }
 
+        private val app: Flow<AppSettings> =
+            feedbackPrefs.shakeToReport.map { shake -> AppSettings(bugReportUrl = bugReportLinks.url(), shakeToReport = shake) }
+
         val uiState: StateFlow<SettingsUiState> =
-            combine(summary, server, config, notifications) { summary, server, config, notifications ->
+            combine(summary, server, config, notifications, app) { summary, server, config, notifications, app ->
                 if (summary == null || server == null) {
                     SettingsUiState.Loading
                 } else {
-                    SettingsUiState.Ready(summary, server, config, notifications)
+                    SettingsUiState.Ready(summary, server, config, notifications, app)
                 }
             }.flowOn(dispatcher)
                 .stateIn(viewModelScope, SharingStarted.Lazily, SettingsUiState.Loading)
@@ -107,6 +114,10 @@ class SettingsViewModel
             value: Boolean,
         ) {
             viewModelScope.launch(dispatcher) { prefs.setEnabled(signal, value) }
+        }
+
+        fun setShakeToReport(enabled: Boolean) {
+            viewModelScope.launch(dispatcher) { feedbackPrefs.setShakeToReport(enabled) }
         }
 
         fun disconnect() {
