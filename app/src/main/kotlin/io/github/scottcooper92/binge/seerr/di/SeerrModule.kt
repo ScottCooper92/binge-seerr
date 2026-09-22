@@ -23,6 +23,7 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
 import io.github.scottcooper92.binge.seerr.notifications.WorkManagerNotificationScheduler
+import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +44,11 @@ annotation class IoDispatcher
 
 private val Context.notificationsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_notifications")
 
+private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_telemetry")
+
 /**
- * The wiring that is not the connection's: the cache, the notification plumbing and the scope the
- * background work runs on. [AuthModule] holds everything that reaches the server.
+ * The wiring that is not the connection's: the cache, the notification plumbing, the reporting
+ * preferences and the scope the background work runs on. [AuthModule] holds everything that reaches the server.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -88,6 +91,12 @@ object SeerrModule {
     fun notificationPrefs(
         @ApplicationContext context: Context,
     ): NotificationPrefs = NotificationPrefs(context.notificationsDataStore)
+
+    @Provides
+    @Singleton
+    fun telemetryPrefs(
+        @ApplicationContext context: Context,
+    ): TelemetryPrefs = TelemetryPrefs(context.telemetryDataStore)
 
     @Provides
     @Singleton
