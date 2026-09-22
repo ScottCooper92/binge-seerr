@@ -18,11 +18,9 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -69,10 +67,8 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestRow
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -119,26 +115,19 @@ fun UserDetailScreen(
     }
     var managing by rememberSaveable { mutableStateOf(false) }
     val ready = state as? UserDetailUiState.Ready
-    ScreenScaffold(
+    OverflowDetailScaffold(
         title = ready?.detail?.item?.name ?: stringResource(R.string.user_detail_title),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
-        actions = {
-            if (ready != null) {
-                IconButton(onClick = { managing = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.user_actions_cd))
-                }
-            }
-        },
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            val inner = padding.innerPadding()
-            when (state) {
-                UserDetailUiState.Loading -> UserDetailSkeleton(Modifier.padding(inner))
-                is UserDetailUiState.Error ->
-                    ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-                is UserDetailUiState.Ready -> UserDetailContent(state.detail, requests.collectAsLazyPagingItems(), actions, inner)
-            }
+        showOverflow = ready != null,
+        overflowContentDescription = stringResource(R.string.user_actions_cd),
+        onOverflowClick = { managing = true },
+    ) { inner ->
+        when (state) {
+            UserDetailUiState.Loading -> UserDetailSkeleton(Modifier.padding(inner))
+            is UserDetailUiState.Error ->
+                ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
+            is UserDetailUiState.Ready -> UserDetailContent(state.detail, requests.collectAsLazyPagingItems(), actions, inner)
         }
     }
     if (managing && ready != null) {

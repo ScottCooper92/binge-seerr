@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,11 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -51,11 +46,9 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -114,26 +107,19 @@ fun IssueDetailScreen(
     }
     var managing by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssueDetailUiState.Ready
-    ScreenScaffold(
+    OverflowDetailScaffold(
         title = ready?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
-        actions = {
-            if (ready != null) {
-                IconButton(onClick = { managing = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.issue_manage_cd))
-                }
-            }
-        },
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            val inner = padding.innerPadding()
-            when (state) {
-                IssueDetailUiState.Loading -> LoadingScreen(Modifier.padding(inner))
-                is IssueDetailUiState.Error ->
-                    ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-                is IssueDetailUiState.Ready -> Ready(state, events, actions, contentPadding = inner)
-            }
+        showOverflow = ready != null,
+        overflowContentDescription = stringResource(R.string.issue_manage_cd),
+        onOverflowClick = { managing = true },
+    ) { inner ->
+        when (state) {
+            IssueDetailUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+            is IssueDetailUiState.Error ->
+                ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
+            is IssueDetailUiState.Ready -> Ready(state, events, actions, contentPadding = inner)
         }
     }
     if (managing && ready != null) {
