@@ -24,6 +24,8 @@ import androidx.tv.material3.MaterialTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.LocalAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.screenName
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
@@ -60,6 +62,8 @@ import io.github.scottcooper92.binge.seerr.ui.tvActions
 @Composable
 internal fun TvConnectedShell() {
     var selected by rememberSaveable { mutableStateOf(TvDestination.Hub) }
+    val analytics = LocalAnalytics.current
+    LaunchedEffect(selected) { analytics.screen(selected.screenName()) }
     var editingConnection by rememberSaveable { mutableStateOf(false) }
     // The requests board's open detail page, above the rail exactly as the connection form is. The two
     // overlays are mutually exclusive by construction — nothing opens one while the other is showing.

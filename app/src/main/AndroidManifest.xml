@@ -41,6 +41,14 @@
         android:usesCleartextTraffic="true">
 
         <!--
+            Crashlytics starts switched off, so nothing is sent before CrashReportingSwitch has read the
+            user's preference; it turns collection on from there, and never on a debug build.
+        -->
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+
+        <!--
             WorkManager's own initializer is removed so it starts through SeerrApp's configuration,
             whose worker factory is Hilt's: the poll worker takes its collaborators by injection.
         -->
