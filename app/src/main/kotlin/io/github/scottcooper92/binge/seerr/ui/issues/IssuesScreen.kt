@@ -57,7 +57,7 @@ fun IssuesScreen(
         title = stringResource(R.string.hub_section_issues),
         onBack = actions.onBack.takeIf { showBack },
         scrollBehavior = scrollBehavior,
-        // The pager's header draws the one scrim over the bar and the chips together.
+        // The pager's header draws the one opaque background over the bar and the chips together.
         barScrim = ready == null,
         actions = {
             if (ready != null) {

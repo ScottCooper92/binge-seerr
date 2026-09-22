@@ -77,7 +77,7 @@ fun RequestsScreen(
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
         scrollBehavior = scrollBehavior,
-        // The pager's header draws the one scrim over the bar and the chips together.
+        // The pager's header draws the one opaque background over the bar and the chips together.
         barScrim = ready == null,
         actions = {
             if (ready != null) {

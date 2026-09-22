@@ -99,7 +99,7 @@ fun BlocklistScreen(
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
         scrollBehavior = scrollBehavior,
-        // The overlay below draws the one scrim over the bar, the search field and the chips together.
+        // The overlay below draws the one opaque background over the bar, the search field and the chips together.
         barScrim = ready == null,
     ) { padding ->
         if (ready == null) {

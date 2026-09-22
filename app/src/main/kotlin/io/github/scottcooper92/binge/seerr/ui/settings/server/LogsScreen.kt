@@ -85,7 +85,7 @@ fun LogsScreen(
         title = stringResource(R.string.server_settings_logs),
         onBack = actions.onBack,
         scrollBehavior = scrollBehavior,
-        // The pager's header draws the one scrim over the bar, the search field and the chips together.
+        // The pager's header draws the one opaque background over the bar, the search field and the chips together.
         barScrim = false,
     ) { padding ->
         BingeFilterChipPager(
