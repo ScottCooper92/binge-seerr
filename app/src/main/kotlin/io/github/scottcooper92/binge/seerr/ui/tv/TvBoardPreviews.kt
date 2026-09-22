@@ -31,6 +31,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
+import io.github.scottcooper92.binge.seerr.ui.settings.AppSettings
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerConfig
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
@@ -203,6 +204,16 @@ internal val SampleSettings =
 
 /** Same server, but as an admin sees it: the config is non-null, so the media server row's scan option shows. */
 internal val SampleSettingsAdmin = SampleSettings.copy(config = ServerConfig())
+
+/** Same server, with this app's own group: the bug report row and its code. */
+internal val SampleSettingsWithApp =
+    SampleSettings.copy(
+        app =
+            AppSettings(
+                bugReportUrl = "https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml&app-version=0.1.0+%281%29",
+                shakeToReport = true,
+            ),
+    )
 
 @TvPreviewsOnBlack
 @Composable

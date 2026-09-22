@@ -40,6 +40,7 @@ class SettingsActions(
     val onOpenAgent: (ServerAgent) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
+    val onToggleShakeToReport: (Boolean) -> Unit,
     val onDisconnect: () -> Unit,
 )
 
@@ -105,6 +106,7 @@ private fun SettingsContent(
                 systemRows(it, actions.onOpenPage),
             )
         }
+        state.app?.let { Group(stringResource(R.string.settings_group_app), appRows(it, actions.onToggleShakeToReport)) }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = resolvedContentInset()))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

@@ -5,6 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettings
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettingsAdmin
+import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettingsWithApp
 
 /**
  * The television settings board: the connection/server list, the disconnect confirmation focused,
@@ -44,6 +45,34 @@ class TvSettingsScreenshotTest {
             onDisconnect = {},
             initialFocusedKey = KEY_MEDIA_SERVER,
             initialFocusedOptionLabel = "Start library scan",
+        )
+    }
+
+    /** This app's own group: the bug report row, with its one option to show a code. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ReportBug() {
+        TvSettingsBoard(
+            state = SampleSettingsWithApp,
+            onEditConnection = {},
+            onDisconnect = {},
+            initialFocusedKey = KEY_REPORT_BUG,
+            initialFocusedOptionLabel = "Show code",
+        )
+    }
+
+    /** The code the phone scans, over the board. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ReportBugCode() {
+        TvSettingsBoard(
+            state = SampleSettingsWithApp,
+            onEditConnection = {},
+            onDisconnect = {},
+            initialFocusedKey = KEY_REPORT_BUG,
+            initialShowingBugReport = true,
         )
     }
 }

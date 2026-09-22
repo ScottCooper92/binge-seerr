@@ -54,7 +54,8 @@ internal const val KEY_MEDIA_SERVER = "media-server"
  * Settings as the list/pane board: the connection and the two things a television can do about it — edit
  * it and disconnect — then the admin's read of the server, each row a read-out with a note saying where it
  * is changed. The editing pages stay on the phone; the one exception is the media server row's library
- * scan, a confirmed action rather than a form.
+ * scan, a confirmed action rather than a form. Last comes this app's own group, whose bug report is a
+ * code for the phone to scan.
  */
 @Composable
 internal fun TvSettingsBoard(
@@ -67,6 +68,7 @@ internal fun TvSettingsBoard(
     initialFocusedKey: String? = null,
     initialListHasFocus: Boolean = false,
     initialFocusedOptionLabel: String? = null,
+    initialShowingBugReport: Boolean = false,
 ) {
     val ready = state as? SettingsUiState.Ready
     if (ready == null) {
@@ -76,11 +78,14 @@ internal fun TvSettingsBoard(
         return
     }
     var confirmingDisconnect by rememberSaveable { mutableStateOf(false) }
+    var showingBugReport by rememberSaveable { mutableStateOf(initialShowingBugReport) }
     // Saved so a return to Settings resumes where the user was rather than snapping back to the top.
     var focusedKey by rememberSaveable { mutableStateOf(initialFocusedKey) }
     // The Disconnect option that opened the confirm sheet, so the closer has somewhere to hand focus back to.
     val disconnectFocus = remember { FocusRequester() }
     val closer = rememberTvOverlayCloser(restoreTo = disconnectFocus, onClose = { confirmingDisconnect = false })
+    val bugReportFocus = remember { FocusRequester() }
+    val bugReportCloser = rememberTvOverlayCloser(restoreTo = bugReportFocus, onClose = { showingBugReport = false })
     // A newer notice supersedes the one still showing, same as the board's paged-list toasts.
     val scanNote = rememberTvTransientEvent(libraryScanEvents).tvNoteOrNull()
     val groups =
@@ -91,7 +96,7 @@ internal fun TvSettingsBoard(
             disconnectFocus = disconnectFocus,
             onStartLibraryScan = onStartLibraryScan,
             scanNote = scanNote,
-        )
+        ) + listOfNotNull(ready.app?.let { tvAppGroup(onShowBugReport = { showingBugReport = true }, optionFocus = bugReportFocus) })
     val describedKey = focusedKey?.takeIf { key -> groups.any { group -> group.rows.any { it.key == key } } } ?: KEY_SERVER
     Box(modifier = modifier.fillMaxSize()) {
         TvListPaneBoard(
@@ -102,6 +107,12 @@ internal fun TvSettingsBoard(
             initialListHasFocus = initialListHasFocus,
             initialFocusedOptionLabel = initialFocusedOptionLabel,
         )
+        val app = ready.app
+        if (showingBugReport && app != null) {
+            TvActionSheet(onDismiss = bugReportCloser::close) { entryFocus ->
+                TvBugReportSheetContent(app = app, onClose = bugReportCloser::close, entryFocus = entryFocus)
+            }
+        }
         if (confirmingDisconnect) {
             TvActionSheet(onDismiss = closer::close) { entryFocus ->
                 TvActionSheetConfirm(

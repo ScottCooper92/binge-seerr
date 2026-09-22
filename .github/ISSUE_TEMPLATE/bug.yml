@@ -1,0 +1,43 @@
+name: Bug report
+description: Something in the app does not work as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The app fills in the version and device fields when you report from it.
+        This issue is public. Do not include your server's address, your API key or anyone's name.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Tap …
+  - type: input
+    id: server
+    attributes:
+      label: Server
+      description: Which server, and its version.
+      placeholder: Jellyseerr 2.7.2
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version

@@ -35,6 +35,7 @@
     <dimen name="tv_list_row_poster_width">40dp</dimen>
     <dimen name="tv_list_row_poster_height">60dp</dimen>
     <dimen name="tv_action_sheet_width">380dp</dimen>
+    <dimen name="tv_bug_report_code_size">240dp</dimen>
     <dimen name="tv_pane_gap">32dp</dimen>
     <dimen name="tv_pane_row_gap">6dp</dimen>
     <dimen name="tv_pane_option_width">360dp</dimen>
