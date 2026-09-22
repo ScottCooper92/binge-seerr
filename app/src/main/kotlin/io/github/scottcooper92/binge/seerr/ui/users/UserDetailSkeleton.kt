@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -23,10 +22,10 @@ import com.binge.designsystem.component.ListRowSkeleton
 import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
-import com.binge.designsystem.navOverlayStart
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
+import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
@@ -133,33 +132,5 @@ private fun StatCellSkeleton(modifier: Modifier = Modifier) {
         SkeletonPlate(Modifier.size(dimensionResource(DesR.dimen.detail_stat_icon_size)))
         SkeletonPlate(Modifier.fillMaxWidth(STAT_VALUE_FRACTION).height(lineHeightOf(MaterialTheme.typography.titleSmall)))
         SkeletonPlate(Modifier.fillMaxWidth(STAT_VALUE_FRACTION).height(lineHeightOf(MaterialTheme.typography.labelSmall)))
-    }
-}
-
-/**
- * [com.binge.designsystem.component.SectionHeader]'s own band — its default padding
- * (`padding_m` + [navOverlayStart] on the start, `padding_m` on the end) and a title plate on its
- * `headlineSmall` floor height, so the row plates below don't jump on resolve.
- */
-@Composable
-private fun SectionHeaderSkeleton(modifier: Modifier = Modifier) {
-    val horizontalPadding = dimensionResource(DesR.dimen.padding_m)
-    Box(
-        modifier =
-            modifier
-                .padding(
-                    start = horizontalPadding + navOverlayStart(),
-                    end = horizontalPadding,
-                    top = dimensionResource(DesR.dimen.section_header_padding_v),
-                    bottom = dimensionResource(DesR.dimen.section_header_padding_v),
-                ).heightIn(min = dimensionResource(DesR.dimen.min_touch_target)),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        SkeletonPlate(
-            Modifier
-                .width(
-                    dimensionResource(DesR.dimen.info_row_label_min_width),
-                ).height(lineHeightOf(MaterialTheme.typography.headlineSmall)),
-        )
     }
 }

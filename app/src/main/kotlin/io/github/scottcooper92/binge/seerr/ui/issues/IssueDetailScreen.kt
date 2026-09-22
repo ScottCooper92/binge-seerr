@@ -45,7 +45,6 @@ import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -116,7 +115,7 @@ fun IssueDetailScreen(
         onOverflowClick = { managing = true },
     ) { inner ->
         when (state) {
-            IssueDetailUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+            IssueDetailUiState.Loading -> IssueDetailSkeleton(Modifier.padding(inner))
             is IssueDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
             is IssueDetailUiState.Ready -> Ready(state, events, actions, contentPadding = inner)

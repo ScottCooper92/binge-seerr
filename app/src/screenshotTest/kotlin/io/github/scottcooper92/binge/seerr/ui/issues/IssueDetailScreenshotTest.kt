@@ -12,6 +12,12 @@ import kotlinx.coroutines.flow.emptyFlow
  * branch this screen has). No phone screenshot coverage existed for this screen before these frames.
  */
 class IssueDetailScreenshotTest {
+    /** The Loading arm (#373): the header, the divider, and the Comments section header. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = IssueDetailSkeleton()
+
     /** The layout, once: a manager's own page, with the pinned composer/resolve bar showing. */
     @PreviewTest
     @SeerrScreenPreviews
