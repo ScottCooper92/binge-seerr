@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -35,8 +34,6 @@ import com.binge.designsystem.component.rememberFilterPagerState
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.openTitle
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -49,13 +46,14 @@ class BlocklistActions(
     val onBack: () -> Unit,
     val onFilterChange: (BlocklistFilter) -> Unit,
     val onSearchChange: (String) -> Unit,
+    val onOpen: (item: BlocklistItem, canManage: Boolean) -> Unit,
     val onRemove: (BlocklistItem) -> Unit,
 )
 
 /**
  * The blocklist browser: a search over the server's blocked titles, a page of paged rows per source
- * chip where the server has them, and one list where it does not. A title opens in Binge, or on the
- * server; a manager unblocks from the row, behind a confirm.
+ * chip where the server has them, and one list where it does not. A row opens its own detail page; a
+ * manager unblocks from there, or from the row itself, behind a confirm either way.
  *
  * The overlay is assembled here rather than taken from `BingeFilterChipPager`, because the search
  * field has to stay composed — and keep its focus and its text — whether or not the chips are there.
@@ -194,7 +192,6 @@ private fun BlocklistPage(
     actions: BlocklistActions,
     contentPadding: PaddingValues,
 ) {
-    val context = LocalContext.current
     val lazyItems = itemsFor(filter).collectAsLazyPagingItems()
     val selected = filter == state.filter
     var removing by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -207,7 +204,7 @@ private fun BlocklistPage(
         isFiltered = state.isFiltered(filter),
         actingTmdbIds = state.actingTmdbIds,
         canManage = state.canManage,
-        onOpen = { item -> context.openTitle(item.mediaType, item.tmdbId, state.webRoot + item.mediaType.webPath() + item.tmdbId) },
+        onOpen = { item -> actions.onOpen(item, state.canManage) },
         onRemove = { item -> removing = item.tmdbId },
         // A rejected session cannot be retried past: the hub owns reconnecting.
         onReconnect = actions.onBack,
@@ -238,5 +235,3 @@ private fun BlocklistPage(
         }
     }
 }
-
-private fun RequestMediaType.webPath(): String = if (this == RequestMediaType.Tv) "tv/" else "movie/"

@@ -18,6 +18,8 @@ app:advanced_title  141004a1a7d0
 app:blocklist_blocked_by  befc4ea207f8
 app:blocklist_collection_blocked  c9e10308d004
 app:blocklist_collection_unblocked  03327b0a424a
+app:blocklist_detail_blocked_at  0b0e8cde96a5
+app:blocklist_detail_blocked_by  36931a940259
 app:blocklist_empty  027a0dd5c53c
 app:blocklist_empty_filtered  dba254267cc9
 app:blocklist_filter_all  a52ace420f21

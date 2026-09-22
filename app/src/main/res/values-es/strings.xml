@@ -79,6 +79,8 @@
     <string name="blocklist_removed">Desbloqueado</string>
     <string name="blocklist_collection_blocked">Colección bloqueada</string>
     <string name="blocklist_collection_unblocked">Colección desbloqueada</string>
+    <string name="blocklist_detail_blocked_by">Bloqueado por</string>
+    <string name="blocklist_detail_blocked_at">Bloqueado el</string>
     <string name="hub_section_settings">Ajustes</string>
     <string name="hub_section_settings_desc">Servicios, notificaciones y tareas</string>
     <string name="section_coming_soon">Esta sección llegará en una fase posterior.</string>

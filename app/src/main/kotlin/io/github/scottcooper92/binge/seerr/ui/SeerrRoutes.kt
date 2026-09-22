@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistItem
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
@@ -39,6 +40,16 @@ data class IssueDetailRoute(
 /** The blocklist browser. */
 @Serializable
 data object BlocklistRoute : SeerrRoute
+
+/**
+ * One blocked title as a page. [item] arrives whole off the row that opened it — there is no `GET`
+ * for a single blocklist entry — and [canManage] is the browser's own gate, current as of the tap.
+ */
+@Serializable
+data class BlocklistDetailRoute(
+    val item: BlocklistItem,
+    val canManage: Boolean,
+) : SeerrRoute
 
 /** The users browser. */
 @Serializable

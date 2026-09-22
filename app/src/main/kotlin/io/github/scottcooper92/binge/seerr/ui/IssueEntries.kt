@@ -6,6 +6,10 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistActions
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailActions
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailScreen
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailViewModel
+import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistItem
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistScreen
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailActions
@@ -76,10 +80,12 @@ internal fun IssueDetailEntry(
 internal fun BlocklistEntry(
     onBack: () -> Unit,
     showBack: Boolean,
+    onOpen: (item: BlocklistItem, canManage: Boolean) -> Unit,
     viewModel: BlocklistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    // The chip counts refetch on arrival, so a block elsewhere shows without a poll.
+    // The chip counts, and the list itself, refetch on arrival, so a change made from a title's own
+    // detail page — a removal there bumps nothing here directly, see BlocklistViewModel.setScreenVisible — shows without a poll.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
@@ -95,7 +101,26 @@ internal fun BlocklistEntry(
                 onBack = onBack,
                 onFilterChange = viewModel::setFilter,
                 onSearchChange = viewModel::setSearch,
+                onOpen = onOpen,
                 onRemove = viewModel::remove,
             ),
+    )
+}
+
+@Composable
+internal fun BlocklistDetailEntry(
+    item: BlocklistItem,
+    canManage: Boolean,
+    onBack: () -> Unit,
+    viewModel: BlocklistDetailViewModel =
+        hiltViewModel<BlocklistDetailViewModel, BlocklistDetailViewModel.Factory>(
+            creationCallback = { factory -> factory.create(item, canManage) },
+        ),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    BlocklistDetailScreen(
+        state = state,
+        events = viewModel.events,
+        actions = BlocklistDetailActions(onBack = onBack, onUnblock = viewModel::unblock),
     )
 }
