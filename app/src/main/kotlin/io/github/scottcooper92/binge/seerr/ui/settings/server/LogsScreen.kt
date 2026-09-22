@@ -14,7 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -186,7 +186,7 @@ private fun LogsBody(
             EmptyScreen(
                 message = stringResource(R.string.server_settings_logs_empty),
                 modifier = modifier.padding(contentPadding),
-                icon = Icons.Filled.Article,
+                icon = Icons.AutoMirrored.Filled.Article,
             )
     }
 }

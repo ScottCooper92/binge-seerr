@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,7 +72,7 @@ private fun TvOptionsForm(
     TvFormPage(
         headline = stringResource(R.string.advanced_title),
         body = stringResource(R.string.advanced_intro),
-        icon = Icons.Filled.Send,
+        icon = Icons.AutoMirrored.Filled.Send,
         modifier = modifier,
     ) {
         TvOptionGroup(

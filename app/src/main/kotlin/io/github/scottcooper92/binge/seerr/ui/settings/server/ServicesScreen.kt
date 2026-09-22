@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Rule
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -124,7 +124,7 @@ private fun ruleRows(
 ): List<SettingsRow> =
     rules.map { rule ->
         SettingsRow(
-            icon = Icons.Filled.Rule,
+            icon = Icons.AutoMirrored.Filled.Rule,
             iconTint = BingeSentiment.Info.fill(),
             label = rule.instanceName,
             detail = pluralStringResource(R.plurals.server_settings_rule_conditions, rule.conditions, rule.conditions),

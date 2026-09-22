@@ -1,7 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
@@ -368,7 +368,7 @@ internal fun systemRows(
             onClick = { onOpenPage(ServerSettingsPage.Cache) },
         ) +
         SettingsRow(
-            icon = Icons.Filled.Article,
+            icon = Icons.AutoMirrored.Filled.Article,
             iconTint = BingeSentiment.Neutral.fill(),
             label = stringResource(R.string.server_settings_logs),
             detail = stringResource(R.string.server_settings_logs_caption),
