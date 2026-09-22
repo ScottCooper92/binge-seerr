@@ -51,6 +51,44 @@ jobs:
         with:
           submodules: true
 
+      # #421: a submodule pin can be a commit that only exists on an unmerged branch of its own
+      # repo — a deliberate case while `hold` gates the merge on it (#420), or one nobody remembers
+      # is unmerged once `hold` comes off. Every pinned commit has to be an ancestor of that
+      # submodule's own default branch, or this PR still needs to carry `hold`; nothing here reads
+      # `.gitmodules` for which pins are "supposed" to be held, only whether each one actually
+      # merged. Runs before the build so an unmerged pin fails fast rather than after a full Gradle
+      # run.
+      - name: Check submodule pins are merged upstream
+        if: github.event_name == 'pull_request'
+        env:
+          HELD: ${{ contains(github.event.pull_request.labels.*.name, 'hold') }}
+        run: |
+          set -euo pipefail
+          : > /tmp/unmerged-submodules.txt
+          git submodule foreach --quiet '
+            url=$(git config --get remote.origin.url)
+            default_branch=$(git ls-remote --symref "$url" HEAD | awk "NR==1{print \$2}" | sed "s#^refs/heads/##")
+            # actions/checkout leaves each submodule shallow, and a plain fetch of the default
+            # branch would only bring its tip in, not the history between it and $sha1 - an
+            # ancestry check against that truncated graph reports every pin "unmerged" regardless
+            # of whether it actually is. The huge depth is the standard "just unshallow" idiom.
+            git fetch --quiet --depth=2147483647 origin "$default_branch"
+            if git merge-base --is-ancestor "$sha1" "origin/$default_branch"; then
+              echo "$name: $sha1 is merged into $default_branch"
+            else
+              echo "$name: $sha1 is NOT an ancestor of $default_branch" >&2
+              echo "$name" >> /tmp/unmerged-submodules.txt
+            fi
+          '
+          if [ -s /tmp/unmerged-submodules.txt ]; then
+            unmerged=$(paste -sd, /tmp/unmerged-submodules.txt)
+            echo "::warning::Submodule pin(s) not merged upstream: $unmerged"
+            if [ "$HELD" != "true" ]; then
+              echo "::error::Unmerged submodule pin(s) without the 'hold' label: $unmerged"
+              exit 1
+            fi
+          fi
+
       # JDK 17, matching Binge rather than binge-integrations' 21. The extracted code
       # targets jvmTarget 17 and AGP 9.3.2 is what Binge builds with, so the toolchain
       # here is the one the extraction arrives expecting.
