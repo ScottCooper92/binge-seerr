@@ -1,8 +1,12 @@
 package io.github.scottcooper92.binge.seerr.ui.state
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
 import com.binge.designsystem.resolvedContentInset
@@ -25,6 +29,13 @@ internal fun PaddingValues.outerPadding(): PaddingValues {
 
 /** The part of a Scaffold's padding that goes inside a scrolling body: the top bar above it and the navigation bar below. */
 internal fun PaddingValues.innerPadding(): PaddingValues = PaddingValues(top = calculateTopPadding(), bottom = calculateBottomPadding())
+
+/**
+ * The sides and the bottom of the window: what a full-bleed page with no top bar and no Scaffold
+ * insets — [MediaHeroDetailScaffold]'s — has to clear by hand.
+ */
+@Composable
+internal fun pageEdgeInsets(): WindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
 
 /**
  * [innerPadding] for a list with a line pinned above it, such as a refresh bar: the top goes above the line,
