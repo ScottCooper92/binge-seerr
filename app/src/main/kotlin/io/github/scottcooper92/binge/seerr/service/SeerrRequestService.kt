@@ -27,6 +27,7 @@ import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusResponse
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.ReportIssueResponse
+import com.binge.companion.contracts.request.v1.RequestInfo
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
@@ -37,6 +38,7 @@ import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
@@ -50,6 +52,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
+import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -275,29 +278,24 @@ class SeerrRequestService(
         media: MediaId,
         allowCached: Boolean = true,
     ): RequestStatus {
-        val permissions = permissions()
-        val status = (if (allowCached) cachedStatus(media) else null) ?: fetchStatus(media)
-        return status.toBuilder().addAllAllowedActions(permissions.allowedActions(status, connection.profile())).build()
+        val user = connection.authenticatedUser()
+        val server = (if (allowCached) cachedStatus(media) else null) ?: fetchStatus(media)
+        return user.toPermissions().withAllowedActions(server, viewerId = user.id, profile = connection.profile())
     }
 
-    private suspend fun cachedStatus(media: MediaId): RequestStatus? =
-        statusCache.find(media)?.takeIf { freshness.isFresh(it, clock()) }?.status
+    private suspend fun cachedStatus(media: MediaId): CachedStatus? = statusCache.find(media)?.takeIf { freshness.isFresh(it, clock()) }
 
     /**
      * The row carries the download ETA the server's answer was turned into, so a cached one is up
      * to its own maximum age out of date. That age is the poll interval for anything downloading,
      * which is the same staleness a host subscribed to [observeStatus] already lives with.
      */
-    private suspend fun fetchStatus(media: MediaId): RequestStatus {
+    private suspend fun fetchStatus(media: MediaId): CachedStatus {
         val now = clock()
-        val status =
-            connection
-                .api()
-                .details(media)
-                .mediaInfo
-                .toRequestStatus(now)
-        if (freshness.maxAgeMillis(status) != null) statusCache.put(media, status, now)
-        return status
+        val info = connection.api().details(media).mediaInfo
+        val fetched = CachedStatus(info.toRequestStatus(now), now, info.requesterIds())
+        if (freshness.maxAgeMillis(fetched.status) != null) statusCache.put(media, fetched)
+        return fetched
     }
 
     private suspend fun <T> gated(
@@ -332,38 +330,85 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         add(Capability.CAPABILITY_ATTENTION)
         if (canRequest4k) add(Capability.CAPABILITY_REQUEST_4K)
         if (canRequestAdvanced) add(Capability.CAPABILITY_ADVANCED_OPTIONS)
-        if (canRequest) add(Capability.CAPABILITY_CANCEL)
         if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
-        // The server lets a requester reshape their own pending request and a moderator anyone's.
-        if (canRequest || canManageRequests) add(Capability.CAPABILITY_EDIT_SEASONS)
+        // A requester may cancel or reshape their own pending request, and a moderator anyone's.
+        if (canRequest || canManageRequests) addAll(listOf(Capability.CAPABILITY_CANCEL, Capability.CAPABILITY_EDIT_SEASONS))
         if (canCreateIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
         if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
     }
 
+/** The capabilities that act on one existing request, and so travel on that request's own `allowed_actions`. */
+private val REQUEST_SCOPED =
+    setOf(
+        Capability.CAPABILITY_APPROVE,
+        Capability.CAPABILITY_DECLINE,
+        Capability.CAPABILITY_RETRY,
+        Capability.CAPABILITY_CANCEL,
+        Capability.CAPABILITY_EDIT_SEASONS,
+    )
+
 /**
- * The declared capabilities that apply to THIS title right now: approve and decline only with a
- * pending request to decide, retry only with a failed one, a report only against something
- * available, a cancel only with something to cancel, an edit only for a show with a request still
- * in play.
+ * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
+ * its own set. The title's set holds a report only against something available and a block only
+ * of something not already blocked. Its request-scoped entries are the union of the requests', so a
+ * host that reads only the title-level list is never offered an action that every request refuses.
  */
-fun SeerrPermissions.allowedActions(
-    status: RequestStatus,
+fun SeerrPermissions.withAllowedActions(
+    server: CachedStatus,
+    viewerId: Int,
     profile: SeerrServerProfile,
-): List<Capability> {
+): RequestStatus {
     val declared = toCapabilities(profile)
-    val states = status.requestsList.map { it.state }
+    val status = server.status
+    val requests =
+        status.requestsList.map { request ->
+            val own = server.requesterIds[request.id] == viewerId
+            request
+                .toBuilder()
+                .clearAllowedActions()
+                .addAllAllowedActions(requestActions(request, own, declared))
+                .build()
+        }
+    val requestActions = requests.flatMapTo(mutableSetOf()) { it.allowedActionsList }
     val reportable =
         status.availability == Availability.AVAILABILITY_AVAILABLE ||
             status.availability == Availability.AVAILABILITY_PARTIALLY_AVAILABLE
+    val titleActions =
+        declared.filter { capability ->
+            when (capability) {
+                in REQUEST_SCOPED -> capability in requestActions
+                Capability.CAPABILITY_REPORT_ISSUE -> reportable
+                Capability.CAPABILITY_BLOCK -> status.availability != Availability.AVAILABILITY_BLOCKLISTED
+                else -> true
+            }
+        }
+    return status
+        .toBuilder()
+        .clearRequests()
+        .addAllRequests(requests)
+        .clearAllowedActions()
+        .addAllAllowedActions(titleActions)
+        .build()
+}
+
+/**
+ * The checks Seerr makes on one request: approve and decline need a pending request and retry a failed
+ * one, each for a moderator. Cancel is a moderator's on any request, or the requester's own while it
+ * is pending. An edit is the moderator's or the requester's, only on a pending TV request.
+ */
+private fun SeerrPermissions.requestActions(
+    request: RequestInfo,
+    own: Boolean,
+    declared: Set<Capability>,
+): List<Capability> {
+    val pending = request.state.isPending()
     return declared.filter { capability ->
         when (capability) {
-            Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE -> states.any { it.isPending() }
-            Capability.CAPABILITY_RETRY -> states.any { it.isFailed() }
-            Capability.CAPABILITY_CANCEL -> states.any { !it.isDeclined() }
-            Capability.CAPABILITY_EDIT_SEASONS -> status.seasonsCount > 0 && states.any { !it.isDeclined() && !it.isFailed() }
-            Capability.CAPABILITY_REPORT_ISSUE -> reportable
-            Capability.CAPABILITY_BLOCK -> status.availability != Availability.AVAILABILITY_BLOCKLISTED
-            else -> true
+            Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE -> pending
+            Capability.CAPABILITY_RETRY -> request.state.isFailed()
+            Capability.CAPABILITY_CANCEL -> canManageRequests || (own && pending)
+            Capability.CAPABILITY_EDIT_SEASONS -> request.seasonNumbersCount > 0 && pending && (canManageRequests || own)
+            else -> false
         }
     }
 }
@@ -371,8 +416,6 @@ fun SeerrPermissions.allowedActions(
 private fun ApprovalState.isPending() = this == ApprovalState.APPROVAL_STATE_PENDING
 
 private fun ApprovalState.isFailed() = this == ApprovalState.APPROVAL_STATE_FAILED
-
-private fun ApprovalState.isDeclined() = this == ApprovalState.APPROVAL_STATE_DECLINED
 
 private fun IssueType.toSeerrIssueType(): SeerrIssueTypeCode =
     when (this) {

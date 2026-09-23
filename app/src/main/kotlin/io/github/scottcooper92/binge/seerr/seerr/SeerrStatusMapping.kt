@@ -40,6 +40,14 @@ fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
     return builder.build()
 }
 
+/** Who made each request, by user id; a request whose requester the server did not name is left out. */
+fun SeerrMediaInfoDto?.requesterIds(): Map<Int, Int> =
+    this
+        ?.requests
+        .orEmpty()
+        .mapNotNull { request -> request.requestedBy?.id?.let { request.id to it } }
+        .toMap()
+
 /**
  * Deleted reads as not requested, which is what the server means by it: Jellyseerr's request
  * creation groups Deleted with Unknown and resets the row to Pending, and its duplicate guard
