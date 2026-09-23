@@ -34,6 +34,8 @@ import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.RetryRequestResponse
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestResponse
+import com.binge.companion.contracts.request.v1.UnblockTitleRequest
+import com.binge.companion.contracts.request.v1.UnblockTitleResponse
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
@@ -264,6 +266,17 @@ class SeerrRequestService(
             BlockTitleResponse.getDefaultInstance()
         }
 
+    /** Keyed by TMDB id and media type, as the block was; a title the server has no entry for is its 404, NOT_FOUND. */
+    override suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse =
+        gated(Capability.CAPABILITY_BLOCK) {
+            connection.api().removeFromBlocklist(
+                connection.profile().blocklistPath,
+                request.media.tmdbId,
+                request.media.seerrMediaType(),
+            )
+            UnblockTitleResponse.getDefaultInstance()
+        }
+
     private suspend fun permissions(): SeerrPermissions = connection.authenticatedUser().toPermissions()
 
     /**
@@ -349,8 +362,9 @@ private val REQUEST_SCOPED =
 
 /**
  * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
- * its own set. The title's set holds a report only against something available and a block only
- * of something not already blocked. Its request-scoped entries are the union of the requests', so a
+ * its own set. The title's set holds a report only against something available, and the block
+ * capability either way: it offers a block on a title and an unblock on a blocked one. Its
+ * request-scoped entries are the union of the requests', so a
  * host that reads only the title-level list is never offered an action that every request refuses.
  */
 fun SeerrPermissions.withAllowedActions(
@@ -378,7 +392,6 @@ fun SeerrPermissions.withAllowedActions(
             when (capability) {
                 in REQUEST_SCOPED -> capability in requestActions
                 Capability.CAPABILITY_REPORT_ISSUE -> reportable
-                Capability.CAPABILITY_BLOCK -> status.availability != Availability.AVAILABILITY_BLOCKLISTED
                 else -> true
             }
         }
