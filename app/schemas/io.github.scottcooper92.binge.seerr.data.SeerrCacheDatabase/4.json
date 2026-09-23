@@ -1,0 +1,288 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "a935ec7ca8926e5771b0f84599bc588a",
+    "entities": [
+      {
+        "tableName": "issues",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`listKey` TEXT NOT NULL, `id` INTEGER NOT NULL, `tmdbId` INTEGER NOT NULL, `mediaType` TEXT NOT NULL, `title` TEXT, `posterUrl` TEXT, `year` TEXT, `issueType` TEXT NOT NULL, `status` TEXT NOT NULL, `reportedBy` TEXT, `reportedById` INTEGER, `commentCount` INTEGER NOT NULL, `createdAtMillis` INTEGER, `updatedAtMillis` INTEGER, `problem` TEXT, `problemSeason` INTEGER, `problemEpisode` INTEGER, `orderIndex` INTEGER NOT NULL, PRIMARY KEY(`listKey`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "listKey",
+            "columnName": "listKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tmdbId",
+            "columnName": "tmdbId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaType",
+            "columnName": "mediaType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "posterUrl",
+            "columnName": "posterUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "issueType",
+            "columnName": "issueType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reportedBy",
+            "columnName": "reportedBy",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reportedById",
+            "columnName": "reportedById",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "commentCount",
+            "columnName": "commentCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "createdAtMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAtMillis",
+            "columnName": "updatedAtMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "problem",
+            "columnName": "problem",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "problemSeason",
+            "columnName": "problemSeason",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "problemEpisode",
+            "columnName": "problemEpisode",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "orderIndex",
+            "columnName": "orderIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "listKey",
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "issue_remote_keys",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`listKey` TEXT NOT NULL, `nextSkip` INTEGER, PRIMARY KEY(`listKey`))",
+        "fields": [
+          {
+            "fieldPath": "listKey",
+            "columnName": "listKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextSkip",
+            "columnName": "nextSkip",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "listKey"
+          ]
+        }
+      },
+      {
+        "tableName": "users",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`listKey` TEXT NOT NULL, `id` INTEGER NOT NULL, `name` TEXT NOT NULL, `email` TEXT, `handle` TEXT, `avatarUrl` TEXT, `origin` TEXT NOT NULL, `permissions` INTEGER NOT NULL, `requestCount` INTEGER NOT NULL, `createdAtMillis` INTEGER, `orderIndex` INTEGER NOT NULL, PRIMARY KEY(`listKey`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "listKey",
+            "columnName": "listKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "handle",
+            "columnName": "handle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "avatarUrl",
+            "columnName": "avatarUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "origin",
+            "columnName": "origin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "permissions",
+            "columnName": "permissions",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestCount",
+            "columnName": "requestCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "createdAtMillis",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "orderIndex",
+            "columnName": "orderIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "listKey",
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "user_remote_keys",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`listKey` TEXT NOT NULL, `nextSkip` INTEGER, PRIMARY KEY(`listKey`))",
+        "fields": [
+          {
+            "fieldPath": "listKey",
+            "columnName": "listKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextSkip",
+            "columnName": "nextSkip",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "listKey"
+          ]
+        }
+      },
+      {
+        "tableName": "media_status",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mediaType` INTEGER NOT NULL, `tmdbId` INTEGER NOT NULL, `status` TEXT NOT NULL, `fetchedAtMillis` INTEGER NOT NULL, `requesterIds` TEXT NOT NULL, PRIMARY KEY(`mediaType`, `tmdbId`))",
+        "fields": [
+          {
+            "fieldPath": "mediaType",
+            "columnName": "mediaType",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tmdbId",
+            "columnName": "tmdbId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedAtMillis",
+            "columnName": "fetchedAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requesterIds",
+            "columnName": "requesterIds",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "mediaType",
+            "tmdbId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a935ec7ca8926e5771b0f84599bc588a')"
+    ]
+  }
+}

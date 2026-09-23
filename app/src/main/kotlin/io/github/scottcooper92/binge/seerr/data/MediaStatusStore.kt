@@ -4,10 +4,15 @@ import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.v1.MediaId
 import java.util.Base64
 
-/** One cached status and the moment the server gave it. */
+/**
+ * One cached status and the moment the server gave it. [requesterIds] maps each request's id to the
+ * id of the user who made it: the contract carries only a display name, and the per-request actions
+ * turn on whether the request is the signed-in user's own.
+ */
 data class CachedStatus(
     val status: RequestStatus,
     val fetchedAtMillis: Long,
+    val requesterIds: Map<Int, Int> = emptyMap(),
 )
 
 /**
@@ -21,8 +26,7 @@ interface MediaStatusStore {
 
     suspend fun put(
         media: MediaId,
-        status: RequestStatus,
-        fetchedAtMillis: Long,
+        cached: CachedStatus,
     )
 
     /** Every row: the server changed, someone else signed in, or a write made all of it suspect. */
@@ -36,20 +40,20 @@ class RoomMediaStatusStore(
 
     override suspend fun find(media: MediaId): CachedStatus? =
         dao.find(media.mediaTypeValue, media.tmdbId)?.let { row ->
-            decodeStatus(row.status)?.let { CachedStatus(it, row.fetchedAtMillis) }
+            decodeStatus(row.status)?.let { CachedStatus(it, row.fetchedAtMillis, decodeRequesterIds(row.requesterIds)) }
         }
 
     override suspend fun put(
         media: MediaId,
-        status: RequestStatus,
-        fetchedAtMillis: Long,
+        cached: CachedStatus,
     ) {
         dao.upsert(
             MediaStatusEntity(
                 mediaType = media.mediaTypeValue,
                 tmdbId = media.tmdbId,
-                status = encodeStatus(status),
-                fetchedAtMillis = fetchedAtMillis,
+                status = encodeStatus(cached.status),
+                fetchedAtMillis = cached.fetchedAtMillis,
+                requesterIds = encodeRequesterIds(cached.requesterIds),
             ),
         )
     }
@@ -67,14 +71,24 @@ internal fun encodeStatus(status: RequestStatus): String = Base64.getEncoder().e
 internal fun decodeStatus(encoded: String): RequestStatus? =
     runCatching { RequestStatus.parseFrom(Base64.getDecoder().decode(encoded)) }.getOrNull()
 
+internal fun encodeRequesterIds(ids: Map<Int, Int>): String = ids.entries.joinToString(",") { (request, user) -> "$request:$user" }
+
+/** A pair that does not parse is dropped, which only ever withholds an action: nobody reads as the requester. */
+internal fun decodeRequesterIds(encoded: String): Map<Int, Int> =
+    encoded
+        .split(',')
+        .mapNotNull { pair ->
+            val (request, user) = pair.split(':').takeIf { it.size == 2 } ?: return@mapNotNull null
+            request.toIntOrNull()?.let { r -> user.toIntOrNull()?.let { u -> r to u } }
+        }.toMap()
+
 /** No cache at all: every lookup misses. What a build or a test that has not wired one gets. */
 object NoMediaStatusStore : MediaStatusStore {
     override suspend fun find(media: MediaId): CachedStatus? = null
 
     override suspend fun put(
         media: MediaId,
-        status: RequestStatus,
-        fetchedAtMillis: Long,
+        cached: CachedStatus,
     ) = Unit
 
     override suspend fun clearAll() = Unit

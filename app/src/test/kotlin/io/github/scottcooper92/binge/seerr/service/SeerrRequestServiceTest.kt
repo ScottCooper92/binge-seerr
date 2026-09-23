@@ -554,10 +554,9 @@ class SeerrRequestServiceTest {
 
         override suspend fun put(
             media: MediaId,
-            status: com.binge.companion.contracts.request.v1.RequestStatus,
-            fetchedAtMillis: Long,
+            cached: CachedStatus,
         ) {
-            rows[media.mediaTypeValue to media.tmdbId] = CachedStatus(status, fetchedAtMillis)
+            rows[media.mediaTypeValue to media.tmdbId] = cached
         }
 
         override suspend fun clearAll() {
@@ -641,6 +640,33 @@ class SeerrRequestServiceTest {
                     .isEmpty(),
             )
             assertTrue(Capability.CAPABILITY_REPORT_ISSUE in getStatus(stub).allowedActionsList)
+        }
+
+    /** #443: a plain requester is offered a cancel only on their own pending request, from the cache as from the server. */
+    @Test
+    fun `cancel is offered per request, on the viewer's own pending one`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(permissions = REQUEST, cache = cache)
+            seerr.enqueue(
+                json(
+                    """{"mediaInfo":{"id":9,"status":2,"requests":[""" +
+                        """{"id":4,"status":1,"requestedBy":{"id":1}},{"id":6,"status":1,"requestedBy":{"id":2}}]}}""",
+                ),
+            )
+
+            listOf(getStatus(stub), getStatus(stub)).forEach { status ->
+                val byId = status.requestsList.associate { it.id to it.allowedActionsList }
+                assertEquals(listOf(Capability.CAPABILITY_CANCEL), byId[4])
+                assertEquals(emptyList<Capability>(), byId[6])
+                assertTrue(Capability.CAPABILITY_CANCEL in status.allowedActionsList)
+            }
+            assertEquals(
+                mapOf(4 to 1, 6 to 2),
+                cache.rows.values
+                    .single()
+                    .requesterIds,
+            )
         }
 
     /** The stream is what keeps the row warm; a poll answering from the row it wrote would never see the server. */

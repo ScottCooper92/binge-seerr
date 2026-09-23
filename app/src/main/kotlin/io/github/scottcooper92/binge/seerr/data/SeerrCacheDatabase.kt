@@ -19,7 +19,7 @@ import androidx.room.RoomDatabase
         UserRemoteKeyEntity::class,
         MediaStatusEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class SeerrCacheDatabase : RoomDatabase() {
