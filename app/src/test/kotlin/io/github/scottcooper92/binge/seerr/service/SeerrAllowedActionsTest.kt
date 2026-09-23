@@ -163,6 +163,18 @@ class SeerrAllowedActionsTest {
         assertTrue(status.actionsOf(4).isEmpty())
     }
 
+    /** One capability, both directions: a block on a title, an unblock on a blocked one. */
+    @Test
+    fun `a blocklist manager is offered the block capability whether or not the title is blocked`() {
+        val manager = SeerrPermissions(canManageBlocklist = true)
+
+        listOf(Availability.AVAILABILITY_NOT_REQUESTED, Availability.AVAILABILITY_BLOCKLISTED).forEach { availability ->
+            val status = manager.withAllowedActions(server(availability = availability), viewerId = VIEWER, profile = profile)
+
+            assertTrue("$availability", Capability.CAPABILITY_BLOCK in status.allowedActionsList)
+        }
+    }
+
     @Test
     fun `the title's request-scoped actions are the union of its requests'`() {
         val status =

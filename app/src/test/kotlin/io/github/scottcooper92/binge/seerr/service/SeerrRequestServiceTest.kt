@@ -16,6 +16,7 @@ import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
+import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
@@ -217,6 +218,44 @@ class SeerrRequestServiceTest {
         }
 
     @Test
+    fun `an unblock deletes the title's blocklist entry by tmdb id and media type`() =
+        runTest {
+            val stub = connected(version = "3.1.0")
+            seerr.enqueue(MockResponse(code = 204))
+
+            stub.unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build())
+
+            val deleted = seerr.takeRequest()
+            assertEquals("DELETE", deleted.method)
+            assertEquals("/api/v1/blocklist/603", deleted.url.encodedPath)
+            assertEquals("movie", deleted.url.queryParameter("mediaType"))
+        }
+
+    @Test
+    fun `an unblock deletes from blacklist on jellyseerr 2`() =
+        runTest {
+            val stub = connected(version = "2.7.0")
+            seerr.enqueue(MockResponse(code = 204))
+
+            stub.unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build())
+
+            assertEquals("/api/v1/blacklist/603", seerr.takeRequest().url.encodedPath)
+        }
+
+    /** The contract's NOT_FOUND for a title not on the blocklist is the server's own 404. */
+    @Test
+    fun `unblocking a title that is not blocked is not found`() =
+        runTest {
+            val stub = connected(version = "3.1.0")
+            seerr.enqueue(MockResponse(code = 404))
+
+            assertEquals(
+                Status.Code.NOT_FOUND,
+                stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) },
+            )
+        }
+
+    @Test
     fun `status translates the title and narrows the allowed actions to its state`() =
         runTest {
             val stub = connected()
@@ -321,6 +360,10 @@ class SeerrRequestServiceTest {
                             .build(),
                     )
                 },
+            )
+            assertEquals(
+                Status.Code.PERMISSION_DENIED,
+                stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) },
             )
 
             assertEquals(before, seerr.requestCount)
