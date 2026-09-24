@@ -27,7 +27,7 @@ import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
+import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -144,7 +144,7 @@ private fun ScheduleDialog(
         onDismiss = onDismiss,
         extraContent = {
             Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-                ChoicePicker(
+                ChoiceRow(
                     title = stringResource(R.string.server_settings_job_presets),
                     choices = presets.map { it.cron to it.label() },
                     selected = cron.takeIf { c -> presets.any { it.cron == c } },
