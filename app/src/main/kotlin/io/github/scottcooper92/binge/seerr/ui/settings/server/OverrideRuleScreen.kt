@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
+import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -59,7 +59,7 @@ private fun ColumnScope.RuleInstance(
     onSelectInstance: (DvrSummary) -> Unit,
 ) {
     val separator = stringResource(R.string.hub_meta_separator)
-    ChoicePicker(
+    ChoiceRow(
         title = stringResource(R.string.advanced_server),
         choices = extras.instances.map { it to "${it.type.name}$separator${it.name}" },
         selected = extras.instances.firstOrNull { it.type == draft.serviceType && it.id == draft.serviceId },
@@ -134,14 +134,14 @@ private fun ColumnScope.RuleOverrides(
         )
         return
     }
-    ChoicePicker(
+    ChoiceRow(
         title = stringResource(R.string.advanced_profile),
         choices = choices.profiles.map { it.id to it.label },
         selected = draft.profileId,
         onSelect = { id -> actions.onEdit { it.copy(profileId = if (it.profileId == id) null else id) } },
         enabled = enabled,
     )
-    ChoicePicker(
+    ChoiceRow(
         title = stringResource(R.string.advanced_root_folder),
         choices = choices.rootFolders.map { it to it },
         selected = draft.rootFolder,
