@@ -49,12 +49,40 @@ fun <T> ChoiceRow(
     if (choices.isEmpty()) return
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
+    ChoiceField(title = title, choices = choices, selected = selected, enabled = enabled) { open = true }
+    if (open) {
+        SortSheet(
+            title = title,
+            choices = choices.map { it.first },
+            selected = selected,
+            label = { id -> choices.first { it.first == id }.second },
+            onSelect = onSelect,
+            onDismiss = { open = false },
+        )
+    }
+}
+
+/**
+ * [ChoiceRow]'s row alone, taking [onClick] rather than owning a sheet. For a caller that is
+ * already a bottom sheet — [EditRequestSheet][io.github.scottcooper92.binge.seerr.ui.requests.EditRequestSheet],
+ * per #336's "sheets inside sheets" — where opening a second one would stack two windows and two
+ * scrims, so the caller swaps its own content in [onClick] instead.
+ */
+@Composable
+internal fun <T> ChoiceField(
+    title: String,
+    choices: List<Pair<T, String>>,
+    selected: T?,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    if (choices.isEmpty()) return
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .clickable(enabled = enabled, role = Role.Button) { open = true },
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
@@ -70,16 +98,6 @@ fun <T> ChoiceRow(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             tint = rowLabelColor(enabled, MaterialTheme.colorScheme.onSurfaceVariant),
-        )
-    }
-    if (open) {
-        SortSheet(
-            title = title,
-            choices = choices.map { it.first },
-            selected = selected,
-            label = { id -> choices.first { it.first == id }.second },
-            onSelect = onSelect,
-            onDismiss = { open = false },
         )
     }
 }
