@@ -13,7 +13,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeOutlinedButton
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
+import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -89,7 +89,7 @@ private fun OptionFields(
         val editable = enabled && option.gatedBy?.let { draft.switched(it) } != false
         when {
             option == AgentOption.EmailSecure ->
-                ChoicePicker(
+                ChoiceRow(
                     title = stringResource(option.labelRes()),
                     choices = EmailEncryption.entries.map { it to stringResource(it.labelRes()) },
                     selected = EmailEncryption.of(draft),
@@ -97,7 +97,7 @@ private fun OptionFields(
                     enabled = editable,
                 )
             option == AgentOption.PushoverSound && extras.sounds.isNotEmpty() ->
-                ChoicePicker(
+                ChoiceRow(
                     title = stringResource(option.labelRes()),
                     choices = extras.sounds.map { it.name to it.description },
                     selected = draft.option(option).takeIf { it.isNotEmpty() },
