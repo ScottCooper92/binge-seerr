@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -74,6 +75,7 @@ internal fun EditRequestContent(
     var activeField by rememberSaveable { mutableStateOf<DestinationField?>(null) }
     val destination = edit.destination
     if (activeField != null && destination != null) {
+        BackHandler(onBack = { activeField = null })
         DestinationPickerFor(activeField, destination, actions) { activeField = null }
         return
     }
