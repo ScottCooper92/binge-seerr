@@ -25,6 +25,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPageActionBar
 import com.binge.designsystem.R as DesR
 
 /**
@@ -42,14 +43,28 @@ fun AdvancedRequestScreen(
     onOpenSetup: () -> Unit,
     onClose: () -> Unit,
 ) {
-    ScreenScaffold(title = stringResource(R.string.advanced_title), onBack = onClose) { padding ->
+    val ready = state as? AdvancedRequestUiState.Ready
+    ScreenScaffold(
+        title = stringResource(R.string.advanced_title),
+        onBack = onClose,
+        bottomBar = {
+            if (ready != null) {
+                EditorPageActionBar(
+                    label = stringResource(R.string.advanced_submit),
+                    onClick = onSubmit,
+                    enabled = ready.canSubmit,
+                    loading = ready.isSubmitting,
+                )
+            }
+        },
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when (state) {
                 AdvancedRequestUiState.Loading, AdvancedRequestUiState.Submitted ->
                     BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center).padding(inner))
                 is AdvancedRequestUiState.Failed -> FailurePanel(state.error, onOpenSetup, onClose, Modifier.padding(inner))
-                is AdvancedRequestUiState.Ready -> OptionsForm(state, onSelectServer, onSelectProfile, onSelectRootFolder, onSubmit, inner)
+                is AdvancedRequestUiState.Ready -> OptionsForm(state, onSelectServer, onSelectProfile, onSelectRootFolder, inner)
             }
         }
     }
@@ -61,7 +76,6 @@ private fun OptionsForm(
     onSelectServer: (Int) -> Unit,
     onSelectProfile: (Int) -> Unit,
     onSelectRootFolder: (String) -> Unit,
-    onSubmit: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     Column(
@@ -102,13 +116,6 @@ private fun OptionsForm(
         state.error?.let { error ->
             Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
         }
-        BingeFilledButton(
-            label = stringResource(R.string.advanced_submit),
-            onClick = onSubmit,
-            enabled = state.canSubmit,
-            loading = state.isSubmitting,
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
 }
 

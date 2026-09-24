@@ -80,12 +80,13 @@ private const val DISABLED_CONTENT_ALPHA = 0.38f
 internal val LocalEditorPageInsets = compositionLocalOf { PaddingValues() }
 
 /**
- * A `scrolling = false` [EditorPage]'s one primary action, anchored in its [EditorPage.bottomBar]
- * slot rather than scrolling away with the rest of the draft - Discover Sliders' Add and a
- * Permissions page's Save both use this shape of [BingeActionFooter]: rounded and raised, since a
+ * A page's one primary action, anchored in a `bottomBar` slot rather than scrolling away with the
+ * rest of the content - Discover Sliders' Add, a Permissions page's Save, and the Advanced Request
+ * hand-off's Request button all use this shape of [BingeActionFooter]: rounded and raised, since a
  * `bottomBar` sits outside the Scaffold's own body and needs its background to extend full-bleed
  * behind the gesture nav bar, which [BingeActionFooter.clearsNavigationBar] leaves to the button
- * alone to clear.
+ * alone to clear. Named for [EditorPage.bottomBar], its first call sites, but not tied to
+ * [EditorUiState] - any screen with a `bottomBar` slot of the same shape can reach for it.
  */
 @Composable
 internal fun EditorPageActionBar(
