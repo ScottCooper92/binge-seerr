@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.ChoicePicker
+import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -38,7 +38,7 @@ fun DiscoverSliderScreen(
         actions = actions,
         canSave = { it.valid },
     ) { draft, enabled ->
-        ChoicePicker(
+        ChoiceRow(
             title = stringResource(R.string.server_settings_slider_type),
             choices = SliderType.customTypes.map { it to stringResource(it.labelRes()) },
             selected = draft.type,
