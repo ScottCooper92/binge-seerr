@@ -74,7 +74,7 @@ private fun OptionsForm(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         Text(stringResource(R.string.advanced_intro), style = MaterialTheme.typography.bodyMedium)
-        ChoicePicker(
+        ChoiceRow(
             title = stringResource(R.string.advanced_server),
             choices = state.destination.servers.map { it.id to it.label },
             selected = state.destination.serverId,
@@ -84,14 +84,14 @@ private fun OptionsForm(
         if (state.destination.loadingChoices) {
             BingeLoadingIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
-            ChoicePicker(
+            ChoiceRow(
                 title = stringResource(R.string.advanced_profile),
                 choices = state.destination.profiles.map { it.id to it.label },
                 selected = state.destination.profileId,
                 onSelect = onSelectProfile,
                 enabled = !state.isSubmitting,
             )
-            ChoicePicker(
+            ChoiceRow(
                 title = stringResource(R.string.advanced_root_folder),
                 choices = state.destination.rootFolders.map { it to it },
                 selected = state.destination.rootFolder,
@@ -113,7 +113,8 @@ private fun OptionsForm(
 }
 
 /**
- * One choice per chip, stacked: root-folder paths are long, and a wrapped path is unreadable.
+ * One choice per chip, stacked. Only for a short list fixed in code — a list the server supplies
+ * has no length or label width this app controls, and wants [ChoiceRow] instead; see #336.
  *
  * [enabled] is what an editor page passes while it saves. Without it a pick made mid-save lands in
  * a draft the request has already been sent from, and the chips give no sign the page is busy.
