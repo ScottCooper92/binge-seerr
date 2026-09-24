@@ -191,7 +191,7 @@ private fun <T> DestinationPickerPanel(
     onSelect: (T) -> Unit,
     onBack: () -> Unit,
 ) {
-    Column {
+    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesR.string.cd_navigate_back))
         }
