@@ -58,6 +58,29 @@ internal fun noPrimaryActionDetail(): RequestDetail =
     )
 
 /**
+ * Settled with no attributed moderator: Seerr bumps `updatedAt` on a save that doesn't always set
+ * `modifiedBy` (an auto-approved request, say), so the "This request" section falls back to an
+ * "Updated" row with no name rather than dropping the timestamp entirely.
+ *
+ * Trimmed of the overview and the destination/watch facts [detail] carries, the same way
+ * [detailWithSiblings] is — with those in, "This request" falls below the single `phone`-height
+ * frame this state takes, and the fallback row this fixture exists to cover would never render.
+ */
+internal fun autoApprovedDetail(): RequestDetail =
+    detail(
+        actions = RequestActions(canRemove = true, canBlock = true),
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.Available,
+        canEdit = false,
+        modifiedBy = null,
+        modifiedById = null,
+        destination = null,
+        watch = null,
+        seasons = emptyList(),
+        overview = null,
+    )
+
+/**
  * Partly available in 4K: the longest availability label plus a third chip on the headline row —
  * the case the "row survives a narrow window" done-when item (#340) asks to wrap rather than clip.
  */
