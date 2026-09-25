@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -72,6 +73,7 @@ internal fun RequestFacts(
     onOpenUser: (Int) -> Unit,
 ) {
     val item = detail.item
+    val updatedText = detail.updatedAtMillis?.let(::formatRelativeOrAbsolute)
     val facts =
         listOfNotNull(
             Fact(
@@ -92,7 +94,13 @@ internal fun RequestFacts(
                     icon = Icons.Filled.Gavel,
                     label = stringResource(R.string.request_modified_by),
                     primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
-                    secondary = detail.updatedAtMillis?.let(::formatRelativeOrAbsolute),
+                    secondary = updatedText,
+                )
+            } ?: updatedText?.let {
+                Fact(
+                    icon = Icons.Filled.Update,
+                    label = stringResource(R.string.request_updated_at),
+                    primary = it,
                 )
             },
             detail.destination?.serverName?.let { Fact(Icons.Filled.Dns, stringResource(R.string.request_server), it) },

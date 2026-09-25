@@ -131,6 +131,7 @@
     <string name="request_this_request_title">This request</string>
     <string name="request_requested_by">Requested by</string>
     <string name="request_modified_by">Moderated by</string>
+    <string name="request_updated_at">Updated</string>
     <string name="request_server">Server</string>
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
