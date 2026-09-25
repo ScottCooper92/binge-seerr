@@ -456,8 +456,7 @@ class SeerrRequestServiceTest {
             repeat(2) { seerr.takeRequest() }
             val postedRequest = seerr.takeRequest()
             val posted = postedRequest.body?.utf8().orEmpty()
-            // is4k is the default (false), and the Json config used for the body doesn't encode defaults.
-            assertFalse(posted.contains("\"is4k\""))
+            assertTrue(posted.contains("\"is4k\":false"))
             assertTrue(posted.contains("\"serverId\":1"))
             assertTrue(posted.contains("\"profileId\":4"))
             assertTrue(posted.contains("\"rootFolder\":\"/media\""))
