@@ -365,6 +365,24 @@ class SeerrRequestServiceTest {
         }
 
     @Test
+    fun `advanced options for a shape with only 4K servers still lists them, nothing preselected`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            val before = seerr.requestCount
+            seerr.enqueue(json("""[{"id":5,"name":"4K Only","is4k":true,"isDefault":true}]"""))
+
+            val destination =
+                stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
+
+            assertEquals(listOf(5 to true), destination.serversList.map { it.id.toInt() to it.is4K })
+            assertEquals("", destination.selectedServerId)
+            assertTrue(destination.profilesList.isEmpty())
+            assertTrue(destination.rootFoldersList.isEmpty())
+            // No default to resolve against, so no arr-server details fetch beyond the server list itself.
+            assertEquals(before + 1, seerr.requestCount)
+        }
+
+    @Test
     fun `destination options re-resolves profile and root folder for the server the host moved to`() =
         runTest {
             val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)

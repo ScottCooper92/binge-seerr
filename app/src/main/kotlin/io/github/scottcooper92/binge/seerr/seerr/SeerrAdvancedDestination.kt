@@ -55,16 +55,20 @@ suspend fun SeerrApi.destinationChoicesFor(
 /**
  * The full advanced-request destination for a fresh picker: every server this media's shape may go
  * to, and the preselected one's profile/root-folder choices — the same server a plain
- * `SubmitRequest` (never 4K) would have used. Empty when this shape has no server configured at
- * all; the host reads that as nothing to override.
+ * `SubmitRequest` (never 4K) would have used. Empty only when this shape has no server configured
+ * at all. A shape with servers but no non-4K default (every instance is 4K-only) still lists them
+ * — the servers axis is the whole point of this rpc over the old single-axis hand-off — just with
+ * nothing preselected and no profile/root-folder axis to resolve against.
  */
 suspend fun SeerrApi.advancedRequestOptions(isTv: Boolean): DestinationChoices {
     val servers = arrServers(isTv)
-    val server = servers.forRequest(is4k = false).preferred() ?: return DestinationChoices.getDefaultInstance()
-    return destinationChoicesFor(isTv, server)
+    if (servers.isEmpty()) return DestinationChoices.getDefaultInstance()
+    val server = servers.forRequest(is4k = false).preferred()
+    val destination = server?.let { destinationChoicesFor(isTv, it) } ?: DestinationChoices.getDefaultInstance()
+    return destination
         .toBuilder()
         .addAllServers(servers.map { it.toServerChoice() })
-        .setSelectedServerId(server.id.toString())
+        .setSelectedServerId(server?.id?.toString().orEmpty())
         .build()
 }
 
