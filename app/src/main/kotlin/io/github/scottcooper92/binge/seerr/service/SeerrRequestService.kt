@@ -14,8 +14,12 @@ import com.binge.companion.contracts.request.v1.DeclineRequestRequest
 import com.binge.companion.contracts.request.v1.DeclineRequestResponse
 import com.binge.companion.contracts.request.v1.EditRequestRequest
 import com.binge.companion.contracts.request.v1.EditRequestResponse
+import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
+import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsResponse
 import com.binge.companion.contracts.request.v1.GetAttentionRequest
 import com.binge.companion.contracts.request.v1.GetAttentionResponse
+import com.binge.companion.contracts.request.v1.GetDestinationOptionsRequest
+import com.binge.companion.contracts.request.v1.GetDestinationOptionsResponse
 import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.GetStatusResponse
 import com.binge.companion.contracts.request.v1.HandshakeRequest
@@ -32,6 +36,8 @@ import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.RetryRequestResponse
+import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
+import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestResponse
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestResponse
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
@@ -52,9 +58,12 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
+import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
+import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
 import io.github.scottcooper92.binge.seerr.seerr.requesterIds
+import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -119,18 +128,72 @@ class SeerrRequestService(
                     seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
                     is4k = request.is4K,
                 )
-            val api = connection.api()
-            val response = api.requestMedia(body)
-            statusCache.clearAll()
-            val builder = SubmitRequestResponse.newBuilder()
-            when {
-                response.code() == HTTP_ACCEPTED -> Unit
-                response.isSuccessful -> response.body()?.id?.let(builder::setRequestId)
-                response.code() == HTTP_CONFLICT -> builder.setAlreadyRequested(true)
-                else -> throw HttpException(response)
-            }
-            builder.setStatus(status(media)).build()
+            submitAndRespond(media, body)
         }
+
+    /**
+     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Every server this media's shape may go to,
+     * and the preselected one's profile/root-folder choices — the same destination a plain
+     * [submitRequest] (never 4K) would have used.
+     */
+    override suspend fun getAdvancedRequestOptions(request: GetAdvancedRequestOptionsRequest): GetAdvancedRequestOptionsResponse =
+        gatedRead(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
+            val isTv = request.media.seerrMediaType().isSeerrTv()
+            GetAdvancedRequestOptionsResponse
+                .newBuilder()
+                .setDestination(connection.api().advancedRequestOptions(isTv))
+                .build()
+        }
+
+    /** Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Re-resolves the profile/root-folder axes for the request's `server_id`. */
+    override suspend fun getDestinationOptions(request: GetDestinationOptionsRequest): GetDestinationOptionsResponse =
+        gatedRead(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
+            val isTv = request.media.seerrMediaType().isSeerrTv()
+            GetDestinationOptionsResponse
+                .newBuilder()
+                .setDestination(connection.api().destinationOptions(isTv, request.serverId))
+                .build()
+        }
+
+    /**
+     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. An empty axis on the request falls back to
+     * the integration's own default for it — the same one [getAdvancedRequestOptions] preselected
+     * — so a submit that never touched a picker is a plain request in every way but its path.
+     */
+    override suspend fun submitAdvancedRequest(request: SubmitAdvancedRequestRequest): SubmitAdvancedRequestResponse =
+        gated(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
+            val media = request.media
+            val isTv = media.seerrMediaType().isSeerrTv()
+            val destination = connection.api().resolveAdvancedDestination(isTv, request.serverId, request.profileId, request.rootFolderId)
+            val body =
+                SeerrRequestBody(
+                    mediaType = media.seerrMediaType(),
+                    mediaId = media.tmdbId,
+                    seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
+                    is4k = destination.server.is4k,
+                    serverId = destination.server.id,
+                    profileId = destination.profileId,
+                    rootFolder = destination.rootFolder,
+                )
+            SubmitAdvancedRequestResponse.newBuilder().setResult(submitAndRespond(media, body)).build()
+        }
+
+    /** The part of a submit that does not depend on where the body came from: post, read the outcome off the status code, attach the fresh status. */
+    private suspend fun submitAndRespond(
+        media: MediaId,
+        body: SeerrRequestBody,
+    ): SubmitRequestResponse {
+        val response = connection.api().requestMedia(body)
+        statusCache.clearAll()
+        val builder = SubmitRequestResponse.newBuilder()
+        when {
+            response.code() == HTTP_ACCEPTED -> Unit
+            response.isSuccessful -> response.body()?.id?.let(builder::setRequestId)
+            response.code() == HTTP_CONFLICT -> builder.setAlreadyRequested(true)
+            else -> throw HttpException(response)
+        }
+        return builder.setStatus(status(media)).build()
+    }
 
     override suspend fun getStatus(request: GetStatusRequest): GetStatusResponse =
         statusCatching { GetStatusResponse.newBuilder().setStatus(status(request.media)).build() }
@@ -316,11 +379,25 @@ class SeerrRequestService(
         block: suspend () -> T,
     ): T =
         statusCatching {
-            permissions().toCapabilities(connection.profile()).requireDeclared(capability)
+            checkDeclared(capability)
             // Every gated rpc is a write, and a write to any title makes every cached row suspect —
             // most of them name a request id rather than a title, so there is nothing narrower to drop.
             block().also { statusCache.clearAll() }
         }
+
+    /** As [gated], for an rpc that only reads: no cache to invalidate behind it. */
+    private suspend fun <T> gatedRead(
+        capability: Capability,
+        block: suspend () -> T,
+    ): T =
+        statusCatching {
+            checkDeclared(capability)
+            block()
+        }
+
+    private suspend fun checkDeclared(capability: Capability) {
+        permissions().toCapabilities(connection.profile()).requireDeclared(capability)
+    }
 
     private companion object {
         const val OBSERVE_INTERVAL_MILLIS = 15_000L
@@ -342,7 +419,13 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         add(Capability.CAPABILITY_OBSERVE_STATUS)
         add(Capability.CAPABILITY_ATTENTION)
         if (canRequest4k) add(Capability.CAPABILITY_REQUEST_4K)
-        if (canRequestAdvanced) add(Capability.CAPABILITY_ADVANCED_OPTIONS)
+        if (canRequestAdvanced) {
+            // Both capabilities are declared together during rollout: a host that only knows the
+            // older one keeps getting the Activity hand-off, one that knows the new one gets the
+            // native picker. Neither is dropped until the cutover (Binge#2882, scope item 7).
+            add(Capability.CAPABILITY_ADVANCED_OPTIONS)
+            add(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS)
+        }
         if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
         // A requester may cancel or reshape their own pending request, and a moderator anyone's.
         if (canRequest || canManageRequests) addAll(listOf(Capability.CAPABILITY_CANCEL, Capability.CAPABILITY_EDIT_SEASONS))

@@ -6,8 +6,11 @@ import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.CancelRequestRequest
 import com.binge.companion.contracts.request.v1.Capability
+import com.binge.companion.contracts.request.v1.DestinationChoices
 import com.binge.companion.contracts.request.v1.EditRequestRequest
+import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
 import com.binge.companion.contracts.request.v1.GetAttentionRequest
+import com.binge.companion.contracts.request.v1.GetDestinationOptionsRequest
 import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.IssueType
@@ -15,6 +18,7 @@ import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
+import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.v1.MediaId
@@ -51,6 +55,7 @@ import org.junit.rules.TemporaryFolder
 
 private const val ADMIN = 2
 private const val REQUEST = 1 shl 5
+private const val REQUEST_ADVANCED = 1 shl 13
 private const val CREATE_ISSUES = 1 shl 22
 
 /**
@@ -311,6 +316,163 @@ class SeerrRequestServiceTest {
             val nothing = stub.submitRequest(request)
             assertEquals(0, nothing.requestId)
             assertFalse(nothing.alreadyRequested)
+        }
+
+    @Test
+    fun `advanced options lists every server for the shape, preselected on the plain non-4k default`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+
+            seerr.enqueue(
+                json(
+                    """
+                    [
+                      {"id":1,"name":"Main","is4k":false,"isDefault":true,"activeProfileId":4,"activeDirectory":"/media"},
+                      {"id":2,"name":"Main 4K","is4k":true,"isDefault":false,"activeProfileId":9,"activeDirectory":"/media4k"}
+                    ]
+                    """.trimIndent(),
+                ),
+            )
+            seerr.enqueue(
+                json(
+                    """{"profiles":[{"id":4,"name":"HD"},{"id":5,"name":"UHD"}],"rootFolders":[{"id":1,"path":"/media"},{"id":2,"path":"/kids"}]}""",
+                ),
+            )
+
+            val destination =
+                stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
+
+            assertEquals(listOf(1 to false, 2 to true), destination.serversList.map { it.id.toInt() to it.is4K })
+            assertEquals("1", destination.selectedServerId)
+            assertEquals(listOf("4" to "HD", "5" to "UHD"), destination.profilesList.map { it.id to it.label })
+            assertEquals("4", destination.selectedProfileId)
+            assertEquals(listOf("/media", "/kids"), destination.rootFoldersList.map { it.id })
+            assertEquals("/media", destination.selectedRootFolderId)
+            assertEquals("/api/v1/service/radarr", seerr.takeRequest().url.encodedPath)
+            assertEquals("/api/v1/service/radarr/1", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `advanced options for a shape with no configured server comes back empty`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("[]"))
+
+            val destination =
+                stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
+
+            assertEquals(DestinationChoices.getDefaultInstance(), destination)
+        }
+
+    @Test
+    fun `destination options re-resolves profile and root folder for the server the host moved to`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(
+                json(
+                    """[{"id":1,"name":"Main","is4k":false,"isDefault":true},{"id":2,"name":"Main 4K","is4k":true,"activeProfileId":9,"activeDirectory":"/media4k"}]""",
+                ),
+            )
+            seerr.enqueue(json("""{"profiles":[{"id":9,"name":"UHD Only"}],"rootFolders":[{"id":3,"path":"/media4k"}]}"""))
+
+            val destination =
+                stub
+                    .getDestinationOptions(GetDestinationOptionsRequest.newBuilder().setMedia(movie).setServerId("2").build())
+                    .destination
+
+            assertTrue(destination.serversList.isEmpty())
+            assertEquals("", destination.selectedServerId)
+            assertEquals(listOf("9"), destination.profilesList.map { it.id })
+            assertEquals("9", destination.selectedProfileId)
+            assertEquals("/media4k", destination.selectedRootFolderId)
+            seerr.takeRequest()
+            assertEquals("/api/v1/service/radarr/2", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `destination options for a server id the server no longer lists is INVALID_ARGUMENT`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("""[{"id":1,"name":"Main","is4k":false,"isDefault":true}]"""))
+
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code {
+                    getDestinationOptions(GetDestinationOptionsRequest.newBuilder().setMedia(movie).setServerId("99").build())
+                },
+            )
+        }
+
+    @Test
+    fun `submit advanced request posts the picker's explicit choices, deriving 4k from the server alone`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("""[{"id":1,"name":"Main","is4k":false},{"id":2,"name":"Main 4K","is4k":true}]"""))
+            seerr.enqueue(json("""{"id":88}"""))
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+
+            val response =
+                stub.submitAdvancedRequest(
+                    SubmitAdvancedRequestRequest
+                        .newBuilder()
+                        .setMedia(movie)
+                        .setServerId("2")
+                        .setProfileId("9")
+                        .setRootFolderId("/media4k")
+                        .build(),
+                )
+
+            assertEquals(88, response.result.requestId)
+            // No arr-server details fetch: both axes were explicit, so there was no default to resolve.
+            seerr.takeRequest()
+            val posted = seerr.takeRequest().body?.utf8().orEmpty()
+            assertTrue(posted.contains("\"is4k\":true"))
+            assertTrue(posted.contains("\"serverId\":2"))
+            assertTrue(posted.contains("\"profileId\":9"))
+            assertTrue(posted.contains("\"rootFolder\":\"/media4k\""))
+        }
+
+    @Test
+    fun `submit advanced request with an untouched picker falls back to the server's own defaults`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("""[{"id":1,"name":"Main","is4k":false,"isDefault":true,"activeProfileId":4,"activeDirectory":"/media"}]"""))
+            seerr.enqueue(json("""{"profiles":[{"id":4,"name":"HD"}],"rootFolders":[{"id":1,"path":"/media"}]}"""))
+            seerr.enqueue(json("""{"id":89}"""))
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+
+            stub.submitAdvancedRequest(SubmitAdvancedRequestRequest.newBuilder().setMedia(movie).build())
+
+            repeat(2) { seerr.takeRequest() }
+            val posted = seerr.takeRequest().body?.utf8().orEmpty()
+            assertTrue(posted.contains("\"is4k\":false"))
+            assertTrue(posted.contains("\"serverId\":1"))
+            assertTrue(posted.contains("\"profileId\":4"))
+            assertTrue(posted.contains("\"rootFolder\":\"/media\""))
+        }
+
+    @Test
+    fun `the advanced-request rpcs are refused for a user without the permission, before any request`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            val before = seerr.requestCount
+
+            assertEquals(
+                Status.Code.PERMISSION_DENIED,
+                stub.code { getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()) },
+            )
+            assertEquals(
+                Status.Code.PERMISSION_DENIED,
+                stub.code {
+                    getDestinationOptions(GetDestinationOptionsRequest.newBuilder().setMedia(movie).setServerId("1").build())
+                },
+            )
+            assertEquals(
+                Status.Code.PERMISSION_DENIED,
+                stub.code { submitAdvancedRequest(SubmitAdvancedRequestRequest.newBuilder().setMedia(movie).build()) },
+            )
+
+            assertEquals(before, seerr.requestCount)
         }
 
     @Test
