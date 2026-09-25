@@ -30,6 +30,7 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
@@ -44,10 +45,10 @@ private const val FACTS_VALUE_FRACTION = 0.55f
 
 /**
  * Loading placeholder for [RequestDetailPage]: the hero, the headline's chip row and overview, and
- * the one facts row every request has. Seasons, downloads, siblings, watch data and Moderated by are
- * all conditional on what the server returns, so nothing is reserved for them — the scroll grows on
- * resolve rather than reflowing a guess, the same trade Binge's own `DetailScreenSkeleton` makes for
- * its cast rail (#373).
+ * "This request"'s own header over the one facts row every request has (Requested by). Stats,
+ * seasons, downloads, siblings and Moderated by are all conditional on what the server returns, so
+ * nothing is reserved for them — the scroll grows on resolve rather than reflowing a guess, the same
+ * trade Binge's own `DetailScreenSkeleton` makes for its cast rail (#373).
  *
  * The primary action footer IS reserved even though `RequestDetail.hasPrimaryAction` can be false
  * (a viewer with no manage permission on an already-settled request) — reserving the common admin
@@ -69,6 +70,7 @@ internal fun RequestDetailSkeleton(modifier: Modifier = Modifier) {
                             .padding(resolvedContentInset())
                             .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
                 )
+                SectionHeaderSkeleton()
                 FactsSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
             }
             PrimaryActionSkeleton()

@@ -1,6 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
@@ -204,9 +206,14 @@ internal fun RequestDetailPage(
         footer = footer,
         body = {
             RequestHeadline(detail, Modifier.padding(resolvedContentInset()), initiallyOverflowing)
+            RequestStats(detail)
             RequestFacts(detail, onOpenUser)
             RequestSections(detail)
             RequestSiblings(detail, onOpenSibling)
+            // The footer sits below the scroll rather than over it (MediaHeroDetailPage's own KDoc),
+            // so this isn't clearing an overlap - it's the same breathing room the scroll's last row
+            // would otherwise only get from the footer's own top padding, which reads as cramped.
+            if (footer != null) Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
         },
     )
 }

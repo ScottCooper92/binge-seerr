@@ -111,6 +111,8 @@
     <string name="request_open_elsewhere">Abrir en otro lugar</string>
     <string name="request_open_web">Abrir en el servidor</string>
     <string name="request_open_media_server">Abrir en el servidor multimedia</string>
+    <string name="request_stats_title">Estadísticas</string>
+    <string name="request_this_request_title">Esta solicitud</string>
     <string name="request_requested_by">Solicitado por</string>
     <string name="request_modified_by">Moderado por</string>
     <string name="request_server">Servidor</string>
@@ -121,7 +123,7 @@
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta solicitud puede diferir a continuación.</string>
     <string name="request_downloads">Descargando</string>
-    <string name="request_siblings_title">También solicitado</string>
+    <string name="request_siblings_title">Otras solicitudes</string>
     <string name="request_siblings_clear_data_note">Borrar los datos de este título elimina todas las peticiones que tiene, incluidas las anteriores.</string>
     <plurals name="request_episodes">
         <item quantity="one">%1$d episodio</item>

@@ -118,6 +118,19 @@ private fun Fact(
     secondary: String? = null,
 ): Fact = Fact(icon, label, InfoValue.Plain(primary), secondary)
 
+/**
+ * The server's own watch tracking — a title-level read-out, the same on every request against it,
+ * so it sits under the synopsis with its own header rather than inside [RequestFacts] below, which
+ * is this request's own facts and no other request's.
+ */
+@Composable
+internal fun RequestStats(detail: RequestDetail) {
+    val facts = watchFacts(detail)
+    if (facts.isEmpty()) return
+    SectionHeader(title = stringResource(R.string.request_stats_title))
+    FactList(facts)
+}
+
 /** Who asked, when, and where it was sent — each row dropped where the server does not say. */
 @Composable
 internal fun RequestFacts(
@@ -154,7 +167,8 @@ internal fun RequestFacts(
             detail.destination?.tags?.takeIf { it.isNotEmpty() }?.let {
                 Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), it.joinToString(", "))
             },
-        ) + watchFacts(detail)
+        )
+    SectionHeader(title = stringResource(R.string.request_this_request_title))
     FactList(facts)
 }
 
