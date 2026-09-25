@@ -173,9 +173,9 @@ internal fun RequestDetailPage(
     MediaHeroDetailPage(
         title = title,
         backdropUrl = detail.backdropUrl,
-        // The type moved onto RequestHeadline's chip row (#340); the year alone is what is left to
-        // read here, and reads deliberately rather than as a leftover fragment of a joined string.
-        metaText = item.year.orEmpty(),
+        // The type moved onto RequestHeadline's chip row (#340), and the year has now followed it
+        // there too, onto the same line as the chips — nothing is left to read in the hero itself.
+        metaText = "",
         onBack = onBack,
         modifier = modifier,
         scrollState = scrollState,

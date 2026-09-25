@@ -43,9 +43,9 @@ import com.binge.designsystem.R as DesR
 /**
  * The request's own state, and what the title is about.
  *
- * What classifies the title — its media type, its availability, and 4K where it applies — are all
- * chips on one wrapping line, so a narrow window drops a chip to a second line rather than clipping
- * it (#340).
+ * The year rides on the same line as the chips that classify the title — its media type, its
+ * availability, and 4K where it applies — all wrapping together, so a narrow window drops one to a
+ * second line rather than clipping it (#340).
  *
  * [initiallyOverflowing] seeds the overview's toggle for a frame: the component only learns it
  * overflowed from `onTextLayout`, which fires after the screenshot lane has captured.
@@ -67,6 +67,14 @@ internal fun RequestHeadline(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
+            item.year?.takeIf { it.isNotBlank() }?.let { year ->
+                Text(
+                    text = year,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                )
+            }
             MediaTypeTag(type = item.mediaType.toTagType())
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
             if (item.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
