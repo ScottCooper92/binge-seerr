@@ -12,6 +12,9 @@ on:
         required: false
         default: 'Manual debug build'
 
+permissions:
+  contents: read
+
 jobs:
   distribute:
     name: Build & distribute debug APK
