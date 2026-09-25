@@ -375,10 +375,13 @@ class SeerrRequestServiceTest {
             )
             seerr.enqueue(json("""{"profiles":[{"id":9,"name":"UHD Only"}],"rootFolders":[{"id":3,"path":"/media4k"}]}"""))
 
-            val destination =
-                stub
-                    .getDestinationOptions(GetDestinationOptionsRequest.newBuilder().setMedia(movie).setServerId("2").build())
-                    .destination
+            val request =
+                GetDestinationOptionsRequest
+                    .newBuilder()
+                    .setMedia(movie)
+                    .setServerId("2")
+                    .build()
+            val destination = stub.getDestinationOptions(request).destination
 
             assertTrue(destination.serversList.isEmpty())
             assertEquals("", destination.selectedServerId)
@@ -398,7 +401,13 @@ class SeerrRequestServiceTest {
             assertEquals(
                 Status.Code.INVALID_ARGUMENT,
                 stub.code {
-                    getDestinationOptions(GetDestinationOptionsRequest.newBuilder().setMedia(movie).setServerId("99").build())
+                    val request =
+                        GetDestinationOptionsRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setServerId("99")
+                            .build()
+                    getDestinationOptions(request)
                 },
             )
         }
@@ -425,7 +434,8 @@ class SeerrRequestServiceTest {
             assertEquals(88, response.result.requestId)
             // No arr-server details fetch: both axes were explicit, so there was no default to resolve.
             seerr.takeRequest()
-            val posted = seerr.takeRequest().body?.utf8().orEmpty()
+            val postedRequest = seerr.takeRequest()
+            val posted = postedRequest.body?.utf8().orEmpty()
             assertTrue(posted.contains("\"is4k\":true"))
             assertTrue(posted.contains("\"serverId\":2"))
             assertTrue(posted.contains("\"profileId\":9"))
@@ -444,8 +454,10 @@ class SeerrRequestServiceTest {
             stub.submitAdvancedRequest(SubmitAdvancedRequestRequest.newBuilder().setMedia(movie).build())
 
             repeat(2) { seerr.takeRequest() }
-            val posted = seerr.takeRequest().body?.utf8().orEmpty()
-            assertTrue(posted.contains("\"is4k\":false"))
+            val postedRequest = seerr.takeRequest()
+            val posted = postedRequest.body?.utf8().orEmpty()
+            // is4k is the default (false), and the Json config used for the body doesn't encode defaults.
+            assertFalse(posted.contains("\"is4k\""))
             assertTrue(posted.contains("\"serverId\":1"))
             assertTrue(posted.contains("\"profileId\":4"))
             assertTrue(posted.contains("\"rootFolder\":\"/media\""))
@@ -464,7 +476,13 @@ class SeerrRequestServiceTest {
             assertEquals(
                 Status.Code.PERMISSION_DENIED,
                 stub.code {
-                    getDestinationOptions(GetDestinationOptionsRequest.newBuilder().setMedia(movie).setServerId("1").build())
+                    val request =
+                        GetDestinationOptionsRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setServerId("1")
+                            .build()
+                    getDestinationOptions(request)
                 },
             )
             assertEquals(

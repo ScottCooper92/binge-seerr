@@ -15,10 +15,20 @@ fun SeerrServerDto.toServerChoice(): ServerChoice =
         .setIs4K(is4k)
         .build()
 
-fun SeerrProfileDto.toChoice(): Choice = Choice.newBuilder().setId(id.toString()).setLabel(name).build()
+fun SeerrProfileDto.toChoice(): Choice =
+    Choice
+        .newBuilder()
+        .setId(id.toString())
+        .setLabel(name)
+        .build()
 
 /** A root folder's own id plays no part on the wire: the path is what Seerr's request body takes back. */
-fun SeerrRootFolderDto.toChoice(): Choice = Choice.newBuilder().setId(path).setLabel(path).build()
+fun SeerrRootFolderDto.toChoice(): Choice =
+    Choice
+        .newBuilder()
+        .setId(path)
+        .setLabel(path)
+        .build()
 
 /**
  * The chosen server's profile/root-folder axes as the contract shape, with Seerr's own `active*`
