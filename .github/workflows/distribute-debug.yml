@@ -1,0 +1,61 @@
+name: Distribute debug build
+
+# Manual only: pushes a debug build to Firebase App Distribution's testers, for installing outside
+# the LAN without touching adb or bumping a version number — App Distribution accepts the same
+# versionCode/versionName on every upload, unlike a Play track.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'Release notes for testers'
+        required: false
+        default: 'Manual debug build'
+
+permissions:
+  contents: read
+
+jobs:
+  distribute:
+    name: Build & distribute debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+      # This app's own Firebase project. Without the secret the build still runs, with crash
+      # reporting compiled out rather than failing — same as release.yml.
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        shell: bash
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON_BASE64 is not set: this build has no crash reporting."
+          fi
+
+      - name: Build debug APK
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Distribute to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@bd494989dd4bec0343f78adee87fe66e48279ad6 # v1.7.1
+        with:
+          appId: 1:95035443283:android:d84900e40aa908e3999ea6
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          testers: scottalancooper@gmail.com
+          releaseNotes: ${{ inputs.release_notes }}
+          file: app/build/outputs/apk/debug/app-debug.apk
