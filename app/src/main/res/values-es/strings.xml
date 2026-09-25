@@ -112,9 +112,7 @@
     <string name="request_open_web">Abrir en el servidor</string>
     <string name="request_open_media_server">Abrir en el servidor multimedia</string>
     <string name="request_requested_by">Solicitado por</string>
-    <string name="request_requested_at">Solicitado</string>
     <string name="request_modified_by">Moderado por</string>
-    <string name="request_updated_at">Actualizado</string>
     <string name="request_server">Servidor</string>
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>

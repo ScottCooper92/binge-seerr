@@ -10,9 +10,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -20,13 +29,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
-import com.binge.designsystem.component.InfoRowEntry
-import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.SectionHeader
@@ -90,6 +99,25 @@ internal fun RequestHeadline(
     }
 }
 
+/**
+ * One fact row: a leading icon standing in for the label this used to spell out, [label] itself
+ * kept as the icon's `contentDescription` so a screen reader still says "Requested by" before the
+ * value rather than reading just a name.
+ */
+private data class Fact(
+    val icon: ImageVector,
+    val label: String,
+    val primary: InfoValue,
+    val secondary: String? = null,
+)
+
+private fun Fact(
+    icon: ImageVector,
+    label: String,
+    primary: String,
+    secondary: String? = null,
+): Fact = Fact(icon, label, InfoValue.Plain(primary), secondary)
+
 /** Who asked, when, and where it was sent — each row dropped where the server does not say. */
 @Composable
 internal fun RequestFacts(
@@ -97,11 +125,12 @@ internal fun RequestFacts(
     onOpenUser: (Int) -> Unit,
 ) {
     val item = detail.item
-    InfoRowList(
-        entries =
-            listOfNotNull(
-                InfoRowEntry(
-                    stringResource(R.string.request_requested_by),
+    val facts =
+        listOfNotNull(
+            Fact(
+                icon = Icons.AutoMirrored.Filled.Send,
+                label = stringResource(R.string.request_requested_by),
+                primary =
                     linkedOrPlain(
                         item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
                         item.requestedById,
@@ -109,26 +138,88 @@ internal fun RequestFacts(
                         detail.canManageUsers,
                         onOpenUser,
                     ),
-                ),
-                InfoRowEntry(stringResource(R.string.request_requested_at), formatRelativeOrAbsolute(item.requestedAtMillis)),
-                detail.modifiedBy?.let {
-                    InfoRowEntry(
-                        stringResource(R.string.request_modified_by),
-                        linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
+                secondary = formatRelativeOrAbsolute(item.requestedAtMillis),
+            ),
+            detail.modifiedBy?.let {
+                Fact(
+                    icon = Icons.Filled.Gavel,
+                    label = stringResource(R.string.request_modified_by),
+                    primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
+                    secondary = detail.updatedAtMillis?.let(::formatRelativeOrAbsolute),
+                )
+            },
+            detail.destination?.serverName?.let { Fact(Icons.Filled.Dns, stringResource(R.string.request_server), it) },
+            detail.destination?.profileName?.let { Fact(Icons.Filled.HighQuality, stringResource(R.string.request_profile), it) },
+            detail.destination?.rootFolder?.let { Fact(Icons.Filled.Folder, stringResource(R.string.request_root_folder), it) },
+            detail.destination?.tags?.takeIf { it.isNotEmpty() }?.let {
+                Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), it.joinToString(", "))
+            },
+        ) + watchFacts(detail)
+    FactList(facts)
+}
+
+@Composable
+private fun FactList(facts: List<Fact>) {
+    if (facts.isEmpty()) return
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = resolvedContentInset()),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        facts.forEach { FactRow(it) }
+    }
+}
+
+@Composable
+private fun FactRow(fact: Fact) {
+    val blank =
+        when (val primary = fact.primary) {
+            is InfoValue.Plain -> primary.text.isBlank()
+            is InfoValue.Link -> primary.text.isBlank()
+            is InfoValue.Links -> primary.links.all { it.text.isBlank() }
+        }
+    if (blank) return
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = fact.icon,
+            contentDescription = fact.label,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(dimensionResource(DesR.dimen.detail_stat_icon_size)),
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            when (val primary = fact.primary) {
+                is InfoValue.Plain ->
+                    Text(
+                        primary.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
-                },
-                detail.updatedAtMillis?.let { InfoRowEntry(stringResource(R.string.request_updated_at), formatRelativeOrAbsolute(it)) },
-                detail.destination?.serverName?.let { InfoRowEntry(stringResource(R.string.request_server), it) },
-                detail.destination?.profileName?.let { InfoRowEntry(stringResource(R.string.request_profile), it) },
-                detail.destination?.rootFolder?.let { InfoRowEntry(stringResource(R.string.request_root_folder), it) },
-                detail.destination?.tags?.takeIf { it.isNotEmpty() }?.let {
-                    InfoRowEntry(
-                        stringResource(R.string.request_tags),
-                        it.joinToString(", "),
+                is InfoValue.Link ->
+                    Text(
+                        primary.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable(role = Role.Button, onClick = primary.onClick),
                     )
-                },
-            ) + watchRows(detail),
-    )
+                is InfoValue.Links ->
+                    Text(
+                        primary.links.joinToString(", ") { it.text },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+            }
+            fact.secondary?.let {
+                Text(
+                    stringResource(R.string.hub_meta_separator) + it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -154,33 +245,35 @@ internal fun linkedOrPlain(
  * What the server's own watch tracking says. A read-out rather than an action, so it belongs beside
  * Requested by and Updated rather than inside a sheet of things that change something.
  *
- * The instance is named only where the server holds two, since "Watch data · 4K" on a title with one
+ * The instance is named only where the server holds two, since "12 plays · 4K" on a title with one
  * copy says nothing the row above it has not.
  */
 @Composable
-private fun watchRows(detail: RequestDetail): List<InfoRowEntry> {
+private fun watchFacts(detail: RequestDetail): List<Fact> {
     val instances =
         detail.media
             ?.instances
             .orEmpty()
             .filter { it.watch != null }
-    val separator = stringResource(R.string.hub_meta_separator)
     val named = instances.size > 1
     return instances.flatMap { instance ->
         val watch = instance.watch ?: return@flatMap emptyList()
-        val suffix =
-            if (named) {
-                separator + stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard)
-            } else {
-                ""
-            }
+        val instanceLabel =
+            if (named) stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard) else null
         listOfNotNull(
-            InfoRowEntry(
-                stringResource(R.string.media_watch_title) + suffix,
-                stringResource(R.string.media_watch_plays, watch.playCount, watch.playCount7Days, watch.playCount30Days),
+            Fact(
+                icon = Icons.Filled.PlayCircle,
+                label = stringResource(R.string.media_watch_title),
+                primary = stringResource(R.string.media_watch_plays, watch.playCount, watch.playCount7Days, watch.playCount30Days),
+                secondary = instanceLabel,
             ),
             watch.users.takeIf { it.isNotEmpty() }?.let {
-                InfoRowEntry(stringResource(R.string.media_watch_users_label) + suffix, it.joinToString(separator))
+                Fact(
+                    icon = Icons.Filled.Groups,
+                    label = stringResource(R.string.media_watch_users_label),
+                    primary = it.joinToString(stringResource(R.string.hub_meta_separator)),
+                    secondary = instanceLabel,
+                )
             },
         )
     }

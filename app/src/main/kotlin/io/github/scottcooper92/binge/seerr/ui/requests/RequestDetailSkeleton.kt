@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -38,15 +39,15 @@ private const val HEADLINE_CHIP_COUNT = 2
 private const val OVERVIEW_LINE_COUNT = 3
 private const val OVERVIEW_LAST_LINE_FRACTION = 0.6f
 
-/** [RequestFacts]'s two unconditional rows — Requested by, Requested at — ragged so the pair doesn't read as a table. */
-private val FACTS_VALUE_FRACTIONS = listOf(0.55f, 0.35f)
+/** [RequestFacts]'s one unconditional row — Requested by, now a leading icon plus one line. */
+private const val FACTS_VALUE_FRACTION = 0.55f
 
 /**
  * Loading placeholder for [RequestDetailPage]: the hero, the headline's chip row and overview, and
- * the two facts rows every request has. Seasons, downloads, siblings and watch data are conditional
- * on what the server returns, so nothing is reserved for them — the scroll grows on resolve rather
- * than reflowing a guess, the same trade Binge's own `DetailScreenSkeleton` makes for its cast rail
- * (#373).
+ * the one facts row every request has. Seasons, downloads, siblings, watch data and Moderated by are
+ * all conditional on what the server returns, so nothing is reserved for them — the scroll grows on
+ * resolve rather than reflowing a guess, the same trade Binge's own `DetailScreenSkeleton` makes for
+ * its cast rail (#373).
  *
  * The primary action footer IS reserved even though `RequestDetail.hasPrimaryAction` can be false
  * (a viewer with no manage permission on an already-settled request) — reserving the common admin
@@ -135,30 +136,19 @@ private fun ChipSkeleton(modifier: Modifier = Modifier) {
 
 @Composable
 private fun FactsSkeleton(modifier: Modifier = Modifier) {
-    Column(
+    Row(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.info_row_spacing_v)),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        FACTS_VALUE_FRACTIONS.forEach { valueFraction ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.info_row_gap)),
-            ) {
-                SkeletonPlate(
-                    Modifier
-                        .width(dimensionResource(DesR.dimen.info_row_label_min_width))
-                        .height(lineHeightOf(MaterialTheme.typography.labelLarge)),
-                )
-                // Weighted, not fillMaxWidth on the row: InfoRow's value column measures against
-                // what's left after the fixed label width, not the row's own full width.
-                Box(modifier = Modifier.weight(1f)) {
-                    SkeletonPlate(
-                        Modifier
-                            .fillMaxWidth(valueFraction)
-                            .height(lineHeightOf(MaterialTheme.typography.bodyMedium)),
-                    )
-                }
-            }
+        SkeletonPlate(Modifier.size(dimensionResource(DesR.dimen.detail_stat_icon_size)))
+        // Weighted, not fillMaxWidth on the row: the value measures against what's left after the
+        // fixed icon width, not the row's own full width.
+        Box(modifier = Modifier.weight(1f)) {
+            SkeletonPlate(
+                Modifier
+                    .fillMaxWidth(FACTS_VALUE_FRACTION)
+                    .height(lineHeightOf(MaterialTheme.typography.bodyMedium)),
+            )
         }
     }
 }

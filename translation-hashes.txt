@@ -241,7 +241,6 @@ app:request_remove_confirm_title  745b69be78ea
 app:request_removed  1f55775c6ffc
 app:request_removed_and_blocked  efcbe6fcadf9
 app:request_removed_block_failed  b6a4ec9720bd
-app:request_requested_at  2d9e28289fac
 app:request_requested_by  9199a054972b
 app:request_retried  14fef0857e6c
 app:request_retry  0bc82cc4bfeb
@@ -259,7 +258,6 @@ app:request_state_pending  331551b0de41
 app:request_state_queued  661ff40a07e0
 app:request_tags  1331275bc537
 app:request_title_status_caption  4ae0d8f6b950
-app:request_updated_at  3a5ecca188c0
 app:requests_empty_all  8e80748e202b
 app:requests_empty_approved  8a0902e6b88f
 app:requests_empty_available  84392ba69df3

@@ -128,9 +128,7 @@
     <string name="request_open_web">Open on the server</string>
     <string name="request_open_media_server">Open in media server</string>
     <string name="request_requested_by">Requested by</string>
-    <string name="request_requested_at">Requested</string>
     <string name="request_modified_by">Moderated by</string>
-    <string name="request_updated_at">Updated</string>
     <string name="request_server">Server</string>
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
