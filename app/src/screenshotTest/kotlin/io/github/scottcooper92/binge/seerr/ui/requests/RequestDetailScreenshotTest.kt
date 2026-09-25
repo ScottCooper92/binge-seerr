@@ -53,6 +53,12 @@ class RequestDetailScreenshotTest {
     @Composable
     fun noPrimaryAction() = Frame(noPrimaryActionDetail())
 
+    /** No attributed moderator: the "Updated" row stands on its own rather than the timestamp vanishing. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun autoApproved() = Frame(autoApprovedDetail())
+
     /**
      * Pending, in a pane narrower than the window (#343): the footer spans the pane it sits in rather
      * than the whole window it is measured against, exactly as [io.github.scottcooper92.binge.seerr.ui.hub.HubScreenshotTest.readyAsListPane]
