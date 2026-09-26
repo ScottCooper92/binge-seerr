@@ -895,14 +895,17 @@ data class SeerrPublicSettings(
 
 /**
  * A media request. The advanced-option overrides are omitted when absent, so a plain request posts
- * exactly as one and the server applies its per-instance defaults.
+ * exactly as one and the server applies its per-instance defaults. `is4k` is not one of those
+ * overrides — it's a flag the server always reads off the body, so it stays encoded even at its
+ * `false` default (as [SeerrMediaStatusBody.is4k] already does).
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SeerrRequestBody(
     @SerialName("mediaType") val mediaType: String,
     @SerialName("mediaId") val mediaId: Int,
     @SerialName("seasons") val seasons: List<Int>? = null,
-    @SerialName("is4k") val is4k: Boolean = false,
+    @EncodeDefault @SerialName("is4k") val is4k: Boolean = false,
     @SerialName("serverId") val serverId: Int? = null,
     @SerialName("profileId") val profileId: Int? = null,
     @SerialName("rootFolder") val rootFolder: String? = null,
