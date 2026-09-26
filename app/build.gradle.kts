@@ -110,6 +110,19 @@ android {
     val releaseStoreFile = signingValue("RELEASE_STORE_FILE")
 
     signingConfigs {
+        // Committed rather than left to AGP's implicit debug config, which auto-generates
+        // ~/.android/debug.keystore on first build if none exists: every machine (and every CI
+        // runner with no persistent ~/.android) would then sign debug builds with a different key,
+        // and installing one over an existing debug build signed by an earlier key fails as a
+        // signature mismatch rather than updating it. Standard AOSP debug credentials
+        // (alias/password androiddebugkey/android) — there's nothing secret in a debug key, that's
+        // the whole reason it's shareable.
+        getByName("debug") {
+            storeFile = rootDir.resolve("app/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (releaseStoreFile != null) {
             create("release") {
                 storeFile = rootDir.resolve(releaseStoreFile)
