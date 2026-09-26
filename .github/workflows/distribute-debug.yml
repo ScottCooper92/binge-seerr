@@ -1,8 +1,12 @@
 name: Distribute debug build
 
 # Manual only: pushes a debug build to Firebase App Distribution's testers, for installing outside
-# the LAN without touching adb or bumping a version number — App Distribution accepts the same
-# versionCode/versionName on every upload, unlike a Play track.
+# the LAN without touching adb. App Distribution accepts the same versionCode/versionName on every
+# upload, unlike a Play track — it treats a same-version upload as an *update* to one existing
+# release rather than a new one, so without something to tell builds apart every dispatch collapses
+# onto the same release and testers (and whoever's reading the console) can't tell which commit they
+# have. The commit short SHA in versionName below is that something; versionCode stays fixed at 1,
+# since nothing here needs Play's monotonically-increasing kind of version bump.
 
 on:
   workflow_dispatch:
@@ -45,11 +49,14 @@ jobs:
             echo "::warning::GOOGLE_SERVICES_JSON_BASE64 is not set: this build has no crash reporting."
           fi
 
+      # VERSION_NAME feeds app/build.gradle.kts:65's `System.getenv("VERSION_NAME") ?: "0.1.0"` — the
+      # same env var the release build reads, just with a short SHA appended so each dispatch on a
+      # different commit produces a distinguishable release in Firebase's list.
       - name: Build debug APK
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: VERSION_NAME="0.1.0-${GITHUB_SHA:0:8}" ./gradlew :app:assembleDebug --stacktrace
 
       - name: Distribute to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@bd494989dd4bec0343f78adee87fe66e48279ad6 # v1.7.1
