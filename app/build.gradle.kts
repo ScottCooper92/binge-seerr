@@ -135,6 +135,10 @@ android {
 
     buildTypes {
         debug {
+            // A package of its own, so a debug build installs beside a release one instead of over it:
+            // the two are signed with different keys, and replacing one with the other means an
+            // uninstall that takes the saved server connection with it. Binge does the same.
+            applicationIdSuffix = ".debug"
             // en-XA lengthens and accents every string, ar-XB mirrors the layout: truncation and RTL
             // bugs found with no translation written. Debug only; they must never ship.
             isPseudoLocalesEnabled = true

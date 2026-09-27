@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tells a debug install apart from a release one, in the launcher and in the host's list. -->
+    <string name="companion_label" translatable="false">Seerr Debug</string>
+</resources>
