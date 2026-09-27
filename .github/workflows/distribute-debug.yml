@@ -61,7 +61,9 @@ jobs:
       - name: Distribute to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@bd494989dd4bec0343f78adee87fe66e48279ad6 # v1.7.1
         with:
-          appId: 1:95035443283:android:d84900e40aa908e3999ea6
+          # "Binge Seerr Debug": the Firebase app registered for the debug build's own package
+          # (io.github.scottcooper92.binge.seerr.debug), not the release app's.
+          appId: 1:95035443283:android:434354a6d8e29d06999ea6
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           testers: scottalancooper@gmail.com
           releaseNotes: ${{ inputs.release_notes }}
