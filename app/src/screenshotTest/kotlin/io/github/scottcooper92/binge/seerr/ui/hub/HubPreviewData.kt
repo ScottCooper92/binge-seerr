@@ -92,6 +92,7 @@ internal fun previewActions() =
     HubActions(
         onOpenSection = {},
         onOpenAccount = {},
+        onOpenRequest = {},
         onRetry = {},
         onReconnect = {},
         onDisconnect = {},

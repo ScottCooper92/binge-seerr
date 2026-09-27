@@ -37,6 +37,7 @@ import com.binge.designsystem.R as DesR
 class HubActions(
     val onOpenSection: (HubSection) -> Unit,
     val onOpenAccount: (userId: Int) -> Unit,
+    val onOpenRequest: (requestId: Int) -> Unit,
     val onRetry: () -> Unit,
     /** The sign-in form on the saved server, for a session it rejected. */
     val onReconnect: () -> Unit,
@@ -93,7 +94,7 @@ private fun Dashboard(
         }
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
-            DownloadingStrip(state.downloading, inset = inset)
+            DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, inset = inset)
         }
         SectionHeader(title = stringResource(R.string.hub_manage))
         SettingsGroup(
