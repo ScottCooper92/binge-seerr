@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.HintCard
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -127,11 +128,7 @@ fun DiscoverSlidersScreen(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             item {
-                Text(
-                    text = stringResource(R.string.server_settings_sliders_reorder_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                HintCard(text = stringResource(R.string.server_settings_sliders_reorder_hint))
             }
             itemsIndexed(sliders, key = { _, slider -> slider.id }) { index, slider ->
                 ReorderableItem(reorderableState, key = slider.id) {

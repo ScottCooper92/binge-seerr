@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
@@ -87,7 +88,7 @@ private fun OptionsForm(
                 .padding(resolvedContentInset()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        Text(stringResource(R.string.advanced_intro), style = MaterialTheme.typography.bodyMedium)
+        HintCard(text = stringResource(R.string.advanced_intro))
         ChoiceRow(
             title = stringResource(R.string.advanced_server),
             choices = state.destination.servers.map { it.id to it.label },
