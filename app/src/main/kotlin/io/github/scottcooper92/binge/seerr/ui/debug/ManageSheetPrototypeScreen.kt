@@ -9,11 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +30,6 @@ import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActionsContent
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSheetCallbacks
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestSheetModel
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
@@ -42,14 +37,13 @@ import kotlinx.coroutines.launch
 import com.binge.designsystem.R as DesR
 
 /**
- * Debug builds only: the request manage sheet's proposed layout beside the current one, over sample
- * requests covering each branch the sheet draws. Nothing here reaches a server — a tap names the
- * action it would take in a snackbar — and "Open as a sheet" shows the chosen version in a real one.
+ * Debug builds only: the request manage sheet over sample requests covering each branch it draws.
+ * Nothing here reaches a server — a tap names the action it would take in a snackbar — and "Open as
+ * a sheet" shows it in a real one.
  */
 @Composable
 internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
     var scenario by rememberSaveable { mutableStateOf(ManageSheetScenario.PendingModerator) }
-    var proposed by rememberSaveable { mutableStateOf(true) }
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var asSheet by rememberSaveable { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
@@ -58,7 +52,7 @@ internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
     val tapped = stringResource(R.string.proto_tapped)
     val callbacks = prototypeCallbacks { action -> scope.launch { snackbar.showSnackbar(tapped.format(action)) } }
     val body: @Composable () -> Unit = {
-        SheetBody(proposed, model, callbacks, blockTitle) { blockTitle = it }
+        RequestActionsContent(model, callbacks, blockTitle, onBlockTitleChange = { blockTitle = it })
     }
 
     ScreenScaffold(
@@ -83,7 +77,6 @@ internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
                     blockTitle = false
                 },
             )
-            VersionToggle(proposed = proposed, onChange = { proposed = it })
             // The sheet's own surface and top corners, so the content reads as it would in the sheet.
             Column(
                 modifier =
@@ -103,39 +96,6 @@ internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
     }
     if (asSheet) {
         BingeBottomSheet(onDismissRequest = { asSheet = false }) { body() }
-    }
-}
-
-@Composable
-private fun VersionToggle(
-    proposed: Boolean,
-    onChange: (Boolean) -> Unit,
-) {
-    SingleChoiceSegmentedButtonRow(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = resolvedContentInset()),
-    ) {
-        listOf(true to R.string.proto_version_proposed, false to R.string.proto_version_current).forEachIndexed { index, (value, label) ->
-            SegmentedButton(
-                selected = proposed == value,
-                onClick = { onChange(value) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
-            ) { Text(stringResource(label)) }
-        }
-    }
-}
-
-@Composable
-private fun SheetBody(
-    proposed: Boolean,
-    model: RequestSheetModel,
-    callbacks: RequestSheetCallbacks,
-    blockTitle: Boolean,
-    onBlockTitleChange: (Boolean) -> Unit,
-) {
-    if (proposed) {
-        RequestActionsPrototypeContent(model, callbacks, blockTitle, onBlockTitleChange)
-    } else {
-        RequestActionsContent(model, callbacks, blockTitle, onBlockTitleChange)
     }
 }
 

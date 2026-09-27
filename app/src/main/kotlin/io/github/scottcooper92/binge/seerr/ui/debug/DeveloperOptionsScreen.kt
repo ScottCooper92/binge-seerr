@@ -20,7 +20,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 
 /**
  * Debug builds only, reached from the hub's last row: tools for working on the app rather than
- * using it. For now that is UI prototypes — proposed layouts over sample data, beside what ships.
+ * using it. For now that is UI previews: screens rendered over sample data rather than a server.
  */
 @Composable
 internal fun DeveloperOptionsScreen(

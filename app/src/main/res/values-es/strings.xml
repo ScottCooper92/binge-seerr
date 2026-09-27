@@ -162,6 +162,14 @@
     <string name="media_watch_plays">%1$d reproducciones · %2$d en los últimos 7 días · %3$d en los últimos 30 días</string>
     <string name="media_watch_users_label">Visto por</string>
     <string name="media_clear_data">Borrar los datos</string>
+    <string name="request_sheet_group_request">Petición</string>
+    <string name="request_sheet_group_media">Contenido</string>
+    <string name="request_sheet_requested_by">Solicitada por %1$s</string>
+    <string name="request_remove_detail">Borra esta petición. El título se puede volver a solicitar.</string>
+    <string name="request_remove_block_detail">Borra esta petición e impide que el título se vuelva a solicitar.</string>
+    <string name="media_delete_4k_files">Eliminar los archivos 4K</string>
+    <string name="media_delete_files_detail">Elimina los archivos descargados de %1$s.</string>
+    <string name="media_clear_detail">El servidor olvida este título y todas sus peticiones.</string>
     <string name="media_clear_confirm_title">¿Borrar los datos del contenido?</string>
     <string name="media_clear_confirm_message">El servidor olvida este título: su estado y todas sus peticiones. Cualquiera puede volver a solicitarlo.</string>
     <string name="media_delete_files">Eliminar los archivos</string>

@@ -78,15 +78,10 @@ internal fun RequestActionsSheet(
                         }
                     },
                     onRemove = { pending = Pending.Remove },
-                    onEdit = {
-                        onDismiss()
-                        onEdit()
-                    },
-                    // Sequential, never stacked: each sheet owns a window and a scrim.
-                    onMarkStatus = { is4k ->
-                        onDismiss()
-                        onMarkStatus(is4k)
-                    },
+                    // Stacked, as Binge's advanced-options picker opens over its request sheet: this sheet
+                    // stays open underneath, and Back, a choice or a save returns to it rather than the page.
+                    onEdit = onEdit,
+                    onMarkStatus = onMarkStatus,
                     onDeleteFiles = { is4k -> pending = Pending.DeleteFiles(is4k) },
                     onClearData = { pending = Pending.ClearData },
                 ),
