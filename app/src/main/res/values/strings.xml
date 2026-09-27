@@ -977,4 +977,29 @@
     <string name="tv_consent_point_change_title">Off with one press</string>
     <string name="tv_consent_reassurance">Nothing is collected unless you choose Share usage data.</string>
     <string name="tv_consent_either_choice">Either choice carries on into the app.</string>
+
+    <!-- Debug builds only: the developer options and its UI prototypes. Never shown in a release build, so not translated. -->
+    <string name="debug_group_developer" translatable="false">Developer</string>
+    <string name="debug_developer_options" translatable="false">Developer options</string>
+    <string name="debug_developer_options_detail" translatable="false">UI prototypes and debug tools</string>
+    <string name="debug_group_prototypes" translatable="false">UI prototypes</string>
+    <string name="proto_manage_sheet_title" translatable="false">Request manage sheet</string>
+    <string name="proto_manage_sheet_detail" translatable="false">A proposed layout beside the current one</string>
+    <string name="proto_version_proposed" translatable="false">Proposed</string>
+    <string name="proto_version_current" translatable="false">Current</string>
+    <string name="proto_open_as_sheet" translatable="false">Open as a sheet</string>
+    <string name="proto_tapped" translatable="false">Tapped: %1$s</string>
+    <string name="proto_scenario_pending" translatable="false">Pending</string>
+    <string name="proto_scenario_own" translatable="false">Own request</string>
+    <string name="proto_scenario_failed" translatable="false">Failed</string>
+    <string name="proto_scenario_available" translatable="false">Available</string>
+    <string name="proto_group_request" translatable="false">Request</string>
+    <string name="proto_group_media" translatable="false">Media</string>
+    <string name="proto_requested_by" translatable="false">Requested by %1$s</string>
+    <string name="proto_remove_detail" translatable="false">Deletes this request. The title can be requested again.</string>
+    <string name="proto_remove_block_detail" translatable="false">Deletes this request and stops the title being requested again.</string>
+    <string name="proto_delete_files_4k" translatable="false">Delete 4K files</string>
+    <string name="proto_delete_files_detail" translatable="false">Deletes the downloaded files from %1$s.</string>
+    <string name="proto_clear_detail" translatable="false">Forgets this title on the server, with every request for it.</string>
+    <string name="proto_mark_as_detail" translatable="false">Mark as…</string>
 </resources>

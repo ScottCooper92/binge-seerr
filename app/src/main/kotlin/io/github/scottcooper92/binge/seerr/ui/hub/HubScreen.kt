@@ -13,12 +13,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.SectionHeader
@@ -42,6 +44,8 @@ class HubActions(
     /** The sign-in form on the saved server, for a session it rejected. */
     val onReconnect: () -> Unit,
     val onDisconnect: () -> Unit,
+    /** Debug builds only: the hub's last row, into the developer options. Null hides the row. */
+    val onOpenDeveloperOptions: (() -> Unit)? = null,
 )
 
 /**
@@ -121,7 +125,30 @@ private fun Dashboard(
             HintCard(text = stringResource(R.string.connected_hint))
             DisconnectButton(actions.onDisconnect)
         }
+        actions.onOpenDeveloperOptions?.let { open -> DeveloperGroup(open, inset) }
     }
+}
+
+/** Debug builds only, after everything else: the way into the developer options. */
+@Composable
+private fun DeveloperGroup(
+    onOpen: () -> Unit,
+    inset: Dp,
+) {
+    SectionHeader(title = stringResource(R.string.debug_group_developer))
+    SettingsGroup(
+        title = null,
+        rows =
+            listOf(
+                SettingsRow(
+                    icon = Icons.Filled.DeveloperMode,
+                    label = stringResource(R.string.debug_developer_options),
+                    detail = stringResource(R.string.debug_developer_options_detail),
+                    onClick = onOpen,
+                ),
+            ),
+        modifier = Modifier.padding(start = inset, end = inset, bottom = inset),
+    )
 }
 
 /** Server gone (retry), the dashboard not loaded yet (retry), or the session rejected (reconnect). */

@@ -124,3 +124,11 @@ data object EditConnectionRoute : SeerrRoute
 data class SectionRoute(
     val section: HubSection,
 ) : SeerrRoute
+
+/** Debug builds only: tools for working on the app, reached from the hub. */
+@Serializable
+data object DeveloperOptionsRoute : SeerrRoute
+
+/** Debug builds only: the request manage sheet's proposed layout beside the current one. */
+@Serializable
+data object ManageSheetPrototypeRoute : SeerrRoute
