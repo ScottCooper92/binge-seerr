@@ -118,6 +118,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     selectedSection = backStack.selectedSection(defaultShowing = hubBeside()),
                     onOpenSection = { section -> backStack.openSection(section, defaultShowing = hubBeside()) },
                     onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
+                    onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
                     onReconnect = { backStack.add(EditConnectionRoute) },
                 )
             } else {
@@ -277,6 +278,7 @@ private fun HubEntry(
     selectedSection: HubSection?,
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
+    onOpenRequest: (Int) -> Unit,
     onReconnect: () -> Unit,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
@@ -295,6 +297,7 @@ private fun HubEntry(
             HubActions(
                 onOpenSection = onOpenSection,
                 onOpenAccount = onOpenAccount,
+                onOpenRequest = onOpenRequest,
                 onRetry = viewModel::recheck,
                 onReconnect = onReconnect,
                 onDisconnect = viewModel::disconnect,

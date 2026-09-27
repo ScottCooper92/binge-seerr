@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import com.binge.designsystem.R as DesR
 @Composable
 internal fun DownloadingStrip(
     items: List<HubDownload>,
+    onClick: (HubDownload) -> Unit,
     modifier: Modifier = Modifier,
     inset: Dp = resolvedContentInset(),
 ) {
@@ -48,18 +50,22 @@ internal fun DownloadingStrip(
         contentPadding = PaddingValues(horizontal = inset),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.hub_download_strip_spacing)),
     ) {
-        items(items, key = { it.requestId }) { item -> DownloadingCard(item) }
+        items(items, key = { it.requestId }) { item -> DownloadingCard(item, onClick = { onClick(item) }) }
     }
 }
 
 @Composable
-private fun DownloadingCard(item: HubDownload) {
+private fun DownloadingCard(
+    item: HubDownload,
+    onClick: () -> Unit,
+) {
     Row(
         modifier =
             Modifier
                 .width(dimensionResource(R.dimen.hub_download_card_width))
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceContainer)
+                .clickable(onClick = onClick)
                 .padding(dimensionResource(DesR.dimen.padding_sm)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
