@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.telemetry
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.scottcooper92.binge.seerr.ui.BlocklistDetailRoute
 import io.github.scottcooper92.binge.seerr.ui.BlocklistRoute
+import io.github.scottcooper92.binge.seerr.ui.DeveloperOptionsRoute
 import io.github.scottcooper92.binge.seerr.ui.DiscoverSliderRoute
 import io.github.scottcooper92.binge.seerr.ui.DvrInstanceRoute
 import io.github.scottcooper92.binge.seerr.ui.EditConnectionRoute
@@ -10,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.ui.HomeRoute
 import io.github.scottcooper92.binge.seerr.ui.HubRoute
 import io.github.scottcooper92.binge.seerr.ui.IssueDetailRoute
 import io.github.scottcooper92.binge.seerr.ui.IssuesRoute
+import io.github.scottcooper92.binge.seerr.ui.ManageSheetPrototypeRoute
 import io.github.scottcooper92.binge.seerr.ui.NotificationAgentRoute
 import io.github.scottcooper92.binge.seerr.ui.OverrideRuleRoute
 import io.github.scottcooper92.binge.seerr.ui.RequestDetailRoute
@@ -50,6 +52,8 @@ fun SeerrRoute.screenName(): String =
         SettingsRoute -> "settings"
         EditConnectionRoute -> "edit_connection"
         is SectionRoute -> "section"
+        DeveloperOptionsRoute -> "developer_options"
+        ManageSheetPrototypeRoute -> "manage_sheet_prototype"
     }
 
 /** A television destination's name: the rail's own key, marked so it never collides with a phone screen. */

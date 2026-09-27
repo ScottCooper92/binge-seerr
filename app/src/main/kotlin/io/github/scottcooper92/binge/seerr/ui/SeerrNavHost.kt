@@ -22,7 +22,10 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
+import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.debug.DeveloperOptionsScreen
+import io.github.scottcooper92.binge.seerr.ui.debug.ManageSheetPrototypeScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
@@ -114,11 +117,13 @@ private fun EntryProviderScope<NavKey>.homeEntries(
         PaneContent {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.
             if (connected() == true) {
+                val openDeveloperOptions: () -> Unit = { backStack.add(DeveloperOptionsRoute) }
                 HubEntry(
                     selectedSection = backStack.selectedSection(defaultShowing = hubBeside()),
                     onOpenSection = { section -> backStack.openSection(section, defaultShowing = hubBeside()) },
                     onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
                     onReconnect = { backStack.add(EditConnectionRoute) },
+                    onOpenDeveloperOptions = openDeveloperOptions.takeIf { BuildConfig.DEBUG },
                 )
             } else {
                 LoadingScreen()
@@ -181,6 +186,20 @@ private fun EntryProviderScope<NavKey>.detailEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
 ) {
+    // Debug builds only. Developer options opens straight off the hub, so it takes showBack like the
+    // account card's destination; the prototype is always stacked above it, so its arrow always shows.
+    entry<DeveloperOptionsRoute>(metadata = DetailPane) {
+        PaneContent {
+            val back: () -> Unit = { backStack.removeLastOrNull() }
+            DeveloperOptionsScreen(
+                onBack = back.takeIf { showBack() },
+                onOpenManageSheetPrototype = { backStack.add(ManageSheetPrototypeRoute) },
+            )
+        }
+    }
+    entry<ManageSheetPrototypeRoute>(metadata = DetailPane) {
+        PaneContent { ManageSheetPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+    }
     entry<RequestDetailRoute>(metadata = DetailPane) { route ->
         PaneContent {
             // No showBack: the hero's DetailOverlayTopBar renders its back arrow unconditionally, which a
@@ -278,6 +297,7 @@ private fun HubEntry(
     onOpenSection: (HubSection) -> Unit,
     onOpenAccount: (Int) -> Unit,
     onReconnect: () -> Unit,
+    onOpenDeveloperOptions: (() -> Unit)?,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -298,6 +318,7 @@ private fun HubEntry(
                 onRetry = viewModel::recheck,
                 onReconnect = onReconnect,
                 onDisconnect = viewModel::disconnect,
+                onOpenDeveloperOptions = onOpenDeveloperOptions,
             ),
     )
 }
