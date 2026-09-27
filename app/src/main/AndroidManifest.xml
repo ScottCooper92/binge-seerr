@@ -36,7 +36,7 @@
         android:banner="@drawable/tv_banner"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="@string/companion_name"
+        android:label="@string/companion_label"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true">
 
@@ -135,7 +135,7 @@
 
             <meta-data
                 android:name="com.binge.companion.name"
-                android:value="@string/companion_name" />
+                android:value="@string/companion_label" />
             <meta-data
                 android:name="com.binge.companion.icon"
                 android:resource="@drawable/ic_companion" />

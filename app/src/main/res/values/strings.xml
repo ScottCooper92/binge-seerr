@@ -2,6 +2,9 @@
 <resources>
     <!-- A brand name, shown by the host as this integration's label. Never translated. -->
     <string name="companion_name" translatable="false">Seerr</string>
+    <!-- The installed app's label, in the launcher and in the host's companion list. Apart from
+         companion_name only so a debug build can say so (src/debug); screens keep companion_name. -->
+    <string name="companion_label" translatable="false">Seerr</string>
 
     <string name="setup_intro">Connect your Seerr, Jellyseerr or Overseerr server. Binge will find this app and, once you allow it there, request titles through it.</string>
     <string name="setup_server_url">Server address</string>
