@@ -19,6 +19,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
@@ -41,7 +42,7 @@ internal fun SetupAddressStep(
                 .padding(resolvedContentInset()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        Text(stringResource(R.string.setup_intro), style = MaterialTheme.typography.bodyMedium)
+        HintCard(text = stringResource(R.string.setup_intro))
         OutlinedTextField(
             value = state.serverUrl,
             onValueChange = onEditAddress,
