@@ -125,7 +125,7 @@ data class SectionRoute(
     val section: HubSection,
 ) : SeerrRoute
 
-/** Debug builds only: tools for working on the app, reached from Settings. */
+/** Debug builds only: tools for working on the app, reached from the hub. */
 @Serializable
 data object DeveloperOptionsRoute : SeerrRoute
 
