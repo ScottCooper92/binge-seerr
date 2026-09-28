@@ -81,7 +81,7 @@ internal fun RequestActionsContent(
                 .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        PrototypeHeader(model.item)
+        RequestSheetHeader(model.item)
         DecisionBar(model.actions, blockTitle, callbacks)
         val requestRows = requestRows(model, blockTitle, onBlockTitleChange, callbacks)
         val mediaRows =
@@ -107,7 +107,7 @@ internal fun RequestActionsContent(
 
 /** Poster, title, what it is, who asked and when, and where the request stands. */
 @Composable
-private fun PrototypeHeader(item: RequestItem) {
+private fun RequestSheetHeader(item: RequestItem) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         verticalAlignment = Alignment.CenterVertically,

@@ -159,7 +159,6 @@ app:media_delete_files_second_message  ee49c02e3821
 app:media_delete_files_second_title  22d3e0dbdfd6
 app:media_files_deleted  dad1dd4af3f4
 app:media_instance_standard  ef6691545d2c
-app:media_manage  d82d731503ec
 app:media_mark_as  74fc19463b2e
 app:media_mark_as_scope_caption  0e7a1f06ebe3
 app:media_open_radarr  e669d99f5781
