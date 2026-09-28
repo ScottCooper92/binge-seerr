@@ -1,16 +1,17 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -19,12 +20,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.SettingsGroup
+import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import com.binge.designsystem.R as DesR
 
 /**
@@ -53,12 +59,11 @@ internal class RequestSheetCallbacks(
 )
 
 /**
- * One sheet, two groups: what can be done to the **request**, and what can be done to the server's
- * **media record**. Two objects, which would normally argue against merging — but they are largely
- * mutually exclusive by state, so on any one title most of one group is absent.
- *
- * Whichever group the request's state makes relevant goes first: the request half while there is
- * still an approve or a retry to make, the media half once that is settled.
+ * The request's context heads the sheet; the decision it is waiting on sits directly under that as
+ * one bar; everything else is a settings row in one of two groups — the **request**, and the
+ * server's **media record** — each destructive row saying what it destroys. The two groups are
+ * largely exclusive by state, so whichever the request's state makes live goes first: the request
+ * while there is still an approve or a retry to make, the media once that is settled.
  */
 @Composable
 internal fun RequestActionsContent(
@@ -68,168 +73,213 @@ internal fun RequestActionsContent(
     onBlockTitleChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val item = model.item
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
                 .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        Text(
-            text = item.title ?: stringResource(item.mediaType.labelRes()),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_s)),
-        )
-        val requestGroup: @Composable () -> Unit = {
-            PositiveAction(model.actions, callbacks.onApprove, callbacks.onRetry)
-            if (model.canEdit) {
-                BingeTextButton(
-                    label = stringResource(R.string.request_edit_title),
-                    onClick = callbacks.onEdit,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            BlockTitleRow(model.actions, blockTitle, onBlockTitleChange)
-            DestructiveActions(model.actions, blockTitle, callbacks.onDecline, callbacks.onRemove)
+        RequestSheetHeader(model.item)
+        DecisionBar(model.actions, blockTitle, callbacks)
+        val requestRows = requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+        val mediaRows =
+            model.media
+                ?.takeIf { it.canManage }
+                ?.let { mediaRows(it, callbacks) }
+                .orEmpty()
+        val request: @Composable () -> Unit = {
+            if (requestRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
         }
-        val mediaGroup: @Composable () -> Unit = {
-            model.media?.takeIf { it.canManage }?.let { record -> MediaGroup(record, callbacks) }
+        val media: @Composable () -> Unit = {
+            if (mediaRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
         }
-        // An approve or a retry still to make is what "the request half is the live one" means.
         if (model.actions.canApprove || model.actions.canRetry) {
-            requestGroup()
-            mediaGroup()
+            request()
+            media()
         } else {
-            mediaGroup()
-            requestGroup()
+            media()
+            request()
         }
     }
 }
 
-/** Approve, or retry where the request already failed — one button, since the two never both apply. */
+/** Poster, title, what it is, who asked and when, and where the request stands. */
 @Composable
-private fun PositiveAction(
-    actions: RequestActions,
-    onApprove: () -> Unit,
-    onRetry: () -> Unit,
-) {
-    if (!actions.canApprove && !actions.canRetry) return
-    BingeFilledButton(
-        label = stringResource(if (actions.canRetry) R.string.request_retry else R.string.request_approve),
-        onClick = if (actions.canRetry) onRetry else onApprove,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-}
-
-/** The block toggle, shown only where it has something to attach to: a decline or a remove below it. */
-@Composable
-private fun BlockTitleRow(
-    actions: RequestActions,
-    blockTitle: Boolean,
-    onBlockTitleChange: (Boolean) -> Unit,
-) {
-    if (!actions.canBlock || !(actions.canDecline || actions.canRemove)) return
+private fun RequestSheetHeader(item: RequestItem) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onBlockTitleChange(!blockTitle)
-                }.padding(vertical = dimensionResource(DesR.dimen.padding_s)),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.request_block_title), style = MaterialTheme.typography.bodyLarge)
+        ListRowPoster(imageUrl = item.posterUrl, contentDescription = null)
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+        ) {
             Text(
-                stringResource(R.string.request_block_caption),
-                style = MaterialTheme.typography.bodySmall,
+                text = item.title ?: stringResource(item.mediaType.labelRes()),
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text =
+                    listOfNotNull(
+                        stringResource(item.mediaType.labelRes()),
+                        item.year,
+                    ).joinToString(stringResource(R.string.hub_meta_separator)),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
+            Text(
+                text =
+                    listOfNotNull(
+                        stringResource(R.string.request_sheet_requested_by, requester),
+                        formatRelativeOrAbsolute(item.requestedAtMillis),
+                    ).joinToString(stringResource(R.string.hub_meta_separator)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            item.status?.let { RequestStateChip(status = it) }
         }
-        Switch(checked = blockTitle, onCheckedChange = onBlockTitleChange)
     }
 }
 
 /**
- * Decline and remove. The label carries the toggle rather than the toggle being a separate
- * confirmation, so what the button is about to do is on the button.
- *
- * Both are always toned: declining and removing are each a decision about the request in front
- * of you, whether or not the toggle adds a block on top. Remove sits below decline as a text
- * button — lower emphasis than the outlined decline, since it is the more final of the two.
+ * The one decision the request is waiting on, as a pair side by side: decline beside approve. A
+ * failed request has only retry. The decline label carries the block switch below, as it does today.
  */
 @Composable
-private fun DestructiveActions(
+private fun DecisionBar(
     actions: RequestActions,
     blockTitle: Boolean,
-    onDecline: () -> Unit,
-    onRemove: () -> Unit,
+    callbacks: RequestSheetCallbacks,
 ) {
-    if (actions.canDecline) {
-        val label = if (blockTitle) R.string.request_decline_and_block else R.string.request_decline
-        BingeOutlinedButton(
-            label = stringResource(label),
-            onClick = onDecline,
-            destructive = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-    if (actions.canRemove) {
-        val label = if (blockTitle) R.string.request_remove_and_block else R.string.request_remove
-        BingeTextButton(
-            label = stringResource(label),
-            onClick = onRemove,
-            destructive = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+    when {
+        actions.canRetry ->
+            BingeFilledButton(
+                label = stringResource(R.string.request_retry),
+                onClick = callbacks.onRetry,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        actions.canApprove ->
+            Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+                if (actions.canDecline) {
+                    BingeOutlinedButton(
+                        label = stringResource(if (blockTitle) R.string.request_decline_and_block else R.string.request_decline),
+                        onClick = callbacks.onDecline,
+                        destructive = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                BingeFilledButton(
+                    label = stringResource(R.string.request_approve),
+                    onClick = callbacks.onApprove,
+                    modifier = Modifier.weight(1f),
+                )
+            }
     }
 }
 
-/** The server's record of the title, per instance. Clearing it sits last, since it takes the request too. */
 @Composable
-private fun MediaGroup(
-    media: MediaRecord,
+private fun requestRows(
+    model: RequestSheetModel,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
     callbacks: RequestSheetCallbacks,
-) {
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-    Text(stringResource(R.string.media_manage), style = MaterialTheme.typography.titleSmall)
-    media.instances.forEach { instance ->
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            Text(
-                stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.weight(1f),
-            )
-            instance.status?.let { MediaStateChip(status = it) }
+): List<SettingsRow> {
+    val actions = model.actions
+    val error = MaterialTheme.colorScheme.error
+    return buildList {
+        if (model.canEdit) {
+            add(SettingsRow(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
         }
-        if (media.canSetStatus) {
-            MarkAsRow { callbacks.onMarkStatus(instance.is4k) }
-        }
-        if (media.canDeleteFiles && instance.status.hasFiles()) {
-            BingeOutlinedButton(
-                label = stringResource(R.string.media_delete_files),
-                onClick = { callbacks.onDeleteFiles(instance.is4k) },
-                destructive = true,
-                modifier = Modifier.fillMaxWidth(),
+        if (actions.canBlock && (actions.canDecline || actions.canRemove)) {
+            add(
+                SettingsRow(
+                    icon = Icons.Filled.Block,
+                    label = stringResource(R.string.request_block_title),
+                    detail = stringResource(R.string.request_block_caption),
+                    trailingContent = { Switch(checked = blockTitle, onCheckedChange = onBlockTitleChange) },
+                    onClick = { onBlockTitleChange(!blockTitle) },
+                ),
             )
         }
-    }
-    if (media.canClearData) {
-        BingeOutlinedButton(
-            label = stringResource(R.string.media_clear_data),
-            onClick = callbacks.onClearData,
-            destructive = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (actions.canRemove) {
+            add(
+                SettingsRow(
+                    icon = Icons.Filled.Delete,
+                    iconTint = error,
+                    label = stringResource(if (blockTitle) R.string.request_remove_and_block else R.string.request_remove),
+                    detail = stringResource(if (blockTitle) R.string.request_remove_block_detail else R.string.request_remove_detail),
+                    trailingContent = {},
+                    onClick = callbacks.onRemove,
+                ),
+            )
+        }
     }
 }
+
+/**
+ * Each instance is one row carrying its state; where the status can be set the row opens the picker,
+ * so "what it is" and "change it" are one thing rather than a label and a separate Mark as row.
+ */
+@Composable
+private fun mediaRows(
+    media: MediaRecord,
+    callbacks: RequestSheetCallbacks,
+): List<SettingsRow> {
+    val error = MaterialTheme.colorScheme.error
+    val client = stringResource(if (media.isTv) R.string.media_client_sonarr else R.string.media_client_radarr)
+    return buildList {
+        media.instances.forEach { instance ->
+            add(instanceRow(instance, media.canSetStatus) { callbacks.onMarkStatus(instance.is4k) })
+            if (media.canDeleteFiles && instance.status.hasFiles()) {
+                add(
+                    SettingsRow(
+                        icon = Icons.Filled.DeleteSweep,
+                        iconTint = error,
+                        label = stringResource(if (instance.is4k) R.string.media_delete_4k_files else R.string.media_delete_files),
+                        detail = stringResource(R.string.media_delete_files_detail, client),
+                        trailingContent = {},
+                        onClick = { callbacks.onDeleteFiles(instance.is4k) },
+                    ),
+                )
+            }
+        }
+        if (media.canClearData) {
+            add(
+                SettingsRow(
+                    icon = Icons.Filled.DeleteForever,
+                    iconTint = error,
+                    label = stringResource(R.string.media_clear_data),
+                    detail = stringResource(R.string.media_clear_detail),
+                    trailingContent = {},
+                    onClick = callbacks.onClearData,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun instanceRow(
+    instance: MediaInstance,
+    canSetStatus: Boolean,
+    onMarkStatus: () -> Unit,
+): SettingsRow =
+    SettingsRow(
+        icon = Icons.Filled.Movie,
+        label = stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard),
+        detail = stringResource(R.string.media_mark_as).takeIf { canSetStatus },
+        clickable = canSetStatus,
+        trailingContent = instance.status?.let { status -> { MediaStateChip(status = status) } },
+        onClick = onMarkStatus,
+    )
 
 /**
  * Whether an instance in this state has files to delete. [MediaRecord.canDeleteFiles] is who may
@@ -238,33 +288,3 @@ private fun MediaGroup(
  */
 private fun SeerrMediaStatusCode?.hasFiles(): Boolean =
     this == SeerrMediaStatusCode.Processing || this == SeerrMediaStatusCode.PartiallyAvailable || this == SeerrMediaStatusCode.Available
-
-/**
- * Opens [MediaStatusSheet]. It carries no value of its own: the instance header above already reads
- * the current state out, and a second copy here is what the chip group used to do.
- */
-@Composable
-private fun MarkAsRow(onClick: () -> Unit) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .clickable(onClick = onClick)
-                .padding(vertical = dimensionResource(DesR.dimen.padding_s)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Text(
-            text = stringResource(R.string.media_mark_as),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}

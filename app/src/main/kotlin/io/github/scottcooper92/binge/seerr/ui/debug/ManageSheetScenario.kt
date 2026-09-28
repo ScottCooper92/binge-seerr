@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.debug
 import androidx.annotation.StringRes
 import io.github.scottcooper92.binge.seerr.R
 
-/** The sheet's distinct shapes, each one of the branches [RequestActionsPrototypeContent] draws. */
+/** The sheet's distinct shapes, each one of the branches the manage sheet draws. */
 internal enum class ManageSheetScenario(
     @param:StringRes val labelRes: Int,
 ) {

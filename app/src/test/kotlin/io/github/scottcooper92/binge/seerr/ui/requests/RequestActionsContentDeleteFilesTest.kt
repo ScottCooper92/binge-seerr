@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -17,15 +16,15 @@ import org.robolectric.RobolectricTestRunner
 
 /**
  * "Delete files" is a per-instance offer: [MediaRecord.canDeleteFiles] is who may delete at all,
- * but only an instance whose own status implies files exist should actually show the button
- * (#338).
+ * but only an instance whose own status implies files exist should actually show the row (#338).
+ * A 4K instance's row names its copy ("Delete 4K files"), so counts span both labels.
  */
 @RunWith(RobolectricTestRunner::class)
 class RequestActionsContentDeleteFilesTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    /** Every status the server can report, plus no status at all — three of them offer the button. */
+    /** Every status the server can report, plus no status at all — three of them offer the row. */
     @Test
     fun `the button offers only for a status that implies files exist`() {
         val statuses =
@@ -42,7 +41,7 @@ class RequestActionsContentDeleteFilesTest {
         setContent(instances = statuses.mapIndexed { index, status -> instance(is4k = index % 2 == 1, status = status) })
 
         // Processing, PartiallyAvailable and Available are the only three with files.
-        composeTestRule.onAllNodesWithText(deleteFilesLabel()).assertCountEquals(3)
+        assertEquals(3, deleteRowCount())
     }
 
     /** The exact bug reported: a downloaded standard copy and an undownloaded 4K copy of the same title. */
@@ -58,7 +57,7 @@ class RequestActionsContentDeleteFilesTest {
             onDeleteFiles = { is4k -> reported += is4k },
         )
 
-        composeTestRule.onAllNodesWithText(deleteFilesLabel()).assertCountEquals(1)
+        assertEquals(1, deleteRowCount())
         composeTestRule.onNodeWithText(deleteFilesLabel()).performClick()
         assertEquals(listOf(false), reported)
     }
@@ -71,7 +70,7 @@ class RequestActionsContentDeleteFilesTest {
             canDeleteFiles = false,
         )
 
-        composeTestRule.onAllNodesWithText(deleteFilesLabel()).assertCountEquals(0)
+        assertEquals(0, deleteRowCount())
     }
 
     private fun setContent(
@@ -114,6 +113,14 @@ class RequestActionsContentDeleteFilesTest {
 
     private fun deleteFilesLabel() =
         ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.media_delete_files)
+
+    private fun delete4kFilesLabel() =
+        ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.media_delete_4k_files)
+
+    /** Delete rows of either copy: the Standard row's label and the 4K row's own. */
+    private fun deleteRowCount(): Int =
+        composeTestRule.onAllNodesWithText(deleteFilesLabel()).fetchSemanticsNodes().size +
+            composeTestRule.onAllNodesWithText(delete4kFilesLabel()).fetchSemanticsNodes().size
 
     private fun instance(
         is4k: Boolean,

@@ -169,7 +169,6 @@
     <string name="request_primary_review">Review request</string>
     <string name="request_primary_manage">Manage</string>
     <string name="request_edit_save">Save changes</string>
-    <string name="media_manage">Manage media</string>
     <string name="media_instance_standard">Standard</string>
     <string name="media_mark_as">Mark as</string>
     <string name="media_mark_as_scope_caption">Changes what every request for this title shows.</string>
@@ -180,6 +179,15 @@
     <string name="media_watch_plays">%1$d plays · %2$d in the last 7 days · %3$d in the last 30 days</string>
     <string name="media_watch_users_label">Watched by</string>
     <string name="media_clear_data">Clear data</string>
+    <!-- The manage sheet's two groups, and the line under each destructive row saying what it destroys. -->
+    <string name="request_sheet_group_request">Request</string>
+    <string name="request_sheet_group_media">Media</string>
+    <string name="request_sheet_requested_by">Requested by %1$s</string>
+    <string name="request_remove_detail">Deletes this request. The title can be requested again.</string>
+    <string name="request_remove_block_detail">Deletes this request and stops the title being requested again.</string>
+    <string name="media_delete_4k_files">Delete 4K files</string>
+    <string name="media_delete_files_detail">Deletes the downloaded files from %1$s.</string>
+    <string name="media_clear_detail">Forgets this title on the server, with every request for it.</string>
     <string name="media_clear_confirm_title">Clear media data?</string>
     <string name="media_clear_confirm_message">The server forgets this title: its status and every request for it. Anyone can request it again.</string>
     <string name="media_delete_files">Delete files</string>
@@ -984,22 +992,11 @@
     <string name="debug_developer_options_detail" translatable="false">UI prototypes and debug tools</string>
     <string name="debug_group_prototypes" translatable="false">UI prototypes</string>
     <string name="proto_manage_sheet_title" translatable="false">Request manage sheet</string>
-    <string name="proto_manage_sheet_detail" translatable="false">A proposed layout beside the current one</string>
-    <string name="proto_version_proposed" translatable="false">Proposed</string>
-    <string name="proto_version_current" translatable="false">Current</string>
+    <string name="proto_manage_sheet_detail" translatable="false">Every state of the sheet, over sample requests</string>
     <string name="proto_open_as_sheet" translatable="false">Open as a sheet</string>
     <string name="proto_tapped" translatable="false">Tapped: %1$s</string>
     <string name="proto_scenario_pending" translatable="false">Pending</string>
     <string name="proto_scenario_own" translatable="false">Own request</string>
     <string name="proto_scenario_failed" translatable="false">Failed</string>
     <string name="proto_scenario_available" translatable="false">Available</string>
-    <string name="proto_group_request" translatable="false">Request</string>
-    <string name="proto_group_media" translatable="false">Media</string>
-    <string name="proto_requested_by" translatable="false">Requested by %1$s</string>
-    <string name="proto_remove_detail" translatable="false">Deletes this request. The title can be requested again.</string>
-    <string name="proto_remove_block_detail" translatable="false">Deletes this request and stops the title being requested again.</string>
-    <string name="proto_delete_files_4k" translatable="false">Delete 4K files</string>
-    <string name="proto_delete_files_detail" translatable="false">Deletes the downloaded files from %1$s.</string>
-    <string name="proto_clear_detail" translatable="false">Forgets this title on the server, with every request for it.</string>
-    <string name="proto_mark_as_detail" translatable="false">Mark as…</string>
 </resources>
