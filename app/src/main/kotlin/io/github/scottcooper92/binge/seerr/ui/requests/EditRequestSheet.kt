@@ -1,17 +1,14 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -22,13 +19,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.CheckboxRow
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoiceField
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
@@ -94,8 +91,13 @@ internal fun EditRequestContent(
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            edit.seasons.forEach { season ->
-                SeasonToggleRow(season, enabled = !edit.saving, onToggle = { actions.onToggleSeason(season.number) })
+            edit.seasons.forEachIndexed { index, season ->
+                SeasonToggleRow(
+                    season = season,
+                    enabled = !edit.saving,
+                    onToggle = { actions.onToggleSeason(season.number) },
+                    showDivider = index != edit.seasons.lastIndex,
+                )
             }
             if (destination != null) {
                 if (destination.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -210,22 +212,15 @@ private fun SeasonToggleRow(
     season: SeasonChoice,
     enabled: Boolean,
     onToggle: () -> Unit,
+    showDivider: Boolean,
 ) {
-    val rowEnabled = enabled && !season.locked
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = rowEnabled, onClick = onToggle),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        Checkbox(checked = season.selected || season.locked, onCheckedChange = { onToggle() }, enabled = rowEnabled)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(season.name ?: stringResource(R.string.request_season_number, season.number), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                pluralStringResource(R.plurals.request_episodes, season.episodeCount, season.episodeCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        season.heldStatus?.let { MediaStateChip(status = it) }
-    }
+    CheckboxRow(
+        label = season.name ?: stringResource(R.string.request_season_number, season.number),
+        subtitle = pluralStringResource(R.plurals.request_episodes, season.episodeCount, season.episodeCount),
+        checked = season.selected || season.locked,
+        onToggle = { onToggle() },
+        enabled = enabled && !season.locked,
+        showDivider = showDivider,
+        trailingContent = season.heldStatus?.let { status -> { MediaStateChip(status = status) } },
+    )
 }
