@@ -45,6 +45,8 @@ import com.binge.companion.contracts.request.v1.UnblockTitleResponse
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
+import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
+import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
@@ -104,18 +106,23 @@ class SeerrRequestService(
     private val observeIntervalMillis: Long = OBSERVE_INTERVAL_MILLIS,
     private val attentionIntervalMillis: Long = ATTENTION_INTERVAL_MILLIS,
     private val statusCache: MediaStatusStore = NoMediaStatusStore,
+    private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val mediaIds = SeerrMediaIds { connection.api() }
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
 
+    /** The one place a bound Binge client is known to have handed over its identity, successfully. */
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
         statusCatching {
             val profile = connection.profile()
-            handshakeResponse(
-                capabilities = permissions().toCapabilities(profile),
-                providerName = profile.variant.displayName,
-                companionVersionName = versionName,
-            )
+            val response =
+                handshakeResponse(
+                    capabilities = permissions().toCapabilities(profile),
+                    providerName = profile.variant.displayName,
+                    companionVersionName = versionName,
+                )
+            bingeConnection.recordHandshake()
+            response
         }
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =

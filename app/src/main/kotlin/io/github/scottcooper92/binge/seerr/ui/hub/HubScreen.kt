@@ -16,8 +16,10 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -26,6 +28,7 @@ import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.SettingsRowDestination
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
@@ -122,10 +125,39 @@ private fun Dashboard(
             modifier = Modifier.padding(inset),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
-            HintCard(text = stringResource(R.string.connected_hint))
+            BingeTile(state.bingeStatus)
             DisconnectButton(actions.onDisconnect)
         }
         actions.onOpenDeveloperOptions?.let { open -> DeveloperGroup(open, inset) }
+    }
+}
+
+/**
+ * Binge's relationship to this device, replacing the old static hint (#469): a row that opens the
+ * Play Store where Binge is missing, or the hint that already existed for the other two states —
+ * neither needs a dismiss, since installing or connecting retires the message on its own.
+ */
+@Composable
+private fun BingeTile(status: BingeStatus) {
+    when (status) {
+        BingeStatus.NotInstalled -> {
+            val context = LocalContext.current
+            SettingsGroup(
+                title = null,
+                rows =
+                    listOf(
+                        SettingsRow(
+                            icon = Icons.Filled.Movie,
+                            label = stringResource(R.string.hub_binge_not_installed_title),
+                            detail = stringResource(R.string.hub_binge_not_installed_detail),
+                            destination = SettingsRowDestination.External,
+                            onClick = { context.openBingeOnPlayStore() },
+                        ),
+                    ),
+            )
+        }
+        BingeStatus.NotConnected -> HintCard(text = stringResource(R.string.connected_hint))
+        BingeStatus.Connected -> HintCard(text = stringResource(R.string.hub_binge_connected_hint))
     }
 }
 

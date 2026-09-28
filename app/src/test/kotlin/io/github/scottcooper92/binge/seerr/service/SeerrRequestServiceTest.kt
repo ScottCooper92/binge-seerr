@@ -23,7 +23,9 @@ import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
+import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
+import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
@@ -84,6 +86,7 @@ class SeerrRequestServiceTest {
         version: String = "2.7.0",
         cache: MediaStatusStore = NoMediaStatusStore,
         now: () -> Long = { 0L },
+        bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
             CredentialStore(
@@ -104,6 +107,7 @@ class SeerrRequestServiceTest {
                     observeIntervalMillis = 1,
                     attentionIntervalMillis = 1,
                     statusCache = cache,
+                    bingeConnection = bingeConnection,
                 ),
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
@@ -151,6 +155,17 @@ class SeerrRequestServiceTest {
                 ),
                 response.capabilitiesList.toSet(),
             )
+        }
+
+    @Test
+    fun `a successful handshake records that Binge has connected`() =
+        runTest {
+            val recording = RecordingBingeConnectionStore()
+
+            // connected() itself performs one handshake as setup, which is what this asserts landed.
+            connected(bingeConnection = recording)
+
+            assertTrue(recording.recorded)
         }
 
     @Test
@@ -941,5 +956,19 @@ class SeerrRequestServiceTest {
         override fun encrypt(plaintext: String): String = plaintext
 
         override fun decrypt(ciphertext: String): String = ciphertext
+    }
+
+    private class RecordingBingeConnectionStore : BingeConnectionStore {
+        var recorded = false
+
+        override val hasConnected = kotlinx.coroutines.flow.flowOf(recorded)
+
+        override suspend fun recordHandshake() {
+            recorded = true
+        }
+
+        override suspend fun forget() {
+            recorded = false
+        }
     }
 }

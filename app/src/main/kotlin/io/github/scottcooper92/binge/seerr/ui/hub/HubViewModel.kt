@@ -3,6 +3,8 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
+import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
@@ -37,10 +39,15 @@ class HubViewModel
         private val loader: HubOverviewLoader,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val pollerTicker: DownloadsPollerTicker = DownloadsPollerTicker(),
+        private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
+        private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)
         private val screenVisible = MutableStateFlow(false)
+
+        /** Re-read on every arrival: installing Binge while this screen is backgrounded should flip the tile unprompted. */
+        private val installedTrigger = MutableStateFlow(installCheck.isInstalled())
 
         /** Bumped by a manual/auto re-check and by the connection itself changing underneath this instance. */
         private val reloadTrigger: Flow<Unit> =
@@ -77,14 +84,28 @@ class HubViewModel
                 ticker = pollerTicker,
             )
 
+        /** Not installed always wins; otherwise "connected" is whether Binge has ever handshaken this server. */
+        private val bingeStatus: Flow<BingeStatus> =
+            combine(installedTrigger, bingeConnection.hasConnected) { installed, connected ->
+                when {
+                    !installed -> BingeStatus.NotInstalled
+                    connected -> BingeStatus.Connected
+                    else -> BingeStatus.NotConnected
+                }
+            }
+
+        /** Folded with the downloading strip rather than added as a sixth argument: [combine] has no six-flow overload. */
+        private val downloadingAndBingeStatus: Flow<Pair<List<HubDownload>, BingeStatus>> =
+            combine(downloadsPoller.downloading, bingeStatus) { downloading, status -> downloading to status }
+
         val uiState: StateFlow<HubUiState> =
             combine(
                 server,
                 health,
                 overview,
-                downloadsPoller.downloading,
+                downloadingAndBingeStatus,
                 refreshedPendingCount,
-            ) { server, health, overview, downloading, pending ->
+            ) { server, health, overview, (downloading, bingeStatus), pending ->
                 // Not loaded is not ready: the overview carries the user's permissions, and every
                 // manage row is gated on one, so a Ready built on the placeholder is a hub with
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
@@ -96,6 +117,7 @@ class HubViewModel
                         health = effectiveHealth(health, overview),
                         overview = overview.copy(pendingRequestCount = pending ?: overview.pendingRequestCount),
                         downloading = downloading,
+                        bingeStatus = bingeStatus,
                     )
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, HubUiState.Loading)
@@ -117,6 +139,7 @@ class HubViewModel
             screenVisible.value = visible
             downloadsPoller.setScreenVisible(visible)
             if (visible) {
+                installedTrigger.value = installCheck.isInstalled()
                 viewModelScope.launch(dispatcher) { loader.pendingRequestCount()?.let { refreshedPendingCount.value = it } }
             }
         }

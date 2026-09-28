@@ -5,6 +5,7 @@ import com.binge.companion.sdk.HostPolicy
 import com.binge.companion.sdk.IntegrationService
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.scottcooper92.binge.seerr.BuildConfig
+import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.grpc.BindableService
@@ -25,8 +26,11 @@ class SeerrCompanionService : IntegrationService() {
     @Inject
     lateinit var statuses: MediaStatusStore
 
+    @Inject
+    lateinit var bingeConnection: BingeConnectionStore
+
     override fun services(): List<BindableService> =
-        listOf(SeerrRequestService(connection, BuildConfig.VERSION_NAME, statusCache = statuses))
+        listOf(SeerrRequestService(connection, BuildConfig.VERSION_NAME, statusCache = statuses, bingeConnection = bingeConnection))
 
     /**
      * Debug builds admit any caller, because a debug Binge is signed with its developer's own key

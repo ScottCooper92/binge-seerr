@@ -102,7 +102,14 @@ internal fun previewReady(
     health: ConnectionHealth = ConnectionHealth.Healthy,
     overview: HubOverview = previewAdminOverview(),
     downloading: List<HubDownload> = previewDownloads(),
-) = HubUiState.Ready(server = previewServer(), health = health, overview = overview, downloading = downloading)
+    bingeStatus: BingeStatus = BingeStatus.NotConnected,
+) = HubUiState.Ready(
+    server = previewServer(),
+    health = health,
+    overview = overview,
+    downloading = downloading,
+    bingeStatus = bingeStatus,
+)
 
 /**
  * A user the server meters on both types, with movies spent.

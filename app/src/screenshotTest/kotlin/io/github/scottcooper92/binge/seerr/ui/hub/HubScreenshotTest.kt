@@ -103,4 +103,28 @@ class HubScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun loading() = HubScreen(state = HubUiState.Loading, actions = previewActions())
+
+    /**
+     * Binge missing: the tile becomes a clickable row rather than a hint, with the external-link glyph
+     * (#469). The restricted overview, with no quota and no downloads, is what keeps the tile inside
+     * this fixed-height viewport at all — the canonical frame's admin overview scrolls it out of frame.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun bingeNotInstalled() =
+        HubScreen(
+            state = previewReady(overview = previewRestrictedOverview(), downloading = emptyList(), bingeStatus = BingeStatus.NotInstalled),
+            actions = previewActions(),
+        )
+
+    /** Binge installed and connected: the hint tells the user how to request from Binge instead (#469). */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun bingeConnected() =
+        HubScreen(
+            state = previewReady(overview = previewRestrictedOverview(), downloading = emptyList(), bingeStatus = BingeStatus.Connected),
+            actions = previewActions(),
+        )
 }

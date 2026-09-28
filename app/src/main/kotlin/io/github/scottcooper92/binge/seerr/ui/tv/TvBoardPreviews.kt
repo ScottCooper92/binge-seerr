@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
 import io.github.scottcooper92.binge.seerr.ui.hub.HubDownload
 import io.github.scottcooper92.binge.seerr.ui.hub.HubOverview
@@ -96,7 +97,13 @@ private val SampleDownloads =
 private fun hub(
     health: ConnectionHealth = ConnectionHealth.Healthy,
     downloading: List<HubDownload> = SampleDownloads,
-) = HubUiState.Ready(server = SampleServer, health = health, overview = SampleOverview, downloading = downloading)
+) = HubUiState.Ready(
+    server = SampleServer,
+    health = health,
+    overview = SampleOverview,
+    downloading = downloading,
+    bingeStatus = BingeStatus.NotConnected,
+)
 
 internal fun request(
     id: Int,
