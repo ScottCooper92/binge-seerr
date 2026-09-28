@@ -84,6 +84,9 @@ android {
     // A locale is complete or it does not exist: the alternative is not English, it is Android's
     // per-string fallback rendering half a screen in each. Adding an English string means adding
     // its translation in the same change.
+    //
+    // UnusedResources is pinned too (#468): without it, a removed call site can leave its string
+    // (and Spanish translation, and translation-hashes.txt entry) behind with a still-green build.
     lint {
         error +=
             setOf(
@@ -93,6 +96,7 @@ android {
                 "UnusedQuantity",
                 "StringFormatMatches",
                 "StringFormatCount",
+                "UnusedResources",
             )
     }
 
