@@ -79,7 +79,8 @@ class BlocklistDetailViewModel
         fun unblock() {
             if (state.value.unblocking) return
             state.update { it.copy(unblocking = true) }
-            crashBreadcrumbs.log("removing tmdb ${item.tmdbId} from blocklist")
+            crashBreadcrumbs.key("tmdb_id", item.tmdbId.toString())
+            crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().removeFromBlocklist(

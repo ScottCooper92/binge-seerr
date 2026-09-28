@@ -105,7 +105,8 @@ class DvrInstanceViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
-            crashBreadcrumbs.log("deleting ${type.apiSegment} instance $existing")
+            crashBreadcrumbs.key("instance_id", existing.toString())
+            crashBreadcrumbs.log("deleting ${type.apiSegment} instance")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
                     .onSuccess {

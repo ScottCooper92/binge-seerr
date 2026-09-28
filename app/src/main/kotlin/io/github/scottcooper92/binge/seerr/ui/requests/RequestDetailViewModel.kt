@@ -117,7 +117,8 @@ class RequestDetailViewModel
             val mediaId = ready.detail.mediaId ?: return
             if (ready.report == IssueReport.Sending) return
             state.value = ready.copy(report = IssueReport.Sending)
-            crashBreadcrumbs.log("reporting issue on request $requestId")
+            crashBreadcrumbs.key("request_id", requestId.toString())
+            crashBreadcrumbs.log("reporting issue on request")
             viewModelScope.launch(dispatcher) {
                 val outcome =
                     runCatching { connection.api().createIssue(SeerrCreateIssueBody(mediaId, type.code, message.trim())) }

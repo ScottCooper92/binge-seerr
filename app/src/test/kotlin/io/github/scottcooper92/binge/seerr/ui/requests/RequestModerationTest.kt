@@ -110,7 +110,8 @@ class RequestModerationTest {
             assertEquals(1, moderated)
             assertTrue(sut.actingIds.value.isEmpty())
             assertEquals(listOf("request_moderated" to mapOf("action" to "approved")), analytics.events)
-            assertEquals(listOf("moderating request 11: approved"), crashBreadcrumbs.logs)
+            assertEquals(listOf("moderating request: approved"), crashBreadcrumbs.logs)
+            assertEquals(listOf("request_id" to "11"), crashBreadcrumbs.keys)
         }
 
     @Test

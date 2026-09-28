@@ -174,7 +174,8 @@ class IssuesViewModel
         ) {
             if (item.id in actingState.value) return
             actingState.update { it + item.id }
-            crashBreadcrumbs.log("$action issue ${item.id}")
+            crashBreadcrumbs.key("issue_id", item.id.toString())
+            crashBreadcrumbs.log("$action issue")
             viewModelScope.launch(dispatcher) {
                 val result = runCatching { write() }
                 actingState.update { it - item.id }

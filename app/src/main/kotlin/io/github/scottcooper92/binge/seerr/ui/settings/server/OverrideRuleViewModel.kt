@@ -101,7 +101,8 @@ class OverrideRuleViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
-            crashBreadcrumbs.log("deleting override rule $existing")
+            crashBreadcrumbs.key("override_rule_id", existing.toString())
+            crashBreadcrumbs.log("deleting override rule")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteOverrideRule(existing) }
                     .onSuccess {

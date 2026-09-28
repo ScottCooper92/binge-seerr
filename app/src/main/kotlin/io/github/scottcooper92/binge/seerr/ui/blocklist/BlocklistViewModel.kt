@@ -198,7 +198,8 @@ class BlocklistViewModel
         fun remove(item: BlocklistItem) {
             if (item.tmdbId in acting.value) return
             acting.update { it + item.tmdbId }
-            crashBreadcrumbs.log("removing tmdb ${item.tmdbId} from blocklist")
+            crashBreadcrumbs.key("tmdb_id", item.tmdbId.toString())
+            crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().removeFromBlocklist(
@@ -221,7 +222,8 @@ class BlocklistViewModel
             collectionId: Int,
             blocked: Boolean,
         ) {
-            crashBreadcrumbs.log("${if (blocked) "blocking" else "unblocking"} collection $collectionId")
+            crashBreadcrumbs.key("collection_id", collectionId.toString())
+            crashBreadcrumbs.log(if (blocked) "blocking collection" else "unblocking collection")
             viewModelScope.launch(dispatcher) {
                 val profile = connection.profile()
                 val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()

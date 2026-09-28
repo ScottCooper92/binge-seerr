@@ -114,7 +114,8 @@ class IssueDetailViewModel
                     state = SendState.Sending,
                 )
             state.value = ready.copy(draft = "", outbox = ready.outbox + entry)
-            crashBreadcrumbs.log("posting comment on issue $issueId")
+            crashBreadcrumbs.key("issue_id", issueId.toString())
+            crashBreadcrumbs.log("posting comment on issue")
             outboxJobs[entry.localId] = viewModelScope.launch(dispatcher) { send(entry.localId, message) }
         }
 
@@ -155,7 +156,9 @@ class IssueDetailViewModel
             val trimmed = message.trim()
             if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Editing(commentId))
-            crashBreadcrumbs.log("editing comment $commentId on issue $issueId")
+            crashBreadcrumbs.key("issue_id", issueId.toString())
+            crashBreadcrumbs.key("comment_id", commentId.toString())
+            crashBreadcrumbs.log("editing comment on issue")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                     .onSuccess {
@@ -179,7 +182,8 @@ class IssueDetailViewModel
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canResolve) return
             val resolving = ready.detail.item.status == IssueStatus.Open
             state.value = ready.copy(action = IssueAction.UpdatingStatus)
-            crashBreadcrumbs.log("${if (resolving) "resolving" else "reopening"} issue $issueId")
+            crashBreadcrumbs.key("issue_id", issueId.toString())
+            crashBreadcrumbs.log(if (resolving) "resolving issue" else "reopening issue")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().setIssueStatus(issueId, if (resolving) STATUS_RESOLVED else STATUS_OPEN)
@@ -206,7 +210,8 @@ class IssueDetailViewModel
             val ready = ready() ?: return
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canDelete) return
             state.value = ready.copy(action = IssueAction.Deleting)
-            crashBreadcrumbs.log("deleting issue $issueId")
+            crashBreadcrumbs.key("issue_id", issueId.toString())
+            crashBreadcrumbs.log("deleting issue")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().deleteIssue(issueId)
@@ -225,7 +230,9 @@ class IssueDetailViewModel
             val ready = ready() ?: return
             if (ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Deleting(commentId))
-            crashBreadcrumbs.log("deleting comment $commentId on issue $issueId")
+            crashBreadcrumbs.key("issue_id", issueId.toString())
+            crashBreadcrumbs.key("comment_id", commentId.toString())
+            crashBreadcrumbs.log("deleting comment on issue")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {

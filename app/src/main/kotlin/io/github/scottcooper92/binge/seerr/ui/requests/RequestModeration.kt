@@ -183,7 +183,8 @@ class RequestModeration(
     ) {
         if (requestId in acting.value) return
         acting.update { it + requestId }
-        crashBreadcrumbs.log("moderating request $requestId: ${done.actionLabel()}")
+        crashBreadcrumbs.key("request_id", requestId.toString())
+        crashBreadcrumbs.log("moderating request: ${done.actionLabel()}")
         scope.launch(dispatcher) {
             val result = runCatching { action(requestId) }
             acting.update { it - requestId }
