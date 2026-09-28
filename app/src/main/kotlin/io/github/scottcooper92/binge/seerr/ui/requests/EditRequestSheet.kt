@@ -91,13 +91,15 @@ internal fun EditRequestContent(
             modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            edit.seasons.forEachIndexed { index, season ->
-                SeasonToggleRow(
-                    season = season,
-                    enabled = !edit.saving,
-                    onToggle = { actions.onToggleSeason(season.number) },
-                    showDivider = index != edit.seasons.lastIndex,
-                )
+            Column {
+                edit.seasons.forEachIndexed { index, season ->
+                    SeasonToggleRow(
+                        season = season,
+                        enabled = !edit.saving,
+                        onToggle = { actions.onToggleSeason(season.number) },
+                        showDivider = index != edit.seasons.lastIndex,
+                    )
+                }
             }
             if (destination != null) {
                 if (destination.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
