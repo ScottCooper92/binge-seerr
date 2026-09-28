@@ -254,7 +254,7 @@ private fun TitleCarousel(
     serverRoot: String,
 ) {
     val context = LocalContext.current
-    MediaCarousel(title = title, items = items, itemKey = { it.mediaType.name + it.tmdbId }, onMoreClick = null) { item ->
+    MediaCarousel(title = title, items = items, itemKey = { it.mediaType.name + it.tmdbId }, onMoreClick = null) { _, item ->
         MediaCard(
             posterUrl = item.posterUrl,
             title =
