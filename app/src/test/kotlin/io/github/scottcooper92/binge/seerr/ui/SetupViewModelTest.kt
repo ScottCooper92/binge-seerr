@@ -506,6 +506,35 @@ class SetupViewModelTest {
         }
 
     @Test
+    fun `a resume that cannot reach the server reports the mode being resumed, not the form's default`() =
+        runTest {
+            val approved = AtomicBoolean(false)
+            seerr.dispatcher = quickConnectServer(approved)
+            val saved = SavedStateHandle()
+            val vm = viewModel(savedState = saved)
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/"))
+            vm.inspect()
+            vm.awaitSignIn()
+            vm.editForm { copy(mode = SeerrSignInMode.QuickConnect) }
+            vm.connect()
+            vm.awaitSignIn { it.link != null }
+
+            // The process dies mid-approval, and the server cannot be reached once it comes back:
+            // `resume()` never reaches the line that sets `form.mode` to the mode being resumed.
+            viewModels.clear()
+            seerr.dispatcher = null
+
+            val restored = viewModel(reuseConnection = true, savedState = saved)
+
+            assertEquals(SetupError.NotSeerr, restored.awaitAddress { it.error != null }.error)
+            assertEquals(
+                listOf("sign_in" to mapOf("method" to "QuickConnect", "success" to false)),
+                analytics.events,
+            )
+        }
+
+    @Test
     fun `a resume of an edit-connection link stays on the form rather than leaving for the hub`() =
         runTest {
             val approved = AtomicBoolean(false)

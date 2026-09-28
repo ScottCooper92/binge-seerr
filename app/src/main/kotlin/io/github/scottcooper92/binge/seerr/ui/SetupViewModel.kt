@@ -235,6 +235,9 @@ class SetupViewModel
                     // The address is kept and the failure shown, but the link is not: a server that
                     // cannot be reached now would otherwise resume into the same failure every launch.
                     links.forget()
+                    // finish() reads the draft's form.mode for the sign_in event; set it to the mode
+                    // actually being resumed before that early return, or it reports the stale default.
+                    draft.update { it.copy(form = SignInForm(mode = pending.mode)) }
                     return finish(failure)
                 }
             // `busy` stays true here: `links.resume()` genuinely suspends before `onLink` fires for
