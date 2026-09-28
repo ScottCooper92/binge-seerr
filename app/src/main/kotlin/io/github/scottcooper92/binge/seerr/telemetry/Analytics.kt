@@ -12,15 +12,36 @@ import javax.inject.Singleton
 interface Analytics {
     /** A screen was shown; [name] is one of this app's fixed screen names, never an id. */
     fun screen(name: String)
+
+    /** A write-path action committed; [name] is one of [AnalyticsEvents]' fixed names, [properties] plain values only. */
+    fun event(
+        name: String,
+        properties: Map<String, Any> = emptyMap(),
+    )
 }
 
-/** The three calls this app makes of an analytics SDK, so the gating around them can be tested. */
+/** Reports nothing — the default for a call site (a test, a preview) with no telemetry wired in. */
+object NoOpAnalytics : Analytics {
+    override fun screen(name: String) = Unit
+
+    override fun event(
+        name: String,
+        properties: Map<String, Any>,
+    ) = Unit
+}
+
+/** The four calls this app makes of an analytics SDK, so the gating around them can be tested. */
 interface AnalyticsClient {
     fun optIn()
 
     fun optOut()
 
     fun screen(name: String)
+
+    fun event(
+        name: String,
+        properties: Map<String, Any> = emptyMap(),
+    )
 }
 
 /** [AnalyticsClient] over PostHog's own client. */
@@ -32,6 +53,11 @@ class PostHogClient(
     override fun optOut() = postHog.optOut()
 
     override fun screen(name: String) = postHog.screen(name)
+
+    override fun event(
+        name: String,
+        properties: Map<String, Any>,
+    ) = postHog.capture(event = name, properties = properties.ifEmpty { null })
 }
 
 /**
@@ -77,6 +103,19 @@ class PostHogAnalytics
                 }
             }
             send(name)
+        }
+
+        /**
+         * Unlike [screen], never held: an action event fires from a deliberate tap, which cannot land in
+         * the brief cold-start window before the stored consent answer is read, so there is nothing worth
+         * buffering for.
+         */
+        override fun event(
+            name: String,
+            properties: Map<String, Any>,
+        ) {
+            if (client == null || !gate.isGranted) return
+            client.event(name, properties)
         }
 
         private fun release() {

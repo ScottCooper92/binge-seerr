@@ -11,6 +11,10 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -49,6 +53,8 @@ class RequestsViewModel
         private val connection: SeerrConnection,
         private val titles: TitleCache,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
@@ -65,7 +71,13 @@ class RequestsViewModel
         private val refreshedVersions = ConcurrentHashMap<RequestFilter, Int>()
 
         val moderation =
-            RequestModeration(scope = viewModelScope, dispatcher = dispatcher, connection = connection) {
+            RequestModeration(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                connection = connection,
+                analytics = analytics,
+                crashBreadcrumbs = crashBreadcrumbs,
+            ) {
                 countsRefresh.value++
                 listVersionState.update { it + 1 }
             }

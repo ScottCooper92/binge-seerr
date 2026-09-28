@@ -9,6 +9,11 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -33,6 +38,8 @@ class OverrideRuleViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ExtrasEditorViewModel<OverrideRuleForm, OverrideRuleExtras>(OverrideRuleExtras(), dispatcher) {
         /** Filled by [load] so [loadChoices] can reuse the same fetch instead of re-fetching per instance pick. */
         private var radarrRecords: List<SeerrServiceSettingsDto> = emptyList()
@@ -71,7 +78,13 @@ class OverrideRuleViewModel
         override suspend fun write(draft: OverrideRuleForm): OverrideRuleForm {
             val api = connection.api()
             val body = draft.toDto()
-            val answered = if (draft.id == null) api.createOverrideRule(body) else api.updateOverrideRule(draft.id, body)
+            val creating = draft.id == null
+            crashBreadcrumbs.log("${if (creating) "creating" else "updating"} override rule")
+            val answered = if (creating) api.createOverrideRule(body) else api.updateOverrideRule(draft.id, body)
+            analytics.event(
+                AnalyticsEvents.OVERRIDE_RULE_CHANGED,
+                mapOf(AnalyticsEvents.PARAM_ACTION to if (creating) "created" else "updated"),
+            )
             return answered.toForm()
         }
 
@@ -88,10 +101,13 @@ class OverrideRuleViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
+            crashBreadcrumbs.log("deleting override rule $existing")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteOverrideRule(existing) }
-                    .onSuccess { notify(EditorEvent.Deleted) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onSuccess {
+                        analytics.event(AnalyticsEvents.OVERRIDE_RULE_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
+                        notify(EditorEvent.Deleted)
+                    }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
 

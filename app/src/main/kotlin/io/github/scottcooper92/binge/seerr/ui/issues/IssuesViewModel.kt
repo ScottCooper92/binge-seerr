@@ -18,6 +18,11 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -52,6 +57,8 @@ class IssuesViewModel
         private val titles: TitleCache,
         private val store: IssueStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(IssueFilter.Open)
         private val selectedSort = MutableStateFlow(IssueSort.Added)
@@ -141,20 +148,20 @@ class IssuesViewModel
 
         /** Marks an open issue resolved; the cached row moves with it, so the list agrees at once. */
         fun resolve(item: IssueItem) =
-            act(item, IssueListEvent.Resolved) {
+            act(item, IssueListEvent.Resolved, "resolved") {
                 connection.api().setIssueStatus(item.id, STATUS_RESOLVED)
                 store.updateStatus(item.id, IssueStatus.Resolved.name)
             }
 
         fun reopen(item: IssueItem) =
-            act(item, IssueListEvent.Reopened) {
+            act(item, IssueListEvent.Reopened, "reopened") {
                 connection.api().setIssueStatus(item.id, STATUS_OPEN)
                 store.updateStatus(item.id, IssueStatus.Open.name)
             }
 
         /** Removes the report and its whole thread from the server and the cache. */
         fun delete(item: IssueItem) =
-            act(item, IssueListEvent.Deleted) {
+            act(item, IssueListEvent.Deleted, "deleted") {
                 connection.api().deleteIssue(item.id)
                 store.delete(item.id)
             }
@@ -162,16 +169,19 @@ class IssuesViewModel
         private fun act(
             item: IssueItem,
             success: IssueListEvent,
+            action: String,
             write: suspend () -> Unit,
         ) {
             if (item.id in actingState.value) return
             actingState.update { it + item.id }
+            crashBreadcrumbs.log("$action issue ${item.id}")
             viewModelScope.launch(dispatcher) {
                 val result = runCatching { write() }
                 actingState.update { it - item.id }
                 result
                     .onSuccess {
                         countsRefresh.value++
+                        analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
                         eventFlow.emit(success)
                     }.onFailure { failure -> eventFlow.emit(IssueListEvent.Failed(failure.toSeerrError())) }
             }

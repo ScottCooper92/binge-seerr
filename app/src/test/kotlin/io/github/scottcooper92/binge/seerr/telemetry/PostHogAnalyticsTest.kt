@@ -33,6 +33,13 @@ class PostHogAnalyticsTest {
         override fun screen(name: String) {
             calls += "screen:$name"
         }
+
+        override fun event(
+            name: String,
+            properties: Map<String, Any>,
+        ) {
+            calls += "event:$name:$properties"
+        }
     }
 
     private val client = RecordingClient()
@@ -105,6 +112,38 @@ class PostHogAnalyticsTest {
         runTest {
             prefs.setAnalyticsGranted(true)
             analytics(client = null).screen("hub")
+        }
+
+    @Test
+    fun `an event is sent only once the stored answer is a grant, and never held`() =
+        runTest {
+            prefs.setAnalyticsGranted(true)
+            analytics().event("request_moderated", mapOf("action" to "approved"))
+            assertEquals(listOf("optIn", "event:request_moderated:{action=approved}"), client.calls)
+        }
+
+    @Test
+    fun `an event sent while undecided is dropped, not held`() =
+        runTest {
+            val unread = UnreadDataStore()
+            TelemetryPrefs(unread).setAnalyticsGranted(true)
+            analytics(gate = gate(unread)).event("sign_in")
+            assertEquals(listOf("optOut"), client.calls)
+        }
+
+    @Test
+    fun `an event sent after a decline is dropped`() =
+        runTest {
+            prefs.setAnalyticsGranted(false)
+            analytics().event("sign_in")
+            assertEquals(listOf("optOut"), client.calls)
+        }
+
+    @Test
+    fun `a build with no project key drops an event and does not fail`() =
+        runTest {
+            prefs.setAnalyticsGranted(true)
+            analytics(client = null).event("sign_in")
         }
 
     @Test

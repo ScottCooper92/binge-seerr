@@ -19,6 +19,11 @@ import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -49,6 +54,8 @@ class IssueDetailViewModel
         private val store: IssueStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val issueId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val state = MutableStateFlow<IssueDetailUiState>(IssueDetailUiState.Loading)
         val uiState: StateFlow<IssueDetailUiState> = state.asStateFlow()
@@ -107,6 +114,7 @@ class IssueDetailViewModel
                     state = SendState.Sending,
                 )
             state.value = ready.copy(draft = "", outbox = ready.outbox + entry)
+            crashBreadcrumbs.log("posting comment on issue $issueId")
             outboxJobs[entry.localId] = viewModelScope.launch(dispatcher) { send(entry.localId, message) }
         }
 
@@ -147,10 +155,14 @@ class IssueDetailViewModel
             val trimmed = message.trim()
             if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Editing(commentId))
+            crashBreadcrumbs.log("editing comment $commentId on issue $issueId")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                     .onSuccess {
                         val reloadFailure = reloadAfterWrite()
+                        if (reloadFailure == null) {
+                            analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "edited"))
+                        }
                         eventFlow.emit(
                             reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentEdited,
                         )
@@ -167,12 +179,17 @@ class IssueDetailViewModel
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canResolve) return
             val resolving = ready.detail.item.status == IssueStatus.Open
             state.value = ready.copy(action = IssueAction.UpdatingStatus)
+            crashBreadcrumbs.log("${if (resolving) "resolving" else "reopening"} issue $issueId")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().setIssueStatus(issueId, if (resolving) STATUS_RESOLVED else STATUS_OPEN)
                     store.updateStatus(issueId, (if (resolving) IssueStatus.Resolved else IssueStatus.Open).name)
                 }.onSuccess {
                     val reloadFailure = reloadAfterWrite()
+                    if (reloadFailure == null) {
+                        val action = if (resolving) "resolved" else "reopened"
+                        analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
+                    }
                     eventFlow.emit(
                         reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) }
                             ?: (if (resolving) IssueDetailEvent.IssueResolved else IssueDetailEvent.IssueReopened),
@@ -189,15 +206,18 @@ class IssueDetailViewModel
             val ready = ready() ?: return
             if (ready.action != IssueAction.None || ready.commentAction != CommentAction.None || !ready.detail.canDelete) return
             state.value = ready.copy(action = IssueAction.Deleting)
+            crashBreadcrumbs.log("deleting issue $issueId")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().deleteIssue(issueId)
                     store.delete(issueId)
-                }.onSuccess { eventFlow.emit(IssueDetailEvent.IssueDeleted) }
-                    .onFailure { failure ->
-                        updateReady { it.copy(action = IssueAction.None) }
-                        eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
-                    }
+                }.onSuccess {
+                    analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
+                    eventFlow.emit(IssueDetailEvent.IssueDeleted)
+                }.onFailure { failure ->
+                    updateReady { it.copy(action = IssueAction.None) }
+                    eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
+                }
             }
         }
 
@@ -205,10 +225,14 @@ class IssueDetailViewModel
             val ready = ready() ?: return
             if (ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
             state.value = ready.copy(commentAction = CommentAction.Deleting(commentId))
+            crashBreadcrumbs.log("deleting comment $commentId on issue $issueId")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {
                         val reloadFailure = reloadAfterWrite()
+                        if (reloadFailure == null) {
+                            analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
+                        }
                         eventFlow.emit(
                             reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentDeleted,
                         )
@@ -255,6 +279,7 @@ class IssueDetailViewModel
                         )
                     }
                 }
+                if (matched) analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "posted"))
                 if (!matched) updateOutbox(localId) { it.copy(state = SendState.Failed(retryable = true)) }
             }.onFailure { failure ->
                 // A cancellation means this send was superseded by an edit or a drop, not that it failed:

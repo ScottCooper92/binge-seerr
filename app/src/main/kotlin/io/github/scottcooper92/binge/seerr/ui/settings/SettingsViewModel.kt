@@ -11,7 +11,12 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,6 +54,8 @@ class SettingsViewModel
         private val telemetryPrefs: TelemetryPrefs,
         bugReportLinks: BugReportLinks,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val fetchTrigger = MutableStateFlow(0)
 
@@ -127,10 +134,15 @@ class SettingsViewModel
             signal: NotificationSignal,
             value: Boolean,
         ) {
+            analytics.event(
+                AnalyticsEvents.NOTIFICATION_SIGNAL_CHANGED,
+                mapOf(AnalyticsEvents.PARAM_SIGNAL to signal.name, AnalyticsEvents.PARAM_ENABLED to value),
+            )
             viewModelScope.launch(dispatcher) { prefs.setEnabled(signal, value) }
         }
 
         fun setShakeToReport(enabled: Boolean) {
+            analytics.event(AnalyticsEvents.SHAKE_TO_REPORT_CHANGED, mapOf(AnalyticsEvents.PARAM_ENABLED to enabled))
             viewModelScope.launch(dispatcher) { feedbackPrefs.setShakeToReport(enabled) }
         }
 
@@ -143,6 +155,8 @@ class SettingsViewModel
         }
 
         fun disconnect() {
+            analytics.event(AnalyticsEvents.SERVER_DISCONNECTED)
+            crashBreadcrumbs.log("disconnecting from server")
             viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
     }

@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -45,6 +46,7 @@ class IssuesViewModelTest {
     private val seerr = FakeSeerrServer()
     private val received = CopyOnWriteArrayList<FakeRequest>()
     private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
 
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
@@ -88,7 +90,7 @@ class IssuesViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = IssuesViewModel(connection, TitleCache(), FakeIssueStore(), mainDispatcherRule.dispatcher)
+        val vm = IssuesViewModel(connection, TitleCache(), FakeIssueStore(), mainDispatcherRule.dispatcher, analytics)
         viewModels.put("issues", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -170,6 +172,7 @@ class IssuesViewModelTest {
             assertEquals(IssueListEvent.Resolved, event.await())
             assertTrue(received.any { it.method == "POST" && it.url.encodedPath == "/api/v1/issue/31/resolved" })
             vm.awaitReady { it.actingIds.isEmpty() }
+            assertEquals(listOf("issue_moderated" to mapOf("action" to "resolved")), analytics.events)
         }
 
     @Test
@@ -200,6 +203,7 @@ class IssuesViewModelTest {
 
             assertTrue(event.await() is IssueListEvent.Failed)
             vm.awaitReady { it.actingIds.isEmpty() }
+            assertTrue(analytics.events.isEmpty())
         }
 
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

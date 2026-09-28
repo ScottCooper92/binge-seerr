@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -51,6 +52,7 @@ class DvrInstanceViewModelTest {
 
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
 
     @Before
     fun setUp() {
@@ -72,7 +74,7 @@ class DvrInstanceViewModelTest {
         type: ServiceType,
         id: Int?,
     ): DvrInstanceViewModel {
-        val vm = DvrInstanceViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, type, id)
+        val vm = DvrInstanceViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, type, id, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -159,6 +161,13 @@ class DvrInstanceViewModelTest {
             val ready = vm.awaitReady()
             assertEquals(7, ready.saved.id)
             assertFalse(ready.dirty)
+            assertEquals(
+                listOf(
+                    "dvr_instance_changed" to mapOf("type" to "radarr", "action" to "tested"),
+                    "dvr_instance_changed" to mapOf("type" to "radarr", "action" to "created"),
+                ),
+                analytics.events,
+            )
         }
 
     @Test
@@ -282,6 +291,7 @@ class DvrInstanceViewModelTest {
             vm.delete()
             assertEquals(EditorEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/sonarr/3"))
+            assertEquals(listOf("dvr_instance_changed" to mapOf("type" to "sonarr", "action" to "deleted")), analytics.events)
         }
 
     @Test

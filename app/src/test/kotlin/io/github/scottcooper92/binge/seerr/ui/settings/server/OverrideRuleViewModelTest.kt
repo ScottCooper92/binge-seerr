@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -47,6 +48,7 @@ class OverrideRuleViewModelTest {
 
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
 
     @Before
     fun setUp() {
@@ -66,7 +68,7 @@ class OverrideRuleViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(id: Int?): OverrideRuleViewModel {
-        val vm = OverrideRuleViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, id)
+        val vm = OverrideRuleViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, id, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -152,6 +154,7 @@ class OverrideRuleViewModelTest {
             assertNull(sent["genre"])
             assertNull(sent["keywords"])
             assertEquals(12, vm.awaitReady().saved.id)
+            assertEquals(listOf("override_rule_changed" to mapOf("action" to "created")), analytics.events)
         }
 
     @Test
@@ -163,6 +166,7 @@ class OverrideRuleViewModelTest {
             val deleted = awaitEvent(vm.events)
             vm.delete()
             assertEquals(EditorEvent.Deleted, deleted.await())
+            assertEquals(listOf("override_rule_changed" to mapOf("action" to "deleted")), analytics.events)
         }
 
     @Test

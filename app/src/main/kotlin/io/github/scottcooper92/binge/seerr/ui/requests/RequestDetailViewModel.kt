@@ -34,6 +34,11 @@ import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -60,12 +65,21 @@ class RequestDetailViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val requestId: Int,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
         /** A moderation reloads the page, so the chip and the history show the server's new answer. */
         val moderation =
-            RequestModeration(scope = viewModelScope, dispatcher = dispatcher, connection = connection, onModerated = ::reload)
+            RequestModeration(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                connection = connection,
+                analytics = analytics,
+                crashBreadcrumbs = crashBreadcrumbs,
+                onModerated = ::reload,
+            )
 
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
         val editor = RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderation)
@@ -103,10 +117,12 @@ class RequestDetailViewModel
             val mediaId = ready.detail.mediaId ?: return
             if (ready.report == IssueReport.Sending) return
             state.value = ready.copy(report = IssueReport.Sending)
+            crashBreadcrumbs.log("reporting issue on request $requestId")
             viewModelScope.launch(dispatcher) {
                 val outcome =
                     runCatching { connection.api().createIssue(SeerrCreateIssueBody(mediaId, type.code, message.trim())) }
                         .fold({ IssueReport.Sent }, { IssueReport.Failed(it.toSeerrError()) })
+                if (outcome is IssueReport.Sent) analytics.event(AnalyticsEvents.ISSUE_REPORTED)
                 state.update { current -> (current as? RequestDetailUiState.Ready)?.copy(report = outcome) ?: current }
             }
         }

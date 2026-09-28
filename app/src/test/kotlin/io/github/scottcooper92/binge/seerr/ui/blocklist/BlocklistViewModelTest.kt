@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ class BlocklistViewModelTest {
 
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
 
     @Before
     fun setUp() {
@@ -52,7 +54,7 @@ class BlocklistViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): BlocklistViewModel {
-        val vm = BlocklistViewModel(seerr.connection(this), TitleCache(), mainDispatcherRule.dispatcher)
+        val vm = BlocklistViewModel(seerr.connection(this), TitleCache(), mainDispatcherRule.dispatcher, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -122,6 +124,7 @@ class BlocklistViewModelTest {
             assertEquals("movie", deletes.single().url.queryParameter("mediaType"))
             vm.awaitReady { it.actingTmdbIds.isEmpty() }
             seerr.awaitCount("GET", "/api/v1/blocklist", moreThan = probes)
+            assertEquals(listOf("blocklist_changed" to mapOf("action" to "removed")), analytics.events)
         }
 
     @Test
@@ -133,6 +136,7 @@ class BlocklistViewModelTest {
             vm.setCollectionBlocked(5, blocked = true)
             assertEquals(BlocklistEvent.CollectionChanged(blocked = true), collectionChanged.await())
             assertEquals(1, received("POST", "/api/v1/blocklist/collection/5").size)
+            assertEquals(listOf("blocklist_changed" to mapOf("action" to "collection_blocked")), analytics.events)
 
             seerr.viewer(id = 1, permissions = ADMIN, version = "3.1.0")
             val older = viewModel()

@@ -17,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -56,6 +57,8 @@ class SetupViewModelTest {
 
     /** Counts the Quick Connect initiates, so a resume can be told from a second sign-in started. */
     private val initiates = AtomicInteger(0)
+
+    private val analytics = RecordingAnalytics()
 
     @After
     fun tearDown() {
@@ -104,6 +107,7 @@ class SetupViewModelTest {
                 savedState = savedState,
                 cipher = cipher,
                 dispatcher = mainDispatcherRule.dispatcher,
+                analytics = analytics,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect { state -> seen?.add(state) } }
@@ -233,6 +237,10 @@ class SetupViewModelTest {
             vm.connect()
 
             assertEquals(SeerrVariant.Seerr, vm.awaitConnected().credentials.variant)
+            assertEquals(
+                listOf("sign_in" to mapOf("method" to "ApiKey", "success" to true)),
+                analytics.events,
+            )
 
             connection.disconnect()
 
@@ -252,6 +260,10 @@ class SetupViewModelTest {
             vm.connect()
 
             assertEquals(SetupError.Rejected, vm.awaitSignIn { it.error != null }.error)
+            assertEquals(
+                listOf("sign_in" to mapOf("method" to "ApiKey", "success" to false)),
+                analytics.events,
+            )
             vm.editForm { copy(apiKey = "better") }
             assertNull(vm.awaitSignIn { it.form.apiKey == "better" }.error)
         }
@@ -288,6 +300,7 @@ class SetupViewModelTest {
             val reset = seerr.takeRequest()
             assertEquals("/api/v1/auth/reset-password", reset.url.encodedPath)
             assertTrue(reset.body.contains("s@example.com"))
+            assertEquals(listOf("password_reset_requested" to mapOf("success" to true)), analytics.events)
         }
 
     @Test

@@ -7,6 +7,11 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusSeasonBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -74,6 +79,8 @@ class RequestModeration(
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
+    private val analytics: Analytics = NoOpAnalytics,
+    private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     private val onModerated: () -> Unit,
 ) {
     private val acting = MutableStateFlow<Set<Int>>(emptySet())
@@ -176,6 +183,7 @@ class RequestModeration(
     ) {
         if (requestId in acting.value) return
         acting.update { it + requestId }
+        crashBreadcrumbs.log("moderating request $requestId: ${done.actionLabel()}")
         scope.launch(dispatcher) {
             val result = runCatching { action(requestId) }
             acting.update { it - requestId }
@@ -188,6 +196,7 @@ class RequestModeration(
                         } else {
                             done
                         }
+                    analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
                     eventFlow.emit(event)
                 }.onFailure { eventFlow.emit(ModerationEvent.Failed(it.toSeerrError())) }
         }
@@ -203,3 +212,21 @@ class RequestModeration(
             )
         }.isSuccess
 }
+
+/** The [AnalyticsEvents.PARAM_ACTION] value for [AnalyticsEvents.REQUEST_MODERATED]; [ModerationEvent.Failed] never reaches this. */
+private fun ModerationEvent.actionLabel(): String =
+    when (this) {
+        ModerationEvent.Approved -> "approved"
+        ModerationEvent.Retried -> "retried"
+        ModerationEvent.Edited -> "edited"
+        ModerationEvent.Declined -> "declined"
+        ModerationEvent.DeclinedAndBlocked -> "declined_and_blocked"
+        ModerationEvent.DeclinedButBlockFailed -> "declined_block_failed"
+        ModerationEvent.Removed -> "removed"
+        ModerationEvent.RemovedAndBlocked -> "removed_and_blocked"
+        ModerationEvent.RemovedButBlockFailed -> "removed_block_failed"
+        ModerationEvent.MediaStatusSet -> "media_status_set"
+        ModerationEvent.MediaCleared -> "media_cleared"
+        ModerationEvent.MediaFilesDeleted -> "media_files_deleted"
+        is ModerationEvent.Failed -> "failed"
+    }
