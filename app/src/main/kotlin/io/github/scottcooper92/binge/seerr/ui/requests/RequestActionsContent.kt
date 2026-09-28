@@ -277,7 +277,7 @@ private fun instanceRow(
         label = stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard),
         detail = stringResource(R.string.media_mark_as).takeIf { canSetStatus },
         clickable = canSetStatus,
-        trailingContent = { instance.status?.let { MediaStateChip(status = it) } },
+        trailingContent = instance.status?.let { status -> { MediaStateChip(status = status) } },
         onClick = onMarkStatus,
     )
 
