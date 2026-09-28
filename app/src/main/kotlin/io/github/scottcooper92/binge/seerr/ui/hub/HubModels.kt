@@ -66,6 +66,9 @@ data class HubOverview(
     val hasBlocklist: Boolean = false,
 )
 
+/** Binge's relationship to this device, for the Hub's contextual tile (#469). */
+enum class BingeStatus { NotInstalled, NotConnected, Connected }
+
 /** One card of the "Downloading now" strip. */
 data class HubDownload(
     val requestId: Int,
@@ -84,5 +87,6 @@ sealed interface HubUiState {
         val health: ConnectionHealth,
         val overview: HubOverview,
         val downloading: List<HubDownload>,
+        val bingeStatus: BingeStatus,
     ) : HubUiState
 }

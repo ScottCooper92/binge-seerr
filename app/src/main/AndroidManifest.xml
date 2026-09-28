@@ -17,12 +17,17 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
-    <!-- Package visibility for the title hand-off: whether Binge answers its own binge:// link. -->
+    <!--
+        Package visibility: whether Binge answers its own binge:// link (the title hand-off), and
+        whether Binge is installed at all (the Hub tile, #469) — a plain getPackageInfo() on its
+        package name is invisible without this on a targetSdk this high.
+    -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="binge" />
         </intent>
+        <package android:name="com.cooper.binge.app" />
     </queries>
 
     <!--

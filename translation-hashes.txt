@@ -47,6 +47,9 @@ app:download_eta_hours  02abf092ccd1
 app:download_eta_minutes  fc01feb5f7e5
 app:field_secret_hide  ad5caeb74e49
 app:field_secret_show  ff5a856d1a08
+app:hub_binge_connected_hint  faa66e79f216
+app:hub_binge_not_installed_detail  a8e52a9826f0
+app:hub_binge_not_installed_title  d7e27e16cd15
 app:hub_couldnt_load_body  221fccfe8796
 app:hub_couldnt_load_headline  e12aae2d43bd
 app:hub_disconnect  acfc5be785a9

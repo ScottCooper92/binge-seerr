@@ -2,7 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
+import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
+import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
@@ -95,7 +97,20 @@ class HubViewModelTest {
 
     private lateinit var connection: SeerrConnection
 
-    private suspend fun TestScope.viewModel(): HubViewModel {
+    /** A mutable install signal a test can flip mid-run, standing in for a package the user installs while backgrounded. */
+    private class FakeBingeInstallCheck(
+        var installed: Boolean = true,
+    ) : BingeInstallCheck {
+        override fun isInstalled(): Boolean = installed
+    }
+
+    private suspend fun TestScope.viewModel(
+        installCheck: BingeInstallCheck = FakeBingeInstallCheck(),
+        bingeConnection: BingeConnectionStore =
+            DataStoreBingeConnectionStore(
+                PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("binge_connection.preferences_pb") },
+            ),
+    ): HubViewModel {
         val monitor = SeerrConnectionHealthMonitor()
         connection =
             SeerrConnection(
@@ -114,7 +129,15 @@ class HubViewModelTest {
                 healthMonitor = monitor,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = HubViewModel(connection, HubOverviewLoader(connection), mainDispatcherRule.dispatcher, boundedTicker)
+        val vm =
+            HubViewModel(
+                connection,
+                HubOverviewLoader(connection),
+                mainDispatcherRule.dispatcher,
+                boundedTicker,
+                installCheck,
+                bingeConnection,
+            )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -265,6 +288,57 @@ class HubViewModelTest {
             val ready = vm.awaitReady { it.server.title == "Second Home" }
 
             assertEquals(0, ready.overview.movieRequestCount)
+        }
+
+    @Test
+    fun `Binge not installed reads NotInstalled, even with a handshake already recorded`() =
+        runTest {
+            healthyServer()
+            val store =
+                DataStoreBingeConnectionStore(
+                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("bc.preferences_pb") },
+                )
+            store.recordHandshake()
+            val vm = viewModel(installCheck = FakeBingeInstallCheck(installed = false), bingeConnection = store)
+
+            assertEquals(BingeStatus.NotInstalled, vm.awaitReady().bingeStatus)
+        }
+
+    @Test
+    fun `Binge installed with no handshake yet reads NotConnected`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel(installCheck = FakeBingeInstallCheck(installed = true))
+
+            assertEquals(BingeStatus.NotConnected, vm.awaitReady().bingeStatus)
+        }
+
+    @Test
+    fun `a recorded handshake reads Connected once Binge is installed`() =
+        runTest {
+            healthyServer()
+            val store =
+                DataStoreBingeConnectionStore(
+                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("bc.preferences_pb") },
+                )
+            store.recordHandshake()
+            val vm = viewModel(installCheck = FakeBingeInstallCheck(installed = true), bingeConnection = store)
+
+            assertEquals(BingeStatus.Connected, vm.awaitReady().bingeStatus)
+        }
+
+    @Test
+    fun `becoming visible re-checks whether Binge was installed while the screen was backgrounded`() =
+        runTest {
+            healthyServer()
+            val installCheck = FakeBingeInstallCheck(installed = false)
+            val vm = viewModel(installCheck = installCheck)
+            assertEquals(BingeStatus.NotInstalled, vm.awaitReady().bingeStatus)
+
+            installCheck.installed = true
+            vm.setScreenVisible(true)
+
+            assertEquals(BingeStatus.NotConnected, vm.awaitReady { it.bingeStatus == BingeStatus.NotConnected }.bingeStatus)
         }
 
     private object PlainCipher : SecretCipher {

@@ -12,10 +12,12 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.scottcooper92.binge.seerr.BuildConfig
+import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.BlockStoreConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.ConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
+import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.DeviceIdentityStore
 import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
@@ -35,6 +37,7 @@ import javax.inject.Singleton
 
 private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_credentials")
 private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_device")
+private val Context.bingeConnectionDataStore: DataStore<Preferences> by preferencesDataStore(name = "binge_connection")
 
 /** The name plex.tv lists this app under on the user's authorised devices. A brand name, never translated. */
 private const val PLEX_PRODUCT_NAME = "Binge Seerr"
@@ -58,6 +61,12 @@ object AuthModule {
         @ApplicationContext context: Context,
         cipher: SecretCipher,
     ): CredentialStore = CredentialStore(context.credentialsDataStore, cipher)
+
+    @Provides
+    @Singleton
+    fun bingeConnectionStore(
+        @ApplicationContext context: Context,
+    ): BingeConnectionStore = DataStoreBingeConnectionStore(context.bingeConnectionDataStore)
 
     @Provides
     @Singleton
@@ -132,11 +141,13 @@ object AuthModule {
         users: UserStore,
         statuses: MediaStatusStore,
         notifications: NotificationPrefs,
+        bingeConnection: BingeConnectionStore,
     ): SeerrConnection =
         SeerrConnection(store, apis, health, carrier = carrier, onServerChanged = {
             issues.clearAll()
             users.clearAll()
             statuses.clearAll()
             notifications.forgetServer()
+            bingeConnection.forget()
         })
 }

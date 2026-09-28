@@ -49,6 +49,9 @@
     <string name="link_cancel">Cancel</string>
 
     <string name="connected_hint">Open Binge and allow this app under Account → Integrations. Requests you make there go to this server.</string>
+    <string name="hub_binge_not_installed_title">Looking for a media browser?</string>
+    <string name="hub_binge_not_installed_detail">Check out Binge, it works with this app.</string>
+    <string name="hub_binge_connected_hint">Request titles for this server right from Binge\'s Discover and search screens.</string>
 
     <string name="hub_health_connected">Connected</string>
     <string name="hub_update_available">Update available</string>

@@ -25,6 +25,8 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
 import io.github.scottcooper92.binge.seerr.notifications.WorkManagerNotificationScheduler
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
+import io.github.scottcooper92.binge.seerr.ui.hub.BingeInstallCheck
+import io.github.scottcooper92.binge.seerr.ui.hub.PackageManagerBingeInstallCheck
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -118,4 +120,9 @@ object SeerrModule {
     fun notifier(
         @ApplicationContext context: Context,
     ): SeerrNotifier = AndroidNotifier(context)
+
+    @Provides
+    fun bingeInstallCheck(
+        @ApplicationContext context: Context,
+    ): BingeInstallCheck = PackageManagerBingeInstallCheck(context)
 }
