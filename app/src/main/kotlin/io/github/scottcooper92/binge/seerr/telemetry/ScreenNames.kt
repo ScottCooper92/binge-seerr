@@ -63,9 +63,4 @@ fun SeerrRoute.screenName(): String =
 internal fun TvDestination.screenName(): String = "tv_$key"
 
 /** The app's [Analytics], for the television shell, which has no route stack to watch. Silent by default. */
-val LocalAnalytics =
-    staticCompositionLocalOf<Analytics> {
-        object : Analytics {
-            override fun screen(name: String) = Unit
-        }
-    }
+val LocalAnalytics = staticCompositionLocalOf<Analytics> { NoOpAnalytics }

@@ -21,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -55,6 +56,7 @@ class SettingsViewModelTest {
     private lateinit var feedbackPrefs: FeedbackPrefs
     private lateinit var telemetryPrefs: TelemetryPrefs
     private val scheduler = FakeScheduler()
+    private val analytics = RecordingAnalytics()
     private val notifier = FakeNotifier()
 
     @Before
@@ -137,6 +139,7 @@ class SettingsViewModelTest {
                 telemetryPrefs,
                 BugReportLinks(),
                 mainDispatcherRule.dispatcher,
+                analytics,
             )
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -224,6 +227,7 @@ class SettingsViewModelTest {
             vm.setShakeToReport(false)
             assertFalse(checkNotNull(vm.awaitReady { it.app?.shakeToReport == false }.app).shakeToReport)
             assertFalse(feedbackPrefs.shakeToReport.first())
+            assertEquals(listOf("shake_to_report_changed" to mapOf("enabled" to false)), analytics.events)
         }
 
     @Test
@@ -266,6 +270,10 @@ class SettingsViewModelTest {
             val on = checkNotNull(vm.awaitReady { it.notifications?.enabled?.isNotEmpty() == true }.notifications)
             assertEquals(setOf(NotificationSignal.RequestApproved), on.enabled)
             assertTrue(prefs.isEnabled(NotificationSignal.RequestApproved))
+            assertEquals(
+                listOf("notification_signal_changed" to mapOf("signal" to "RequestApproved", "enabled" to true)),
+                analytics.events,
+            )
 
             notifier.canPost = true
             vm.recheckNotificationAccess()

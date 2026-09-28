@@ -9,6 +9,11 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
@@ -34,6 +39,8 @@ class NotificationAgentViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted val agent: ServerAgent,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ExtrasEditorViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher) {
         internal var soundsDebounceMillis = SOUNDS_DEBOUNCE_MILLIS
 
@@ -44,8 +51,15 @@ class NotificationAgentViewModel
 
         override suspend fun load(): AgentForm = connection.api().notificationAgent(agent.segment).toForm(agent)
 
-        override suspend fun write(draft: AgentForm): AgentForm =
-            connection.api().updateNotificationAgent(agent.segment, draft.toDto()).toForm(agent)
+        override suspend fun write(draft: AgentForm): AgentForm {
+            crashBreadcrumbs.log("updating ${agent.segment} notification agent")
+            val form = connection.api().updateNotificationAgent(agent.segment, draft.toDto()).toForm(agent)
+            analytics.event(
+                AnalyticsEvents.NOTIFICATION_AGENT_CHANGED,
+                mapOf(AnalyticsEvents.PARAM_AGENT to agent.segment, AnalyticsEvents.PARAM_ACTION to "updated"),
+            )
+            return form
+        }
 
         override fun canSave(draft: AgentForm): Boolean = draft.valid
 
@@ -76,6 +90,7 @@ class NotificationAgentViewModel
             val draft = ready()?.draft ?: return
             if (currentExtras().testing) return
             editExtras { it.copy(testing = true) }
+            crashBreadcrumbs.log("testing ${agent.segment} notification agent")
             viewModelScope.launch(dispatcher) {
                 val outcome =
                     runCatching {
@@ -84,8 +99,13 @@ class NotificationAgentViewModel
                     }
                 editExtras { it.copy(testing = false) }
                 outcome
-                    .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_agent_tested)) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onSuccess {
+                        analytics.event(
+                            AnalyticsEvents.NOTIFICATION_AGENT_CHANGED,
+                            mapOf(AnalyticsEvents.PARAM_AGENT to agent.segment, AnalyticsEvents.PARAM_ACTION to "tested"),
+                        )
+                        notify(EditorEvent.Notice(R.string.server_settings_agent_tested))
+                    }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
 

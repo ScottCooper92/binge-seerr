@@ -12,7 +12,9 @@ import dagger.hilt.components.SingletonComponent
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsClient
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.CrashCollection
+import io.github.scottcooper92.binge.seerr.telemetry.FirebaseCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.FirebaseCrashCollection
 import io.github.scottcooper92.binge.seerr.telemetry.PostHogAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.PostHogClient
@@ -28,6 +30,9 @@ abstract class TelemetryModule {
 
     @Binds
     abstract fun crashCollection(impl: FirebaseCrashCollection): CrashCollection
+
+    @Binds
+    abstract fun crashBreadcrumbs(impl: FirebaseCrashBreadcrumbs): CrashBreadcrumbs
 
     companion object {
         /** A blank key means no PostHog project was built in: no config, no client, and no SDK started. */

@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -32,6 +33,7 @@ class BlocklistDetailViewModelTest {
 
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
 
     private val item =
         BlocklistItem(
@@ -64,7 +66,7 @@ class BlocklistDetailViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(canManage: Boolean = true): BlocklistDetailViewModel {
-        val vm = BlocklistDetailViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, item, canManage)
+        val vm = BlocklistDetailViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, item, canManage, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -102,6 +104,7 @@ class BlocklistDetailViewModelTest {
             // Seerr 3.2 made this required and answers 400 without it.
             val delete = seerr.received.last { it.method == "DELETE" }
             assertEquals("movie", delete.url.queryParameter("mediaType"))
+            assertEquals(listOf("blocklist_changed" to mapOf("action" to "removed")), analytics.events)
         }
 
     @Test

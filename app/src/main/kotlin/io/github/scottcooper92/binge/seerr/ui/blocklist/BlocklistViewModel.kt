@@ -13,6 +13,11 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.ui.requests.seerrMediaType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,6 +71,8 @@ class BlocklistViewModel
         private val connection: SeerrConnection,
         private val titles: TitleCache,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(BlocklistFilter.All)
         private val search = MutableStateFlow("")
@@ -191,6 +198,8 @@ class BlocklistViewModel
         fun remove(item: BlocklistItem) {
             if (item.tmdbId in acting.value) return
             acting.update { it + item.tmdbId }
+            crashBreadcrumbs.key("tmdb_id", item.tmdbId.toString())
+            crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().removeFromBlocklist(
@@ -201,6 +210,7 @@ class BlocklistViewModel
                 }.onSuccess {
                     countsRefresh.update { it + 1 }
                     listVersionState.update { it + 1 }
+                    analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "removed"))
                     eventFlow.emit(BlocklistEvent.Removed)
                 }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
                 acting.update { it - item.tmdbId }
@@ -212,6 +222,8 @@ class BlocklistViewModel
             collectionId: Int,
             blocked: Boolean,
         ) {
+            crashBreadcrumbs.key("collection_id", collectionId.toString())
+            crashBreadcrumbs.log(if (blocked) "blocking collection" else "unblocking collection")
             viewModelScope.launch(dispatcher) {
                 val profile = connection.profile()
                 val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
@@ -222,6 +234,8 @@ class BlocklistViewModel
                 }.onSuccess {
                     countsRefresh.update { it + 1 }
                     listVersionState.update { it + 1 }
+                    val action = if (blocked) "collection_blocked" else "collection_unblocked"
+                    analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
                     eventFlow.emit(BlocklistEvent.CollectionChanged(blocked))
                 }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
             }

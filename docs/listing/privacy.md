@@ -37,10 +37,13 @@ secret and the cache.
   device. Binge cannot read the server address or the secret.
 
 - **To PostHog**, only if you agree to share usage data when the app first asks, or later in
-  Settings: which of the app's screens you open. The screen names are the app's own ("requests",
-  "settings"), never an id, a title, your server's address or anyone's name. Nothing is sent until
-  you agree, and turning it off in Settings stops it. PostHog records it against a random
-  identifier for this install, not against you, and derives a rough location from the IP address.
+  Settings: which of the app's screens you open, and which action you take (approving a request,
+  resolving an issue, saving a DVR instance, and so on). Both are the app's own fixed names
+  ("requests", "request_moderated"), with at most a fixed category as a detail (which kind of
+  action, which sign-in method, on/off) — never an id, a title, a message, your server's address or
+  anyone's name. Nothing is sent until you agree, and turning it off in Settings stops it. PostHog
+  records it against a random identifier for this install, not against you, and derives a rough
+  location from the IP address.
 - **To Google (Firebase Crashlytics)**, when the app crashes: what the app was doing, the device
   model and Android version. This is on unless you turn it off in Settings. No user identifier is
   set, and the app does not forward its logs.
@@ -52,7 +55,8 @@ The app has no server of its own.
 
 ## What the app does not do
 
-- No advertising or tracking libraries, and no analytics beyond the screen names above.
+- No advertising or tracking libraries, and no analytics beyond the screen names and action
+  categories above.
 - No account with the app's author, and no sign-in other than to your own server (and Plex, if you
   choose it).
 - No access to contacts, location, files, the camera, the microphone or the clipboard beyond the

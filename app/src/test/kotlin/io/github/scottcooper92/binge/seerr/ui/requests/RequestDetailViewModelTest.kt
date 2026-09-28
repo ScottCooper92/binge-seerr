@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -48,6 +49,7 @@ class RequestDetailViewModelTest {
     private val received = CopyOnWriteArrayList<FakeRequest>()
     private val responses = mutableMapOf<String, () -> FakeResponse>()
     private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
     private var stores = 0
 
     @Before
@@ -114,7 +116,7 @@ class RequestDetailViewModelTest {
         connection: SeerrConnection,
         requestId: Int = 11,
     ): RequestDetailViewModel {
-        val vm = RequestDetailViewModel(connection, mainDispatcherRule.dispatcher, requestId)
+        val vm = RequestDetailViewModel(connection, mainDispatcherRule.dispatcher, requestId, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -255,6 +257,7 @@ class RequestDetailViewModelTest {
             assertTrue(posted.contains("\"mediaId\":900"))
             assertTrue(posted.contains("\"issueType\":3"))
             assertTrue(posted.contains("\"message\":\"Missing subs\""))
+            assertEquals(listOf("issue_reported" to emptyMap<String, Any>()), analytics.events)
 
             responses["/api/v1/auth/me"] =
                 {

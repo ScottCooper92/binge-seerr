@@ -15,6 +15,8 @@ import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import io.github.scottcooper92.binge.seerr.util.RecordingCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
@@ -50,6 +52,8 @@ class IssueDetailViewModelTest {
     private val viewModels = ViewModelStore()
     private var stores = 0
     private val cache = FakeIssueStore()
+    private val analytics = RecordingAnalytics()
+    private val crashBreadcrumbs = RecordingCrashBreadcrumbs()
 
     @Before
     fun setUp() {
@@ -104,7 +108,7 @@ class IssueDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = IssueDetailViewModel(connection, TitleCache(), cache, mainDispatcherRule.dispatcher, 31)
+        val vm = IssueDetailViewModel(connection, TitleCache(), cache, mainDispatcherRule.dispatcher, 31, analytics, crashBreadcrumbs)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -381,6 +385,10 @@ class IssueDetailViewModelTest {
             assertEquals(IssueDetailEvent.CommentDeleted, commentDeleted.await())
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/issueComment/2" })
             assertEquals(CommentAction.None, vm.awaitReady { it.commentAction == CommentAction.None }.commentAction)
+            assertEquals(
+                listOf("issue_commented" to mapOf("action" to "edited"), "issue_commented" to mapOf("action" to "deleted")),
+                analytics.events,
+            )
         }
 
     @Test
@@ -419,6 +427,14 @@ class IssueDetailViewModelTest {
             assertEquals(IssueDetailEvent.IssueDeleted, issueDeleted.await())
             assertEquals(listOf(32), cache.rows.map { it.id })
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/issue/31" })
+            assertEquals(
+                listOf(
+                    "issue_moderated" to mapOf("action" to "resolved"),
+                    "issue_moderated" to mapOf("action" to "reopened"),
+                    "issue_moderated" to mapOf("action" to "deleted"),
+                ),
+                analytics.events,
+            )
         }
 
     @Test

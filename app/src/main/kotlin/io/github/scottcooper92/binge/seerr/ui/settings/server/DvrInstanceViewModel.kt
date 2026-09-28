@@ -10,6 +10,11 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
@@ -30,6 +35,8 @@ class DvrInstanceViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val type: ServiceType,
         @Assisted private val id: Int?,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ExtrasEditorViewModel<DvrForm, DvrExtras>(DvrExtras(), dispatcher) {
         init {
             reload()
@@ -58,7 +65,16 @@ class DvrInstanceViewModel
         override suspend fun write(draft: DvrForm): DvrForm {
             val api = connection.api()
             val body = draft.toDto(currentExtras().choices)
-            val answered = if (draft.id == null) api.createDvr(type.apiSegment, body) else api.updateDvr(type.apiSegment, draft.id, body)
+            val creating = draft.id == null
+            crashBreadcrumbs.log("${if (creating) "creating" else "updating"} ${type.apiSegment} instance")
+            val answered = if (creating) api.createDvr(type.apiSegment, body) else api.updateDvr(type.apiSegment, draft.id, body)
+            analytics.event(
+                AnalyticsEvents.DVR_INSTANCE_CHANGED,
+                mapOf(
+                    AnalyticsEvents.PARAM_TYPE to type.apiSegment,
+                    AnalyticsEvents.PARAM_ACTION to if (creating) "created" else "updated",
+                ),
+            )
             return answered.toForm(type)
         }
 
@@ -69,11 +85,16 @@ class DvrInstanceViewModel
             val draft = ready()?.draft ?: return
             if (!draft.connectionValid || currentExtras().testing) return
             editExtras { it.copy(testing = true) }
+            crashBreadcrumbs.log("testing ${type.apiSegment} instance")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().testDvr(type.apiSegment, draft.toTestBody()).toChoices() }
                     .onSuccess { choices ->
                         editExtras { it.copy(choices = choices, testing = false) }
                         edit { form -> form.reconciledWith(choices) }
+                        analytics.event(
+                            AnalyticsEvents.DVR_INSTANCE_CHANGED,
+                            mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "tested"),
+                        )
                         notify(EditorEvent.Notice(R.string.server_settings_dvr_tested))
                     }.onFailure { failure ->
                         editExtras { it.copy(testing = false) }
@@ -84,10 +105,17 @@ class DvrInstanceViewModel
 
         fun delete() {
             val existing = ready()?.draft?.id ?: return
+            crashBreadcrumbs.key("instance_id", existing.toString())
+            crashBreadcrumbs.log("deleting ${type.apiSegment} instance")
             viewModelScope.launch(dispatcher) {
                 runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
-                    .onSuccess { notify(EditorEvent.Deleted) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onSuccess {
+                        analytics.event(
+                            AnalyticsEvents.DVR_INSTANCE_CHANGED,
+                            mapOf(AnalyticsEvents.PARAM_TYPE to type.apiSegment, AnalyticsEvents.PARAM_ACTION to "deleted"),
+                        )
+                        notify(EditorEvent.Deleted)
+                    }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
 

@@ -11,6 +11,11 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.ui.requests.seerrMediaType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -44,6 +49,8 @@ class BlocklistDetailViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val item: BlocklistItem,
         @Assisted canManage: Boolean,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val state = MutableStateFlow(BlocklistDetailUiState(item = item, canManage = canManage))
         val uiState: StateFlow<BlocklistDetailUiState> = state.asStateFlow()
@@ -72,6 +79,8 @@ class BlocklistDetailViewModel
         fun unblock() {
             if (state.value.unblocking) return
             state.update { it.copy(unblocking = true) }
+            crashBreadcrumbs.key("tmdb_id", item.tmdbId.toString())
+            crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     connection.api().removeFromBlocklist(
@@ -80,6 +89,7 @@ class BlocklistDetailViewModel
                         item.mediaType.seerrMediaType(),
                     )
                 }.onSuccess {
+                    analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "removed"))
                     eventFlow.emit(BlocklistDetailEvent.Removed)
                 }.onFailure {
                     state.update { current -> current.copy(unblocking = false) }

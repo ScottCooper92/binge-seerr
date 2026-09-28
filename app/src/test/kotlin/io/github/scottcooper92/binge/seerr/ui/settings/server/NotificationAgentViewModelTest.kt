@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -51,6 +52,7 @@ class NotificationAgentViewModelTest {
 
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
 
     @Before
     fun setUp() {
@@ -72,7 +74,7 @@ class NotificationAgentViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(agent: ServerAgent): NotificationAgentViewModel {
-        val vm = NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent)
+        val vm = NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent, analytics)
         vm.soundsDebounceMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -129,6 +131,10 @@ class NotificationAgentViewModelTest {
             assertFalse(options.getValue("secure").jsonPrimitive.isString)
             assertEquals("mailer", options.getValue("authUser").jsonPrimitive.content)
             assertEquals("legacy", options.getValue("pgpMode").jsonPrimitive.content)
+            assertEquals(
+                listOf("notification_agent_changed" to mapOf("agent" to "email", "action" to "updated")),
+                analytics.events,
+            )
         }
 
     @Test
@@ -251,6 +257,10 @@ class NotificationAgentViewModelTest {
                     .jsonPrimitive.content,
             )
             assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
+            assertEquals(
+                listOf("notification_agent_changed" to mapOf("agent" to "email", "action" to "tested")),
+                analytics.events,
+            )
 
             seerr.serve("POST /api/v1/settings/notifications/email/test", """{"message":"boom"}""", code = 500)
             val failed = awaitEvent(vm.events)
@@ -259,6 +269,8 @@ class NotificationAgentViewModelTest {
             // `test()` reports the outcome before it clears `testing`, so await the flag rather
             // than sampling it the moment the event lands.
             assertFalse(vm.awaitReady { !it.extras.testing }.extras.testing)
+            // The failed test above must not have added a second event.
+            assertEquals(1, analytics.events.size)
         }
 
     @Test

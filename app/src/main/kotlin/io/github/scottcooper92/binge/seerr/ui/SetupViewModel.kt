@@ -20,6 +20,11 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.isInsecurePublicUrl
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
+import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,6 +61,8 @@ class SetupViewModel
         savedState: SavedStateHandle,
         cipher: SecretCipher,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val analytics: Analytics = NoOpAnalytics,
+        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val draft = MutableStateFlow(Draft())
 
@@ -103,6 +110,7 @@ class SetupViewModel
         /** Settings' Edit connection: the form on the live server, prefilled and read, with that connection kept until a new one saves. */
         fun beginEdit() {
             if (draft.value.editing != null) return
+            crashBreadcrumbs.log("editing server connection")
             viewModelScope.launch(dispatcher) {
                 val saved = runCatching { connection.current() }.getOrNull() ?: return@launch
                 draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl) }
@@ -145,6 +153,7 @@ class SetupViewModel
             val server = current.server ?: return
             if (!current.form.canSubmit || current.busy || current.link != null) return
             draft.update { it.copy(busy = true, error = null, notice = null) }
+            crashBreadcrumbs.log("signing in via ${current.form.mode}")
             val editing = current.editing != null
             when (current.form.mode) {
                 SeerrSignInMode.Plex -> links.startPlex(server, editing, forLink)
@@ -169,11 +178,18 @@ class SetupViewModel
             val server = current.server ?: return
             if (!current.form.canRequestReset || current.busy) return
             draft.update { it.copy(busy = true, error = null, notice = null) }
+            crashBreadcrumbs.log("requesting password reset")
             viewModelScope.launch(dispatcher) {
                 connection
                     .requestPasswordReset(server.baseUrl, current.form.email.trim())
                     .onSuccess { draft.update { it.copy(notice = SetupNotice.ResetEmailSent) } }
                     .onFailure { failure -> draft.update { it.copy(error = failure.toSetupError()) } }
+                    .also { result ->
+                        analytics.event(
+                            AnalyticsEvents.PASSWORD_RESET_REQUESTED,
+                            mapOf(AnalyticsEvents.PARAM_SUCCESS to result.isSuccess),
+                        )
+                    }
                 draft.update { it.copy(busy = false) }
             }
         }
@@ -219,6 +235,9 @@ class SetupViewModel
                     // The address is kept and the failure shown, but the link is not: a server that
                     // cannot be reached now would otherwise resume into the same failure every launch.
                     links.forget()
+                    // finish() reads the draft's form.mode for the sign_in event; set it to the mode
+                    // actually being resumed before that early return, or it reports the stale default.
+                    draft.update { it.copy(form = SignInForm(mode = pending.mode)) }
                     return finish(failure)
                 }
             // `busy` stays true here: `links.resume()` genuinely suspends before `onLink` fires for
@@ -230,6 +249,10 @@ class SetupViewModel
         /** Every attempt ends here: the secret leaves the form once it is stored encrypted, or the failure is shown. */
         private fun finish(failure: Throwable?) {
             if (failure is CancellationException) return
+            analytics.event(
+                AnalyticsEvents.SIGN_IN,
+                mapOf(AnalyticsEvents.PARAM_METHOD to draft.value.form.mode.name, AnalyticsEvents.PARAM_SUCCESS to (failure == null)),
+            )
             draft.update { current ->
                 if (failure == null) {
                     current.copy(busy = false, link = null, editing = null, form = SignInForm(mode = current.form.mode))

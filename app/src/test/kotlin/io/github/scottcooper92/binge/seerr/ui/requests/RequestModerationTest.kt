@@ -8,6 +8,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import io.github.scottcooper92.binge.seerr.util.RecordingCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -35,6 +37,8 @@ class RequestModerationTest {
     private val received = CopyOnWriteArrayList<RecordedRequest>()
     private val codes = mutableMapOf<String, Int>()
     private var moderated = 0
+    private val analytics = RecordingAnalytics()
+    private val crashBreadcrumbs = RecordingCrashBreadcrumbs()
 
     @After
     fun tearDown() = seerr.close()
@@ -70,6 +74,8 @@ class RequestModerationTest {
             scope = backgroundScope,
             dispatcher = UnconfinedTestDispatcher(testScheduler),
             connection = connection,
+            analytics = analytics,
+            crashBreadcrumbs = crashBreadcrumbs,
         ) { moderated++ }
     }
 
@@ -103,6 +109,9 @@ class RequestModerationTest {
             assertEquals("/api/v1/request/11/approve", received.last { it.method == "POST" }.url.encodedPath)
             assertEquals(1, moderated)
             assertTrue(sut.actingIds.value.isEmpty())
+            assertEquals(listOf("request_moderated" to mapOf("action" to "approved")), analytics.events)
+            assertEquals(listOf("moderating request: approved"), crashBreadcrumbs.logs)
+            assertEquals(listOf("request_id" to "11"), crashBreadcrumbs.keys)
         }
 
     @Test
@@ -125,6 +134,10 @@ class RequestModerationTest {
             assertTrue(block.contains("\"tmdbId\":550"))
             assertTrue(block.contains("\"mediaType\":\"movie\""))
             assertTrue(block.contains("\"user\":1"))
+            assertEquals(
+                listOf("request_moderated" to mapOf("action" to "declined_and_blocked")),
+                analytics.events,
+            )
         }
 
     @Test
@@ -144,6 +157,7 @@ class RequestModerationTest {
             sut.approve(12)
             assertEquals(ModerationEvent.Failed(SeerrError.Unauthorized), failed.await())
             assertEquals(1, moderated)
+            assertEquals(listOf("request_moderated" to mapOf("action" to "removed_block_failed")), analytics.events)
         }
 
     private object PlainCipher : SecretCipher {
