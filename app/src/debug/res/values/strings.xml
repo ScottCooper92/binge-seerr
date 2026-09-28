@@ -2,4 +2,16 @@
 <resources>
     <!-- Tells a debug install apart from a release one, in the launcher and in the host's list. -->
     <string name="companion_label" translatable="false">Seerr Debug</string>
+
+    <!-- The developer options screen's own UI prototypes (#467). Never shown in a release build,
+         where this code does not exist at all, so not translated. -->
+    <string name="debug_group_prototypes" translatable="false">UI prototypes</string>
+    <string name="proto_manage_sheet_title" translatable="false">Request manage sheet</string>
+    <string name="proto_manage_sheet_detail" translatable="false">Every state of the sheet, over sample requests</string>
+    <string name="proto_open_as_sheet" translatable="false">Open as a sheet</string>
+    <string name="proto_tapped" translatable="false">Tapped: %1$s</string>
+    <string name="proto_scenario_pending" translatable="false">Pending</string>
+    <string name="proto_scenario_own" translatable="false">Own request</string>
+    <string name="proto_scenario_failed" translatable="false">Failed</string>
+    <string name="proto_scenario_available" translatable="false">Available</string>
 </resources>
