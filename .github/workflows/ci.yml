@@ -135,6 +135,8 @@ jobs:
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
   # closes itself on the next green run, so an open one means "still broken", not "old".
+  # Anything but success reports: a job that hits its timeout is `cancelled`, not `failure`, and the
+  # nightly has its own concurrency group, so nothing else supersedes it.
   nightly-report:
     if: ${{ always() && github.event_name == 'schedule' }}
     needs: build
@@ -164,7 +166,7 @@ jobs:
               await github.rest.issues.update({
                 owner, repo, issue_number: open.number, state: 'closed', state_reason: 'completed',
               });
-            } else if (process.env.BUILD_RESULT === 'failure') {
+            } else {
               if (open) {
                 await github.rest.issues.createComment({
                   owner, repo, issue_number: open.number,
