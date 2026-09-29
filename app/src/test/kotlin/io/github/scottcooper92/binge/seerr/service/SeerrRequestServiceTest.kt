@@ -173,8 +173,11 @@ class SeerrRequestServiceTest {
         runTest {
             val response = connected(permissions = ADMIN).handshake(HandshakeRequest.getDefaultInstance())
 
+            // MEDIA_FILE_INFO is in the contract but not served here yet: it needs a Radarr fetch, and
+            // declaring it would promise the host a file_info this companion cannot fill.
             assertEquals(
-                Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED,
+                Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
+                    Capability.CAPABILITY_MEDIA_FILE_INFO,
                 response.capabilitiesList.toSet(),
             )
         }
