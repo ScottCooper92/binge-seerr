@@ -85,6 +85,7 @@ private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
             .setId(id)
             .setState(status.toApprovalState())
             .addAllSeasonNumbers(seasons.map { it.seasonNumber })
+            .setIs4K(is4k)
     requestedBy?.displayString()?.let(builder::setRequestedBy)
     createdAt?.toEpochMillisOrNull()?.let(builder::setRequestedAtEpochMs)
     return builder.build()

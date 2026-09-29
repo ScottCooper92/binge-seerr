@@ -58,6 +58,25 @@ class SeerrStatusMappingTest {
     }
 
     @Test
+    fun `a standard and a 4K request against one title are told apart`() {
+        val info =
+            SeerrMediaInfoDto(
+                id = 9,
+                status = SeerrMediaStatusCode.Available,
+                requests =
+                    listOf(
+                        SeerrRequestSummaryDto(id = 4, status = SeerrRequestStatusCode.Completed, is4k = false),
+                        SeerrRequestSummaryDto(id = 5, status = SeerrRequestStatusCode.Approved, is4k = true),
+                    ),
+            )
+
+        val requests = info.toRequestStatus(NOW).requestsList
+
+        assertEquals(listOf(4, 5), requests.map { it.id })
+        assertEquals(listOf(false, true), requests.map { it.is4K })
+    }
+
+    @Test
     fun `downloads aggregate into one bar with the slowest eta`() {
         val downloads =
             listOf(
