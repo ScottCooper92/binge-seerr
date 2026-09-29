@@ -151,10 +151,7 @@ fun DiscoverSlidersScreen(
     if (showOverflow) {
         BingeBottomSheet(onDismissRequest = { showOverflow = false }) {
             SlidersOverflowRow(
-                onClick = {
-                    showOverflow = false
-                    confirmingReset = true
-                },
+                onClick = { confirmingReset = true },
             )
         }
     }

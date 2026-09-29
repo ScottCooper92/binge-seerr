@@ -24,7 +24,6 @@ internal class IssueModalState {
     var outboxEditDraft by mutableStateOf("")
 
     fun openEdit(comment: IssueComment) {
-        actingOnCommentId = null
         editingCommentId = comment.id
         editDraft = comment.message
     }
