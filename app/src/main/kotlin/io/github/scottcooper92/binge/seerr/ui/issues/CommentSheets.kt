@@ -85,14 +85,8 @@ internal fun CommentActionsSheet(
 ) {
     BingeBottomSheet(onDismissRequest = onDismiss) {
         CommentActionsContent(
-            onEdit = {
-                onDismiss()
-                onEdit()
-            },
-            onDelete = {
-                onDismiss()
-                onDelete()
-            },
+            onEdit = onEdit,
+            onDelete = onDelete,
         )
     }
 }
@@ -121,18 +115,9 @@ internal fun OutboxActionsSheet(
     BingeBottomSheet(onDismissRequest = onDismiss) {
         OutboxActionsContent(
             retryable = retryable,
-            onRetry = {
-                onDismiss()
-                onRetry()
-            },
-            onEdit = {
-                onDismiss()
-                onEdit()
-            },
-            onDrop = {
-                onDismiss()
-                onDrop()
-            },
+            onRetry = onRetry,
+            onEdit = onEdit,
+            onDrop = onDrop,
         )
     }
 }
