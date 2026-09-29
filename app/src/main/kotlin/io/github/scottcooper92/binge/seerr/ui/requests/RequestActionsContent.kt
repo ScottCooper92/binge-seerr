@@ -3,8 +3,10 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
@@ -19,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
@@ -144,7 +147,27 @@ private fun RequestSheetHeader(item: RequestItem) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            item.status?.let { RequestStateChip(status = it) }
+            val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                item.status?.let { RequestStateChip(status = it) }
+                if (item.is4k) {
+                    if (item.status != null) Spacer(Modifier.width(gap))
+                    Text(
+                        text = stringResource(R.string.settings_service_4k),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (item.seasonNumbers.isNotEmpty()) {
+                Text(
+                    text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.joinToString(", ")),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

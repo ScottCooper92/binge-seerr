@@ -29,6 +29,12 @@ class RequestSheetsScreenshotTest {
     @Composable
     fun actionsSettled() = SheetFrame { ActionsContent(settledDetail()) }
 
+    /** A 4K request: the header's 4K label beside the status chip, with the season count under it (#479). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actions4kSeason() = SheetFrame { ActionsContent(partiallyAvailable4kDetail()) }
+
     /** The three Open-in links, which used to have two homes and now have one. */
     @PreviewTest
     @SeerrComponentPreviews
