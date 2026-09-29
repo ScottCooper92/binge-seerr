@@ -30,8 +30,11 @@ on:
   schedule:
     - cron: '0 6 * * 1'
 
+# The weekly run has its own group. Sharing main's with a push would let a push cancel it mid-run,
+# and a cancelled scheduled run is reported (a job that hits its timeout is `cancelled`, not
+# `failure`), so that would raise a false alarm.
 concurrency:
-  group: device-smoke-${{ github.event.inputs.ref || github.ref }}
+  group: device-smoke-${{ github.event_name == 'schedule' && 'weekly' || github.event.inputs.ref || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -148,7 +151,7 @@ jobs:
               await github.rest.issues.update({
                 owner, repo, issue_number: open.number, state: 'closed', state_reason: 'completed',
               });
-            } else if (process.env.SMOKE_RESULT === 'failure') {
+            } else {
               if (open) {
                 await github.rest.issues.createComment({
                   owner, repo, issue_number: open.number,
