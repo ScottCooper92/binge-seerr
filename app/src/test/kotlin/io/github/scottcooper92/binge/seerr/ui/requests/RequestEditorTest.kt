@@ -174,6 +174,40 @@ class RequestEditorTest {
         }
 
     @Test
+    fun `selecting all ticks every changeable season and leaves a held one alone`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            assertFalse(editor.awaitLoaded().allSeasonsSelected)
+
+            editor.selectAllSeasons(true)
+
+            val ticked = editor.awaitLoaded()
+            // Season 3 is held by the server: it stays as it was, not selected, and does not count against "all".
+            assertEquals(listOf(true, true, false), ticked.seasons.map { it.selected })
+            assertTrue(ticked.allSeasonsSelected)
+
+            editor.save()
+            editor.awaitClosed()
+            assertEquals(listOf(1, 2), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `clearing all unticks every changeable season, which leaves nothing to save`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.selectAllSeasons(false)
+
+            val cleared = editor.awaitLoaded()
+            assertEquals(listOf(false, false, false), cleared.seasons.map { it.selected })
+            assertFalse(cleared.allSeasonsSelected)
+            assertFalse(cleared.canSave)
+        }
+
+    @Test
     fun `a series whose details did not load sends no seasons, and cannot be saved at all`() =
         runTest {
             val editor = editor()

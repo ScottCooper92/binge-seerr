@@ -87,6 +87,10 @@ class RequestEditor(
             state.copy(seasons = state.seasons.map { if (it.number == number && !it.locked) it.copy(selected = !it.selected) else it })
         }
 
+    /** Ticks or clears every season the editor may change; a held season is left exactly as it is. */
+    fun selectAllSeasons(selected: Boolean) =
+        update { state -> state.copy(seasons = state.seasons.map { if (it.locked) it else it.copy(selected = selected) }) }
+
     fun selectServer(id: Int) {
         val server = servers.firstOrNull { it.id == id } ?: return
         var changed = false
