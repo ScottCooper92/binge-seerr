@@ -94,7 +94,14 @@ internal fun EditRequestContent(
         Text(stringResource(R.string.request_edit_title), style = MaterialTheme.typography.titleMedium)
         item.title?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         if (edit.seasons.isNotEmpty()) SeasonChecklist(edit = edit, actions = actions, modifier = Modifier.weight(1f, fill = false))
-        if (destination != null) DestinationFields(destination, enabled = !edit.saving, actions = actions) { activeField = it }
+        if (destination != null) {
+            Column(
+                modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            ) {
+                DestinationFields(destination, enabled = !edit.saving, actions = actions) { activeField = it }
+            }
+        }
         BingeActionFooter(
             label = stringResource(R.string.request_edit_save),
             onClick = actions.onSave,
@@ -143,7 +150,11 @@ private fun SeasonChecklist(
     }
 }
 
-/** The server, profile, root folder and tags: a handful of fixed-height rows, so no scroll region of their own. */
+/**
+ * The server, profile, root folder and tags. Called inside its own scroll region in
+ * [EditRequestContent], independent of the seasons list, since the tag count is server-defined
+ * and unbounded.
+ */
 @Composable
 private fun DestinationFields(
     destination: DestinationChoices,
