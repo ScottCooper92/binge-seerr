@@ -3,8 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,12 +22,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.CheckboxRow
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoiceField
@@ -36,6 +41,7 @@ import com.binge.designsystem.R as DesR
 
 class EditRequestActions(
     val onToggleSeason: (Int) -> Unit,
+    val onSelectAllSeasons: (Boolean) -> Unit,
     val onSelectServer: (Int) -> Unit,
     val onSelectProfile: (Int) -> Unit,
     val onSelectRootFolder: (String) -> Unit,
@@ -87,41 +93,13 @@ internal fun EditRequestContent(
     ) {
         Text(stringResource(R.string.request_edit_title), style = MaterialTheme.typography.titleMedium)
         item.title?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        Column(
-            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            Column {
-                edit.seasons.forEachIndexed { index, season ->
-                    SeasonToggleRow(
-                        season = season,
-                        enabled = !edit.saving,
-                        onToggle = { actions.onToggleSeason(season.number) },
-                        showDivider = index != edit.seasons.lastIndex,
-                    )
-                }
-            }
-            if (destination != null) {
-                if (destination.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
-                ChoiceField(
-                    title = stringResource(R.string.advanced_server),
-                    choices = destination.servers.map { it.id to it.label },
-                    selected = destination.serverId,
-                    enabled = !edit.saving,
-                ) { activeField = DestinationField.Server }
-                ChoiceField(
-                    title = stringResource(R.string.advanced_profile),
-                    choices = destination.profiles.map { it.id to it.label },
-                    selected = destination.profileId,
-                    enabled = !edit.saving,
-                ) { activeField = DestinationField.Profile }
-                ChoiceField(
-                    title = stringResource(R.string.advanced_root_folder),
-                    choices = destination.rootFolders.map { it to it },
-                    selected = destination.rootFolder,
-                    enabled = !edit.saving,
-                ) { activeField = DestinationField.RootFolder }
-                TagChips(destination.tags, destination.tagIds, !edit.saving, actions.onToggleTag)
+        if (edit.seasons.isNotEmpty()) SeasonChecklist(edit = edit, actions = actions, modifier = Modifier.weight(1f, fill = false))
+        if (destination != null) {
+            Column(
+                modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            ) {
+                DestinationFields(destination, enabled = !edit.saving, actions = actions) { activeField = it }
             }
         }
         BingeActionFooter(
@@ -131,6 +109,79 @@ internal fun EditRequestContent(
             loading = edit.saving,
         )
     }
+}
+
+/**
+ * The seasons as a checklist of their own, so a long run scrolls here without dragging the destination
+ * fields with it. A show with more than one season the editor may change gets a bulk toggle.
+ */
+@Composable
+private fun SeasonChecklist(
+    edit: EditState,
+    actions: EditRequestActions,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        if (edit.toggleableSeasons.size > 1) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.request_edit_seasons),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                val all = edit.allSeasonsSelected
+                BingeTextButton(
+                    label = stringResource(if (all) R.string.request_edit_select_none else R.string.request_edit_select_all),
+                    onClick = { actions.onSelectAllSeasons(!all) },
+                    enabled = !edit.saving,
+                )
+            }
+        }
+        LazyColumn {
+            itemsIndexed(edit.seasons, key = { _, season -> season.number }) { index, season ->
+                SeasonToggleRow(
+                    season = season,
+                    enabled = !edit.saving,
+                    onToggle = { actions.onToggleSeason(season.number) },
+                    showDivider = index != edit.seasons.lastIndex,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The server, profile, root folder and tags. Called inside its own scroll region in
+ * [EditRequestContent], independent of the seasons list, since the tag count is server-defined
+ * and unbounded.
+ */
+@Composable
+private fun DestinationFields(
+    destination: DestinationChoices,
+    enabled: Boolean,
+    actions: EditRequestActions,
+    onOpen: (DestinationField) -> Unit,
+) {
+    if (destination.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
+    ChoiceField(
+        title = stringResource(R.string.advanced_server),
+        choices = destination.servers.map { it.id to it.label },
+        selected = destination.serverId,
+        enabled = enabled,
+    ) { onOpen(DestinationField.Server) }
+    ChoiceField(
+        title = stringResource(R.string.advanced_profile),
+        choices = destination.profiles.map { it.id to it.label },
+        selected = destination.profileId,
+        enabled = enabled,
+    ) { onOpen(DestinationField.Profile) }
+    ChoiceField(
+        title = stringResource(R.string.advanced_root_folder),
+        choices = destination.rootFolders.map { it to it },
+        selected = destination.rootFolder,
+        enabled = enabled,
+    ) { onOpen(DestinationField.RootFolder) }
+    TagChips(destination.tags, destination.tagIds, enabled, actions.onToggleTag)
 }
 
 /**

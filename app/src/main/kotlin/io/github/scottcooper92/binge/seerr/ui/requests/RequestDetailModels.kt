@@ -60,6 +60,13 @@ data class EditState(
     /** The show's season list failed to load, so [seasons] is empty for lack of data, not because there is none. */
     val seasonsUnknown: Boolean = false,
 ) {
+    /** The seasons the editor may change: those the server does not already hold. */
+    val toggleableSeasons: List<SeasonChoice> get() = seasons.filterNot { it.locked }
+
+    /** Whether every changeable season is ticked, which is what the bulk toggle offers to undo. */
+    val allSeasonsSelected: Boolean
+        get() = toggleableSeasons.let { changeable -> changeable.isNotEmpty() && changeable.all { it.selected } }
+
     /** A show with nothing ticked is a request for nothing, which the server refuses. */
     val canSave: Boolean
         get() =

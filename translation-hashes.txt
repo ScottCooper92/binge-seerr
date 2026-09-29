@@ -227,6 +227,9 @@ app:request_declined_and_blocked  c8b8ff9ee2e5
 app:request_declined_block_failed  01454f1fd4f3
 app:request_downloads  37b345555d7e
 app:request_edit_save  dd0ae7a5cbcf
+app:request_edit_seasons  c15527b19b99
+app:request_edit_select_all  1fc9a387654d
+app:request_edit_select_none  83b12c2216ef
 app:request_edit_title  c5a6b24b7a28
 app:request_edited  933d05a95a03
 app:request_episodes  b3135dd43c57

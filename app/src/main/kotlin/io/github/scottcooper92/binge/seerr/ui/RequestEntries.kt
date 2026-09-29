@@ -46,6 +46,7 @@ internal fun RequestDetailEntry(
                 edit =
                     EditRequestActions(
                         onToggleSeason = viewModel.editor::toggleSeason,
+                        onSelectAllSeasons = viewModel.editor::selectAllSeasons,
                         onSelectServer = viewModel.editor::selectServer,
                         onSelectProfile = viewModel.editor::selectProfile,
                         onSelectRootFolder = viewModel.editor::selectRootFolder,
