@@ -20,13 +20,16 @@ private val SHEET_HEIGHT = 640.dp
 /** Tall enough for five whole season rows above the destination fields, so nothing is clipped mid-row. */
 private val SHORT_RUN_SHEET_HEIGHT = 680.dp
 
+/** Tall enough that the season list's visible rows all end on a whole row, so none is clipped mid-row. */
+private val LONG_RUN_SHEET_HEIGHT = 700.dp
+
 /** The editor with its season checklist as a region of its own, and the bulk toggle above it (#477). */
 class EditRequestSheetScreenshotTest {
     /** Twenty-four seasons, the first three held by the server: the list scrolls, the destination rows and the save stay put. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun longRun() = EditFrame(longRunEditState())
+    fun longRun() = EditFrame(longRunEditState(), LONG_RUN_SHEET_HEIGHT)
 
     /** Everything changeable is ticked, so the toggle reads "Clear" and the held season stays checked and disabled. */
     @PreviewTest
