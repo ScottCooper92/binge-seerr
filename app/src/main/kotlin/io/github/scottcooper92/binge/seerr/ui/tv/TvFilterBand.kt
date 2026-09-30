@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,11 +30,13 @@ import com.binge.designsystem.tv.focus.tvFocusFill
 import io.github.scottcooper92.binge.seerr.R
 
 /**
- * The band above a board: what to show, then how to order it, on one D-pad line.
+ * The band above a board: what to show, then how to order it. On one D-pad line where it fits, and
+ * wrapping where it does not: the filters wrap pill by pill, and the sort (its label and pills) wraps
+ * as a whole, so nothing is ever pushed off the screen, whatever the copy's length.
  *
- * Both halves are [TvFilterBand] rather than a picker, because a board's sort is two mutually
- * exclusive values and an overlay to choose between two is a worse trade on a remote than one press
- * right. The sort half is labelled because two rows of identical pills would not say which is which.
+ * Both halves are pills rather than a picker, because a board's sort is two mutually exclusive
+ * values and an overlay to choose between two is a worse trade on a remote than one press right.
+ * The sort half is labelled because two rows of identical pills would not say which is which.
  */
 @Composable
 internal fun <F, S> TvBoardBands(
@@ -46,23 +49,29 @@ internal fun <F, S> TvBoardBands(
     modifier: Modifier = Modifier,
     initialFocusedLabel: String? = null,
 ) {
-    Row(
+    FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_filter_band_gap)),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_filter_band_gap)),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        TvFilterBand(
+        TvFilterPills(
             filters = filters,
             selected = selectedFilter,
             onSelect = onFilterChange,
             initialFocusedLabel = initialFocusedLabel,
         )
-        Text(
-            text = stringResource(R.string.sort_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        TvFilterBand(filters = sorts, selected = selectedSort, onSelect = onSortChange)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_filter_band_gap)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.sort_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TvFilterBand(filters = sorts, selected = selectedSort, onSelect = onSortChange)
+        }
     }
 }
 
@@ -79,21 +88,34 @@ internal fun <T> TvFilterBand(
     initialFocusedLabel: String? = null,
     arrival: TvArrivalFocus? = null,
 ) {
-    Row(
+    FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_filter_band_gap)),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_filter_band_gap)),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        filters.forEachIndexed { index, (key, label) ->
-            val isSelected = key == selected
-            TvChoicePill(
-                label = label,
-                selected = isSelected,
-                onSelect = { if (!isSelected) onSelect(key) },
-                initiallyFocused = label == initialFocusedLabel,
-                modifier = if (index == 0 && arrival != null) Modifier.tvArrivalTarget(arrival) else Modifier,
-            )
-        }
+        TvFilterPills(filters, selected, onSelect, initialFocusedLabel, arrival)
+    }
+}
+
+/** The pills themselves, emitted into whatever flow the caller lays them in. */
+@Composable
+private fun <T> TvFilterPills(
+    filters: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    initialFocusedLabel: String? = null,
+    arrival: TvArrivalFocus? = null,
+) {
+    filters.forEachIndexed { index, (key, label) ->
+        val isSelected = key == selected
+        TvChoicePill(
+            label = label,
+            selected = isSelected,
+            onSelect = { if (!isSelected) onSelect(key) },
+            initiallyFocused = label == initialFocusedLabel,
+            modifier = if (index == 0 && arrival != null) Modifier.tvArrivalTarget(arrival) else Modifier,
+        )
     }
 }
 
