@@ -36,8 +36,10 @@ server's own web client; this app manages what has already been asked for.
 
 The store listing and the privacy policy are under [`docs/listing/`](docs/listing/). The short
 version: the one secret (your API key or session) is encrypted with an Android Keystore key and
-stays on the device; the app talks to the server you entered and, if you choose to sign in with
-Plex, to plex.tv, and to nothing else.
+stored on the device, and Google Play's Block Store can carry it to a new device; the app talks to
+the server you entered and, if you choose to sign in with Plex, to plex.tv. Usage data (PostHog,
+only if you agree) and crash reports (Firebase Crashlytics, switchable in Settings) are the only
+other traffic.
 
 ## For the person writing a companion
 

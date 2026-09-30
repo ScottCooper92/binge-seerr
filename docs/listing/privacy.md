@@ -11,7 +11,13 @@ https://github.com/ScottCooper92/binge-seerr.
 - **One secret for that server**: the API key you entered, or the session the server issued when
   you signed in with an account, with Plex, or with Jellyfin's Quick Connect. It is encrypted with
   a key held in the Android Keystore, so the key material never leaves the device's secure
-  hardware, and it is stored only on the device.
+  hardware, and it is stored on the device.
+- **A copy of the connection in Google Play's Block Store**: the server address and the same
+  secret, so that setting up a new device, or restoring one, can reconnect without signing in
+  again. Block Store is part of Google Play services. The copy survives a device-to-device
+  transfer, and is included in Google's cloud backup only where your Google account has end-to-end
+  encryption available, so that Google cannot read it. It is best-effort, absent on a device
+  without Play services, and removed when you disconnect in the app.
 - **A cache of what the server showed you** (requests, issues, users, titles and artwork URLs), so
   lists open instantly and work offline until refreshed. It is cleared when you disconnect.
 - **Your notification choices**, and the last time the background check ran.
@@ -20,9 +26,10 @@ https://github.com/ScottCooper92/binge-seerr.
 - **Your answers about usage data and crash reports**, and whether shaking the phone offers to
   report a bug.
 
-The app sets `allowBackup="false"`: none of the above is copied into a cloud backup, and
-uninstalling the app removes all of it. Disconnecting inside the app removes the address, the
-secret and the cache.
+The app sets `allowBackup="false"`, so Android's own backup does not copy any of the above.
+Uninstalling the app removes it. Disconnecting inside the app removes the address, the secret,
+the cache and the Block Store copy. The Block Store copy is the one path by which the connection
+can leave the device, and only in the two ways described above.
 
 ## Where the app sends data
 
@@ -32,6 +39,8 @@ secret and the cache.
 - **To plex.tv**, only when you choose to sign in with Plex: the app opens Plex's sign-in page and
   polls plex.tv for the approval, sending the identifier above. Plex's own privacy policy governs
   what happens there.
+- **To Google (Play services Block Store)**, if the device has Play services: the connection copy
+  described above, handled by Google's own service under your Google account.
 - **To Binge**, on the same device, when Binge is installed and you allow it: request and status
   data for the titles Binge asks about, over an Android service binding that never leaves the
   device. Binge cannot read the server address or the secret.
@@ -69,6 +78,17 @@ The app has no server of its own.
 - **Internet**, to reach your server.
 - **Notifications** (Android 13 and later), to tell you about new requests and issues. Denying it
   disables the notifications and nothing else.
+
+Libraries the app includes add more to the installed app's manifest. None is used to reach anything
+beyond what this policy describes:
+
+- **Network state**, **wake lock**, **run at startup** and **foreground service**, from Android's
+  WorkManager (and, for network state, PostHog): they let the background notification check
+  survive a restart and run reliably.
+- **Biometric** and **fingerprint**, declared by the `androidx.biometric` library that a
+  dependency brings in. The app never asks for biometrics.
+- A signature-level permission named after the app, added by `androidx.core` to protect the app's
+  own broadcast receivers. No other app can hold it.
 
 ## Children
 
