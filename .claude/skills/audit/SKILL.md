@@ -63,7 +63,7 @@ repos and audits) and `build/`.
 The repo is read as documentation; anything wrong here is copied by third parties.
 
 - **Contract redefinition**: any `.proto`, hand-written message class or constant re-stating a
-  contract value (the contract lives in binge-integrations). Anything relying on a private
+  contract value (the contract lives in binge-companions). Anything relying on a private
   first-party arrangement (assumed field, undocumented ordering).
 - **Capabilities, never versions**: a version-number comparison deciding host-facing behaviour; an
   unknown enum value treated as an error rather than ignored; an rpc reachable when its capability

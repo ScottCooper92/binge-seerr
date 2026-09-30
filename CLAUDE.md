@@ -16,13 +16,13 @@ is not a discovery client; browsing for titles is Binge's job or the server's we
 As a companion, it is what Binge talks to. Binge ships as a plain TMDB client with zero
 bundled providers; a companion app is a separate APK that exports a bound Android Service
 implementing a contract from
-[binge-integrations](https://github.com/ScottCooper92/binge-integrations). This one implements
+[binge-companions](https://github.com/ScottCooper92/binge-companions). This one implements
 REQUEST v1 against the connected server, and `AdvancedRequestActivity` is the SDK's hand-off,
 the Activity Binge starts with a title.
 
 The contracts live in that repository and are authoritative there. **Nothing in this
 repository defines a contract.** A change to the wire format is a PR against
-binge-integrations, and this repository consumes the result.
+binge-companions, and this repository consumes the result.
 
 Status is pre-alpha, at contract parity: the exported Service serves every REQUEST v1
 operation against the connected server, the capability set is derived from the signed-in
@@ -103,7 +103,7 @@ to design; the server's API is versioned by release because it is not.
   build and never applied. AGP 9 has built-in Kotlin support and rejects the plugin
   being applied, but compiles with whichever Kotlin Gradle plugin is on the build
   classpath, and the declaration is what puts 2.4.10 there — the version the included
-  binge-integrations build compiles the contracts and SDK with. See the comment in
+  binge-companions build compiles the contracts and SDK with. See the comment in
   `libs.versions.toml`.
 - The version catalog is `libs.versions.toml` at the repository root, not under
   `gradle/`, matching Binge so a version bump applies the same way to both.
@@ -167,7 +167,7 @@ in `values-es` — the Gates section covers what happens if it does not.
 **Structure.** A screen composable orchestrates and delegates to focused children. About 300 lines
 is the signal to split a file by concern, and 400 is too long. Route entries live in `*Entries.kt`
 files by area. There is no automated length gate here — the custom detekt rule that enforces one in
-Binge lives in an unpublished module (binge-integrations#39) — so this one is held in review.
+Binge lives in an unpublished module (binge-companions#39) — so this one is held in review.
 
 **Where the code does not follow this**, it is an open issue rather than a line here: a list of
 departures in this file goes stale faster than it is read. The one standing exception is the DVR
@@ -225,7 +225,7 @@ in its application plugin and keeps every frame in a library module. That is the
 Config is the root `detekt.yml`, with `buildUponDefaultConfig = true`, so it records only
 deviations from detekt's defaults. It is Binge's config minus everything that does not transfer:
 the custom `binge:` ruleset lives in an unpublished module there and cannot be depended on from
-here (binge-integrations#39), and the community Compose ruleset is tuned per-file to Binge's own
+here (binge-companions#39), and the community Compose ruleset is tuned per-file to Binge's own
 composables, so adopting it is a measurement pass rather than a port.
 
 detekt runs on production `src/main` only, and **with type resolution** — the compile classpath is
@@ -286,7 +286,7 @@ repository already has rather than inventing new ones.
 ## Agent workflows
 
 `.github/workflows/` holds a review bot and three author bots, adapted from
-binge-integrations for this repository. They act only on PRs carrying the `agent`
+binge-companions for this repository. They act only on PRs carrying the `agent`
 label.
 
 **That label is maintainers-only.** Applying it grants an agent code execution with

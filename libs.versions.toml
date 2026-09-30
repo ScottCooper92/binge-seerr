@@ -6,7 +6,7 @@
 # plugin being APPLIED — but it compiles with whichever Kotlin Gradle plugin is on the build
 # classpath, and with none declared that is the 2.2 it embeds. Declaring the plugin `apply false`
 # in the root build puts 2.4.10 there, which is what Binge does and what the included
-# binge-integrations build compiles the contracts and SDK with; a mismatch fails as "compiled with
+# binge-companions build compiles the contracts and SDK with; a mismatch fails as "compiled with
 # an incompatible version of Kotlin" on every SDK class.
 [versions]
 agp = "9.4.1"
@@ -21,7 +21,7 @@ screenshot = "0.0.1-alpha15"
 ktlint = "14.2.0"
 detekt = "1.23.8"
 kover = "0.9.9"
-# Must agree with binge-integrations' catalog: the SDK brings grpc-binder at its version, and the
+# Must agree with binge-companions' catalog: the SDK brings grpc-binder at its version, and the
 # in-process transport the tests use has to be the same release or the two disagree on internals.
 grpc = "1.68.1"
 kotlinxCoroutines = "1.11.0"
@@ -74,7 +74,7 @@ reorderable = "2.5.1"
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 junit = { module = "junit:junit", version.ref = "junit" }
-# Version-less on purpose: both resolve to projects of the included binge-integrations build.
+# Version-less on purpose: both resolve to projects of the included binge-companions build.
 binge-companion-contracts = { module = "io.github.scottcooper92:contracts" }
 binge-companion-sdk = { module = "io.github.scottcooper92:sdk" }
 # Version-less for the same reason: resolves to the included binge-design-system build.

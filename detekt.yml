@@ -7,7 +7,7 @@
 #
 #   - The custom `binge:` ruleset (FileLength, the comment gates). It lives in an unpublished
 #     module in Binge and is loaded by project path, so it cannot be depended on from here;
-#     copying the source would fork a live ruleset. See binge-integrations#39.
+#     copying the source would fork a live ruleset. See binge-companions#39.
 #   - The community Compose ruleset, io.nlopez.compose.rules. Binge runs it, but its config there
 #     is tuned per-file to Binge's own code - an allowlist naming BingeNavHost, a CompositionLocal
 #     list, a dozen rules off for reasons that name Binge composables. Adopting it here is a
@@ -96,7 +96,7 @@ potential-bugs:
     active: true
   # Off, as in Binge. Wiring type resolution for UnsafeCallOnNullableType also activates these
   # two, which nothing here asked for — and UnreachableCode is known to mis-resolve Android
-  # platform types and call live code dead (measured in binge-integrations#38).
+  # platform types and call live code dead (measured in binge-companions#38).
   UnreachableCode:
     active: false
   UnnecessarySafeCall:
