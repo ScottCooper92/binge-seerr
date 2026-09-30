@@ -118,7 +118,7 @@ private fun ConnectionFields(
 
 /** Empty until a test answered: the pickers show what the instance offers, and nothing else is offered. */
 @Composable
-private fun DestinationFields(
+internal fun DestinationFields(
     draft: DvrForm,
     choices: DvrChoices?,
     enabled: Boolean,
@@ -225,7 +225,7 @@ private fun SonarrFields(
 }
 
 @Composable
-private fun FlagSwitches(
+internal fun FlagSwitches(
     draft: DvrForm,
     enabled: Boolean,
     actions: EditorActions<DvrForm>,

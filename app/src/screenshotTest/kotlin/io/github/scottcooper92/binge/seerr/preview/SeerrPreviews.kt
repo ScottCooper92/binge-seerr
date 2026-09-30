@@ -95,6 +95,15 @@ annotation class SeerrListPanePreview
 annotation class SeerrComponentPreviews
 
 /**
+ * [SeerrComponentPreviews] at a phone's width and 1600dp tall, for a section longer than the renderer's
+ * default cap, which would clip it mid-row.
+ */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(name = "dark", widthDp = 411, heightDp = 1600, uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)
+@Preview(name = "light", widthDp = 411, heightDp = 1600, uiMode = UI_MODE_NIGHT_NO, locale = DEFAULT_LOCALE)
+annotation class SeerrTallComponentPreviews
+
+/**
  * A television surface, pinned to [DEFAULT_LOCALE].
  *
  * The design system's `@TvPreviews` pair is the same matrix and cannot be used here: it pins no
