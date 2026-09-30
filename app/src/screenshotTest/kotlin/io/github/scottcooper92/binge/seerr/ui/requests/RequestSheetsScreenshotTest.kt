@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 
 private val SHEET_WIDTH = 411.dp
 
@@ -34,6 +35,21 @@ class RequestSheetsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun actions4kSeason() = SheetFrame { ActionsContent(partiallyAvailable4kDetail()) }
+
+    /** Another request's sheet while that request is fetched: it is loaded on open, not held by the page. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun otherRequestLoading() = SheetFrame { RequestSheetPlaceholderContent(state = RequestDetailUiState.Loading, onRetry = {}) }
+
+    /** And when that fetch fails, the same retry every other screen offers. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun otherRequestError() =
+        SheetFrame {
+            RequestSheetPlaceholderContent(state = RequestDetailUiState.Error(SeerrError.Unreachable), onRetry = {})
+        }
 
     /** The three Open-in links, which used to have two homes and now have one. */
     @PreviewTest

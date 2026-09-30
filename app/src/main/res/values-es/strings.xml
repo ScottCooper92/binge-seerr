@@ -127,7 +127,7 @@
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta solicitud puede diferir a continuación.</string>
     <string name="request_downloads">Descargando</string>
-    <string name="request_siblings_title">Otras solicitudes</string>
+    <string name="request_summaries_title">Solicitudes de este título</string>
     <string name="request_siblings_clear_data_note">Borrar los datos de este título elimina todas las peticiones que tiene, incluidas las anteriores.</string>
     <plurals name="request_episodes">
         <item quantity="one">%1$d episodio</item>

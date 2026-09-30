@@ -2,24 +2,29 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.ui.requests.EditRequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.ManageMediaActions
+import io.github.scottcooper92.binge.seerr.ui.requests.ModerationSnackbarEffect
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestManagementSheets
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestSheetPlaceholder
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsScreen
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.SiblingSheet
 
 @Composable
 internal fun RequestDetailEntry(
     requestId: Int,
     onBack: () -> Unit,
-    onOpenRequest: (Int) -> Unit,
     onOpenUser: (Int) -> Unit,
     viewModel: RequestDetailViewModel =
         hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
@@ -29,48 +34,110 @@ internal fun RequestDetailEntry(
         state = state,
         events = viewModel.moderation.events,
         actions =
-            RequestDetailActions(
+            viewModel.toActions(
+                requestId = requestId,
+                state = state,
                 onBack = onBack,
-                onRetry = viewModel::reload,
-                onReportIssue = viewModel::reportIssue,
-                onDismissReport = viewModel::dismissReport,
-                onApprove = { viewModel.moderation.approve(requestId) },
-                onRetryRequest = { viewModel.moderation.retry(requestId) },
-                onDecline = { block ->
-                    (state as? RequestDetailUiState.Ready)?.let { viewModel.moderation.decline(it.detail.item, block) }
-                },
-                onRemove = { block -> (state as? RequestDetailUiState.Ready)?.let { viewModel.moderation.remove(it.detail.item, block) } },
-                onStartEdit = viewModel::startEdit,
-                onOpenSibling = onOpenRequest,
                 onOpenUser = onOpenUser,
-                edit =
-                    EditRequestActions(
-                        onToggleSeason = viewModel.editor::toggleSeason,
-                        onSelectAllSeasons = viewModel.editor::selectAllSeasons,
-                        onSelectServer = viewModel.editor::selectServer,
-                        onSelectProfile = viewModel.editor::selectProfile,
-                        onSelectRootFolder = viewModel.editor::selectRootFolder,
-                        onToggleTag = viewModel.editor::toggleTag,
-                        onSave = viewModel.editor::save,
-                        onDismiss = viewModel.editor::cancel,
-                    ),
-                media =
-                    ManageMediaActions(
-                        onSetStatus = { mediaId, status, is4k ->
-                            val seasons =
-                                (state as? RequestDetailUiState.Ready)
-                                    ?.detail
-                                    ?.seasons
-                                    ?.map { it.number }
-                                    .orEmpty()
-                            viewModel.moderation.setMediaStatus(requestId, mediaId, status, is4k, seasons)
-                        },
-                        onClearData = { mediaId -> viewModel.moderation.clearMedia(requestId, mediaId) },
-                        onDeleteFiles = { mediaId, is4k -> viewModel.moderation.deleteMediaFiles(requestId, mediaId, is4k) },
-                    ),
+                siblingSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser) },
             ),
     )
 }
+
+/**
+ * Another request's actions over the request page, backed by that request's own view model. Keyed by
+ * the request so each one opened is fetched once and kept while the page stays, and so opening the
+ * same one again is instant. The view model is held while [SiblingSheet.open] is false too, because
+ * a moderation's result arrives after the sheet has closed and its snackbar and the page's reload
+ * ride that result.
+ */
+@Composable
+private fun SiblingRequestSheet(
+    sheet: SiblingSheet,
+    onOpenUser: (Int) -> Unit,
+) {
+    val viewModel =
+        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(
+            key = "request-detail-${sheet.requestId}",
+            creationCallback = { factory -> factory.create(sheet.requestId) },
+        )
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val current by rememberUpdatedState(sheet)
+    ModerationSnackbarEffect(viewModel.moderation.events, sheet.snackbarHostState)
+    LaunchedEffect(viewModel) {
+        viewModel.moderation.events.collect { event ->
+            current.onChanged()
+            if (event.removesTheRequest) current.onDismiss()
+        }
+    }
+    when (val page = state) {
+        is RequestDetailUiState.Ready ->
+            RequestManagementSheets(
+                state = page,
+                actions =
+                    viewModel.toActions(
+                        requestId = sheet.requestId,
+                        state = page,
+                        onBack = sheet.onDismiss,
+                        onOpenUser = onOpenUser,
+                        siblingSheet = {},
+                    ),
+                acting = sheet.open,
+                onDismissActing = sheet.onDismiss,
+            )
+        else ->
+            if (sheet.open) {
+                RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)
+            }
+    }
+}
+
+/** Every callback a request's screen or sheet makes, bound to [this] view model's request. */
+private fun RequestDetailViewModel.toActions(
+    requestId: Int,
+    state: RequestDetailUiState,
+    onBack: () -> Unit,
+    onOpenUser: (Int) -> Unit,
+    siblingSheet: @Composable (SiblingSheet) -> Unit,
+): RequestDetailActions =
+    RequestDetailActions(
+        onBack = onBack,
+        onRetry = ::reload,
+        onReportIssue = ::reportIssue,
+        onDismissReport = ::dismissReport,
+        onApprove = { moderation.approve(requestId) },
+        onRetryRequest = { moderation.retry(requestId) },
+        onDecline = { block -> (state as? RequestDetailUiState.Ready)?.let { moderation.decline(it.detail.item, block) } },
+        onRemove = { block -> (state as? RequestDetailUiState.Ready)?.let { moderation.remove(it.detail.item, block) } },
+        onStartEdit = ::startEdit,
+        siblingSheet = siblingSheet,
+        onOpenUser = onOpenUser,
+        edit =
+            EditRequestActions(
+                onToggleSeason = editor::toggleSeason,
+                onSelectAllSeasons = editor::selectAllSeasons,
+                onSelectServer = editor::selectServer,
+                onSelectProfile = editor::selectProfile,
+                onSelectRootFolder = editor::selectRootFolder,
+                onToggleTag = editor::toggleTag,
+                onSave = editor::save,
+                onDismiss = editor::cancel,
+            ),
+        media =
+            ManageMediaActions(
+                onSetStatus = { mediaId, status, is4k ->
+                    val seasons =
+                        (state as? RequestDetailUiState.Ready)
+                            ?.detail
+                            ?.seasons
+                            ?.map { it.number }
+                            .orEmpty()
+                    moderation.setMediaStatus(requestId, mediaId, status, is4k, seasons)
+                },
+                onClearData = { mediaId -> moderation.clearMedia(requestId, mediaId) },
+                onDeleteFiles = { mediaId, is4k -> moderation.deleteMediaFiles(requestId, mediaId, is4k) },
+            ),
+    )
 
 @Composable
 internal fun RequestsEntry(
