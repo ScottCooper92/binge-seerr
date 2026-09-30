@@ -96,7 +96,10 @@ data class ResolvedAdvancedDestination(
  * preselected, so a submit with every field untouched is a plain request in every way but its
  * path. An explicit but unrecognised server id is a bad argument, not a silent fall-through to the
  * default — unlike an empty one, it names a choice the picker offered, so a submit against it
- * failing loudly is what tells the host its own picker state is stale.
+ * failing loudly is what tells the host its own picker state is stale. A profile id that is not a
+ * number is the same, since it can name no profile: it is refused rather than dropped for the
+ * server's default. Whether a well-formed profile or root folder is one the server offers is left to
+ * Seerr, which refuses it, so a submit carrying both still pays for no extra lookup.
  *
  * The profile/root-folder details fetch only runs when an axis is actually left empty: a submit
  * that already carries both is the common case, and it pays for none of the two extra round trips
@@ -118,10 +121,17 @@ suspend fun SeerrApi.resolveAdvancedDestination(
             servers.firstOrNull { it.id.toString() == serverId }
                 ?: throw StatusException(Status.INVALID_ARGUMENT.withDescription("unknown server_id $serverId"))
         }
+    val explicitProfile = explicitProfileId(profileId)
     val destination = if (profileId.isEmpty() || rootFolderId.isEmpty()) destinationChoicesFor(isTv, server) else null
     return ResolvedAdvancedDestination(
         server = server,
-        profileId = profileId.toIntOrNull() ?: destination?.selectedProfileId?.toIntOrNull(),
+        profileId = explicitProfile ?: destination?.selectedProfileId?.toIntOrNull(),
         rootFolder = rootFolderId.ifEmpty { null } ?: destination?.selectedRootFolderId?.ifEmpty { null },
     )
 }
+
+/** Null for an empty profile id, which falls back to the default; a present one that is not a number names no profile. */
+private fun explicitProfileId(raw: String): Int? =
+    raw.ifEmpty { null }?.let {
+        it.toIntOrNull() ?: throw StatusException(Status.INVALID_ARGUMENT.withDescription("profile_id must be a number, not $it"))
+    }

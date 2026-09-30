@@ -57,6 +57,7 @@ import org.junit.rules.TemporaryFolder
 
 private const val ADMIN = 2
 private const val REQUEST = 1 shl 5
+private const val REQUEST_4K = 1 shl 10
 private const val REQUEST_ADVANCED = 1 shl 13
 private const val CREATE_ISSUES = 1 shl 22
 
@@ -87,6 +88,7 @@ class SeerrRequestServiceTest {
         cache: MediaStatusStore = NoMediaStatusStore,
         now: () -> Long = { 0L },
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
+        warm: Boolean = true,
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
             CredentialStore(
@@ -95,9 +97,11 @@ class SeerrRequestServiceTest {
             )
         runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.fromVersion(version))) }
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false))
-        seerr.enqueue(json("""{"version":"$version"}"""))
-        seerr.enqueue(json("""{"initialized":true}"""))
-        seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
+        if (warm) {
+            seerr.enqueue(json("""{"version":"$version"}"""))
+            seerr.enqueue(json("""{"initialized":true}"""))
+            seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
+        }
         val stub =
             serve(
                 SeerrRequestService(
@@ -112,8 +116,11 @@ class SeerrRequestServiceTest {
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
         // three, so each test's recorded requests are its own rather than starting with lookups.
-        runBlocking { stub.handshake(HandshakeRequest.getDefaultInstance()) }
-        repeat(3) { seerr.takeRequest() }
+        // A cold start skips it: the process has cached nothing, as after the app is killed.
+        if (warm) {
+            runBlocking { stub.handshake(HandshakeRequest.getDefaultInstance()) }
+            repeat(3) { seerr.takeRequest() }
+        }
         return stub
     }
 
@@ -451,7 +458,8 @@ class SeerrRequestServiceTest {
     @Test
     fun `submit advanced request posts the picker's explicit choices, deriving 4k from the server alone`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            // Picking a 4K server is a 4K request, so this user holds that permission too.
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K)
             seerr.enqueue(json("""[{"id":1,"name":"Main","is4k":false},{"id":2,"name":"Main 4K","is4k":true}]"""))
             seerr.enqueue(json("""{"id":88}"""))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
@@ -496,6 +504,96 @@ class SeerrRequestServiceTest {
             assertTrue(posted.contains("\"serverId\":1"))
             assertTrue(posted.contains("\"profileId\":4"))
             assertTrue(posted.contains("\"rootFolder\":\"/media\""))
+        }
+
+    /** A profile that is present but not a number names nothing, so it fails loudly instead of posting to the server's default. */
+    @Test
+    fun `submit advanced request with a profile id that is not a number is INVALID_ARGUMENT, before anything is posted`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("""[{"id":1,"name":"Main","is4k":false}]"""))
+            val before = seerr.requestCount
+
+            val code =
+                stub.code {
+                    submitAdvancedRequest(
+                        SubmitAdvancedRequestRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setServerId("1")
+                            .setProfileId("abc")
+                            .setRootFolderId("/media")
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
+            // The server list was read to find the server; nothing was posted after it.
+            assertEquals(before + 1, seerr.requestCount)
+        }
+
+    @Test
+    fun `a 4K request is refused for a user who does not hold the 4K permission, before it is posted`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            val before = seerr.requestCount
+
+            val code =
+                stub.code {
+                    submitRequest(
+                        SubmitRequestRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setIs4K(true)
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a request to a 4K server through the advanced path needs the 4K permission too`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("""[{"id":2,"name":"Main 4K","is4k":true}]"""))
+            val before = seerr.requestCount
+
+            val code =
+                stub.code {
+                    submitAdvancedRequest(
+                        SubmitAdvancedRequestRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setServerId("2")
+                            .setProfileId("9")
+                            .setRootFolderId("/media4k")
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(before + 1, seerr.requestCount)
+        }
+
+    @Test
+    fun `a user who holds the 4K permission may still request 4K`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_4K)
+            seerr.enqueue(json("""{"id":90}"""))
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+
+            val created =
+                stub.submitRequest(
+                    SubmitRequestRequest
+                        .newBuilder()
+                        .setMedia(movie)
+                        .setIs4K(true)
+                        .build(),
+                )
+
+            assertEquals(90, created.requestId)
         }
 
     @Test
@@ -698,6 +796,22 @@ class SeerrRequestServiceTest {
     fun `a rejected session reads as needs_reconnect`() =
         runTest {
             val stub = connected(permissions = ADMIN)
+            seerr.enqueue(MockResponse(code = 401))
+
+            val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention
+
+            assertTrue(attention.needsReconnect)
+            assertEquals(0, attention.pendingCount)
+        }
+
+    /**
+     * The KDoc's promise, without the process being warm: with nothing cached the first read is
+     * `auth/me`, and it is that call the expired session fails on.
+     */
+    @Test
+    fun `a cold start with an expired session reads as needs_reconnect, not UNAUTHENTICATED`() =
+        runTest {
+            val stub = connected(permissions = ADMIN, warm = false)
             seerr.enqueue(MockResponse(code = 401))
 
             val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention

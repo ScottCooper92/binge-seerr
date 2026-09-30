@@ -127,6 +127,8 @@ class SeerrRequestService(
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =
         statusCatching {
+            // Re-checked here, not trusted to the host: only a 4K request needs the capability.
+            if (request.is4K) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
             val media = request.media
             val body =
                 SeerrRequestBody(
@@ -172,6 +174,8 @@ class SeerrRequestService(
             val media = request.media
             val isTv = media.seerrMediaType().isSeerrTv()
             val destination = connection.api().resolveAdvancedDestination(isTv, request.serverId, request.profileId, request.rootFolderId)
+            // 4K here is a property of the server the caller named, not a flag, so it is known only now.
+            if (destination.server.is4k) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
@@ -293,11 +297,14 @@ class SeerrRequestService(
      * asked for nothing. A 401 here is the contract's `needs_reconnect`: the server is connected and
      * the session is what broke, which only this app's sign-in can mend.
      */
-    private suspend fun attention(): Attention {
-        val permissions = permissions()
-        val profile = connection.profile()
-        val api = connection.api()
-        return try {
+    private suspend fun attention(): Attention =
+        try {
+            // Inside the handler: with nothing cached the first read is `auth/me`, and an expired
+            // session fails there rather than at the counts, so a warm process is not the only one
+            // that gets the reconnect flag.
+            val permissions = permissions()
+            val profile = connection.profile()
+            val api = connection.api()
             val pending = if (permissions.canManageRequests) api.requestCount().pending else 0
             val issues = if (permissions.canManageIssues && profile.hasCounts) api.issueCount().open else 0
             Attention
@@ -313,7 +320,6 @@ class SeerrRequestService(
                 .setNeedsReconnect(true)
                 .build()
         }
-    }
 
     /** The one operation that needs Seerr's own id space: the server's media record, not the TMDB id. */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
