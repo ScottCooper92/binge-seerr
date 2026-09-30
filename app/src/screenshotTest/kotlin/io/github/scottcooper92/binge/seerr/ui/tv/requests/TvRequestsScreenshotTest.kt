@@ -3,9 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.tv.requests
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDownload
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.NoRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
@@ -39,7 +41,7 @@ private val FixedSampleRequests =
     )
 
 /**
- * The television requests board: the loaded list, the empty arm and the failed-load plate. A row's own
+ * The television requests board: the loaded list, the empty arm, the failed-load plate and the failed-scope plates. A row's own
  * moderation sheet is framed on `TvRequestDetailScreenshotTest` now, off the detail page that owns it.
  * Mirrors the states already sketched in `TvBoardPreviews.kt`.
  */
@@ -71,6 +73,28 @@ class TvRequestsScreenshotTest {
         TvRequestsBoard(
             state = requestsReady(),
             rows = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)),
+            actions = NoRequestsActions,
+        )
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScopeFailed() {
+        TvRequestsBoard(
+            state = RequestsUiState.Error(SeerrError.Unreachable),
+            rows = rows(emptyList()),
+            actions = NoRequestsActions,
+        )
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScopeRejected() {
+        TvRequestsBoard(
+            state = RequestsUiState.Error(SeerrError.Unauthorized),
+            rows = rows(emptyList()),
             actions = NoRequestsActions,
         )
     }

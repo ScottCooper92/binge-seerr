@@ -2,6 +2,8 @@ package io.github.scottcooper92.binge.seerr.ui.tv.requests
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,6 +17,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestCounts
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestFilter
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
@@ -34,6 +37,7 @@ internal class TvRequestsActions(
     val onSortChange: (RequestSort) -> Unit,
     val onOpenDetail: (RequestItem) -> Unit,
     val onRetryLoad: () -> Unit,
+    val onRetryScope: () -> Unit,
     val onReconnect: () -> Unit,
 )
 
@@ -70,7 +74,7 @@ internal fun TvRequestsBoard(
     Box(modifier = modifier.fillMaxSize()) {
         TvBoardFrame(title = stringResource(R.string.hub_section_requests)) {
             if (ready == null) {
-                TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
+                TvRequestsUnresolved(state, actions, Modifier.weight(1f))
                 return@TvBoardFrame
             }
             TvBoardBands(
@@ -114,4 +118,29 @@ private fun filterLabel(
     val label = stringResource(filter.labelRes())
     val count = counts?.countFor(filter) ?: return label
     return stringResource(R.string.tv_filter_with_count, label, count)
+}
+
+/** What the board shows before the user is known: the skeleton, or why they could not be read, with the way out. */
+@Composable
+private fun TvRequestsUnresolved(
+    state: RequestsUiState,
+    actions: TvRequestsActions,
+    modifier: Modifier = Modifier,
+) {
+    if (state !is RequestsUiState.Error) {
+        TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = modifier)
+        return
+    }
+    val rejected = state.error == SeerrError.Unauthorized || state.error == SeerrError.NotConnected
+    TvBoardPlate(
+        body = stringResource(if (rejected) R.string.requests_reconnect else R.string.tv_list_load_failed),
+        icon = Icons.Filled.Warning,
+        primary =
+            if (rejected) {
+                stringResource(R.string.tv_hub_reconnect) to actions.onReconnect
+            } else {
+                stringResource(R.string.hub_retry) to actions.onRetryScope
+            },
+        modifier = modifier,
+    )
 }
