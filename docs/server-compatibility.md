@@ -33,6 +33,12 @@ A `develop-<sha>` build has no numeric version. For those the profile probes `GE
 `mediaServerType` exists only on the Jellyseerr lineage, so its presence picks the lineage, and a
 development build is taken to have everything its lineage has released.
 
+When a call fails, the profile says so (`complete = false`) and is not cached, so the next read
+tries again. A lineage that could not be read is taken as the family's latest, so a hiccup hides
+nothing: it is never taken for Overseerr. A `mediaServerType` that was not read is
+`SeerrMediaServer.Unknown`, not Plex, and the media-server page reports a failed load rather than
+showing the Plex form for a Jellyfin server. Overseerr has no such field and is always Plex.
+
 `commitTag`, `updateAvailable` and `commitsBehind` from the same call feed the update notice on
 the hub. `versionCheck` in the public settings says whether the server checks at all.
 

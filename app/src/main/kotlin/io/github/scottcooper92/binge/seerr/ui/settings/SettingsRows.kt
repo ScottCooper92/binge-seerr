@@ -123,7 +123,8 @@ internal fun mediaServerRows(
                     when (server.mediaServer) {
                         SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
                         SeerrMediaServer.Emby -> R.string.user_origin_emby
-                        SeerrMediaServer.Plex, SeerrMediaServer.NotConfigured -> R.string.user_origin_plex
+                        SeerrMediaServer.Plex -> R.string.user_origin_plex
+                        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> R.string.server_settings_media_server
                     },
                 ),
             detail = stringResource(R.string.server_settings_media_server_caption),

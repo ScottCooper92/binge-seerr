@@ -140,7 +140,7 @@ class LinkedAccountsViewModel
                 when (profile.mediaServer) {
                     SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
                     SeerrMediaServer.Emby -> UserOrigin.Emby
-                    SeerrMediaServer.Plex, SeerrMediaServer.NotConfigured -> null
+                    SeerrMediaServer.Plex, SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> null
                 }
             return LinkedAccountsUiState.Ready(
                 plex = LinkedAccount(UserOrigin.Plex, linked = user.plexId != null, linkedAs = user.plexUsername.orNull()),

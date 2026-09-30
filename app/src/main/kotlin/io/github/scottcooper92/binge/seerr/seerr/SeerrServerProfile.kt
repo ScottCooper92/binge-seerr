@@ -21,12 +21,16 @@ data class SeerrVersion(
     }
 }
 
-/** Seerr's `MediaServerType`; Overseerr predates the field and is always Plex. */
+/**
+ * Seerr's `MediaServerType`; Overseerr predates the field and is always Plex. [Unknown] is a server
+ * whose type was never read, which is not the same as [NotConfigured] and must not be shown as Plex.
+ */
 enum class SeerrMediaServer {
     Plex,
     Jellyfin,
     Emby,
     NotConfigured,
+    Unknown,
     ;
 
     companion object {
@@ -36,7 +40,8 @@ enum class SeerrMediaServer {
 
         fun fromCode(code: Int?): SeerrMediaServer =
             when (code) {
-                PLEX, null -> Plex
+                PLEX -> Plex
+                null -> Unknown
                 JELLYFIN -> Jellyfin
                 EMBY -> Emby
                 else -> NotConfigured
@@ -60,8 +65,11 @@ data class SeerrServerProfile(
     val updateAvailable: Boolean = false,
     val commitsBehind: Int = 0,
     val settings: SeerrPublicSettings = SeerrPublicSettings(),
+    /** False when a call failed, so the lineage or the settings are guesses; an incomplete profile is not cached. */
+    val complete: Boolean = true,
 ) {
-    private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage
+    /** An unknown lineage hides nothing, as [unknown] promises: it is taken as the family's latest, never as Overseerr. */
+    private val jellyseerrLineage: Boolean get() = variant.isJellyseerrLineage || variant == SeerrVariant.Unknown
 
     /** The blocklist arrived with Jellyseerr 2.0; Overseerr never had one. */
     val hasBlocklist: Boolean get() = jellyseerrLineage && atLeast(2, 0)
@@ -110,7 +118,14 @@ data class SeerrServerProfile(
     /** Tautulli watch data: Overseerr 1.29, and the Jellyseerr lineage from 1.1. */
     val hasWatchData: Boolean get() = if (jellyseerrLineage) atLeast(1, 1) else atLeast(1, 29)
 
-    val mediaServer: SeerrMediaServer get() = SeerrMediaServer.fromCode(settings.mediaServerType)
+    /** Overseerr has no such field and is always Plex; on any other lineage a missing type is unknown. */
+    val mediaServer: SeerrMediaServer
+        get() =
+            if (variant == SeerrVariant.Overseerr && settings.mediaServerType == null) {
+                SeerrMediaServer.Plex
+            } else {
+                SeerrMediaServer.fromCode(settings.mediaServerType)
+            }
 
     /** The sign-in modes the form offers: what the lineage can do, narrowed by what the admin turned on. */
     val signInModes: Set<SeerrSignInMode>
@@ -127,7 +142,7 @@ data class SeerrServerProfile(
                             if (hasQuickConnect) add(SeerrSignInMode.QuickConnect)
                         }
                         SeerrMediaServer.Emby -> add(SeerrSignInMode.Emby)
-                        SeerrMediaServer.NotConfigured -> Unit
+                        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> Unit
                     }
                 }
             }
@@ -141,15 +156,18 @@ data class SeerrServerProfile(
         /**
          * The lineage from the version's major, as [SeerrVariant.fromVersion]; a development build has
          * none, so its public settings decide — `mediaServerType` exists only on the Jellyseerr lineage.
+         * Without settings either, the lineage is [fallback] and the profile is incomplete.
          */
         fun from(
             status: SeerrStatusDto,
-            settings: SeerrPublicSettings,
+            settings: SeerrPublicSettings?,
+            fallback: SeerrVariant = SeerrVariant.Unknown,
         ): SeerrServerProfile {
             val version = SeerrVersion.parse(status.version)
             val variant =
                 when {
                     version != null -> SeerrVariant.fromVersion(status.version)
+                    settings == null -> fallback
                     settings.mediaServerType != null -> SeerrVariant.Seerr
                     else -> SeerrVariant.Overseerr
                 }
@@ -159,12 +177,13 @@ data class SeerrServerProfile(
                 commitTag = status.commitTag,
                 updateAvailable = status.updateAvailable,
                 commitsBehind = status.commitsBehind,
-                settings = settings,
+                settings = settings ?: SeerrPublicSettings(),
+                complete = settings != null,
             )
         }
 
         /** Neither call answered: the lineage the credentials recorded, taken at its latest. */
-        fun unknown(variant: SeerrVariant): SeerrServerProfile = SeerrServerProfile(variant = variant, version = null)
+        fun unknown(variant: SeerrVariant): SeerrServerProfile = SeerrServerProfile(variant = variant, version = null, complete = false)
     }
 }
 
@@ -179,7 +198,7 @@ suspend fun SeerrApi.inspectProfile(fallback: SeerrVariant): Result<SeerrServerP
     val settings = runCatching { publicSettings() }.getOrNull()
     val statusDto = status.getOrNull()
     return when {
-        statusDto != null -> Result.success(SeerrServerProfile.from(statusDto, settings ?: SeerrPublicSettings()))
+        statusDto != null -> Result.success(SeerrServerProfile.from(statusDto, settings, fallback))
         settings?.mediaServerType != null -> Result.success(SeerrServerProfile.from(SeerrStatusDto(), settings))
         settings != null -> Result.success(SeerrServerProfile.unknown(fallback).copy(settings = settings))
         else -> Result.failure(status.exceptionOrNull() ?: IllegalStateException("No status"))

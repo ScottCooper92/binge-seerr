@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVersion
 import kotlinx.coroutines.CoroutineScope
@@ -75,9 +76,36 @@ class SeerrConnectionTest {
             val sut = connection(backgroundScope)
 
             val saved = sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+            server.enqueue(MockResponse(code = 503))
+            server.enqueue(MockResponse(code = 503))
+            val profile = sut.profile()
 
             assertEquals(SeerrVariant.Unknown, saved.variant)
-            assertNull(sut.profile().version)
+            assertNull(profile.version)
+            assertFalse(profile.complete)
+            assertTrue(profile.hasBlocklist)
+            assertTrue(profile.hasQuickConnect)
+        }
+
+    @Test
+    fun `a guessed profile is read again until a real one is cached`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueue(MockResponse(code = 503))
+            server.enqueue(MockResponse(code = 503))
+            val sut = connection(backgroundScope)
+            sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            server.enqueue(json("""{"version":"3.4.0"}"""))
+            server.enqueue(json("""{"initialized":true,"mediaServerType":2}"""))
+            val recovered = sut.profile()
+            val served = server.requestCount
+            sut.profile()
+
+            assertTrue(recovered.complete)
+            assertEquals(SeerrVersion(3, 4, 0), recovered.version)
+            assertEquals(SeerrMediaServer.Jellyfin, recovered.mediaServer)
+            assertEquals("a real profile is cached, so nothing is read again", served, server.requestCount)
         }
 
     @Test

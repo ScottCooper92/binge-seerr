@@ -144,13 +144,14 @@ class SeerrConnection(
     /**
      * What the saved server is and can do, served from cache while the credentials are unchanged.
      * A server that answers neither call is profiled as the lineage the credentials recorded, at
-     * its latest, so a transient failure hides nothing; [refreshProfile] re-reads after an upgrade.
+     * its latest, so a transient failure hides nothing; that guess is not cached, so the next call
+     * reads again. [refreshProfile] re-reads after an upgrade.
      */
     suspend fun profile(): SeerrServerProfile {
         val saved = current()
         return userLock.withLock {
             cachedProfile?.takeIf { it.first == saved }?.second
-                ?: apis.cached(saved.baseUrl, saved.auth).readProfile(saved.variant).also { cachedProfile = saved to it }
+                ?: apis.cached(saved.baseUrl, saved.auth).readProfile(saved.variant).also { if (it.complete) cachedProfile = saved to it }
         }
     }
 
@@ -327,7 +328,8 @@ class SeerrConnection(
     /**
      * Best-effort fork detection rides along: the provider name the host shows follows the server
      * the user actually connected to, and an unreachable `/status` brands neutrally rather than
-     * failing a connect that just succeeded. The profile read here is cached for the connection.
+     * failing a connect that just succeeded. The profile read here is cached for the connection,
+     * unless it was a guess.
      */
     private suspend fun persist(
         baseUrl: String,
@@ -339,7 +341,7 @@ class SeerrConnection(
         carrier.put(credentials)
         userLock.withLock {
             cachedUser = null
-            cachedProfile = credentials to profile
+            cachedProfile = (credentials to profile).takeIf { profile.complete }
         }
         healthMonitor.onConnected()
         onServerChanged()

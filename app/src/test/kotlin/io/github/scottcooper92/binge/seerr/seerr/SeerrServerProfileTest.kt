@@ -94,6 +94,42 @@ class SeerrServerProfileTest {
     }
 
     @Test
+    fun `a lineage that could not be read hides nothing and is not taken for Overseerr`() {
+        val unknown = SeerrServerProfile.unknown(SeerrVariant.Unknown)
+
+        assertFalse(unknown.complete)
+        assertTrue(unknown.hasBlocklist)
+        assertTrue(unknown.hasOverrideRules)
+        assertTrue(unknown.hasQuickConnect)
+        assertTrue(unknown.hasIssues)
+        assertTrue(unknown.hasGotify)
+        assertFalse(unknown.hasLunaSea)
+    }
+
+    @Test
+    fun `a development build whose settings failed keeps the recorded lineage and is incomplete`() {
+        val develop = SeerrStatusDto(version = "develop-abc")
+
+        val recorded = SeerrServerProfile.from(develop, settings = null, fallback = SeerrVariant.Seerr)
+        val unrecorded = SeerrServerProfile.from(develop, settings = null)
+
+        assertEquals(SeerrVariant.Seerr, recorded.variant)
+        assertFalse(recorded.complete)
+        assertEquals(SeerrVariant.Unknown, unrecorded.variant)
+        assertTrue(unrecorded.hasBlocklist)
+        assertTrue(SeerrServerProfile.from(develop, SeerrPublicSettings()).complete)
+    }
+
+    @Test
+    fun `a media server type that was not read is unknown, except on Overseerr where it is always Plex`() {
+        assertEquals(SeerrMediaServer.Plex, profile("1.33.0").mediaServer)
+        assertEquals(SeerrMediaServer.Unknown, profile("3.4.0").mediaServer)
+        assertEquals(SeerrMediaServer.Unknown, SeerrServerProfile.unknown(SeerrVariant.Unknown).mediaServer)
+        assertEquals(SeerrMediaServer.Jellyfin, profile("3.4.0", SeerrPublicSettings(mediaServerType = MEDIA_SERVER_JELLYFIN)).mediaServer)
+        assertEquals(SeerrMediaServer.Unknown, SeerrMediaServer.fromCode(null))
+    }
+
+    @Test
     fun `the update fields ride along from status`() {
         val profile =
             SeerrServerProfile.from(

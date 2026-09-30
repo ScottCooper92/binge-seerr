@@ -103,12 +103,16 @@ data class TautulliForm(
     val valid: Boolean get() = hostAndPortValid(host, port) && apiKey.isNotBlank()
 }
 
-/** Overseerr has no media-server type and is always Plex; a lineage server not yet set up is shown the Plex form too. */
-internal fun SeerrMediaServer.toKind(): MediaServerKind =
+/**
+ * Overseerr has no media-server type and is always Plex; a lineage server not yet set up is shown the
+ * Plex form too. Null when the type was never read, where any form would be a guess.
+ */
+internal fun SeerrMediaServer.toKind(): MediaServerKind? =
     when (this) {
         SeerrMediaServer.Jellyfin -> MediaServerKind.Jellyfin
         SeerrMediaServer.Emby -> MediaServerKind.Emby
         SeerrMediaServer.Plex, SeerrMediaServer.NotConfigured -> MediaServerKind.Plex
+        SeerrMediaServer.Unknown -> null
     }
 
 internal fun SeerrPlexSettingsDto.toForm(): MediaServerForm =

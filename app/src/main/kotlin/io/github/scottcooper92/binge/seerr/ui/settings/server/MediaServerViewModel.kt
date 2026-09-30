@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -59,7 +60,7 @@ class MediaServerViewModel
 
         override suspend fun load(): MediaServerForm {
             val api = connection.api()
-            kind = connection.profile().mediaServer.toKind()
+            kind = connection.profile().mediaServer.toKind() ?: throw IOException("The server's media server type could not be read")
             val form =
                 when (kind) {
                     MediaServerKind.Plex -> api.plexSettings().let { it.toForm().also { _ -> setLibraries(it.libraries) } }
