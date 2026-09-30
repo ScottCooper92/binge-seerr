@@ -97,8 +97,8 @@ to design; the server's API is versioned by release because it is not.
 ## Kotlin, Gradle and Android
 
 - Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 17.
-- AGP 9.3.2, `compileSdk` 37, `minSdk` 26, `targetSdk` 36 — matching Binge, so the
-  extraction is a code move rather than a toolchain negotiation.
+- `compileSdk` 37, `minSdk` 26, `targetSdk` 36, and the AGP in `libs.versions.toml` — matching
+  Binge, so the extraction is a code move rather than a toolchain negotiation.
 - The `org.jetbrains.kotlin.android` plugin is declared `apply false` in the root
   build and never applied. AGP 9 has built-in Kotlin support and rejects the plugin
   being applied, but compiles with whichever Kotlin Gradle plugin is on the build
@@ -124,9 +124,9 @@ because this file is what the bots read, and an unwritten convention is one the 
 from without anyone noticing.
 
 **State.** Every screen's state is a sealed interface: `Loading`, a data variant, and `Error` where
-the screen can hard-fail. Never a flat class with `isLoading`-style flags. The shared generic form
-is `ui/state/UiState.kt`, whose data variant is `Success`; a per-screen state names its data variant
-`Ready`. Do not mix the two in one screen.
+the screen can hard-fail. Never a flat class with `isLoading`-style flags. A screen's state is
+its own type, and its data variant is named `Ready`. There is no shared generic `UiState<T>` here,
+unlike Binge.
 
 A flat data class is allowed for a screen whose top level is always interactive, with loading kept
 elsewhere — and it carries a KDoc saying so. `LogsUiState` is the one: it holds only the query,
@@ -176,8 +176,8 @@ instance and override rule editors, which carry their pickers' choices in a seco
 
 ## Gates
 
-CI runs `./gradlew build`. That is the whole gate, and it covers eight things, all of
-which turn the build red:
+CI runs `./gradlew build`. That is the whole gate, and everything below turns it red. The list
+is the checks `build` pulls in through `check`; `app/build.gradle.kts` is where to confirm it:
 
 - Kotlin compilation.
 - The unit tests (`:app:test`).
@@ -194,10 +194,13 @@ which turn the build red:
   PNG. The screenshot plugin does not wire itself into `check` the way ktlint and AGP's lint do, so
   `app/build.gradle.kts` does it by hand; a local `build` and a CI build therefore ask the same
   question.
+- `checkBaselineStaleness` — an entry in `detekt-baseline.xml` that the code no longer produces.
+  An orphaned entry reads as debt still owed and absorbs the next real finding of that rule in
+  that file. Delete the entry.
 
-`build` depends on `check`, which is what pulls the last seven in. The device lane
-(`device-smoke.yml`) is not part of it: it runs on `main`, weekly and on request, and proves the
-release keep rules across a real Binder.
+`build` depends on `check`, which is what pulls everything after the compile and the tests in.
+The device lane (`device-smoke.yml`) is not part of it: it runs on `main`, weekly and on request,
+and proves the release keep rules across a real Binder.
 
 There is no `buf` in this repository, so do not look for one and do not report a finding as though
 one had caught it.

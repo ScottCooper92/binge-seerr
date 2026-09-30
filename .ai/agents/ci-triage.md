@@ -8,9 +8,9 @@ CI is one job:
 
 | Job | Runs |
 | --- | --- |
-| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint`, `checkTranslationStaleness`, `koverVerify`, `validateDebugScreenshotTest` |
+| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint`, `checkTranslationStaleness`, `koverVerify`, `validateDebugScreenshotTest`, `checkBaselineStaleness` |
 
-The last seven arrive through `check` or are wired onto `build` by hand — the
+Everything after the compile and the tests arrives through `check` or is wired onto `build` by hand — the
 screenshot plugin does the latter, per `CLAUDE.md`'s Gates section — but `build`
 pulls in either way. Nothing in the repository names them separately, so a red run
 whose log ends in a lint report, a coverage report or a screenshot diff is still
@@ -35,6 +35,7 @@ an invitation to improvise.
 | Kotlin compile error | Ordinary | Fix it. If a symbol from the contract stubs "does not exist", the app and the contract version it builds against disagree — fix the app, and if the contract is genuinely wrong that is a PR against binge-integrations, not a change here |
 | `:app:test` — a unit test fails | Ordinary | Fix the code the test is describing. Changing an assertion to match new behaviour is only correct when the PR deliberately changed that behaviour and says so |
 | `validateDebugScreenshotTest` reports a diff | A `@PreviewTest` frame no longer renders like its committed reference PNG | **Stop.** Accepting a regenerated baseline is a judgment call a human should make, not a mechanical repair. Leave the working tree clean and name the remedy in a PR comment instead: `./gradlew :app:updateDebugScreenshotTest`, look at the regenerated PNGs, then commit them alongside the code that changed them |
+| `checkBaselineStaleness` reports an entry `detekt-baseline.xml` holds that the code no longer produces | The failure output names each stale `rule in file` pair | Mechanical: delete the named entries from `detekt-baseline.xml`. **Never** add to the file instead |
 | `Failed to apply plugin 'org.jetbrains.kotlin.android'` | AGP 9 has built-in Kotlin support and rejects the plugin being applied to a module | Remove the `apply` from the module that applies it. The root build's own `apply false` declaration is intentional — it puts a compatible Kotlin version on AGP's classpath — and is not the plugin this error is about; do not remove that one. Do not downgrade AGP. See the comment in `libs.versions.toml` |
 | Manifest merger failure | Two manifests declare conflicting attributes | Read the merger report it points at. Resolve by making the declarations agree; `tools:replace` is a last resort and needs saying why in the PR |
 | Gradle "could not resolve" / dependency failure | Usually transient, or a catalog edit | If the diff touched `libs.versions.toml`, fix that. Otherwise it is infrastructure — **stop** and say so |

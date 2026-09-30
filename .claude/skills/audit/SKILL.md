@@ -34,8 +34,7 @@ repos and audits) and `build/`.
 ## Dimension 1 — ungated convention invariants (`CLAUDE.md` > Screens and ViewModels)
 
 - **State shape**: a screen state that is a flat class with `isLoading`-style flags instead of a
-  sealed interface (`Loading` / data / `Error`); mixing `UiState.Success` and a per-screen `Ready`
-  in one screen. Exempt `LogsUiState` (KDoc'd flat state).
+  sealed interface (`Loading` / data / `Error`). Exempt `LogsUiState` (KDoc'd flat state).
 - **One `StateFlow` per ViewModel**: count public `StateFlow`s per `*ViewModel.kt`; allowed extras
   are `Flow<PagingData<T>>` and one-shot events only. Any exposed `MutableStateFlow`. Exempt the
   DVR instance/override editors' picker stream (#188).
@@ -147,7 +146,7 @@ content; stateless `*Content` composables exist where a modal window cannot be c
 Extract every checkable claim from `CLAUDE.md`, `.ai/agents/*.md`, `docs/*.md`, `README.md` and
 `.github/workflows/*.yml` comments (task names, thresholds — e.g. 78% kover, 400-line signal,
 SDK/JDK/AGP versions, "pre-alpha at contract parity" status claims, capability lists, the
-"eight things `build` covers" count, workflow names, paths, issue numbers like #165/#188) and
+list of what `build` covers (compare it to `check`'s dependencies, not to a count), workflow names, paths, issue numbers like #165/#188) and
 verify each against source, `libs.versions.toml`, `app/build.gradle.kts` and `buildSrc/`. Report
 claim → reality → which side should change. Also check `docs/listing/` (data-safety, privacy)
 against actual permissions, SDKs and data collected.
@@ -161,7 +160,8 @@ re-hunting them. Hunt what lint cannot see:
 - Unused `internal`/`private`/public non-`@Composable` declarations (exempt `@Preview`, Hilt
   `@Module`/`@Provides`/`@Binds` including multibindings, Room DAOs/entities, manifest-referenced
   and `keepRules/`-referenced classes, `@Serializable`/Moshi DTOs the deserializer builds).
-  Known baseline entries: unused `toCandidate()` in `UserAdmission.kt` — decide fix or delete.
+  Known baseline entries: the two `UnusedPrivateMember` entries for `toCandidate()` in `UserAdmission.kt`
+  are detekt false positives on extension receivers — the functions are used, so do not delete them.
 - Dead enum entries / sealed subtypes; `SeerrApi` endpoints nothing calls; DTO fields never read.
 - Never-mutated `MutableStateFlow`s (check all files); unreachable defaults (scope to construction
   sites of the type, split production from test).

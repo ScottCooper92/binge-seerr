@@ -1,7 +1,7 @@
 # API coverage
 
 Every endpoint the Seerr API surfaces, which phase of #26 covers it, and the first release of
-each lineage that has it. The "Today" column marks the sixteen calls the app makes now.
+each lineage that has it. The "Today" column marks the calls the app makes now.
 
 The lists come from the OpenAPI specs (`overseerr-api.yml` on Overseerr's `develop`,
 `seerr-api.yml` on Seerr's `develop`) and from the same file at every release tag of both

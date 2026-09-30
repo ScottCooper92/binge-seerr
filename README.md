@@ -67,7 +67,7 @@ The pieces to read, in order:
 4. `AdvancedRequestActivity.kt`: the SDK's hand-off, the Activity Binge starts with a title so the
    companion can show its own request options.
 
-The platform's decisions are in Binge's `docs/integration-platform-architecture.md`
+The platform's decisions are in Binge's `docs/companion-platform-architecture.md`
 and the wire contract in binge-integrations' `contracts/`; this app's own roadmap is
 [#26](https://github.com/ScottCooper92/binge-seerr/issues/26).
 
@@ -91,8 +91,8 @@ git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 ./gradlew build
 ```
 
-That is the whole gate: Kotlin compile, unit tests, `ktlintCheck`, Android lint and the
-translation-staleness check. JDK 17, AGP 9.3.2, `compileSdk` 37, `minSdk` 26, matching Binge,
+That is the whole gate: the checks `CLAUDE.md` lists under Gates, from the Kotlin compile to the
+screenshot suite. JDK 17, `compileSdk` 37, `minSdk` 26 and the AGP in `libs.versions.toml`, matching Binge,
 so the extraction is a code move rather than a toolchain negotiation. The object graph is Hilt's,
 through KSP, at the versions Binge pins; the wiring is one module, `di/SeerrModule.kt`.
 
