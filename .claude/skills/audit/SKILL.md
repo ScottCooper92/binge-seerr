@@ -34,8 +34,7 @@ repos and audits) and `build/`.
 ## Dimension 1 — ungated convention invariants (`CLAUDE.md` > Screens and ViewModels)
 
 - **State shape**: a screen state that is a flat class with `isLoading`-style flags instead of a
-  sealed interface (`Loading` / data / `Error`); mixing `UiState.Success` and a per-screen `Ready`
-  in one screen. Exempt `LogsUiState` (KDoc'd flat state).
+  sealed interface (`Loading` / data / `Error`). Exempt `LogsUiState` (KDoc'd flat state).
 - **One `StateFlow` per ViewModel**: count public `StateFlow`s per `*ViewModel.kt`; allowed extras
   are `Flow<PagingData<T>>` and one-shot events only. Any exposed `MutableStateFlow`. Exempt the
   DVR instance/override editors' picker stream (#188).
