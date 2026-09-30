@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -66,8 +67,13 @@ class SettingsViewModel
         /**
          * The trigger, after the signed-in user has been re-read. Refreshed here once rather than in each
          * loader: they run concurrently, so each refreshing would race the others' reads of the cache.
+         * `shareIn` with `replay = 1` is what makes that true: a plain cold flow would still be collected
+         * once per downstream `flatMapLatest`, refreshing three times per arrival instead of one.
          */
-        private val viewerRefreshed: Flow<Int> = fetchTrigger.mapLatest { trigger -> trigger.also { loader.refreshViewer() } }
+        private val viewerRefreshed: Flow<Int> =
+            fetchTrigger
+                .mapLatest { trigger -> trigger.also { loader.refreshViewer() } }
+                .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
         private val summary: Flow<ConnectionSummary?> =
             viewerRefreshed.flatMapLatest { flow { emit(runCatching { loader.connection() }.getOrNull()) } }.onStart { emit(null) }
