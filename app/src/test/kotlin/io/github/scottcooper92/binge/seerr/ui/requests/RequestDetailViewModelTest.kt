@@ -36,6 +36,7 @@ import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val REQUEST = 32
+private const val REQUEST_ADVANCED = 1 shl 13
 
 /** The request page over an in-memory connection into a path-scripted Seerr. */
 class RequestDetailViewModelTest {
@@ -560,6 +561,21 @@ class RequestDetailViewModelTest {
 
             serve("/api/v1/auth/me", """{"id":9,"displayName":"Other","permissions":$REQUEST}""")
             assertFalse(viewModel().awaitReady().detail.canEdit)
+        }
+
+    @Test
+    fun `with partial requests off a show's seasons are not editable, but its destination still is for who may`() =
+        runTest {
+            server(REQUEST)
+            editable()
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":$REQUEST}""")
+            serve("/api/v1/settings/public", """{"mediaServerType":2,"partialRequestsEnabled":false}""")
+            assertFalse(viewModel().awaitReady().detail.canEdit)
+
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":${REQUEST or REQUEST_ADVANCED}}""")
+            val detail = viewModel().awaitReady().detail
+            assertTrue(detail.canEdit)
+            assertTrue(detail.canEditDestination)
         }
 
     @Test

@@ -15,12 +15,14 @@ import kotlinx.coroutines.flow.map
  * Seerr's permissions as the contract's capability set — the handshake is derived, never
  * hand-listed — narrowed by the server: a blocklist the lineage lacks, or issues an Overseerr is
  * too old for, are not offered however the user's bits read, since the server answers them 404.
+ * A 4K request or a season edit the administrator switched off is refused the same way.
  */
 fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability> =
     buildSet {
         add(Capability.CAPABILITY_OBSERVE_STATUS)
         add(Capability.CAPABILITY_ATTENTION)
-        if (canRequest4k) add(Capability.CAPABILITY_REQUEST_4K)
+        val settings = profile.settings
+        if (canRequest4kOn(settings)) add(Capability.CAPABILITY_REQUEST_4K)
         if (canRequestAdvanced) {
             // Both capabilities are declared together during rollout: a host that only knows the
             // older one keeps getting the Activity hand-off, one that knows the new one gets the
@@ -30,7 +32,10 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         }
         if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
         // A requester may cancel or reshape their own pending request, and a moderator anyone's.
-        if (canRequest || canManageRequests) addAll(listOf(Capability.CAPABILITY_CANCEL, Capability.CAPABILITY_EDIT_SEASONS))
+        if (canRequest || canManageRequests) {
+            add(Capability.CAPABILITY_CANCEL)
+            if (settings.partialRequestsEnabled) add(Capability.CAPABILITY_EDIT_SEASONS)
+        }
         if (canCreateIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
         if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
     }
