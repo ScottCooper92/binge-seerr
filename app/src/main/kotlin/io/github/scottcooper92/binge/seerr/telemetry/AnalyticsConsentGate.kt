@@ -73,11 +73,6 @@ class AnalyticsConsentGate
             readState.first { it }
         }
 
-        /** Suspends until [granted], for a caller whose next event must not be dropped. */
-        suspend fun awaitGranted() {
-            granted.first { it }
-        }
-
         private fun publish(granted: Boolean) {
             // The first read of an unanswered or declined choice changes nothing: every backend
             // starts closed, and telling one to close would touch its SDK before the user answers.
@@ -93,7 +88,7 @@ class AnalyticsConsentGate
 
         /**
          * A hook calls into a third-party SDK. One that throws is logged and skipped: escaping,
-         * it would end the collector and leave every [awaitGranted] caller suspended for good.
+         * it would end the collector and leave every observer of [granted] waiting for good.
          */
         private fun ((Boolean) -> Unit).runIsolated(granted: Boolean) {
             runCatching { this(granted) }

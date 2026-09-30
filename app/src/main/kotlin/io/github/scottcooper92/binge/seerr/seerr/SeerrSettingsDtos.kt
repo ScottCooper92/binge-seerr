@@ -320,8 +320,6 @@ data class SeerrCacheStatsDto(
     @SerialName("hits") val hits: Long = 0,
     @SerialName("misses") val misses: Long = 0,
     @SerialName("keys") val keys: Long = 0,
-    @SerialName("ksize") val ksize: Long = 0,
-    @SerialName("vsize") val vsize: Long = 0,
 )
 
 @Serializable
@@ -350,7 +348,6 @@ data class SeerrDnsCacheStatsDto(
 data class SeerrDnsEntryDto(
     @SerialName("hostname") val hostname: String? = null,
     @SerialName("activeAddress") val activeAddress: String? = null,
-    @SerialName("family") val family: Int? = null,
     @SerialName("ttl") val ttl: Long? = null,
     @SerialName("hits") val hits: Long = 0,
     @SerialName("misses") val misses: Long = 0,

@@ -118,5 +118,4 @@ data class SeerrQuotaBucketDto(
     @SerialName("limit") val limit: Int? = null,
     @SerialName("used") val used: Int? = null,
     @SerialName("remaining") val remaining: Int? = null,
-    @SerialName("restricted") val restricted: Boolean = false,
 )
