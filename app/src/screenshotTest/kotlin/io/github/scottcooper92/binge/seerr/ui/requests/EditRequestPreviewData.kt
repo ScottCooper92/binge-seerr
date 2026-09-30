@@ -46,6 +46,10 @@ internal fun allTickedEditState(): EditState =
         destination = editDestination(),
     )
 
+/** A show on a server with partial requests off: no season list, just where the request goes. */
+internal fun destinationOnlyEditState(): EditState =
+    EditState(seasons = emptyList(), destination = editDestination(), seasonsEditable = false)
+
 private fun editDestination() =
     DestinationChoices(
         servers = listOf(Choice(SONARR_ID, "Sonarr")),

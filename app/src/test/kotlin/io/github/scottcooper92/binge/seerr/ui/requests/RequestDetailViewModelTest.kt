@@ -573,9 +573,17 @@ class RequestDetailViewModelTest {
             assertFalse(viewModel().awaitReady().detail.canEdit)
 
             serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":${REQUEST or REQUEST_ADVANCED}}""")
-            val detail = viewModel().awaitReady().detail
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
             assertTrue(detail.canEdit)
             assertTrue(detail.canEditDestination)
+
+            // The editor it opens is for the destination alone: no season list to tick, and none sent.
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit?.destination?.loadingChoices == false }.edit)
+            assertFalse(edit.seasonsEditable)
+            assertTrue(edit.seasons.isEmpty())
+            assertFalse(edit.seasonsUnknown)
         }
 
     @Test

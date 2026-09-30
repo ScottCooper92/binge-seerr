@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -221,6 +222,29 @@ class RequestEditorTest {
 
             editor.save()
             assertTrue(received.none { it.method == "PUT" })
+        }
+
+    @Test
+    fun `a show on a server with partial requests off offers no seasons and saves none, only its destination`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = true, seasonsEditable = false))
+
+            val loaded = editor.awaitLoaded()
+            // The season list is absent by rule, not because it failed to load, so the editor can still save.
+            assertTrue(loaded.seasons.isEmpty())
+            assertFalse(loaded.seasonsUnknown)
+            assertFalse(loaded.seasonsEditable)
+            assertTrue(loaded.canSave)
+
+            editor.selectProfile(8)
+            editor.save()
+            editor.awaitClosed()
+
+            // A PUT without seasons leaves the request's own alone; one with an empty list would drop every season.
+            val body = editBody()
+            assertTrue(body["seasons"] == null || body["seasons"] is JsonNull)
+            assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
         }
 
     @Test

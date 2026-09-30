@@ -24,11 +24,16 @@ import kotlinx.coroutines.launch
 
 private const val FIRST_SEASON = 1
 
-/** What the editor opens on: the request as the server returned it, and its title as the server lists it. */
+/**
+ * What the editor opens on: the request as the server returned it, and its title as the server lists it.
+ * [seasonsEditable] is false for a show on a server with partial requests off, which takes the whole
+ * show: the editor then offers no season list and sends no seasons.
+ */
 class EditSource(
     val request: SeerrRequestDto,
     val details: SeerrMediaDetailsDto?,
     val canEditDestination: Boolean,
+    val seasonsEditable: Boolean = true,
 )
 
 /**
@@ -73,8 +78,14 @@ class RequestEditor(
         this.source = source
         val request = source.request
         val destination = if (source.canEditDestination) request.destination().copy(loadingChoices = true) else null
-        val seasonsUnknown = request.isTv && source.details == null
-        edit.value = EditState(seasons = source.seasonChoices(), destination = destination, seasonsUnknown = seasonsUnknown)
+        val seasonsUnknown = request.isTv && source.seasonsEditable && source.details == null
+        edit.value =
+            EditState(
+                seasons = if (source.seasonsEditable) source.seasonChoices() else emptyList(),
+                destination = destination,
+                seasonsUnknown = seasonsUnknown,
+                seasonsEditable = source.seasonsEditable,
+            )
         if (destination != null) scope.launch(dispatcher) { loadServers(request) }
     }
 
@@ -152,7 +163,7 @@ class RequestEditor(
         return SeerrEditRequestBody(
             mediaType = request.media.mediaType,
             seasons =
-                if (request.isTv && !seasonsUnknown) {
+                if (request.isTv && seasonsEditable && !seasonsUnknown) {
                     seasons.filter { it.selected && !it.locked }.map { it.number }
                 } else {
                     null
