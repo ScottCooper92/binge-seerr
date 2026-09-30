@@ -50,13 +50,13 @@ maintainer's decision; see the README.
 > **Your server, your data.** Sign in with an API key, a local account, Plex, or Jellyfin's Quick
 > Connect. The key or session is encrypted with an Android Keystore key. The app talks to the
 > server you entered and, if you choose to sign in with Plex, to plex.tv. Usage data goes to
-> PostHog only if you agree, and crash reports go to Google Crashlytics unless you turn them off in
+> PostHog only if you agree, and crash reports go to Firebase Crashlytics unless you turn them off in
 > Settings. Google Play's Block Store can carry your connection to a new device. No adverts, no
 > accounts of its own.
 >
 > Open source, under the Apache 2.0 licence: github.com/ScottCooper92/binge-seerr.
 
-(2,040 characters)
+(2,042 characters)
 
 ## Category and contact
 
