@@ -5,6 +5,9 @@ import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.PaneBackNavigationBehavior
@@ -37,8 +40,19 @@ internal val DefaultSection: HubSection = HubSection.Requests
 internal fun rememberSeerrPaneStrategy(directive: PaneScaffoldDirective): ListDetailSceneStrategy<NavKey> =
     rememberListDetailSceneStrategy(
         backNavigationBehavior = PaneBackNavigationBehavior,
-        directive = directive,
+        directive = directive.copy(defaultPanePreferredWidth = equalPaneWidth(directive)),
     )
+
+/** Half the window less half the gap between the panes, so the gap sits at the window's centre. */
+@Composable
+private fun equalPaneWidth(directive: PaneScaffoldDirective): Dp {
+    val windowWidth =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.width
+                .toDp()
+        }
+    return (windowWidth - directive.horizontalPartitionSpacerSize) / 2
+}
 
 /** The route a hub section opens. */
 internal fun HubSection.route(): SeerrRoute =
