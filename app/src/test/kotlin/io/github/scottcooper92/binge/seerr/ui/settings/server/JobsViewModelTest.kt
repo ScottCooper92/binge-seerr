@@ -59,6 +59,7 @@ class JobsViewModelTest {
     private suspend fun TestScope.viewModel(): JobsViewModel {
         val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
         vm.runningRefreshMillis = 10
+        vm.outcomeMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -153,6 +154,47 @@ class JobsViewModelTest {
             val failed = awaitEvent(vm.events)
             vm.runWhenReady(MEDIA_SERVER_SCAN_JOB_ID, R.string.tv_settings_scan_started)
             assertTrue(failed.await() is EditorEvent.Failed)
+        }
+
+    @Test
+    fun `running a job that finishes immediately shows a success outcome, then clears it`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/download-sync/run", job("download-sync", running = false))
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.run("download-sync")
+            val succeeded = vm.uiState.first { it is JobsUiState.Ready && it.outcomes["download-sync"] != null } as JobsUiState.Ready
+            assertEquals(JobOutcome.Succeeded, succeeded.outcomes["download-sync"])
+            val cleared = vm.uiState.first { it is JobsUiState.Ready && it.outcomes.isEmpty() } as JobsUiState.Ready
+            assertTrue(cleared.outcomes.isEmpty())
+        }
+
+    @Test
+    fun `running a job that the server refuses shows a failure outcome, then clears it`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/download-sync/run", """{"message":"boom"}""", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.run("download-sync")
+            val failed = vm.uiState.first { it is JobsUiState.Ready && it.outcomes["download-sync"] != null } as JobsUiState.Ready
+            assertEquals(JobOutcome.Failed, failed.outcomes["download-sync"])
+            val cleared = vm.uiState.first { it is JobsUiState.Ready && it.outcomes.isEmpty() } as JobsUiState.Ready
+            assertTrue(cleared.outcomes.isEmpty())
+        }
+
+    @Test
+    fun `a job that was still running shows its outcome once the poll sees it stop, not before`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/plex-full-scan/run", job("plex-full-scan", running = true))
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.run("plex-full-scan")
+            val running = vm.uiState.first { it is JobsUiState.Ready && it.jobs[0].running } as JobsUiState.Ready
+            assertTrue(running.outcomes.isEmpty())
+
+            seerr.serve("GET /api/v1/settings/jobs", JOBS)
+            val succeeded = vm.uiState.first { it is JobsUiState.Ready && it.outcomes["plex-full-scan"] != null } as JobsUiState.Ready
+            assertEquals(JobOutcome.Succeeded, succeeded.outcomes["plex-full-scan"])
         }
 
     @Test

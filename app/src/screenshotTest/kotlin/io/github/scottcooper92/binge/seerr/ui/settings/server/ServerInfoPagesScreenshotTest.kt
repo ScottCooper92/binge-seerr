@@ -9,9 +9,9 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * The server settings pages that only report: About, Cache and Jobs. Each takes its layout across the
+ * The server settings pages that only report: About and Cache. Each takes its layout across the
  * device matrix once, then its states and its two whole-screen arms (loading, and a failure with retry)
- * on the phone cell alone. The jobs carry no next-run time, since that renders against the clock.
+ * on the phone cell alone.
  */
 class AboutScreenshotTest {
     @PreviewTest
@@ -82,29 +82,6 @@ class CacheScreenshotTest {
     fun failed() = CacheFrame(CacheUiState.Error(SeerrError.Server))
 }
 
-class JobsScreenshotTest {
-    @PreviewTest
-    @SeerrScreenPreviews
-    @Composable
-    fun readyLayout() = JobsFrame(JobsUiState.Ready(jobs()))
-
-    /** One job's run or schedule in flight. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun busy() = JobsFrame(JobsUiState.Ready(jobs(), busyIds = setOf("download-sync")))
-
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun loading() = JobsFrame(JobsUiState.Loading)
-
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun failed() = JobsFrame(JobsUiState.Error(SeerrError.Unauthorized))
-}
-
 private fun aboutInfo(
     versionLabel: String? = "3.1.0",
     commitsBehind: Int = 0,
@@ -164,36 +141,9 @@ private fun dnsCache() =
             ),
     )
 
-private fun jobs() =
-    listOf(
-        ServerJob(id = "download-sync", name = "Download sync", interval = JobInterval.Short, running = true, nextRunMillis = null),
-        ServerJob(
-            id = "availability-sync",
-            name = "Media availability sync",
-            interval = JobInterval.Long,
-            running = false,
-            nextRunMillis = null,
-        ),
-        ServerJob(
-            id = "image-cache-cleanup",
-            name = "Image cache cleanup",
-            interval = JobInterval.Fixed,
-            running = false,
-            nextRunMillis = null,
-        ),
-    )
-
 @Composable
 private fun AboutFrame(state: AboutUiState) = AboutScreen(state = state, onBack = {}, onRetry = {}, onOpenUrl = {})
 
 @Composable
 private fun CacheFrame(state: CacheUiState) =
     CacheScreen(state = state, events = emptyFlow(), actions = CacheActions(onBack = {}, onRetry = {}, onFlush = {}, onFlushDnsEntry = {}))
-
-@Composable
-private fun JobsFrame(state: JobsUiState) =
-    JobsScreen(
-        state = state,
-        events = emptyFlow(),
-        actions = JobsActions(onBack = {}, onRetry = {}, onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
-    )

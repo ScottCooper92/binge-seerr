@@ -56,6 +56,9 @@ fun ServerJob.presets(): List<SchedulePreset> =
         else -> emptyList()
     }
 
+/** How a run ended: the server reports no result, so [Failed] is a run it refused or that could not be started. */
+enum class JobOutcome { Succeeded, Failed }
+
 sealed interface JobsUiState {
     data object Loading : JobsUiState
 
@@ -63,10 +66,11 @@ sealed interface JobsUiState {
         val error: SeerrError,
     ) : JobsUiState
 
-    /** [busyIds] are the jobs with a run, cancel or schedule in flight. */
+    /** [busyIds] are the jobs with a run, cancel or schedule in flight; [outcomes] each job's last run, shown briefly. */
     data class Ready(
         val jobs: List<ServerJob>,
         val busyIds: Set<String> = emptySet(),
+        val outcomes: Map<String, JobOutcome> = emptyMap(),
     ) : JobsUiState
 }
 

@@ -31,7 +31,6 @@ enum class ServerSettingsPage {
     DiscoverSliders,
     Network,
     Metadata,
-    Jobs,
     Cache,
     Logs,
     About,

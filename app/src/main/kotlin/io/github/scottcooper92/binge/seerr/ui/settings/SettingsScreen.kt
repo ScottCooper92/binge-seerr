@@ -9,7 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -19,12 +25,19 @@ import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsUiState
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ScheduleDialog
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
+import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEventSnackbarEffect
+import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
 /**
@@ -56,14 +69,23 @@ class SettingsActions(
 fun SettingsScreen(
     state: SettingsUiState,
     actions: SettingsActions,
+    jobs: JobsUiState,
+    jobEvents: Flow<EditorEvent>,
+    jobActions: JobsActions,
     showBack: Boolean = true,
 ) {
-    ScreenScaffold(title = stringResource(R.string.hub_section_settings), onBack = actions.onBack.takeIf { showBack }) { padding ->
+    val snackbarHostState = remember { SnackbarHostState() }
+    EditorEventSnackbarEffect(jobEvents, snackbarHostState)
+    ScreenScaffold(
+        title = stringResource(R.string.hub_section_settings),
+        onBack = actions.onBack.takeIf { showBack },
+        snackbarHostState = snackbarHostState,
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when (state) {
                 SettingsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
-                is SettingsUiState.Ready -> SettingsContent(state, actions, contentPadding = inner)
+                is SettingsUiState.Ready -> SettingsContent(state, actions, jobs, jobActions, contentPadding = inner)
             }
         }
     }
@@ -73,9 +95,12 @@ fun SettingsScreen(
 private fun SettingsContent(
     state: SettingsUiState.Ready,
     actions: SettingsActions,
+    jobs: JobsUiState,
+    jobActions: JobsActions,
     contentPadding: PaddingValues,
 ) {
     val config = state.config
+    var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         ServerAddressPlate(
             baseUrl = state.connection.baseUrl,
@@ -102,11 +127,19 @@ private fun SettingsContent(
         config?.agents?.let {
             Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenPage, actions.onOpenAgent))
         }
-        config?.system?.let {
-            Group(
-                stringResource(R.string.settings_group_system),
-                systemRows(it, actions.onOpenPage),
-            )
+        if (config != null) {
+            // The Cache and Logs rows are static links, not a read of their own, so they show whether or
+            // not the jobs list came back: `system` is only the fallback for while the live `jobs` (below)
+            // is still loading, and its own fetch failing shouldn't take the unrelated rows down with it.
+            val rows =
+                if (jobs is JobsUiState.Ready) {
+                    jobs.jobs.map { job ->
+                        jobRow(job, busy = job.id in jobs.busyIds, outcome = jobs.outcomes[job.id], jobActions) { scheduling = job.id }
+                    } + systemLinkRows(actions.onOpenPage)
+                } else {
+                    config.system?.let { systemRows(it, actions.onOpenPage) } ?: systemLinkRows(actions.onOpenPage)
+                }
+            Group(stringResource(R.string.settings_group_system), rows)
         }
         state.app?.let {
             Group(
@@ -117,6 +150,16 @@ private fun SettingsContent(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = resolvedContentInset()))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+    }
+    (jobs as? JobsUiState.Ready)?.jobs?.firstOrNull { it.id == scheduling }?.let { job ->
+        ScheduleDialog(
+            job = job,
+            onConfirm = { cron ->
+                scheduling = null
+                jobActions.onSchedule(job.id, cron)
+            },
+            onDismiss = { scheduling = null },
+        )
     }
 }
 
