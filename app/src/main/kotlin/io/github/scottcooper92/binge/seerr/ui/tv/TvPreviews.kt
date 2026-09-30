@@ -25,7 +25,7 @@ private val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
 
 private val NoAdvancedActions = TvAdvancedRequestActions({}, {}, {}, {}, {}, {})
 
-private val SampleServer =
+internal val SampleSetupServer =
     SetupServer(
         baseUrl = "http://seerr.lan:5055",
         title = "Living room Jellyseerr",
@@ -37,21 +37,21 @@ private val SampleServer =
         backdropUrl = null,
     )
 
-private fun address(
+internal fun setupAddress(
     serverUrl: String = "",
     insecure: Boolean = false,
     isInspecting: Boolean = false,
     error: SetupError? = null,
 ) = SetupUiState.Address(serverUrl = serverUrl, insecure = insecure, isInspecting = isInspecting, error = error)
 
-private fun signIn(
+internal fun setupSignIn(
     form: SignInForm = SignInForm(mode = SeerrSignInMode.Jellyfin),
-    server: SetupServer = SampleServer,
+    server: SetupServer = SampleSetupServer,
     isConnecting: Boolean = false,
     error: SetupError? = null,
 ) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = null, error = error, notice = null)
 
-private fun ready(
+internal fun advancedReady(
     isLoadingChoices: Boolean = false,
     isSubmitting: Boolean = false,
     error: AdvancedRequestError? = null,
@@ -73,14 +73,14 @@ private fun ready(
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSetupAddressPreview() {
-    TvSetupScreen(state = address(), actions = NoSetupActions, initialFocus = TvSetupFocus.Address)
+    TvSetupScreen(state = setupAddress(), actions = NoSetupActions, initialFocus = TvSetupFocus.Address)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSetupAddressTypedPreview() {
     TvSetupScreen(
-        state = address(serverUrl = "http://seerr.lan:5055", insecure = false),
+        state = setupAddress(serverUrl = "http://seerr.lan:5055", insecure = false),
         actions = NoSetupActions,
         initialFocus = TvSetupFocus.Continue,
     )
@@ -89,32 +89,32 @@ internal fun TvSetupAddressTypedPreview() {
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSetupAddressInsecurePreview() {
-    TvSetupScreen(state = address(serverUrl = "http://seerr.example.com", insecure = true), actions = NoSetupActions)
+    TvSetupScreen(state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true), actions = NoSetupActions)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSetupAddressErrorPreview() {
-    TvSetupScreen(state = address(serverUrl = "http://nas.lan:9000", error = SetupError.NotSeerr), actions = NoSetupActions)
+    TvSetupScreen(state = setupAddress(serverUrl = "http://nas.lan:9000", error = SetupError.NotSeerr), actions = NoSetupActions)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSetupAddressInspectingPreview() {
-    TvSetupScreen(state = address(serverUrl = "http://seerr.lan:5055", isInspecting = true), actions = NoSetupActions)
+    TvSetupScreen(state = setupAddress(serverUrl = "http://seerr.lan:5055", isInspecting = true), actions = NoSetupActions)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSetupSignInJellyfinPreview() {
-    TvSetupScreen(state = signIn(), actions = NoSetupActions, initialFocus = TvSetupFocus.Credential)
+    TvSetupScreen(state = setupSignIn(), actions = NoSetupActions, initialFocus = TvSetupFocus.Credential)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvSetupSignInApiKeyPreview() {
     TvSetupScreen(
-        state = signIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = "MTc0NDE1NzQ0MjQyMzFhYzY0")),
+        state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = "MTc0NDE1NzQ0MjQyMzFhYzY0")),
         actions = NoSetupActions,
         initialFocus = TvSetupFocus.Connect,
     )
@@ -125,7 +125,7 @@ internal fun TvSetupSignInApiKeyPreview() {
 internal fun TvSetupSignInRejectedPreview() {
     TvSetupScreen(
         state =
-            signIn(
+            setupSignIn(
                 form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", password = "hunter2"),
                 error = SetupError.Rejected,
             ),
@@ -137,7 +137,7 @@ internal fun TvSetupSignInRejectedPreview() {
 @Composable
 internal fun TvSetupSignInConnectingPreview() {
     TvSetupScreen(
-        state = signIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = "MTc0NDE1NzQ0MjQyMzFhYzY0"), isConnecting = true),
+        state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = "MTc0NDE1NzQ0MjQyMzFhYzY0"), isConnecting = true),
         actions = NoSetupActions,
     )
 }
@@ -146,7 +146,7 @@ internal fun TvSetupSignInConnectingPreview() {
 @Composable
 internal fun TvSetupSignInNothingTypedPreview() {
     TvSetupScreen(
-        state = signIn(server = SampleServer.copy(modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect))),
+        state = setupSignIn(server = SampleSetupServer.copy(modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect))),
         actions = NoSetupActions,
     )
 }
@@ -160,31 +160,31 @@ internal fun TvSetupLoadingPreview() {
 @TvPreviewsOnBlack
 @Composable
 internal fun TvAdvancedRequestReadyPreview() {
-    TvAdvancedRequestScreen(state = ready(), actions = NoAdvancedActions, initialFocusedLabel = "Radarr")
+    TvAdvancedRequestScreen(state = advancedReady(), actions = NoAdvancedActions, initialFocusedLabel = "Radarr")
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvAdvancedRequestSubmitFocusedPreview() {
-    TvAdvancedRequestScreen(state = ready(), actions = NoAdvancedActions, initialSubmitFocused = true)
+    TvAdvancedRequestScreen(state = advancedReady(), actions = NoAdvancedActions, initialSubmitFocused = true)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvAdvancedRequestLoadingChoicesPreview() {
-    TvAdvancedRequestScreen(state = ready(isLoadingChoices = true), actions = NoAdvancedActions)
+    TvAdvancedRequestScreen(state = advancedReady(isLoadingChoices = true), actions = NoAdvancedActions)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvAdvancedRequestRejectedPreview() {
-    TvAdvancedRequestScreen(state = ready(error = AdvancedRequestError.Rejected), actions = NoAdvancedActions)
+    TvAdvancedRequestScreen(state = advancedReady(error = AdvancedRequestError.Rejected), actions = NoAdvancedActions)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvAdvancedRequestSubmittingPreview() {
-    TvAdvancedRequestScreen(state = ready(isSubmitting = true), actions = NoAdvancedActions)
+    TvAdvancedRequestScreen(state = advancedReady(isSubmitting = true), actions = NoAdvancedActions)
 }
 
 @TvPreviewsOnBlack
