@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaDetailsDto
@@ -245,6 +246,10 @@ private class DetailSources(
 
     val canEditDestination: Boolean get() = pending && permissions.canRequestAdvanced
 
+    /** With partial requests off the server takes a whole show, so a show's seasons are not the editor's to change. */
+    private val seasonsEditable: Boolean
+        get() = dto.media.mediaType != SEERR_MEDIA_TYPE_TV || profile.settings.partialRequestsEnabled
+
     suspend fun toDetail(): RequestDetail {
         val hydrated = details?.let { HydratedTitle(it.displayTitle, it.posterPath?.toTmdbPosterUrl(), it.year) }
         val item =
@@ -255,7 +260,7 @@ private class DetailSources(
         return RequestDetail(
             item = item,
             actions = item.actions(scope),
-            canEdit = pending && (permissions.canManageRequests || own),
+            canEdit = pending && (permissions.canManageRequests || own) && (seasonsEditable || canEditDestination),
             canEditDestination = canEditDestination,
             backdropUrl = details?.backdropPath?.toTmdbBackdropUrl(),
             overview = details?.overview?.takeIf { it.isNotBlank() },

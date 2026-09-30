@@ -44,6 +44,10 @@ data class SeerrPermissions(
 ) {
     val canRequest4k: Boolean get() = canRequest4kMovie || canRequest4kTv
 
+    /** Whether some 4K request is open to this user: they hold the permission for a media type the server has 4K on for. */
+    fun canRequest4kOn(settings: SeerrPublicSettings): Boolean =
+        (canRequest4kMovie && settings.movie4kEnabled) || (canRequest4kTv && settings.series4kEnabled)
+
     /** The server's issue list admits any of the three; `CREATE_ISSUES` alone sees only the user's own. */
     val canSeeIssues: Boolean get() = canManageIssues || canViewIssues || canCreateIssues
 

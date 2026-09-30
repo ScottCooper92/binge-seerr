@@ -58,8 +58,12 @@ import org.junit.rules.TemporaryFolder
 private const val ADMIN = 2
 private const val REQUEST = 1 shl 5
 private const val REQUEST_4K = 1 shl 10
+private const val REQUEST_4K_MOVIE = 1 shl 11
 private const val REQUEST_ADVANCED = 1 shl 13
 private const val CREATE_ISSUES = 1 shl 22
+
+private const val ALL_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true,"series4kEnabled":true}"""
+private const val MOVIE_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true}"""
 
 /**
  * The whole contract end to end, on the JVM: a host's generated stub over an in-process channel
@@ -89,6 +93,7 @@ class SeerrRequestServiceTest {
         now: () -> Long = { 0L },
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         warm: Boolean = true,
+        publicSettings: String = """{"initialized":true}""",
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
             CredentialStore(
@@ -99,7 +104,7 @@ class SeerrRequestServiceTest {
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false))
         if (warm) {
             seerr.enqueue(json("""{"version":"$version"}"""))
-            seerr.enqueue(json("""{"initialized":true}"""))
+            seerr.enqueue(json(publicSettings))
             seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
         }
         val stub =
@@ -178,7 +183,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `an admin declares everything`() =
         runTest {
-            val response = connected(permissions = ADMIN).handshake(HandshakeRequest.getDefaultInstance())
+            val response = connected(permissions = ADMIN, publicSettings = ALL_4K_ENABLED).handshake(HandshakeRequest.getDefaultInstance())
 
             // MEDIA_FILE_INFO is in the contract but not served here yet: it needs a Radarr fetch, and
             // declaring it would promise the host a file_info this companion cannot fill.
@@ -303,7 +308,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `submit reads the three outcomes off the status code`() =
         runTest {
-            val stub = connected()
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED)
             val request =
                 SubmitRequestRequest
                     .newBuilder()
@@ -459,7 +464,7 @@ class SeerrRequestServiceTest {
     fun `submit advanced request posts the picker's explicit choices, deriving 4k from the server alone`() =
         runTest {
             // Picking a 4K server is a 4K request, so this user holds that permission too.
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K)
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
             seerr.enqueue(json("""[{"id":1,"name":"Main","is4k":false},{"id":2,"name":"Main 4K","is4k":true}]"""))
             seerr.enqueue(json("""{"id":88}"""))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
@@ -532,6 +537,71 @@ class SeerrRequestServiceTest {
             assertEquals(before + 1, seerr.requestCount)
         }
 
+    private suspend fun declares4k(
+        permissions: Int,
+        settings: String,
+    ): Boolean =
+        connected(permissions, publicSettings = settings)
+            .handshake(HandshakeRequest.getDefaultInstance())
+            .capabilitiesList
+            .contains(Capability.CAPABILITY_REQUEST_4K)
+
+    @Test
+    fun `4K is declared where the permission and the server's 4K setting for a media type agree`() =
+        runTest {
+            assertTrue(declares4k(REQUEST or REQUEST_4K, MOVIE_4K_ENABLED))
+        }
+
+    @Test
+    fun `4K is not declared while the server has it off, though the user holds the permission`() =
+        runTest {
+            assertFalse(declares4k(REQUEST or REQUEST_4K, """{"initialized":true}"""))
+        }
+
+    @Test
+    fun `4K is not declared for a user without the permission, though the server has it on`() =
+        runTest {
+            assertFalse(declares4k(REQUEST, ALL_4K_ENABLED))
+        }
+
+    @Test
+    fun `the movie 4K permission does not open a server that only has series 4K on`() =
+        runTest {
+            assertFalse(declares4k(REQUEST or REQUEST_4K_MOVIE, """{"initialized":true,"series4kEnabled":true}"""))
+        }
+
+    @Test
+    fun `a 4K request is refused while the server has 4K off, though the user holds the permission`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_4K)
+            val before = seerr.requestCount
+
+            val code =
+                stub.code {
+                    submitRequest(
+                        SubmitRequestRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setIs4K(true)
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `season edits are not declared while the server has partial requests off`() =
+        runTest {
+            val response =
+                connected(permissions = REQUEST, publicSettings = """{"initialized":true,"partialRequestsEnabled":false}""")
+                    .handshake(HandshakeRequest.getDefaultInstance())
+
+            assertTrue(Capability.CAPABILITY_CANCEL in response.capabilitiesList)
+            assertFalse(Capability.CAPABILITY_EDIT_SEASONS in response.capabilitiesList)
+        }
+
     @Test
     fun `a 4K request is refused for a user who does not hold the 4K permission, before it is posted`() =
         runTest {
@@ -580,7 +650,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `a user who holds the 4K permission may still request 4K`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_4K)
+            val stub = connected(permissions = REQUEST or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
             seerr.enqueue(json("""{"id":90}"""))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
 
