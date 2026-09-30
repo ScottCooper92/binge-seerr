@@ -127,14 +127,17 @@ private fun SettingsContent(
         config?.agents?.let {
             Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenPage, actions.onOpenAgent))
         }
-        config?.system?.let {
+        if (config != null) {
+            // The Cache and Logs rows are static links, not a read of their own, so they show whether or
+            // not the jobs list came back: `system` is only the fallback for while the live `jobs` (below)
+            // is still loading, and its own fetch failing shouldn't take the unrelated rows down with it.
             val rows =
                 if (jobs is JobsUiState.Ready) {
                     jobs.jobs.map { job ->
                         jobRow(job, busy = job.id in jobs.busyIds, outcome = jobs.outcomes[job.id], jobActions) { scheduling = job.id }
                     } + systemLinkRows(actions.onOpenPage)
                 } else {
-                    systemRows(it, actions.onOpenPage)
+                    config.system?.let { systemRows(it, actions.onOpenPage) } ?: systemLinkRows(actions.onOpenPage)
                 }
             Group(stringResource(R.string.settings_group_system), rows)
         }

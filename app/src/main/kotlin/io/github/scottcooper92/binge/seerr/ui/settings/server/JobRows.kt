@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.SettingsRow
@@ -49,10 +48,6 @@ class JobsActions(
     val onCancel: (String) -> Unit,
     val onSchedule: (id: String, cron: String) -> Unit,
 )
-
-/** Fixed so a button, a spinner and an outcome icon all sit in the same box and the row never changes height. */
-private val JOB_ACTION_HEIGHT = 48.dp
-private val JOB_ACTION_MIN_WIDTH = 96.dp
 
 /** One scheduled job as a settings row: run or cancel in place, the last run's outcome briefly, and a tap to reschedule where the job allows it. */
 @Composable
@@ -83,7 +78,13 @@ internal fun jobRow(
             },
         detailColor = if (outcome == JobOutcome.Failed) BingeSentiment.Negative.accent() else null,
         trailingContent = {
-            Box(modifier = Modifier.height(JOB_ACTION_HEIGHT).widthIn(min = JOB_ACTION_MIN_WIDTH), contentAlignment = Alignment.CenterEnd) {
+            Box(
+                modifier =
+                    Modifier
+                        .height(dimensionResource(R.dimen.server_settings_job_action_height))
+                        .widthIn(min = dimensionResource(R.dimen.server_settings_job_action_min_width)),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
                 when {
                     outcome != null -> OutcomeIcon(outcome)
                     job.running ->
