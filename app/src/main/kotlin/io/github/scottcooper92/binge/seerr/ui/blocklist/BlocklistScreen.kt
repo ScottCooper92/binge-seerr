@@ -34,6 +34,7 @@ import com.binge.designsystem.component.rememberFilterPagerState
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -48,6 +49,7 @@ class BlocklistActions(
     val onSearchChange: (String) -> Unit,
     val onOpen: (item: BlocklistItem, canManage: Boolean) -> Unit,
     val onRemove: (BlocklistItem) -> Unit,
+    val onRetry: () -> Unit,
 )
 
 /**
@@ -90,7 +92,6 @@ fun BlocklistScreen(
             snackbarHostState.showSnackbar(resources.getString(message), kind)
         }
     }
-    val ready = state as? BlocklistUiState.Ready
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     ScreenScaffold(
         title = stringResource(R.string.hub_section_blocklist),
@@ -98,20 +99,21 @@ fun BlocklistScreen(
         snackbarHostState = snackbarHostState,
         scrollBehavior = scrollBehavior,
         // The overlay below draws the one opaque background over the bar, the search field and the chips together.
-        barScrim = ready == null,
+        barScrim = state !is BlocklistUiState.Ready,
     ) { padding ->
-        if (ready == null) {
-            LoadingScreen(Modifier.fillMaxSize().padding(padding))
-        } else {
-            BlocklistPages(
-                state = ready,
-                itemsFor = itemsFor,
-                shouldRefresh = shouldRefresh,
-                actions = actions,
-                barHeight = padding.calculateTopPadding(),
-                bottomPadding = padding.calculateBottomPadding(),
-                modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
-            )
+        when (state) {
+            BlocklistUiState.Loading -> LoadingScreen(Modifier.fillMaxSize().padding(padding))
+            is BlocklistUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetry)
+            is BlocklistUiState.Ready ->
+                BlocklistPages(
+                    state = state,
+                    itemsFor = itemsFor,
+                    shouldRefresh = shouldRefresh,
+                    actions = actions,
+                    barHeight = padding.calculateTopPadding(),
+                    bottomPadding = padding.calculateBottomPadding(),
+                    modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
+                )
         }
     }
 }

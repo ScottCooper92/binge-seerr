@@ -72,6 +72,7 @@ class BlocklistPagerTest {
                             onSearchChange = {},
                             onOpen = { _, _ -> },
                             onRemove = {},
+                            onRetry = {},
                         ),
                 )
             }
