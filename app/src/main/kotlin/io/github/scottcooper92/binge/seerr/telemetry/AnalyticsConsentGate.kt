@@ -17,12 +17,13 @@ import javax.inject.Singleton
 private const val TAG = "AnalyticsConsentGate"
 
 /**
- * The one owner of "may analytics report", which every backend registers with and every
- * consent-aware caller awaits. One owner, so no two readers of the preference can disagree.
+ * The one owner of "may analytics report", which every backend registers with. One owner, so no
+ * two readers of the preference can disagree.
  *
- * [isGranted] is the flag a backend checks before it sends. [granted] turns true only after every
- * registered backend has run its open hook, so a caller awaiting it cannot send into a backend
- * that is still opted out. Fails closed: nothing is granted until a stored grant is read.
+ * [isGranted] is the flag a backend checks before it sends, and [awaitRead] is what a caller
+ * holding an event waits on. [granted] turns true only after every registered backend has run its
+ * open hook, so whatever observes it cannot outrun a backend still opted out; only the tests
+ * observe it today. Fails closed: nothing is granted until a stored grant is read.
  */
 @Singleton
 class AnalyticsConsentGate
@@ -88,7 +89,7 @@ class AnalyticsConsentGate
 
         /**
          * A hook calls into a third-party SDK. One that throws is logged and skipped: escaping,
-         * it would end the collector and leave every observer of [granted] waiting for good.
+         * it would end the collector and leave every caller of [awaitRead] waiting for good.
          */
         private fun ((Boolean) -> Unit).runIsolated(granted: Boolean) {
             runCatching { this(granted) }
