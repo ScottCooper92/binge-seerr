@@ -65,6 +65,14 @@ list it is a question for the maintainer and Play's review; record the answer he
 ## Permissions declared
 
 The app's own manifest declares `INTERNET` and `POST_NOTIFICATIONS`. Play reads the **merged**
-release manifest, and libraries the app includes (WorkManager, Crashlytics, PostHog, Play services)
-can add permissions to it, so check that manifest before answering the form and list any addition
-here and in `privacy.md`.
+release manifest, which also carries (checked against
+`app/build/outputs/logs/manifest-merger-release-report.txt`, from `:app:processReleaseMainManifest`):
+
+| Permission | Comes from |
+|---|---|
+| `ACCESS_NETWORK_STATE` | WorkManager, PostHog |
+| `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager |
+| `USE_BIOMETRIC`, `USE_FINGERPRINT` | `androidx.biometric` (transitive; the app never uses biometrics) |
+| `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` (signature-level, the app's own) |
+
+They are listed in `privacy.md`. Re-check the merged manifest whenever a dependency changes.

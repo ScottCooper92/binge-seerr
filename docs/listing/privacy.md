@@ -79,6 +79,17 @@ The app has no server of its own.
 - **Notifications** (Android 13 and later), to tell you about new requests and issues. Denying it
   disables the notifications and nothing else.
 
+Libraries the app includes add more to the installed app's manifest. None is used to reach anything
+beyond what this policy describes:
+
+- **Network state**, **wake lock**, **run at startup** and **foreground service**, from Android's
+  WorkManager (and, for network state, PostHog): they let the background notification check
+  survive a restart and run reliably.
+- **Biometric** and **fingerprint**, declared by the `androidx.biometric` library that a
+  dependency brings in. The app never asks for biometrics.
+- A signature-level permission named after the app, added by `androidx.core` to protect the app's
+  own broadcast receivers. No other app can hold it.
+
 ## Children
 
 The app is a server administration tool and is not directed at children.
