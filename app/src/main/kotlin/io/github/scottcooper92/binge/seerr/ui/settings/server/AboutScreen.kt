@@ -76,12 +76,15 @@ private fun AboutContent(
             rows = versionRows(info, onOpenUrl),
             modifier = Modifier.padding(horizontal = inset),
         )
-        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        SettingsGroup(
-            title = stringResource(R.string.settings_server),
-            rows = serverRows(info),
-            modifier = Modifier.padding(horizontal = inset),
-        )
+        val serverRows = serverRows(info)
+        if (serverRows.isNotEmpty()) {
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            SettingsGroup(
+                title = stringResource(R.string.settings_server),
+                rows = serverRows,
+                modifier = Modifier.padding(horizontal = inset),
+            )
+        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         SettingsGroup(
             title = stringResource(R.string.server_settings_about_support),
