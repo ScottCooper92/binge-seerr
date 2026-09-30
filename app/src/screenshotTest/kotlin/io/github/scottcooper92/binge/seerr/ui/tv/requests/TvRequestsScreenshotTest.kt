@@ -59,6 +59,20 @@ class TvRequestsScreenshotTest {
         )
     }
 
+    /** A filter pill holding focus, filled amber: the band is where the remote lands above the list. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun FilterFocused() {
+        TvRequestsBoard(
+            state = requestsReady(),
+            rows = rows(FixedSampleRequests),
+            actions = NoRequestsActions,
+            initialFocusedFilterLabel = "Pending (1)",
+            now = REQUESTS_NOW_MILLIS,
+        )
+    }
+
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
