@@ -179,22 +179,28 @@ class SeerrApiFactory(
             .build()
             .create(SeerrApi::class.java)
 
-    /** An `X-Api-Key` header, or a host-scoped jar pre-loaded with the session cookie. */
+    /**
+     * An `X-Api-Key` header sent only to the saved server's own origin, or a host-scoped jar
+     * pre-loaded with the session cookie.
+     *
+     * The key is added per hop, in a **network** interceptor: an application interceptor's request is
+     * the one OkHttp copies onto a redirect's next hop, which would carry the key to whatever host,
+     * or plain-http URL, the server or a proxy in front of it named. A saved URL that does not parse
+     * sends no key at all.
+     */
     private fun OkHttpClient.Builder.applyAuth(
         auth: SeerrAuth,
         baseUrl: String,
     ): OkHttpClient.Builder =
         when (auth) {
-            is SeerrAuth.ApiKey ->
-                addInterceptor { chain ->
-                    chain.proceed(
-                        chain
-                            .request()
-                            .newBuilder()
-                            .addHeader(API_KEY_HEADER, auth.key)
-                            .build(),
-                    )
+            is SeerrAuth.ApiKey -> {
+                val origin = baseUrl.toHttpUrlOrNull()
+                addNetworkInterceptor { chain ->
+                    val request = chain.request()
+                    val toSavedServer = origin != null && request.url.sharesOriginWith(origin)
+                    chain.proceed(if (toSavedServer) request.newBuilder().addHeader(API_KEY_HEADER, auth.key).build() else request)
                 }
+            }
             is SeerrAuth.Session -> cookieJar(sessionCookieJarOrNull(auth, baseUrl) ?: CookieJar.NO_COOKIES)
         }
 
@@ -233,6 +239,13 @@ data class SeerrLoginResult<T>(
 )
 
 private const val SESSION_COOKIE_NAME = "connect.sid"
+
+/**
+ * True when this request is to the saved server's own origin: same scheme, host and port. That is the
+ * only place the API key may go, so an https-to-http downgrade and a hop to another host or port both
+ * fail it.
+ */
+internal fun HttpUrl.sharesOriginWith(base: HttpUrl): Boolean = scheme == base.scheme && host == base.host && port == base.port
 
 /**
  * Replays one `connect.sid` cookie, scoped to the saved server's host. [loadForRequest] filters on
