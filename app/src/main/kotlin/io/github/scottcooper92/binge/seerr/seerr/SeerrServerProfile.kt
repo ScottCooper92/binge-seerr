@@ -154,9 +154,11 @@ data class SeerrServerProfile(
 
     companion object {
         /**
-         * The lineage from the version's major, as [SeerrVariant.fromVersion]; a development build has
-         * none, so its public settings decide — `mediaServerType` exists only on the Jellyseerr lineage.
-         * Without settings either, the lineage is [fallback] and the profile is incomplete.
+         * The lineage from the version's major, as [SeerrVariant.fromVersion], except that a `1.x` is
+         * both Overseerr and early Jellyseerr, so it and a development build (which has no version at
+         * all) are decided by the public settings: `mediaServerType` exists only on the Jellyseerr
+         * lineage. Without settings a `1.x` stays Overseerr, a development build takes [fallback],
+         * and either way the profile is incomplete and read again.
          */
         fun from(
             status: SeerrStatusDto,
@@ -164,12 +166,14 @@ data class SeerrServerProfile(
             fallback: SeerrVariant = SeerrVariant.Unknown,
         ): SeerrServerProfile {
             val version = SeerrVersion.parse(status.version)
+            val byVersion = SeerrVariant.fromVersion(status.version)
+            val hasMediaServerType = settings?.mediaServerType != null
             val variant =
                 when {
-                    version != null -> SeerrVariant.fromVersion(status.version)
-                    settings == null -> fallback
-                    settings.mediaServerType != null -> SeerrVariant.Seerr
-                    else -> SeerrVariant.Overseerr
+                    version == null && settings == null -> fallback
+                    version == null -> if (hasMediaServerType) SeerrVariant.Seerr else SeerrVariant.Overseerr
+                    byVersion == SeerrVariant.Overseerr && hasMediaServerType -> SeerrVariant.Jellyseerr
+                    else -> byVersion
                 }
             return SeerrServerProfile(
                 variant = variant,
