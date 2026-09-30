@@ -442,13 +442,13 @@ app:server_settings_image_caches  173424730985
 app:server_settings_job_cancel  19766ed6ccb2
 app:server_settings_job_cron  9e6e7de6b9d6
 app:server_settings_job_cron_hint  898806e8ad3f
+app:server_settings_job_failed  f9aa3903df35
 app:server_settings_job_presets  9b8617fdfbba
 app:server_settings_job_run  0991397702fa
-app:server_settings_job_schedule  f4830a1dae29
 app:server_settings_job_schedule_message  970f234db5bf
 app:server_settings_job_schedule_title  852f89d41457
 app:server_settings_job_scheduled  f64729c2ce78
-app:server_settings_jobs  46863de6d537
+app:server_settings_job_succeeded  7804f7a79a9e
 app:server_settings_libraries  62ef6fd92ee1
 app:server_settings_libraries_none  9ece396d9787
 app:server_settings_libraries_sync  9e1e4208e1b6

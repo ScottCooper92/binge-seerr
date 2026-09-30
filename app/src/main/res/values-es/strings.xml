@@ -622,7 +622,6 @@
     <string name="server_settings_agents_manage">Gestionar los agentes</string>
     <string name="server_settings_sliders">Filas de Descubrir</string>
     <string name="server_settings_network">Red</string>
-    <string name="server_settings_jobs">Tareas programadas</string>
     <string name="server_settings_logs">Registros</string>
     <string name="server_settings_about_version">Versión</string>
     <string name="server_settings_about_update">Actualización disponible</string>
@@ -647,8 +646,9 @@
     <string name="server_settings_log_warn">Aviso</string>
     <string name="server_settings_log_error">Error</string>
     <string name="server_settings_job_run">Ejecutar ahora</string>
+    <string name="server_settings_job_succeeded">Terminado</string>
+    <string name="server_settings_job_failed">Error al ejecutar</string>
     <string name="server_settings_job_cancel">Cancelar</string>
-    <string name="server_settings_job_schedule">Programar</string>
     <string name="server_settings_job_schedule_title">Programar %1$s</string>
     <string name="server_settings_job_schedule_message">Elige cada cuánto se ejecuta o escribe tu propia expresión cron.</string>
     <string name="server_settings_job_presets">Cada</string>

@@ -20,9 +20,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersViewModel
-import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
-import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsScreen
-import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsViewModel
@@ -62,7 +59,6 @@ internal fun ServerSettingsPageEntry(
     when (page) {
         ServerSettingsPage.About -> AboutPage(onBack)
         ServerSettingsPage.Logs -> LogsPage(onBack)
-        ServerSettingsPage.Jobs -> JobsPage(onBack)
         ServerSettingsPage.Cache -> CachePage(onBack)
         ServerSettingsPage.Network -> NetworkPage(onBack)
         ServerSettingsPage.Metadata -> MetadataPage(onBack)
@@ -103,25 +99,6 @@ private fun LogsPage(onBack: () -> Unit) {
                 onSearchChange = viewModel::setSearch,
                 onFollowingChange = viewModel::setFollowing,
                 onCopy = { text -> context.copyToClipboard(copyLabel, text) },
-            ),
-    )
-}
-
-/** The server's scheduled jobs: run, cancel, and reschedule. */
-@Composable
-private fun JobsPage(onBack: () -> Unit) {
-    val viewModel = hiltViewModel<JobsViewModel>()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    JobsScreen(
-        state = state,
-        events = viewModel.events,
-        actions =
-            JobsActions(
-                onBack = onBack,
-                onRetry = viewModel::reload,
-                onRun = viewModel::run,
-                onCancel = viewModel::cancel,
-                onSchedule = viewModel::schedule,
             ),
     )
 }

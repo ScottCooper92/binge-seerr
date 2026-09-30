@@ -14,6 +14,8 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 
 @Composable
 internal fun HubEntry(
@@ -56,6 +58,8 @@ internal fun SettingsEntry(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val jobsViewModel = hiltViewModel<JobsViewModel>()
+    val jobs by jobsViewModel.uiState.collectAsStateWithLifecycle()
     // Refetched on every arrival, so returning from Edit connection shows the new server.
     DisposableEffect(viewModel) {
         viewModel.setScreenVisible(true)
@@ -68,6 +72,9 @@ internal fun SettingsEntry(
     SettingsScreen(
         state = state,
         showBack = showBack,
+        jobs = jobs,
+        jobEvents = jobsViewModel.events,
+        jobActions = JobsActions(onRun = jobsViewModel::run, onCancel = jobsViewModel::cancel, onSchedule = jobsViewModel::schedule),
         actions =
             SettingsActions(
                 onBack = onBack,

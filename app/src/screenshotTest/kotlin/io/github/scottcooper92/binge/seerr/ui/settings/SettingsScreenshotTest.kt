@@ -12,6 +12,13 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobInterval
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobOutcome
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsUiState
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerJob
+import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * The Settings root. Every group is one screen tall together, so the page frames carry the layout and
@@ -122,6 +129,25 @@ class SettingsGroupsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun system() = Group(R.string.settings_group_system, systemRows(systemInfo(), {}))
+
+    /** Each job state at once: running, idle, a run that finished, a run that failed, and a run in flight. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun jobStates() {
+        val actions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> })
+        val jobs = serverJobs()
+        Group(
+            R.string.settings_group_system,
+            listOf(
+                jobRow(jobs[0], busy = false, outcome = null, actions) {},
+                jobRow(jobs[1], busy = false, outcome = null, actions) {},
+                jobRow(jobs[2], busy = false, outcome = JobOutcome.Succeeded, actions) {},
+                jobRow(jobs[3], busy = false, outcome = JobOutcome.Failed, actions) {},
+                jobRow(jobs[4], busy = true, outcome = null, actions) {},
+            ),
+        )
+    }
 
     /** The system would show nothing, so the row that says so sits between the toggles and the schedule. */
     @PreviewTest
@@ -261,4 +287,32 @@ private fun noActions() =
     )
 
 @Composable
-private fun SettingsFrame(state: SettingsUiState) = SettingsScreen(state = state, actions = noActions())
+private fun SettingsFrame(state: SettingsUiState) =
+    SettingsScreen(
+        state = state,
+        actions = noActions(),
+        jobs = JobsUiState.Loading,
+        jobEvents = emptyFlow(),
+        jobActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
+    )
+
+private fun serverJobs() =
+    listOf(
+        ServerJob(
+            id = "plex-recently-added-scan",
+            name = "Recently added scan",
+            interval = JobInterval.Short,
+            running = true,
+            nextRunMillis = null,
+        ),
+        ServerJob(id = "download-sync", name = "Download sync", interval = JobInterval.Short, running = false, nextRunMillis = null),
+        ServerJob(id = "availability-sync", name = "Availability sync", interval = JobInterval.Long, running = false, nextRunMillis = null),
+        ServerJob(id = "radarr-scan", name = "Radarr scan", interval = JobInterval.Long, running = false, nextRunMillis = null),
+        ServerJob(
+            id = "image-cache-cleanup",
+            name = "Image cache cleanup",
+            interval = JobInterval.Fixed,
+            running = false,
+            nextRunMillis = null,
+        ),
+    )

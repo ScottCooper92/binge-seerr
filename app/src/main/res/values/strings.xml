@@ -644,7 +644,6 @@
     <string name="server_settings_agents_manage">Manage agents</string>
     <string name="server_settings_sliders">Discover sliders</string>
     <string name="server_settings_network">Network</string>
-    <string name="server_settings_jobs">Scheduled jobs</string>
     <string name="server_settings_logs">Logs</string>
     <string name="server_settings_about_version">Version</string>
     <string name="server_settings_about_update">Update available</string>
@@ -671,8 +670,9 @@
     <string name="server_settings_log_warn">Warning</string>
     <string name="server_settings_log_error">Error</string>
     <string name="server_settings_job_run">Run now</string>
+    <string name="server_settings_job_succeeded">Finished</string>
+    <string name="server_settings_job_failed">Failed to run</string>
     <string name="server_settings_job_cancel">Cancel</string>
-    <string name="server_settings_job_schedule">Schedule</string>
     <string name="server_settings_job_schedule_title">Schedule %1$s</string>
     <string name="server_settings_job_schedule_message">Pick how often it runs, or type a cron expression of your own.</string>
     <string name="server_settings_job_presets">Every</string>
