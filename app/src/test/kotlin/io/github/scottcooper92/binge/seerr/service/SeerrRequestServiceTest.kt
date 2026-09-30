@@ -51,6 +51,7 @@ import mockwebserver3.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -304,7 +305,9 @@ class SeerrRequestServiceTest {
 
             stub.unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build())
 
-            assertEquals("/api/v1/blacklist/603", seerr.takeRequest().url.encodedPath)
+            val deleted = seerr.takeRequest()
+            assertEquals("/api/v1/blacklist/603", deleted.url.encodedPath)
+            assertNull(deleted.url.queryParameter("mediaType"))
         }
 
     /** The contract's NOT_FOUND for a title not on the blocklist is the server's own 404. */
