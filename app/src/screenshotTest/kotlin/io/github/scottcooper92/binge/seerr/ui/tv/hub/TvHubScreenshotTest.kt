@@ -3,6 +3,8 @@ package io.github.scottcooper92.binge.seerr.ui.tv.hub
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
+import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.previewAdminOverview
 import io.github.scottcooper92.binge.seerr.ui.hub.previewLimitedOverview
 import io.github.scottcooper92.binge.seerr.ui.hub.previewReady
@@ -10,7 +12,9 @@ import io.github.scottcooper92.binge.seerr.ui.hub.previewUnlimitedOverview
 
 /**
  * The television hub, framed for the three accounts whose quota reads differently: an admin with one
- * metered type beside one unlimited, a user with movies spent, and a user metered on neither.
+ * metered type beside one unlimited, a user with movies spent, and a user metered on neither. Beyond
+ * those, the board's whole-screen arms (loading and the three connection problems) and a stat tile
+ * with focus, which a remote can reach and which changes how the tile draws.
  */
 class TvHubScreenshotTest {
     @PreviewTest
@@ -32,6 +36,51 @@ class TvHubScreenshotTest {
     @Composable
     fun UnlimitedQuotaBoard() {
         TvHubBoard(state = previewReady(overview = previewUnlimitedOverview()), actions = previewTvHubActions())
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Loading() {
+        TvHubBoard(state = HubUiState.Loading, actions = previewTvHubActions())
+    }
+
+    /** The server did not answer: Retry leads, with Disconnect beside it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Unreachable() {
+        TvHubBoard(state = previewReady(health = ConnectionHealth.Unreachable), actions = previewTvHubActions())
+    }
+
+    /** It answered, but the overview would not load. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun CouldNotLoad() {
+        TvHubBoard(state = previewReady(health = ConnectionHealth.CouldNotLoad), actions = previewTvHubActions())
+    }
+
+    /** The saved sign-in was rejected: Reconnect leads, since retrying cannot mend it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Unauthorized() {
+        TvHubBoard(state = previewReady(health = ConnectionHealth.Unauthorized), actions = previewTvHubActions())
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun PendingTileFocused() {
+        TvHubBoard(state = previewReady(), actions = previewTvHubActions(), initialFocusedTile = TILE_PENDING)
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun IssuesTileFocused() {
+        TvHubBoard(state = previewReady(), actions = previewTvHubActions(), initialFocusedTile = TILE_ISSUES)
     }
 }
 
