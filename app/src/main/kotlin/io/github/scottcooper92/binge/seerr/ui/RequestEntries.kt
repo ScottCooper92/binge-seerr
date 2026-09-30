@@ -166,6 +166,7 @@ internal fun RequestsEntry(
                 onOpen = { item -> onOpen(item.id) },
                 onOpenActions = viewModel::openActions,
                 onDismissActions = viewModel::dismissActions,
+                onRetryLoad = viewModel::retry,
                 onApprove = viewModel.moderation::approve,
                 onRetry = viewModel.moderation::retry,
                 onDecline = viewModel.moderation::decline,
