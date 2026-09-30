@@ -17,7 +17,6 @@ data class SeerrLibraryDto(
 @Serializable
 data class SeerrPlexSettingsDto(
     @SerialName("name") val name: String? = null,
-    @SerialName("machineId") val machineId: String? = null,
     @SerialName("ip") val ip: String? = null,
     @SerialName("port") val port: Int? = null,
     @SerialName("useSsl") val useSsl: Boolean? = null,

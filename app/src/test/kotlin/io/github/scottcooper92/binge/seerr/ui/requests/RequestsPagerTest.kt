@@ -149,6 +149,7 @@ class RequestsPagerTest {
             onOpen = {},
             onOpenActions = {},
             onDismissActions = {},
+            onRetryLoad = {},
             onApprove = {},
             onRetry = {},
             onDecline = { _, _ -> },

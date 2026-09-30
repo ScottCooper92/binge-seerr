@@ -181,6 +181,7 @@ class TvRequestsBoardFocusTest {
                                 openRequestId = item.id
                             },
                             onRetryLoad = {},
+                            onRetryScope = {},
                             onReconnect = {},
                         ),
                 )

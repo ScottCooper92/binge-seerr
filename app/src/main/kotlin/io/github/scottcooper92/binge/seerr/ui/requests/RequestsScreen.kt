@@ -29,6 +29,7 @@ import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
@@ -43,6 +44,7 @@ class RequestsActions(
     val onOpen: (RequestItem) -> Unit,
     val onOpenActions: (RequestItem) -> Unit,
     val onDismissActions: () -> Unit,
+    val onRetryLoad: () -> Unit,
     val onApprove: (Int) -> Unit,
     val onRetry: (Int) -> Unit,
     val onDecline: (RequestItem, Boolean) -> Unit,
@@ -88,7 +90,11 @@ fun RequestsScreen(
         },
     ) { padding ->
         if (ready == null) {
-            LoadingScreen(Modifier.fillMaxSize().padding(padding))
+            when (state) {
+                is RequestsUiState.Error ->
+                    ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetryLoad)
+                else -> LoadingScreen(Modifier.fillMaxSize().padding(padding))
+            }
         } else {
             BingeFilterChipPager(
                 items =

@@ -10,6 +10,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
+import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -34,11 +36,14 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -55,6 +60,23 @@ private data class BlocklistScope(
     val canManage: Boolean = false,
     val canBlockCollections: Boolean = false,
 )
+
+/** What one arrival's reads returned; null is a read that failed. */
+private class ScopeRead(
+    val profile: SeerrServerProfile?,
+    val viewer: SeerrUserDto?,
+)
+
+/** This scope with [read] applied: each part the read answered is replaced, and one it did not keeps its last value. */
+private fun BlocklistScope.readWith(read: ScopeRead): BlocklistScope {
+    val canManage = read.viewer?.toPermissions()?.canManageBlocklist ?: canManage
+    return BlocklistScope(
+        path = read.profile?.blocklistPath ?: path,
+        hasFilters = read.profile?.hasBlocklistFilters ?: hasFilters,
+        canManage = canManage,
+        canBlockCollections = (read.profile?.canBlockCollections ?: canBlockCollections) && canManage,
+    )
+}
 
 /**
  * The blocklist browser: one cached paged list per filter over the debounced search, the chip
@@ -90,27 +112,31 @@ class BlocklistViewModel
         private val eventFlow = MutableSharedFlow<BlocklistEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<BlocklistEvent> = eventFlow.asSharedFlow()
 
+        /** Bumped on every arrival, so the scope below is re-read rather than fixed for the view model's life. */
+        private val scopeRefresh = MutableStateFlow(0)
+
         /**
-         * Resolved once per connection, and nothing downstream runs before it: the list's path is
-         * the profile's, so a page fetched against a guessed one would be a request to the wrong place.
+         * Resolved before anything downstream runs: the list's path is the profile's, so a page fetched
+         * against a guessed one would be a request to the wrong place. Re-read on every arrival, since a
+         * permission or a server upgrade is otherwise invisible while this view model lives. A read that
+         * fails keeps the last answer for that part (defaults on the very first), and `distinctUntilChanged`
+         * means re-entry restarts the lists only when the scope actually changed.
          *
          * `flowOn(dispatcher)` for the same reason every `launch` here takes one (#177/#370): without
          * it, this flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`,
          * which can outlive a cleared scope same as a plain `launch` would.
          */
         private val scope: Flow<BlocklistScope> =
-            flow {
-                val profile = runCatching { connection.profile() }.getOrNull()
-                val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
-                emit(
-                    BlocklistScope(
-                        path = profile?.blocklistPath ?: BlocklistScope().path,
-                        hasFilters = profile?.hasBlocklistFilters == true,
-                        canManage = permissions.canManageBlocklist,
-                        canBlockCollections = profile?.canBlockCollections == true && permissions.canManageBlocklist,
-                    ),
-                )
-            }.flowOn(dispatcher)
+            scopeRefresh
+                .mapLatest {
+                    ScopeRead(
+                        runCatching { connection.refreshProfile() }.getOrNull(),
+                        runCatching { connection.refreshAuthenticatedUser() }.getOrNull(),
+                    )
+                }.runningFold<ScopeRead, BlocklistScope?>(null) { previous, read -> (previous ?: BlocklistScope()).readWith(read) }
+                .filterNotNull()
+                .distinctUntilChanged()
+                .flowOn(dispatcher)
                 .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
         /** A blank query needs no debounce, so the first page is not held back. */
@@ -190,6 +216,7 @@ class BlocklistViewModel
          */
         fun setScreenVisible(visible: Boolean) {
             if (visible) {
+                scopeRefresh.update { it + 1 }
                 countsRefresh.update { it + 1 }
                 listVersionState.update { it + 1 }
             }
