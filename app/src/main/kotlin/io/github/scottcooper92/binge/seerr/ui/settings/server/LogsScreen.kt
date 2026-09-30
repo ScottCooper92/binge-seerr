@@ -193,11 +193,12 @@ private fun LogsBody(
 
 /** One line: the level in its tone, the label and the time, the message, and the attached data once tapped open. */
 @Composable
-private fun LogRow(
+internal fun LogRow(
     entry: LogEntry,
     onCopy: () -> Unit,
+    initiallyExpanded: Boolean = false,
 ) {
-    var expanded by rememberSaveable(entry.id) { mutableStateOf(false) }
+    var expanded by rememberSaveable(entry.id) { mutableStateOf(initiallyExpanded) }
     Column(
         modifier =
             Modifier
