@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
@@ -39,6 +40,9 @@ private const val REQUEST_WAIT_MILLIS = 2_000L
 private const val POLL_MILLIS = 10L
 
 private const val ADMIN = 2
+private const val HTTP_OK = 200
+private const val HTTP_UNAUTHORIZED = 401
+private const val HTTP_SERVER_ERROR = 500
 private const val REQUEST = 32
 
 /** The browser over an in-memory connection into a path-scripted Seerr. */
@@ -237,6 +241,69 @@ class RequestsViewModelTest {
             // only REQUEST, so a Ready carrying moderation could only have come from a guess.
             assertTrue(seen.none { it is RequestsUiState.Ready && it.scope.permissions.canManageRequests })
         }
+
+    @Test
+    fun `an auth failure on entry is an error the screen can show, and retry recovers from it`() =
+        runTest {
+            val authStatus = AtomicInteger(HTTP_SERVER_ERROR)
+            seerr.dispatcher = { request ->
+                received += request
+                when (request.url.encodedPath) {
+                    "/api/v1/auth/me" ->
+                        if (authStatus.get() == HTTP_OK) {
+                            json("""{"id":7,"displayName":"Scott","permissions":$REQUEST}""")
+                        } else {
+                            FakeResponse(code = authStatus.get())
+                        }
+                    "/api/v1/status" -> json("""{"version":"3.1.0"}""")
+                    "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                    "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
+                    else -> FakeResponse(code = 404)
+                }
+            }
+            val connection = connectedWhile(authStatus)
+            val vm = RequestsViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher)
+            viewModels.put("requests", vm)
+            backgroundScope.launch { vm.uiState.collect {} }
+            vm.setScreenVisible(true)
+
+            assertEquals(RequestsUiState.Error(SeerrError.Server), vm.uiState.first { it is RequestsUiState.Error })
+
+            authStatus.set(HTTP_UNAUTHORIZED)
+            vm.retry()
+            assertEquals(
+                RequestsUiState.Error(SeerrError.Unauthorized),
+                vm.uiState.first {
+                    it ==
+                        RequestsUiState.Error(SeerrError.Unauthorized)
+                },
+            )
+
+            authStatus.set(HTTP_OK)
+            vm.retry()
+            assertFalse(
+                vm
+                    .awaitReady { it.counts != null }
+                    .scope.permissions.canManageRequests,
+            )
+        }
+
+    /** A connection whose `connect()` probe passes, then reads `auth/me` as [authStatus] says. */
+    private suspend fun TestScope.connectedWhile(authStatus: AtomicInteger): SeerrConnection {
+        val connection =
+            SeerrConnection(
+                store =
+                    CredentialStore(
+                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("r.preferences_pb") },
+                        PlainCipher,
+                    ),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
+            )
+        val failing = authStatus.getAndSet(HTTP_OK)
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        authStatus.set(failing)
+        return connection
+    }
 
     private fun authReads() = received.count { it.url.encodedPath == "/api/v1/auth/me" }
 

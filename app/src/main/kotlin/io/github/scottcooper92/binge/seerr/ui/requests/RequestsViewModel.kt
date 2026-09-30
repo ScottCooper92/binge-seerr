@@ -9,8 +9,10 @@ import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
+import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
@@ -22,7 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -38,12 +40,25 @@ private data class ListScope(
     val requestedBy: Int?,
 )
 
+/** Where resolving [ListScope] stands: in flight, done, or failed with why, so a failure is a state rather than a skeleton that never ends. */
+private sealed interface ScopeState {
+    data object Resolving : ScopeState
+
+    data class Resolved(
+        val scope: ListScope,
+    ) : ScopeState
+
+    data class Failed(
+        val error: SeerrError,
+    ) : ScopeState
+}
+
 /**
  * The requests browser. One cached paging stream per filter, so switching chips keeps each list's
  * rows; every stream re-queries when the sort changes. The chip counts and the resolved scope both
  * refetch on the screen becoming visible (the counts also on a filter change), holding the previous
- * value while a fetch is in flight — so a transient `auth/me` failure on entry isn't a permanent
- * stuck spinner, it self-corrects the next time the screen becomes visible.
+ * value while a fetch is in flight. A failed `auth/me` read is an [RequestsUiState.Error] the user can
+ * retry, and it also self-corrects the next time the screen becomes visible.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -96,37 +111,43 @@ class RequestsViewModel
         /**
          * The user's permissions decide whether the list is theirs alone, and what they may moderate.
          * Re-read from the server on becoming visible, since the cached `auth/me` would not show a
-         * permission changed in the web client; null while unresolved (including after a failed
-         * re-resolve), so nothing downstream acts on a guessed, all-permissive scope. The profile is
-         * not re-read: `hasBlocklist` follows the server's version, which an upgrade restarts anyway.
+         * permission changed in the web client; a failed re-resolve is [ScopeState.Failed] rather than a
+         * guessed, all-permissive scope, so nothing downstream acts on one. A retry from a failure
+         * shows [ScopeState.Resolving] again. The profile is not re-read: `hasBlocklist` follows the
+         * server's version, which an upgrade restarts anyway.
          *
          * `flowOn(dispatcher)` for the same reason [moderation] takes one (#177): without it, this
          * flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`, which
          * can outlive a cleared scope same as a plain `launch` would.
          */
-        private val scope: StateFlow<ListScope?> =
+        private val scope: StateFlow<ScopeState> =
             refreshTrigger
                 .flatMapLatest {
                     flow {
-                        val user = runCatching { connection.refreshAuthenticatedUser() }.getOrNull()
+                        if (scope.value is ScopeState.Failed) emit(ScopeState.Resolving)
                         emit(
-                            user?.let { resolved ->
-                                val permissions = resolved.toPermissions()
-                                val hasBlocklist = runCatching { connection.profile().hasBlocklist }.getOrDefault(false)
-                                ListScope(
-                                    moderation =
-                                        ModerationScope(permissions, currentUserId = resolved.id, hasBlocklist = hasBlocklist),
-                                    requestedBy = resolved.id.takeUnless { permissions.canViewRequests },
-                                )
-                            },
+                            runCatching { connection.refreshAuthenticatedUser() }.fold(
+                                onSuccess = { resolved ->
+                                    val permissions = resolved.toPermissions()
+                                    val hasBlocklist = runCatching { connection.profile().hasBlocklist }.getOrDefault(false)
+                                    ScopeState.Resolved(
+                                        ListScope(
+                                            moderation =
+                                                ModerationScope(permissions, currentUserId = resolved.id, hasBlocklist = hasBlocklist),
+                                            requestedBy = resolved.id.takeUnless { permissions.canViewRequests },
+                                        ),
+                                    )
+                                },
+                                onFailure = { ScopeState.Failed(it.toSeerrError()) },
+                            ),
                         )
                     }
                 }.flowOn(dispatcher)
-                .stateIn(viewModelScope, SharingStarted.Lazily, null)
+                .stateIn(viewModelScope, SharingStarted.Lazily, ScopeState.Resolving)
 
         private val streams: Map<RequestFilter, Flow<PagingData<RequestItem>>> =
             RequestFilter.entries.associateWith { filter ->
-                combine(selectedSort, scope.filterNotNull()) { sort, scope -> sort to scope }
+                combine(selectedSort, scope.filterIsInstance<ScopeState.Resolved>()) { sort, resolved -> sort to resolved.scope }
                     .flatMapLatest { (sort, scope) ->
                         Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
                             RequestsPagingSource(
@@ -163,18 +184,19 @@ class RequestsViewModel
                 moderation.actingIds,
                 actionItem,
             ) { (filter, sort, version), counts, scope, acting, actionItem ->
-                if (scope == null) {
-                    RequestsUiState.Loading
-                } else {
-                    RequestsUiState.Ready(
-                        filter = filter,
-                        sort = sort,
-                        counts = counts,
-                        scope = scope.moderation,
-                        actingIds = acting,
-                        listVersion = version,
-                        actionItem = actionItem,
-                    )
+                when (scope) {
+                    ScopeState.Resolving -> RequestsUiState.Loading
+                    is ScopeState.Failed -> RequestsUiState.Error(scope.error)
+                    is ScopeState.Resolved ->
+                        RequestsUiState.Ready(
+                            filter = filter,
+                            sort = sort,
+                            counts = counts,
+                            scope = scope.scope.moderation,
+                            actingIds = acting,
+                            listVersion = version,
+                            actionItem = actionItem,
+                        )
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, RequestsUiState.Loading)
 
@@ -192,6 +214,11 @@ class RequestsViewModel
 
         fun setSort(sort: RequestSort) {
             selectedSort.value = sort
+        }
+
+        /** Re-reads the signed-in user after [RequestsUiState.Error]. */
+        fun retry() {
+            refreshTrigger.value++
         }
 
         /** The counts and the scope are low-velocity: refetched on entry, never polled. */

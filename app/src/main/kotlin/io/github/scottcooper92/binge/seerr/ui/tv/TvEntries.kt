@@ -170,6 +170,7 @@ private fun TvRequestsEntry(
                 onSortChange = viewModel::setSort,
                 onOpenDetail = { item -> onOpenRequest(item.id) },
                 onRetryLoad = { lazyItems?.retry() },
+                onRetryScope = viewModel::retry,
                 onReconnect = onReconnect,
             ),
     )

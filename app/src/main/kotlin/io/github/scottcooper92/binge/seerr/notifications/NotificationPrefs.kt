@@ -30,9 +30,6 @@ enum class NotificationSignal(
     RequestAvailable("request_available"),
     RequestApproved("request_approved"),
     RequestDeclined("request_declined"),
-    ;
-
-    val isFeed: Boolean get() = this == PendingRequests || this == OpenIssues
 }
 
 private val LAST_RUN = longPreferencesKey("last_run_millis")

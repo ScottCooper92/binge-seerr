@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.telemetry
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -76,7 +77,7 @@ class AnalyticsConsentGateTest {
             gate.register { seen += it }
             var released = false
             backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                gate.awaitGranted()
+                gate.granted.first { it }
                 released = true
             }
             assertFalse(released)

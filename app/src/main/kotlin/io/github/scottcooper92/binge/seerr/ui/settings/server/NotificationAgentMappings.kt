@@ -2,13 +2,11 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Http
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Tag
 import androidx.compose.ui.graphics.vector.ImageVector
 import io.github.scottcooper92.binge.seerr.R
 
@@ -37,9 +35,6 @@ internal fun ServerAgent.icon(): ImageVector =
             Icons.Filled.Notifications
         ServerAgent.Webhook -> Icons.Filled.Http
     }
-
-/** The icon of the two type groups on the agent page. */
-internal fun typeGroupIcon(issues: Boolean): ImageVector = if (issues) Icons.AutoMirrored.Filled.Chat else Icons.Filled.Tag
 
 @StringRes
 internal fun AgentOption.labelRes(): Int =

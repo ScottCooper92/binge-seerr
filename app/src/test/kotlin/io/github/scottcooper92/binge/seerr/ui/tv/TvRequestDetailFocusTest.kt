@@ -232,6 +232,7 @@ class TvRequestDetailFocusTest {
                                 onSortChange = {},
                                 onOpenDetail = { openId = it.id },
                                 onRetryLoad = {},
+                                onRetryScope = {},
                                 onReconnect = {},
                             ),
                     )

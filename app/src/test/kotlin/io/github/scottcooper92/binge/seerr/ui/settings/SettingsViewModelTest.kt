@@ -214,6 +214,36 @@ class SettingsViewModelTest {
             assertNull(vm.awaitReady { it.connection.userName != null }.config)
         }
 
+    /**
+     * `authenticatedUser()` is cached for the life of the connection, so a permission the administrator
+     * grants in the web client is invisible until something asks again; returning to the screen is that ask.
+     */
+    @Test
+    fun `a permission granted on the server shows on the next arrival`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+            assertNull(vm.awaitReady { it.connection.userName != null }.config)
+
+            server(ADMIN)
+            vm.setScreenVisible(true)
+
+            assertTrue(vm.awaitReady { it.config?.system != null }.config != null)
+        }
+
+    @Test
+    fun `a permission revoked on the server hides its sections on the next arrival`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            server(REQUEST)
+            vm.setScreenVisible(true)
+
+            assertNull(vm.awaitReady { it.config == null && it.connection.userName != null }.config)
+        }
+
     @Test
     fun `every user gets this app's group, and the shake toggle writes through to the prefs`() =
         runTest {

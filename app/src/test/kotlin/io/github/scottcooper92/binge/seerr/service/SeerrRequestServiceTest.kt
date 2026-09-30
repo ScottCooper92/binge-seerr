@@ -13,6 +13,7 @@ import com.binge.companion.contracts.request.v1.GetAttentionRequest
 import com.binge.companion.contracts.request.v1.GetDestinationOptionsRequest
 import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.HandshakeRequest
+import com.binge.companion.contracts.request.v1.HandshakeResponse
 import com.binge.companion.contracts.request.v1.IssueType
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
@@ -60,6 +61,7 @@ private const val REQUEST = 1 shl 5
 private const val REQUEST_4K = 1 shl 10
 private const val REQUEST_4K_MOVIE = 1 shl 11
 private const val REQUEST_ADVANCED = 1 shl 13
+private const val REQUEST_4K_PERMISSION = 1 shl 10
 private const val CREATE_ISSUES = 1 shl 22
 
 private const val ALL_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true,"series4kEnabled":true}"""
@@ -142,6 +144,18 @@ class SeerrRequestServiceTest {
         return RequestServiceGrpcKt.RequestServiceCoroutineStub(channel)
     }
 
+    /** A handshake re-reads the profile and the user, so each one after the warm-up is answered from the server again. */
+    private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.handshakeAs(
+        permissions: Int,
+        version: String = "2.7.0",
+        publicSettings: String = """{"initialized":true}""",
+    ): HandshakeResponse {
+        seerr.enqueue(json("""{"version":"$version"}"""))
+        seerr.enqueue(json(publicSettings))
+        seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
+        return handshake(HandshakeRequest.getDefaultInstance()).also { repeat(3) { seerr.takeRequest() } }
+    }
+
     @After
     fun tearDown() {
         if (::channel.isInitialized) channel.shutdownNow()
@@ -154,7 +168,7 @@ class SeerrRequestServiceTest {
         runTest {
             val stub = connected(permissions = REQUEST or CREATE_ISSUES)
 
-            val response = stub.handshake(HandshakeRequest.getDefaultInstance())
+            val response = stub.handshakeAs(REQUEST or CREATE_ISSUES)
 
             assertEquals("Jellyseerr", response.providerName)
             assertEquals(
@@ -167,6 +181,22 @@ class SeerrRequestServiceTest {
                 ),
                 response.capabilitiesList.toSet(),
             )
+        }
+
+    /**
+     * The capability set is decided at the handshake and the user behind it is cached for the life of the
+     * connection, so without a refresh a host that rebinds while this process is alive is told what the
+     * user could do when the process started.
+     */
+    @Test
+    fun `a rebind is told what the user may do now, not when the process started`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            assertFalse(Capability.CAPABILITY_REQUEST_4K in stub.handshakeAs(REQUEST).capabilitiesList)
+
+            val response = stub.handshakeAs(REQUEST or REQUEST_4K_PERMISSION, publicSettings = MOVIE_4K_ENABLED)
+
+            assertTrue(Capability.CAPABILITY_REQUEST_4K in response.capabilitiesList)
         }
 
     @Test
@@ -183,7 +213,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `an admin declares everything`() =
         runTest {
-            val response = connected(permissions = ADMIN, publicSettings = ALL_4K_ENABLED).handshake(HandshakeRequest.getDefaultInstance())
+            val response = connected(permissions = ADMIN).handshakeAs(ADMIN, publicSettings = ALL_4K_ENABLED)
 
             // MEDIA_FILE_INFO is in the contract but not served here yet: it needs a Radarr fetch, and
             // declaring it would promise the host a file_info this companion cannot fill.
@@ -197,7 +227,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `overseerr has no blocklist, so an admin there is not offered the block capability`() =
         runTest {
-            val response = connected(permissions = ADMIN, version = "1.33.2").handshake(HandshakeRequest.getDefaultInstance())
+            val response = connected(permissions = ADMIN, version = "1.33.2").handshakeAs(ADMIN, version = "1.33.2")
 
             assertEquals("Overseerr", response.providerName)
             assertFalse(Capability.CAPABILITY_BLOCK in response.capabilitiesList)
@@ -541,8 +571,8 @@ class SeerrRequestServiceTest {
         permissions: Int,
         settings: String,
     ): Boolean =
-        connected(permissions, publicSettings = settings)
-            .handshake(HandshakeRequest.getDefaultInstance())
+        connected(permissions)
+            .handshakeAs(permissions, publicSettings = settings)
             .capabilitiesList
             .contains(Capability.CAPABILITY_REQUEST_4K)
 
@@ -595,8 +625,8 @@ class SeerrRequestServiceTest {
     fun `season edits are not declared while the server has partial requests off`() =
         runTest {
             val response =
-                connected(permissions = REQUEST, publicSettings = """{"initialized":true,"partialRequestsEnabled":false}""")
-                    .handshake(HandshakeRequest.getDefaultInstance())
+                connected(permissions = REQUEST)
+                    .handshakeAs(REQUEST, publicSettings = """{"initialized":true,"partialRequestsEnabled":false}""")
 
             assertTrue(Capability.CAPABILITY_CANCEL in response.capabilitiesList)
             assertFalse(Capability.CAPABILITY_EDIT_SEASONS in response.capabilitiesList)

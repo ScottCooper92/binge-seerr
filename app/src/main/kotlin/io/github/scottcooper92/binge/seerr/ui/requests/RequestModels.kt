@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
@@ -126,5 +127,10 @@ sealed interface RequestsUiState {
         val listVersion: Int,
         /** The request whose actions sheet is open; held here so it survives rotation. */
         val actionItem: RequestItem? = null,
+    ) : RequestsUiState
+
+    /** The signed-in user could not be read, so what the list may show is unknown; retrying re-reads it. */
+    data class Error(
+        val error: SeerrError,
     ) : RequestsUiState
 }
