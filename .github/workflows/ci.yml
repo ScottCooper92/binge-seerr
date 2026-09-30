@@ -11,7 +11,7 @@ name: CI
 # separate jobs would buy parallelism this build is far too small to need, and would
 # cost a second required status check to keep in sync with branch protection.
 #
-# Deliberately NO paths-ignore, matching binge-integrations. bot-review requires a
+# Deliberately NO paths-ignore, matching binge-companions. bot-review requires a
 # SUCCESSFUL run of this workflow against the head, so a skipped run means a PR that
 # is never reviewed. .ai/ holds the rules the bots themselves read, so a docs filter
 # would bypass review on exactly the changes that most need it.
@@ -97,7 +97,7 @@ jobs:
             fi
           fi
 
-      # JDK 17, matching Binge rather than binge-integrations' 21. The extracted code
+      # JDK 17, matching Binge rather than binge-companions' 21. The extracted code
       # targets jvmTarget 17 and the AGP in `libs.versions.toml` is what Binge builds with, so the toolchain
       # here is the one the extraction arrives expecting.
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5

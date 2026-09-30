@@ -45,7 +45,7 @@ other traffic.
 
 Binge ships as a plain TMDB client with zero bundled providers. A companion app is a separate APK
 that exports a bound Android Service implementing a contract from
-[binge-integrations](https://github.com/ScottCooper92/binge-integrations); only data crosses the
+[binge-companions](https://github.com/ScottCooper92/binge-companions); only data crosses the
 IPC boundary, over gRPC on Binder, and there is no dynamic code loading. This app implements
 REQUEST v1, and it is the **reference** companion: the worked example a third-party author reads
 to learn what a companion looks like. Whatever is here will be copied, so the bar is not "does it
@@ -70,7 +70,7 @@ The pieces to read, in order:
    companion can show its own request options.
 
 The platform's decisions are in Binge's `docs/companion-platform-architecture.md`
-and the wire contract in binge-integrations' `contracts/`; this app's own roadmap is
+and the wire contract in binge-companions' `contracts/`; this app's own roadmap is
 [#26](https://github.com/ScottCooper92/binge-seerr/issues/26).
 
 ## Status
@@ -84,7 +84,7 @@ its screenshots.
 
 ## Building
 
-The contracts and the SDK come from binge-integrations as source, and the theme and components
+The contracts and the SDK come from binge-companions as source, and the theme and components
 the screens wear from binge-design-system, both through a git submodule and a Gradle composite
 build, so clone with submodules:
 

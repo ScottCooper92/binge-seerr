@@ -35,11 +35,11 @@ on. It is also the one that most looks like a nit and is not.
 **No privileged first-party arrangement.** This companion has no special
 relationship with Binge. Anything that works only because both ends share an author
 — an assumed field, an undocumented ordering, a behaviour the contract does not
-promise — is a finding. The correct fix is a contract change in binge-integrations
+promise — is a finding. The correct fix is a contract change in binge-companions
 or a change here, never a private understanding between the two.
 
 **Nothing here defines a contract.** A `.proto`, a hand-written message class, or a
-constant redefining a contract value is a finding. Those live in binge-integrations.
+constant redefining a contract value is a finding. Those live in binge-companions.
 
 **Capabilities, not versions.** What the host can do is discovered from the
 handshake's capability set. A version-number comparison used to decide behaviour is
