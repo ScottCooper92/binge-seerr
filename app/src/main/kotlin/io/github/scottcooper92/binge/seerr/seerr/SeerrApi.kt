@@ -708,13 +708,14 @@ interface SeerrApi {
 
     /**
      * Keyed by TMDB id, not the entry's own; `MANAGE_BLOCKLIST`. [mediaType] is `movie` or `tv`:
-     * Seerr 3.2 made it required and answers 400 without it, and an earlier server ignores it.
+     * Seerr 3.2 made it required and answers 400 without it, and an earlier server answers 400 with
+     * it. Null omits it; see `SeerrServerProfile.unblockMediaType`.
      */
     @DELETE("api/v1/{path}/{tmdbId}")
     suspend fun removeFromBlocklist(
         @Path("path") path: String,
         @Path("tmdbId") tmdbId: Int,
-        @Query("mediaType") mediaType: String,
+        @Query("mediaType") mediaType: String?,
     )
 
     /** Seerr 3.2+: blocks or unblocks every movie of a TMDB collection at once; `MANAGE_BLOCKLIST`. */

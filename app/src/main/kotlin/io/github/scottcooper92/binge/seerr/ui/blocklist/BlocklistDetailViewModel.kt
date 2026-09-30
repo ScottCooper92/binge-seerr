@@ -86,7 +86,7 @@ class BlocklistDetailViewModel
                     connection.api().removeFromBlocklist(
                         connection.profile().blocklistPath,
                         item.tmdbId,
-                        item.mediaType.seerrMediaType(),
+                        connection.profile().unblockMediaType(item.mediaType.seerrMediaType()),
                     )
                 }.onSuccess {
                     analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "removed"))
