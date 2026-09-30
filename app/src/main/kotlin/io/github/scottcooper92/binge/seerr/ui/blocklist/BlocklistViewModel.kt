@@ -270,7 +270,7 @@ class BlocklistViewModel
                     connection.api().removeFromBlocklist(
                         connection.profile().blocklistPath,
                         item.tmdbId,
-                        item.mediaType.seerrMediaType(),
+                        connection.profile().unblockMediaType(item.mediaType.seerrMediaType()),
                     )
                 }.onSuccess {
                     countsRefresh.update { it + 1 }

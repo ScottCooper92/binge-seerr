@@ -316,7 +316,7 @@ class SeerrRequestService(
             connection.api().removeFromBlocklist(
                 connection.profile().blocklistPath,
                 request.media.tmdbId,
-                request.media.seerrMediaType(),
+                connection.profile().unblockMediaType(request.media.seerrMediaType()),
             )
             UnblockTitleResponse.getDefaultInstance()
         }

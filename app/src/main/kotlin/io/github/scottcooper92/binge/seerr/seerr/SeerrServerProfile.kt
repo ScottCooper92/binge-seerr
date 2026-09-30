@@ -77,6 +77,9 @@ data class SeerrServerProfile(
     /** Jellyseerr 2.x served it at `/blacklist`; Seerr 3.0 renamed it and keeps the old path as an alias. */
     val blocklistPath: String get() = if (atLeast(3, 0)) "blocklist" else "blacklist"
 
+    /** Seerr 3.2 requires the media type on an unblock; an earlier server's validator rejects it as an unknown query parameter. */
+    fun unblockMediaType(mediaType: String): String? = mediaType.takeIf { atLeast(major = 3, minor = 2) }
+
     val canBlockCollections: Boolean get() = jellyseerrLineage && atLeast(3, 2)
 
     /** Tag-driven blocking, and with it the list's `filter`, came with the rename at Seerr 3.0. */
