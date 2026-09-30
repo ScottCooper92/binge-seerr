@@ -8,9 +8,9 @@ CI is one job:
 
 | Job | Runs |
 | --- | --- |
-| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint`, `checkTranslationStaleness`, `koverVerify`, `validateDebugScreenshotTest` |
+| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint`, `checkTranslationStaleness`, `koverVerify`, `validateDebugScreenshotTest`, `checkBaselineStaleness` |
 
-The last seven arrive through `check` or are wired onto `build` by hand — the
+Everything after the compile and the tests arrives through `check` or are wired onto `build` by hand — the
 screenshot plugin does the latter, per `CLAUDE.md`'s Gates section — but `build`
 pulls in either way. Nothing in the repository names them separately, so a red run
 whose log ends in a lint report, a coverage report or a screenshot diff is still
