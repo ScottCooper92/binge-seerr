@@ -36,6 +36,12 @@ class EditRequestSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun allTicked() = EditFrame(allTickedEditState(), SHORT_RUN_SHEET_HEIGHT)
+
+    /** Partial requests are off on the server: the season list is absent, and only the destination is the editor's to change (#510). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun destinationOnly() = EditFrame(destinationOnlyEditState())
 }
 
 @Composable

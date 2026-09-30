@@ -143,6 +143,7 @@ class RequestDetailViewModel
                     request = sources.dto,
                     details = sources.details,
                     canEditDestination = sources.canEditDestination,
+                    seasonsEditable = sources.seasonsEditable,
                 )
             return sources.toDetail()
         }
@@ -247,7 +248,7 @@ private class DetailSources(
     val canEditDestination: Boolean get() = pending && permissions.canRequestAdvanced
 
     /** With partial requests off the server takes a whole show, so a show's seasons are not the editor's to change. */
-    private val seasonsEditable: Boolean
+    val seasonsEditable: Boolean
         get() = dto.media.mediaType != SEERR_MEDIA_TYPE_TV || profile.settings.partialRequestsEnabled
 
     suspend fun toDetail(): RequestDetail {
