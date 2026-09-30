@@ -26,16 +26,20 @@ backstop, and a screen that meets one of them shows it rather than retrying.
 
 ## Telling the servers apart
 
-`GET /status` returns `version`. The major is the lineage: `1.x` is Overseerr, `2.x` is
-Jellyseerr, `3.x` and above is Seerr. That is what `SeerrVariant.fromVersion` does today.
+`GET /status` returns `version`. The major is the lineage: `2.x` is Jellyseerr and `3.x` and above
+is Seerr. `SeerrVariant.fromVersion` does that, and reads `1.x` as Overseerr by default.
 
-A `develop-<sha>` build has no numeric version. For those the profile probes `GET /settings/public`:
-`mediaServerType` exists only on the Jellyseerr lineage, so its presence picks the lineage, and a
-development build is taken to have everything its lineage has released.
+A `1.x` is ambiguous, because Jellyseerr's first releases were 1.x too. So for a `1.x`, and for a
+`develop-<sha>` build, which has no numeric version at all, the profile also reads
+`GET /settings/public`: `mediaServerType` exists only on the Jellyseerr lineage, so its presence
+picks the lineage. A `1.x` that has it is Jellyseerr at that version, with the features its
+release has. A development build is taken to have everything its lineage has released.
 
 When a call fails, the profile says so (`complete = false`) and is not cached, so the next read
 tries again. A lineage that could not be read is taken as the family's latest, so a hiccup hides
-nothing: it is never taken for Overseerr. A `mediaServerType` that was not read is
+nothing: it is never taken for Overseerr. The one exception is a `1.x` whose settings failed: it
+reads as Overseerr, which hides Jellyseerr-only features rather than offering ones an Overseerr
+would refuse, until the next read answers. A `mediaServerType` that was not read is
 `SeerrMediaServer.Unknown`, not Plex, and the media-server page reports a failed load rather than
 showing the Plex form for a Jellyfin server. Overseerr has no such field and is always Plex.
 

@@ -77,6 +77,41 @@ class SeerrServerProfileTest {
     }
 
     @Test
+    fun `a 1x with a media server type is Jellyseerr at its version, and one without is Overseerr`() {
+        val jellyseerr = profile("1.9.2", SeerrPublicSettings(mediaServerType = MEDIA_SERVER_JELLYFIN))
+        val overseerr = profile("1.33.2", SeerrPublicSettings())
+
+        assertEquals(SeerrVariant.Jellyseerr, jellyseerr.variant)
+        assertEquals(SeerrVersion(1, 9, 2), jellyseerr.version)
+        assertTrue(jellyseerr.complete)
+        // Its own releases' features, which the old Overseerr reading made unreachable for any real 1.x.
+        assertTrue(jellyseerr.hasDeleteMediaFiles)
+        assertTrue(jellyseerr.hasPushoverSounds)
+        assertTrue(jellyseerr.hasGotify)
+        assertTrue(jellyseerr.hasWatchData)
+        // What arrived in later majors stays hidden on it, and LunaSea is Overseerr's alone.
+        assertFalse(jellyseerr.hasBlocklist)
+        assertFalse(jellyseerr.hasOverrideRules)
+        assertFalse(jellyseerr.hasNtfy)
+        assertFalse(jellyseerr.hasLunaSea)
+        assertEquals(SeerrMediaServer.Jellyfin, jellyseerr.mediaServer)
+
+        assertEquals(SeerrVariant.Overseerr, overseerr.variant)
+        assertFalse(overseerr.hasDeleteMediaFiles)
+        assertTrue(overseerr.hasLunaSea)
+        assertEquals(SeerrMediaServer.Plex, overseerr.mediaServer)
+    }
+
+    @Test
+    fun `a 1x whose settings failed reads as Overseerr, and is incomplete so the next read tries again`() {
+        val profile = SeerrServerProfile.from(SeerrStatusDto(version = "1.9.2"), settings = null)
+
+        assertEquals(SeerrVariant.Overseerr, profile.variant)
+        assertEquals(SeerrVersion(1, 9, 2), profile.version)
+        assertFalse(profile.complete)
+    }
+
+    @Test
     fun `sign-in modes follow the lineage, the media server and what the admin turned on`() {
         val overseerr = profile("1.33.0", SeerrPublicSettings(localLogin = false))
         val jellyfin = profile("3.4.0", SeerrPublicSettings(mediaServerType = MEDIA_SERVER_JELLYFIN))

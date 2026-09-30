@@ -69,7 +69,9 @@ enum class SeerrVariant(
     companion object {
         /**
          * By major version: Overseerr capped at `1.x`, Jellyseerr reached `2.x`, Seerr starts at
-         * `3.x`. A missing or non-numeric version — a `develop` build — is [Unknown].
+         * `3.x`. A missing or non-numeric version — a `develop` build — is [Unknown]. A `1.x` is
+         * Overseerr here only as the default: Jellyseerr began at 1.0, and
+         * `SeerrServerProfile.from` tells the two apart from the server's public settings.
          */
         fun fromVersion(version: String?): SeerrVariant =
             when (
