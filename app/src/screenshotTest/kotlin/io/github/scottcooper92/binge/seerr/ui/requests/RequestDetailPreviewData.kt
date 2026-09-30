@@ -128,19 +128,21 @@ internal fun detailWithSiblings(): RequestDetail =
         overview = null,
         siblings =
             listOf(
-                SiblingRequest(
+                RequestSummary(
                     id = SIBLING_REQUEST_ID,
                     status = SeerrRequestStatusCode.Declined,
                     requestedBy = "Grace",
                     requestedAtMillis = SIBLING_DECLINED_AT_MILLIS,
                     is4k = false,
+                    seasonNumbers = listOf(1, 2),
                 ),
-                SiblingRequest(
+                RequestSummary(
                     id = OTHER_SIBLING_REQUEST_ID,
                     status = SeerrRequestStatusCode.Completed,
                     requestedBy = null,
                     requestedAtMillis = SIBLING_COMPLETED_AT_MILLIS,
                     is4k = true,
+                    seasonNumbers = listOf(1),
                 ),
             ),
     )
@@ -158,7 +160,7 @@ private fun detail(
     watch: WatchStats? = WatchStats(PLAYS, PLAYS_7, PLAYS_30, listOf("Ada", "Grace")),
     seasons: List<SeasonState> = listOf(SeasonState(number = 1, name = null, episodeCount = EPISODE_COUNT, status = mediaStatus)),
     overview: String? = OVERVIEW,
-    siblings: List<SiblingRequest> = emptyList(),
+    siblings: List<RequestSummary> = emptyList(),
     canManageMedia: Boolean = true,
     is4k: Boolean = false,
 ): RequestDetail =

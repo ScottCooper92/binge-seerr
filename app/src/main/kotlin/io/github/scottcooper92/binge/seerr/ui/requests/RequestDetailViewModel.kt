@@ -204,13 +204,14 @@ class RequestDetailViewModel
         }
     }
 
-private fun SeerrRequestSummaryDto.toSibling(): SiblingRequest =
-    SiblingRequest(
+private fun SeerrRequestSummaryDto.toSummary(): RequestSummary =
+    RequestSummary(
         id = id,
         status = status,
         requestedBy = requestedBy?.displayString(),
         requestedAtMillis = createdAt?.toEpochMillisOrNull(),
         is4k = is4k,
+        seasonNumbers = seasons.map { it.seasonNumber },
     )
 
 private fun SeerrWatchStatsDto.toWatchStats(): WatchStats =
@@ -278,7 +279,7 @@ private class DetailSources(
                     ?.requests
                     .orEmpty()
                     .filter { it.id != dto.id }
-                    .map { it.toSibling() },
+                    .map { it.toSummary() },
         )
     }
 

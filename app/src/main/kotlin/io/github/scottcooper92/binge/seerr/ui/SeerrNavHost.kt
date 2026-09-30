@@ -193,7 +193,6 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             RequestDetailEntry(
                 route.requestId,
                 onBack = { backStack.removeLastOrNull() },
-                onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
                 onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
             )
         }

@@ -1,7 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -41,11 +43,21 @@ class RequestDetailScreenshotTest {
     @Composable
     fun settled() = Frame(settledDetail())
 
-    /** A title with a second request against it: the "Also requested" section, and the clear-data note. */
+    /** A title with a second request against it: the "Requests for this title" list, this request first. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun withSiblings() = Frame(detailWithSiblings())
+
+    /**
+     * The same page scrolled to its end, so the whole list shows: this request's own row first, then a
+     * declined sibling and a completed 4K one with no requester, and the clear-data note. Page top
+     * alone hides the last row behind the footer.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withSiblingsScrolled() = Frame(detailWithSiblings(), scrollState = rememberScrollState(initial = Int.MAX_VALUE))
 
     /** Nothing left to do: no footer, and the scroll clears the safe area itself rather than a footer's. */
     @PreviewTest
@@ -92,14 +104,18 @@ class RequestDetailScreenshotTest {
 }
 
 @Composable
-private fun Frame(detail: RequestDetail) {
+private fun Frame(
+    detail: RequestDetail,
+    scrollState: ScrollState = rememberScrollState(),
+) {
     RequestDetailPage(
         detail = detail,
+        scrollState = scrollState,
         onBack = {},
         onOpen = {},
         onReport = {},
         onPrimary = {},
-        onOpenSibling = {},
+        onOpenRequest = {},
         onOpenUser = {},
         initiallyOverflowing = true,
     )

@@ -178,7 +178,7 @@ class RequestDetailViewModelTest {
         }
 
     @Test
-    fun `sibling requests against the same title exclude this one and map their id, status, requester, date and 4K flag`() =
+    fun `sibling requests against the same title exclude this one and map their id, status, requester, date, 4K flag and seasons`() =
         runTest {
             server(ADMIN)
             serve(
@@ -186,7 +186,8 @@ class RequestDetailViewModelTest {
                 """{"name":"Severance","posterPath":"/sev.jpg","firstAirDate":"2022-02-18",
                 "mediaInfo":{"id":900,"status":4,
                   "requests":[{"id":11,"status":2,"seasons":[{"seasonNumber":1},{"seasonNumber":2}]},
-                    {"id":12,"status":3,"createdAt":"2025-04-12T09:00:00.000Z","requestedBy":{"displayName":"Grace"}},
+                    {"id":12,"status":3,"createdAt":"2025-04-12T09:00:00.000Z","requestedBy":{"displayName":"Grace"},
+                      "seasons":[{"seasonNumber":1},{"seasonNumber":2}]},
                     {"id":13,"status":5,"createdAt":"2026-06-12T09:00:00.000Z","is4k":true}]},
                 "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":2,"name":"Season 2","episodeCount":10}]}""",
             )
@@ -196,23 +197,45 @@ class RequestDetailViewModelTest {
 
             assertEquals(
                 listOf(
-                    SiblingRequest(
+                    RequestSummary(
                         id = 12,
                         status = SeerrRequestStatusCode.Declined,
                         requestedBy = "Grace",
                         requestedAtMillis = Instant.parse("2025-04-12T09:00:00.000Z").toEpochMilli(),
                         is4k = false,
+                        seasonNumbers = listOf(1, 2),
                     ),
-                    SiblingRequest(
+                    RequestSummary(
                         id = 13,
                         status = SeerrRequestStatusCode.Completed,
                         requestedBy = null,
                         requestedAtMillis = Instant.parse("2026-06-12T09:00:00.000Z").toEpochMilli(),
                         is4k = true,
+                        seasonNumbers = emptyList(),
                     ),
                 ),
                 siblings,
             )
+        }
+
+    @Test
+    fun `the list of requests leads with this page's own request, then the siblings in the server's order`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","posterPath":"/sev.jpg","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":4,
+                  "requests":[{"id":11,"status":2},{"id":12,"status":3},{"id":13,"status":5}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9}]}""",
+            )
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(detail.item.id, detail.summaries().first().id)
+            assertEquals(detail.siblings, detail.summaries().drop(1))
+            assertEquals(1 + detail.siblings.size, detail.summaries().size)
         }
 
     /** A title the app has never seen with a second request still shows no siblings section: nothing to read. */
@@ -223,7 +246,7 @@ class RequestDetailViewModelTest {
             responses.remove("/api/v1/tv/200")
             val vm = viewModel()
 
-            assertEquals(emptyList<SiblingRequest>(), vm.awaitReady().detail.siblings)
+            assertEquals(emptyList<RequestSummary>(), vm.awaitReady().detail.siblings)
         }
 
     /** The hub reads a size with no remaining bytes as complete; the page shares its helper, so it must agree. */

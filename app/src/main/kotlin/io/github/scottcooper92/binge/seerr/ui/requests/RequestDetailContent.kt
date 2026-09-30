@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeTag
@@ -103,7 +104,7 @@ internal fun RequestSections(detail: RequestDetail) {
 /**
  * A read-out, not a destination: there is no per-season page in this app, so this deliberately does
  * not take the shape of this app's tappable rows (a text column with a status chip pinned to the
- * row's far trailing edge — [SiblingRow] below is that shape, and it opens something). The chip
+ * row's far trailing edge — [RequestSummaryRow] below is that shape, and it opens something). The chip
  * instead sits inline with the season's own name, and there is no leading visual and no chevron.
  */
 @Composable
@@ -175,21 +176,22 @@ internal fun DownloadRow(download: DetailDownload) {
 }
 
 /**
- * Other requests against this title — Seerr allows more than one, e.g. declined and requested
- * again later — dropped entirely when this is the only one. Tapping a row opens its own page.
+ * Every request against this title — Seerr allows more than one, e.g. declined and requested
+ * again later — this page's own first, then the others. Dropped entirely when this is the only one.
+ * Tapping any row, this page's own included, opens that request's actions in a sheet.
  *
- * [MediaRecord.canClearData]'s note is surfaced here rather than only in the manage sheet: a
- * sibling being visible is exactly where a user would want to know that clearing data removes
+ * [MediaRecord.canClearData]'s note is surfaced here rather than only in the manage sheet: another
+ * request being visible is exactly where a user would want to know that clearing data removes
  * every request for the title, this one and the ones listed above it.
  */
 @Composable
-internal fun RequestSiblings(
+internal fun RequestSummaryRows(
     detail: RequestDetail,
     onOpen: (Int) -> Unit,
 ) {
     if (detail.siblings.isEmpty()) return
-    SectionHeader(title = stringResource(R.string.request_siblings_title))
-    detail.siblings.forEach { sibling -> SiblingRow(sibling, onClick = { onOpen(sibling.id) }) }
+    SectionHeader(title = stringResource(R.string.request_summaries_title))
+    detail.summaries().forEach { summary -> RequestSummaryRow(summary, onClick = { onOpen(summary.id) }) }
     if (detail.media?.canClearData == true) {
         Text(
             stringResource(R.string.request_siblings_clear_data_note),
@@ -205,8 +207,8 @@ internal fun RequestSiblings(
 }
 
 @Composable
-private fun SiblingRow(
-    sibling: SiblingRequest,
+private fun RequestSummaryRow(
+    summary: RequestSummary,
     onClick: () -> Unit,
 ) {
     val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
@@ -223,8 +225,8 @@ private fun SiblingRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                RequestStateChip(status = sibling.status ?: SeerrRequestStatusCode.Pending)
-                if (sibling.is4k) {
+                RequestStateChip(status = summary.status ?: SeerrRequestStatusCode.Pending)
+                if (summary.is4k) {
                     Spacer(Modifier.width(gap))
                     Text(
                         stringResource(R.string.settings_service_4k),
@@ -232,12 +234,26 @@ private fun SiblingRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                if (summary.seasonNumbers.isNotEmpty()) {
+                    Spacer(Modifier.width(gap))
+                    Text(
+                        pluralStringResource(
+                            R.plurals.requests_seasons,
+                            summary.seasonNumbers.size,
+                            summary.seasonNumbers.joinToString(", "),
+                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             Spacer(Modifier.height(gap))
             Text(
                 listOfNotNull(
-                    sibling.requestedBy ?: stringResource(R.string.requests_requester_unknown),
-                    formatRelativeOrAbsolute(sibling.requestedAtMillis),
+                    summary.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    formatRelativeOrAbsolute(summary.requestedAtMillis),
                 ).joinToString(stringResource(R.string.hub_meta_separator)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

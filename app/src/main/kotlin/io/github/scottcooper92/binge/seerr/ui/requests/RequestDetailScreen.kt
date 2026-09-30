@@ -43,12 +43,29 @@ class RequestDetailActions(
     val onDecline: (Boolean) -> Unit,
     val onRemove: (Boolean) -> Unit,
     val onStartEdit: () -> Unit,
-    /** Opens a sibling request's own page — another request against this same title. */
-    val onOpenSibling: (Int) -> Unit,
+    /**
+     * Shows another request's actions, over this page. A slot rather than a callback because its view
+     * model belongs to whichever entry owns this page's own, and a screen takes no view model.
+     */
+    val siblingSheet: @Composable (SiblingSheet) -> Unit,
     /** Opens the requester's, or the moderator's, own user detail screen. */
     val onOpenUser: (Int) -> Unit,
     val edit: EditRequestActions,
     val media: ManageMediaActions,
+)
+
+/**
+ * Another request against this title, whose actions open in a sheet over this page. [open] is separate
+ * from the request being present: dismissing hides the sheet but keeps the request's view model alive
+ * until its result lands, so a moderation's snackbar and this page's reload are not dropped with it.
+ */
+class SiblingSheet(
+    val requestId: Int,
+    val open: Boolean,
+    val snackbarHostState: SnackbarHostState,
+    val onDismiss: () -> Unit,
+    /** A moderation of that request finished, so this page's list of requests is stale. */
+    val onChanged: () -> Unit,
 )
 
 /**
@@ -73,7 +90,7 @@ fun RequestDetailScreen(
             RequestDetailUiState.Loading -> RequestDetailSkeleton()
             is RequestDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.safeDrawingPadding(), onRetry = actions.onRetry)
-            is RequestDetailUiState.Ready -> Ready(state, actions)
+            is RequestDetailUiState.Ready -> Ready(state, actions, snackbarHostState)
         }
     }
 }
@@ -82,14 +99,15 @@ fun RequestDetailScreen(
 private fun Ready(
     state: RequestDetailUiState.Ready,
     actions: RequestDetailActions,
+    snackbarHostState: SnackbarHostState,
 ) {
     val detail = state.detail
     var reporting by rememberSaveable { mutableStateOf(false) }
     var acting by rememberSaveable { mutableStateOf(false) }
     var opening by rememberSaveable { mutableStateOf(false) }
-    // Which instance the status sheet is marking, keyed by is4k because that is what tells the
-    // two apart — and because a Boolean survives process death where MediaInstance would not.
-    var marking by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    // The other request whose actions were last opened, and whether its sheet is up.
+    var other by rememberSaveable { mutableStateOf<Int?>(null) }
+    var otherOpen by rememberSaveable { mutableStateOf(false) }
     val links = rememberRequestOpenLinks(detail)
     RequestDetailPage(
         detail = detail,
@@ -97,9 +115,59 @@ private fun Ready(
         onOpen = { opening = true }.takeIf { links.isNotEmpty() },
         onReport = { reporting = true }.takeIf { detail.canReportIssue },
         onPrimary = { acting = true },
-        onOpenSibling = actions.onOpenSibling,
+        onOpenRequest = { id ->
+            if (id == detail.item.id) {
+                acting = true
+            } else {
+                other = id
+                otherOpen = true
+            }
+        },
         onOpenUser = actions.onOpenUser,
     )
+    RequestManagementSheets(state = state, actions = actions, acting = acting, onDismissActing = { acting = false })
+    other?.let { id ->
+        actions.siblingSheet(
+            SiblingSheet(
+                requestId = id,
+                open = otherOpen,
+                snackbarHostState = snackbarHostState,
+                onDismiss = { otherOpen = false },
+                onChanged = actions.onRetry,
+            ),
+        )
+    }
+    if (opening) {
+        RequestOpenSheet(links = links, onDismiss = { opening = false })
+    }
+    if (reporting) {
+        ReportIssueSheet(
+            report = state.report,
+            onSend = actions.onReportIssue,
+            onDismiss = {
+                reporting = false
+                actions.onDismissReport()
+            },
+        )
+    }
+}
+
+/**
+ * What one request's actions can open: the actions sheet while [acting], the editor while it has state,
+ * and the media status sheet the actions sheet asks for. Shared by this page's own request and by any
+ * other request opened over it, so the two cannot drift.
+ */
+@Composable
+internal fun RequestManagementSheets(
+    state: RequestDetailUiState.Ready,
+    actions: RequestDetailActions,
+    acting: Boolean,
+    onDismissActing: () -> Unit,
+) {
+    val detail = state.detail
+    // Which instance the status sheet is marking, keyed by is4k because that is what tells the
+    // two apart — and because a Boolean survives process death where MediaInstance would not.
+    var marking by rememberSaveable { mutableStateOf<Boolean?>(null) }
     if (acting) {
         RequestActionsSheet(
             item = detail.item,
@@ -108,16 +176,13 @@ private fun Ready(
             onRetry = actions.onRetryRequest,
             onDecline = actions.onDecline,
             onRemove = actions.onRemove,
-            onDismiss = { acting = false },
+            onDismiss = onDismissActing,
             canEdit = detail.canEdit,
             onEdit = actions.onStartEdit,
             media = detail.media,
             mediaActions = actions.media,
             onMarkStatus = { is4k -> marking = is4k },
         )
-    }
-    if (opening) {
-        RequestOpenSheet(links = links, onDismiss = { opening = false })
     }
     state.edit?.let { edit -> EditRequestSheet(item = detail.item, edit = edit, actions = actions.edit) }
     val media = detail.media
@@ -131,16 +196,6 @@ private fun Ready(
                 )
             }
         }
-    }
-    if (reporting) {
-        ReportIssueSheet(
-            report = state.report,
-            onSend = actions.onReportIssue,
-            onDismiss = {
-                reporting = false
-                actions.onDismissReport()
-            },
-        )
     }
 }
 
@@ -158,7 +213,7 @@ internal fun RequestDetailPage(
     onOpen: (() -> Unit)?,
     onReport: (() -> Unit)?,
     onPrimary: () -> Unit,
-    onOpenSibling: (Int) -> Unit,
+    onOpenRequest: (Int) -> Unit,
     onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
@@ -209,7 +264,7 @@ internal fun RequestDetailPage(
             RequestStats(detail)
             RequestFacts(detail, onOpenUser)
             RequestSections(detail)
-            RequestSiblings(detail, onOpenSibling)
+            RequestSummaryRows(detail, onOpenRequest)
             // The footer sits below the scroll rather than over it (MediaHeroDetailPage's own KDoc),
             // so this isn't clearing an overlap - it's the same breathing room the scroll's last row
             // would otherwise only get from the footer's own top padding, which reads as cramped.

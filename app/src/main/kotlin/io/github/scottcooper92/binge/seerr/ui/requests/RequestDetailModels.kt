@@ -120,15 +120,18 @@ data class MediaRecord(
 }
 
 /**
- * Another request against this same title — Seerr allows more than one (declined, then requested
- * again later) — named well enough to open its own detail page.
+ * One request against a title, named well enough to list and to open its actions. Seerr allows more
+ * than one request per title (declined, then requested again later), so the page lists its own request
+ * and every other one the same way.
  */
-data class SiblingRequest(
+data class RequestSummary(
     val id: Int,
     val status: SeerrRequestStatusCode?,
     val requestedBy: String?,
     val requestedAtMillis: Long?,
     val is4k: Boolean,
+    /** Empty for a movie. */
+    val seasonNumbers: List<Int>,
 )
 
 data class RequestDetail(
@@ -160,8 +163,21 @@ data class RequestDetail(
     /** Null for a title the server no longer tracks. */
     val media: MediaRecord?,
     /** Other requests against this title, excluding this one; empty when this is the only one. */
-    val siblings: List<SiblingRequest>,
-)
+    val siblings: List<RequestSummary>,
+) {
+    /** Every request against this title, this page's own first, then [siblings]. */
+    fun summaries(): List<RequestSummary> =
+        listOf(
+            RequestSummary(
+                id = item.id,
+                status = item.status,
+                requestedBy = item.requestedBy,
+                requestedAtMillis = item.requestedAtMillis,
+                is4k = item.is4k,
+                seasonNumbers = item.seasonNumbers,
+            ),
+        ) + siblings
+}
 
 sealed interface IssueReport {
     data object Idle : IssueReport
