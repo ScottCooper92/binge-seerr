@@ -29,7 +29,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -62,17 +64,28 @@ class SettingsViewModel
         /** Re-read on every arrival and after the system's notification page: what it allows is not observable. */
         private val blockedTrigger = MutableStateFlow(0)
 
+        /**
+         * The trigger, after the signed-in user has been re-read. Refreshed here once rather than in each
+         * loader: they run concurrently, so each refreshing would race the others' reads of the cache.
+         * `shareIn` with `replay = 1` is what makes that true: a plain cold flow would still be collected
+         * once per downstream `flatMapLatest`, refreshing three times per arrival instead of one.
+         */
+        private val viewerRefreshed: Flow<Int> =
+            fetchTrigger
+                .mapLatest { trigger -> trigger.also { loader.refreshViewer() } }
+                .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
+
         private val summary: Flow<ConnectionSummary?> =
-            fetchTrigger.flatMapLatest { flow { emit(runCatching { loader.connection() }.getOrNull()) } }.onStart { emit(null) }
+            viewerRefreshed.flatMapLatest { flow { emit(runCatching { loader.connection() }.getOrNull()) } }.onStart { emit(null) }
 
         private val server: Flow<ServerSummary?> =
             fetchTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }.onStart { emit(null) }
 
         private val config: Flow<ServerConfig?> =
-            fetchTrigger.flatMapLatest { flow { emit(loader.config()) } }.onStart { emit(null) }
+            viewerRefreshed.flatMapLatest { flow { emit(loader.config()) } }.onStart { emit(null) }
 
         private val offered: Flow<List<NotificationSignal>?> =
-            fetchTrigger.flatMapLatest { flow<List<NotificationSignal>?> { emit(loader.notificationSignals()) } }.onStart { emit(null) }
+            viewerRefreshed.flatMapLatest { flow<List<NotificationSignal>?> { emit(loader.notificationSignals()) } }.onStart { emit(null) }
 
         private val enabled: Flow<Set<NotificationSignal>> =
             combine(
