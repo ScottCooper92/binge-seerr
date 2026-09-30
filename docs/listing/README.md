@@ -37,10 +37,16 @@ The listing describes behaviour, so a change to what the app stores, sends or as
 to `privacy.md` and `data-safety.md` in the same PR. The specific claims that must stay true:
 
 - The one secret (an API key or a session cookie) is encrypted with an Android Keystore key
-  (`auth/SecretCipher.kt`) and stored on the device only.
-- Nothing is sent anywhere but the server the user entered, and plex.tv when the user chooses to
-  sign in with Plex.
-- There is no analytics, crash reporting or advertising SDK. Check `app/build.gradle.kts` before
-  claiming this again.
-- `android:allowBackup="false"`: nothing is copied to a cloud backup, and uninstalling removes
-  everything.
+  (`auth/SecretCipher.kt`) and stored on the device. A copy of the connection (address and secret)
+  also goes to Google Play's Block Store (`auth/BlockStoreConnectionCarrier.kt`), which survives a
+  device-to-device transfer and, where end-to-end encryption is available, a cloud restore.
+  Disconnecting clears both. So it is **not** true that the secret never leaves the device.
+- Traffic goes to the server the user entered; plex.tv when the user chooses to sign in with Plex;
+  PostHog only after the user agrees to usage data; Firebase Crashlytics for crash reports unless
+  the user turns them off; and GitHub only when the user submits the bug report form.
+- There is an analytics SDK (PostHog) and a crash reporting SDK (Firebase Crashlytics), both gated
+  as above, and no advertising SDK. Check `app/build.gradle.kts` and `telemetry/` before changing
+  this claim in either direction.
+- `android:allowBackup="false"`: Android's own backup does not copy the app's data, and uninstalling
+  removes it. Block Store is a separate mechanism and the one path by which the connection can
+  leave the device.

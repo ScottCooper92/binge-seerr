@@ -48,13 +48,15 @@ maintainer's decision; see the README.
 > **Android TV.** A rail with the hub, requests, issues and settings, driven from the remote.
 >
 > **Your server, your data.** Sign in with an API key, a local account, Plex, or Jellyfin's Quick
-> Connect. The key or session is encrypted with an Android Keystore key and never leaves the
-> device. The app talks to the server you entered and to nothing else, except plex.tv if you choose
-> to sign in with Plex. No analytics, no adverts, no accounts of its own.
+> Connect. The key or session is encrypted with an Android Keystore key. The app talks to the
+> server you entered and, if you choose to sign in with Plex, to plex.tv. Usage data goes to
+> PostHog only if you agree, and crash reports go to Google Crashlytics unless you turn them off in
+> Settings. Google Play's Block Store can carry your connection to a new device. No adverts, no
+> accounts of its own.
 >
 > Open source, under the Apache 2.0 licence: github.com/ScottCooper92/binge-seerr.
 
-(1,712 characters)
+(2,040 characters)
 
 ## Category and contact
 

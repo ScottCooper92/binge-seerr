@@ -49,8 +49,22 @@ management*, with plex.tv as the recipient.
 
 Not asked by the form, but the reader of `privacy.md` will want the list: the server address, one
 encrypted secret (API key or session), a cache of what the server showed, notification choices,
-the usage data and crash report choices, and the Plex identifier. All of it on the device only, none of it backed up.
+the usage data and crash report choices, and the Plex identifier. All of it is on the device, and
+Android's backup does not copy it (`allowBackup="false"`). The one exception is the connection
+(address and secret), which is also held in Play services' Block Store; see the next section.
+
+## The Block Store copy
+
+The app keeps a copy of the connection in Google Play's Block Store so a new or restored device can
+reconnect. It survives a device-to-device transfer and, only where end-to-end encryption is
+available, a cloud restore (`auth/BlockStoreConnectionCarrier.kt`). It is Google's own platform
+feature under the user's own Google account, not the developer receiving data, so it is not
+collection by the developer. It is disclosed in `privacy.md` regardless. Whether the form should
+list it is a question for the maintainer and Play's review; record the answer here once it is known.
 
 ## Permissions declared
 
-`INTERNET`, `POST_NOTIFICATIONS`. No others.
+The app's own manifest declares `INTERNET` and `POST_NOTIFICATIONS`. Play reads the **merged**
+release manifest, and libraries the app includes (WorkManager, Crashlytics, PostHog, Play services)
+can add permissions to it, so check that manifest before answering the form and list any addition
+here and in `privacy.md`.
