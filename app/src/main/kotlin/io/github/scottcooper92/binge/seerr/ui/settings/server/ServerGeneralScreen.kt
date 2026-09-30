@@ -153,7 +153,7 @@ private fun RequestSwitches(
 }
 
 @Composable
-private fun ServerSwitches(
+internal fun ServerSwitches(
     draft: ServerGeneralSettings,
     enabled: Boolean,
     actions: EditorActions<ServerGeneralSettings>,
@@ -190,7 +190,7 @@ private fun ServerSwitches(
 
 /** Masked until revealed; regenerating asks first, since the old key stops working at once. */
 @Composable
-private fun ApiKeySection(
+internal fun ApiKeySection(
     apiKey: ApiKeyState,
     actions: ApiKeyActions,
 ) {
@@ -237,7 +237,7 @@ private fun ApiKeySection(
 
 /** Read-only: what the server tells a visitor before they sign in, so an admin can check it here. */
 @Composable
-private fun VisitorSection(visitor: VisitorView) {
+internal fun VisitorSection(visitor: VisitorView) {
     EditorSectionTitle(stringResource(R.string.server_settings_visitor_title))
     Text(
         stringResource(R.string.server_settings_visitor_lead),
