@@ -99,7 +99,7 @@ class UsersViewModel
                                         SeerrMediaServer.Plex -> UserOrigin.Plex
                                         SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
                                         SeerrMediaServer.Emby -> UserOrigin.Emby
-                                        SeerrMediaServer.NotConfigured, null -> null
+                                        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown, null -> null
                                     },
                                 canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
                             ),
