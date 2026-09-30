@@ -1,10 +1,8 @@
 package io.github.scottcooper92.binge.seerr.service
 
-import com.binge.companion.contracts.request.v1.ApprovalState
 import com.binge.companion.contracts.request.v1.ApproveRequestRequest
 import com.binge.companion.contracts.request.v1.ApproveRequestResponse
 import com.binge.companion.contracts.request.v1.Attention
-import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.BlockTitleResponse
 import com.binge.companion.contracts.request.v1.CancelRequestRequest
@@ -24,14 +22,12 @@ import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.GetStatusResponse
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
-import com.binge.companion.contracts.request.v1.IssueType
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveAttentionResponse
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusResponse
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.ReportIssueResponse
-import com.binge.companion.contracts.request.v1.RequestInfo
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
@@ -54,12 +50,9 @@ import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
-import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueTypeCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
@@ -70,9 +63,6 @@ import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toRequestStatus
-import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
-import io.grpc.Status
-import io.grpc.StatusException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -297,35 +287,7 @@ class SeerrRequestService(
         }.distinctUntilChanged()
             .map { ObserveAttentionResponse.newBuilder().setAttention(it).build() }
 
-    /**
-     * What waits on the signed-in user: requests to moderate, issues to handle — each counted only
-     * where the user holds the permission and the server has the endpoint, so a plain requester is
-     * asked for nothing. A 401 here is the contract's `needs_reconnect`: the server is connected and
-     * the session is what broke, which only this app's sign-in can mend.
-     */
-    private suspend fun attention(): Attention =
-        try {
-            // Inside the handler: with nothing cached the first read is `auth/me`, and an expired
-            // session fails there rather than at the counts, so a warm process is not the only one
-            // that gets the reconnect flag.
-            val permissions = permissions()
-            val profile = connection.profile()
-            val api = connection.api()
-            val pending = if (permissions.canManageRequests) api.requestCount().pending else 0
-            val issues = if (permissions.canManageIssues && profile.hasCounts) api.issueCount().open else 0
-            Attention
-                .newBuilder()
-                .setPendingCount(pending + issues)
-                .setNeedsReconnect(false)
-                .build()
-        } catch (e: HttpException) {
-            if (e.toSeerrError() != SeerrError.Unauthorized) throw e
-            Attention
-                .newBuilder()
-                .setPendingCount(0)
-                .setNeedsReconnect(true)
-                .build()
-        }
+    private suspend fun attention(): Attention = connection.readAttention()
 
     /** The one operation that needs Seerr's own id space: the server's media record, not the TMDB id. */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
@@ -425,117 +387,3 @@ class SeerrRequestService(
         const val ATTENTION_INTERVAL_MILLIS = 60_000L
     }
 }
-
-private fun invalidArgument(reason: String): StatusException = StatusException(Status.INVALID_ARGUMENT.withDescription(reason))
-
-/**
- * Seerr's permissions as the contract's capability set — the handshake is derived, never
- * hand-listed — narrowed by the server: a blocklist the lineage lacks, or issues an Overseerr is
- * too old for, are not offered however the user's bits read, since the server answers them 404.
- */
-fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability> =
-    buildSet {
-        add(Capability.CAPABILITY_OBSERVE_STATUS)
-        add(Capability.CAPABILITY_ATTENTION)
-        if (canRequest4k) add(Capability.CAPABILITY_REQUEST_4K)
-        if (canRequestAdvanced) {
-            // Both capabilities are declared together during rollout: a host that only knows the
-            // older one keeps getting the Activity hand-off, one that knows the new one gets the
-            // native picker. Neither is dropped until the cutover (Binge#2882, scope item 7).
-            add(Capability.CAPABILITY_ADVANCED_OPTIONS)
-            add(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS)
-        }
-        if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
-        // A requester may cancel or reshape their own pending request, and a moderator anyone's.
-        if (canRequest || canManageRequests) addAll(listOf(Capability.CAPABILITY_CANCEL, Capability.CAPABILITY_EDIT_SEASONS))
-        if (canCreateIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
-        if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
-    }
-
-/** The capabilities that act on one existing request, and so travel on that request's own `allowed_actions`. */
-private val REQUEST_SCOPED =
-    setOf(
-        Capability.CAPABILITY_APPROVE,
-        Capability.CAPABILITY_DECLINE,
-        Capability.CAPABILITY_RETRY,
-        Capability.CAPABILITY_CANCEL,
-        Capability.CAPABILITY_EDIT_SEASONS,
-    )
-
-/**
- * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
- * its own set. The title's set holds a report only against something available, and the block
- * capability either way: it offers a block on a title and an unblock on a blocked one. Its
- * request-scoped entries are the union of the requests', so a
- * host that reads only the title-level list is never offered an action that every request refuses.
- */
-fun SeerrPermissions.withAllowedActions(
-    server: CachedStatus,
-    viewerId: Int,
-    profile: SeerrServerProfile,
-): RequestStatus {
-    val declared = toCapabilities(profile)
-    val status = server.status
-    val requests =
-        status.requestsList.map { request ->
-            val own = server.requesterIds[request.id] == viewerId
-            request
-                .toBuilder()
-                .clearAllowedActions()
-                .addAllAllowedActions(requestActions(request, own, declared))
-                .build()
-        }
-    val requestActions = requests.flatMapTo(mutableSetOf()) { it.allowedActionsList }
-    val reportable =
-        status.availability == Availability.AVAILABILITY_AVAILABLE ||
-            status.availability == Availability.AVAILABILITY_PARTIALLY_AVAILABLE
-    val titleActions =
-        declared.filter { capability ->
-            when (capability) {
-                in REQUEST_SCOPED -> capability in requestActions
-                Capability.CAPABILITY_REPORT_ISSUE -> reportable
-                else -> true
-            }
-        }
-    return status
-        .toBuilder()
-        .clearRequests()
-        .addAllRequests(requests)
-        .clearAllowedActions()
-        .addAllAllowedActions(titleActions)
-        .build()
-}
-
-/**
- * The checks Seerr makes on one request: approve and decline need a pending request and retry a failed
- * one, each for a moderator. Cancel is a moderator's on any request, or the requester's own while it
- * is pending. An edit is the moderator's or the requester's, only on a pending TV request.
- */
-private fun SeerrPermissions.requestActions(
-    request: RequestInfo,
-    own: Boolean,
-    declared: Set<Capability>,
-): List<Capability> {
-    val pending = request.state.isPending()
-    return declared.filter { capability ->
-        when (capability) {
-            Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE -> pending
-            Capability.CAPABILITY_RETRY -> request.state.isFailed()
-            Capability.CAPABILITY_CANCEL -> canManageRequests || (own && pending)
-            Capability.CAPABILITY_EDIT_SEASONS -> request.seasonNumbersCount > 0 && pending && (canManageRequests || own)
-            else -> false
-        }
-    }
-}
-
-private fun ApprovalState.isPending() = this == ApprovalState.APPROVAL_STATE_PENDING
-
-private fun ApprovalState.isFailed() = this == ApprovalState.APPROVAL_STATE_FAILED
-
-private fun IssueType.toSeerrIssueType(): SeerrIssueTypeCode =
-    when (this) {
-        IssueType.ISSUE_TYPE_VIDEO -> SeerrIssueTypeCode.Video
-        IssueType.ISSUE_TYPE_AUDIO -> SeerrIssueTypeCode.Audio
-        IssueType.ISSUE_TYPE_SUBTITLE -> SeerrIssueTypeCode.Subtitles
-        IssueType.ISSUE_TYPE_OTHER, IssueType.ISSUE_TYPE_UNSPECIFIED, IssueType.UNRECOGNIZED -> SeerrIssueTypeCode.Other
-    }
