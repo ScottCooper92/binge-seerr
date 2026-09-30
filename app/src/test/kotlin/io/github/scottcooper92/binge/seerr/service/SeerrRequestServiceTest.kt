@@ -285,7 +285,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `an unblock deletes the title's blocklist entry by tmdb id and media type`() =
         runTest {
-            val stub = connected(version = "3.1.0")
+            val stub = connected(version = "3.2.0")
             seerr.enqueue(MockResponse(code = 204))
 
             stub.unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build())
