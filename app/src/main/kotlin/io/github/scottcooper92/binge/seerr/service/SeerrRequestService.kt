@@ -111,13 +111,19 @@ class SeerrRequestService(
     private val mediaIds = SeerrMediaIds { connection.api() }
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
 
-    /** The one place a bound Binge client is known to have handed over its identity, successfully. */
+    /**
+     * The one place a bound Binge client is known to have handed over its identity, successfully.
+     *
+     * Re-reads the profile and the signed-in user rather than serving the connection's cached copies:
+     * this is where the capability set is decided, and a host that rebinds while the process is alive
+     * would otherwise be told what the user could do when the process started.
+     */
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
         statusCatching {
-            val profile = connection.profile()
+            val profile = connection.refreshProfile()
             val response =
                 handshakeResponse(
-                    capabilities = permissions().toCapabilities(profile),
+                    capabilities = connection.refreshAuthenticatedUser().toPermissions().toCapabilities(profile),
                     providerName = profile.variant.displayName,
                     companionVersionName = versionName,
                 )

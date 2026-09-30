@@ -29,6 +29,15 @@ class SettingsLoader
     constructor(
         private val connection: SeerrConnection,
     ) {
+        /**
+         * Re-reads the signed-in user, once, ahead of the loaders below: they all read it, and a
+         * permission changed on the server is otherwise invisible until the app reconnects. Best-effort,
+         * so an unreachable server leaves the last answer rather than emptying the screen.
+         */
+        suspend fun refreshViewer() {
+            runCatching { connection.refreshAuthenticatedUser() }
+        }
+
         suspend fun connection(): ConnectionSummary {
             val saved = connection.current()
             val user = runCatching { connection.authenticatedUser() }.getOrNull()

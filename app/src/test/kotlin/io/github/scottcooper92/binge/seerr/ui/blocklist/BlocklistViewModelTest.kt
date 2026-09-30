@@ -146,6 +146,44 @@ class BlocklistViewModelTest {
             assertEquals(1, received("POST", "/api/v1/blocklist/collection/5").size)
         }
 
+    /**
+     * The scope was resolved once per view model and never again, so a permission granted in the web
+     * client stayed invisible for as long as the view model lived.
+     */
+    @Test
+    fun `a permission granted on the server shows when the screen is next entered`() =
+        runTest {
+            seerr.viewer(id = 2, permissions = VIEW_BLOCKLIST)
+            val vm = viewModel()
+            vm.setScreenVisible(true)
+            assertFalse(vm.awaitReady().canManage)
+
+            seerr.viewer(id = 2, permissions = ADMIN)
+            vm.setScreenVisible(true)
+
+            assertTrue(vm.awaitReady { it.canManage }.canManage)
+        }
+
+    /** One read that failed on first entry used to fix `canManage` at false until the entry was recreated. */
+    @Test
+    fun `a first read that failed does not freeze the scope, the next entry recovers it`() =
+        runTest {
+            val connection = seerr.connection(this)
+            // Drop the user connect() cached and have the next read fail, as a cold process on a bad network would.
+            seerr.serve("GET /api/v1/auth/me", code = 500)
+            runCatching { connection.refreshAuthenticatedUser() }
+            val vm = BlocklistViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher, analytics)
+            viewModels.put(vm.hashCode().toString(), vm)
+            backgroundScope.launch { vm.uiState.collect {} }
+            vm.setScreenVisible(true)
+            assertFalse(vm.awaitReady().canManage)
+
+            seerr.viewer(id = 1, permissions = ADMIN)
+            vm.setScreenVisible(true)
+
+            assertTrue(vm.awaitReady { it.canManage }.canManage)
+        }
+
     private fun received(
         method: String,
         path: String,
