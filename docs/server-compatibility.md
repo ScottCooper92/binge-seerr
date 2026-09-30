@@ -109,9 +109,10 @@ write when they are off:
 
 - `CAPABILITY_REQUEST_4K` needs the user to hold the 4K permission for a media type the server has
   4K on for: `movie4kEnabled` for movies, `series4kEnabled` for series.
-- `CAPABILITY_EDIT_SEASONS`, and the season list in the app's own request editor, need
-  `partialRequestsEnabled`. With it off the server takes a whole show. A user who may change the
-  destination still gets the editor for that.
+- `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the server takes a whole
+  show. A user who may change the destination still gets the editor for that, and its season list
+  is not yet gated by the setting: every unlocked season stays toggleable and saveable. Hiding it
+  is a UI change of its own, tracked in #510.
 
 ## Where this lives
 
