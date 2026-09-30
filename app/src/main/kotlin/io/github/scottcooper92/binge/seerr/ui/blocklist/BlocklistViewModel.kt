@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
@@ -36,15 +37,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.runningFold
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -61,11 +59,25 @@ private data class BlocklistScope(
     val canBlockCollections: Boolean = false,
 )
 
-/** What one arrival's reads returned; null is a read that failed. */
+/** What one arrival's reads returned; null is a read that failed, and [viewerError] says why the viewer's did. */
 private class ScopeRead(
     val profile: SeerrServerProfile?,
     val viewer: SeerrUserDto?,
+    val viewerError: SeerrError?,
 )
+
+/** Where resolving [BlocklistScope] stands: in flight, done, or failed with why, so a failure is a state rather than a skeleton that never ends. */
+private sealed interface ScopeState {
+    data object Resolving : ScopeState
+
+    data class Resolved(
+        val scope: BlocklistScope,
+    ) : ScopeState
+
+    data class Failed(
+        val error: SeerrError,
+    ) : ScopeState
+}
 
 /** This scope with [read] applied: each part the read answered is replaced, and one it did not keeps its last value. */
 private fun BlocklistScope.readWith(read: ScopeRead): BlocklistScope {
@@ -76,6 +88,19 @@ private fun BlocklistScope.readWith(read: ScopeRead): BlocklistScope {
         canManage = canManage,
         canBlockCollections = (read.profile?.canBlockCollections ?: canBlockCollections) && canManage,
     )
+}
+
+/**
+ * The state after [read]. A first read that could not identify the viewer is [ScopeState.Failed]:
+ * whether they may manage the list is unknown, and a guessed answer would offer or hide removal on
+ * no evidence. Once a scope has resolved, a failed re-read keeps it.
+ */
+private fun ScopeState.readWith(read: ScopeRead): ScopeState {
+    val previous = (this as? ScopeState.Resolved)?.scope
+    return when {
+        previous == null && read.viewerError != null -> ScopeState.Failed(read.viewerError)
+        else -> ScopeState.Resolved((previous ?: BlocklistScope()).readWith(read))
+    }
 }
 
 /**
@@ -118,26 +143,29 @@ class BlocklistViewModel
         /**
          * Resolved before anything downstream runs: the list's path is the profile's, so a page fetched
          * against a guessed one would be a request to the wrong place. Re-read on every arrival, since a
-         * permission or a server upgrade is otherwise invisible while this view model lives. A read that
-         * fails keeps the last answer for that part (defaults on the very first), and `distinctUntilChanged`
-         * means re-entry restarts the lists only when the scope actually changed.
+         * permission or a server upgrade is otherwise invisible while this view model lives. A first read
+         * that cannot identify the viewer is [ScopeState.Failed], and a retry shows [ScopeState.Resolving]
+         * again; once resolved, a read that fails keeps the last answer for that part.
          *
          * `flowOn(dispatcher)` for the same reason every `launch` here takes one (#177/#370): without
          * it, this flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`,
          * which can outlive a cleared scope same as a plain `launch` would.
          */
-        private val scope: Flow<BlocklistScope> =
+        private val scopeState: StateFlow<ScopeState> =
             scopeRefresh
-                .mapLatest {
-                    ScopeRead(
-                        runCatching { connection.refreshProfile() }.getOrNull(),
-                        runCatching { connection.refreshAuthenticatedUser() }.getOrNull(),
-                    )
-                }.runningFold<ScopeRead, BlocklistScope?>(null) { previous, read -> (previous ?: BlocklistScope()).readWith(read) }
-                .filterNotNull()
-                .distinctUntilChanged()
+                .flatMapLatest {
+                    flow {
+                        val previous = scopeState.value
+                        if (previous is ScopeState.Failed) emit(ScopeState.Resolving)
+                        emit(previous.readWith(readScope()))
+                    }
+                }.distinctUntilChanged()
                 .flowOn(dispatcher)
-                .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
+                .stateIn(viewModelScope, SharingStarted.Lazily, ScopeState.Resolving)
+
+        /** The resolved scope alone, which is all the lists and the counts wait on; `distinctUntilChanged` means re-entry restarts them only when it changed. */
+        private val scope: Flow<BlocklistScope> =
+            scopeState.filterIsInstance<ScopeState.Resolved>().map { it.scope }.distinctUntilChanged()
 
         /** A blank query needs no debounce, so the first page is not held back. */
         private val query: Flow<String> =
@@ -183,20 +211,25 @@ class BlocklistViewModel
             combine(
                 selectedFilter,
                 search,
-                combine(counts, scope) { counts, scope -> counts to scope },
+                combine(counts, scopeState) { counts, scope -> counts to scope },
                 acting,
                 listVersionState,
-            ) { filter, search, (counts, scope), acting, listVersion ->
-                BlocklistUiState.Ready(
-                    filter = filter,
-                    search = search,
-                    counts = counts,
-                    listVersion = listVersion,
-                    hasFilters = scope.hasFilters,
-                    canManage = scope.canManage,
-                    canBlockCollections = scope.canBlockCollections,
-                    actingTmdbIds = acting,
-                )
+            ) { filter, search, (counts, scopeState), acting, listVersion ->
+                when (scopeState) {
+                    ScopeState.Resolving -> BlocklistUiState.Loading
+                    is ScopeState.Failed -> BlocklistUiState.Error(scopeState.error)
+                    is ScopeState.Resolved ->
+                        BlocklistUiState.Ready(
+                            filter = filter,
+                            search = search,
+                            counts = counts,
+                            listVersion = listVersion,
+                            hasFilters = scopeState.scope.hasFilters,
+                            canManage = scopeState.scope.canManage,
+                            canBlockCollections = scopeState.scope.canBlockCollections,
+                            actingTmdbIds = acting,
+                        )
+                }
             }.stateIn(viewModelScope, SharingStarted.Lazily, BlocklistUiState.Loading)
 
         fun setFilter(filter: BlocklistFilter) {
@@ -205,6 +238,11 @@ class BlocklistViewModel
 
         fun setSearch(query: String) {
             search.value = query
+        }
+
+        /** Re-reads the signed-in user after [BlocklistUiState.Error]. */
+        fun retry() {
+            scopeRefresh.update { it + 1 }
         }
 
         /**
@@ -266,6 +304,15 @@ class BlocklistViewModel
                     eventFlow.emit(BlocklistEvent.CollectionChanged(blocked))
                 }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
             }
+        }
+
+        private suspend fun readScope(): ScopeRead {
+            val viewer = runCatching { connection.refreshAuthenticatedUser() }
+            return ScopeRead(
+                profile = runCatching { connection.refreshProfile() }.getOrNull(),
+                viewer = viewer.getOrNull(),
+                viewerError = viewer.exceptionOrNull()?.toSeerrError(),
+            )
         }
 
         private suspend fun fetchCounts(path: String): BlocklistCounts =

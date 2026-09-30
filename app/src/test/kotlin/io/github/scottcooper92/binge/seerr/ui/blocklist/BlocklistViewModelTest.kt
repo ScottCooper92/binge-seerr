@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import androidx.lifecycle.ViewModelStore
 import androidx.paging.testing.asSnapshot
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
@@ -164,25 +165,66 @@ class BlocklistViewModelTest {
             assertTrue(vm.awaitReady { it.canManage }.canManage)
         }
 
-    /** One read that failed on first entry used to fix `canManage` at false until the entry was recreated. */
+    /** A first read that failed used to fix `canManage` at false until the entry was recreated; now it says so, and the next entry recovers. */
     @Test
-    fun `a first read that failed does not freeze the scope, the next entry recovers it`() =
+    fun `a first read that failed is an error, and the next entry recovers it`() =
         runTest {
-            val connection = seerr.connection(this)
-            // Drop the user connect() cached and have the next read fail, as a cold process on a bad network would.
-            seerr.serve("GET /api/v1/auth/me", code = 500)
-            runCatching { connection.refreshAuthenticatedUser() }
-            val vm = BlocklistViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher, analytics)
-            viewModels.put(vm.hashCode().toString(), vm)
-            backgroundScope.launch { vm.uiState.collect {} }
-            vm.setScreenVisible(true)
-            assertFalse(vm.awaitReady().canManage)
+            val vm = failedFirstRead(code = 500)
+            assertEquals(BlocklistUiState.Error(SeerrError.Server), vm.uiState.first { it is BlocklistUiState.Error })
 
             seerr.viewer(id = 1, permissions = ADMIN)
             vm.setScreenVisible(true)
 
             assertTrue(vm.awaitReady { it.canManage }.canManage)
         }
+
+    @Test
+    fun `retry reads the viewer again, and says why it still cannot`() =
+        runTest {
+            val vm = failedFirstRead(code = 500)
+            assertEquals(BlocklistUiState.Error(SeerrError.Server), vm.uiState.first { it is BlocklistUiState.Error })
+
+            seerr.serve("GET /api/v1/auth/me", code = 401)
+            vm.retry()
+            assertEquals(
+                BlocklistUiState.Error(SeerrError.Unauthorized),
+                vm.uiState.first {
+                    it ==
+                        BlocklistUiState.Error(SeerrError.Unauthorized)
+                },
+            )
+
+            seerr.viewer(id = 1, permissions = ADMIN)
+            vm.retry()
+            assertTrue(vm.awaitReady { it.canManage }.canManage)
+        }
+
+    @Test
+    fun `a read that fails once the scope has resolved keeps the list as it was`() =
+        runTest {
+            val vm = viewModel()
+            vm.setScreenVisible(true)
+            assertTrue(vm.awaitReady { it.canManage }.canManage)
+
+            val reads = seerr.count("GET", "/api/v1/auth/me")
+            seerr.serve("GET /api/v1/auth/me", code = 500)
+            vm.setScreenVisible(true)
+            seerr.awaitCount("GET", "/api/v1/auth/me", moreThan = reads)
+
+            assertTrue(vm.awaitReady { it.canManage }.canManage)
+        }
+
+    /** A view model whose first `auth/me` read answers [code], as a cold process on a bad network would. */
+    private suspend fun TestScope.failedFirstRead(code: Int): BlocklistViewModel {
+        val connection = seerr.connection(this)
+        seerr.serve("GET /api/v1/auth/me", code = code)
+        runCatching { connection.refreshAuthenticatedUser() }
+        val vm = BlocklistViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher, analytics)
+        viewModels.put(vm.hashCode().toString(), vm)
+        backgroundScope.launch { vm.uiState.collect {} }
+        vm.setScreenVisible(true)
+        return vm
+    }
 
     private fun received(
         method: String,

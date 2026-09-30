@@ -66,6 +66,11 @@ sealed interface BlocklistUiState {
         /** Per page, not per selection: an empty page says why it is empty, and a swiped-to page is its own. */
         fun isFiltered(filter: BlocklistFilter): Boolean = filter != BlocklistFilter.All || search.isNotBlank()
     }
+
+    /** The signed-in user could not be read, so what they may do to the list is unknown. */
+    data class Error(
+        val error: SeerrError,
+    ) : BlocklistUiState
 }
 
 sealed interface BlocklistEvent {

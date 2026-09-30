@@ -103,6 +103,7 @@ internal fun BlocklistEntry(
                 onSearchChange = viewModel::setSearch,
                 onOpen = onOpen,
                 onRemove = viewModel::remove,
+                onRetry = viewModel::retry,
             ),
     )
 }

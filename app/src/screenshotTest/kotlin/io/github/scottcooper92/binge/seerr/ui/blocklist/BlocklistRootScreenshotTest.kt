@@ -5,6 +5,7 @@ import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -36,6 +37,17 @@ class BlocklistRootScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun loading() = Frame(BlocklistUiState.Loading)
+
+    /** The signed-in user could not be read: the list is not guessed at, and the screen offers a retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun unreachable() = Frame(BlocklistUiState.Error(SeerrError.Unreachable))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun unauthorized() = Frame(BlocklistUiState.Error(SeerrError.Unauthorized))
 }
 
 private fun ready(
@@ -59,6 +71,11 @@ private fun Frame(state: BlocklistUiState) {
         itemsFor = { flowOf(PagingData.from(emptyList())) },
         events = emptyFlow(),
         shouldRefresh = { _, _ -> false },
-        actions = BlocklistActions(onBack = {}, onFilterChange = {}, onSearchChange = {}, onOpen = { _, _ -> }, onRemove = {}),
+        actions =
+            BlocklistActions(onBack = {}, onFilterChange = {}, onSearchChange = {}, onOpen = {
+                _,
+                _,
+                ->
+            }, onRemove = {}, onRetry = {}),
     )
 }
