@@ -234,8 +234,8 @@ class SettingsViewModelTest {
                     mainDispatcherRule.dispatcher,
                 )
 
-            val first = again.uiState.first()
-            assertTrue(first is SettingsUiState.Loading || (first as SettingsUiState.Ready).config == null)
+            val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
+            assertNull(first.config)
         }
 
     @Test

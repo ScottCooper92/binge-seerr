@@ -128,12 +128,7 @@ class SettingsViewModel
         private suspend fun seeded(): SettingsReadCache =
             cache.also {
                 it.adopt(
-                    runCatching {
-                        connection.current().let { c ->
-                            c.baseUrl to
-                                c.auth
-                        }
-                    }.getOrNull(),
+                    runCatching { connection.current().let { it.baseUrl to it.auth } }.getOrNull(),
                 )
             }
 
