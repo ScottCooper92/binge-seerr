@@ -2,6 +2,8 @@ package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import androidx.lifecycle.ViewModelStore
 import androidx.paging.testing.asSnapshot
+import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
@@ -232,18 +234,25 @@ class BlocklistViewModelTest {
             assertEquals(seen.counts, ready.counts)
         }
 
-    /** What one server showed must never seed another's browser. */
+    /** What one server, or one user, showed must never seed another's browser. */
     @Test
-    fun `the last result is dropped when the server changes`() {
+    fun `the last result is dropped when the server or the user changes`() {
         val cache = BlocklistReadCache()
-        cache.adopt("https://one.example")
+        val userA = SeerrCredentials("https://one.example", SeerrAuth.Session("cookie-a", userId = 1))
+        cache.adopt(userA)
         cache.scope = BlocklistScope(canManage = true)
         cache.counts = BlocklistCounts(all = 1, manual = 1, tagged = 1)
 
-        cache.adopt("https://one.example")
+        cache.adopt(userA.copy())
         assertTrue(cache.scope?.canManage == true)
 
-        cache.adopt("https://two.example")
+        cache.adopt(userA.copy(auth = SeerrAuth.Session("cookie-b", userId = 2)))
+        assertNull(cache.scope)
+        assertNull(cache.counts)
+
+        cache.scope = BlocklistScope(canManage = true)
+        cache.counts = BlocklistCounts(all = 1, manual = 1, tagged = 1)
+        cache.adopt(userA.copy(baseUrl = "https://two.example"))
         assertNull(cache.scope)
         assertNull(cache.counts)
     }

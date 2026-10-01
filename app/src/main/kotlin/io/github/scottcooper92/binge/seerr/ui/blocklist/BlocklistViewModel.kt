@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
+import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
@@ -108,21 +109,23 @@ private fun ScopeState.readWith(read: ScopeRead): ScopeState {
 /**
  * The last scope and chip counts read, kept in memory so a re-entered browser opens on them rather
  * than on a full-screen spinner and bare chips. Each fetch still runs and replaces them. Held per
- * server's address: a different server starts empty rather than showing the old one's list.
+ * connection, like the connection's own caches: the scope is the signed-in user's `auth/me`, so a
+ * different server or a different user starts empty rather than showing the last one's controls.
  */
 @Singleton
 class BlocklistReadCache
     @Inject
     constructor() {
-        private var baseUrl: String? = null
+        @Volatile private var credentials: SeerrCredentials? = null
 
         @Volatile var scope: BlocklistScope? = null
 
         @Volatile var counts: BlocklistCounts? = null
 
-        fun adopt(baseUrl: String?) {
-            if (baseUrl == this.baseUrl) return
-            this.baseUrl = baseUrl
+        @Synchronized
+        fun adopt(credentials: SeerrCredentials?) {
+            if (credentials == this.credentials) return
+            this.credentials = credentials
             scope = null
             counts = null
         }
@@ -353,7 +356,7 @@ class BlocklistViewModel
             }
         }
 
-        private suspend fun seeded(): BlocklistReadCache = cache.also { it.adopt(runCatching { connection.current().baseUrl }.getOrNull()) }
+        private suspend fun seeded(): BlocklistReadCache = cache.also { it.adopt(runCatching { connection.current() }.getOrNull()) }
 
         private suspend fun readScope(): ScopeRead {
             val viewer = runCatching { connection.refreshAuthenticatedUser() }
