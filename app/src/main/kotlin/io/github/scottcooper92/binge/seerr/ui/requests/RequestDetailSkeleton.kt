@@ -40,7 +40,7 @@ private const val HEADLINE_CHIP_COUNT = 2
 private const val OVERVIEW_LINE_COUNT = 3
 private const val OVERVIEW_LAST_LINE_FRACTION = 0.6f
 
-/** [RequestFacts]'s one unconditional row — Requested by, now a leading icon plus one line. */
+/** [requestPeopleFacts]'s one unconditional row — Requested by, now a leading icon plus one line. */
 private const val FACTS_VALUE_FRACTION = 0.55f
 
 /**

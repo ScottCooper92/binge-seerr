@@ -55,8 +55,8 @@ internal fun Fact(
 
 /**
  * The server's own watch tracking — a title-level read-out, the same on every request against it,
- * so it sits under the synopsis with its own header rather than inside [RequestFacts] below, which
- * is this request's own facts and no other request's.
+ * so it sits under the synopsis with its own header rather than inside [requestPeopleFacts] or
+ * [requestDestinationFacts] below, which are this request's own facts and no other request's.
  */
 @Composable
 internal fun RequestStats(detail: RequestDetail) {
