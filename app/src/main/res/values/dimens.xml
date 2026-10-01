@@ -59,6 +59,9 @@
          (it sizes to its label), so the skeleton picks a plausible one for each of the two chips
          every request headline shows (media type, request status). -->
     <dimen name="request_skeleton_chip_width">72dp</dimen>
+    <!-- The same skeleton's button plate inside the request card: the Review / Manage label sizes the
+         real BingeTextButton, so this picks a plausible width for the longer of the two. -->
+    <dimen name="request_skeleton_button_width">120dp</dimen>
     <!-- A job row's action slot: a button, a spinner and an outcome icon all sit in the same box,
          fixed so the row never changes height across the three. -->
     <dimen name="server_settings_job_action_height">48dp</dimen>

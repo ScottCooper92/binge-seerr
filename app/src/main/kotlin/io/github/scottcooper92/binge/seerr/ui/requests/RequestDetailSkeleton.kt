@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +31,6 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
@@ -40,18 +40,19 @@ private const val HEADLINE_CHIP_COUNT = 2
 private const val OVERVIEW_LINE_COUNT = 3
 private const val OVERVIEW_LAST_LINE_FRACTION = 0.6f
 
-/** [requestPeopleFacts]'s one unconditional row — Requested by, now a leading icon plus one line. */
-private const val FACTS_VALUE_FRACTION = 0.55f
+private const val CARD_TITLE_FRACTION = 0.5f
+private const val CARD_ROW_TITLE_FRACTION = 0.6f
+private const val CARD_ROW_DETAIL_FRACTION = 0.4f
 
 /**
  * Loading placeholder for [RequestDetailPage]: the hero, the headline's chip row and overview, and
- * "This request"'s own header over the one facts row every request has (Requested by). Stats,
- * seasons, downloads, siblings and Moderated by are all conditional on what the server returns, so
- * nothing is reserved for them — the scroll grows on resolve rather than reflowing a guess, the same
- * trade Binge's own `DetailScreenSkeleton` makes for its cast rail (#373).
+ * a [RequestCard] stand-in: the title row with its chip, one person row and the button. Stats, the
+ * info rows, the destination line, "Other requests" and Moderated by are all conditional on what the
+ * server returns, so nothing is reserved for them — the scroll grows on resolve rather than
+ * reflowing a guess, the same trade Binge's own `DetailScreenSkeleton` makes for its cast rail (#373).
  *
- * There is no primary action footer to reserve: the request's own button lives inside "This
- * request" further down the scroll, so nothing is pinned below it.
+ * There is no primary action footer to pin: the button lives inside the card, and the card
+ * placeholder reserves it.
  *
  * Insets mirror [RequestDetailPage] exactly rather than a blanket `safeDrawingPadding()`: the hero
  * runs full-bleed under the status bar on both, and the scroll itself clears the navigation bar —
@@ -74,8 +75,7 @@ internal fun RequestDetailSkeleton(modifier: Modifier = Modifier) {
                         .padding(resolvedContentInset())
                         .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
             )
-            SectionHeaderSkeleton()
-            FactsSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
+            RequestCardSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
         }
     }
 }
@@ -138,21 +138,52 @@ private fun ChipSkeleton(modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * [RequestCard]'s shape: the title row with a chip at its end, one person row and the button. The
+ * button is reserved because the common viewer of an admin console has one; the rarer viewer without
+ * it sees the card shrink on resolve, which beats the card growing.
+ */
 @Composable
-private fun FactsSkeleton(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        SkeletonPlate(Modifier.size(dimensionResource(DesR.dimen.detail_stat_icon_size)))
-        // Weighted, not fillMaxWidth on the row: the value measures against what's left after the
-        // fixed icon width, not the row's own full width.
-        Box(modifier = Modifier.weight(1f)) {
-            SkeletonPlate(
-                Modifier
-                    .fillMaxWidth(FACTS_VALUE_FRACTION)
-                    .height(lineHeightOf(MaterialTheme.typography.bodyMedium)),
-            )
+private fun RequestCardSkeleton(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth().cardSurface()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(cardRowPadding()),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                SkeletonPlate(
+                    Modifier
+                        .fillMaxWidth(CARD_TITLE_FRACTION)
+                        .height(lineHeightOf(MaterialTheme.typography.titleLarge)),
+                )
+            }
+            ChipSkeleton()
         }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(cardRowPadding()),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SkeletonPlate(Modifier.size(dimensionResource(DesR.dimen.settings_group_icon_size)), shape = BingeShapes.MoreCard)
+            Spacer(Modifier.width(dimensionResource(DesR.dimen.account_card_spacing)))
+            Column(modifier = Modifier.weight(1f)) {
+                SkeletonPlate(
+                    Modifier
+                        .fillMaxWidth(CARD_ROW_TITLE_FRACTION)
+                        .height(lineHeightOf(MaterialTheme.typography.titleMedium)),
+                )
+                SkeletonPlate(
+                    Modifier
+                        .fillMaxWidth(CARD_ROW_DETAIL_FRACTION)
+                        .height(lineHeightOf(MaterialTheme.typography.bodyMedium)),
+                )
+            }
+        }
+        SkeletonPlate(
+            Modifier
+                .align(Alignment.CenterHorizontally)
+                .width(dimensionResource(R.dimen.request_skeleton_button_width))
+                .height(dimensionResource(DesR.dimen.button_filled_height)),
+            shape = BingeShapes.Medium,
+        )
     }
 }
