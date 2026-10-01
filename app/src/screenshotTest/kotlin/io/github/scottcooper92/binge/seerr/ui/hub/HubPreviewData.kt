@@ -96,6 +96,7 @@ internal fun previewActions() =
         onRetry = {},
         onReconnect = {},
         onDisconnect = {},
+        onDismissBingeHint = {},
     )
 
 internal fun previewReady(

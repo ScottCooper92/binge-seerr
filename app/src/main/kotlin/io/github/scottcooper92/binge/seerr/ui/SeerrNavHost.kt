@@ -113,7 +113,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                     onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
                     onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
                     onReconnect = { backStack.add(EditConnectionRoute) },
-                    onOpenDeveloperOptions = debugOpenDeveloperOptions(backStack),
+                    developerRows = debugDeveloperRows(backStack),
                 )
             } else {
                 LoadingScreen()

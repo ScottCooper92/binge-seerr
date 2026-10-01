@@ -23,7 +23,7 @@ data class NetworkForm(
     val valid: Boolean get() = proxy?.valid != false && dnsCache?.valid != false
 }
 
-/** The outbound proxy: reachable only while it has a host and a port in range, if it is on. */
+/** The outbound proxy: reachable only while it has a host and a port in range, with its credentials as a pair, if it is on. */
 data class ProxyForm(
     val enabled: Boolean = false,
     val host: String = "",
@@ -34,7 +34,13 @@ data class ProxyForm(
     val bypassFilter: String = "",
     val bypassLocalAddresses: Boolean = true,
 ) {
-    val valid: Boolean get() = !enabled || hostAndPortValid(host, port)
+    val addressValid: Boolean get() = hostAndPortValid(host, port)
+
+    /** The username and password go together: a proxy that is given one without the other cannot authenticate. */
+    val userMissing: Boolean get() = user.isBlank() && password.isNotEmpty()
+    val passwordMissing: Boolean get() = user.isNotBlank() && password.isEmpty()
+
+    val valid: Boolean get() = !enabled || (addressValid && !userMissing && !passwordMissing)
 }
 
 /** The DNS cache and the TTL bounds it forces; a blank bound is none. */
@@ -43,7 +49,15 @@ data class DnsCacheForm(
     val minTtl: String = "",
     val maxTtl: String = "",
 ) {
-    val valid: Boolean get() = !enabled || (minTtl.isTtl() && maxTtl.isTtl())
+    /** Both bounds, when both are set, must not cross: a minimum above the maximum can never be met. */
+    val orderValid: Boolean
+        get() {
+            val min = minTtl.trim().toIntOrNull()
+            val max = maxTtl.trim().toIntOrNull()
+            return min == null || max == null || min <= max
+        }
+
+    val valid: Boolean get() = !enabled || (minTtl.isTtl() && maxTtl.isTtl() && orderValid)
 }
 
 internal fun String.isTtl(): Boolean = isBlank() || trim().toIntOrNull()?.let { it >= 0 } == true

@@ -50,8 +50,8 @@ import com.binge.designsystem.R as DesR
 
 /**
  * The selected filter's rows with the states the pager reports. Once rows are on screen a refresh
- * shows as a thin bar over them; the full-screen loader is for the first load, when there is
- * nothing to keep.
+ * shows as a thin bar over them, or a tappable line when it failed; the full-screen states are for a cache
+ * with nothing in it.
  */
 @Composable
 internal fun RequestsBody(
@@ -65,23 +65,26 @@ internal fun RequestsBody(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val refreshState = lazyItems.loadState.refresh
+    val remote = lazyItems.loadState.mediator?.refresh ?: lazyItems.loadState.refresh
     when {
-        lazyItems.itemCount > 0 && refreshState is LoadState.Loading ->
+        lazyItems.itemCount > 0 && (remote is LoadState.Loading || remote is LoadState.Error) ->
             // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
             Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
+                if (remote is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+                if (remote is LoadState.Error) {
+                    RefreshFailedLine(remote.error, R.string.requests_refresh_failed, onRetry = lazyItems::retry, onReconnect = onReconnect)
+                }
                 RequestList(lazyItems, scope, actingIds, onOpen, onManage, onReconnect, contentPadding.belowPinnedLine())
             }
         lazyItems.itemCount > 0 -> RequestList(lazyItems, scope, actingIds, onOpen, onManage, onReconnect, contentPadding)
-        refreshState is LoadState.Loading ->
+        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
             ListRowSkeletonColumn(
                 contentPadding = resolvedListContentPadding(contentPadding),
                 modifier = modifier,
             )
-        refreshState is LoadState.Error ->
+        remote is LoadState.Error ->
             PagedRefreshError(
-                refreshState.error,
+                remote.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
                 modifier = modifier.padding(contentPadding),
@@ -120,7 +123,10 @@ private fun RequestList(
                 )
             }
         }
-        item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry, onReconnect = onReconnect) }
+        item {
+            val append = lazyItems.loadState.mediator?.append ?: lazyItems.loadState.append
+            PagedAppendState(append, onRetry = lazyItems::retry, onReconnect = onReconnect)
+        }
     }
 }
 

@@ -13,6 +13,11 @@ private const val PLAY_STORE_MARKET_URI = "market://details?id=${BingeHosts.RELE
 @Suppress("DEPRECATION")
 fun Context.isBingeInstalled(): Boolean = runCatching { packageManager.getPackageInfo(BingeHosts.RELEASE_PACKAGE_NAME, 0) }.isSuccess
 
+/** Opens Binge itself, at wherever it last was; a failed launch is swallowed, since the hint offering it only shows where Binge is installed. */
+fun Context.openBinge() {
+    packageManager.getLaunchIntentForPackage(BingeHosts.RELEASE_PACKAGE_NAME)?.let { runCatching { startActivity(it) } }
+}
+
 /** Opens Binge's Play Store listing in the Play Store app, or a browser where it is not present. */
 fun Context.openBingeOnPlayStore() {
     runCatching { startActivity(Intent(Intent.ACTION_VIEW, PLAY_STORE_MARKET_URI.toUri())) }

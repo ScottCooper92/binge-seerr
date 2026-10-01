@@ -52,7 +52,7 @@ class GeneralSettingsViewModel
             return load()
         }
 
-        override fun canSave(draft: GeneralSettings): Boolean = draft.quotasValid
+        override fun canSave(draft: GeneralSettings): Boolean = draft.valid
 
         @AssistedFactory
         interface Factory {

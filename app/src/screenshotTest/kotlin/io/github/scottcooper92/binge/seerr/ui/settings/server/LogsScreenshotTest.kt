@@ -58,12 +58,20 @@ class LogRowScreenshotTest {
     @Composable
     fun opened() = RowsFrame { LogRow(entry(level = LogLevel.Error, data = DATA), onCopy = {}, initiallyExpanded = true) }
 
+    /** A long message is held to three lines; the chevron that opens it appears after the first layout, which a static frame never reaches. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun longMessage() = RowsFrame { LogRow(entry(level = LogLevel.Error, message = LONG_MESSAGE), onCopy = {}) }
+
     /** A line with no label and a time that did not parse shows the server's own timestamp. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun unlabelled() = RowsFrame { LogRow(entry(level = LogLevel.Info, label = null, message = "Server started"), onCopy = {}) }
 }
+
+private val LONG_MESSAGE = "Request failed after retrying: " + "the instance did not answer within the timeout. ".repeat(6)
 
 private const val DATA = "{\n  \"errorMessage\": \"connect ECONNREFUSED 10.0.0.12:8989\",\n  \"status\": 503\n}"
 

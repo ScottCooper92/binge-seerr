@@ -47,9 +47,12 @@ app:download_eta_hours  02abf092ccd1
 app:download_eta_minutes  fc01feb5f7e5
 app:field_secret_hide  ad5caeb74e49
 app:field_secret_show  ff5a856d1a08
-app:hub_binge_connected_hint  faa66e79f216
+app:hub_binge_connect_hint  ac2c213c1567
+app:hub_binge_connected_hint  10f092bfe3a5
+app:hub_binge_get  d0d7d58e7428
 app:hub_binge_not_installed_detail  a8e52a9826f0
 app:hub_binge_not_installed_title  d7e27e16cd15
+app:hub_binge_open  f95bbc9b91f4
 app:hub_couldnt_load_body  221fccfe8796
 app:hub_couldnt_load_headline  e12aae2d43bd
 app:hub_disconnect  acfc5be785a9
@@ -292,6 +295,7 @@ app:requests_filter_processing  37b345555d7e
 app:requests_filter_unavailable  ca1844969742
 app:requests_load_more_failed  ea41cca861da
 app:requests_reconnect  7d346d22e897
+app:requests_refresh_failed  1a02d2e4782c
 app:requests_requester_unknown  864c855e3d64
 app:requests_seasons  bd03814e7d73
 app:requests_sort_added  7459b8690410
@@ -398,6 +402,7 @@ app:server_settings_dns_min_ttl  30bd9303ab55
 app:server_settings_dns_stats  bd60331a7e54
 app:server_settings_dns_ttl  27711c509cb6
 app:server_settings_dns_ttl_hint  8357d79eb688
+app:server_settings_dns_ttl_order  eb88962348f7
 app:server_settings_dvr_4k  b9eca1fa10bc
 app:server_settings_dvr_add  28bbd103dc99
 app:server_settings_dvr_anime  3eac161518fc
@@ -464,8 +469,10 @@ app:server_settings_log_info  170322a32f3c
 app:server_settings_log_warn  e981ddae45d8
 app:server_settings_logs  ea2100dc89ae
 app:server_settings_logs_caption  d61c5767f9dd
+app:server_settings_logs_collapse  c9722a7a962a
 app:server_settings_logs_copy  744b288951b4
 app:server_settings_logs_empty  d0c532dc8df4
+app:server_settings_logs_expand  1af77ee273cb
 app:server_settings_logs_search  e8895952bdcd
 app:server_settings_media_server  b44e32763b07
 app:server_settings_media_server_caption  0e4c085f345d
@@ -493,6 +500,8 @@ app:server_settings_proxy_bypass  d3d45e442c4d
 app:server_settings_proxy_bypass_hint  ab2db5557ad9
 app:server_settings_proxy_bypass_local  58b07426216a
 app:server_settings_proxy_enabled  712f2dd05d97
+app:server_settings_proxy_password_missing  ccf0fcec85d2
+app:server_settings_proxy_user_missing  2c4065c0ec0d
 app:server_settings_region_hint  f6510423baf2
 app:server_settings_rule_add  bed79361ea53
 app:server_settings_rule_conditions  2ff17c09dfc9

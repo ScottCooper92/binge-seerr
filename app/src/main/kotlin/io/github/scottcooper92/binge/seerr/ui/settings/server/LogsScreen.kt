@@ -1,26 +1,40 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,9 +46,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
@@ -46,6 +64,7 @@ import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
+import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.accent
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
@@ -191,7 +210,14 @@ private fun LogsBody(
     }
 }
 
-/** One line: the level in its tone, the label and the time, the message, and the attached data once tapped open. */
+private const val COLLAPSED_MESSAGE_LINES = 3
+
+/**
+ * One line as a card: a stripe, an icon and the level's name all carry the severity, so it never
+ * rests on colour alone. The message is held to a few lines until the row is opened; a row with
+ * attached data or a clipped message shows a chevron, and a long press copies the line either way.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun LogRow(
     entry: LogEntry,
@@ -199,46 +225,130 @@ internal fun LogRow(
     initiallyExpanded: Boolean = false,
 ) {
     var expanded by rememberSaveable(entry.id) { mutableStateOf(initiallyExpanded) }
-    Column(
+    var clipped by remember { mutableStateOf(false) }
+    val expandable = entry.data != null || clipped || expanded
+    val tone = entry.level.sentiment().accent()
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(enabled = entry.data != null) { expanded = !expanded },
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+                .clip(BingeShapes.Medium)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .height(IntrinsicSize.Min)
+                .combinedClickable(
+                    onClickLabel =
+                        if (expandable) {
+                            stringResource(if (expanded) R.string.server_settings_logs_collapse else R.string.server_settings_logs_expand)
+                        } else {
+                            null
+                        },
+                    onClick = { if (expandable) expanded = !expanded },
+                    onLongClick = onCopy,
+                    onLongClickLabel = stringResource(R.string.server_settings_logs_copy),
+                ),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        Box(Modifier.width(dimensionResource(R.dimen.log_row_severity_stripe_width)).fillMaxHeight().background(tone))
+        Column(
+            modifier = Modifier.weight(1f).padding(dimensionResource(DesR.dimen.padding_m)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
+            LogRowHeader(entry, tone, expandable, expanded)
             Text(
-                stringResource(entry.level.labelRes()).uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = entry.level.sentiment().accent(),
+                entry.message,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = if (expanded) Int.MAX_VALUE else COLLAPSED_MESSAGE_LINES,
+                overflow = TextOverflow.Ellipsis,
+                onTextLayout = { if (!expanded) clipped = it.hasVisualOverflow },
             )
-            Text(
-                listOfNotNull(entry.label, formatRelativeOrAbsolute(entry.timestampMillis) ?: entry.timestampRaw.takeIf { it.isNotEmpty() })
-                    .joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = onCopy) {
-                Icon(Icons.Filled.ContentCopy, contentDescription = stringResource(R.string.server_settings_logs_copy))
-            }
-        }
-        Text(entry.message, style = MaterialTheme.typography.bodyMedium)
-        if (expanded) {
-            entry.data?.let { data ->
-                Text(
-                    data,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            if (expanded) LogRowDetails(entry, onCopy)
         }
     }
 }
+
+@Composable
+private fun LogRowHeader(
+    entry: LogEntry,
+    tone: Color,
+    expandable: Boolean,
+    expanded: Boolean,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+    ) {
+        Icon(
+            entry.level.icon(),
+            contentDescription = null,
+            tint = tone,
+            modifier = Modifier.size(dimensionResource(R.dimen.log_row_level_icon_size)),
+        )
+        Text(stringResource(entry.level.labelRes()).uppercase(), style = MaterialTheme.typography.labelMedium, color = tone)
+        val meta =
+            listOfNotNull(
+                entry.label,
+                formatRelativeOrAbsolute(entry.timestampMillis) ?: entry.timestampRaw.takeIf { it.isNotEmpty() },
+            )
+        if (meta.isNotEmpty()) {
+            val separator = stringResource(R.string.hub_meta_separator)
+            Text(
+                meta.joinToString(separator, prefix = separator),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+        if (expandable) {
+            Icon(
+                if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription =
+                    stringResource(if (expanded) R.string.server_settings_logs_collapse else R.string.server_settings_logs_expand),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.LogRowDetails(
+    entry: LogEntry,
+    onCopy: () -> Unit,
+) {
+    entry.data?.let { data ->
+        Text(
+            data,
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = FontFamily.Monospace,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(BingeShapes.ElementSmall)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .padding(dimensionResource(DesR.dimen.padding_s)),
+        )
+    }
+    TextButton(onClick = onCopy, modifier = Modifier.align(Alignment.End)) {
+        Icon(
+            Icons.Filled.ContentCopy,
+            contentDescription = null,
+            modifier = Modifier.size(dimensionResource(R.dimen.log_row_level_icon_size)),
+        )
+        Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_xs)))
+        Text(stringResource(R.string.server_settings_logs_copy))
+    }
+}
+
+private fun LogLevel.icon(): ImageVector =
+    when (this) {
+        LogLevel.Debug -> Icons.Filled.BugReport
+        LogLevel.Info -> Icons.Filled.Info
+        LogLevel.Warn -> Icons.Filled.Warning
+        LogLevel.Error -> Icons.Filled.Error
+    }
 
 private fun LogLevel.labelRes(): Int =
     when (this) {
