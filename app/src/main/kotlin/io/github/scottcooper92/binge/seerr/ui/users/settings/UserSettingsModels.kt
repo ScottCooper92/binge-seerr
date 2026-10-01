@@ -58,6 +58,11 @@ data class GeneralSettings(
     val canEditQuotas: Boolean = false,
     val canEditEmail: Boolean = false,
 ) {
+    /** Blank clears the ID; anything else has to be digits only. */
+    val discordIdValid: Boolean get() = discordId.isBlank() || discordId.isDiscordIdShape()
+
+    val valid: Boolean get() = quotasValid && discordIdValid
+
     /** A quota field is a whole number or blank; anything else is not a change the server would take. */
     val quotasValid: Boolean
         get() = listOf(movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays).all { it.isBlank() || (it.toIntOrNull() ?: -1) >= 0 }

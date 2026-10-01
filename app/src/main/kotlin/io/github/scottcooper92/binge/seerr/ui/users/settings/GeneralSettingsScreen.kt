@@ -34,7 +34,7 @@ fun GeneralSettingsScreen(
         state = state,
         events = events,
         actions = actions,
-        canSave = { it.quotasValid },
+        canSave = { it.valid },
     ) { draft, enabled ->
         ProfileCard(draft, enabled, actions)
         DiscoverCard(draft, enabled, actions)
@@ -76,6 +76,7 @@ private fun ProfileCard(
             enabled = enabled,
             keyboardType = KeyboardType.Number,
             supporting = stringResource(R.string.user_settings_discord_id_hint),
+            isError = !draft.discordIdValid,
         ) { value -> actions.onEdit { it.copy(discordId = value) } }
     }
 }
