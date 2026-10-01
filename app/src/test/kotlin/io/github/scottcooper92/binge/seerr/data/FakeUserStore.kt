@@ -16,6 +16,8 @@ class FakeUserStore : UserStore {
 
     override suspend fun nextSkip(listKey: String): Int? = cursors[listKey]
 
+    override suspend fun byId(userId: Int): UserEntity? = rows.firstOrNull { it.id == userId }
+
     override suspend fun refresh(
         listKey: String,
         users: List<UserEntity>,

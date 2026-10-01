@@ -39,6 +39,7 @@ import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.DetailDownload
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationEvent
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
@@ -90,17 +91,32 @@ internal fun TvRequestDetailScreen(
     }
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         when (state) {
-            RequestDetailUiState.Loading -> TvLoadingPlate(modifier = Modifier.fillMaxSize())
-            is RequestDetailUiState.Error ->
-                TvBoardPlate(
-                    body = stringResource(state.error.messageRes()),
-                    icon = Icons.Filled.Warning,
-                    primary = stringResource(R.string.hub_retry) to actions.onRetry,
-                    modifier = Modifier.fillMaxSize(),
-                )
+            // The TV page does not seed from a cached row: it loads, or fails, as it always has.
+            RequestDetailUiState.Loading, is RequestDetailUiState.Seeded -> {
+                val failure = (state as? RequestDetailUiState.Seeded)?.error
+                if (failure == null) {
+                    TvLoadingPlate(modifier = Modifier.fillMaxSize())
+                } else {
+                    TvErrorPlate(failure, actions.onRetry)
+                }
+            }
+            is RequestDetailUiState.Error -> TvErrorPlate(state.error, actions.onRetry)
             is RequestDetailUiState.Ready -> TvRequestDetailContent(detail = state.detail, events = events, actions = actions)
         }
     }
+}
+
+@Composable
+private fun TvErrorPlate(
+    error: SeerrError,
+    onRetry: () -> Unit,
+) {
+    TvBoardPlate(
+        body = stringResource(error.messageRes()),
+        icon = Icons.Filled.Warning,
+        primary = stringResource(R.string.hub_retry) to onRetry,
+        modifier = Modifier.fillMaxSize(),
+    )
 }
 
 /**

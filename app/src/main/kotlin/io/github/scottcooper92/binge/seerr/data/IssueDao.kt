@@ -17,6 +17,10 @@ interface IssueDao {
         status: String?,
     ): PagingSource<Int, IssueEntity>
 
+    /** Any slice's copy of the issue: a detail screen seeds its header from whichever list the user tapped it in. */
+    @Query("SELECT * FROM issues WHERE id = :id LIMIT 1")
+    suspend fun byId(id: Int): IssueEntity?
+
     @Upsert
     suspend fun upsertAll(issues: List<IssueEntity>)
 

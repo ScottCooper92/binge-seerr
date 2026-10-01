@@ -19,6 +19,8 @@ class FakeRequestStore : RequestStore {
 
     override suspend fun nextSkip(listKey: String): Int? = cursors[listKey]
 
+    override suspend fun byId(requestId: Int): RequestEntity? = rows.firstOrNull { it.id == requestId }
+
     override suspend fun refresh(
         listKey: String,
         requests: List<RequestEntity>,

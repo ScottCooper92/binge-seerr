@@ -15,6 +15,9 @@ interface IssueStore {
 
     suspend fun nextSkip(listKey: String): Int?
 
+    /** The cached row for [issueId] from any list, or null when no list has cached it. */
+    suspend fun byId(issueId: Int): IssueEntity?
+
     /** Replaces one list's slice with its first page; [nextSkip] is null when that page was the last. */
     suspend fun refresh(
         listKey: String,
@@ -52,6 +55,8 @@ class RoomIssueStore(
     ): PagingSource<Int, IssueEntity> = issues.pagingSource(listKey, status)
 
     override suspend fun nextSkip(listKey: String): Int? = keys.nextSkip(listKey)
+
+    override suspend fun byId(issueId: Int): IssueEntity? = issues.byId(issueId)
 
     override suspend fun refresh(
         listKey: String,

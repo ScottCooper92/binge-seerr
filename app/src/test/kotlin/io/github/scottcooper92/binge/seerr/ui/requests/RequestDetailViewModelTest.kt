@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.FakeRequestStore
+import io.github.scottcooper92.binge.seerr.data.NoRequestStore
+import io.github.scottcooper92.binge.seerr.data.RequestEntity
+import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -116,14 +120,100 @@ class RequestDetailViewModelTest {
     private fun TestScope.viewModel(
         connection: SeerrConnection,
         requestId: Int = 11,
+        cache: RequestStore = NoRequestStore,
     ): RequestDetailViewModel {
-        val vm = RequestDetailViewModel(connection, mainDispatcherRule.dispatcher, requestId, analytics)
+        val vm = RequestDetailViewModel(connection, mainDispatcherRule.dispatcher, requestId, analytics, cache = cache)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
 
     private suspend fun TestScope.viewModel(requestId: Int = 11): RequestDetailViewModel = viewModel(connection(), requestId)
+
+    private fun cachedRequest(id: Int) =
+        RequestEntity(
+            listKey = "all:added:all",
+            id = id,
+            tmdbId = 200,
+            mediaType = "Tv",
+            title = "Cached Severance",
+            posterUrl = null,
+            year = "2022",
+            requestedBy = "scott",
+            requestedById = 7,
+            requestedAtMillis = null,
+            status = 1,
+            mediaStatus = null,
+            downloadFraction = null,
+            downloadEtaMinutes = null,
+            downloading = false,
+            seasonNumbers = "1,2",
+            is4k = true,
+            orderIndex = id,
+        )
+
+    @Test
+    fun `a cached row seeds the hero at once, and the fetch then fills the page in behind it`() =
+        runTest {
+            server(ADMIN)
+            val cache = FakeRequestStore()
+            cache.refresh("all:added:all", listOf(cachedRequest(11)), nextSkip = null)
+            val release = CountDownLatch(1)
+            val ok = responses.getValue("/api/v1/request/11")
+            responses["/api/v1/request/11"] = {
+                release.await()
+                ok()
+            }
+            val vm = viewModel(connection(), cache = cache)
+
+            val seeded = vm.uiState.first { it is RequestDetailUiState.Seeded } as RequestDetailUiState.Seeded
+            assertEquals("Cached Severance", seeded.item.title)
+            assertEquals("2022", seeded.item.year)
+            assertTrue(seeded.item.is4k)
+            assertNull(seeded.error)
+
+            release.countDown()
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady()
+                    .detail.item.title,
+            )
+        }
+
+    @Test
+    fun `a failed refresh keeps the seeded hero and reports the error`() =
+        runTest {
+            server(ADMIN)
+            val cache = FakeRequestStore()
+            cache.refresh("all:added:all", listOf(cachedRequest(11)), nextSkip = null)
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+            val vm = viewModel(connection(), cache = cache)
+
+            val failed = vm.uiState.first { it is RequestDetailUiState.Seeded && it.error != null } as RequestDetailUiState.Seeded
+
+            assertEquals("Cached Severance", failed.item.title)
+            assertEquals(SeerrError.Server, failed.error)
+
+            server(ADMIN)
+            vm.reload()
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady()
+                    .detail.item.title,
+            )
+        }
+
+    @Test
+    fun `with no cached row the page still starts as loading, and a failed fetch is the error screen`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+            val vm = viewModel()
+
+            assertTrue(vm.uiState.first { it !is RequestDetailUiState.Loading } is RequestDetailUiState.Error)
+        }
 
     private suspend fun RequestDetailViewModel.awaitReady(
         match: (RequestDetailUiState.Ready) -> Boolean = {

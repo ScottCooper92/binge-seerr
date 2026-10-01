@@ -31,6 +31,8 @@ import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
@@ -77,6 +79,20 @@ internal fun RequestDetailSkeleton(modifier: Modifier = Modifier) {
             )
             RequestCardSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
         }
+    }
+}
+
+/** What sits under a seeded hero: the skeleton's headline and card, or the error and its retry once the refresh has failed. */
+@Composable
+internal fun RequestDetailSeededBody(
+    error: SeerrError?,
+    onRetry: () -> Unit,
+) {
+    if (error != null) {
+        ErrorScreen(error = error, onRetry = onRetry)
+    } else {
+        HeadlineSkeleton(modifier = Modifier.padding(resolvedContentInset()))
+        RequestCardSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
     }
 }
 

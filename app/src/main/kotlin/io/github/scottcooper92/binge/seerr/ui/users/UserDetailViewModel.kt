@@ -71,14 +71,34 @@ class UserDetailViewModel
         }
 
         fun reload() {
-            if (state.value !is UserDetailUiState.Ready) state.value = UserDetailUiState.Loading
+            state.update { current ->
+                when (current) {
+                    is UserDetailUiState.Ready -> current
+                    is UserDetailUiState.Seeded -> current.copy(error = null)
+                    else -> UserDetailUiState.Loading
+                }
+            }
             viewModelScope.launch(dispatcher) {
+                seedFromCache()
                 runCatching { load() }
                     .onSuccess { detail -> state.value = UserDetailUiState.Ready(detail) }
                     .onFailure { failure ->
-                        state.update { current -> (current as? UserDetailUiState.Ready) ?: UserDetailUiState.Error(failure.toSeerrError()) }
+                        state.update { current ->
+                            when (current) {
+                                is UserDetailUiState.Ready -> current
+                                is UserDetailUiState.Seeded -> current.copy(error = failure.toSeerrError())
+                                else -> UserDetailUiState.Error(failure.toSeerrError())
+                            }
+                        }
                     }
             }
+        }
+
+        /** Shows the cached row's profile in place of the skeleton, if a list has the user and nothing has landed yet. */
+        private suspend fun seedFromCache() {
+            if (state.value !is UserDetailUiState.Loading) return
+            val item = runCatching { store.byId(userId)?.toUserItem() }.getOrNull() ?: return
+            state.update { current -> if (current is UserDetailUiState.Loading) UserDetailUiState.Seeded(item) else current }
         }
 
         /** Removes the user; the cached row goes too, and the page pops. */

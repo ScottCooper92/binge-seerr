@@ -113,13 +113,35 @@ class RequestDetailViewModel
         }
 
         fun reload() {
-            if (state.value !is RequestDetailUiState.Ready) state.value = RequestDetailUiState.Loading
+            state.update { current ->
+                when (current) {
+                    is RequestDetailUiState.Ready -> current
+                    is RequestDetailUiState.Seeded -> current.copy(error = null)
+                    else -> RequestDetailUiState.Loading
+                }
+            }
             viewModelScope.launch(dispatcher) {
-                state.value =
-                    runCatching { load() }
-                        .fold({ RequestDetailUiState.Ready(it) }, { RequestDetailUiState.Error(it.toSeerrError()) })
+                seedFromCache()
+                val result = runCatching { load() }
+                state.update { current ->
+                    result.fold(
+                        { RequestDetailUiState.Ready(it) },
+                        { failure ->
+                            // A seeded page keeps its header and reports the failure beside it.
+                            (current as? RequestDetailUiState.Seeded)?.copy(error = failure.toSeerrError())
+                                ?: RequestDetailUiState.Error(failure.toSeerrError())
+                        },
+                    )
+                }
                 reloadingAfterAction.value = false
             }
+        }
+
+        /** Shows the cached row's hero in place of the skeleton, if a list has the request and nothing has landed yet. */
+        private suspend fun seedFromCache() {
+            if (state.value !is RequestDetailUiState.Loading) return
+            val item = runCatching { cache.byId(requestId)?.toRequestItem() }.getOrNull() ?: return
+            state.update { current -> if (current is RequestDetailUiState.Loading) RequestDetailUiState.Seeded(item) else current }
         }
 
         private fun reloadAfterAction() {
