@@ -88,4 +88,6 @@
     <dimen name="tv_consent_point_icon">24dp</dimen>
     <dimen name="tv_consent_point_text_gap">6dp</dimen>
     <dimen name="hub_quota_bar_width">72dp</dimen>
+    <!-- The Settings screen's one plate where the admin groups will land while they are still answering. -->
+    <dimen name="settings_pending_groups_height">240dp</dimen>
 </resources>
