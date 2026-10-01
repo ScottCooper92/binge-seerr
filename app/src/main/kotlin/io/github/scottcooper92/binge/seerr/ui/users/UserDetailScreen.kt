@@ -234,7 +234,7 @@ private fun ProfileHeader(
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
             Text(item.name, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val joined = formatRelativeOrAbsolute(item.createdAtMillis)?.let { stringResource(R.string.user_joined, it) }
-            val username = item.handle ?: item.name
+            val username = item.handle ?: item.email
             listOfNotNull(
                 listOfNotNull(username, joined).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty {
                     null

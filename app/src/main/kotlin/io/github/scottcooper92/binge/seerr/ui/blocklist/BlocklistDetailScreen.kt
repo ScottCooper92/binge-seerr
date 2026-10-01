@@ -163,11 +163,11 @@ private fun BlocklistDetailFacts(item: BlocklistItem) {
                     clickable = false,
                 )
             },
-            item.addedAtMillis?.let {
+            formatRelativeOrAbsolute(item.addedAtMillis)?.let {
                 SettingsRow(
                     icon = Icons.Filled.Schedule,
                     label = stringResource(R.string.blocklist_detail_blocked_at),
-                    detail = formatRelativeOrAbsolute(it).orEmpty(),
+                    detail = it,
                     clickable = false,
                 )
             },
