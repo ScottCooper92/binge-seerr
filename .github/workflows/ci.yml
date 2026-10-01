@@ -176,6 +176,12 @@ jobs:
           tar xzf actionlint.tar.gz actionlint
           ./actionlint -shellcheck 'shellcheck --severity=warning'
 
+      # actionlint cannot read composite actions (#562). This shellchecks their `run:` blocks and
+      # checks that each `env.X` / `inputs.X` they read is declared; see the script header for
+      # what that does and does not prove.
+      - name: Check composite actions
+        run: python3 .github/scripts/check-actions.py
+
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
   # closes itself on the next green run, so an open one means "still broken", not "old".
