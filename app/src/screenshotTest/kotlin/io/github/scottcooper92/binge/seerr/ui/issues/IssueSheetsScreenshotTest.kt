@@ -21,7 +21,10 @@ class IssueSheetsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun manageWithDelete() = SheetFrame { IssueManageContent("Seerr", "Plex", "Radarr", onOpenWeb = {}, onOpenMediaServer = {}, onOpenService = {}) }
+    fun manageWithDelete() =
+        SheetFrame {
+            IssueManageContent("Seerr", "Plex", "Radarr", onOpenWeb = {}, onOpenMediaServer = {}, onOpenService = {})
+        }
 
     /** Without the permission to delete, the web link is all there is. */
     @PreviewTest

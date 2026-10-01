@@ -109,8 +109,12 @@ private fun RequestDetailViewModel.toActions(
         onDismissReport = ::dismissReport,
         onApprove = { moderation.approve(requestId) },
         onRetryRequest = { moderation.retry(requestId) },
-        onDecline = { block -> ((state as? RequestDetailUiState.Ready)?.detail?.item ?: fallbackItem)?.let { moderation.decline(it, block) } },
-        onRemove = { block -> ((state as? RequestDetailUiState.Ready)?.detail?.item ?: fallbackItem)?.let { moderation.remove(it, block) } },
+        onDecline = { block ->
+            ((state as? RequestDetailUiState.Ready)?.detail?.item ?: fallbackItem)?.let { moderation.decline(it, block) }
+        },
+        onRemove = { block ->
+            ((state as? RequestDetailUiState.Ready)?.detail?.item ?: fallbackItem)?.let { moderation.remove(it, block) }
+        },
         onStartEdit = ::startEdit,
         siblingSheet = siblingSheet,
         onOpenUser = onOpenUser,

@@ -31,6 +31,7 @@ internal fun IssueManageSheet(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
+
     fun open(url: String): () -> Unit =
         {
             onDismiss()
@@ -61,7 +62,11 @@ internal fun IssueManageContent(
     Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
         ManageRow(stringResource(R.string.open_in_named, serverName), onOpenWeb)
         onOpenMediaServer?.let {
-            ManageRow(mediaServerName?.let { name -> stringResource(R.string.open_in_named, name) } ?: stringResource(R.string.request_open_media_server), it)
+            ManageRow(
+                mediaServerName?.let { name -> stringResource(R.string.open_in_named, name) }
+                    ?: stringResource(R.string.request_open_media_server),
+                it,
+            )
         }
         onOpenService?.let { ManageRow(stringResource(R.string.open_in_named, serviceName), it) }
     }
