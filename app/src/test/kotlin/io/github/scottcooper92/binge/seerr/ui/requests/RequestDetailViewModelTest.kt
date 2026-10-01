@@ -16,10 +16,13 @@ import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -33,6 +36,7 @@ import org.junit.rules.TemporaryFolder
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -307,6 +311,39 @@ class RequestDetailViewModelTest {
 
             assertEquals(RequestActions(), detail.actions)
             assertFalse(detail.canReportIssue)
+        }
+
+    @Test
+    fun `isActing holds from the moderation call through the reload that follows it, then clears`() =
+        runTest {
+            server(ADMIN)
+            val approve = CountDownLatch(1)
+            val reload = CountDownLatch(1)
+            val page = responses.getValue("/api/v1/request/11")
+            val pageReads = AtomicInteger()
+            responses["/api/v1/request/11"] = {
+                // The second read is the reload the approval triggers; hold it open.
+                if (pageReads.incrementAndGet() == 2) reload.await()
+                page()
+            }
+            responses["/api/v1/request/11/approve"] = {
+                approve.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            val vm = viewModel()
+            assertFalse(vm.awaitReady().isActing)
+
+            vm.moderation.approve(11)
+            assertTrue(vm.awaitReady { it.isActing }.isActing)
+
+            approve.countDown()
+            // The approval has settled and the reload is still held: nothing but the reload marks the page.
+            // Real time on a real dispatcher: sleeping here would block the test dispatcher the reload is queued on.
+            withContext(Dispatchers.Default) { while (pageReads.get() < 2) delay(10) }
+            assertTrue(vm.awaitReady { it.isActing }.isActing)
+
+            reload.countDown()
+            assertFalse(vm.awaitReady { !it.isActing }.isActing)
         }
 
     @Test

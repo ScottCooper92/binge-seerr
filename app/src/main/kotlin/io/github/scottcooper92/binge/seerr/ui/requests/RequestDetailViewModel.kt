@@ -71,6 +71,9 @@ class RequestDetailViewModel
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
+        /** Raised when a moderation lands and held until the reload it triggers has written its result. */
+        private val reloadingAfterModeration = MutableStateFlow(false)
+
         /** A moderation reloads the page, so the chip and the history show the server's new answer. */
         val moderation =
             RequestModeration(
@@ -79,15 +82,16 @@ class RequestDetailViewModel
                 connection = connection,
                 analytics = analytics,
                 crashBreadcrumbs = crashBreadcrumbs,
-                onModerated = ::reload,
+                onModerated = ::reloadAfterModeration,
             )
 
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
         val editor = RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderation)
 
         val uiState: StateFlow<RequestDetailUiState> =
-            combine(state, editor.state) { page, edit -> (page as? RequestDetailUiState.Ready)?.copy(edit = edit) ?: page }
-                .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
+            combine(state, editor.state, moderation.actingIds, reloadingAfterModeration) { page, edit, actingIds, reloading ->
+                (page as? RequestDetailUiState.Ready)?.copy(edit = edit, isActing = requestId in actingIds || reloading) ?: page
+            }.stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
         private var editSource: EditSource? = null
 
@@ -106,7 +110,14 @@ class RequestDetailViewModel
                 state.value =
                     runCatching { load() }
                         .fold({ RequestDetailUiState.Ready(it) }, { RequestDetailUiState.Error(it.toSeerrError()) })
+                reloadingAfterModeration.value = false
             }
+        }
+
+        /** [RequestModeration] clears its acting set before this runs, so the reload gets its own flag to keep the page marked. */
+        private fun reloadAfterModeration() {
+            reloadingAfterModeration.value = true
+            reload()
         }
 
         /** Files an issue against the request's media; the server keys issues on its own media id, not TMDB's. */

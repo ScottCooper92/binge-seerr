@@ -44,6 +44,7 @@ import com.binge.designsystem.R as DesR
 internal fun RequestHeroMeta(
     detail: RequestDetail,
     modifier: Modifier = Modifier,
+    isActing: Boolean = false,
 ) {
     val item = detail.item
     val chip = item.statusChip()
@@ -61,7 +62,7 @@ internal fun RequestHeroMeta(
             )
         }
         MediaTypeTag(type = item.mediaType.toTagType())
-        RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
+        RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone, modifier = Modifier.actingDim(isActing))
         if (item.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
     }
 }

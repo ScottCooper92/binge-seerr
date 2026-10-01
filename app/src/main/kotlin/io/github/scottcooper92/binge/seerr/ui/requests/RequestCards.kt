@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
@@ -56,6 +57,7 @@ internal fun RequestCard(
     onClick: (() -> Unit)?,
     onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    isActing: Boolean = false,
 ) {
     val people = requestPeopleFacts(detail, onOpenUser).filterNot { it.isBlank() }
     val destination = requestDestinationFacts(detail).filter { it.icon != Icons.Filled.Sell && !it.isBlank() }
@@ -71,13 +73,18 @@ internal fun RequestCard(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f).semantics { heading() },
             )
-            SummaryStatus(summary)
+            SummaryStatus(summary, Modifier.actingDim(isActing))
         }
         people.forEach { CardPersonRow(it) }
         if (people.isNotEmpty() && hasInfo) CardDivider()
         if (hasInfo) CardInfoRows(summary, destination)
         if (onClick != null) {
-            BingeTextButton(label = actionLabel, onClick = onClick, modifier = Modifier.align(Alignment.CenterHorizontally))
+            BingeTextButton(
+                label = actionLabel,
+                onClick = onClick,
+                enabled = !isActing,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
         }
     }
 }
@@ -92,10 +99,12 @@ internal fun RequestCardSection(
     onOpenRequest: (Int) -> Unit,
     onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    isActing: Boolean = false,
 ) {
     Column(modifier = modifier.padding(horizontal = resolvedContentInset())) {
         RequestCard(
             detail = detail,
+            isActing = isActing,
             onClick = { onOpenRequest(detail.item.id) }.takeIf { detail.hasPrimaryAction },
             onOpenUser = onOpenUser,
         )
@@ -276,8 +285,11 @@ private fun CardDivider() {
 }
 
 @Composable
-private fun SummaryStatus(summary: RequestSummary) {
-    RequestStateChip(status = summary.status ?: SeerrRequestStatusCode.Pending)
+private fun SummaryStatus(
+    summary: RequestSummary,
+    modifier: Modifier = Modifier,
+) {
+    RequestStateChip(status = summary.status ?: SeerrRequestStatusCode.Pending, modifier = modifier)
 }
 
 @Composable
@@ -288,3 +300,8 @@ private fun CardChevron() {
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
+
+private const val ACTING_ALPHA = 0.5f
+
+/** The page's dimmed look for what a running moderation is about to change. */
+internal fun Modifier.actingDim(isActing: Boolean): Modifier = if (isActing) alpha(ACTING_ALPHA) else this

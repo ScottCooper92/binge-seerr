@@ -87,6 +87,12 @@ class RequestDetailScreenshotTest {
             }
         }
 
+    /** A moderation running or reloading: the thin bar under the status bar, the chip dimmed and the primary action disabled. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun acting() = Frame(pendingDetail(), isActing = true)
+
     /** Type, availability and 4K as three chips on the headline row, wrapping rather than clipping (#340). */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -107,9 +113,11 @@ class RequestDetailScreenshotTest {
 private fun Frame(
     detail: RequestDetail,
     scrollState: ScrollState = rememberScrollState(),
+    isActing: Boolean = false,
 ) {
     RequestDetailPage(
         detail = detail,
+        isActing = isActing,
         scrollState = scrollState,
         onBack = {},
         onOpen = {},

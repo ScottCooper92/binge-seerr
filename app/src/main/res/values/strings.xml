@@ -169,6 +169,7 @@
     <string name="request_edited">Request updated</string>
     <string name="request_edit_title">Edit request</string>
     <string name="request_primary_review">Review request</string>
+    <string name="request_updating">Updating request</string>
     <string name="request_primary_manage">Manage</string>
     <string name="request_edit_save">Save changes</string>
     <string name="request_edit_seasons">Seasons</string>

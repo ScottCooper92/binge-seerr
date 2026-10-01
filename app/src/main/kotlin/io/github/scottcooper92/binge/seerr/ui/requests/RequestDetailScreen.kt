@@ -1,12 +1,18 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,9 +21,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.resolvedContentInset
@@ -115,6 +124,7 @@ private fun Ready(
     val links = rememberRequestOpenLinks(detail)
     RequestDetailPage(
         detail = detail,
+        isActing = state.isActing,
         onBack = actions.onBack,
         onOpen = { opening = true }.takeIf { links.isNotEmpty() },
         onReport = { reporting = true }.takeIf { detail.canReportIssue },
@@ -227,6 +237,38 @@ internal fun RequestDetailPage(
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     initiallyOverflowing: Boolean = false,
+    isActing: Boolean = false,
+) {
+    Box(modifier = modifier) {
+        RequestDetailHero(detail, isActing, onBack, onOpen, onReport, onOpenRequest, onOpenUser, scrollState, initiallyOverflowing)
+        if (isActing) ActingProgressBar(Modifier.align(Alignment.TopCenter))
+    }
+}
+
+/** Indeterminate and under the status bar, so nothing on the page moves when it appears. */
+@Composable
+private fun ActingProgressBar(modifier: Modifier = Modifier) {
+    val label = stringResource(R.string.request_updating)
+    LinearProgressIndicator(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .semantics { contentDescription = label },
+    )
+}
+
+@Composable
+private fun RequestDetailHero(
+    detail: RequestDetail,
+    isActing: Boolean,
+    onBack: () -> Unit,
+    onOpen: (() -> Unit)?,
+    onReport: (() -> Unit)?,
+    onOpenRequest: (Int) -> Unit,
+    onOpenUser: (Int) -> Unit,
+    scrollState: ScrollState,
+    initiallyOverflowing: Boolean,
 ) {
     val item = detail.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
@@ -234,9 +276,8 @@ internal fun RequestDetailPage(
         title = title,
         backdropUrl = detail.backdropUrl,
         metaText = "",
-        metaContent = { RequestHeroMeta(detail) },
+        metaContent = { RequestHeroMeta(detail, isActing = isActing) },
         onBack = onBack,
-        modifier = modifier,
         scrollState = scrollState,
         topBarActions = {
             onOpen?.let {
@@ -263,7 +304,7 @@ internal fun RequestDetailPage(
         body = {
             RequestHeadline(detail, Modifier.padding(resolvedContentInset()), initiallyOverflowing)
             RequestStats(detail)
-            RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser)
+            RequestCardSection(detail, isActing = isActing, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser)
             RequestSections(detail)
         },
     )
