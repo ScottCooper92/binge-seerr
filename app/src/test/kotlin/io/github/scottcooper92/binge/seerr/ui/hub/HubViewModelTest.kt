@@ -32,6 +32,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -337,6 +338,8 @@ class HubViewModelTest {
         runTest {
             healthyServer()
             viewModel().awaitReady { it.overview.account != null }
+            // The user has left the hub: its ViewModel is gone, so only the cache can carry its overview forward.
+            viewModels.clear()
             connection.disconnect()
             connection.connect("http://other-seerr.test:8080/", SeerrAuth.ApiKey("k3y-2")).getOrThrow()
             val release = CountDownLatch(1)
@@ -374,6 +377,34 @@ class HubViewModelTest {
             runCurrent()
 
             assertEquals(HubUiState.Loading, vm.uiState.value)
+        }
+
+    @Test
+    fun `a live hub never shows the previous account's overview while new credentials are saved over it`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel()
+            vm.awaitReady { it.overview.account != null }
+            val states = mutableListOf<HubUiState>()
+            backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
+            states.clear()
+            // The connect's own probe reads auth/me once; every read after it, the live hub's reload included, fails.
+            val probes = AtomicInteger()
+            val healthy = responses.getValue("/api/v1/auth/me")
+            responses["/api/v1/auth/me"] = {
+                if (probes.getAndIncrement() ==
+                    0
+                ) {
+                    healthy()
+                } else {
+                    FakeResponse(code = 503, headers = headersOf("Content-Type", "application/json"), body = "")
+                }
+            }
+
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("other-k3y")).getOrThrow()
+            runCurrent()
+
+            assertTrue(states.none { it is HubUiState.Ready && it.overview.account != null })
         }
 
     @Test

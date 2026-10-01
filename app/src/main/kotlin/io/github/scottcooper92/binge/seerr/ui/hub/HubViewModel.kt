@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -51,19 +52,18 @@ class HubViewModel
         private val installedTrigger = MutableStateFlow(installCheck.isInstalled())
 
         /** Bumped by a manual/auto re-check and by the connection itself changing underneath this instance. */
-        private val reloadTrigger: Flow<Unit> =
-            combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, _ -> Unit }
+        private val reloadTrigger: Flow<SeerrCredentials?> =
+            combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, credentials -> credentials }
 
         /** `flowOn(dispatcher)` per #177/#370: without it, [HubOverviewLoader.server]'s suspend call resumes on Main. */
         private val server: Flow<HubServer?> =
             reloadTrigger
-                .flatMapLatest {
+                .flatMapLatest { credentials ->
                     flow {
-                        val generation = cache.generation()
-                        val remembered = cache.server
+                        val remembered = cache.serverFor(credentials)
                         remembered?.let { emit(it) }
                         val fresh = runCatching { loader.server() }.getOrNull()
-                        fresh?.let { cache.remember(generation, server = it) }
+                        fresh?.let { cache.remember(credentials, server = it) }
                         // A failed refresh keeps the remembered server rather than blanking the hub.
                         if (fresh != null || remembered == null) emit(fresh)
                     }
@@ -77,12 +77,11 @@ class HubViewModel
         /** Same `flowOn(dispatcher)` reason as [server]: [HubOverviewLoader.load] suspends too. */
         private val overview: Flow<HubOverview> =
             reloadTrigger
-                .flatMapLatest {
+                .flatMapLatest { credentials ->
                     flow {
-                        val generation = cache.generation()
-                        val remembered = cache.overview
+                        val remembered = cache.overviewFor(credentials)
                         emit(remembered ?: HubOverview())
-                        emit(refreshed(generation, remembered, loader.load()))
+                        emit(refreshed(credentials, remembered, loader.load()))
                     }
                 }.flowOn(dispatcher)
 
@@ -92,14 +91,14 @@ class HubViewModel
          * under the stale-but-useful hub. A rejected session forgets it: permissions may be gone.
          */
         private fun refreshed(
-            generation: Int,
+            credentials: SeerrCredentials?,
             remembered: HubOverview?,
             fresh: HubOverview,
         ): HubOverview =
             when {
-                fresh.userLoad == HubUserLoad.Loaded -> fresh.also { cache.remember(generation, overview = it) }
+                fresh.userLoad == HubUserLoad.Loaded -> fresh.also { cache.remember(credentials, overview = it) }
                 fresh.userLoad == HubUserLoad.Failed && remembered != null -> remembered.copy(userLoad = HubUserLoad.Failed)
-                else -> fresh.also { cache.forgetOverview() }
+                else -> fresh.also { cache.forgetOverview(credentials) }
             }
 
         /** A count read on becoming visible, overriding the overview's until the next re-check reloads everything. */
