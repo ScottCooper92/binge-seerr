@@ -662,6 +662,8 @@
     <string name="server_settings_logs_search">Search the log</string>
     <string name="server_settings_logs_empty">Nothing logged at this level</string>
     <string name="server_settings_logs_copy">Copy line</string>
+    <string name="server_settings_logs_expand">Show details</string>
+    <string name="server_settings_logs_collapse">Hide details</string>
     <string name="server_settings_log_debug">Debug</string>
     <string name="server_settings_log_info">Info</string>
     <string name="server_settings_log_warn">Warning</string>

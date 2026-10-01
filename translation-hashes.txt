@@ -468,8 +468,10 @@ app:server_settings_log_info  170322a32f3c
 app:server_settings_log_warn  e981ddae45d8
 app:server_settings_logs  ea2100dc89ae
 app:server_settings_logs_caption  d61c5767f9dd
+app:server_settings_logs_collapse  c9722a7a962a
 app:server_settings_logs_copy  744b288951b4
 app:server_settings_logs_empty  d0c532dc8df4
+app:server_settings_logs_expand  1af77ee273cb
 app:server_settings_logs_search  e8895952bdcd
 app:server_settings_media_server  b44e32763b07
 app:server_settings_media_server_caption  0e4c085f345d

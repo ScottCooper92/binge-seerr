@@ -639,6 +639,8 @@
     <string name="server_settings_logs_search">Buscar en el registro</string>
     <string name="server_settings_logs_empty">No hay nada registrado en este nivel</string>
     <string name="server_settings_logs_copy">Copiar la línea</string>
+    <string name="server_settings_logs_expand">Mostrar detalles</string>
+    <string name="server_settings_logs_collapse">Ocultar detalles</string>
     <string name="server_settings_log_debug">Depuración</string>
     <string name="server_settings_log_info">Información</string>
     <string name="server_settings_log_warn">Aviso</string>
