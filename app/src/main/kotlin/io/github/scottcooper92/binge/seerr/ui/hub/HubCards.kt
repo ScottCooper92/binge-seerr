@@ -183,7 +183,20 @@ internal fun AccountCard(
     HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, inset, contentPadding = PaddingValues()) {
         val rowPadding = dimensionResource(DesR.dimen.settings_group_row_padding_h)
         Row(
-            modifier = Modifier.padding(start = rowPadding, top = rowPadding, end = rowPadding, bottom = if (quota == null) rowPadding else Dp.Hairline),
+            modifier =
+                Modifier.padding(
+                    start = rowPadding,
+                    top = rowPadding,
+                    end = rowPadding,
+                    bottom =
+                        if (quota ==
+                            null
+                        ) {
+                            rowPadding
+                        } else {
+                            Dp.Hairline
+                        },
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(

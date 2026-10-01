@@ -741,7 +741,7 @@ app:user_delete  58363fd94240
 app:user_delete_confirm_message  a02ad34c7a48
 app:user_delete_confirm_title  6474596f1237
 app:user_detail_title  b512d97e7cbf
-app:user_joined  69318b0c6a92
+app:user_joined  c7c6c5e98711
 app:user_no_requests  ea923f45a415
 app:user_origin_local  871e019bee76
 app:user_permissions_title  abccc78cc93c

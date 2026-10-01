@@ -156,7 +156,12 @@ private fun BlocklistDetailFacts(item: BlocklistItem) {
     val rows =
         listOfNotNull(
             item.addedBy?.let {
-                SettingsRow(icon = Icons.Filled.Person, label = stringResource(R.string.blocklist_detail_blocked_by), detail = it, clickable = false)
+                SettingsRow(
+                    icon = Icons.Filled.Person,
+                    label = stringResource(R.string.blocklist_detail_blocked_by),
+                    detail = it,
+                    clickable = false,
+                )
             },
             item.addedAtMillis?.let {
                 SettingsRow(

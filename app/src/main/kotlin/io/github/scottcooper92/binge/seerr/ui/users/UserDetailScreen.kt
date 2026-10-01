@@ -235,7 +235,12 @@ private fun ProfileHeader(
             Text(item.name, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val joined = formatRelativeOrAbsolute(item.createdAtMillis)?.let { stringResource(R.string.user_joined, it) }
             val username = item.handle ?: item.name
-            listOfNotNull(listOfNotNull(username, joined).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty { null }, item.email?.takeUnless { it.equals(username, ignoreCase = true) }).forEach {
+            listOfNotNull(
+                listOfNotNull(username, joined).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty {
+                    null
+                },
+                item.email?.takeUnless { it.equals(username, ignoreCase = true) },
+            ).forEach {
                 Text(
                     it,
                     style = MaterialTheme.typography.bodyMedium,
