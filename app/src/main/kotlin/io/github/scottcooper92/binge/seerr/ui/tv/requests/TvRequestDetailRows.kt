@@ -50,7 +50,7 @@ import com.binge.designsystem.R as DesR
 internal fun TvRequestDetailFacts(
     item: RequestItem,
     hasSeasons: Boolean,
-    destination: RequestDestination? = null,
+    destination: RequestDestination?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xxs))) {
         val chip = item.statusChip()

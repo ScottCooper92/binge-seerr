@@ -66,6 +66,21 @@ internal fun noPrimaryActionDetail(): RequestDetail =
  * [detailWithSiblings] is — with those in, "This request" falls below the single `phone`-height
  * frame this state takes, and the fallback row this fixture exists to cover would never render.
  */
+internal fun autoApprovedDetail(): RequestDetail =
+    detail(
+        actions = RequestActions(canRemove = true, canBlock = true),
+        status = SeerrRequestStatusCode.Approved,
+        mediaStatus = SeerrMediaStatusCode.Available,
+        canEdit = false,
+        modifiedBy = null,
+        modifiedById = null,
+        destination = null,
+        watch = null,
+        seasons = emptyList(),
+        overview = null,
+    )
+
+/** Settled with a destination carrying six tags: the case the tag line has to wrap. */
 internal fun manyTagsDetail(): RequestDetail =
     detail(
         actions = RequestActions(canRemove = true, canBlock = true),
@@ -79,20 +94,6 @@ internal fun manyTagsDetail(): RequestDetail =
                 rootFolder = "/tv",
                 tags = listOf("kids", "anime", "4k-hdr", "weekly", "english-audio", "no-subs"),
             ),
-    )
-
-internal fun autoApprovedDetail(): RequestDetail =
-    detail(
-        actions = RequestActions(canRemove = true, canBlock = true),
-        status = SeerrRequestStatusCode.Approved,
-        mediaStatus = SeerrMediaStatusCode.Available,
-        canEdit = false,
-        modifiedBy = null,
-        modifiedById = null,
-        destination = null,
-        watch = null,
-        seasons = emptyList(),
-        overview = null,
     )
 
 /**
