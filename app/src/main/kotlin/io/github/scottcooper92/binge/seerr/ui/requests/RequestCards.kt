@@ -29,7 +29,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -200,7 +199,10 @@ private fun CardInfoRows(
 }
 
 @Composable
-private fun FactIconBox(fact: Fact) {
+private fun FactIconBox(
+    fact: Fact,
+    contentDescription: String? = null,
+) {
     Box(
         modifier =
             Modifier
@@ -211,7 +213,7 @@ private fun FactIconBox(fact: Fact) {
     ) {
         Icon(
             imageVector = fact.icon,
-            contentDescription = null,
+            contentDescription = contentDescription,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(dimensionResource(DesR.dimen.settings_group_icon_glyph)),
         )
@@ -227,11 +229,11 @@ private fun CardDestinationLine(facts: List<Fact>) {
     ) {
         facts.forEach { fact ->
             Column(
-                modifier = Modifier.weight(1f).semantics(mergeDescendants = true) { contentDescription = fact.label },
+                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
             ) {
-                FactIconBox(fact)
+                FactIconBox(fact, contentDescription = fact.label)
                 Text(
                     text = fact.primary.plainText(),
                     style = MaterialTheme.typography.bodySmall,
