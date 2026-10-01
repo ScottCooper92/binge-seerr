@@ -25,6 +25,7 @@ import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
@@ -37,6 +38,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -194,15 +196,46 @@ class SettingsViewModelTest {
     fun `a group that is slow to answer is held as a placeholder once the wait runs out`() =
         runTest {
             server(ADMIN)
+            val release = CountDownLatch(1)
             responses["/api/v1/settings/main"] = {
-                Thread.sleep(SETTLE_MILLIS + SETTLE_MILLIS / 2)
+                release.await()
                 FakeResponse(code = 200, body = "{}")
             }
             val vm = viewModel()
 
+            advanceTimeBy(SETTLE_MILLIS + 1)
             val ready = vm.awaitReady { true }
+            release.countDown()
 
             assertTrue(ready.pending)
+        }
+
+    @Test
+    fun `a different account on the same server does not start on the last one's rows`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            connection.disconnect()
+            server(REQUEST)
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("other")).getOrThrow()
+            val again =
+                SettingsViewModel(
+                    connection,
+                    SettingsLoader(connection),
+                    cache,
+                    prefs,
+                    scheduler,
+                    notifier,
+                    feedbackPrefs,
+                    telemetryPrefs,
+                    BugReportLinks(),
+                    mainDispatcherRule.dispatcher,
+                )
+
+            val first = again.uiState.first()
+            assertTrue(first is SettingsUiState.Loading || (first as SettingsUiState.Ready).config == null)
         }
 
     @Test

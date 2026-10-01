@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
+import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -56,13 +57,14 @@ private val <T> Read<T>.valueOrNull: T? get() = (this as? Read.Done<T>)?.value
 /**
  * The last answers for the server this process is connected to, so a return to Settings paints the
  * screen it left and refreshes it in place instead of rebuilding it from nothing. Keyed by the
- * server's address: a different server starts empty rather than showing the old one's rows.
+ * server's address and the sign-in: a different server, or a different account on the same one, starts
+ * empty rather than showing the old one's rows, which may be ones this viewer may not see.
  */
 @Singleton
 class SettingsReadCache
     @Inject
     constructor() {
-        private var baseUrl: String? = null
+        private var identity: Pair<String, SeerrAuth>? = null
 
         @Volatile var summary: ConnectionSummary? = null
 
@@ -72,9 +74,10 @@ class SettingsReadCache
 
         @Volatile var offered: Read<List<NotificationSignal>>? = null
 
-        fun adopt(baseUrl: String?) {
-            if (baseUrl == this.baseUrl) return
-            this.baseUrl = baseUrl
+        @Synchronized
+        fun adopt(identity: Pair<String, SeerrAuth>?) {
+            if (identity == this.identity) return
+            this.identity = identity
             summary = null
             server = null
             config = null
@@ -122,7 +125,17 @@ class SettingsViewModel
                 .mapLatest { trigger -> trigger.also { loader.refreshViewer() } }
                 .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
-        private suspend fun seeded(): SettingsReadCache = cache.also { it.adopt(runCatching { connection.current().baseUrl }.getOrNull()) }
+        private suspend fun seeded(): SettingsReadCache =
+            cache.also {
+                it.adopt(
+                    runCatching {
+                        connection.current().let { c ->
+                            c.baseUrl to
+                                c.auth
+                        }
+                    }.getOrNull(),
+                )
+            }
 
         private val summary: Flow<ConnectionSummary?> =
             viewerRefreshed

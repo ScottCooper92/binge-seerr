@@ -20,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.resolvedContentInset
@@ -173,12 +172,15 @@ private fun SettingsContent(
 private fun PendingGroups() {
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     SkeletonPlate(
-        modifier = Modifier.padding(horizontal = resolvedContentInset()).fillMaxWidth().height(PENDING_GROUPS_HEIGHT),
+        modifier =
+            Modifier
+                .padding(
+                    horizontal = resolvedContentInset(),
+                ).fillMaxWidth()
+                .height(dimensionResource(R.dimen.settings_pending_groups_height)),
         shape = BingeShapes.Large,
     )
 }
-
-private val PENDING_GROUPS_HEIGHT = 240.dp
 
 /** A titled group with the screen's spacing above it; skipped when it has no rows. */
 @Composable
