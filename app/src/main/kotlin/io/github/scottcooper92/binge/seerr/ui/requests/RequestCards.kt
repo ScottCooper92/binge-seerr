@@ -5,8 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,11 +34,11 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
@@ -65,10 +63,11 @@ internal fun RequestCard(
     isActing: Boolean = false,
 ) {
     val people = requestPeopleFacts(detail, onOpenUser).filterNot { it.isBlank() }
-    val destination = requestDestinationFacts(detail).filter { it.icon != Icons.Filled.Sell && !it.isBlank() }
+    val allDestination = requestDestinationFacts(detail).filterNot { it.isBlank() }
+    val destination = allDestination.filter { it.icon != Icons.Filled.Sell }
+    val tags = allDestination.firstOrNull { it.icon == Icons.Filled.Sell }
     val summary = detail.summaries().first()
-    val tags = detail.destination?.tags.orEmpty()
-    val hasInfo = destination.isNotEmpty() || tags.isNotEmpty() || summary.is4k || summary.seasonNumbers.isNotEmpty()
+    val hasInfo = destination.isNotEmpty() || tags != null || summary.is4k || summary.seasonNumbers.isNotEmpty()
     val reviewable = detail.actions.canApprove || detail.actions.canRetry
     val actionLabel = stringResource(if (reviewable) R.string.request_primary_review else R.string.request_primary_manage)
     Column(modifier = modifier.fillMaxWidth().cardSurface()) {
@@ -151,7 +150,7 @@ internal fun RequestSummaryGroup(
                             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
                             summary.seasonNumbers
                                 .takeIf { it.isNotEmpty() }
-                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.joinToString(", ")) },
+                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
                         ).joinToString(stringResource(R.string.hub_meta_separator)),
                     trailingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -194,44 +193,26 @@ private fun CardPersonRow(fact: Fact) {
     }
 }
 
-/** What it asked for as a row of its own, then server, quality and folder side by side. */
+/** What it asked for as a row of its own, then server, quality and folder side by side, then its tags. */
 @Composable
 private fun CardInfoRows(
     summary: RequestSummary,
     destination: List<Fact>,
-    tags: List<String>,
+    tags: Fact?,
 ) {
     val asked =
         listOfNotNull(
             summary.seasonNumbers
                 .takeIf { it.isNotEmpty() }
-                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.joinToString(", ")) },
+                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
         ).joinToString(stringResource(R.string.hub_meta_separator))
     if (asked.isNotEmpty()) {
         CardPersonRow(Fact(Icons.Filled.Info, stringResource(R.string.request_card_info), primary = "", secondary = asked))
     }
     if (destination.isNotEmpty()) CardDestinationLine(destination)
-    if (tags.isNotEmpty()) CardTagsRow(tags)
-}
-
-/** The request's tags as chips, which wrap where a line of server, quality and folder would have to truncate them. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun CardTagsRow(tags: List<String>) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(cardRowPadding()),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        FactIconBox(Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), primary = ""))
-        Spacer(Modifier.width(dimensionResource(DesR.dimen.account_card_spacing)))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            tags.forEach { BingeTag(label = it, uppercase = false) }
-        }
-    }
+    // Tags are free text of any length, so they get a row of their own rather than a column of the line above.
+    tags?.let { CardPersonRow(Fact(it.icon, it.label, primary = "", secondary = it.primary.plainText())) }
 }
 
 @Composable

@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.grpc.BindableService
 import io.grpc.binder.SecurityPolicy
 import javax.inject.Inject
@@ -29,8 +30,19 @@ class SeerrCompanionService : IntegrationService() {
     @Inject
     lateinit var bingeConnection: BingeConnectionStore
 
+    @Inject
+    lateinit var analytics: Analytics
+
     override fun services(): List<BindableService> =
-        listOf(SeerrRequestService(connection, BuildConfig.VERSION_NAME, statusCache = statuses, bingeConnection = bingeConnection))
+        listOf(
+            SeerrRequestService(
+                connection,
+                BuildConfig.VERSION_NAME,
+                statusCache = statuses,
+                bingeConnection = bingeConnection,
+                analytics = analytics,
+            ),
+        )
 
     /**
      * Debug builds admit any caller, because a debug Binge is signed with its developer's own key

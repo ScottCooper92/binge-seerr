@@ -20,6 +20,9 @@ object AnalyticsEvents {
     const val OVERRIDE_RULE_CHANGED = "override_rule_changed"
     const val NOTIFICATION_AGENT_CHANGED = "notification_agent_changed"
 
+    /** A server operation failed in a way a server version could explain; see `operationFailed`. */
+    const val REQUEST_OPERATION_FAILED = "request_operation_failed"
+
     const val PARAM_ACTION = "action"
     const val PARAM_METHOD = "method"
     const val PARAM_SUCCESS = "success"
@@ -27,4 +30,9 @@ object AnalyticsEvents {
     const val PARAM_TYPE = "type"
     const val PARAM_AGENT = "agent"
     const val PARAM_SIGNAL = "signal"
+    const val PARAM_OPERATION = "operation"
+    const val PARAM_HTTP_STATUS = "http_status"
+    const val PARAM_GRPC_STATUS = "grpc_status"
+    const val PARAM_SERVER_LINEAGE = "server_lineage"
+    const val PARAM_SERVER_VERSION = "server_version"
 }

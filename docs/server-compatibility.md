@@ -111,7 +111,7 @@ The request page reads the request's own `serverId`, `profileId`, `rootFolder` a
 and `/service/{radarr,sonarr}/{id}`. Tags arrive as ids and are shown by label, so the labels are only
 as available as that second lookup: where it fails (the administrator removed the instance, or the
 server refuses this user) the tags are dropped rather than shown as numbers. A request made without
-tags sends `"tags": null` on the Jellyseerr lineage, which reads as none. The chips and the lines on
+tags sends `"tags": null` on the Jellyseerr lineage, which reads as none. The tag row on the phone card and the lines on
 the TV screen are read-outs, so they carry no permission gate of their own; the destination *editor*
 still needs `REQUEST_ADVANCED`.
 

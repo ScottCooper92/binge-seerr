@@ -80,22 +80,6 @@ internal fun autoApprovedDetail(): RequestDetail =
         overview = null,
     )
 
-/** Settled with a destination carrying six tags: the case the tag line has to wrap. */
-internal fun manyTagsDetail(): RequestDetail =
-    detail(
-        actions = RequestActions(canRemove = true, canBlock = true),
-        status = SeerrRequestStatusCode.Approved,
-        mediaStatus = SeerrMediaStatusCode.Processing,
-        canEdit = false,
-        destination =
-            RequestDestination(
-                serverName = "Sonarr",
-                profileName = "HD-1080p",
-                rootFolder = "/tv",
-                tags = listOf("kids", "anime", "4k-hdr", "weekly", "english-audio", "no-subs"),
-            ),
-    )
-
 /**
  * Partly available in 4K: the longest availability label plus a third chip on the headline row —
  * the case the "row survives a narrow window" done-when item (#340) asks to wrap rather than clip.
