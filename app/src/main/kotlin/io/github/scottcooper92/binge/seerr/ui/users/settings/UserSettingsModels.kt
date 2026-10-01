@@ -41,6 +41,8 @@ data class GeneralSettings(
     /** What the server falls back to when the display name is blank: the media-server username, or the email. */
     val fallbackName: String = "",
     val email: String = "",
+    /** The email as the server sent it. Seerr stores a media-server username there for users with no address. */
+    val loadedEmail: String = "",
     val discordId: String = "",
     val locale: String = "",
     val region: String = "",
@@ -58,8 +60,8 @@ data class GeneralSettings(
     val canEditQuotas: Boolean = false,
     val canEditEmail: Boolean = false,
 ) {
-    /** Blank clears the address; anything else has to look like one. */
-    val emailValid: Boolean get() = email.isBlank() || email.isEmailShape()
+    /** Blank clears the address and the value the server sent is kept as it was; a changed one has to look like an address. */
+    val emailValid: Boolean get() = email.isBlank() || email.trim() == loadedEmail.trim() || email.isEmailShape()
 
     /** Blank clears the ID; anything else has to be digits only. */
     val discordIdValid: Boolean get() = discordId.isBlank() || discordId.isDiscordIdShape()
