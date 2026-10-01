@@ -32,7 +32,8 @@ and Spanish. Not yet released: Binge's release certificate is not yet published 
 the Play listing under `docs/listing/` waits on its screenshots.
 
 The contracts and the SDK are consumed as source: `binge-integrations/` is a git
-submodule and `settings.gradle.kts` includes it as a composite build. So is the
+submodule of the binge-companions repository (the path keeps the name it had before the
+rename, and `consumer-check.yml` in that repository relies on it), and `settings.gradle.kts` includes it as a composite build. So is the
 shared design system, `design-system/` (binge-design-system): the screens are built
 from its theme and components, which is what makes this app read as part of Binge's
 family without depending on it. The brand deliberately does not follow — `theme/SeerrTheme.kt`
