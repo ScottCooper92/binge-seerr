@@ -27,6 +27,10 @@ on:
       - 'binge-integrations'
       - 'libs.versions.toml'
       - '.github/workflows/device-smoke.yml'
+      # The cache key, the paths cached and the delete-before-save step carry real logic that can
+      # break the lane outright when wrong.
+      - '.github/actions/restore-avd-cache/**'
+      - '.github/actions/save-avd-cache/**'
   schedule:
     - cron: '0 6 * * 1'
 
@@ -45,6 +49,11 @@ jobs:
     name: Handshake and status over Binder on a minified build
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    # `save-avd-cache` runs `gh cache delete` before it saves. Without `actions: write` the delete
+    # gets a 403 that `|| true` hides, and the cache freezes at its first content.
+    permissions:
+      contents: read
+      actions: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -89,9 +98,18 @@ jobs:
           fi
           echo "/dev/kvm present and writable."
 
+      # A miss is not a failure: the setup step below falls back to the full download and boot.
+      - name: Restore AVD cache
+        uses: ./.github/actions/restore-avd-cache
+        with:
+          device: smokeAtdApi34
+          api-level: '34'
+          system-image-source: aosp-atd
+
       # showKernelLogging is what makes an emulator that fails to start say why: without it the
       # failure reads as an empty error list.
       - name: Create the managed-device snapshot
+        id: setup-device
         run: >
           ./gradlew :app:smokeAtdApi34Setup
           -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
@@ -104,6 +122,18 @@ jobs:
           -PminifyDebug
           -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
+
+      # Push to main only, so a dispatch or the weekly run never overwrites the cache entry.
+      - name: Save AVD cache
+        if: >
+          !cancelled() && github.event_name == 'push' &&
+          steps.setup-device.outcome == 'success'
+        uses: ./.github/actions/save-avd-cache
+        with:
+          device: smokeAtdApi34
+          api-level: '34'
+          system-image-source: aosp-atd
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload test results
         if: always()
