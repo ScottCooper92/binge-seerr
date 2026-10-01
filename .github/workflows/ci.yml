@@ -48,6 +48,10 @@ jobs:
     # "skipped", which author-ci-fix and bot-review both already treat as "not green".
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    # Job level, not workflow level: only the submodule-pin step reads a PR label (#561).
+    permissions:
+      contents: read
+      pull-requests: read
     # Generous against a build that currently takes a couple of minutes, so it catches
     # a hang rather than a slow day. The Android SDK is preinstalled on the runner
     # image; nothing here installs one.
@@ -69,9 +73,13 @@ jobs:
       - name: Check submodule pins are merged upstream
         if: github.event_name == 'pull_request'
         env:
-          HELD: ${{ contains(github.event.pull_request.labels.*.name, 'hold') }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
+          # Read live, not from the event payload: adding `hold` starts no run, and a re-run
+          # replays the original payload, so the payload still says the label is absent (#561).
+          HELD=$(gh pr view "$PR_NUMBER" --json labels --jq 'any(.labels[]; .name == "hold")')
           : > /tmp/unmerged-submodules.txt
           git submodule foreach --quiet '
             url=$(git config --get remote.origin.url)
