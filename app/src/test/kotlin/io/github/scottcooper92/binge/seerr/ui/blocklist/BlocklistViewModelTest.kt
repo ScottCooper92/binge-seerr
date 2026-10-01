@@ -36,6 +36,7 @@ class BlocklistViewModelTest {
     private val seerr = ScriptedSeerr(folder)
     private val viewModels = ViewModelStore()
     private val analytics = RecordingAnalytics()
+    private val cache = BlocklistReadCache()
 
     @Before
     fun setUp() {
@@ -55,7 +56,7 @@ class BlocklistViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): BlocklistViewModel {
-        val vm = BlocklistViewModel(seerr.connection(this), TitleCache(), mainDispatcherRule.dispatcher, analytics)
+        val vm = BlocklistViewModel(seerr.connection(this), TitleCache(), mainDispatcherRule.dispatcher, cache, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -214,12 +215,45 @@ class BlocklistViewModelTest {
             assertTrue(vm.awaitReady { it.canManage }.canManage)
         }
 
+    /** A browser re-entered after being left opens on the last scope and chip counts, not a spinner, even before its reads answer. */
+    @Test
+    fun `a re-entered browser opens on the last result for the same server`() =
+        runTest {
+            val first = viewModel()
+            first.setScreenVisible(true)
+            val seen = first.awaitReady { it.counts?.all != null && it.canManage }
+
+            val second = viewModel()
+            seerr.serve("GET /api/v1/auth/me", code = 500)
+            second.setScreenVisible(true)
+
+            val ready = second.awaitReady()
+            assertTrue(ready.canManage)
+            assertEquals(seen.counts, ready.counts)
+        }
+
+    /** What one server showed must never seed another's browser. */
+    @Test
+    fun `the last result is dropped when the server changes`() {
+        val cache = BlocklistReadCache()
+        cache.adopt("https://one.example")
+        cache.scope = BlocklistScope(canManage = true)
+        cache.counts = BlocklistCounts(all = 1, manual = 1, tagged = 1)
+
+        cache.adopt("https://one.example")
+        assertTrue(cache.scope?.canManage == true)
+
+        cache.adopt("https://two.example")
+        assertNull(cache.scope)
+        assertNull(cache.counts)
+    }
+
     /** A view model whose first `auth/me` read answers [code], as a cold process on a bad network would. */
     private suspend fun TestScope.failedFirstRead(code: Int): BlocklistViewModel {
         val connection = seerr.connection(this)
         seerr.serve("GET /api/v1/auth/me", code = code)
         runCatching { connection.refreshAuthenticatedUser() }
-        val vm = BlocklistViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher, analytics)
+        val vm = BlocklistViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher, cache, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
