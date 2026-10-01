@@ -65,7 +65,6 @@ class RequestsActions(
 fun RequestsScreen(
     state: RequestsUiState,
     requestsFor: (RequestFilter) -> Flow<PagingData<RequestItem>>,
-    events: Flow<ModerationEvent>,
     shouldRefresh: (RequestFilter, Int) -> Boolean,
     actions: RequestsActions,
     showBack: Boolean = true,
@@ -78,7 +77,6 @@ fun RequestsScreen(
     var sheetItem by remember { mutableStateOf<RequestItem?>(null) }
     val ready = state as? RequestsUiState.Ready
     val snackbarHostState = remember { SnackbarHostState() }
-    ModerationSnackbarEffect(events, snackbarHostState)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     ScreenScaffold(
         title = stringResource(R.string.hub_section_requests),

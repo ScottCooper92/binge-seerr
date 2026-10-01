@@ -72,7 +72,7 @@ private fun SiblingRequestSheet(
         }
     }
     val page = state
-    if (page is RequestDetailUiState.Ready || sheet.preview != null) {
+    if (page is RequestDetailUiState.Ready || (page is RequestDetailUiState.Loading && sheet.preview != null)) {
         RequestManagementSheets(
             state = page as? RequestDetailUiState.Ready,
             actions =
@@ -163,7 +163,6 @@ internal fun RequestsEntry(
         state = state,
         showBack = showBack,
         requestsFor = viewModel::requests,
-        events = viewModel.moderation.events,
         shouldRefresh = viewModel::shouldRefresh,
         actions =
             RequestsActions(

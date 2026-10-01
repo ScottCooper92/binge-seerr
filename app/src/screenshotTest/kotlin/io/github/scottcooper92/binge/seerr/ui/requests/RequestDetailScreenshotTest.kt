@@ -51,15 +51,15 @@ class RequestDetailScreenshotTest {
 
     /**
      * The same page scrolled to its end, so the whole list shows: this request's own row first, then a
-     * declined sibling and a completed 4K one with no requester, and the clear-data note. Page top
-     * alone hides the last row behind the footer.
+     * declined sibling and a completed 4K one with no requester. Page top alone can hide the last
+     * row below the fold.
      */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun withSiblingsScrolled() = Frame(detailWithSiblings(), scrollState = rememberScrollState(initial = Int.MAX_VALUE))
 
-    /** Nothing left to do: no footer, and the scroll clears the safe area itself rather than a footer's. */
+    /** Nothing left to do: the card has no Review or Manage button. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
