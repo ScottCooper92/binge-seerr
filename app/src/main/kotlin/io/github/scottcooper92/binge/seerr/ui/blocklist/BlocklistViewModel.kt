@@ -21,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
 import io.github.scottcooper92.binge.seerr.ui.requests.seerrMediaType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -277,7 +278,10 @@ class BlocklistViewModel
                     listVersionState.update { it + 1 }
                     analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "removed"))
                     eventFlow.emit(BlocklistEvent.Removed)
-                }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
+                }.onFailure {
+                    analytics.operationFailed("unblock_title", it, connection)
+                    eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError()))
+                }
                 acting.update { it - item.tmdbId }
             }
         }
@@ -302,7 +306,10 @@ class BlocklistViewModel
                     val action = if (blocked) "collection_blocked" else "collection_unblocked"
                     analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to action))
                     eventFlow.emit(BlocklistEvent.CollectionChanged(blocked))
-                }.onFailure { eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError())) }
+                }.onFailure {
+                    analytics.operationFailed(if (blocked) "block_collection" else "unblock_collection", it, profile)
+                    eventFlow.emit(BlocklistEvent.Failed(it.toSeerrError()))
+                }
             }
         }
 

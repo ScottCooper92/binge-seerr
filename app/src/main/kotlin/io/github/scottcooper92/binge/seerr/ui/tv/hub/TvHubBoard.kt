@@ -35,6 +35,7 @@ import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
 import io.github.scottcooper92.binge.seerr.ui.hub.HubDownload
 import io.github.scottcooper92.binge.seerr.ui.hub.HubServer
@@ -61,6 +62,7 @@ internal class TvHubActions(
     val onRetry: () -> Unit,
     val onReconnect: () -> Unit,
     val onDisconnect: () -> Unit,
+    val onOpenBingeListing: () -> Unit,
 )
 
 /**
@@ -74,13 +76,14 @@ internal fun TvHubBoard(
     actions: TvHubActions,
     modifier: Modifier = Modifier,
     initialFocusedTile: String? = null,
+    initialBingeTileFocused: Boolean = false,
 ) {
     val ready = state as? HubUiState.Ready
     TvBoardFrame(title = ready?.server?.title ?: stringResource(R.string.companion_name), modifier = modifier) {
         when {
             ready == null -> TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
             ready.health.isProblem() -> TvHubProblem(ready.health, actions, modifier = Modifier.weight(1f))
-            else -> TvHubDashboard(ready, actions, initialFocusedTile)
+            else -> TvHubDashboard(ready, actions, initialFocusedTile, initialBingeTileFocused)
         }
     }
 }
@@ -127,14 +130,24 @@ private fun ColumnScope.TvHubDashboard(
     state: HubUiState.Ready,
     actions: TvHubActions,
     initialFocusedTile: String?,
+    initialBingeTileFocused: Boolean,
 ) {
     val overview = state.overview
     val placeholder = stringResource(R.string.hub_stat_placeholder)
-    Text(
-        text = state.server.healthLine(state.health),
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    val bingeMissing = state.bingeStatus == BingeStatus.NotInstalled
+    // The board has no height to spare, so a missing Binge shares the health line's row instead of adding one.
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = state.server.healthLine(state.health),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (bingeMissing) TvBingeTile(state.bingeStatus, actions.onOpenBingeListing, initiallyFocused = initialBingeTileFocused)
+    }
     overview.account?.let { TvHubAccount(account = it, quota = overview.quota) }
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
@@ -182,11 +195,7 @@ private fun ColumnScope.TvHubDashboard(
         }
     }
     Spacer(modifier = Modifier.weight(1f))
-    Text(
-        text = stringResource(R.string.connected_hint),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    if (!bingeMissing) TvBingeTile(state.bingeStatus, actions.onOpenBingeListing)
 }
 
 /** The fork and version, then whether the server is answering right now. */

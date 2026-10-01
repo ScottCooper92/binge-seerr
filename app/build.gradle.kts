@@ -332,6 +332,16 @@ tasks.withType<Test>().configureEach {
         failOnNoDiscoveredTests = false
         maxParallelForks = 1
     } else {
+        // Inputs for TvFocusSeedFramesTest, which reads these directories with java.io.File. Gradle
+        // cannot see that, so without them a change to a frame alone is an UP-TO-DATE or cached pass.
+        inputs
+            .dir("src/screenshotTest/kotlin")
+            .withPropertyName("tvFocusSeedFrames")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs
+            .dir("src/main/kotlin/io/github/scottcooper92/binge/seerr/ui/tv")
+            .withPropertyName("tvFocusSeedSources")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
         // Where CoroutineLeakReporter writes. Under build/reports/tests so ci.yml's artifact already
         // carries it: a leak reports between tests, which is exactly where Gradle's per-test capture
         // has nowhere to put it (#177).

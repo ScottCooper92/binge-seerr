@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -199,7 +200,10 @@ class RequestModeration(
                         }
                     analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
                     eventFlow.emit(event)
-                }.onFailure { eventFlow.emit(ModerationEvent.Failed(it.toSeerrError())) }
+                }.onFailure {
+                    analytics.operationFailed("moderate_${done.actionLabel()}", it, connection)
+                    eventFlow.emit(ModerationEvent.Failed(it.toSeerrError()))
+                }
         }
     }
 
@@ -211,7 +215,8 @@ class RequestModeration(
                 connection.profile().blocklistPath,
                 SeerrAddToBlocklistBody(item.tmdbId, mediaType, item.title.orEmpty(), user),
             )
-        }.isSuccess
+        }.onFailure { analytics.operationFailed("block_title", it, connection) }
+            .isSuccess
 }
 
 /** The [AnalyticsEvents.PARAM_ACTION] value for [AnalyticsEvents.REQUEST_MODERATED]; [ModerationEvent.Failed] never reaches this. */

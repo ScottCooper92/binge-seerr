@@ -157,7 +157,21 @@ class RequestModerationTest {
             sut.approve(12)
             assertEquals(ModerationEvent.Failed(SeerrError.Unauthorized), failed.await())
             assertEquals(1, moderated)
-            assertEquals(listOf("request_moderated" to mapOf("action" to "removed_block_failed")), analytics.events)
+            // The 500 on the block names a server fault and is reported; the 401 is an expired sign-in and is not.
+            assertEquals(
+                listOf(
+                    "request_operation_failed" to
+                        mapOf(
+                            "operation" to "block_title",
+                            "http_status" to "500",
+                            "grpc_status" to "UNAVAILABLE",
+                            "server_lineage" to "jellyseerr",
+                            "server_version" to "2.7.0",
+                        ),
+                    "request_moderated" to mapOf("action" to "removed_block_failed"),
+                ),
+                analytics.events,
+            )
         }
 
     private object PlainCipher : SecretCipher {
