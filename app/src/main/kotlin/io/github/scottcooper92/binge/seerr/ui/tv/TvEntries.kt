@@ -29,6 +29,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.screenName
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
+import io.github.scottcooper92.binge.seerr.ui.hub.openBingeOnPlayStore
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
@@ -121,6 +122,7 @@ private fun TvHubEntry(
     onReconnect: () -> Unit,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // The downloading poll and the auto-retry run only while the hub is on screen.
     DisposableEffect(viewModel) {
@@ -136,6 +138,7 @@ private fun TvHubEntry(
                 onRetry = viewModel::recheck,
                 onReconnect = onReconnect,
                 onDisconnect = viewModel::disconnect,
+                onOpenBingeListing = { context.openBingeOnPlayStore() },
             ),
     )
 }
