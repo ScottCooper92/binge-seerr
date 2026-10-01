@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
+import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
@@ -49,11 +50,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val SEARCH_DEBOUNCE_MS = 300L
 
 /** What the browser needs once per connection: where the list is, and what this viewer may do to it. */
-private data class BlocklistScope(
+data class BlocklistScope(
     val path: String = "blocklist",
     val hasFilters: Boolean = false,
     val canManage: Boolean = false,
@@ -105,6 +107,31 @@ private fun ScopeState.readWith(read: ScopeRead): ScopeState {
 }
 
 /**
+ * The last scope and chip counts read, kept in memory so a re-entered browser opens on them rather
+ * than on a full-screen spinner and bare chips. Each fetch still runs and replaces them. Held per
+ * connection, like the connection's own caches: the scope is the signed-in user's `auth/me`, so a
+ * different server or a different user starts empty rather than showing the last one's controls.
+ */
+@Singleton
+class BlocklistReadCache
+    @Inject
+    constructor() {
+        @Volatile private var credentials: SeerrCredentials? = null
+
+        @Volatile var scope: BlocklistScope? = null
+
+        @Volatile var counts: BlocklistCounts? = null
+
+        @Synchronized
+        fun adopt(credentials: SeerrCredentials?) {
+            if (credentials == this.credentials) return
+            this.credentials = credentials
+            scope = null
+            counts = null
+        }
+    }
+
+/**
  * The blocklist browser: one cached paged list per filter over the debounced search, the chip
  * counts, and removal keyed by TMDB id. A removal reports through [events] and bumps the list
  * version, which refreshes each filter's page in place as it is selected, so the list keeps its
@@ -119,6 +146,7 @@ class BlocklistViewModel
         private val connection: SeerrConnection,
         private val titles: TitleCache,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val cache: BlocklistReadCache,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
@@ -156,9 +184,19 @@ class BlocklistViewModel
             scopeRefresh
                 .flatMapLatest {
                     flow {
-                        val previous = scopeState.value
+                        var previous = scopeState.value
                         if (previous is ScopeState.Failed) emit(ScopeState.Resolving)
-                        emit(previous.readWith(readScope()))
+                        if (previous is ScopeState.Resolving) {
+                            seeded().scope?.let { cached ->
+                                ScopeState.Resolved(cached).also {
+                                    emit(it)
+                                    previous = it
+                                }
+                            }
+                        }
+                        val next = previous.readWith(readScope())
+                        (next as? ScopeState.Resolved)?.let { cache.scope = it.scope }
+                        emit(next)
                     }
                 }.distinctUntilChanged()
                 .flowOn(dispatcher)
@@ -204,9 +242,14 @@ class BlocklistViewModel
         /** The previous totals stay on the chips while a refetch is in flight; a failed probe leaves that chip bare. */
         private val counts: Flow<BlocklistCounts?> =
             combine(countsRefresh, scope) { _, scope -> scope }
-                .flatMapLatest { scope -> flow { emit(if (scope.hasFilters) fetchCounts(scope.path) else null) } }
-                .flowOn(dispatcher)
-                .onStart { emit(null) }
+                .flatMapLatest { scope ->
+                    flow {
+                        val read = if (scope.hasFilters) fetchCounts(scope.path) else null
+                        cache.counts = read
+                        emit(read)
+                    }
+                }.flowOn(dispatcher)
+                .onStart { emit(seeded().counts) }
 
         val uiState: StateFlow<BlocklistUiState> =
             combine(
@@ -312,6 +355,8 @@ class BlocklistViewModel
                 }
             }
         }
+
+        private suspend fun seeded(): BlocklistReadCache = cache.also { it.adopt(runCatching { connection.current() }.getOrNull()) }
 
         private suspend fun readScope(): ScopeRead {
             val viewer = runCatching { connection.refreshAuthenticatedUser() }
