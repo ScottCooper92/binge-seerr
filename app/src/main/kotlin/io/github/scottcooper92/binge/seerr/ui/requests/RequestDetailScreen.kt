@@ -230,9 +230,8 @@ internal fun RequestDetailPage(
     MediaHeroDetailPage(
         title = title,
         backdropUrl = detail.backdropUrl,
-        // The type moved onto RequestHeadline's chip row (#340), and the year has now followed it
-        // there too, onto the same line as the chips — nothing is left to read in the hero itself.
         metaText = "",
+        metaContent = { RequestHeroMeta(detail) },
         onBack = onBack,
         modifier = modifier,
         scrollState = scrollState,
