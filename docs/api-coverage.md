@@ -54,7 +54,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /issue/count` | Gets issue counts | v1.30.0 | v1.1.1 | yes | Hub counts; also the browsers' filter chips, and the open count in the host's attention badge. |
 | `GET /request/count` | Gets request counts | v1.17.0 | v1.0.0 | yes | Hub counts; also the browsers' filter chips, and the pending count in the host's attention badge. |
 | `GET /settings/about` | Get server stats | v1.5.0 | v1.0.0 | yes | Versions and totals on the hub, and the about page. |
-| `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | The hub's system group, and the jobs page. |
+| `GET /settings/jobs` | Get scheduled jobs | v1.0.0 | v1.0.0 | yes | The job rows in the Settings screen's System group. |
 | `GET /settings/main` | Get main settings | v1.0.0 | v1.0.0 | yes | The Settings summary, and the general settings form. |
 | `GET /settings/notifications/discord` | Get Discord notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
 | `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
@@ -163,9 +163,9 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `PUT /settings/jellyfin/library/{libraryId}` | Update a single Jellyfin library | — | develop | yes | Tried first for a library toggle; a 404 falls back to the `GET`. |
 | `GET /settings/jellyfin/sync` | Get status of full Jellyfin library sync | — | v1.0.0 | yes | The scan's progress, polled while it runs. |
 | `POST /settings/jellyfin/sync` | Start full Jellyfin library sync | — | v1.0.0 | yes | Start and cancel the scan. |
-| `POST /settings/jobs/{jobId}/cancel` | Cancel a specific job | v1.20.0 | v1.0.0 | yes | Cancel on a running job, on the jobs page. |
-| `POST /settings/jobs/{jobId}/run` | Invoke a specific job | v1.20.0 | v1.0.0 | yes | Run now on the jobs page. |
-| `POST /settings/jobs/{jobId}/schedule` | Modify job schedule | v1.27.0 | v1.1.0 | yes | The schedule dialog on the jobs page: the presets or a cron of the admin's own. |
+| `POST /settings/jobs/{jobId}/cancel` | Cancel a specific job | v1.20.0 | v1.0.0 | yes | Cancel on a running job's row in the System group. |
+| `POST /settings/jobs/{jobId}/run` | Invoke a specific job | v1.20.0 | v1.0.0 | yes | Run now on a job's row in the System group. |
+| `POST /settings/jobs/{jobId}/schedule` | Modify job schedule | v1.27.0 | v1.1.0 | yes | The schedule dialog opened from a job row: the presets or a cron of the admin's own. |
 | `GET /settings/logs` | Returns logs | v1.22.0 | v1.0.0 | yes | The logs page: paged, with the level filter and the search. |
 | `POST /settings/main` | Update main settings | v1.0.0 | v1.0.0 | yes | The general settings form, and the default permissions page (which sends only those bits). |
 | `POST /settings/main/regenerate` | Get main settings with newly-generated API key | v1.20.0 | v1.0.0 | yes | Regenerate on the general settings page; an API-key session reconnects with the new key. |
