@@ -53,7 +53,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
@@ -212,8 +211,6 @@ private fun LogsBody(
 }
 
 private const val COLLAPSED_MESSAGE_LINES = 3
-private val SEVERITY_STRIPE_WIDTH = 4.dp
-private val LEVEL_ICON_SIZE = 16.dp
 
 /**
  * One line as a card: a stripe, an icon and the level's name all carry the severity, so it never
@@ -239,12 +236,18 @@ internal fun LogRow(
                 .background(MaterialTheme.colorScheme.surfaceContainer)
                 .height(IntrinsicSize.Min)
                 .combinedClickable(
+                    onClickLabel =
+                        if (expandable) {
+                            stringResource(if (expanded) R.string.server_settings_logs_collapse else R.string.server_settings_logs_expand)
+                        } else {
+                            null
+                        },
                     onClick = { if (expandable) expanded = !expanded },
                     onLongClick = onCopy,
                     onLongClickLabel = stringResource(R.string.server_settings_logs_copy),
                 ),
     ) {
-        Box(Modifier.width(SEVERITY_STRIPE_WIDTH).fillMaxHeight().background(tone))
+        Box(Modifier.width(dimensionResource(R.dimen.log_row_severity_stripe_width)).fillMaxHeight().background(tone))
         Column(
             modifier = Modifier.weight(1f).padding(dimensionResource(DesR.dimen.padding_m)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
@@ -273,19 +276,31 @@ private fun LogRowHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
     ) {
-        Icon(entry.level.icon(), contentDescription = null, tint = tone, modifier = Modifier.size(LEVEL_ICON_SIZE))
+        Icon(
+            entry.level.icon(),
+            contentDescription = null,
+            tint = tone,
+            modifier = Modifier.size(dimensionResource(R.dimen.log_row_level_icon_size)),
+        )
         Text(stringResource(entry.level.labelRes()).uppercase(), style = MaterialTheme.typography.labelMedium, color = tone)
-        Text(
+        val meta =
             listOfNotNull(
                 entry.label,
                 formatRelativeOrAbsolute(entry.timestampMillis) ?: entry.timestampRaw.takeIf { it.isNotEmpty() },
-            ).joinToString(stringResource(R.string.hub_meta_separator), prefix = stringResource(R.string.hub_meta_separator)),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
+            )
+        if (meta.isNotEmpty()) {
+            val separator = stringResource(R.string.hub_meta_separator)
+            Text(
+                meta.joinToString(separator, prefix = separator),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
         if (expandable) {
             Icon(
                 if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
@@ -317,7 +332,11 @@ private fun ColumnScope.LogRowDetails(
         )
     }
     TextButton(onClick = onCopy, modifier = Modifier.align(Alignment.End)) {
-        Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(LEVEL_ICON_SIZE))
+        Icon(
+            Icons.Filled.ContentCopy,
+            contentDescription = null,
+            modifier = Modifier.size(dimensionResource(R.dimen.log_row_level_icon_size)),
+        )
         Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_xs)))
         Text(stringResource(R.string.server_settings_logs_copy))
     }
