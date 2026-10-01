@@ -135,7 +135,7 @@ class RequestsViewModelTest {
             val vm = viewModel()
             val before = vm.awaitReady { it.counts != null }.listVersion
 
-            vm.moderation.approve(11)
+            vm.listChanged()
 
             val after = vm.awaitReady { it.listVersion > before }.listVersion
             // The gate is per filter per version: the open list refreshes once, a filter that was

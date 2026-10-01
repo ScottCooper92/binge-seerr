@@ -9,92 +9,73 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeBottomSheet
-import com.binge.designsystem.component.BingeConfirmDialog
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import com.binge.designsystem.R as DesR
 
-/**
- * The page's overflow: the issue on the server, and, for a manager or the reporter, deleting it
- * behind a confirm that says the thread goes with it.
- */
+/** The page's overflow: the issue on the server, the title on the media server, and in Sonarr or Radarr. */
 @Composable
 internal fun IssueManageSheet(
     detail: IssueDetail,
-    onDeleteIssue: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+
+    fun open(url: String): () -> Unit =
+        {
+            onDismiss()
+            context.openInBrowser(url)
+        }
     BingeBottomSheet(onDismissRequest = onDismiss) {
         IssueManageContent(
-            canDelete = detail.canDelete,
-            onOpenWeb = {
-                onDismiss()
-                context.openInBrowser(detail.webUrl)
-            },
-            onDelete = { confirmingDelete = true },
-        )
-    }
-    if (confirmingDelete) {
-        BingeConfirmDialog(
-            title = stringResource(R.string.issue_delete_confirm_title),
-            message = stringResource(R.string.issue_delete_confirm_message),
-            confirmLabel = stringResource(R.string.issue_delete),
-            destructive = true,
-            onConfirm = {
-                confirmingDelete = false
-                onDismiss()
-                onDeleteIssue()
-            },
-            onDismiss = { confirmingDelete = false },
+            serverName = detail.serverName,
+            mediaServerName = detail.mediaServerName,
+            serviceName = if (detail.item.mediaType == RequestMediaType.Tv) "Sonarr" else "Radarr",
+            onOpenWeb = open(detail.webUrl),
+            onOpenMediaServer = detail.mediaServerUrl?.let(::open),
+            onOpenService = detail.serviceUrl?.let(::open),
         )
     }
 }
 
 @Composable
 internal fun IssueManageContent(
-    canDelete: Boolean,
+    serverName: String,
+    mediaServerName: String?,
+    serviceName: String,
     onOpenWeb: () -> Unit,
-    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenMediaServer: (() -> Unit)? = null,
+    onOpenService: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
-        ManageRow(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.request_open_web), onOpenWeb)
-        if (canDelete) {
+        ManageRow(stringResource(R.string.open_in_named, serverName), onOpenWeb)
+        onOpenMediaServer?.let {
             ManageRow(
-                Icons.Filled.Delete,
-                stringResource(R.string.issue_delete),
-                onDelete,
-                tint = MaterialTheme.colorScheme.error,
+                mediaServerName?.let { name -> stringResource(R.string.open_in_named, name) }
+                    ?: stringResource(R.string.request_open_media_server),
+                it,
             )
         }
+        onOpenService?.let { ManageRow(stringResource(R.string.open_in_named, serviceName), it) }
     }
 }
 
 @Composable
 private fun ManageRow(
-    icon: ImageVector,
     label: String,
     onClick: () -> Unit,
-    tint: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Row(
         modifier =
@@ -106,7 +87,7 @@ private fun ManageRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        Icon(icon, contentDescription = null, tint = tint)
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = tint)
+        Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
     }
 }

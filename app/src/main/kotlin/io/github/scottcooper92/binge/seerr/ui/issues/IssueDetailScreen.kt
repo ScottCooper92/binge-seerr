@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -34,7 +38,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -42,7 +45,6 @@ import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
@@ -105,6 +107,7 @@ fun IssueDetailScreen(
         }
     }
     var managing by rememberSaveable { mutableStateOf(false) }
+    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssueDetailUiState.Ready
     OverflowDetailScaffold(
         title = ready?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
@@ -113,6 +116,14 @@ fun IssueDetailScreen(
         showOverflow = ready != null,
         overflowContentDescription = stringResource(R.string.issue_manage_cd),
         onOverflowClick = { managing = true },
+        overflowIcon = Icons.AutoMirrored.Filled.OpenInNew,
+        leadingActions = {
+            if (ready?.detail?.canDelete == true) {
+                IconButton(onClick = { confirmingDelete = true }) {
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.issue_delete))
+                }
+            }
+        },
     ) { inner ->
         when (state) {
             IssueDetailUiState.Loading -> IssueDetailSkeleton(Modifier.padding(inner))
@@ -124,8 +135,20 @@ fun IssueDetailScreen(
     if (managing && ready != null) {
         IssueManageSheet(
             detail = ready.detail,
-            onDeleteIssue = actions.onDeleteIssue,
             onDismiss = { managing = false },
+        )
+    }
+    if (confirmingDelete) {
+        BingeConfirmDialog(
+            title = stringResource(R.string.issue_delete_confirm_title),
+            message = stringResource(R.string.issue_delete_confirm_message),
+            confirmLabel = stringResource(R.string.issue_delete),
+            destructive = true,
+            onConfirm = {
+                confirmingDelete = false
+                actions.onDeleteIssue()
+            },
+            onDismiss = { confirmingDelete = false },
         )
     }
 }
@@ -258,18 +281,6 @@ private fun IssueHeader(
                     )
                     RequestStateChip(label = stringResource(item.status.labelRes()), tone = item.status.tone())
                 }
-            }
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            detail.mediaServerUrl?.let { url ->
-                BingeOutlinedButton(label = stringResource(R.string.request_open_media_server), onClick = { context.openInBrowser(url) })
-            }
-            detail.serviceUrl?.let { url ->
-                val labelRes = if (item.mediaType == RequestMediaType.Tv) R.string.media_open_sonarr else R.string.media_open_radarr
-                BingeOutlinedButton(label = stringResource(labelRes), onClick = { context.openInBrowser(url) })
             }
         }
     }

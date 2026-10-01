@@ -112,10 +112,11 @@
     <string name="media_type_movie">Película</string>
     <string name="request_open_binge">Abrir en Binge</string>
     <string name="request_open_elsewhere">Abrir en otro lugar</string>
-    <string name="request_open_web">Abrir en el servidor</string>
     <string name="request_open_media_server">Abrir en el servidor multimedia</string>
     <string name="request_stats_title">Estadísticas</string>
     <string name="request_this_request_title">Esta solicitud</string>
+    <string name="request_open_web">Abrir en el servidor</string>
+    <string name="request_card_info">Información de la solicitud</string>
     <string name="request_requested_by">Solicitado por</string>
     <string name="request_modified_by">Moderado por</string>
     <string name="request_updated_at">Actualizado</string>
@@ -127,8 +128,7 @@
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta solicitud puede diferir a continuación.</string>
     <string name="request_downloads">Descargando</string>
-    <string name="request_summaries_title">Solicitudes de este título</string>
-    <string name="request_siblings_clear_data_note">Borrar los datos de este título elimina todas las peticiones que tiene, incluidas las anteriores.</string>
+    <string name="request_summaries_title">Otras solicitudes</string>
     <plurals name="request_episodes">
         <item quantity="one">%1$d episodio</item>
         <item quantity="many">%1$d episodios</item>
@@ -246,6 +246,7 @@
     <string name="issue_resolve_confirm_message">La incidencia se marca como resuelta para todos. Se puede reabrir.</string>
     <string name="issue_reopen_confirm_title">¿Reabrir esta incidencia?</string>
     <string name="issue_reopen_confirm_message">La incidencia vuelve a la lista de abiertas.</string>
+    <string name="open_in_named">Abrir en %1$s</string>
     <string name="issue_delete">Eliminar la incidencia</string>
     <string name="issue_delete_confirm_title">¿Eliminar esta incidencia?</string>
     <string name="issue_delete_confirm_message">El aviso y todos sus comentarios se quitan del servidor.</string>

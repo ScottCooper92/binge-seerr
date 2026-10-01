@@ -8,6 +8,8 @@
     <string name="debug_group_prototypes" translatable="false">UI prototypes</string>
     <string name="proto_manage_sheet_title" translatable="false">Request manage sheet</string>
     <string name="proto_manage_sheet_detail" translatable="false">Every state of the sheet, over sample requests</string>
+    <string name="proto_request_cards_title" translatable="false">Request cards</string>
+    <string name="proto_request_cards_detail" translatable="false">This request and other requests as tappable cards</string>
     <string name="proto_open_as_sheet" translatable="false">Open as a sheet</string>
     <string name="proto_tapped" translatable="false">Tapped: %1$s</string>
     <string name="proto_scenario_pending" translatable="false">Pending</string>

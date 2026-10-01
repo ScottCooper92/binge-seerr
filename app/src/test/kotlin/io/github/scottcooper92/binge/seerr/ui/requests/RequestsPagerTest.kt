@@ -17,7 +17,6 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.paging.PagingData
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -93,7 +92,6 @@ class RequestsPagerTest {
                 RequestsScreen(
                     state = ready(filter),
                     requestsFor = ::rowsFor,
-                    events = emptyFlow(),
                     shouldRefresh = { asked, _ ->
                         refreshAsks += asked
                         false
@@ -147,12 +145,8 @@ class RequestsPagerTest {
             onFilterChange = onFilterChange,
             onSortChange = {},
             onOpen = {},
-            onOpenActions = {},
-            onDismissActions = {},
             onRetryLoad = {},
-            onApprove = {},
-            onRetry = {},
-            onDecline = { _, _ -> },
-            onRemove = { _, _ -> },
+            onChanged = {},
+            detailSheet = {},
         )
 }

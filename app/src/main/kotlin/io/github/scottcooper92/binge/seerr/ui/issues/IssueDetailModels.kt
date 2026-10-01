@@ -32,6 +32,10 @@ data class IssueDetail(
     val serviceUrl: String?,
     /** The connected user's name, which a pending comment is shown under. */
     val currentUserName: String?,
+    /** What the connected server calls itself: Seerr, Jellyseerr or Overseerr. */
+    val serverName: String = "Seerr",
+    /** Plex, Jellyfin or Emby; null where the server's type is not known. */
+    val mediaServerName: String? = null,
 ) {
     fun canActOn(comment: IssueComment): Boolean = canManage || comment.isMine
 }

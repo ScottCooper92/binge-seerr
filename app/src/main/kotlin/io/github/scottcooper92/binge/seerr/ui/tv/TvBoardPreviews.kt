@@ -147,7 +147,7 @@ internal val SampleRequests =
 internal val ManagerScope =
     ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 7, hasBlocklist = true)
 
-internal fun requestsReady(actionItem: RequestItem? = null) =
+internal fun requestsReady() =
     RequestsUiState.Ready(
         filter = RequestFilter.All,
         sort = RequestSort.Added,
@@ -155,7 +155,6 @@ internal fun requestsReady(actionItem: RequestItem? = null) =
         scope = ManagerScope,
         actingIds = emptySet(),
         listVersion = 0,
-        actionItem = actionItem,
     )
 
 internal fun <T> rows(items: List<T>) = TvPagedRows(count = items.size, at = { items.getOrNull(it) })

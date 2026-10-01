@@ -53,12 +53,23 @@ internal fun RequestActionsSheet(
     media: MediaRecord? = null,
     mediaActions: ManageMediaActions? = null,
     onMarkStatus: (is4k: Boolean) -> Unit = {},
+    onOpenUser: ((Int) -> Unit)? = null,
+    viewerId: Int? = null,
+    canManageUsers: Boolean = false,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
     BingeBottomSheet(onDismissRequest = onDismiss) {
         RequestActionsContent(
-            model = RequestSheetModel(item = item, actions = actions, canEdit = canEdit, media = media),
+            model =
+                RequestSheetModel(
+                    item = item,
+                    actions = actions,
+                    canEdit = canEdit,
+                    media = media,
+                    viewerId = viewerId,
+                    canManageUsers = canManageUsers,
+                ),
             callbacks =
                 RequestSheetCallbacks(
                     onApprove = {
@@ -84,6 +95,13 @@ internal fun RequestActionsSheet(
                     onMarkStatus = onMarkStatus,
                     onDeleteFiles = { is4k -> pending = Pending.DeleteFiles(is4k) },
                     onClearData = { pending = Pending.ClearData },
+                    onOpenUser =
+                        onOpenUser?.let { open ->
+                            { id ->
+                                onDismiss()
+                                open(id)
+                            }
+                        },
                 ),
             blockTitle = blockTitle,
             onBlockTitleChange = { blockTitle = it },

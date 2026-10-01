@@ -166,6 +166,9 @@ data class RequestDetail(
     val media: MediaRecord?,
     /** Other requests against this title, excluding this one; empty when this is the only one. */
     val siblings: List<RequestSummary>,
+    /** What the server calls itself, and the media server it fronts when there is one, for the open-in labels. */
+    val serverName: String = "Seerr",
+    val mediaServerName: String? = null,
 ) {
     /** Every request against this title, this page's own first, then [siblings]. */
     fun summaries(): List<RequestSummary> =

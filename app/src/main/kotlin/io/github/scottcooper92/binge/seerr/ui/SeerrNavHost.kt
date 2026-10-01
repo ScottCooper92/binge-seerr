@@ -149,7 +149,12 @@ private fun SectionContent(
     val onBack: () -> Unit = { backStack.removeLastOrNull() }
     when (section) {
         HubSection.Requests ->
-            RequestsEntry(onBack = onBack, showBack = showBack, onOpen = { id -> backStack.add(RequestDetailRoute(id)) })
+            RequestsEntry(
+                onBack = onBack,
+                showBack = showBack,
+                onOpen = { id -> backStack.add(RequestDetailRoute(id)) },
+                onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
+            )
         HubSection.Issues ->
             IssuesEntry(onBack = onBack, showBack = showBack, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
         HubSection.Blocklist ->

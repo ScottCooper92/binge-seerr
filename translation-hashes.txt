@@ -194,6 +194,7 @@ app:notif_new_requests  f223f131694b
 app:notif_requests_approved  88772da0efcf
 app:notif_requests_available  ede6f4e6a280
 app:notif_requests_declined  0800d53535ab
+app:open_in_named  db1257f4fa5c
 app:permission_admin  c1c224b03cd9
 app:permission_auto_approve  9323d903f85b
 app:permission_auto_approve_4k  369ee35133eb
@@ -218,6 +219,7 @@ app:request_approve  9ed200aeb78c
 app:request_approved  b07efc4b3f44
 app:request_block_caption  4eb7e63b4423
 app:request_block_title  958e9438ce1a
+app:request_card_info  d16675ee1cfc
 app:request_decline  72740f4a78a7
 app:request_decline_and_block  f7b7c13d89f0
 app:request_decline_block_confirm_message  bd8633b8508d
@@ -261,7 +263,6 @@ app:request_server  aef7de28d529
 app:request_sheet_group_media  d357175cfe89
 app:request_sheet_group_request  59f03d642b41
 app:request_sheet_requested_by  8fadf88352bb
-app:request_siblings_clear_data_note  e2ff59b20a28
 app:request_state_approved  87b42e40c2a2
 app:request_state_completed  22a970d2e5b1
 app:request_state_declined  dce083a2c47f
@@ -269,7 +270,7 @@ app:request_state_failed  031a8f0f659d
 app:request_state_pending  331551b0de41
 app:request_state_queued  661ff40a07e0
 app:request_stats_title  b4a7365740ef
-app:request_summaries_title  034bdcf74922
+app:request_summaries_title  638e58c202ba
 app:request_tags  1331275bc537
 app:request_this_request_title  c97853df8527
 app:request_title_status_caption  4ae0d8f6b950

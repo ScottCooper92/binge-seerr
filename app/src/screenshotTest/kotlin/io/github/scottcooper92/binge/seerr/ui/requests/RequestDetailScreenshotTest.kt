@@ -17,8 +17,8 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 /**
  * The request page on the shared detail shape: the hero under an overlay bar carrying Open and
  * Report, the overview collapsed with its toggle, the watch rows under their own Stats header ahead
- * of "This request"'s own facts, and one primary pinned in its own footer (#343) rather than scrolled
- * with the rest of the content.
+ * of "This request"'s own facts and its primary action, inline in that card rather than pinned in a
+ * footer.
  *
  * The overview is seeded overflowing in every frame. Left alone the component only learns it
  * overflowed from `onTextLayout`, which fires after this lane has captured, so its collapsed-with-
@@ -51,15 +51,15 @@ class RequestDetailScreenshotTest {
 
     /**
      * The same page scrolled to its end, so the whole list shows: this request's own row first, then a
-     * declined sibling and a completed 4K one with no requester, and the clear-data note. Page top
-     * alone hides the last row behind the footer.
+     * declined sibling and a completed 4K one with no requester. Page top alone can hide the last
+     * row below the fold.
      */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun withSiblingsScrolled() = Frame(detailWithSiblings(), scrollState = rememberScrollState(initial = Int.MAX_VALUE))
 
-    /** Nothing left to do: no footer, and the scroll clears the safe area itself rather than a footer's. */
+    /** Nothing left to do: the card has no Review or Manage button. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -114,7 +114,6 @@ private fun Frame(
         onBack = {},
         onOpen = {},
         onReport = {},
-        onPrimary = {},
         onOpenRequest = {},
         onOpenUser = {},
         initiallyOverflowing = true,

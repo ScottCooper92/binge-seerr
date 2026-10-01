@@ -8,12 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Update
@@ -39,14 +39,14 @@ import com.binge.designsystem.R as DesR
  * kept as the icon's `contentDescription` so a screen reader still says "Requested by" before the
  * value rather than reading just a name.
  */
-private data class Fact(
+internal data class Fact(
     val icon: ImageVector,
     val label: String,
     val primary: InfoValue,
     val secondary: String? = null,
 )
 
-private fun Fact(
+internal fun Fact(
     icon: ImageVector,
     label: String,
     primary: String,
@@ -55,8 +55,8 @@ private fun Fact(
 
 /**
  * The server's own watch tracking — a title-level read-out, the same on every request against it,
- * so it sits under the synopsis with its own header rather than inside [RequestFacts] below, which
- * is this request's own facts and no other request's.
+ * so it sits under the synopsis with its own header rather than inside [requestPeopleFacts] or
+ * [requestDestinationFacts] below, which are this request's own facts and no other request's.
  */
 @Composable
 internal fun RequestStats(detail: RequestDetail) {
@@ -66,53 +66,56 @@ internal fun RequestStats(detail: RequestDetail) {
     FactList(facts)
 }
 
-/** Who asked, when, and where it was sent — each row dropped where the server does not say. */
+/** Who asked and who last changed it, each with when. */
 @Composable
-internal fun RequestFacts(
+internal fun requestPeopleFacts(
     detail: RequestDetail,
     onOpenUser: (Int) -> Unit,
-) {
+): List<Fact> {
     val item = detail.item
     val updatedText = detail.updatedAtMillis?.let(::formatRelativeOrAbsolute)
-    val facts =
-        listOfNotNull(
+    return listOfNotNull(
+        Fact(
+            icon = Icons.Filled.Person,
+            label = stringResource(R.string.request_requested_by),
+            primary =
+                linkedOrPlain(
+                    item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    item.requestedById,
+                    detail.viewerId,
+                    detail.canManageUsers,
+                    onOpenUser,
+                ),
+            secondary = formatRelativeOrAbsolute(item.requestedAtMillis),
+        ),
+        detail.modifiedBy?.let {
             Fact(
-                icon = Icons.AutoMirrored.Filled.Send,
-                label = stringResource(R.string.request_requested_by),
-                primary =
-                    linkedOrPlain(
-                        item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
-                        item.requestedById,
-                        detail.viewerId,
-                        detail.canManageUsers,
-                        onOpenUser,
-                    ),
-                secondary = formatRelativeOrAbsolute(item.requestedAtMillis),
-            ),
-            detail.modifiedBy?.let {
-                Fact(
-                    icon = Icons.Filled.Gavel,
-                    label = stringResource(R.string.request_modified_by),
-                    primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
-                    secondary = updatedText,
-                )
-            } ?: updatedText?.let {
-                Fact(
-                    icon = Icons.Filled.Update,
-                    label = stringResource(R.string.request_updated_at),
-                    primary = it,
-                )
-            },
-            detail.destination?.serverName?.let { Fact(Icons.Filled.Dns, stringResource(R.string.request_server), it) },
-            detail.destination?.profileName?.let { Fact(Icons.Filled.HighQuality, stringResource(R.string.request_profile), it) },
-            detail.destination?.rootFolder?.let { Fact(Icons.Filled.Folder, stringResource(R.string.request_root_folder), it) },
-            detail.destination?.tags?.takeIf { it.isNotEmpty() }?.let {
-                Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), it.joinToString(", "))
-            },
-        )
-    SectionHeader(title = stringResource(R.string.request_this_request_title))
-    FactList(facts)
+                icon = Icons.Filled.Gavel,
+                label = stringResource(R.string.request_modified_by),
+                primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
+                secondary = updatedText,
+            )
+        } ?: updatedText?.let {
+            Fact(
+                icon = Icons.Filled.Update,
+                label = stringResource(R.string.request_updated_at),
+                primary = it,
+            )
+        },
+    )
 }
+
+/** Where it was sent: server, quality profile, root folder and tags. */
+@Composable
+internal fun requestDestinationFacts(detail: RequestDetail): List<Fact> =
+    listOfNotNull(
+        detail.destination?.serverName?.let { Fact(Icons.Filled.Dns, stringResource(R.string.request_server), it) },
+        detail.destination?.profileName?.let { Fact(Icons.Filled.HighQuality, stringResource(R.string.request_profile), it) },
+        detail.destination?.rootFolder?.let { Fact(Icons.Filled.Folder, stringResource(R.string.request_root_folder), it) },
+        detail.destination?.tags?.takeIf { it.isNotEmpty() }?.let {
+            Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), it.joinToString(", "))
+        },
+    )
 
 @Composable
 private fun FactList(facts: List<Fact>) {
@@ -179,11 +182,17 @@ private fun FactRow(fact: Fact) {
 }
 
 /**
- * A name as a link to that user's detail screen where the viewer may actually open it — their own
- * id, or any id at all with `MANAGE_USERS` — plain text otherwise. `SeerrApi.user()` refuses
- * anyone else's id without that permission, so an ungated link would be a dead end rather than a
- * shortcut.
+ * Whether the viewer may open [id]'s user detail screen — their own id, or any id at all with
+ * `MANAGE_USERS`. `SeerrApi.user()` refuses anyone else's id without that permission, so an
+ * ungated link would be a dead end rather than a shortcut.
  */
+internal fun canOpenUser(
+    id: Int?,
+    viewerId: Int?,
+    canManageUsers: Boolean,
+): Boolean = id != null && (id == viewerId || canManageUsers)
+
+/** A name as a link to that user's detail screen where [canOpenUser] allows it, plain text otherwise. */
 internal fun linkedOrPlain(
     text: String,
     id: Int?,
@@ -191,7 +200,7 @@ internal fun linkedOrPlain(
     canManageUsers: Boolean,
     onOpenUser: (Int) -> Unit,
 ): InfoValue =
-    if (id != null && (id == viewerId || canManageUsers)) {
+    if (id != null && canOpenUser(id, viewerId, canManageUsers)) {
         InfoValue.Link(text, onClick = { onOpenUser(id) })
     } else {
         InfoValue.Plain(text)
