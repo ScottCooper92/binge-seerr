@@ -43,7 +43,8 @@ import com.binge.designsystem.R as DesR
  * The year and the chips that classify the title — its media type, its availability, and 4K where it
  * applies — drawn under the title inside the hero, wrapping together so a narrow window drops one to a
  * second line rather than clipping it (#340). The chip reads the title's own status across every
- * request, not this request's own seasons — see [RequestSections].
+ * request, not this request's own seasons — see [RequestSections] and [RequestHeadline]'s caption
+ * for where the two can disagree.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -73,7 +74,8 @@ internal fun RequestHeroMeta(
 }
 
 /**
- * What the title is about: its overview.
+ * The disambiguation caption where this request's seasons can disagree with the title's own status
+ * chip in [RequestHeroMeta], then what the title is about: its overview.
  *
  * [initiallyOverflowing] seeds the overview's toggle for a frame: the component only learns it
  * overflowed from `onTextLayout`, which fires after the screenshot lane has captured.
@@ -84,8 +86,15 @@ internal fun RequestHeadline(
     modifier: Modifier = Modifier,
     initiallyOverflowing: Boolean = false,
 ) {
-    detail.overview?.let {
-        ExpandableOverview(text = it, initiallyOverflowing = initiallyOverflowing, modifier = modifier)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
+        if (detail.seasons.isNotEmpty()) {
+            Text(
+                stringResource(R.string.request_title_status_caption),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        detail.overview?.let { ExpandableOverview(text = it, initiallyOverflowing = initiallyOverflowing) }
     }
 }
 
