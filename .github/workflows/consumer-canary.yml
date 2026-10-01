@@ -1,0 +1,115 @@
+name: Consumer canary
+
+# Builds this app against the HEADS of design-system/ and binge-integrations/ instead of the
+# commits pinned here. Both upstreams say a green build in their repository does not mean a green
+# build in their consumers, and this app is where a breaking change on their main first shows. CI
+# only ever builds the pins, so without this the break surfaces in the bump PR.
+#
+# A separate workflow with its own name, deliberately. bot-review, author-ci-fix and
+# author-conflicts match CI by NAME (`workflows: ["CI"]`), so a job added to ci.yml would be a
+# second thing for them to reason about, and this one has no PR to act on. Under this name they
+# never see it. It only answers "would a bump be green"; it never commits the bump.
+on:
+  schedule:
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: consumer-canary
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+
+      # Moves each submodule to the tip of its remote's default branch in the working tree only.
+      - name: Move the submodules to their upstream heads
+        run: |
+          set -euo pipefail
+          git submodule update --init --remote design-system binge-integrations
+          git submodule status
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+      - name: Build, test and lint
+        run: ./gradlew build --continue
+
+      - name: Upload reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: canary-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/reports/lint-results-*.html
+            **/build/reports/ktlint/**
+            **/build/reports/detekt/**
+            **/build/reports/kover/**
+            **/build/outputs/screenshotTest-results/**/diffs/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # The same report as ci.yml's nightly-report, under its own issue title so a break from upstream
+  # is told apart from a toolchain-drift red. The issue stays in this repository: opening one in an
+  # upstream from here would put this repo's failures on someone else's backlog.
+  canary-report:
+    if: ${{ always() && github.event_name == 'schedule' }}
+    needs: canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          CANARY_RESULT: ${{ needs.canary.result }}
+        with:
+          script: |
+            const title = 'Consumer canary: main no longer builds against upstream heads';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const { owner, repo } = context.repo;
+            const open = (await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', per_page: 100,
+            })).find((i) => !i.pull_request && i.title === title);
+
+            if (process.env.CANARY_RESULT === 'success') {
+              if (!open) return;
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: open.number,
+                body: `The canary is green again: ${runUrl}`,
+              });
+              await github.rest.issues.update({
+                owner, repo, issue_number: open.number, state: 'closed', state_reason: 'completed',
+              });
+            } else {
+              if (open) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: open.number,
+                  body: `Still failing: ${runUrl}`,
+                });
+                return;
+              }
+              await github.rest.issues.create({
+                owner, repo, title,
+                body: [
+                  `The scheduled canary failed: ${runUrl}`,
+                  '',
+                  'This build uses the heads of design-system/ (binge-design-system) and binge-integrations/ (binge-integrations), not the pinned commits. If the nightly CI run is green, an upstream commit broke this app: the log names the submodule commits it built against, and bumping the pin would be red too.',
+                  '',
+                  'The canary-reports artifact is kept for seven days. This issue closes itself on the next green canary run.',
+                ].join('\n'),
+              });
+            }
