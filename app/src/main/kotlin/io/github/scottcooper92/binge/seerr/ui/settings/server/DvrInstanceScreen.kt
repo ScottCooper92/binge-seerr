@@ -1,6 +1,20 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Https
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,10 +35,12 @@ import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 
@@ -51,14 +67,16 @@ fun DvrInstanceScreen(
         actions = actions,
         canSave = { it.valid },
     ) { draft, enabled ->
-        ConnectionFields(draft, enabled, actions)
-        BingeOutlinedButton(
-            label = stringResource(R.string.server_settings_dvr_test),
-            onClick = onTest,
-            enabled = enabled && draft.connectionValid && !extras.testing,
-            loading = extras.testing,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        EditorSectionCard(stringResource(R.string.settings_group_connection)) {
+            ConnectionFields(draft, enabled, actions)
+            BingeOutlinedButton(
+                label = stringResource(R.string.server_settings_dvr_test),
+                onClick = onTest,
+                enabled = enabled && draft.connectionValid && !extras.testing,
+                loading = extras.testing,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         DestinationFields(draft, extras.choices, enabled, actions)
         FlagSwitches(draft, enabled, actions)
         if (draft.id != null) DeleteButton(onDelete)
@@ -71,12 +89,13 @@ private fun ConnectionFields(
     enabled: Boolean,
     actions: EditorActions<DvrForm>,
 ) {
-    EditorTextField(draft.name, stringResource(R.string.server_settings_dvr_name), enabled = enabled) { value ->
+    EditorTextField(draft.name, stringResource(R.string.server_settings_dvr_name), icon = Icons.Filled.Badge, enabled = enabled) { value ->
         actions.onEdit { it.copy(name = value) }
     }
     EditorTextField(
         draft.host,
         stringResource(R.string.server_settings_host),
+        icon = Icons.Filled.Dns,
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
         placeholder = stringResource(R.string.placeholder_host),
@@ -86,19 +105,29 @@ private fun ConnectionFields(
     EditorTextField(
         draft.port,
         stringResource(R.string.server_settings_port),
+        icon = Icons.Filled.Tag,
         enabled = enabled,
         keyboardType = KeyboardType.Number,
         isError = draft.port.isNotBlank() && !draft.copy(host = "x", apiKey = "x").connectionValid,
     ) { value -> actions.onEdit { it.copy(port = value) } }
-    EditorSwitchRow(stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled = enabled) { value ->
-        actions.onEdit { it.copy(useSsl = value) }
-    }
-    EditorTextField(draft.apiKey, stringResource(R.string.server_settings_api_key), enabled = enabled, secret = true) { value ->
+    EditorToggleRow(
+        editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
+            actions.onEdit { it.copy(useSsl = value) }
+        },
+    )
+    EditorTextField(
+        draft.apiKey,
+        stringResource(R.string.server_settings_api_key),
+        icon = Icons.Filled.Key,
+        enabled = enabled,
+        secret = true,
+    ) { value ->
         actions.onEdit { it.copy(apiKey = value) }
     }
     EditorTextField(
         draft.baseUrl,
         stringResource(R.string.server_settings_url_base),
+        icon = Icons.Filled.Link,
         enabled = enabled,
         placeholder =
             stringResource(
@@ -110,6 +139,7 @@ private fun ConnectionFields(
     EditorTextField(
         draft.externalUrl,
         stringResource(R.string.server_settings_external_url),
+        icon = Icons.Filled.Language,
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
         supporting = stringResource(R.string.server_settings_dvr_external_hint),
@@ -124,15 +154,29 @@ internal fun DestinationFields(
     enabled: Boolean,
     actions: EditorActions<DvrForm>,
 ) {
-    EditorSectionTitle(stringResource(R.string.server_settings_dvr_destination))
     if (choices == null) {
-        Text(
-            stringResource(R.string.server_settings_dvr_untested),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        EditorSectionCard(stringResource(R.string.server_settings_dvr_destination)) {
+            Text(
+                stringResource(R.string.server_settings_dvr_untested),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         return
     }
+    EditorSectionCard(stringResource(R.string.server_settings_dvr_destination)) {
+        DestinationChoices(draft, choices, enabled, actions)
+    }
+    if (draft.type == ServiceType.Sonarr) AnimeFields(draft, choices, enabled, actions)
+}
+
+@Composable
+private fun DestinationChoices(
+    draft: DvrForm,
+    choices: DvrChoices,
+    enabled: Boolean,
+    actions: EditorActions<DvrForm>,
+) {
     if (draft.type == ServiceType.Radarr) {
         ChoicePicker(
             title = stringResource(R.string.server_settings_dvr_minimum_availability),
@@ -166,13 +210,12 @@ internal fun DestinationFields(
         )
     }
     TagChips(choices.tags, draft.tagIds, enabled) { id -> actions.onEdit { it.copy(tagIds = it.tagIds.toggled(id)) } }
-    if (draft.type == ServiceType.Sonarr) SonarrFields(draft, choices, enabled, actions)
+    if (draft.type == ServiceType.Sonarr) SonarrFields(draft, enabled, actions)
 }
 
 @Composable
 private fun SonarrFields(
     draft: DvrForm,
-    choices: DvrChoices,
     enabled: Boolean,
     actions: EditorActions<DvrForm>,
 ) {
@@ -184,11 +227,21 @@ private fun SonarrFields(
         enabled = enabled,
     )
     draft.seasonFolders?.let { on ->
-        EditorSwitchRow(stringResource(R.string.server_settings_dvr_season_folders), on, enabled = enabled) { value ->
-            actions.onEdit { it.copy(seasonFolders = value) }
-        }
+        EditorToggleRow(
+            editorToggle(Icons.Filled.Folder, stringResource(R.string.server_settings_dvr_season_folders), on, enabled) { value ->
+                actions.onEdit { it.copy(seasonFolders = value) }
+            },
+        )
     }
-    EditorSectionTitle(stringResource(R.string.server_settings_dvr_anime))
+}
+
+@Composable
+private fun AnimeFields(
+    draft: DvrForm,
+    choices: DvrChoices,
+    enabled: Boolean,
+    actions: EditorActions<DvrForm>,
+) = EditorSectionCard(stringResource(R.string.server_settings_dvr_anime)) {
     ChoicePicker(
         title = stringResource(R.string.server_settings_dvr_series_type),
         choices = SERIES_TYPES.map { it to stringResource(it.seriesTypeRes()) },
@@ -230,22 +283,36 @@ internal fun FlagSwitches(
     enabled: Boolean,
     actions: EditorActions<DvrForm>,
 ) {
-    EditorSectionTitle(stringResource(R.string.server_settings_dvr_behaviour))
-    EditorSwitchRow(stringResource(R.string.server_settings_dvr_default), draft.isDefault, enabled = enabled) { value ->
-        actions.onEdit { it.copy(isDefault = value) }
-    }
-    EditorSwitchRow(stringResource(R.string.server_settings_dvr_4k), draft.is4k, enabled = enabled) { value ->
-        actions.onEdit { it.copy(is4k = value) }
-    }
-    EditorSwitchRow(stringResource(R.string.server_settings_dvr_sync), draft.syncEnabled, enabled = enabled) { value ->
-        actions.onEdit { it.copy(syncEnabled = value) }
-    }
-    EditorSwitchRow(stringResource(R.string.server_settings_dvr_prevent_search), draft.preventSearch, enabled = enabled) { value ->
-        actions.onEdit { it.copy(preventSearch = value) }
-    }
-    EditorSwitchRow(stringResource(R.string.server_settings_dvr_tag_requests), draft.tagRequests, enabled = enabled) { value ->
-        actions.onEdit { it.copy(tagRequests = value) }
-    }
+    EditorToggleGroup(
+        stringResource(R.string.server_settings_dvr_behaviour),
+        listOf(
+            editorToggle(Icons.Filled.Star, stringResource(R.string.server_settings_dvr_default), draft.isDefault, enabled) { value ->
+                actions.onEdit { it.copy(isDefault = value) }
+            },
+            editorToggle(Icons.Filled.HighQuality, stringResource(R.string.server_settings_dvr_4k), draft.is4k, enabled) { value ->
+                actions.onEdit { it.copy(is4k = value) }
+            },
+            editorToggle(Icons.Filled.Sync, stringResource(R.string.server_settings_dvr_sync), draft.syncEnabled, enabled) { value ->
+                actions.onEdit { it.copy(syncEnabled = value) }
+            },
+            editorToggle(
+                Icons.Filled.Search,
+                stringResource(R.string.server_settings_dvr_prevent_search),
+                draft.preventSearch,
+                enabled,
+            ) { value ->
+                actions.onEdit { it.copy(preventSearch = value) }
+            },
+            editorToggle(
+                Icons.Filled.Label,
+                stringResource(R.string.server_settings_dvr_tag_requests),
+                draft.tagRequests,
+                enabled,
+            ) { value ->
+                actions.onEdit { it.copy(tagRequests = value) }
+            },
+        ),
+    )
 }
 
 @Composable

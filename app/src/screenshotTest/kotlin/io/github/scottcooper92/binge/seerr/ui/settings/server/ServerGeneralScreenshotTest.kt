@@ -63,7 +63,7 @@ class ServerGeneralScreenshotTest {
     fun failed() = GeneralFrame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
 }
 
-/** The general page's lower sections: the server switches, the API key and what a visitor sees. */
+/** The general page's lower sections: the server switches, and the API key. */
 class ServerGeneralSectionsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
@@ -96,23 +96,6 @@ class ServerGeneralSectionsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun apiKeyUnread() = SectionFrame { ApiKeySection(ApiKeyState(), noKeyActions()) }
-
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun visitor() =
-        SectionFrame {
-            VisitorSection(
-                VisitorView(
-                    localLogin = true,
-                    mediaServerLogin = false,
-                    movie4k = true,
-                    series4k = false,
-                    partialRequests = true,
-                    hideAvailable = false,
-                ),
-            )
-        }
 }
 
 private const val API_KEY = "MTc1NzQ2MDk5MzEyNA1234abcd"

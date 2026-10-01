@@ -370,12 +370,10 @@ app:server_settings_agents_manage_caption  c4ae33f6f524
 app:server_settings_api_caches  1a9544d250ea
 app:server_settings_api_key  16f0ee47f993
 app:server_settings_api_key_copy  e21f935f11d7
-app:server_settings_api_key_hide  ac20a57bfde0
 app:server_settings_api_key_regenerate  1651031bf58d
 app:server_settings_api_key_regenerate_message  4cdf3dff16f8
 app:server_settings_api_key_regenerate_title  5d08dae30c8d
 app:server_settings_api_key_regenerated  3e15205c659f
-app:server_settings_api_key_reveal  36b830bdb447
 app:server_settings_application_title  f4fe57f03ac4
 app:server_settings_application_url_hint  5a74ac1e0707
 app:server_settings_cache  c4d5ec97a1bc
@@ -515,6 +513,7 @@ app:server_settings_scan_lead  c81e9c5da9e5
 app:server_settings_scan_running  151650fec630
 app:server_settings_scan_running_library  ade192a839b9
 app:server_settings_scan_start  b1fbac894dbc
+app:server_settings_section_application  e7ad522ea327
 app:server_settings_section_users  bdbdb86464d4
 app:server_settings_services_manage  8542eab86011
 app:server_settings_services_manage_caption  4cafc24b6e98
@@ -572,12 +571,6 @@ app:server_settings_trust_proxy  36fd2b0c678c
 app:server_settings_url_base  f1a52d70f8c5
 app:server_settings_use_ssl  e51a45d18afd
 app:server_settings_version_check  f26f3275e735
-app:server_settings_visitor_lead  dda1e0a5b637
-app:server_settings_visitor_local_login  ad8f0ce759ef
-app:server_settings_visitor_media_server_login  c5ec74e21b0b
-app:server_settings_visitor_movie_4k  3051966053dc
-app:server_settings_visitor_series_4k  acf9738911c1
-app:server_settings_visitor_title  4713b9923dfa
 app:server_settings_youtube_url  60d148a500ae
 app:server_settings_youtube_url_hint  a5e06ab9a284
 app:settings_about  4efca0d10c5f
@@ -797,6 +790,7 @@ app:user_settings_region_hint  c33edd99bdfd
 app:user_settings_save  1509f561f241
 app:user_settings_saved  b5c120b316c2
 app:user_settings_section_discover  d4a33d5b78bc
+app:user_settings_section_profile  d696a35bdd18
 app:user_settings_telegram_bot  931de21a8a9d
 app:user_settings_telegram_chat_id_hint  f874cb36ce6f
 app:user_settings_telegram_silent  e6ace96135ad

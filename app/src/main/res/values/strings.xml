@@ -355,6 +355,8 @@
     <string name="user_delete_confirm_title">Delete %1$s?</string>
     <string name="user_delete_confirm_message">The account and its requests are removed from the server. This cannot be undone.</string>
     <string name="user_settings_title">Settings</string>
+    <string name="server_settings_section_application">Application</string>
+    <string name="user_settings_section_profile">Profile</string>
     <string name="user_settings_none">There is nothing here you can change.</string>
     <string name="user_settings_save">Save</string>
     <string name="user_settings_saved">Saved</string>
@@ -438,20 +440,11 @@
     <string name="server_settings_default_permissions">Default permissions</string>
     <string name="server_settings_default_permissions_lead">What a new account starts with. You can grant by default only what you hold.</string>
     <string name="server_settings_api_key">API key</string>
-    <string name="server_settings_api_key_masked" translatable="false">••••••••••••••••</string>
-    <string name="server_settings_api_key_reveal">Reveal</string>
-    <string name="server_settings_api_key_hide">Hide</string>
     <string name="server_settings_api_key_copy">Copy</string>
     <string name="server_settings_api_key_regenerate">Regenerate</string>
     <string name="server_settings_api_key_regenerate_title">Regenerate the API key?</string>
     <string name="server_settings_api_key_regenerate_message">The current key stops working at once. Anything else signed in with it, including this app if it is, needs the new one — this app reconnects itself.</string>
     <string name="server_settings_api_key_regenerated">API key regenerated</string>
-    <string name="server_settings_visitor_title">What a visitor sees</string>
-    <string name="server_settings_visitor_lead">The public settings the server shows before sign-in; each comes from its own page.</string>
-    <string name="server_settings_visitor_local_login">Local sign-in</string>
-    <string name="server_settings_visitor_media_server_login">Media server sign-in</string>
-    <string name="server_settings_visitor_movie_4k">4K movie requests</string>
-    <string name="server_settings_visitor_series_4k">4K series requests</string>
     <string name="server_settings_media_server">Media server</string>
     <string name="server_settings_media_server_caption">Address, libraries and scans</string>
     <string name="server_settings_media_server_lead">The %1$s server this app requests against: %2$s</string>

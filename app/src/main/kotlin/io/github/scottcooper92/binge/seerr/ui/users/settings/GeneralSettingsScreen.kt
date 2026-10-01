@@ -3,6 +3,14 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,9 +36,25 @@ fun GeneralSettingsScreen(
         actions = actions,
         canSave = { it.quotasValid },
     ) { draft, enabled ->
+        ProfileCard(draft, enabled, actions)
+        DiscoverCard(draft, enabled, actions)
+        if (draft.canEditQuotas) {
+            QuotasCard(draft, enabled, actions)
+        }
+    }
+}
+
+@Composable
+private fun ProfileCard(
+    draft: GeneralSettings,
+    enabled: Boolean,
+    actions: EditorActions<GeneralSettings>,
+) {
+    EditorSectionCard(stringResource(R.string.user_settings_section_profile)) {
         EditorTextField(
             draft.displayName,
             stringResource(R.string.user_settings_display_name),
+            icon = Icons.Filled.Person,
             enabled = enabled,
             // What the server itself shows when this is blank, so the example is also the answer to "or what?".
             placeholder = draft.fallbackName.takeIf { it.isNotBlank() },
@@ -40,6 +64,7 @@ fun GeneralSettingsScreen(
         EditorTextField(
             draft.email,
             stringResource(R.string.user_settings_email),
+            icon = Icons.Filled.Email,
             enabled = enabled && draft.canEditEmail,
             keyboardType = KeyboardType.Email,
             placeholder = stringResource(R.string.placeholder_email),
@@ -47,26 +72,39 @@ fun GeneralSettingsScreen(
         EditorTextField(
             draft.discordId,
             stringResource(R.string.user_settings_discord_id),
+            icon = Icons.Filled.Forum,
             enabled = enabled,
             keyboardType = KeyboardType.Number,
             supporting = stringResource(R.string.user_settings_discord_id_hint),
         ) { value -> actions.onEdit { it.copy(discordId = value) } }
-        EditorSectionTitle(stringResource(R.string.user_settings_section_discover))
+    }
+}
+
+@Composable
+private fun DiscoverCard(
+    draft: GeneralSettings,
+    enabled: Boolean,
+    actions: EditorActions<GeneralSettings>,
+) {
+    EditorSectionCard(stringResource(R.string.user_settings_section_discover)) {
         EditorTextField(
             draft.locale,
             stringResource(R.string.settings_display_language),
+            icon = Icons.Filled.Translate,
             enabled = enabled,
             supporting = stringResource(R.string.user_settings_locale_hint),
         ) { value -> actions.onEdit { it.copy(locale = value) } }
         EditorTextField(
             draft.region,
             stringResource(R.string.user_settings_region),
+            icon = Icons.Filled.Public,
             enabled = enabled,
             supporting = stringResource(R.string.user_settings_region_hint),
         ) { value -> actions.onEdit { it.copy(region = value) } }
         EditorTextField(
             draft.originalLanguage,
             stringResource(R.string.user_settings_original_language),
+            icon = Icons.Filled.Language,
             enabled = enabled,
             // The same field as the server-level one, so it says the same thing rather than a second wording of it.
             supporting = stringResource(R.string.server_settings_original_language_hint),
@@ -74,36 +112,47 @@ fun GeneralSettingsScreen(
             actions.onEdit { it.copy(originalLanguage = value) }
         }
         draft.watchlistSyncMovies?.let { on ->
-            EditorSwitchRow(stringResource(R.string.user_settings_watchlist_movies), on, enabled = enabled) { value ->
-                actions.onEdit { it.copy(watchlistSyncMovies = value) }
-            }
+            EditorToggleRow(
+                editorToggle(Icons.Filled.Bookmark, stringResource(R.string.user_settings_watchlist_movies), on, enabled) { value ->
+                    actions.onEdit { it.copy(watchlistSyncMovies = value) }
+                },
+            )
         }
         draft.watchlistSyncTv?.let { on ->
-            EditorSwitchRow(stringResource(R.string.user_settings_watchlist_tv), on, enabled = enabled) { value ->
-                actions.onEdit { it.copy(watchlistSyncTv = value) }
-            }
-        }
-        if (draft.canEditQuotas) {
-            EditorSectionTitle(stringResource(R.string.user_settings_quotas))
-            QuotaFields(
-                title = stringResource(R.string.hub_quota_movies),
-                limit = draft.movieQuotaLimit,
-                days = draft.movieQuotaDays,
-                default = draft.defaultMovieQuota,
-                enabled = enabled,
-                onLimit = { value -> actions.onEdit { it.copy(movieQuotaLimit = value) } },
-                onDays = { value -> actions.onEdit { it.copy(movieQuotaDays = value) } },
-            )
-            QuotaFields(
-                title = stringResource(R.string.hub_quota_tv),
-                limit = draft.tvQuotaLimit,
-                days = draft.tvQuotaDays,
-                default = draft.defaultTvQuota,
-                enabled = enabled,
-                onLimit = { value -> actions.onEdit { it.copy(tvQuotaLimit = value) } },
-                onDays = { value -> actions.onEdit { it.copy(tvQuotaDays = value) } },
+            EditorToggleRow(
+                editorToggle(Icons.Filled.Bookmark, stringResource(R.string.user_settings_watchlist_tv), on, enabled) { value ->
+                    actions.onEdit { it.copy(watchlistSyncTv = value) }
+                },
             )
         }
+    }
+}
+
+@Composable
+private fun QuotasCard(
+    draft: GeneralSettings,
+    enabled: Boolean,
+    actions: EditorActions<GeneralSettings>,
+) {
+    EditorSectionCard(stringResource(R.string.user_settings_quotas)) {
+        QuotaFields(
+            title = stringResource(R.string.hub_quota_movies),
+            limit = draft.movieQuotaLimit,
+            days = draft.movieQuotaDays,
+            default = draft.defaultMovieQuota,
+            enabled = enabled,
+            onLimit = { value -> actions.onEdit { it.copy(movieQuotaLimit = value) } },
+            onDays = { value -> actions.onEdit { it.copy(movieQuotaDays = value) } },
+        )
+        QuotaFields(
+            title = stringResource(R.string.hub_quota_tv),
+            limit = draft.tvQuotaLimit,
+            days = draft.tvQuotaDays,
+            default = draft.defaultTvQuota,
+            enabled = enabled,
+            onLimit = { value -> actions.onEdit { it.copy(tvQuotaLimit = value) } },
+            onDays = { value -> actions.onEdit { it.copy(tvQuotaDays = value) } },
+        )
     }
 }
 

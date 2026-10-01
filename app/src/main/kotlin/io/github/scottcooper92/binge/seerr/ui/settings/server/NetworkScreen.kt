@@ -1,5 +1,20 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.HourglassFull
+import androidx.compose.material.icons.filled.Https
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -7,10 +22,12 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import kotlinx.coroutines.flow.Flow
 
 /** The network page: the switches every lineage has, then the proxy and the DNS cache where the server sent them. */
@@ -27,17 +44,27 @@ fun NetworkScreen(
         actions = actions,
         canSave = { it.valid },
     ) { draft, enabled ->
-        EditorSwitchRow(stringResource(R.string.server_settings_trust_proxy), draft.trustProxy, enabled = enabled) { value ->
-            actions.onEdit { it.copy(trustProxy = value) }
-        }
-        EditorSwitchRow(stringResource(R.string.server_settings_csrf), draft.csrfProtection, enabled = enabled) { value ->
-            actions.onEdit { it.copy(csrfProtection = value) }
-        }
-        draft.forceIpv4First?.let { on ->
-            EditorSwitchRow(stringResource(R.string.server_settings_force_ipv4), on, enabled = enabled) { value ->
-                actions.onEdit { it.copy(forceIpv4First = value) }
-            }
-        }
+        EditorToggleGroup(
+            stringResource(R.string.settings_group_general),
+            listOfNotNull(
+                editorToggle(
+                    Icons.Filled.Shield,
+                    stringResource(R.string.server_settings_trust_proxy),
+                    draft.trustProxy,
+                    enabled,
+                ) { value ->
+                    actions.onEdit { it.copy(trustProxy = value) }
+                },
+                editorToggle(Icons.Filled.Lock, stringResource(R.string.server_settings_csrf), draft.csrfProtection, enabled) { value ->
+                    actions.onEdit { it.copy(csrfProtection = value) }
+                },
+                draft.forceIpv4First?.let { on ->
+                    editorToggle(Icons.Filled.Public, stringResource(R.string.server_settings_force_ipv4), on, enabled) { value ->
+                        actions.onEdit { it.copy(forceIpv4First = value) }
+                    }
+                },
+            ),
+        )
         draft.proxy?.let { proxy ->
             ProxyFields(proxy, enabled) { transform -> actions.onEdit { it.copy(proxy = it.proxy?.let(transform)) } }
         }
@@ -53,50 +80,78 @@ private fun ProxyFields(
     enabled: Boolean,
     onEdit: ((ProxyForm) -> ProxyForm) -> Unit,
 ) {
-    EditorSectionTitle(stringResource(R.string.server_settings_proxy))
-    EditorSwitchRow(stringResource(R.string.server_settings_proxy_enabled), proxy.enabled, enabled = enabled) { value ->
-        onEdit { it.copy(enabled = value) }
-    }
-    // The switch is the gate: with the proxy off nothing below it is read, and ProxyForm.valid
-    // already says so, so the controls follow rather than looking live over a setting in no use.
-    val editable = enabled && proxy.enabled
-    EditorTextField(
-        proxy.host,
-        stringResource(R.string.server_settings_host),
-        enabled = editable,
-        keyboardType = KeyboardType.Uri,
-        placeholder = stringResource(R.string.placeholder_proxy_host),
-        isError = proxy.enabled && proxy.host.isBlank(),
-    ) { value -> onEdit { it.copy(host = value) } }
-    EditorTextField(
-        proxy.port,
-        stringResource(R.string.server_settings_port),
-        enabled = editable,
-        keyboardType = KeyboardType.Number,
-        placeholder = stringResource(R.string.placeholder_port_proxy),
-        isError = proxy.enabled && !proxy.valid && proxy.host.isNotBlank(),
-    ) { value -> onEdit { it.copy(port = value) } }
-    EditorSwitchRow(stringResource(R.string.server_settings_use_ssl), proxy.useSsl, enabled = editable) { value ->
-        onEdit {
-            it.copy(useSsl = value)
+    EditorSectionCard(stringResource(R.string.server_settings_proxy)) {
+        EditorToggleRow(
+            editorToggle(
+                Icons.Filled.PowerSettingsNew,
+                stringResource(R.string.server_settings_proxy_enabled),
+                proxy.enabled,
+                enabled,
+            ) { value ->
+                onEdit { it.copy(enabled = value) }
+            },
+        )
+        // The switch is the gate: with the proxy off nothing below it is read, and ProxyForm.valid
+        // already says so, so the controls follow rather than looking live over a setting in no use.
+        val editable = enabled && proxy.enabled
+        EditorTextField(
+            proxy.host,
+            stringResource(R.string.server_settings_host),
+            icon = Icons.Filled.Dns,
+            enabled = editable,
+            keyboardType = KeyboardType.Uri,
+            placeholder = stringResource(R.string.placeholder_proxy_host),
+            isError = proxy.enabled && proxy.host.isBlank(),
+        ) { value -> onEdit { it.copy(host = value) } }
+        EditorTextField(
+            proxy.port,
+            stringResource(R.string.server_settings_port),
+            icon = Icons.Filled.Tag,
+            enabled = editable,
+            keyboardType = KeyboardType.Number,
+            placeholder = stringResource(R.string.placeholder_port_proxy),
+            isError = proxy.enabled && !proxy.valid && proxy.host.isNotBlank(),
+        ) { value -> onEdit { it.copy(port = value) } }
+        EditorToggleRow(
+            editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), proxy.useSsl, editable) { value ->
+                onEdit { it.copy(useSsl = value) }
+            },
+        )
+        EditorTextField(
+            proxy.user,
+            stringResource(R.string.server_settings_agent_username),
+            icon = Icons.Filled.Person,
+            enabled = editable,
+            autoCorrect = false,
+        ) { value ->
+            onEdit {
+                it.copy(user = value)
+            }
         }
-    }
-    EditorTextField(proxy.user, stringResource(R.string.server_settings_agent_username), enabled = editable, autoCorrect = false) { value ->
-        onEdit {
-            it.copy(user = value)
+        EditorTextField(
+            proxy.password,
+            stringResource(R.string.server_settings_agent_password),
+            icon = Icons.Filled.Key,
+            enabled = editable,
+            secret = true,
+        ) { value ->
+            onEdit { it.copy(password = value) }
         }
-    }
-    EditorTextField(proxy.password, stringResource(R.string.server_settings_agent_password), enabled = editable, secret = true) { value ->
-        onEdit { it.copy(password = value) }
-    }
-    EditorTextField(
-        proxy.bypassFilter,
-        stringResource(R.string.server_settings_proxy_bypass),
-        enabled = editable,
-        supporting = stringResource(R.string.server_settings_proxy_bypass_hint),
-    ) { value -> onEdit { it.copy(bypassFilter = value) } }
-    EditorSwitchRow(stringResource(R.string.server_settings_proxy_bypass_local), proxy.bypassLocalAddresses, enabled = editable) { value ->
-        onEdit { it.copy(bypassLocalAddresses = value) }
+        EditorTextField(
+            proxy.bypassFilter,
+            stringResource(R.string.server_settings_proxy_bypass),
+            icon = Icons.Filled.Block,
+            enabled = editable,
+            supporting = stringResource(R.string.server_settings_proxy_bypass_hint),
+        ) { value -> onEdit { it.copy(bypassFilter = value) } }
+        EditorToggleRow(
+            editorToggle(
+                Icons.Filled.Speed,
+                stringResource(R.string.server_settings_proxy_bypass_local),
+                proxy.bypassLocalAddresses,
+                editable,
+            ) { value -> onEdit { it.copy(bypassLocalAddresses = value) } },
+        )
     }
 }
 
@@ -106,25 +161,35 @@ private fun DnsCacheFields(
     enabled: Boolean,
     onEdit: ((DnsCacheForm) -> DnsCacheForm) -> Unit,
 ) {
-    EditorSectionTitle(stringResource(R.string.server_settings_dns_cache))
-    EditorSwitchRow(stringResource(R.string.server_settings_dns_cache_enabled), cache.enabled, enabled = enabled) { value ->
-        onEdit { it.copy(enabled = value) }
+    EditorSectionCard(stringResource(R.string.server_settings_dns_cache)) {
+        EditorToggleRow(
+            editorToggle(
+                Icons.Filled.Storage,
+                stringResource(R.string.server_settings_dns_cache_enabled),
+                cache.enabled,
+                enabled,
+            ) { value ->
+                onEdit { it.copy(enabled = value) }
+            },
+        )
+        val editable = enabled && cache.enabled
+        EditorTextField(
+            cache.minTtl,
+            stringResource(R.string.server_settings_dns_min_ttl),
+            icon = Icons.Filled.Timer,
+            enabled = editable,
+            keyboardType = KeyboardType.Number,
+            isError = cache.enabled && !cache.minTtl.isTtl(),
+            supporting = stringResource(R.string.server_settings_dns_ttl_hint),
+        ) { value -> onEdit { it.copy(minTtl = value) } }
+        EditorTextField(
+            cache.maxTtl,
+            stringResource(R.string.server_settings_dns_max_ttl),
+            icon = Icons.Filled.HourglassFull,
+            enabled = editable,
+            keyboardType = KeyboardType.Number,
+            isError = cache.enabled && !cache.maxTtl.isTtl(),
+            supporting = stringResource(R.string.server_settings_dns_ttl_hint),
+        ) { value -> onEdit { it.copy(maxTtl = value) } }
     }
-    val editable = enabled && cache.enabled
-    EditorTextField(
-        cache.minTtl,
-        stringResource(R.string.server_settings_dns_min_ttl),
-        enabled = editable,
-        keyboardType = KeyboardType.Number,
-        isError = cache.enabled && !cache.minTtl.isTtl(),
-        supporting = stringResource(R.string.server_settings_dns_ttl_hint),
-    ) { value -> onEdit { it.copy(minTtl = value) } }
-    EditorTextField(
-        cache.maxTtl,
-        stringResource(R.string.server_settings_dns_max_ttl),
-        enabled = editable,
-        keyboardType = KeyboardType.Number,
-        isError = cache.enabled && !cache.maxTtl.isTtl(),
-        supporting = stringResource(R.string.server_settings_dns_ttl_hint),
-    ) { value -> onEdit { it.copy(maxTtl = value) } }
 }

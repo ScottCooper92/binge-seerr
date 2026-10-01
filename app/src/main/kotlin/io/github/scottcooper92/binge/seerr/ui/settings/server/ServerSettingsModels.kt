@@ -1,8 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.isJellyseerrLineage
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
@@ -69,20 +69,11 @@ data class ApiKeyState(
     val regenerating: Boolean = false,
 )
 
-/** What `settings/public` tells a visitor before they sign in — read-only beside the form. */
-data class VisitorView(
-    val localLogin: Boolean,
-    val mediaServerLogin: Boolean,
-    val movie4k: Boolean,
-    val series4k: Boolean,
-    val partialRequests: Boolean,
-    val hideAvailable: Boolean,
-)
-
 /** What the general page shows beside its form; both wait on the same load. */
 data class ServerGeneralExtras(
     val apiKey: ApiKeyState = ApiKeyState(),
-    val visitor: VisitorView? = null,
+    /** What a new user starts with, off the same `settings/main` read as the form. */
+    val defaultPermissions: Set<ManageablePermission> = emptySet(),
 )
 
 internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): ServerGeneralSettings {
@@ -129,14 +120,4 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         youtubeUrl = youtubeUrl?.trim(),
         trustProxy = trustProxy,
         csrfProtection = csrfProtection,
-    )
-
-internal fun SeerrPublicSettings.toVisitorView(): VisitorView =
-    VisitorView(
-        localLogin = localLogin,
-        mediaServerLogin = mediaServerLogin,
-        movie4k = movie4kEnabled,
-        series4k = series4kEnabled,
-        partialRequests = partialRequestsEnabled,
-        hideAvailable = hideAvailable,
     )

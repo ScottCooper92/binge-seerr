@@ -92,10 +92,9 @@ class ServerGeneralViewModelTest {
             assertNull(draft.trustProxy)
             assertNull(draft.csrfProtection)
             assertNull(draft.versionCheck)
-            val extras = vm.awaitReady { it.extras.visitor != null }.extras
+            val extras = vm.awaitReady().extras
             assertEquals("old-key", extras.apiKey.key)
             assertFalse(extras.apiKey.revealed)
-            assertEquals(true, extras.visitor?.localLogin)
         }
 
     @Test
