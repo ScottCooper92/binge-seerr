@@ -17,8 +17,8 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 /**
  * The request page on the shared detail shape: the hero under an overlay bar carrying Open and
  * Report, the overview collapsed with its toggle, the watch rows under their own Stats header ahead
- * of "This request"'s own facts, and one primary pinned in its own footer (#343) rather than scrolled
- * with the rest of the content.
+ * of "This request"'s own facts and its primary action, inline in that card rather than pinned in a
+ * footer.
  *
  * The overview is seeded overflowing in every frame. Left alone the component only learns it
  * overflowed from `onTextLayout`, which fires after this lane has captured, so its collapsed-with-

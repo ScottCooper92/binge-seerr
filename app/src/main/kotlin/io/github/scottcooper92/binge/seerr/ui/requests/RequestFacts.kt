@@ -66,13 +66,6 @@ internal fun RequestStats(detail: RequestDetail) {
     FactList(facts)
 }
 
-/** This request's own facts as rows. */
-@Composable
-internal fun requestFacts(
-    detail: RequestDetail,
-    onOpenUser: (Int) -> Unit,
-): List<Fact> = requestPeopleFacts(detail, onOpenUser) + requestDestinationFacts(detail)
-
 /** Who asked and who last changed it, each with when. */
 @Composable
 internal fun requestPeopleFacts(
@@ -136,7 +129,7 @@ private fun FactList(facts: List<Fact>) {
 }
 
 @Composable
-internal fun FactRow(fact: Fact) {
+private fun FactRow(fact: Fact) {
     val blank =
         when (val primary = fact.primary) {
             is InfoValue.Plain -> primary.text.isBlank()
@@ -189,11 +182,17 @@ internal fun FactRow(fact: Fact) {
 }
 
 /**
- * A name as a link to that user's detail screen where the viewer may actually open it — their own
- * id, or any id at all with `MANAGE_USERS` — plain text otherwise. `SeerrApi.user()` refuses
- * anyone else's id without that permission, so an ungated link would be a dead end rather than a
- * shortcut.
+ * Whether the viewer may open [id]'s user detail screen — their own id, or any id at all with
+ * `MANAGE_USERS`. `SeerrApi.user()` refuses anyone else's id without that permission, so an
+ * ungated link would be a dead end rather than a shortcut.
  */
+internal fun canOpenUser(
+    id: Int?,
+    viewerId: Int?,
+    canManageUsers: Boolean,
+): Boolean = id != null && (id == viewerId || canManageUsers)
+
+/** A name as a link to that user's detail screen where [canOpenUser] allows it, plain text otherwise. */
 internal fun linkedOrPlain(
     text: String,
     id: Int?,
@@ -201,7 +200,7 @@ internal fun linkedOrPlain(
     canManageUsers: Boolean,
     onOpenUser: (Int) -> Unit,
 ): InfoValue =
-    if (id != null && (id == viewerId || canManageUsers)) {
+    if (id != null && canOpenUser(id, viewerId, canManageUsers)) {
         InfoValue.Link(text, onClick = { onOpenUser(id) })
     } else {
         InfoValue.Plain(text)

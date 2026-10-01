@@ -54,12 +54,22 @@ internal fun RequestActionsSheet(
     mediaActions: ManageMediaActions? = null,
     onMarkStatus: (is4k: Boolean) -> Unit = {},
     onOpenUser: ((Int) -> Unit)? = null,
+    viewerId: Int? = null,
+    canManageUsers: Boolean = false,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
     BingeBottomSheet(onDismissRequest = onDismiss) {
         RequestActionsContent(
-            model = RequestSheetModel(item = item, actions = actions, canEdit = canEdit, media = media),
+            model =
+                RequestSheetModel(
+                    item = item,
+                    actions = actions,
+                    canEdit = canEdit,
+                    media = media,
+                    viewerId = viewerId,
+                    canManageUsers = canManageUsers,
+                ),
             callbacks =
                 RequestSheetCallbacks(
                     onApprove = {

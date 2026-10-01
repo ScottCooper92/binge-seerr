@@ -190,6 +190,8 @@ internal fun RequestManagementSheets(
             mediaActions = actions.media,
             onMarkStatus = { is4k -> marking = is4k },
             onOpenUser = actions.onOpenUser,
+            viewerId = detail?.viewerId,
+            canManageUsers = detail?.canManageUsers == true,
         )
     }
     state?.edit?.let { edit -> EditRequestSheet(item = state.detail.item, edit = edit, actions = actions.edit) }

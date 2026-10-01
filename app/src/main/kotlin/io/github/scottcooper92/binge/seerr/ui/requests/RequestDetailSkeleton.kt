@@ -50,30 +50,32 @@ private const val FACTS_VALUE_FRACTION = 0.55f
  * nothing is reserved for them — the scroll grows on resolve rather than reflowing a guess, the same
  * trade Binge's own `DetailScreenSkeleton` makes for its cast rail (#373).
  *
- * The primary action footer IS reserved even though `RequestDetail.hasPrimaryAction` can be false
- * (a viewer with no manage permission on an already-settled request) — reserving the common admin
- * case over the rare read-only one, the same trade that skeleton makes for its details band.
+ * There is no primary action footer to reserve: the request's own button lives inside "This
+ * request" further down the scroll, so nothing is pinned below it.
  *
  * Insets mirror [RequestDetailPage] exactly rather than a blanket `safeDrawingPadding()`: the hero
- * runs full-bleed under the status bar on both, and only the footer clears the navigation bar —
+ * runs full-bleed under the status bar on both, and the scroll itself clears the navigation bar —
  * matching that is what keeps the [LayoutAnchors.Detail.HERO] anchor from moving on resolve.
  */
 @Composable
 internal fun RequestDetailSkeleton(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
-                HeroSkeleton(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)))
-                HeadlineSkeleton(
-                    modifier =
-                        Modifier
-                            .padding(resolvedContentInset())
-                            .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
-                )
-                SectionHeaderSkeleton()
-                FactsSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
-            }
-            PrimaryActionSkeleton()
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+        ) {
+            HeroSkeleton(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)))
+            HeadlineSkeleton(
+                modifier =
+                    Modifier
+                        .padding(resolvedContentInset())
+                        .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
+            )
+            SectionHeaderSkeleton()
+            FactsSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
         }
     }
 }
@@ -152,22 +154,5 @@ private fun FactsSkeleton(modifier: Modifier = Modifier) {
                     .height(lineHeightOf(MaterialTheme.typography.bodyMedium)),
             )
         }
-    }
-}
-
-@Composable
-private fun PrimaryActionSkeleton(modifier: Modifier = Modifier) {
-    Box(
-        modifier =
-            modifier
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                .fillMaxWidth()
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
-                .padding(top = dimensionResource(DesR.dimen.padding_sm), bottom = dimensionResource(DesR.dimen.padding_l)),
-    ) {
-        SkeletonPlate(
-            Modifier.fillMaxWidth().height(dimensionResource(DesR.dimen.button_filled_height)),
-            shape = BingeShapes.Medium,
-        )
     }
 }

@@ -48,6 +48,8 @@ internal class RequestSheetModel(
     val actions: RequestActions,
     val canEdit: Boolean = false,
     val media: MediaRecord? = null,
+    val viewerId: Int? = null,
+    val canManageUsers: Boolean = false,
 )
 
 /** What its rows call back into, bundled so the content's parameter list stays readable. */
@@ -84,7 +86,10 @@ internal fun RequestActionsContent(
                 .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        val requesterId = model.item.requestedById?.takeIf { callbacks.onOpenUser != null }
+        val requesterId =
+            model.item.requestedById?.takeIf {
+                callbacks.onOpenUser != null && canOpenUser(it, model.viewerId, model.canManageUsers)
+            }
         RequestSheetHeader(model.item, showRequester = requesterId == null)
         DecisionBar(model.actions, blockTitle, callbacks)
         val requestRows =
