@@ -37,6 +37,7 @@ class HubViewModel
     constructor(
         private val connection: SeerrConnection,
         private val loader: HubOverviewLoader,
+        private val cache: HubOverviewCache,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val pollerTicker: DownloadsPollerTicker = DownloadsPollerTicker(),
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
@@ -55,7 +56,21 @@ class HubViewModel
 
         /** `flowOn(dispatcher)` per #177/#370: without it, [HubOverviewLoader.server]'s suspend call resumes on Main. */
         private val server: Flow<HubServer?> =
-            reloadTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }.flowOn(dispatcher)
+            reloadTrigger
+                .flatMapLatest {
+                    flow {
+                        val baseUrl = currentBaseUrl()
+                        cache.adopt(baseUrl)
+                        val remembered = cache.server
+                        remembered?.let { emit(it) }
+                        val fresh = runCatching { loader.server() }.getOrNull()
+                        fresh?.let { cache.remember(baseUrl, server = it) }
+                        // A failed refresh keeps the remembered server rather than blanking the hub.
+                        if (fresh != null || remembered == null) emit(fresh)
+                    }
+                }.flowOn(dispatcher)
+
+        private suspend fun currentBaseUrl(): String? = runCatching { connection.current().baseUrl }.getOrNull()
 
         private val health: Flow<ConnectionHealth> =
             combine(connection.health, isProbing) { health, probing ->
@@ -67,10 +82,29 @@ class HubViewModel
             reloadTrigger
                 .flatMapLatest {
                     flow {
-                        emit(HubOverview())
-                        emit(loader.load())
+                        val baseUrl = currentBaseUrl()
+                        cache.adopt(baseUrl)
+                        val remembered = cache.overview
+                        emit(remembered ?: HubOverview())
+                        emit(refreshed(baseUrl, remembered, loader.load()))
                     }
                 }.flowOn(dispatcher)
+
+        /**
+         * A good read is remembered. A transient failure keeps the remembered overview's content but
+         * carries the failure, so health still reads CouldNotLoad and [HubAutoRetry] keeps retrying
+         * under the stale-but-useful hub. A rejected session forgets it: permissions may be gone.
+         */
+        private fun refreshed(
+            baseUrl: String?,
+            remembered: HubOverview?,
+            fresh: HubOverview,
+        ): HubOverview =
+            when {
+                fresh.userLoad == HubUserLoad.Loaded -> fresh.also { cache.remember(baseUrl, overview = it) }
+                fresh.userLoad == HubUserLoad.Failed && remembered != null -> remembered.copy(userLoad = HubUserLoad.Failed)
+                else -> fresh.also { cache.forgetOverview() }
+            }
 
         /** A count read on becoming visible, overriding the overview's until the next re-check reloads everything. */
         private val refreshedPendingCount = MutableStateFlow<Int?>(null)

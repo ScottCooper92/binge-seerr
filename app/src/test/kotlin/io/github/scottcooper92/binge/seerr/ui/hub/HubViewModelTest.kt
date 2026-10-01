@@ -19,6 +19,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
@@ -29,9 +30,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 private const val ADMIN = 2
 private const val REQUEST = 32
+private const val LATCH_SECONDS = 5L
 
 /**
  * The hub over an in-memory connection, scripted by path, because the overview fans its calls out
@@ -104,6 +108,9 @@ class HubViewModelTest {
         override fun isInstalled(): Boolean = installed
     }
 
+    /** The cache is a singleton in the app; a test shares one across ViewModels to stand in for leaving and returning to the hub. */
+    private val cache = HubOverviewCache()
+
     private suspend fun TestScope.viewModel(
         installCheck: BingeInstallCheck = FakeBingeInstallCheck(),
         bingeConnection: BingeConnectionStore =
@@ -133,6 +140,7 @@ class HubViewModelTest {
             HubViewModel(
                 connection,
                 HubOverviewLoader(connection),
+                cache,
                 mainDispatcherRule.dispatcher,
                 boundedTicker,
                 installCheck,
@@ -212,7 +220,7 @@ class HubViewModelTest {
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         serve("/api/v1/auth/me", "", code = code)
-        val vm = HubViewModel(connection, HubOverviewLoader(connection), mainDispatcherRule.dispatcher, boundedTicker)
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), cache, mainDispatcherRule.dispatcher, boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -288,6 +296,81 @@ class HubViewModelTest {
             val ready = vm.awaitReady { it.server.title == "Second Home" }
 
             assertEquals(0, ready.overview.movieRequestCount)
+        }
+
+    /** A second visit: a fresh ViewModel over the same connection and the same singleton cache. */
+    private fun TestScope.returnToHub(): HubViewModel {
+        val vm = HubViewModel(connection, HubOverviewLoader(connection), cache, mainDispatcherRule.dispatcher, boundedTicker)
+        viewModels.put(vm.hashCode().toString(), vm)
+        backgroundScope.launch { vm.uiState.collect {} }
+        return vm
+    }
+
+    @Test
+    fun `returning to the hub shows the previous overview while the refresh is still running`() =
+        runTest {
+            healthyServer()
+            viewModel().awaitReady { it.overview.account != null }
+            val release = CountDownLatch(1)
+            responses["/api/v1/auth/me"] = {
+                release.await(LATCH_SECONDS, TimeUnit.SECONDS)
+                FakeResponse(
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"id":1,"displayName":"Scott","permissions":$ADMIN}""",
+                )
+            }
+
+            try {
+                val ready = returnToHub().awaitReady()
+
+                assertEquals("Scott", ready.overview.account?.name)
+                assertEquals(HubSection.entries, ready.overview.visibleSections())
+                assertEquals("Family", ready.server.title)
+            } finally {
+                release.countDown()
+            }
+        }
+
+    @Test
+    fun `a different server never shows the previous server's overview`() =
+        runTest {
+            healthyServer()
+            viewModel().awaitReady { it.overview.account != null }
+            connection.disconnect()
+            connection.connect("http://other-seerr.test:8080/", SeerrAuth.ApiKey("k3y-2")).getOrThrow()
+            val release = CountDownLatch(1)
+            responses["/api/v1/auth/me"] = {
+                release.await(LATCH_SECONDS, TimeUnit.SECONDS)
+                FakeResponse(
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"id":9,"displayName":"Other","permissions":$REQUEST}""",
+                )
+            }
+
+            try {
+                val vm = returnToHub()
+                val states = mutableListOf<HubUiState>()
+                backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
+                runCurrent()
+                assertEquals(HubUiState.Loading, vm.uiState.value)
+            } finally {
+                release.countDown()
+            }
+            val ready = returnToHub().awaitReady { it.overview.account?.name == "Other" }
+            assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+        }
+
+    @Test
+    fun `a failed refresh keeps showing the remembered overview and still reads as could-not-load`() =
+        runTest {
+            healthyServer()
+            viewModel().awaitReady { it.overview.account != null }
+            serve("/api/v1/auth/me", "", code = 503)
+
+            val ready = returnToHub().awaitReady { it.health == ConnectionHealth.CouldNotLoad }
+
+            assertEquals("Scott", ready.overview.account?.name)
+            assertEquals(HubSection.entries, ready.overview.visibleSections())
         }
 
     @Test
