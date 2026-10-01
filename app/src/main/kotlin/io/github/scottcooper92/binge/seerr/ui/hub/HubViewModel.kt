@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +40,7 @@ class HubViewModel
     constructor(
         private val connection: SeerrConnection,
         private val loader: HubOverviewLoader,
+        private val cache: HubOverviewCache,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val pollerTicker: DownloadsPollerTicker = DownloadsPollerTicker(),
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
@@ -52,12 +54,22 @@ class HubViewModel
         private val installedTrigger = MutableStateFlow(installCheck.isInstalled())
 
         /** Bumped by a manual/auto re-check and by the connection itself changing underneath this instance. */
-        private val reloadTrigger: Flow<Unit> =
-            combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, _ -> Unit }
+        private val reloadTrigger: Flow<SeerrCredentials?> =
+            combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, credentials -> credentials }
 
         /** `flowOn(dispatcher)` per #177/#370: without it, [HubOverviewLoader.server]'s suspend call resumes on Main. */
         private val server: Flow<HubServer?> =
-            reloadTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }.flowOn(dispatcher)
+            reloadTrigger
+                .flatMapLatest { credentials ->
+                    flow {
+                        val remembered = cache.serverFor(credentials)
+                        remembered?.let { emit(it) }
+                        val fresh = runCatching { loader.server() }.getOrNull()
+                        fresh?.let { cache.remember(credentials, server = it) }
+                        // A failed refresh keeps the remembered server rather than blanking the hub.
+                        if (fresh != null || remembered == null) emit(fresh)
+                    }
+                }.flowOn(dispatcher)
 
         private val health: Flow<ConnectionHealth> =
             combine(connection.health, isProbing) { health, probing ->
@@ -67,12 +79,29 @@ class HubViewModel
         /** Same `flowOn(dispatcher)` reason as [server]: [HubOverviewLoader.load] suspends too. */
         private val overview: Flow<HubOverview> =
             reloadTrigger
-                .flatMapLatest {
+                .flatMapLatest { credentials ->
                     flow {
-                        emit(HubOverview())
-                        emit(loader.load())
+                        val remembered = cache.overviewFor(credentials)
+                        emit(remembered ?: HubOverview())
+                        emit(refreshed(credentials, remembered, loader.load()))
                     }
                 }.flowOn(dispatcher)
+
+        /**
+         * A good read is remembered. A transient failure keeps the remembered overview's content but
+         * carries the failure, so health still reads CouldNotLoad and [HubAutoRetry] keeps retrying
+         * under the stale-but-useful hub. A rejected session forgets it: permissions may be gone.
+         */
+        private fun refreshed(
+            credentials: SeerrCredentials?,
+            remembered: HubOverview?,
+            fresh: HubOverview,
+        ): HubOverview =
+            when {
+                fresh.userLoad == HubUserLoad.Loaded -> fresh.also { cache.remember(credentials, overview = it) }
+                fresh.userLoad == HubUserLoad.Failed && remembered != null -> remembered.copy(userLoad = HubUserLoad.Failed)
+                else -> fresh.also { cache.forgetOverview(credentials) }
+            }
 
         /** A count read on becoming visible, overriding the overview's until the next re-check reloads everything. */
         private val refreshedPendingCount = MutableStateFlow<Int?>(null)
