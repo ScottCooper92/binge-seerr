@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -19,9 +20,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
@@ -33,6 +36,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -110,6 +114,7 @@ private fun SettingsContent(
             stringResource(R.string.settings_group_connection),
             connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage),
         )
+        if (state.pending) PendingGroups()
         config?.general?.let {
             Group(
                 stringResource(R.string.settings_group_general),
@@ -162,6 +167,18 @@ private fun SettingsContent(
         )
     }
 }
+
+/** One plate where the admin groups will land, so the groups below make room once rather than jumping as each arrives. */
+@Composable
+private fun PendingGroups() {
+    Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+    SkeletonPlate(
+        modifier = Modifier.padding(horizontal = resolvedContentInset()).fillMaxWidth().height(PENDING_GROUPS_HEIGHT),
+        shape = BingeShapes.Large,
+    )
+}
+
+private val PENDING_GROUPS_HEIGHT = 240.dp
 
 /** A titled group with the screen's spacing above it; skipped when it has no rows. */
 @Composable

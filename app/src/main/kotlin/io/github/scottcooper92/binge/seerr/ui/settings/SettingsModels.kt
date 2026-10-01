@@ -122,5 +122,7 @@ sealed interface SettingsUiState {
         val config: ServerConfig?,
         val notifications: NotificationSettings? = null,
         val app: AppSettings? = null,
+        /** The admin groups have not answered yet and the wait for them ran out: the screen holds their place. */
+        val pending: Boolean = false,
     ) : SettingsUiState
 }

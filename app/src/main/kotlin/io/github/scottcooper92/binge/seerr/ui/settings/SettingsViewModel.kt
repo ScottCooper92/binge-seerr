@@ -20,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,11 +31,56 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Singleton
+
+/** How long the screen waits for the admin groups before it paints without them, as placeholders. */
+internal const val SETTLE_MILLIS = 1_000L
+
+/** A read that has not answered yet, told apart from one that answered with nothing (a viewer who may not read the config). */
+sealed interface Read<out T> {
+    data object Pending : Read<Nothing>
+
+    data class Done<T>(
+        val value: T?,
+    ) : Read<T>
+}
+
+private val <T> Read<T>.valueOrNull: T? get() = (this as? Read.Done<T>)?.value
+
+/**
+ * The last answers for the server this process is connected to, so a return to Settings paints the
+ * screen it left and refreshes it in place instead of rebuilding it from nothing. Keyed by the
+ * server's address: a different server starts empty rather than showing the old one's rows.
+ */
+@Singleton
+class SettingsReadCache
+    @Inject
+    constructor() {
+        private var baseUrl: String? = null
+
+        @Volatile var summary: ConnectionSummary? = null
+
+        @Volatile var server: ServerSummary? = null
+
+        @Volatile var config: Read<ServerConfig>? = null
+
+        @Volatile var offered: Read<List<NotificationSignal>>? = null
+
+        fun adopt(baseUrl: String?) {
+            if (baseUrl == this.baseUrl) return
+            this.baseUrl = baseUrl
+            summary = null
+            server = null
+            config = null
+            offered = null
+        }
+    }
 
 /**
  * Settings: the connection, the server, the poll's toggles, the admin's read-only view of the
@@ -49,6 +95,7 @@ class SettingsViewModel
     constructor(
         private val connection: SeerrConnection,
         private val loader: SettingsLoader,
+        private val cache: SettingsReadCache,
         private val prefs: NotificationPrefs,
         scheduler: NotificationScheduler,
         private val notifier: SeerrNotifier,
@@ -75,17 +122,31 @@ class SettingsViewModel
                 .mapLatest { trigger -> trigger.also { loader.refreshViewer() } }
                 .shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
 
+        private suspend fun seeded(): SettingsReadCache = cache.also { it.adopt(runCatching { connection.current().baseUrl }.getOrNull()) }
+
         private val summary: Flow<ConnectionSummary?> =
-            viewerRefreshed.flatMapLatest { flow { emit(runCatching { loader.connection() }.getOrNull()) } }.onStart { emit(null) }
+            viewerRefreshed
+                .flatMapLatest { flow { emit(runCatching { loader.connection() }.getOrNull()) } }
+                .onEach { if (it != null) cache.summary = it }
+                .onStart { emit(seeded().summary) }
 
         private val server: Flow<ServerSummary?> =
-            fetchTrigger.flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }.onStart { emit(null) }
+            fetchTrigger
+                .flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }
+                .onEach { if (it != null) cache.server = it }
+                .onStart { emit(seeded().server) }
 
-        private val config: Flow<ServerConfig?> =
-            viewerRefreshed.flatMapLatest { flow { emit(loader.config()) } }.onStart { emit(null) }
+        private val config: Flow<Read<ServerConfig>> =
+            viewerRefreshed
+                .flatMapLatest { flow<Read<ServerConfig>> { emit(Read.Done(loader.config())) } }
+                .onEach { cache.config = it }
+                .onStart { emit(seeded().config ?: Read.Pending) }
 
-        private val offered: Flow<List<NotificationSignal>?> =
-            viewerRefreshed.flatMapLatest { flow<List<NotificationSignal>?> { emit(loader.notificationSignals()) } }.onStart { emit(null) }
+        private val offered: Flow<Read<List<NotificationSignal>>> =
+            viewerRefreshed
+                .flatMapLatest { flow<Read<List<NotificationSignal>>> { emit(Read.Done(loader.notificationSignals())) } }
+                .onEach { cache.offered = it }
+                .onStart { emit(seeded().offered ?: Read.Pending) }
 
         private val enabled: Flow<Set<NotificationSignal>> =
             combine(
@@ -94,16 +155,22 @@ class SettingsViewModel
                 },
             ) { it.filterNotNull().toSet() }
 
-        private val notifications: Flow<NotificationSettings?> =
+        private val notifications: Flow<Read<NotificationSettings>> =
             combine(offered, enabled, blockedTrigger, prefs.lastRunMillis, scheduler.nextRunMillis()) { offered, enabled, _, last, next ->
-                offered?.let {
-                    NotificationSettings(
-                        offered = it,
-                        enabled = enabled.filterTo(mutableSetOf()) { signal -> signal in it },
-                        blocked = !notifier.canPost(),
-                        lastRunMillis = last,
-                        nextRunMillis = next,
-                    )
+                when (offered) {
+                    Read.Pending -> Read.Pending
+                    is Read.Done ->
+                        Read.Done(
+                            offered.value?.let {
+                                NotificationSettings(
+                                    offered = it,
+                                    enabled = enabled.filterTo(mutableSetOf()) { signal -> signal in it },
+                                    blocked = !notifier.canPost(),
+                                    lastRunMillis = last,
+                                    nextRunMillis = next,
+                                )
+                            },
+                        )
                 }
             }
 
@@ -121,13 +188,31 @@ class SettingsViewModel
                 )
             }
 
+        /** False until [SETTLE_MILLIS] have passed: the admin groups get that long to answer before the screen paints without them. */
+        private val settled: Flow<Boolean> =
+            flow {
+                emit(false)
+                delay(SETTLE_MILLIS)
+                emit(true)
+            }
+
         val uiState: StateFlow<SettingsUiState> =
             combine(summary, server, config, notifications, app) { summary, server, config, notifications, app ->
                 if (summary == null || server == null) {
                     SettingsUiState.Loading
                 } else {
-                    SettingsUiState.Ready(summary, server, config, notifications, app)
+                    SettingsUiState.Ready(
+                        summary,
+                        server,
+                        config.valueOrNull,
+                        notifications.valueOrNull,
+                        app,
+                        pending = config is Read.Pending || notifications is Read.Pending,
+                    )
                 }
+            }.combine(settled) { state, settled ->
+                // One paint with the groups in it, rather than the screen built in two or three steps.
+                if (state is SettingsUiState.Ready && state.pending && !settled) SettingsUiState.Loading else state
             }.flowOn(dispatcher)
                 .stateIn(viewModelScope, SharingStarted.Lazily, SettingsUiState.Loading)
 

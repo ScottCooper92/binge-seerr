@@ -30,6 +30,7 @@ import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -58,6 +59,7 @@ class SettingsViewModelTest {
     private val scheduler = FakeScheduler()
     private val analytics = RecordingAnalytics()
     private val notifier = FakeNotifier()
+    private val cache = SettingsReadCache()
 
     @Before
     fun setUp() {
@@ -132,6 +134,7 @@ class SettingsViewModelTest {
             SettingsViewModel(
                 connection,
                 SettingsLoader(connection),
+                cache,
                 prefs,
                 scheduler,
                 notifier,
@@ -185,6 +188,46 @@ class SettingsViewModelTest {
                 listOf("http://10.0.0.4:7878", "https://sonarr.example.com"),
                 checkNotNull(config.services).map { it.url },
             )
+        }
+
+    @Test
+    fun `a group that is slow to answer is held as a placeholder once the wait runs out`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/settings/main"] = {
+                Thread.sleep(SETTLE_MILLIS + SETTLE_MILLIS / 2)
+                FakeResponse(code = 200, body = "{}")
+            }
+            val vm = viewModel()
+
+            val ready = vm.awaitReady { true }
+
+            assertTrue(ready.pending)
+        }
+
+    @Test
+    fun `a second visit starts from the last answers rather than empty`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            val again =
+                SettingsViewModel(
+                    connection,
+                    SettingsLoader(connection),
+                    cache,
+                    prefs,
+                    scheduler,
+                    notifier,
+                    feedbackPrefs,
+                    telemetryPrefs,
+                    BugReportLinks(),
+                    mainDispatcherRule.dispatcher,
+                )
+
+            val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
+            assertNotNull(first.config?.system)
         }
 
     @Test
