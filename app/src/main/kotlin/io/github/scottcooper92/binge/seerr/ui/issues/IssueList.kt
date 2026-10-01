@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,12 +34,10 @@ import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.formatRelativeOrAbsolute
-import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
-import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
+import io.github.scottcooper92.binge.seerr.ui.requests.RefreshFailedLine
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.toTagType
@@ -70,7 +67,14 @@ internal fun IssuesBody(
             // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
             Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                 if (remote is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                if (remote is LoadState.Error) RefreshFailedLine(remote.error, onRetry = lazyItems::retry, onReconnect = onReconnect)
+                if (remote is LoadState.Error) {
+                    RefreshFailedLine(
+                        remote.error,
+                        R.string.issues_refresh_failed,
+                        onRetry = lazyItems::retry,
+                        onReconnect = onReconnect,
+                    )
+                }
                 IssueList(lazyItems, onOpen, onReconnect, contentPadding.belowPinnedLine())
             }
         lazyItems.itemCount > 0 -> IssueList(lazyItems, onOpen, onReconnect, contentPadding)
@@ -93,28 +97,6 @@ internal fun IssuesBody(
                 icon = Icons.Filled.ReportProblem,
             )
     }
-}
-
-@Composable
-private fun RefreshFailedLine(
-    error: Throwable,
-    onRetry: () -> Unit,
-    onReconnect: () -> Unit,
-) {
-    val rejected = error.toSeerrError() == SeerrError.Unauthorized
-    Text(
-        text = stringResource(if (rejected) R.string.requests_reconnect else R.string.issues_refresh_failed),
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (rejected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable { if (rejected) onReconnect() else onRetry() }
-                .padding(
-                    horizontal = resolvedContentInset(),
-                    vertical = dimensionResource(DesR.dimen.padding_s),
-                ),
-    )
 }
 
 @Composable

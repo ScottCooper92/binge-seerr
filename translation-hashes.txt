@@ -292,6 +292,7 @@ app:requests_filter_processing  37b345555d7e
 app:requests_filter_unavailable  ca1844969742
 app:requests_load_more_failed  ea41cca861da
 app:requests_reconnect  7d346d22e897
+app:requests_refresh_failed  1a02d2e4782c
 app:requests_requester_unknown  864c855e3d64
 app:requests_seasons  bd03814e7d73
 app:requests_sort_added  7459b8690410

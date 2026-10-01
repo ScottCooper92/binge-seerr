@@ -229,6 +229,7 @@
     <string name="issues_empty_open">No open issues. Nothing needs your attention.</string>
     <string name="issues_empty_resolved">No resolved issues yet.</string>
     <string name="issues_empty_all">No issues have been reported on your server.</string>
+    <string name="requests_refresh_failed">Showing the last known requests. Tap to refresh.</string>
     <string name="issues_refresh_failed">Showing the last known issues. Tap to refresh.</string>
     <string name="issue_state_open">Open</string>
     <string name="issue_state_resolved">Resolved</string>
