@@ -78,6 +78,7 @@ private fun ProfileCard(
             enabled = enabled,
             keyboardType = KeyboardType.Number,
             supporting = stringResource(R.string.user_settings_discord_id_hint),
+            isError = !draft.discordIdValid,
         ) { value -> actions.onEdit { it.copy(discordId = value) } }
     }
 }

@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
+import io.github.scottcooper92.binge.seerr.auth.BingeHint
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
@@ -325,6 +326,43 @@ class HubViewModelTest {
             val vm = viewModel(installCheck = FakeBingeInstallCheck(installed = true), bingeConnection = store)
 
             assertEquals(BingeStatus.Connected, vm.awaitReady().bingeStatus)
+        }
+
+    @Test
+    fun `dismissing the hint hides it for the status it was shown under, and only that one`() =
+        runTest {
+            healthyServer()
+            val store =
+                DataStoreBingeConnectionStore(
+                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("bc.preferences_pb") },
+                )
+            val vm = viewModel(installCheck = FakeBingeInstallCheck(installed = true), bingeConnection = store)
+            assertEquals(false, vm.awaitReady().bingeHintDismissed)
+
+            vm.dismissBingeHint()
+            val dismissed = vm.awaitReady { it.bingeHintDismissed }
+
+            assertEquals(BingeStatus.NotConnected, dismissed.bingeStatus)
+            assertEquals(setOf(BingeHint.NotConnected), store.dismissedHints.first())
+
+            store.recordHandshake()
+            assertEquals(false, vm.awaitReady { it.bingeStatus == BingeStatus.Connected }.bingeHintDismissed)
+        }
+
+    @Test
+    fun `the install hint can be dismissed too, and that stays with the not-installed state`() =
+        runTest {
+            healthyServer()
+            val installCheck = FakeBingeInstallCheck(installed = false)
+            val vm = viewModel(installCheck = installCheck)
+            assertEquals(false, vm.awaitReady().bingeHintDismissed)
+
+            vm.dismissBingeHint()
+            assertEquals(BingeStatus.NotInstalled, vm.awaitReady { it.bingeHintDismissed }.bingeStatus)
+
+            installCheck.installed = true
+            vm.setScreenVisible(true)
+            assertEquals(false, vm.awaitReady { it.bingeStatus == BingeStatus.NotConnected }.bingeHintDismissed)
         }
 
     @Test

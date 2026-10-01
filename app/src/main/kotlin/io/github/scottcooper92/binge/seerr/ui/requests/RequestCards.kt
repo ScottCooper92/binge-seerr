@@ -63,9 +63,8 @@ internal fun RequestCard(
     isActing: Boolean = false,
 ) {
     val people = requestPeopleFacts(detail, onOpenUser).filterNot { it.isBlank() }
-    val allDestination = requestDestinationFacts(detail).filterNot { it.isBlank() }
-    val destination = allDestination.filter { it.icon != Icons.Filled.Sell }
-    val tags = allDestination.firstOrNull { it.icon == Icons.Filled.Sell }
+    val destination = requestDestinationFacts(detail).filterNot { it.isBlank() }
+    val tags = detail.destination?.tagsLabel
     val summary = detail.summaries().first()
     val hasInfo = destination.isNotEmpty() || tags != null || summary.is4k || summary.seasonNumbers.isNotEmpty()
     val reviewable = detail.actions.canApprove || detail.actions.canRetry
@@ -198,7 +197,7 @@ private fun CardPersonRow(fact: Fact) {
 private fun CardInfoRows(
     summary: RequestSummary,
     destination: List<Fact>,
-    tags: Fact?,
+    tags: String?,
 ) {
     val asked =
         listOfNotNull(
@@ -212,7 +211,9 @@ private fun CardInfoRows(
     }
     if (destination.isNotEmpty()) CardDestinationLine(destination)
     // Tags are free text of any length, so they get a row of their own rather than a column of the line above.
-    tags?.let { CardPersonRow(Fact(it.icon, it.label, primary = "", secondary = it.primary.plainText())) }
+    tags?.let {
+        CardPersonRow(Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), primary = "", secondary = it))
+    }
 }
 
 @Composable

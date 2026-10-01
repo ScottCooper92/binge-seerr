@@ -88,5 +88,7 @@ sealed interface HubUiState {
         val overview: HubOverview,
         val downloading: List<HubDownload>,
         val bingeStatus: BingeStatus,
+        /** The user closed the hint [bingeStatus] shows, so the tile leaves it out. */
+        val bingeHintDismissed: Boolean = false,
     ) : HubUiState
 }

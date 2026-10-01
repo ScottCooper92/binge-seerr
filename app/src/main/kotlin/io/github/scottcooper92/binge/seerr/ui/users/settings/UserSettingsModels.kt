@@ -61,7 +61,10 @@ data class GeneralSettings(
     /** Blank clears the address; anything else has to look like one. */
     val emailValid: Boolean get() = email.isBlank() || email.isEmailShape()
 
-    val valid: Boolean get() = quotasValid && emailValid
+    /** Blank clears the ID; anything else has to be digits only. */
+    val discordIdValid: Boolean get() = discordId.isBlank() || discordId.isDiscordIdShape()
+
+    val valid: Boolean get() = quotasValid && emailValid && discordIdValid
 
     /** A quota field is a whole number or blank; anything else is not a change the server would take. */
     val quotasValid: Boolean

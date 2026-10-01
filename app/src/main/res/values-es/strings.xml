@@ -37,7 +37,10 @@
     <string name="connected_hint">Abre Binge y permite esta app en Cuenta → Integraciones. Las peticiones que hagas allí irán a este servidor.</string>
     <string name="hub_binge_not_installed_title">¿Buscas un explorador de contenido?</string>
     <string name="hub_binge_not_installed_detail">Prueba Binge, funciona con esta app.</string>
-    <string name="hub_binge_connected_hint">Pide títulos para este servidor directamente desde las pantallas de Descubrir y búsqueda de Binge.</string>
+    <string name="hub_binge_get">Obtener Binge</string>
+    <string name="hub_binge_connect_hint">Conecta Binge a esta app para enviar y gestionar peticiones directamente desde Binge</string>
+    <string name="hub_binge_connected_hint">Conectado a Binge, pide títulos y gestiona peticiones directamente desde allí</string>
+    <string name="hub_binge_open">Abrir Binge</string>
     <string name="hub_health_connected">Conectado</string>
     <string name="hub_update_available">Actualización disponible</string>
     <string name="hub_stat_pending">Pendientes</string>
@@ -637,6 +640,8 @@
     <string name="server_settings_logs_search">Buscar en el registro</string>
     <string name="server_settings_logs_empty">No hay nada registrado en este nivel</string>
     <string name="server_settings_logs_copy">Copiar la línea</string>
+    <string name="server_settings_logs_expand">Mostrar detalles</string>
+    <string name="server_settings_logs_collapse">Ocultar detalles</string>
     <string name="server_settings_log_debug">Depuración</string>
     <string name="server_settings_log_info">Información</string>
     <string name="server_settings_log_warn">Aviso</string>
@@ -689,6 +694,7 @@
     <string name="server_settings_dns_min_ttl">TTL mínimo</string>
     <string name="server_settings_dns_max_ttl">TTL máximo</string>
     <string name="server_settings_dns_ttl_hint">Segundos; en blanco para conservar el de la respuesta</string>
+    <string name="server_settings_dns_ttl_order">El máximo no puede ser menor que el mínimo</string>
     <string name="server_settings_metadata">Proveedores de metadatos</string>
     <string name="server_settings_metadata_caption">De dónde vienen los detalles de series y anime</string>
     <string name="server_settings_metadata_tv">Series</string>

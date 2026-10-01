@@ -43,7 +43,15 @@ data class DnsCacheForm(
     val minTtl: String = "",
     val maxTtl: String = "",
 ) {
-    val valid: Boolean get() = !enabled || (minTtl.isTtl() && maxTtl.isTtl())
+    /** Both bounds, when both are set, must not cross: a minimum above the maximum can never be met. */
+    val orderValid: Boolean
+        get() {
+            val min = minTtl.trim().toIntOrNull()
+            val max = maxTtl.trim().toIntOrNull()
+            return min == null || max == null || min <= max
+        }
+
+    val valid: Boolean get() = !enabled || (minTtl.isTtl() && maxTtl.isTtl() && orderValid)
 }
 
 internal fun String.isTtl(): Boolean = isBlank() || trim().toIntOrNull()?.let { it >= 0 } == true

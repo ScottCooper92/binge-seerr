@@ -1242,6 +1242,10 @@ class SeerrRequestServiceTest {
 
         override val hasConnected = kotlinx.coroutines.flow.flowOf(recorded)
 
+        override val dismissedHints = kotlinx.coroutines.flow.flowOf(emptySet<io.github.scottcooper92.binge.seerr.auth.BingeHint>())
+
+        override suspend fun dismissHint(hint: io.github.scottcooper92.binge.seerr.auth.BingeHint) = Unit
+
         override suspend fun recordHandshake() {
             recorded = true
         }
