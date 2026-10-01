@@ -179,8 +179,8 @@ private fun tvSettingGroups(
 }
 
 /**
- * The media server row, with one option beside its read-out: start the library scan job the phone's
- * Jobs page runs, the "it downloaded but isn't showing" fix from the sofa. [note] is the scan's own
+ * The media server row, with one option beside its read-out: start the library scan job that the phone's
+ * System group's job row runs, the "it downloaded but isn't showing" fix from the sofa. [note] is the scan's own
  * outcome while it is still showing, else the same "change this on the phone" note every other row here
  * carries.
  */

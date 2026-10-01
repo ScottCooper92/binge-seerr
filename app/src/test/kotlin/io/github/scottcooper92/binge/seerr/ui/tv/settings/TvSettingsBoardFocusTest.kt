@@ -34,7 +34,7 @@ private val SERVER =
     ServerSummary(title = "Seerr", variant = SeerrVariant.Jellyseerr, versionLabel = "2.7.2", updateAvailable = false, commitsBehind = 0)
 
 /**
- * The media server row's library scan: admin-only, and running the same job the phone Jobs page runs.
+ * The media server row's library scan: admin-only, and running the same job the phone's System group job row runs.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
