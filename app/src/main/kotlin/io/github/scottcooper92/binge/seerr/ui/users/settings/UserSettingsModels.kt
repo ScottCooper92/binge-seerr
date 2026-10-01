@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.ui.LanguageCodeShapes
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 
@@ -63,10 +64,15 @@ data class GeneralSettings(
     /** Blank clears the address and the value the server sent is kept as it was; a changed one has to look like an address. */
     val emailValid: Boolean get() = email.isBlank() || email.trim() == loadedEmail.trim() || email.isEmailShape()
 
+    /** Blank is "use the server's"; anything else has to have the shape of its code. */
+    val localeValid: Boolean get() = locale.isBlank() || LanguageCodeShapes.isLocale(locale)
+    val regionValid: Boolean get() = region.isBlank() || LanguageCodeShapes.isRegion(region)
+    val originalLanguageValid: Boolean get() = originalLanguage.isBlank() || LanguageCodeShapes.isOriginalLanguage(originalLanguage)
+
     /** Blank clears the ID; anything else has to be digits only. */
     val discordIdValid: Boolean get() = discordId.isBlank() || discordId.isDiscordIdShape()
 
-    val valid: Boolean get() = quotasValid && emailValid && discordIdValid
+    val valid: Boolean get() = quotasValid && emailValid && localeValid && regionValid && originalLanguageValid && discordIdValid
 
     /** A quota field is a whole number or blank; anything else is not a change the server would take. */
     val quotasValid: Boolean

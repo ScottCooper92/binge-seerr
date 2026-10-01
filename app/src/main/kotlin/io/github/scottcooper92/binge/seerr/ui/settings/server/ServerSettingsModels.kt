@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.isJellyseerrLineage
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
+import io.github.scottcooper92.binge.seerr.ui.LanguageCodeShapes
 
 /** The highest TCP port there is; a typed port outside 1..this is not one. */
 private const val PORT_MAX = 65_535
@@ -60,6 +61,15 @@ data class ServerGeneralSettings(
 ) {
     /** A blank URL clears it; anything else has to be a web address the server can serve links from. */
     val urlValid: Boolean get() = applicationUrl.isBlank() || applicationUrl.trim().isWebUrl()
+
+    /** Blank is "use the default"; anything else has to have the shape of its code. */
+    val localeValid: Boolean get() = locale.isBlank() || LanguageCodeShapes.isLocale(locale)
+    val discoverRegionValid: Boolean get() = discoverRegion.isBlank() || LanguageCodeShapes.isRegion(discoverRegion)
+    val streamingRegionValid: Boolean get() = streamingRegion.isNullOrBlank() || LanguageCodeShapes.isRegion(streamingRegion)
+    val originalLanguageValid: Boolean get() = originalLanguage.isBlank() || LanguageCodeShapes.isOriginalLanguage(originalLanguage)
+
+    val valid: Boolean
+        get() = urlValid && localeValid && discoverRegionValid && streamingRegionValid && originalLanguageValid
 }
 
 /** The server's API key beside the form: shown only on request, and replaceable. */
