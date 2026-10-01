@@ -14,18 +14,24 @@ import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.component.SettingsRows
 import com.binge.designsystem.R as DesR
 
-/** A toggle drawn as the design system's switch [SettingsRow], the same as the Notify me group's. */
+/**
+ * A toggle drawn as the design system's switch [SettingsRow], the same as the Notify me group's.
+ * [dimSwitch] is for a row inside a group, where nothing else dims it; a lone [EditorToggleRow] dims whole.
+ */
 internal fun editorToggle(
     icon: ImageVector,
     label: String,
     checked: Boolean,
     enabled: Boolean = true,
+    detail: String? = null,
+    dimSwitch: Boolean = false,
     onToggle: (Boolean) -> Unit,
 ) = SettingsRow(
     icon = icon,
     label = label,
+    detail = detail,
     clickable = enabled,
-    trailingContent = { Switch(checked = checked, onCheckedChange = null) },
+    trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled || !dimSwitch) },
     onClick = { onToggle(!checked) },
 )
 

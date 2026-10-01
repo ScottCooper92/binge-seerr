@@ -6,6 +6,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Https
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,10 +36,12 @@ import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -66,12 +77,13 @@ fun MediaServerScreen(
         LibrariesSection(extras, serverActions)
         ScanSection(extras.scan, serverActions)
         if (draft.kind == MediaServerKind.Plex) {
-            EditorSectionTitle(stringResource(R.string.server_settings_tautulli))
-            BingeOutlinedButton(
-                label = stringResource(R.string.server_settings_tautulli_open),
-                onClick = serverActions.onOpenTautulli,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            EditorSectionCard(stringResource(R.string.server_settings_tautulli)) {
+                BingeOutlinedButton(
+                    label = stringResource(R.string.server_settings_tautulli_open),
+                    onClick = serverActions.onOpenTautulli,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
     extras.picker?.let { picker -> PlexServerSheet(picker, serverActions) }
@@ -84,23 +96,36 @@ private fun ConnectionFields(
     actions: EditorActions<MediaServerForm>,
     serverActions: MediaServerActions,
 ) {
-    Text(
-        stringResource(R.string.server_settings_media_server_lead, stringResource(draft.kind.labelRes()), draft.serverName)
-            .trimEnd(' ', ':'),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    if (draft.kind == MediaServerKind.Plex) {
-        BingeOutlinedButton(
-            label = stringResource(R.string.server_settings_plex_pick),
-            onClick = serverActions.onOpenServerPicker,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth(),
+    EditorSectionCard(stringResource(R.string.settings_group_connection)) {
+        Text(
+            stringResource(R.string.server_settings_media_server_lead, stringResource(draft.kind.labelRes()), draft.serverName)
+                .trimEnd(' ', ':'),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (draft.kind == MediaServerKind.Plex) {
+            BingeOutlinedButton(
+                label = stringResource(R.string.server_settings_plex_pick),
+                onClick = serverActions.onOpenServerPicker,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        AddressFields(draft, enabled, actions)
+        LinkFields(draft, enabled, actions)
     }
+}
+
+@Composable
+private fun AddressFields(
+    draft: MediaServerForm,
+    enabled: Boolean,
+    actions: EditorActions<MediaServerForm>,
+) {
     EditorTextField(
         draft.host,
         stringResource(R.string.server_settings_host),
+        icon = Icons.Filled.Dns,
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
         placeholder = stringResource(R.string.placeholder_host),
@@ -110,35 +135,42 @@ private fun ConnectionFields(
     EditorTextField(
         draft.port,
         stringResource(R.string.server_settings_port),
+        icon = Icons.Filled.Tag,
         enabled = enabled,
         keyboardType = KeyboardType.Number,
         placeholder = portPlaceholder(draft.kind),
         isError = draft.port.isNotBlank() && !draft.copy(host = "x").valid,
     ) { value -> actions.onEdit { it.copy(port = value) } }
-    EditorSwitchRow(stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled = enabled) { value ->
-        actions.onEdit { it.copy(useSsl = value) }
-    }
+    EditorToggleRow(
+        editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
+            actions.onEdit { it.copy(useSsl = value) }
+        },
+    )
     draft.urlBase?.let { base ->
         EditorTextField(
             base,
             stringResource(R.string.server_settings_url_base),
+            icon = Icons.AutoMirrored.Filled.AltRoute,
             enabled = enabled,
             placeholder = urlBasePlaceholder(draft.kind),
         ) { value ->
             actions.onEdit { it.copy(urlBase = value) }
         }
     }
+}
+
+@Composable
+private fun LinkFields(
+    draft: MediaServerForm,
+    enabled: Boolean,
+    actions: EditorActions<MediaServerForm>,
+) {
     EditorTextField(
         draft.externalUrl,
         stringResource(
-            if (draft.kind ==
-                MediaServerKind.Plex
-            ) {
-                R.string.server_settings_plex_web_url
-            } else {
-                R.string.server_settings_external_host
-            },
+            if (draft.kind == MediaServerKind.Plex) R.string.server_settings_plex_web_url else R.string.server_settings_external_host,
         ),
+        icon = Icons.Filled.Link,
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
         placeholder = externalUrlPlaceholder(draft.kind),
@@ -148,6 +180,7 @@ private fun ConnectionFields(
         EditorTextField(
             url,
             stringResource(R.string.server_settings_forgot_password_url),
+            icon = Icons.Filled.LinkOff,
             enabled = enabled,
             keyboardType = KeyboardType.Uri,
             placeholder = stringResource(R.string.placeholder_url_https),
@@ -156,7 +189,13 @@ private fun ConnectionFields(
         }
     }
     draft.apiKey?.let { key ->
-        EditorTextField(key, stringResource(R.string.server_settings_api_key), enabled = enabled, secret = true) { value ->
+        EditorTextField(
+            key,
+            stringResource(R.string.server_settings_api_key),
+            icon = Icons.Filled.Key,
+            enabled = enabled,
+            secret = true,
+        ) { value ->
             actions.onEdit { it.copy(apiKey = value) }
         }
     }
@@ -168,24 +207,41 @@ private fun LibrariesSection(
     extras: MediaServerExtras,
     actions: MediaServerActions,
 ) {
-    EditorSectionTitle(stringResource(R.string.server_settings_libraries))
+    val title = stringResource(R.string.server_settings_libraries)
     if (extras.libraries.isEmpty()) {
-        Text(
-            stringResource(R.string.server_settings_libraries_none),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-    extras.libraries.forEach { library ->
-        EditorSwitchRow(library.name, library.enabled, enabled = library.id !in extras.busyLibraryIds) { on ->
-            actions.onSetLibraryEnabled(library.id, on)
+        EditorSectionCard(title) {
+            Text(
+                stringResource(R.string.server_settings_libraries_none),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SyncLibrariesButton(extras, actions)
         }
-        Text(
-            library.detail(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        return
     }
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+        EditorToggleGroup(
+            title,
+            extras.libraries.map { library ->
+                editorToggle(
+                    Icons.Filled.VideoLibrary,
+                    library.name,
+                    library.enabled,
+                    library.id !in extras.busyLibraryIds,
+                    detail = library.detail(),
+                    dimSwitch = true,
+                ) { on -> actions.onSetLibraryEnabled(library.id, on) }
+            },
+        )
+        SyncLibrariesButton(extras, actions)
+    }
+}
+
+@Composable
+private fun SyncLibrariesButton(
+    extras: MediaServerExtras,
+    actions: MediaServerActions,
+) {
     BingeTextButton(
         label = stringResource(R.string.server_settings_libraries_sync),
         onClick = actions.onSyncLibraries,
@@ -214,7 +270,16 @@ private fun ScanSection(
     scan: LibraryScan?,
     actions: MediaServerActions,
 ) {
-    EditorSectionTitle(stringResource(R.string.server_settings_scan))
+    EditorSectionCard(stringResource(R.string.server_settings_scan)) {
+        ScanContent(scan, actions)
+    }
+}
+
+@Composable
+private fun ScanContent(
+    scan: LibraryScan?,
+    actions: MediaServerActions,
+) {
     if (scan?.running == true) {
         val fraction = if (scan.total > 0) scan.progress.toFloat() / scan.total else 0f
         LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())

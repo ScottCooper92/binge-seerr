@@ -2,11 +2,12 @@ package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,8 +20,9 @@ import com.binge.designsystem.component.BingeBottomSheet
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPageActionBar
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
 import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorPageInsets
+import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import com.binge.designsystem.R as DesR
 
 /**
@@ -102,30 +104,23 @@ internal fun PermissionsEditorContent(
                         .padding(bottom = dimensionResource(DesR.dimen.padding_s)),
             )
             offered.groupBy { it.group }.forEach { (group, permissions) ->
-                Text(
-                    stringResource(group.labelRes()).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                EditorToggleGroup(
+                    stringResource(group.labelRes()),
+                    permissions.map { permission ->
+                        val implied = permission !in selected && ManageablePermission.isGranted(permission, selected)
+                        editorToggle(
+                            Icons.Filled.Security,
+                            stringResource(permission.labelRes()),
+                            permission in selected || implied,
+                            !saving && !implied && permission !in locked,
+                            dimSwitch = true,
+                        ) { onToggle(permission) }
+                    },
                     modifier =
-                        Modifier.padding(
-                            horizontal = dimensionResource(DesR.dimen.padding_m),
-                            vertical = dimensionResource(DesR.dimen.padding_s),
-                        ),
+                        Modifier
+                            .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                            .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
                 )
-                permissions.forEach { permission ->
-                    val implied = permission !in selected && ManageablePermission.isGranted(permission, selected)
-                    EditorSwitchRow(
-                        label = stringResource(permission.labelRes()),
-                        checked = permission in selected || implied,
-                        enabled = !saving && !implied && permission !in locked,
-                        contentPadding =
-                            PaddingValues(
-                                horizontal = dimensionResource(DesR.dimen.padding_m),
-                                vertical = dimensionResource(DesR.dimen.padding_xs),
-                            ),
-                        onToggle = { onToggle(permission) },
-                    )
-                }
             }
         }
         if (showFooter) {

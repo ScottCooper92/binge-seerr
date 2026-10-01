@@ -3,6 +3,9 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,11 +20,13 @@ import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionTitle
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSwitchRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
+import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.labelRes
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
@@ -56,11 +61,17 @@ fun NotificationAgentScreen(
         actions = actions,
         canSave = { it.valid },
     ) { draft, enabled ->
-        EditorSwitchRow(
-            stringResource(R.string.user_settings_agent_enabled),
-            draft.enabled,
-            enabled = enabled,
-            onToggle = agentActions.onSetEnabled,
+        EditorToggleGroup(
+            stringResource(agent.labelRes()),
+            listOf(
+                editorToggle(
+                    Icons.Filled.Notifications,
+                    stringResource(R.string.user_settings_agent_enabled),
+                    draft.enabled,
+                    enabled,
+                    onToggle = agentActions.onSetEnabled,
+                ),
+            ),
         )
         OptionFields(draft, extras, enabled, agentActions)
         TypeChips(draft, enabled, agentActions.onToggleType)
@@ -82,51 +93,64 @@ private fun OptionFields(
     actions: AgentActions,
 ) {
     val options = AgentOption.of(draft.agent).filter { it.ownControl }
-    if (options.isNotEmpty()) EditorSectionTitle(stringResource(R.string.server_settings_agent_section_options))
-    options.forEach { option ->
-        // An option nothing reads follows the switch that would read it. The switches themselves
-        // stay live: exclusivity is enforced by turning the other one off, not by refusing this one.
-        val editable = enabled && option.gatedBy?.let { draft.switched(it) } != false
-        when {
-            option == AgentOption.EmailSecure ->
-                ChoiceRow(
-                    title = stringResource(option.labelRes()),
-                    choices = EmailEncryption.entries.map { it to stringResource(it.labelRes()) },
-                    selected = EmailEncryption.of(draft),
-                    onSelect = actions.onSetEncryption,
-                    enabled = editable,
-                )
-            option == AgentOption.PushoverSound && extras.sounds.isNotEmpty() ->
-                ChoiceRow(
-                    title = stringResource(option.labelRes()),
-                    choices = extras.sounds.map { it.name to it.description },
-                    selected = draft.option(option).takeIf { it.isNotEmpty() },
-                    onSelect = { name -> actions.onSetOption(option, name) },
-                    enabled = editable,
-                )
-            option.kind == OptionKind.Switch ->
-                EditorSwitchRow(stringResource(option.labelRes()), draft.switched(option), enabled = enabled) { value ->
+    if (options.isEmpty()) return
+    EditorSectionCard(stringResource(R.string.server_settings_agent_section_options)) {
+        options.forEach { option -> OptionField(option, draft, extras, enabled, actions) }
+    }
+}
+
+@Composable
+private fun OptionField(
+    option: AgentOption,
+    draft: AgentForm,
+    extras: AgentExtras,
+    enabled: Boolean,
+    actions: AgentActions,
+) {
+    // An option nothing reads follows the switch that would read it. The switches themselves
+    // stay live: exclusivity is enforced by turning the other one off, not by refusing this one.
+    val editable = enabled && option.gatedBy?.let { draft.switched(it) } != false
+    when {
+        option == AgentOption.EmailSecure ->
+            ChoiceRow(
+                title = stringResource(option.labelRes()),
+                choices = EmailEncryption.entries.map { it to stringResource(it.labelRes()) },
+                selected = EmailEncryption.of(draft),
+                onSelect = actions.onSetEncryption,
+                enabled = editable,
+            )
+        option == AgentOption.PushoverSound && extras.sounds.isNotEmpty() ->
+            ChoiceRow(
+                title = stringResource(option.labelRes()),
+                choices = extras.sounds.map { it.name to it.description },
+                selected = draft.option(option).takeIf { it.isNotEmpty() },
+                onSelect = { name -> actions.onSetOption(option, name) },
+                enabled = editable,
+            )
+        option.kind == OptionKind.Switch ->
+            EditorToggleRow(
+                editorToggle(Icons.Filled.Tune, stringResource(option.labelRes()), draft.switched(option), enabled) { value ->
                     actions.onSetOption(option, value.toString())
-                }
-            else ->
-                EditorTextField(
-                    draft.option(option),
-                    stringResource(option.labelRes()),
-                    enabled = editable,
-                    secret = option.secret,
-                    singleLine = option.kind != OptionKind.Multiline,
-                    keyboardType =
-                        when (option.kind) {
-                            OptionKind.Number -> KeyboardType.Number
-                            OptionKind.Uri -> KeyboardType.Uri
-                            else -> KeyboardType.Text
-                        },
-                    autoCorrect = option.autoCorrect,
-                    placeholder = option.placeholderRes()?.let { stringResource(it) },
-                    supporting = option.hintRes()?.let { stringResource(it) },
-                    isError = draft.enabled && option.required && !option.satisfiedBy(draft.option(option)),
-                ) { value -> actions.onSetOption(option, value) }
-        }
+                },
+            )
+        else ->
+            EditorTextField(
+                draft.option(option),
+                stringResource(option.labelRes()),
+                enabled = editable,
+                secret = option.secret,
+                singleLine = option.kind != OptionKind.Multiline,
+                keyboardType =
+                    when (option.kind) {
+                        OptionKind.Number -> KeyboardType.Number
+                        OptionKind.Uri -> KeyboardType.Uri
+                        else -> KeyboardType.Text
+                    },
+                autoCorrect = option.autoCorrect,
+                placeholder = option.placeholderRes()?.let { stringResource(it) },
+                supporting = option.hintRes()?.let { stringResource(it) },
+                isError = draft.enabled && option.required && !option.satisfiedBy(draft.option(option)),
+            ) { value -> actions.onSetOption(option, value) }
     }
 }
 
@@ -136,7 +160,17 @@ private fun TypeChips(
     enabled: Boolean,
     onToggle: (Int) -> Unit,
 ) {
-    EditorSectionTitle(stringResource(R.string.user_settings_types_title))
+    EditorSectionCard(stringResource(R.string.user_settings_types_title)) {
+        TypeChipGroups(draft, enabled, onToggle)
+    }
+}
+
+@Composable
+private fun TypeChipGroups(
+    draft: AgentForm,
+    enabled: Boolean,
+    onToggle: (Int) -> Unit,
+) {
     listOf(false, true).forEach { issues ->
         Text(
             stringResource(if (issues) R.string.permission_group_issues else R.string.permission_group_requests),
