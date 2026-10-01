@@ -77,6 +77,7 @@ internal fun SeerrUserMainSettingsDto.toGeneralSettings(
         displayName = username.orEmpty(),
         fallbackName = fallbackName,
         email = email.orEmpty(),
+        loadedEmail = email.orEmpty(),
         discordId = discordId.orEmpty(),
         locale = locale.orEmpty(),
         region = (region ?: discoverRegion).orEmpty(),

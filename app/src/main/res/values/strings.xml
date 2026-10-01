@@ -376,6 +376,7 @@
     <string name="user_settings_page_linked_desc">Plex and media server sign-ins</string>
     <string name="user_settings_display_name">Display name</string>
     <string name="user_settings_email">Email</string>
+    <string name="user_settings_email_invalid">Enter an address like name@example.com</string>
     <string name="user_settings_discord_id">Discord user ID</string>
     <string name="user_settings_section_discover">Discover</string>
     <string name="user_settings_locale_hint">A language code such as en or fr-FR; blank uses the server\'s.</string>
