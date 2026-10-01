@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.PlayArrow
@@ -66,6 +65,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestRow
+import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -148,7 +148,6 @@ private fun UserDetailContent(
     actions: UserDetailActions,
     contentPadding: PaddingValues,
 ) {
-    val context = LocalContext.current
     val inset = resolvedContentInset()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -156,7 +155,7 @@ private fun UserDetailContent(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         item { ProfileHeader(detail.item, modifier = Modifier.padding(inset)) }
-        item { DetailStatRow(userStats(detail)) }
+        if (detail.watch?.playCount != null) item { DetailStatRow(userStats(detail)) }
         detail.quota?.let { quota -> item { Box(Modifier.padding(horizontal = inset)) { QuotaSection(quota) } } }
         if (detail.permissions.isNotEmpty()) {
             item {
@@ -176,7 +175,18 @@ private fun UserDetailContent(
         if (detail.watchlist.isNotEmpty()) {
             item { TitleCarousel(stringResource(R.string.user_watchlist), detail.watchlist, detail.serverUrl) }
         }
-        item { SectionHeader(title = stringResource(R.string.hub_section_requests)) }
+        item {
+            SectionHeader(
+                title = stringResource(R.string.hub_section_requests),
+                trailingContent = {
+                    Text(
+                        detail.item.requestCount.toString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+            )
+        }
         items(count = requests.itemCount, key = requests.itemKey { it.id }) { index ->
             requests[index]?.let { item ->
                 RequestRow(
@@ -190,24 +200,15 @@ private fun UserDetailContent(
             val refresh = requests.loadState.refresh
             when {
                 refresh is LoadState.NotLoading && requests.itemCount == 0 ->
-                    Text(
-                        stringResource(R.string.user_no_requests),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = inset),
+                    EmptyScreen(
+                        message = stringResource(R.string.user_no_requests),
+                        modifier = Modifier.padding(vertical = dimensionResource(DesR.dimen.padding_l)),
+                        icon = Icons.Filled.Inbox,
                     )
                 refresh is LoadState.Loading || refresh is LoadState.Error ->
                     PagedAppendState(refresh, onRetry = requests::retry, onReconnect = actions.onBack)
                 else -> PagedAppendState(requests.loadState.append, onRetry = requests::retry, onReconnect = actions.onBack)
             }
-        }
-        item {
-            Text(
-                stringResource(R.string.request_open_web),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.fillMaxWidth().clickable { context.openInBrowser(detail.webUrl) }.padding(inset),
-            )
         }
     }
 }
@@ -215,33 +216,43 @@ private fun UserDetailContent(
 @Composable
 private fun userStats(detail: UserDetail): List<DetailStat> =
     listOfNotNull(
-        DetailStat(Icons.Filled.Inbox, detail.item.requestCount.toString(), stringResource(R.string.hub_section_requests)),
-        formatRelativeOrAbsolute(detail.item.createdAtMillis)?.let { joined ->
-            DetailStat(Icons.Filled.CalendarMonth, joined, stringResource(R.string.user_joined))
-        },
         detail.watch?.playCount?.let { DetailStat(Icons.Filled.PlayArrow, it.toString(), stringResource(R.string.user_plays)) },
     )
 
-/** The identity block: a large avatar over the name, how they sign in, the role and server tags, and the email. */
+/** The identity block: the avatar with everything else beside it, the username, the display name and email, then the role and server tags. */
 @Composable
 private fun ProfileHeader(
     item: UserItem,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         BingeInitialsAvatar(name = item.name, avatarUrl = item.avatarUrl, size = dimensionResource(DesR.dimen.avatar_size_lg))
-        Text(item.name, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        item.handle?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            BingeTag(label = stringResource(if (item.isAdmin) R.string.hub_role_admin else R.string.hub_role_user))
-            BingeTag(label = stringResource(item.origin.labelRes()))
-        }
-        item.email?.let {
-            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
+            Text(item.name, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val joined = formatRelativeOrAbsolute(item.createdAtMillis)?.let { stringResource(R.string.user_joined, it) }
+            val username = item.handle ?: item.email
+            listOfNotNull(
+                listOfNotNull(username, joined).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty {
+                    null
+                },
+                item.email?.takeUnless { it.equals(username, ignoreCase = true) },
+            ).forEach {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+                BingeTag(label = stringResource(if (item.isAdmin) R.string.hub_role_admin else R.string.hub_role_user))
+                BingeTag(label = stringResource(item.origin.labelRes()))
+            }
         }
     }
 }
@@ -288,7 +299,7 @@ private fun UserActionsSheet(
                     onOpenSettings()
                 }
             }
-            ActionRow(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.request_open_web)) {
+            ActionRow(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, detail.serverName)) {
                 onDismiss()
                 context.openInBrowser(detail.webUrl)
             }

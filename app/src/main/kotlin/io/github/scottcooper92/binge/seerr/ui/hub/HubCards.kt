@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -21,13 +25,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.SettingsGroup
+import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.SettingsRows
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
@@ -42,6 +52,7 @@ import com.binge.designsystem.R as DesR
 internal fun HubCard(
     modifier: Modifier = Modifier,
     inset: Dp = resolvedContentInset(),
+    contentPadding: PaddingValues = PaddingValues(dimensionResource(DesR.dimen.padding_m)),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -56,7 +67,7 @@ internal fun HubCard(
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(
-            modifier = Modifier.padding(dimensionResource(DesR.dimen.padding_m)),
+            modifier = Modifier.padding(contentPadding),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.hub_card_section_spacing)),
             content = content,
         )
@@ -168,8 +179,26 @@ internal fun AccountCard(
     inset: Dp = resolvedContentInset(),
     onClick: (() -> Unit)? = null,
 ) {
-    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, inset) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    // The card carries no padding of its own: the name row and the quota rows each bring their row padding, so none is doubled.
+    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, inset, contentPadding = PaddingValues()) {
+        val rowPadding = dimensionResource(DesR.dimen.settings_group_row_padding_h)
+        Row(
+            modifier =
+                Modifier.padding(
+                    start = rowPadding,
+                    top = rowPadding,
+                    end = rowPadding,
+                    bottom =
+                        if (quota ==
+                            null
+                        ) {
+                            rowPadding
+                        } else {
+                            Dp.Hairline
+                        },
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = account.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -186,65 +215,63 @@ internal fun AccountCard(
                 fill = sentiment.fill(),
             )
         }
-        quota?.let { QuotaSection(it) }
-    }
-}
-
-@Composable
-internal fun QuotaSection(quota: HubQuota) {
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.hub_quota_meter_spacing))) {
-        Text(
-            stringResource(R.string.hub_quota_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        QuotaMeter(stringResource(R.string.hub_quota_movies), quota.movie)
-        QuotaMeter(stringResource(R.string.hub_quota_tv), quota.tv)
-    }
-}
-
-/** One type's quota: "x of y left" over a usage bar, and the window when the server reports one. A null bucket is unlimited. */
-@Composable
-private fun QuotaMeter(
-    label: String,
-    bucket: HubQuotaBucket?,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.hub_quota_meter_line_spacing))) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text =
-                    if (bucket == null) {
-                        stringResource(R.string.hub_quota_unlimited)
-                    } else {
-                        pluralStringResource(R.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit)
-                    },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (bucket == null) {
-            // Unlimited keeps the row's shape with a calm tonal band, so a full bar never reads as a used-up quota.
-            LinearProgressIndicator(
-                progress = { 1f },
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                trackColor = MaterialTheme.colorScheme.secondaryContainer,
-            )
-        } else {
-            LinearProgressIndicator(progress = { bucket.used.toFloat() / bucket.limit }, modifier = Modifier.fillMaxWidth())
-            bucket.days?.let { days ->
+        quota?.let {
+            Column {
                 Text(
-                    pluralStringResource(R.plurals.hub_quota_period, days, days),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(R.string.hub_quota_title).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = rowPadding).semantics { heading() },
                 )
+                SettingsRows(quotaRows(it))
             }
         }
     }
 }
+
+/** Request quota as settings-style rows: Movies and TV, each with what is left, or "Unlimited" and no bar. */
+@Composable
+internal fun QuotaSection(
+    quota: HubQuota,
+    modifier: Modifier = Modifier,
+) {
+    SettingsGroup(title = stringResource(R.string.hub_quota_title), rows = quotaRows(quota), modifier = modifier)
+}
+
+@Composable
+private fun quotaRows(quota: HubQuota): List<SettingsRow> =
+    listOf(
+        quotaRow(Icons.Filled.Movie, stringResource(R.string.hub_quota_movies), quota.movie),
+        quotaRow(Icons.Filled.Tv, stringResource(R.string.hub_quota_tv), quota.tv),
+    )
+
+/** One type's quota: "x of y left" and the window when the server reports one, with a usage bar. A null bucket is unlimited. */
+@Composable
+private fun quotaRow(
+    icon: ImageVector,
+    label: String,
+    bucket: HubQuotaBucket?,
+): SettingsRow =
+    SettingsRow(
+        icon = icon,
+        label = label,
+        detail =
+            if (bucket == null) {
+                stringResource(R.string.hub_quota_unlimited)
+            } else {
+                listOfNotNull(
+                    pluralStringResource(R.plurals.hub_quota_remaining, bucket.remaining, bucket.remaining, bucket.limit),
+                    bucket.days?.let { pluralStringResource(R.plurals.hub_quota_period, it, it) },
+                ).joinToString(stringResource(R.string.hub_meta_separator))
+            },
+        clickable = false,
+        trailingContent =
+            bucket?.let {
+                {
+                    LinearProgressIndicator(
+                        progress = { it.used.toFloat() / it.limit },
+                        modifier = Modifier.width(dimensionResource(R.dimen.hub_quota_bar_width)),
+                    )
+                }
+            },
+    )

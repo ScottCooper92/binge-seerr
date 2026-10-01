@@ -134,7 +134,6 @@
     <string name="request_open_media_server">Open in media server</string>
     <string name="request_stats_title">Stats</string>
     <string name="request_this_request_title">This request</string>
-    <string name="request_open_web">Open on the server</string>
     <string name="request_card_info">Request info</string>
     <string name="request_requested_by">Requested by</string>
     <string name="request_modified_by">Moderated by</string>
@@ -277,7 +276,6 @@
     <string name="users_sort_name">Name</string>
     <string name="users_sort_requests">Most requests</string>
     <string name="users_empty">No users on your server yet.</string>
-    <string name="users_select_cd">Select user</string>
     <string name="users_clear_selection_cd">Clear selection</string>
     <string name="users_edit_permissions">Edit permissions</string>
     <string name="users_edit_permissions_save">Apply</string>
@@ -346,7 +344,7 @@
     <string name="permission_view_blocklist">View blocklist</string>
     <string name="user_detail_title">User</string>
     <string name="user_actions_cd">User actions</string>
-    <string name="user_joined">Joined</string>
+    <string name="user_joined">Joined %1$s</string>
     <string name="user_plays">Plays</string>
     <string name="user_permissions_title">Permissions</string>
     <string name="user_recently_watched">Recently watched</string>

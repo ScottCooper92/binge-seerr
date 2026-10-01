@@ -1,7 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.users
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,8 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.plus
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,14 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowSkeletonColumn
+import com.binge.designsystem.component.SettingsGroup
+import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
@@ -113,8 +114,7 @@ private fun UserList(
     }
 }
 
-/** One user: avatar, name and role, how they sign in, and their request count; a long press starts selecting. */
-@OptIn(ExperimentalFoundationApi::class)
+/** One user as a settings row on its own card: name and how they sign in, their role and request count; a long press starts selecting. */
 @Composable
 internal fun UserRow(
     item: UserItem,
@@ -124,56 +124,49 @@ internal fun UserRow(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ListRow(
-        modifier =
-            modifier.combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-                onLongClickLabel = stringResource(R.string.users_select_cd),
+    SettingsGroup(
+        title = null,
+        modifier = modifier,
+        rows =
+            listOf(
+                SettingsRow(
+                    icon = Icons.Filled.Person,
+                    leadingContent = {
+                        BingeInitialsAvatar(
+                            name = item.name,
+                            avatarUrl = item.avatarUrl,
+                            size = dimensionResource(DesR.dimen.avatar_size_md),
+                        )
+                    },
+                    label = item.name,
+                    detail =
+                        listOfNotNull(item.handle ?: item.email, stringResource(item.origin.labelRes()))
+                            .joinToString(stringResource(R.string.hub_meta_separator)),
+                    trailingContent = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+                        ) {
+                            if (item.isAdmin) BingeTag(label = stringResource(R.string.hub_role_admin))
+                            if (selecting) {
+                                Checkbox(checked = selected, onCheckedChange = null)
+                            } else {
+                                Text(
+                                    pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    },
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
             ),
-        verticalAlignment = Alignment.CenterVertically,
-        leading = {
-            BingeInitialsAvatar(
-                name = item.name,
-                avatarUrl = item.avatarUrl,
-                size = dimensionResource(DesR.dimen.avatar_size_md),
-            )
-        },
-        trailing = {
-            if (selecting) {
-                Checkbox(checked = selected, onCheckedChange = null)
-            } else {
-                Text(
-                    pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-    ) { contentModifier ->
-        Column(modifier = contentModifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            ) {
-                Text(
-                    item.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                if (item.isAdmin) BingeTag(label = stringResource(R.string.hub_role_admin))
-            }
-            Text(
-                text =
-                    listOfNotNull(item.handle ?: item.email, stringResource(item.origin.labelRes()))
-                        .joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    )
 }
