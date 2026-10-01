@@ -138,6 +138,24 @@ jobs:
           if-no-files-found: ignore
           retention-days: ${{ github.event_name == 'schedule' && 7 || 1 }}
 
+  # Lints the workflow files, which is where a typo turns into a silent startup_failure. It lives
+  # in this workflow rather than its own so there is still one required check to keep in sync with
+  # branch protection, and it runs on workflow-only diffs because this repo has no paths-ignore.
+  # actionlint cannot see across a `uses:` reference to a reusable workflow, so the callers'
+  # permissions are still proved by running them. The download script is pinned by commit and
+  # fetches the pinned release, not latest.
+  actionlint:
+    if: github.event_name != 'schedule' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Run actionlint
+        run: |
+          set -euo pipefail
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/914e7df21a07ef503a81201c76d2b11c789d3fca/scripts/download-actionlint.bash) 1.7.12 "$RUNNER_TEMP"
+          "$RUNNER_TEMP/actionlint" -color
+
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
   # closes itself on the next green run, so an open one means "still broken", not "old".
