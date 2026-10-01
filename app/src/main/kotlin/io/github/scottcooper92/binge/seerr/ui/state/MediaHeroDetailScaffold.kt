@@ -84,6 +84,7 @@ internal fun MediaHeroDetailPage(
     scrollState: ScrollState = rememberScrollState(),
     topBarActions: @Composable RowScope.(glassBackgroundAlpha: Float) -> Unit = {},
     footer: (@Composable () -> Unit)? = null,
+    metaContent: (@Composable () -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -111,6 +112,7 @@ internal fun MediaHeroDetailPage(
                     onBack = onBack,
                     showChrome = false,
                     richBackdrop = true,
+                    metaContent = metaContent,
                 )
                 body()
             }

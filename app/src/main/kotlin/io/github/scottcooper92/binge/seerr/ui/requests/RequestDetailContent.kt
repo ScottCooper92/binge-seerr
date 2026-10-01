@@ -30,6 +30,7 @@ import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
@@ -39,19 +40,46 @@ import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
 import com.binge.designsystem.R as DesR
 
 /**
- * The request's own state, and what the title is about.
- *
- * The year rides on the same line as the chips that classify the title — its media type, its
- * availability, and 4K where it applies — all wrapping together, so a narrow window drops one to a
- * second line rather than clipping it (#340).
+ * The year and the chips that classify the title — its media type, its availability, and 4K where it
+ * applies — drawn under the title inside the hero, wrapping together so a narrow window drops one to a
+ * second line rather than clipping it (#340). The chip reads the title's own status across every
+ * request, not this request's own seasons — see [RequestSections] and [RequestHeadline]'s caption
+ * for where the two can disagree.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun RequestHeroMeta(
+    detail: RequestDetail,
+    modifier: Modifier = Modifier,
+) {
+    val item = detail.item
+    val chip = item.statusChip()
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+    ) {
+        item.year?.takeIf { it.isNotBlank() }?.let { year ->
+            Text(
+                text = year,
+                style = MaterialTheme.typography.bodyMedium,
+                color = BingeTheme.colors.onScrim,
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
+        }
+        MediaTypeTag(type = item.mediaType.toTagType())
+        RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
+        if (item.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
+    }
+}
+
+/**
+ * The disambiguation caption where this request's seasons can disagree with the title's own status
+ * chip in [RequestHeroMeta], then what the title is about: its overview.
  *
  * [initiallyOverflowing] seeds the overview's toggle for a frame: the component only learns it
  * overflowed from `onTextLayout`, which fires after the screenshot lane has captured.
- *
- * The chip reads the title's own status across every request, not this request's own seasons —
- * see [RequestSections] below, and the caption this composable adds where the two can disagree.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun RequestHeadline(
     detail: RequestDetail,
@@ -59,24 +87,6 @@ internal fun RequestHeadline(
     initiallyOverflowing: Boolean = false,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        val item = detail.item
-        val chip = item.statusChip()
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            item.year?.takeIf { it.isNotBlank() }?.let { year ->
-                Text(
-                    text = year,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                )
-            }
-            MediaTypeTag(type = item.mediaType.toTagType())
-            RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
-            if (item.is4k) BingeTag(label = stringResource(R.string.settings_service_4k))
-        }
         if (detail.seasons.isNotEmpty()) {
             Text(
                 stringResource(R.string.request_title_status_caption),
