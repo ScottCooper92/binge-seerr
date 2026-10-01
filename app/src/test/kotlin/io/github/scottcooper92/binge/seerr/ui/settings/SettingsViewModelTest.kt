@@ -25,17 +25,20 @@ import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val REQUEST = 32
@@ -58,6 +61,7 @@ class SettingsViewModelTest {
     private val scheduler = FakeScheduler()
     private val analytics = RecordingAnalytics()
     private val notifier = FakeNotifier()
+    private val cache = SettingsReadCache()
 
     @Before
     fun setUp() {
@@ -132,6 +136,7 @@ class SettingsViewModelTest {
             SettingsViewModel(
                 connection,
                 SettingsLoader(connection),
+                cache,
                 prefs,
                 scheduler,
                 notifier,
@@ -185,6 +190,77 @@ class SettingsViewModelTest {
                 listOf("http://10.0.0.4:7878", "https://sonarr.example.com"),
                 checkNotNull(config.services).map { it.url },
             )
+        }
+
+    @Test
+    fun `a group that is slow to answer is held as a placeholder once the wait runs out`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/settings/main"] = {
+                release.await()
+                FakeResponse(code = 200, body = "{}")
+            }
+            val vm = viewModel()
+
+            advanceTimeBy(SETTLE_MILLIS + 1)
+            val ready = vm.awaitReady { true }
+            release.countDown()
+
+            assertTrue(ready.pending)
+        }
+
+    @Test
+    fun `a different account on the same server does not start on the last one's rows`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            connection.disconnect()
+            server(REQUEST)
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("other")).getOrThrow()
+            val again =
+                SettingsViewModel(
+                    connection,
+                    SettingsLoader(connection),
+                    cache,
+                    prefs,
+                    scheduler,
+                    notifier,
+                    feedbackPrefs,
+                    telemetryPrefs,
+                    BugReportLinks(),
+                    mainDispatcherRule.dispatcher,
+                )
+
+            val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
+            assertNull(first.config)
+        }
+
+    @Test
+    fun `a second visit starts from the last answers rather than empty`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            val again =
+                SettingsViewModel(
+                    connection,
+                    SettingsLoader(connection),
+                    cache,
+                    prefs,
+                    scheduler,
+                    notifier,
+                    feedbackPrefs,
+                    telemetryPrefs,
+                    BugReportLinks(),
+                    mainDispatcherRule.dispatcher,
+                )
+
+            val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
+            assertNotNull(first.config?.system)
         }
 
     @Test

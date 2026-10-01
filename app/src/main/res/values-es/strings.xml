@@ -359,6 +359,7 @@
     <string name="user_settings_page_linked_desc">Inicios de sesión de Plex y del servidor multimedia</string>
     <string name="user_settings_display_name">Nombre visible</string>
     <string name="user_settings_email">Correo electrónico</string>
+    <string name="user_settings_email_invalid">Introduce una dirección como nombre@ejemplo.com</string>
     <string name="user_settings_discord_id">ID de usuario de Discord</string>
     <string name="user_settings_section_discover">Descubrir</string>
     <string name="user_settings_locale_hint">Un código de idioma como es o fr-FR; en blanco usa el del servidor.</string>

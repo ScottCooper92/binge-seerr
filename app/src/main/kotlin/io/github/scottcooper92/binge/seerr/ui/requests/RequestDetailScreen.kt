@@ -92,11 +92,33 @@ fun RequestDetailScreen(
     MediaHeroDetailScaffold(snackbarHostState = snackbarHostState) {
         when (state) {
             RequestDetailUiState.Loading -> RequestDetailSkeleton()
+            is RequestDetailUiState.Seeded -> RequestDetailSeeded(state, onBack = actions.onBack, onRetry = actions.onRetry)
             is RequestDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.safeDrawingPadding(), onRetry = actions.onRetry)
             is RequestDetailUiState.Ready -> Ready(state, actions, snackbarHostState)
         }
     }
+}
+
+/**
+ * The tapped row's hero (title, year, type, state, 4K) with no backdrop yet, over the loading
+ * skeleton's body; a failed refresh swaps that body for the error and its retry, and the hero stays.
+ */
+@Composable
+private fun RequestDetailSeeded(
+    state: RequestDetailUiState.Seeded,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    val item = state.item
+    MediaHeroDetailPage(
+        title = item.title ?: stringResource(item.mediaType.labelRes()),
+        backdropUrl = null,
+        metaText = "",
+        metaContent = { RequestHeroMeta(item) },
+        onBack = onBack,
+        body = { RequestDetailSeededBody(error = state.error, onRetry = onRetry) },
+    )
 }
 
 @Composable
@@ -241,7 +263,7 @@ internal fun RequestDetailPage(
         title = title,
         backdropUrl = detail.backdropUrl,
         metaText = "",
-        metaContent = { RequestHeroMeta(detail) },
+        metaContent = { RequestHeroMeta(item) },
         inFlight = isActing,
         onBack = onBack,
         modifier = modifier,

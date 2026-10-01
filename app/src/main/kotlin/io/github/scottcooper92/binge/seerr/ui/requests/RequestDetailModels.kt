@@ -204,6 +204,16 @@ sealed interface IssueReport {
 sealed interface RequestDetailUiState {
     data object Loading : RequestDetailUiState
 
+    /**
+     * The row the user tapped, shown while the request loads. The title, year, type, state and 4K
+     * tag the hero draws are all on it; the backdrop, overview, history and what the viewer may do are
+     * not, so none of those are guessed. A failed refresh sets [error] and leaves the hero up.
+     */
+    data class Seeded(
+        val item: RequestItem,
+        val error: SeerrError? = null,
+    ) : RequestDetailUiState
+
     data class Ready(
         val detail: RequestDetail,
         val report: IssueReport = IssueReport.Idle,

@@ -49,6 +49,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -109,8 +110,9 @@ fun IssueDetailScreen(
     var managing by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssueDetailUiState.Ready
+    val seeded = state as? IssueDetailUiState.Seeded
     OverflowDetailScaffold(
-        title = ready?.detail?.item?.title ?: stringResource(R.string.issue_detail_title),
+        title = ready?.detail?.item?.title ?: seeded?.item?.title ?: stringResource(R.string.issue_detail_title),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
         showOverflow = ready != null,
@@ -127,6 +129,7 @@ fun IssueDetailScreen(
     ) { inner ->
         when (state) {
             IssueDetailUiState.Loading -> IssueDetailSkeleton(Modifier.padding(inner))
+            is IssueDetailUiState.Seeded -> Seeded(state, actions, contentPadding = inner)
             is IssueDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
             is IssueDetailUiState.Ready -> Ready(state, events, actions, contentPadding = inner)
@@ -153,6 +156,28 @@ fun IssueDetailScreen(
     }
 }
 
+/**
+ * The tapped row's header while the issue loads, with the skeleton's own Comments heading under it;
+ * a failed refresh swaps the rest of the page for the error and its retry, and the header stays.
+ */
+@Composable
+private fun Seeded(
+    state: IssueDetailUiState.Seeded,
+    actions: IssueDetailActions,
+    contentPadding: PaddingValues,
+) {
+    val inset = resolvedContentInset()
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        IssueHeader(state.item, onOpen = null, modifier = Modifier.padding(inset))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
+        if (state.error != null) {
+            ErrorScreen(error = state.error, onRetry = actions.onRetry)
+        } else {
+            SectionHeaderSkeleton()
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Ready(
@@ -163,6 +188,7 @@ private fun Ready(
 ) {
     val modals = rememberSaveable(saver = IssueModalState.Saver) { IssueModalState() }
     val detail = state.detail
+    val context = LocalContext.current
     val inset = resolvedContentInset()
     // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
     // the thread's scroll where there is not.
@@ -175,7 +201,7 @@ private fun Ready(
                     .verticalScroll(rememberScrollState())
                     .padding(if (pinnedBar) PaddingValues(top = contentPadding.calculateTopPadding()) else contentPadding),
         ) {
-            IssueHeader(detail, modifier = Modifier.padding(inset))
+            IssueHeader(detail.item, onOpen = { context.openInBrowser(detail.webUrl) }, modifier = Modifier.padding(inset))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
             detail.report?.let { report ->
                 SectionHeader(title = stringResource(R.string.issue_problem))
@@ -239,14 +265,13 @@ private fun Ready(
 /** The title it is about: poster, title, what it affects, and the type and state; tapping opens the server's page. */
 @Composable
 private fun IssueHeader(
-    detail: IssueDetail,
+    item: IssueItem,
+    onOpen: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val item = detail.item
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable { context.openInBrowser(detail.webUrl) },
+            modifier = Modifier.fillMaxWidth().then(if (onOpen != null) Modifier.clickable(onClick = onOpen) else Modifier),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ListRowPoster(imageUrl = item.posterUrl, contentDescription = null)

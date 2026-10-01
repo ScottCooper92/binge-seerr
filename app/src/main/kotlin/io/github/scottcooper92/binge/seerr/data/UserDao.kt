@@ -16,6 +16,10 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE listKey = :listKey ORDER BY orderIndex ASC")
     fun pagingSource(listKey: String): PagingSource<Int, UserEntity>
 
+    /** Any order's copy of the user: a detail screen seeds its header from whichever list the user was tapped in. */
+    @Query("SELECT * FROM users WHERE id = :id LIMIT 1")
+    suspend fun byId(id: Int): UserEntity?
+
     @Upsert
     suspend fun upsertAll(users: List<UserEntity>)
 

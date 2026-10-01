@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.data.FakeIssueStore
 import io.github.scottcooper92.binge.seerr.data.IssueEntity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
@@ -28,6 +29,7 @@ import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -469,6 +471,66 @@ class IssueDetailViewModelTest {
             assertTrue(failed.await() is IssueDetailEvent.Failed)
             val ready = vm.awaitReady { it.action == IssueAction.None }
             assertEquals(IssueStatus.Open, ready.detail.item.status)
+        }
+
+    @Test
+    fun `a cached row seeds the header at once, and the fetch then fills the page in behind it`() =
+        runTest {
+            server(ADMIN)
+            cache.refresh("open:added", listOf(cachedRow(31, "Open").copy(title = "Cached Heat")), nextSkip = null)
+            val release = CountDownLatch(1)
+            responses["GET /api/v1/issue/31"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = issueJson())
+            }
+            val vm = viewModel()
+
+            val seeded = vm.uiState.first { it is IssueDetailUiState.Seeded } as IssueDetailUiState.Seeded
+            assertEquals("Cached Heat", seeded.item.title)
+            assertEquals(IssueType.Audio, seeded.item.type)
+            assertEquals(IssueStatus.Open, seeded.item.status)
+            assertNull(seeded.error)
+
+            release.countDown()
+            assertEquals(
+                "Heat",
+                vm
+                    .awaitReady()
+                    .detail.item.title,
+            )
+        }
+
+    @Test
+    fun `a failed refresh keeps the seeded header and reports the error`() =
+        runTest {
+            server(ADMIN)
+            cache.refresh("open:added", listOf(cachedRow(31, "Open").copy(title = "Cached Heat")), nextSkip = null)
+            serve("GET /api/v1/issue/31", "", code = 503)
+            val vm = viewModel()
+
+            val failed = vm.uiState.first { it is IssueDetailUiState.Seeded && it.error != null } as IssueDetailUiState.Seeded
+
+            assertEquals("Cached Heat", failed.item.title)
+            assertEquals(SeerrError.Server, failed.error)
+
+            serve("GET /api/v1/issue/31", issueJson())
+            vm.reload()
+            assertEquals(
+                "Heat",
+                vm
+                    .awaitReady()
+                    .detail.item.title,
+            )
+        }
+
+    @Test
+    fun `with no cached row the page still starts as loading, and a failed fetch is the error screen`() =
+        runTest {
+            server(ADMIN)
+            serve("GET /api/v1/issue/31", "", code = 503)
+            val vm = viewModel()
+
+            assertTrue(vm.uiState.first { it !is IssueDetailUiState.Loading } is IssueDetailUiState.Error)
         }
 
     private fun cachedRow(

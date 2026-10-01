@@ -79,8 +79,15 @@ class IssueDetailViewModel
         }
 
         fun reload() {
-            if (state.value !is IssueDetailUiState.Ready) state.value = IssueDetailUiState.Loading
+            state.update { current ->
+                when (current) {
+                    is IssueDetailUiState.Ready -> current
+                    is IssueDetailUiState.Seeded -> current.copy(error = null)
+                    else -> IssueDetailUiState.Loading
+                }
+            }
             viewModelScope.launch(dispatcher) {
+                seedFromCache()
                 runCatching { load() }
                     .onSuccess { detail ->
                         state.update { current ->
@@ -94,10 +101,21 @@ class IssueDetailViewModel
                     }.onFailure { failure ->
                         // A page already showing keeps its stale issue rather than blanking to the error.
                         state.update { current ->
-                            (current as? IssueDetailUiState.Ready) ?: IssueDetailUiState.Error(failure.toSeerrError())
+                            when (current) {
+                                is IssueDetailUiState.Ready -> current
+                                is IssueDetailUiState.Seeded -> current.copy(error = failure.toSeerrError())
+                                else -> IssueDetailUiState.Error(failure.toSeerrError())
+                            }
                         }
                     }
             }
+        }
+
+        /** Shows the cached row's header in place of the skeleton, if a list has the issue and nothing has landed yet. */
+        private suspend fun seedFromCache() {
+            if (state.value !is IssueDetailUiState.Loading) return
+            val item = runCatching { store.byId(issueId)?.toIssueItem() }.getOrNull() ?: return
+            state.update { current -> if (current is IssueDetailUiState.Loading) IssueDetailUiState.Seeded(item) else current }
         }
 
         fun setDraft(text: String) = updateReady { it.copy(draft = text) }

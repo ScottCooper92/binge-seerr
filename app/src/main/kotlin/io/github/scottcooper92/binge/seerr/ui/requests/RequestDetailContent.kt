@@ -42,10 +42,9 @@ import com.binge.designsystem.R as DesR
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun RequestHeroMeta(
-    detail: RequestDetail,
+    item: RequestItem,
     modifier: Modifier = Modifier,
 ) {
-    val item = detail.item
     val chip = item.statusChip()
     FlowRow(
         modifier = modifier,

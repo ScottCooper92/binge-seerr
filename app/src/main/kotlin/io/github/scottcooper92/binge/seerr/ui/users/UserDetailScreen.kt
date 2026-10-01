@@ -58,6 +58,8 @@ import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.hub.QuotaSection
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.openTitle
@@ -115,8 +117,9 @@ fun UserDetailScreen(
     }
     var managing by rememberSaveable { mutableStateOf(false) }
     val ready = state as? UserDetailUiState.Ready
+    val seeded = state as? UserDetailUiState.Seeded
     OverflowDetailScaffold(
-        title = ready?.detail?.item?.name ?: stringResource(R.string.user_detail_title),
+        title = ready?.detail?.item?.name ?: seeded?.item?.name ?: stringResource(R.string.user_detail_title),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
         showOverflow = ready != null,
@@ -127,7 +130,10 @@ fun UserDetailScreen(
             UserDetailUiState.Loading -> UserDetailSkeleton(Modifier.padding(inner))
             is UserDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-            is UserDetailUiState.Ready -> UserDetailContent(state.detail, requests.collectAsLazyPagingItems(), actions, inner)
+            is UserDetailUiState.Seeded ->
+                UserDetailContent(state.item, null, state.error, requests.collectAsLazyPagingItems(), actions, inner)
+            is UserDetailUiState.Ready ->
+                UserDetailContent(state.detail.item, state.detail, null, requests.collectAsLazyPagingItems(), actions, inner)
         }
     }
     if (managing && ready != null) {
@@ -143,7 +149,9 @@ fun UserDetailScreen(
 
 @Composable
 private fun UserDetailContent(
-    detail: UserDetail,
+    item: UserItem,
+    detail: UserDetail?,
+    refreshError: SeerrError?,
     requests: LazyPagingItems<RequestItem>,
     actions: UserDetailActions,
     contentPadding: PaddingValues,
@@ -154,10 +162,14 @@ private fun UserDetailContent(
         contentPadding = PaddingValues(bottom = dimensionResource(DesR.dimen.padding_l)) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        item { ProfileHeader(detail.item, modifier = Modifier.padding(inset)) }
-        if (detail.watch?.playCount != null) item { DetailStatRow(userStats(detail)) }
-        detail.quota?.let { quota -> item { Box(Modifier.padding(horizontal = inset)) { QuotaSection(quota) } } }
-        if (detail.permissions.isNotEmpty()) {
+        item { ProfileHeader(item, modifier = Modifier.padding(inset)) }
+        // A failed refresh says so under the profile, which stays; the requests below are their own stream.
+        refreshError?.let { error -> item { ErrorScreen(error = error, onRetry = actions.onRetry) } }
+        if (detail?.watch?.playCount != null) item { DetailStatRow(userStats(detail)) }
+        detail?.quota?.let { quota -> item { Box(Modifier.padding(horizontal = inset)) { QuotaSection(quota) } } }
+        // The bitmask is on the row, so a seeded page names the permissions as the loaded one will.
+        val permissions = detail?.permissions ?: ManageablePermission.decode(item.permissions)
+        if (permissions.isNotEmpty()) {
             item {
                 SectionHeader(title = stringResource(R.string.user_permissions_title))
                 FlowRow(
@@ -165,14 +177,14 @@ private fun UserDetailContent(
                     horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
                     verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
                 ) {
-                    detail.permissions.forEach { permission -> BingeTag(label = stringResource(permission.labelRes())) }
+                    permissions.forEach { permission -> BingeTag(label = stringResource(permission.labelRes())) }
                 }
             }
         }
-        detail.watch?.takeIf { it.recentlyWatched.isNotEmpty() }?.let { watch ->
+        detail?.watch?.takeIf { it.recentlyWatched.isNotEmpty() }?.let { watch ->
             item { TitleCarousel(stringResource(R.string.user_recently_watched), watch.recentlyWatched, detail.serverUrl) }
         }
-        if (detail.watchlist.isNotEmpty()) {
+        if (detail != null && detail.watchlist.isNotEmpty()) {
             item { TitleCarousel(stringResource(R.string.user_watchlist), detail.watchlist, detail.serverUrl) }
         }
         item {
@@ -180,7 +192,7 @@ private fun UserDetailContent(
                 title = stringResource(R.string.hub_section_requests),
                 trailingContent = {
                     Text(
-                        detail.item.requestCount.toString(),
+                        item.requestCount.toString(),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

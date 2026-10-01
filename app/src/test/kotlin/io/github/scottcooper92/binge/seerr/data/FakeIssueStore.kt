@@ -22,6 +22,8 @@ class FakeIssueStore : IssueStore {
 
     override suspend fun nextSkip(listKey: String): Int? = cursors[listKey]
 
+    override suspend fun byId(issueId: Int): IssueEntity? = rows.firstOrNull { it.id == issueId }
+
     override suspend fun refresh(
         listKey: String,
         issues: List<IssueEntity>,

@@ -40,6 +40,7 @@ import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueComment
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetail
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailUiState
@@ -83,17 +84,32 @@ internal fun TvIssueDetailScreen(
     BackHandler(onBack = actions.onBack)
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         when (state) {
-            IssueDetailUiState.Loading -> TvLoadingPlate(modifier = Modifier.fillMaxSize())
-            is IssueDetailUiState.Error ->
-                TvBoardPlate(
-                    body = stringResource(state.error.messageRes()),
-                    icon = Icons.Filled.Warning,
-                    primary = stringResource(R.string.hub_retry) to actions.onRetry,
-                    modifier = Modifier.fillMaxSize(),
-                )
+            // The TV page does not seed from a cached row: it loads, or fails, as it always has.
+            IssueDetailUiState.Loading, is IssueDetailUiState.Seeded -> {
+                val failure = (state as? IssueDetailUiState.Seeded)?.error
+                if (failure == null) {
+                    TvLoadingPlate(modifier = Modifier.fillMaxSize())
+                } else {
+                    TvErrorPlate(failure, actions.onRetry)
+                }
+            }
+            is IssueDetailUiState.Error -> TvErrorPlate(state.error, actions.onRetry)
             is IssueDetailUiState.Ready -> TvIssueDetailContent(detail = state.detail, now = now)
         }
     }
+}
+
+@Composable
+private fun TvErrorPlate(
+    error: SeerrError,
+    onRetry: () -> Unit,
+) {
+    TvBoardPlate(
+        body = stringResource(error.messageRes()),
+        icon = Icons.Filled.Warning,
+        primary = stringResource(R.string.hub_retry) to onRetry,
+        modifier = Modifier.fillMaxSize(),
+    )
 }
 
 /**
