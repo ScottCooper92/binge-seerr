@@ -499,6 +499,8 @@ app:server_settings_proxy_bypass  d3d45e442c4d
 app:server_settings_proxy_bypass_hint  ab2db5557ad9
 app:server_settings_proxy_bypass_local  58b07426216a
 app:server_settings_proxy_enabled  712f2dd05d97
+app:server_settings_proxy_password_missing  ccf0fcec85d2
+app:server_settings_proxy_user_missing  2c4065c0ec0d
 app:server_settings_region_hint  f6510423baf2
 app:server_settings_rule_add  bed79361ea53
 app:server_settings_rule_conditions  2ff17c09dfc9
