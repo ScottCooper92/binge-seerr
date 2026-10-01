@@ -15,15 +15,19 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
@@ -32,9 +36,11 @@ import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import com.binge.designsystem.R as DesR
 
 /**
@@ -50,7 +56,22 @@ internal class RequestSheetModel(
     val media: MediaRecord? = null,
     val viewerId: Int? = null,
     val canManageUsers: Boolean = false,
+    val detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
 )
+
+/**
+ * Whether the request's own detail has arrived behind a sheet opened from a preview. Until it has, the
+ * Media group, the requester and Edit are absent, so the sheet says it is still working rather than growing silently.
+ */
+internal sealed interface SheetDetailLoad {
+    data object Loaded : SheetDetailLoad
+
+    data object Loading : SheetDetailLoad
+
+    data class Failed(
+        val error: SeerrError,
+    ) : SheetDetailLoad
+}
 
 /** What its rows call back into, bundled so the content's parameter list stays readable. */
 internal class RequestSheetCallbacks(
@@ -63,6 +84,7 @@ internal class RequestSheetCallbacks(
     val onDeleteFiles: (is4k: Boolean) -> Unit = {},
     val onClearData: () -> Unit = {},
     val onOpenUser: ((Int) -> Unit)? = null,
+    val onRetryDetail: () -> Unit = {},
 )
 
 /**
@@ -86,6 +108,7 @@ internal fun RequestActionsContent(
                 .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
+        DetailLoadIndicator(model.detailLoad, callbacks.onRetryDetail)
         val requesterId =
             model.item.requestedById?.takeIf {
                 callbacks.onOpenUser != null && canOpenUser(it, model.viewerId, model.canManageUsers)
@@ -102,6 +125,35 @@ internal fun RequestActionsContent(
                 .orEmpty()
         if (requestRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
         if (mediaRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
+    }
+}
+
+/** A thin bar while the detail loads, and a one-line retry when it failed; nothing once it landed. */
+@Composable
+private fun DetailLoadIndicator(
+    load: SheetDetailLoad,
+    onRetry: () -> Unit,
+) {
+    when (load) {
+        SheetDetailLoad.Loaded -> Unit
+        SheetDetailLoad.Loading -> {
+            val description = stringResource(R.string.request_sheet_loading)
+            LinearProgressIndicator(Modifier.fillMaxWidth().semantics { contentDescription = description })
+        }
+        is SheetDetailLoad.Failed ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(load.error.messageRes()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onRetry) { Text(stringResource(R.string.action_try_again)) }
+            }
     }
 }
 

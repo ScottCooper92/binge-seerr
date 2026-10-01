@@ -20,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestSheetPlaceholder
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsScreen
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.SheetDetailLoad
 import io.github.scottcooper92.binge.seerr.ui.requests.SiblingSheet
 
 @Composable
@@ -72,7 +73,7 @@ private fun SiblingRequestSheet(
         }
     }
     val page = state
-    if (page is RequestDetailUiState.Ready || (page is RequestDetailUiState.Loading && sheet.preview != null)) {
+    if (page is RequestDetailUiState.Ready || sheet.preview != null) {
         RequestManagementSheets(
             state = page as? RequestDetailUiState.Ready,
             actions =
@@ -87,6 +88,8 @@ private fun SiblingRequestSheet(
             acting = sheet.open,
             onDismissActing = sheet.onDismiss,
             preview = sheet.preview,
+            detailLoad = page.sheetDetailLoad(),
+            onRetryDetail = viewModel::reload,
         )
     } else if (sheet.open) {
         RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)
@@ -176,3 +179,11 @@ internal fun RequestsEntry(
             ),
     )
 }
+
+/** What a sheet opened from a preview says about the detail still behind it. */
+internal fun RequestDetailUiState.sheetDetailLoad(): SheetDetailLoad =
+    when (this) {
+        is RequestDetailUiState.Ready -> SheetDetailLoad.Loaded
+        RequestDetailUiState.Loading -> SheetDetailLoad.Loading
+        is RequestDetailUiState.Error -> SheetDetailLoad.Failed(error)
+    }

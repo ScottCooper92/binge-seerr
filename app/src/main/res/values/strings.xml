@@ -188,6 +188,7 @@
     <string name="request_sheet_group_request">Request</string>
     <string name="request_sheet_group_media">Media</string>
     <string name="request_sheet_requested_by">Requested by %1$s</string>
+    <string name="request_sheet_loading">Loading request details</string>
     <string name="request_remove_detail">Deletes this request. The title can be requested again.</string>
     <string name="request_remove_block_detail">Deletes this request and stops the title being requested again.</string>
     <string name="media_delete_4k_files">Delete 4K files</string>

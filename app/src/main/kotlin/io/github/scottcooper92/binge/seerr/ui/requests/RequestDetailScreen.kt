@@ -168,6 +168,8 @@ internal fun RequestManagementSheets(
     acting: Boolean,
     onDismissActing: () -> Unit,
     preview: RequestPreview? = null,
+    detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
+    onRetryDetail: () -> Unit = {},
 ) {
     val detail = state?.detail
     // Which instance the status sheet is marking, keyed by is4k because that is what tells the
@@ -192,6 +194,8 @@ internal fun RequestManagementSheets(
             onOpenUser = actions.onOpenUser,
             viewerId = detail?.viewerId,
             canManageUsers = detail?.canManageUsers == true,
+            detailLoad = detailLoad,
+            onRetryDetail = onRetryDetail,
         )
     }
     state?.edit?.let { edit -> EditRequestSheet(item = state.detail.item, edit = edit, actions = actions.edit) }
