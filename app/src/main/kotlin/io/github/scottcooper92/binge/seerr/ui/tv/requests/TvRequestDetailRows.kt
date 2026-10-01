@@ -95,7 +95,7 @@ private fun TvRequestDestination(destination: RequestDestination) {
             .joinToString(stringResource(R.string.hub_meta_separator))
     listOfNotNull(
         where.takeIf { it.isNotEmpty() },
-        destination.tags.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.request_tags_line, it.joinToString(", ")) },
+        destination.tagsLabel?.let { stringResource(R.string.request_tags_line, it) },
     ).forEach {
         Text(text = it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
