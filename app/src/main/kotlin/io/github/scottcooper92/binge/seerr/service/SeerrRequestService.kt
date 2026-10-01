@@ -47,12 +47,15 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
+import io.github.scottcooper92.binge.seerr.data.NoRequestStore
+import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
@@ -103,6 +106,7 @@ class SeerrRequestService(
     private val statusCache: MediaStatusStore = NoMediaStatusStore,
     private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
     private val analytics: Analytics = NoOpAnalytics,
+    private val requestCache: RequestStore = NoRequestStore,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val mediaIds = SeerrMediaIds { connection.api() }
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
@@ -232,18 +236,21 @@ class SeerrRequestService(
     override suspend fun cancelRequest(request: CancelRequestRequest): CancelRequestResponse =
         gated("cancel_request", Capability.CAPABILITY_CANCEL) {
             connection.api().deleteRequest(request.requestId)
+            requestCache.delete(request.requestId)
             CancelRequestResponse.getDefaultInstance()
         }
 
     override suspend fun approveRequest(request: ApproveRequestRequest): ApproveRequestResponse =
         gated("approve_request", Capability.CAPABILITY_APPROVE) {
             connection.api().approveRequest(request.requestId)
+            requestCache.updateStatus(request.requestId, SeerrRequestStatusCode.Approved.raw)
             ApproveRequestResponse.getDefaultInstance()
         }
 
     override suspend fun declineRequest(request: DeclineRequestRequest): DeclineRequestResponse =
         gated("decline_request", Capability.CAPABILITY_DECLINE) {
             connection.api().declineRequest(request.requestId)
+            requestCache.updateStatus(request.requestId, SeerrRequestStatusCode.Declined.raw)
             DeclineRequestResponse.getDefaultInstance()
         }
 

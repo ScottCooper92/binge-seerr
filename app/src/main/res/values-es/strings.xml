@@ -211,6 +211,7 @@
     <string name="issues_empty_open">No hay incidencias abiertas. Nada requiere tu atención.</string>
     <string name="issues_empty_resolved">Aún no hay incidencias resueltas.</string>
     <string name="issues_empty_all">No se ha informado de ninguna incidencia en tu servidor.</string>
+    <string name="requests_refresh_failed">Mostrando las últimas solicitudes conocidas. Toca para actualizar.</string>
     <string name="issues_refresh_failed">Mostrando las últimas incidencias conocidas. Toca para actualizar.</string>
     <string name="issue_state_open">Abierta</string>
     <string name="issue_state_resolved">Resuelta</string>

@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
+import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.grpc.BindableService
 import io.grpc.binder.SecurityPolicy
@@ -28,6 +29,9 @@ class SeerrCompanionService : IntegrationService() {
     lateinit var statuses: MediaStatusStore
 
     @Inject
+    lateinit var requests: RequestStore
+
+    @Inject
     lateinit var bingeConnection: BingeConnectionStore
 
     @Inject
@@ -41,6 +45,7 @@ class SeerrCompanionService : IntegrationService() {
                 statusCache = statuses,
                 bingeConnection = bingeConnection,
                 analytics = analytics,
+                requestCache = requests,
             ),
         )
 

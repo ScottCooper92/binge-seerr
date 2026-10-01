@@ -1,11 +1,14 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.NoRequestStore
+import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusSeasonBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -82,6 +85,8 @@ class RequestModeration(
     private val connection: SeerrConnection,
     private val analytics: Analytics = NoOpAnalytics,
     private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+    /** The cached list rows, moved with a success so the list agrees before its refresh lands. */
+    private val cache: RequestStore = NoRequestStore,
     private val onModerated: () -> Unit,
 ) {
     private val acting = MutableStateFlow<Set<Int>>(emptySet())
@@ -90,7 +95,11 @@ class RequestModeration(
     private val eventFlow = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<ModerationEvent> = eventFlow.asSharedFlow()
 
-    fun approve(requestId: Int) = moderate(requestId, ModerationEvent.Approved) { connection.api().approveRequest(it) }
+    fun approve(requestId: Int) =
+        moderate(requestId, ModerationEvent.Approved) {
+            connection.api().approveRequest(it)
+            cache.updateStatus(it, SeerrRequestStatusCode.Approved.raw)
+        }
 
     fun retry(requestId: Int) = moderate(requestId, ModerationEvent.Retried) { connection.api().retryRequest(it) }
 
@@ -137,7 +146,10 @@ class RequestModeration(
         ModerationEvent.Declined,
         ModerationEvent.DeclinedAndBlocked,
         ModerationEvent.DeclinedButBlockFailed,
-    ) { connection.api().declineRequest(it) }
+    ) {
+        connection.api().declineRequest(it)
+        cache.updateStatus(it, SeerrRequestStatusCode.Declined.raw)
+    }
 
     fun remove(
         item: RequestItem,
@@ -148,7 +160,10 @@ class RequestModeration(
         ModerationEvent.Removed,
         ModerationEvent.RemovedAndBlocked,
         ModerationEvent.RemovedButBlockFailed,
-    ) { connection.api().deleteRequest(it) }
+    ) {
+        connection.api().deleteRequest(it)
+        cache.delete(it)
+    }
 
     private fun moderate(
         requestId: Int,

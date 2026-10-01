@@ -12,8 +12,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
+import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.data.RoomIssueStore
 import io.github.scottcooper92.binge.seerr.data.RoomMediaStatusStore
+import io.github.scottcooper92.binge.seerr.data.RoomRequestStore
 import io.github.scottcooper92.binge.seerr.data.RoomUserStore
 import io.github.scottcooper92.binge.seerr.data.SeerrCacheDatabase
 import io.github.scottcooper92.binge.seerr.data.UserStore
@@ -72,6 +74,10 @@ object SeerrModule {
     @Provides
     @Singleton
     fun issueStore(db: SeerrCacheDatabase): IssueStore = RoomIssueStore(db)
+
+    @Provides
+    @Singleton
+    fun requestStore(db: SeerrCacheDatabase): RequestStore = RoomRequestStore(db)
 
     @Provides
     @Singleton

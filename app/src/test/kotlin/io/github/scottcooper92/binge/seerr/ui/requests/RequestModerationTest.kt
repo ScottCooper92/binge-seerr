@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.FakeRequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -37,6 +38,7 @@ class RequestModerationTest {
     private val received = CopyOnWriteArrayList<RecordedRequest>()
     private val codes = mutableMapOf<String, Int>()
     private var moderated = 0
+    private val cache = FakeRequestStore()
     private val analytics = RecordingAnalytics()
     private val crashBreadcrumbs = RecordingCrashBreadcrumbs()
 
@@ -76,6 +78,7 @@ class RequestModerationTest {
             connection = connection,
             analytics = analytics,
             crashBreadcrumbs = crashBreadcrumbs,
+            cache = cache,
         ) { moderated++ }
     }
 
@@ -112,6 +115,35 @@ class RequestModerationTest {
             assertEquals(listOf("request_moderated" to mapOf("action" to "approved")), analytics.events)
             assertEquals(listOf("moderating request: approved"), crashBreadcrumbs.logs)
             assertEquals(listOf("request_id" to "11"), crashBreadcrumbs.keys)
+        }
+
+    @Test
+    fun `approving, declining and removing move the cached row, and a failed write leaves it`() =
+        runTest {
+            cache.append("all:added:all", listOf(item.toEntity("all:added:all", 0), item.copy(id = 12).toEntity("all:added:all", 1)), null)
+            val sut = moderation()
+
+            codes["/api/v1/request/11/approve"] = 500
+            val failed = awaitEvent(sut.events)
+            sut.approve(11)
+            failed.await()
+            assertEquals(1, cache.rows.first { it.id == 11 }.status)
+
+            codes.clear()
+            val approved = awaitEvent(sut.events)
+            sut.approve(11)
+            approved.await()
+            assertEquals(SeerrRequestStatusCode.Approved.raw, cache.rows.first { it.id == 11 }.status)
+
+            val declined = awaitEvent(sut.events)
+            sut.decline(item, blockTitle = false)
+            declined.await()
+            assertEquals(SeerrRequestStatusCode.Declined.raw, cache.rows.first { it.id == 11 }.status)
+
+            val removed = awaitEvent(sut.events)
+            sut.remove(item, blockTitle = false)
+            removed.await()
+            assertEquals(listOf(12), cache.rows.map { it.id })
         }
 
     @Test

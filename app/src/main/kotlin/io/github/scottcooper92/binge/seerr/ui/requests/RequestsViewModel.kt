@@ -2,12 +2,17 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.RequestListQuery
+import io.github.scottcooper92.binge.seerr.data.RequestStore
+import io.github.scottcooper92.binge.seerr.data.RequestsRemoteMediator
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
@@ -28,6 +33,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -54,19 +60,21 @@ private sealed interface ScopeState {
 }
 
 /**
- * The requests browser. One cached paging stream per filter, so switching chips keeps each list's
- * rows; every stream re-queries when the sort changes. The chip counts and the resolved scope both
+ * The requests browser. One cached paging stream per filter, each read from the cache and refreshed
+ * through the mediator, so switching chips keeps each list's rows and a cold open shows the last
+ * pages before the server answers; every stream re-queries when the sort changes. The chip counts and the resolved scope both
  * refetch on the screen becoming visible (the counts also on a filter change), holding the previous
  * value while a fetch is in flight. A failed `auth/me` read is an [RequestsUiState.Error] the user can
  * retry, and it also self-corrects the next time the screen becomes visible.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalPagingApi::class)
 @HiltViewModel
 class RequestsViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
         private val titles: TitleCache,
+        private val store: RequestStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
@@ -91,6 +99,7 @@ class RequestsViewModel
                 connection = connection,
                 analytics = analytics,
                 crashBreadcrumbs = crashBreadcrumbs,
+                cache = store,
             ) { listChanged() }
 
         /** A moderation finished, here or in a row's sheet: refetch the counts and stale the lists. */
@@ -151,16 +160,16 @@ class RequestsViewModel
             RequestFilter.entries.associateWith { filter ->
                 combine(selectedSort, scope.filterIsInstance<ScopeState.Resolved>()) { sort, resolved -> sort to resolved.scope }
                     .flatMapLatest { (sort, scope) ->
-                        Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
-                            RequestsPagingSource(
-                                api = connection::api,
-                                filter = filter,
-                                sort = sort,
-                                requestedBy = scope.requestedBy,
-                                hydrate = titles::get,
-                            )
-                        }.flow
-                    }.cachedIn(viewModelScope)
+                        val query = RequestListQuery(filter.apiValue, sort.apiValue, scope.requestedBy)
+                        Pager(
+                            config = PagingConfig(pageSize = REQUESTS_PAGE_SIZE),
+                            remoteMediator =
+                                RequestsRemoteMediator(query = query, api = connection::api, store = store) { dto, api, key, index ->
+                                    dto.toRequestEntity(api, titles::get, key, index, System.currentTimeMillis())
+                                },
+                        ) { store.pagingSource(query.listKey) }.flow
+                    }.map { data -> data.map { it.toRequestItem() } }
+                    .cachedIn(viewModelScope)
             }
 
         fun requests(filter: RequestFilter): Flow<PagingData<RequestItem>> = streams.getValue(filter)
