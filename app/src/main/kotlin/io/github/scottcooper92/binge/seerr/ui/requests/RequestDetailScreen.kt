@@ -127,6 +127,7 @@ private fun Ready(
             }
         },
         onOpenUser = actions.onOpenUser,
+        isActing = state.isActing,
     )
     RequestManagementSheets(state = state, actions = actions, acting = acting, onDismissActing = { acting = false })
     other?.let { id ->
@@ -213,7 +214,8 @@ internal fun RequestManagementSheets(
  * The page itself, with no sheet state of its own so a frame can render it. The hero, the overlay bar
  * and the footer's own layout live in [MediaHeroDetailPage] — this composable is what feeds it: the
  * title/backdrop/meta, the [onOpen]/[onReport] icon actions (null when this viewer, or this title,
- * does not have the action) and the scrollable facts as the body; [RequestCardSection] carries the
+ * does not have the action), [isActing] (a moderation is in flight, so a bar shows and the card's chip and
+ * action dim) and the scrollable facts as the body; [RequestCardSection] carries the
  * request's own action, so there is no footer.
  */
 @Composable
@@ -227,6 +229,7 @@ internal fun RequestDetailPage(
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     initiallyOverflowing: Boolean = false,
+    isActing: Boolean = false,
 ) {
     val item = detail.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
@@ -235,6 +238,7 @@ internal fun RequestDetailPage(
         backdropUrl = detail.backdropUrl,
         metaText = "",
         metaContent = { RequestHeroMeta(detail) },
+        inFlight = isActing,
         onBack = onBack,
         modifier = modifier,
         scrollState = scrollState,
@@ -263,7 +267,7 @@ internal fun RequestDetailPage(
         body = {
             RequestHeadline(detail, Modifier.padding(resolvedContentInset()), initiallyOverflowing)
             RequestStats(detail)
-            RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser)
+            RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser, isActing = isActing)
             RequestSections(detail)
         },
     )
