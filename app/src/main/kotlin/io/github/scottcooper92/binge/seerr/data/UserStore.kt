@@ -9,6 +9,9 @@ interface UserStore {
 
     suspend fun nextSkip(listKey: String): Int?
 
+    /** The cached row for [userId] from any order, or null when none has cached it. */
+    suspend fun byId(userId: Int): UserEntity?
+
     suspend fun refresh(
         listKey: String,
         users: List<UserEntity>,
@@ -43,6 +46,8 @@ class RoomUserStore(
     override fun pagingSource(listKey: String): PagingSource<Int, UserEntity> = users.pagingSource(listKey)
 
     override suspend fun nextSkip(listKey: String): Int? = keys.nextSkip(listKey)
+
+    override suspend fun byId(userId: Int): UserEntity? = users.byId(userId)
 
     override suspend fun refresh(
         listKey: String,

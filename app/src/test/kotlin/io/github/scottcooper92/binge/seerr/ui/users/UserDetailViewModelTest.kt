@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.data.UserEntity
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuotaBucket
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
@@ -34,6 +35,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val MANAGE_USERS = 1 shl 3
@@ -71,8 +73,9 @@ class UserDetailViewModelTest {
     private fun serve(
         key: String,
         body: String,
+        code: Int = 200,
     ) {
-        responses[key] = { FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body) }
+        responses[key] = { FakeResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body) }
     }
 
     private fun server(
@@ -195,6 +198,56 @@ class UserDetailViewModelTest {
             assertEquals(UserDetailEvent.UserDeleted, userDeleted.await())
             assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/user/8" })
             assertEquals(listOf(9), cache.rows.map { it.id })
+        }
+
+    @Test
+    fun `a cached row seeds the profile at once, and the fetch then fills the page in behind it`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            cache.refresh("created", listOf(cachedUser(8).copy(name = "Cached Ana", requestCount = 3)), nextSkip = null)
+            val release = CountDownLatch(1)
+            responses["GET /api/v1/user/8"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":8,"displayName":"Ana"}""")
+            }
+            val vm = viewModel()
+
+            val seeded = vm.uiState.first { it is UserDetailUiState.Seeded } as UserDetailUiState.Seeded
+            assertEquals("Cached Ana", seeded.item.name)
+            assertEquals(3, seeded.item.requestCount)
+            assertNull(seeded.error)
+
+            release.countDown()
+            assertEquals(
+                "Ana",
+                vm
+                    .awaitReady()
+                    .detail.item.name,
+            )
+        }
+
+    @Test
+    fun `a failed refresh keeps the seeded profile and reports the error`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            cache.refresh("created", listOf(cachedUser(8).copy(name = "Cached Ana")), nextSkip = null)
+            serve("GET /api/v1/user/8", "", code = 503)
+            val vm = viewModel()
+
+            val failed = vm.uiState.first { it is UserDetailUiState.Seeded && it.error != null } as UserDetailUiState.Seeded
+
+            assertEquals("Cached Ana", failed.item.name)
+            assertEquals(SeerrError.Server, failed.error)
+        }
+
+    @Test
+    fun `with no cached row the page still starts as loading, and a failed fetch is the error screen`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            serve("GET /api/v1/user/8", "", code = 503)
+            val vm = viewModel()
+
+            assertTrue(vm.uiState.first { it !is UserDetailUiState.Loading } is UserDetailUiState.Error)
         }
 
     private fun cachedUser(id: Int) =

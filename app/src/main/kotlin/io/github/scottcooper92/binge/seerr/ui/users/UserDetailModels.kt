@@ -48,6 +48,17 @@ data class UserDetail(
 sealed interface UserDetailUiState {
     data object Loading : UserDetailUiState
 
+    /**
+     * The row the user tapped, shown while the profile loads: the header, the role and origin tags,
+     * the permissions and the request count are all on it, but the quota, the watch data and what the
+     * viewer may do are not, so none of those are guessed. A failed refresh sets [error] and leaves the
+     * profile up.
+     */
+    data class Seeded(
+        val item: UserItem,
+        val error: SeerrError? = null,
+    ) : UserDetailUiState
+
     data class Ready(
         val detail: UserDetail,
         val deleting: Boolean = false,

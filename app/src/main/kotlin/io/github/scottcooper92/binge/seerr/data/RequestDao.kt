@@ -11,6 +11,10 @@ interface RequestDao {
     @Query("SELECT * FROM requests WHERE listKey = :listKey ORDER BY orderIndex ASC")
     fun pagingSource(listKey: String): PagingSource<Int, RequestEntity>
 
+    /** Any slice's copy of the request: a detail screen seeds its header from whichever list the user tapped it in. */
+    @Query("SELECT * FROM requests WHERE id = :id LIMIT 1")
+    suspend fun byId(id: Int): RequestEntity?
+
     @Upsert
     suspend fun upsertAll(requests: List<RequestEntity>)
 

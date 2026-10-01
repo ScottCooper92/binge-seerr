@@ -185,5 +185,6 @@ internal fun RequestDetailUiState.sheetDetailLoad(): SheetDetailLoad =
     when (this) {
         is RequestDetailUiState.Ready -> SheetDetailLoad.Loaded
         RequestDetailUiState.Loading -> SheetDetailLoad.Loading
+        is RequestDetailUiState.Seeded -> error?.let { SheetDetailLoad.Failed(it) } ?: SheetDetailLoad.Loading
         is RequestDetailUiState.Error -> SheetDetailLoad.Failed(error)
     }

@@ -100,6 +100,16 @@ enum class IssueAction { None, UpdatingStatus, Deleting }
 sealed interface IssueDetailUiState {
     data object Loading : IssueDetailUiState
 
+    /**
+     * The row the user tapped, shown while the issue loads: everything the header draws is on it, but
+     * the report, the thread and what the viewer may do are not, so none of those are guessed. A failed
+     * refresh sets [error] and leaves the header up.
+     */
+    data class Seeded(
+        val item: IssueItem,
+        val error: SeerrError? = null,
+    ) : IssueDetailUiState
+
     data class Ready(
         val detail: IssueDetail,
         val draft: String = "",

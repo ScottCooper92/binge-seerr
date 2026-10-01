@@ -13,6 +13,9 @@ interface RequestStore {
 
     suspend fun nextSkip(listKey: String): Int?
 
+    /** The cached row for [requestId] from any list, or null when no list has cached it. */
+    suspend fun byId(requestId: Int): RequestEntity?
+
     /** Replaces one list's slice with its first page; [nextSkip] is null when that page was the last. */
     suspend fun refresh(
         listKey: String,
@@ -48,6 +51,8 @@ class RoomRequestStore(
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = requests.pagingSource(listKey)
 
     override suspend fun nextSkip(listKey: String): Int? = keys.nextSkip(listKey)
+
+    override suspend fun byId(requestId: Int): RequestEntity? = requests.byId(requestId)
 
     override suspend fun refresh(
         listKey: String,
@@ -87,6 +92,8 @@ object NoRequestStore : RequestStore {
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = error("NoRequestStore holds no rows")
 
     override suspend fun nextSkip(listKey: String): Int? = null
+
+    override suspend fun byId(requestId: Int): RequestEntity? = null
 
     override suspend fun refresh(
         listKey: String,

@@ -35,6 +35,8 @@ internal fun RequestSheetPlaceholderContent(
     val held = modifier.fillMaxWidth().height(dimensionResource(R.dimen.request_sheet_placeholder_height))
     when (state) {
         is RequestDetailUiState.Error -> ErrorScreen(error = state.error, modifier = held, onRetry = onRetry)
+        is RequestDetailUiState.Seeded ->
+            state.error?.let { ErrorScreen(error = it, modifier = held, onRetry = onRetry) } ?: LoadingScreen(held)
         RequestDetailUiState.Loading, is RequestDetailUiState.Ready -> LoadingScreen(held)
     }
 }
