@@ -52,7 +52,7 @@ class ServerGeneralViewModel
             return answered.toServerGeneral(connection.profile().variant)
         }
 
-        override fun canSave(draft: ServerGeneralSettings): Boolean = draft.urlValid
+        override fun canSave(draft: ServerGeneralSettings): Boolean = draft.valid
 
         /**
          * Re-reads only the default permissions, for when the page comes back from the editor that

@@ -75,7 +75,7 @@ fun ServerGeneralScreen(
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        canSave = { it.urlValid },
+        canSave = { it.valid },
     ) { draft, enabled ->
         GeneralFields(draft, enabled, actions)
         DiscoverFields(draft, enabled, actions)
@@ -140,6 +140,7 @@ private fun DiscoverFields(
             icon = Icons.Filled.Translate,
             enabled = enabled,
             supporting = stringResource(R.string.server_settings_locale_hint),
+            isError = !draft.localeValid,
         ) { value -> actions.onEdit { it.copy(locale = value) } }
         EditorTextField(
             draft.discoverRegion,
@@ -147,6 +148,7 @@ private fun DiscoverFields(
             icon = Icons.Filled.Public,
             enabled = enabled,
             supporting = stringResource(R.string.server_settings_region_hint),
+            isError = !draft.discoverRegionValid,
         ) { value -> actions.onEdit { it.copy(discoverRegion = value) } }
         draft.streamingRegion?.let { region ->
             EditorTextField(
@@ -155,6 +157,7 @@ private fun DiscoverFields(
                 icon = Icons.Filled.LiveTv,
                 enabled = enabled,
                 supporting = stringResource(R.string.server_settings_region_hint),
+                isError = !draft.streamingRegionValid,
             ) { value -> actions.onEdit { it.copy(streamingRegion = value) } }
         }
         EditorTextField(
@@ -163,6 +166,7 @@ private fun DiscoverFields(
             icon = Icons.Filled.Language,
             enabled = enabled,
             supporting = stringResource(R.string.server_settings_original_language_hint),
+            isError = !draft.originalLanguageValid,
         ) { value -> actions.onEdit { it.copy(originalLanguage = value) } }
     }
 }

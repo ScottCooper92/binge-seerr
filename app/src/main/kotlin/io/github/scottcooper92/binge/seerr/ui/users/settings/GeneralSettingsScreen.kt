@@ -94,6 +94,7 @@ private fun DiscoverCard(
             icon = Icons.Filled.Translate,
             enabled = enabled,
             supporting = stringResource(R.string.user_settings_locale_hint),
+            isError = !draft.localeValid,
         ) { value -> actions.onEdit { it.copy(locale = value) } }
         EditorTextField(
             draft.region,
@@ -101,6 +102,7 @@ private fun DiscoverCard(
             icon = Icons.Filled.Public,
             enabled = enabled,
             supporting = stringResource(R.string.user_settings_region_hint),
+            isError = !draft.regionValid,
         ) { value -> actions.onEdit { it.copy(region = value) } }
         EditorTextField(
             draft.originalLanguage,
@@ -109,6 +111,7 @@ private fun DiscoverCard(
             enabled = enabled,
             // The same field as the server-level one, so it says the same thing rather than a second wording of it.
             supporting = stringResource(R.string.server_settings_original_language_hint),
+            isError = !draft.originalLanguageValid,
         ) { value ->
             actions.onEdit { it.copy(originalLanguage = value) }
         }
