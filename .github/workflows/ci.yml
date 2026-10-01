@@ -118,7 +118,11 @@ jobs:
       # **/build/reports/ — the greedy glob is fail-OPEN, so every new report type
       # Gradle and AGP invent silently reappears in the artifact. Both the test reports
       # and the lint results are named, because a red run here is as likely to be lint
-      # as it is to be a failing test, and author-ci-fix triages from what it can read.
+      # as it is to be a failing test, and author-ci-fix triages from what it can read. detekt
+      # and kover are named for the same reason: `build` runs both, and without their reports a
+      # red detekt or a coverage-floor failure leaves only the log. Screenshots are narrowed to
+      # the diffs, not the whole results tree. `build` is one Gradle step, so there is no
+      # failed-step gate to hang that on; if-no-files-found covers a run with no diffs.
       - name: Upload reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -128,7 +132,9 @@ jobs:
             **/build/reports/tests/**
             **/build/reports/lint-results-*.html
             **/build/reports/ktlint/**
-            **/build/outputs/screenshotTest-results/**
+            **/build/reports/detekt/**
+            **/build/reports/kover/**
+            **/build/outputs/screenshotTest-results/**/diffs/**
           if-no-files-found: ignore
           retention-days: ${{ github.event_name == 'schedule' && 7 || 1 }}
 
