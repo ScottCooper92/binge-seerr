@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -90,7 +91,7 @@ class IssuesViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = IssuesViewModel(connection, TitleCache(), FakeIssueStore(), mainDispatcherRule.dispatcher, analytics)
+        val vm = IssuesViewModel(connection, TitleCache(FakeTitleDao()), FakeIssueStore(), mainDispatcherRule.dispatcher, analytics)
         viewModels.put("issues", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)

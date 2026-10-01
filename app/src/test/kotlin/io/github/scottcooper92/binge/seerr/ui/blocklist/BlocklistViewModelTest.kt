@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -55,7 +56,7 @@ class BlocklistViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): BlocklistViewModel {
-        val vm = BlocklistViewModel(seerr.connection(this), TitleCache(), mainDispatcherRule.dispatcher, analytics)
+        val vm = BlocklistViewModel(seerr.connection(this), TitleCache(FakeTitleDao()), mainDispatcherRule.dispatcher, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -219,7 +220,7 @@ class BlocklistViewModelTest {
         val connection = seerr.connection(this)
         seerr.serve("GET /api/v1/auth/me", code = code)
         runCatching { connection.refreshAuthenticatedUser() }
-        val vm = BlocklistViewModel(connection, TitleCache(), mainDispatcherRule.dispatcher, analytics)
+        val vm = BlocklistViewModel(connection, TitleCache(FakeTitleDao()), mainDispatcherRule.dispatcher, analytics)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)

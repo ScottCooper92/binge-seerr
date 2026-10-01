@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.REQUEST
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
+import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -70,7 +71,7 @@ class NotificationsCheckerTest {
     ): NotificationsChecker {
         on.forEach { prefs.setEnabled(it, true) }
         val connection = seerr.connection(this)
-        return NotificationsChecker(prefs, connection, NotificationFeeds(connection, TitleCache()), notifier)
+        return NotificationsChecker(prefs, connection, NotificationFeeds(connection, TitleCache(FakeTitleDao())), notifier)
     }
 
     @Test

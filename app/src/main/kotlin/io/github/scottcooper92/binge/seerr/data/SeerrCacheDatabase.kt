@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 /**
  * The cache behind the browsers: the last pages of each issue, request and user list, so a
  * browser opens on rows before the server answers and reads them without it, and the last status
- * each title was seen in, so a host's lookup does not always wait on a round trip. It is the one
+ * each title was seen in, the display fields of each title a row names, so a host's lookup does not always wait on a round trip. It is the one
  * source of truth for a row's state, so a write made on a page moves its row at once. It is
  * cleared when the server changes, and a schema change rebuilds it rather than migrating: nothing
  * in it is the user's own.
@@ -20,8 +20,9 @@ import androidx.room.RoomDatabase
         MediaStatusEntity::class,
         RequestEntity::class,
         RequestRemoteKeyEntity::class,
+        TitleEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class SeerrCacheDatabase : RoomDatabase() {
@@ -38,4 +39,6 @@ abstract class SeerrCacheDatabase : RoomDatabase() {
     abstract fun requestDao(): RequestDao
 
     abstract fun requestRemoteKeyDao(): RequestRemoteKeyDao
+
+    abstract fun titleDao(): TitleDao
 }

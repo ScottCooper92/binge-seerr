@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.requests.toRequestEntity
 import io.github.scottcooper92.binge.seerr.ui.requests.toRequestItem
+import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -94,7 +95,7 @@ class RequestsRemoteMediatorTest {
     private fun mediator(
         store: RequestStore,
         query: RequestListQuery = RequestListQuery("all", "added", requestedBy = null),
-        titles: TitleCache = TitleCache(),
+        titles: TitleCache = TitleCache(FakeTitleDao()),
     ) = RequestsRemoteMediator(query = query, api = ::api, store = store) { dto, api, key, index ->
         dto.toRequestEntity(api, titles::get, key, index, nowMillis = 0L)
     }
@@ -160,7 +161,7 @@ class RequestsRemoteMediatorTest {
         runTest {
             start()
             val store = FakeRequestStore()
-            val titles = TitleCache()
+            val titles = TitleCache(FakeTitleDao())
             val query = RequestListQuery("pending", "modified", requestedBy = 7)
 
             mediator(store, query, titles).load(LoadType.REFRESH, pagingState)

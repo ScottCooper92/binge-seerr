@@ -32,6 +32,7 @@ import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
+import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
@@ -142,6 +143,7 @@ object AuthModule {
         requests: RequestStore,
         users: UserStore,
         statuses: MediaStatusStore,
+        titles: TitleCache,
         notifications: NotificationPrefs,
         bingeConnection: BingeConnectionStore,
     ): SeerrConnection =
@@ -150,6 +152,7 @@ object AuthModule {
             requests.clearAll()
             users.clearAll()
             statuses.clearAll()
+            titles.clear()
             notifications.forgetServer()
             bingeConnection.forget()
         })
