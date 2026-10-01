@@ -107,7 +107,7 @@ jobs:
                 body: [
                   `The scheduled canary failed: ${runUrl}`,
                   '',
-                  'This build uses the heads of design-system/ (binge-design-system) and binge-integrations/ (binge-integrations), not the pinned commits. If the nightly CI run is green, an upstream commit broke this app: the log names the submodule commits it built against, and bumping the pin would be red too.',
+                  'This build uses the heads of design-system/ (binge-design-system) and binge-integrations/ (binge-companions), not the pinned commits. If the nightly CI run is green, an upstream commit broke this app: the log names the submodule commits it built against, and bumping the pin would be red too.',
                   '',
                   'The canary-reports artifact is kept for seven days. This issue closes itself on the next green canary run.',
                 ].join('\n'),
