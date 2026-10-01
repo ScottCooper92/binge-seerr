@@ -58,6 +58,11 @@ data class GeneralSettings(
     val canEditQuotas: Boolean = false,
     val canEditEmail: Boolean = false,
 ) {
+    /** Blank clears the address; anything else has to look like one. */
+    val emailValid: Boolean get() = email.isBlank() || email.isEmailShape()
+
+    val valid: Boolean get() = quotasValid && emailValid
+
     /** A quota field is a whole number or blank; anything else is not a change the server would take. */
     val quotasValid: Boolean
         get() = listOf(movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays).all { it.isBlank() || (it.toIntOrNull() ?: -1) >= 0 }

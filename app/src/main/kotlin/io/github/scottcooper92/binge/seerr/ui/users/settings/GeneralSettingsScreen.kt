@@ -34,7 +34,7 @@ fun GeneralSettingsScreen(
         state = state,
         events = events,
         actions = actions,
-        canSave = { it.quotasValid },
+        canSave = { it.valid },
     ) { draft, enabled ->
         ProfileCard(draft, enabled, actions)
         DiscoverCard(draft, enabled, actions)
@@ -68,6 +68,8 @@ private fun ProfileCard(
             enabled = enabled && draft.canEditEmail,
             keyboardType = KeyboardType.Email,
             placeholder = stringResource(R.string.placeholder_email),
+            supporting = stringResource(R.string.user_settings_email_invalid).takeIf { !draft.emailValid },
+            isError = !draft.emailValid,
         ) { value -> actions.onEdit { it.copy(email = value) } }
         EditorTextField(
             draft.discordId,
