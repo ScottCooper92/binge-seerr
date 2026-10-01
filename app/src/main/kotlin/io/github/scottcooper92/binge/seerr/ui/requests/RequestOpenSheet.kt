@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeBottomSheet
@@ -49,13 +50,14 @@ internal class RequestOpenLink(
 @Composable
 internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLink> {
     val context = LocalContext.current
-    return remember(context, detail) {
+    val resources = LocalResources.current
+    return remember(context, resources, detail) {
         // The title row names where it goes: Binge where it answers, the server's own page where it doesn't.
         val titleLabel =
             if (context.bingeAnswersTitleLink(detail.item.mediaType, detail.item.tmdbId)) {
-                context.getString(R.string.request_open_binge)
+                resources.getString(R.string.request_open_binge)
             } else {
-                context.getString(R.string.open_in_named, detail.serverName)
+                resources.getString(R.string.open_in_named, detail.serverName)
             }
         listOfNotNull(
             RequestOpenLink(titleLabel, Icons.AutoMirrored.Filled.OpenInNew) {
@@ -63,14 +65,14 @@ internal fun rememberRequestOpenLinks(detail: RequestDetail): List<RequestOpenLi
             },
             detail.mediaServerUrl?.let { url ->
                 val label =
-                    detail.mediaServerName?.let { context.getString(R.string.open_in_named, it) }
-                        ?: context.getString(R.string.request_open_media_server)
+                    detail.mediaServerName?.let { resources.getString(R.string.open_in_named, it) }
+                        ?: resources.getString(R.string.request_open_media_server)
                 RequestOpenLink(label, Icons.Filled.PlayArrow) { context.openInBrowser(url) }
             },
             detail.serviceUrl?.let { url ->
                 val labelRes =
                     if (detail.item.mediaType == RequestMediaType.Tv) R.string.media_open_sonarr else R.string.media_open_radarr
-                RequestOpenLink(context.getString(labelRes), Icons.Filled.Dns) { context.openInBrowser(url) }
+                RequestOpenLink(resources.getString(labelRes), Icons.Filled.Dns) { context.openInBrowser(url) }
             },
         )
     }
