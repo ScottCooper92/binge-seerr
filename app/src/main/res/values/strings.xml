@@ -708,6 +708,7 @@
     <string name="server_settings_dns_min_ttl">Minimum TTL</string>
     <string name="server_settings_dns_max_ttl">Maximum TTL</string>
     <string name="server_settings_dns_ttl_hint">Seconds; blank to keep the answer\'s own</string>
+    <string name="server_settings_dns_ttl_order">The maximum must not be below the minimum</string>
     <string name="server_settings_metadata">Metadata providers</string>
     <string name="server_settings_metadata_caption">Where series and anime details come from</string>
     <string name="server_settings_metadata_tv">Series</string>
