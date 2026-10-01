@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.focus.tvClickable
@@ -90,7 +91,7 @@ internal fun TvRequestRow(
                         stringResource(R.string.settings_service_4k).takeIf { item.is4k },
                         item.seasonNumbers
                             .takeIf { it.isNotEmpty() }
-                            ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.joinToString(", ")) },
+                            ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
                     ).joinToString(stringResource(R.string.hub_meta_separator)),
                 style = MaterialTheme.typography.labelMedium,
                 color = muted,

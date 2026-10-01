@@ -30,6 +30,7 @@ import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
@@ -163,7 +164,7 @@ private fun RequestSheetHeader(
             }
             if (item.seasonNumbers.isNotEmpty()) {
                 Text(
-                    text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.joinToString(", ")),
+                    text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.formatRanges()),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
