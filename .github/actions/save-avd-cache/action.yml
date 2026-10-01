@@ -1,0 +1,50 @@
+name: Save AVD cache
+description: >
+  Saves the Gradle Managed Device state restore-avd-cache reads back: the created AVD (with its
+  post-boot snapshot) and its downloaded system image package. Call only after a run that actually
+  populated both - gated by the caller to push-to-main, so PR/manual-dispatch runs don't thrash
+  the canonical cache entry.
+
+inputs:
+  device:
+    description: The Gradle Managed Device name (e.g. smokeAtdApi34), as declared in app/build.gradle.kts.
+    required: true
+  api-level:
+    description: The device's apiLevel. Must match the value passed to restore-avd-cache for this device.
+    required: true
+  system-image-source:
+    description: The device's systemImageSource (e.g. aosp-atd). Must match the value passed to restore-avd-cache for this device.
+    required: true
+  github-token:
+    description: >
+      A token with `actions: write` on this repo, for `gh cache delete` (actions/cache/save alone
+      cannot overwrite an existing key).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # The key is fixed (not content-hashed against the AVD's own bytes), because there is nothing
+    # meaningful to hash - a snapshot's content changes on every boot regardless of whether anything
+    # about the device config did. actions/cache/save refuses to overwrite an existing key, so the
+    # previous entry is deleted first; a delete on a first-ever save (no entry yet) is expected to
+    # report not-found and is not a failure.
+    - name: Delete the previous cache entry
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh cache delete "gmd-avd-${{ runner.os }}-${{ inputs.device }}-${{ inputs.api-level }}-${{ inputs.system-image-source }}-main-v1" || true
+
+    # emulator joins system-images here for the same reason it joins the restore side (Binge#2753) - see
+    # that action's comment for the mechanism. Both must move together or a save from before this
+    # change and a restore after it (or vice versa) recreates the gap.
+    - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.android/avd/gradle-managed
+          !~/.android/avd/gradle-managed/**/*.lock
+          !~/.android/avd/gradle-managed/**/active_gradle_devices*
+          ${{ env.ANDROID_SDK_ROOT }}/system-images
+          ${{ env.ANDROID_SDK_ROOT }}/emulator
+        key: gmd-avd-${{ runner.os }}-${{ inputs.device }}-${{ inputs.api-level }}-${{ inputs.system-image-source }}-main-v1

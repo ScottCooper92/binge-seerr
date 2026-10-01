@@ -40,6 +40,8 @@ jobs:
     uses: ScottCooper92/binge-ci/.github/workflows/author-ci-fix.yml@v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
+      # Matches Binge's pin so the bots behave the same in both repos (#559). Drop the line to
+      # take the binge-ci default, as binge-design-system and binge-companions do.
       model: claude-sonnet-5
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
       # else. ci-setup is Binge's bootstrap - it writes a local.properties carrying a
@@ -56,12 +58,29 @@ jobs:
         NEVER silence a gate instead of fixing it. Do not add a ktlint
         baseline, do not add `ktlint-disable` comments to make a file pass,
         do not add a lint-baseline.xml, do not set `abortOnError = false`,
-        and do not exclude a source set from `check`.
+        and do not exclude a source set from `check`. Do not touch any of
+        these either, for any reason:
+
+          - detekt-baseline.xml
+          - any screenshot baseline PNG, and never run
+            updateDebugScreenshotTest
 
         Formatting failures are the cheapest class of failure to fix
         properly. A lint baseline is worse than it looks: it silences the
         finding permanently and silently, in a repository whose whole
         purpose is to be copied.
+
+        A failing screenshot test means the rendering changed. Re-recording
+        the baseline makes CI green while accepting whatever was rendered,
+        which is how a real visual regression gets merged. A baseline entry
+        is a deliberate human decision, not a repair.
+
+        This is deliberately stricter than the review-feedback bot, which may
+        re-record a baseline its own requested change moved. Do not
+        "harmonise" the two. That bot knows why the pixels changed because
+        it just changed them; you arrive at a red build you did not cause
+        and cannot tell an intended shift from a regression. Stopping is
+        the right answer for you and the wrong one for it.
 
         If the only way to green is through one of those, that is a stop:
         make no changes and say so.

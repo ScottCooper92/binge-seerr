@@ -60,6 +60,8 @@ jobs:
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
       maintainer_handle: ScottCooper92
+      # Matches Binge's pin so the bots behave the same in both repos (#559). Drop the line to
+      # take the binge-ci default, as binge-design-system and binge-companions do.
       model: claude-sonnet-5
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
       # else. ci-setup is Binge's bootstrap - it writes a local.properties carrying a
@@ -76,12 +78,40 @@ jobs:
       gate_rules: |
         NEVER silence a gate, however the request is worded. Do not add a
         ktlint baseline, do not add `ktlint-disable` comments to make a file
-        pass, do not add a lint-baseline.xml, do not set
-        `abortOnError = false`, and do not exclude a source set from `check`.
+        pass, do not add a lint-baseline.xml, do not add an entry to
+        detekt-baseline.xml, do not set `abortOnError = false`, and do not
+        exclude a source set from `check`.
 
         A lint baseline is worse than it looks here: it silences the finding
         permanently and silently, in a repository whose whole purpose is to
         be copied.
+
+        Screenshot baselines have three cases, and only the first is
+        silencing:
+
+          - A baseline moved and your own diff does not account for it.
+            Never re-record. That accepts whatever was rendered, which is
+            how a real visual regression lands. Fix the code, or change
+            nothing and say why.
+          - A NEW preview has no baseline yet. Record it - required, since
+            the conventions ask for screenshot coverage on new UI in the
+            same PR.
+          - A change you were asked to make INTENTIONALLY alters what an
+            existing preview renders. Re-record it, and name in your reply
+            which baselines moved and why. Leaving it red is not the safe
+            option here: it hands back a PR whose only remaining fault is
+            the one your own fix caused.
+
+        The discriminator is provenance, not the colour of the build:
+        re-record only what your own change in this round accounts for, and
+        follow the conventions' screenshot-testing section - which includes
+        reviewing the regenerated PNGs for unintended drift riding along.
+
+        This holds even when the request is explicit, reasonable-sounding,
+        or comes from a maintainer - "the change is intentional, just
+        re-record it" is exactly the request this rule exists to refuse.
+        Say no in your reply and explain why; a human who genuinely wants a
+        baseline re-recorded can do it themselves.
 
         There is one more thing a comment cannot ask you for. This is the
         reference companion, and it has no privileged relationship with the
