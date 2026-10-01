@@ -135,6 +135,7 @@ class UserDetailViewModel
                     canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
                     serverUrl = connection.current().baseUrl,
                     webUrl = connection.current().baseUrl + "users/" + userId,
+                    serverName = connection.profile().variant.displayName,
                 )
             }
 

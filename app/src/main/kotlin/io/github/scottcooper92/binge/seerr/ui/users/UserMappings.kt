@@ -72,7 +72,7 @@ internal fun Int?.toUserOrigin(): UserOrigin =
 
 /** Null for a user with no name to show; the row would be blank. */
 fun SeerrUserDto.toUserItem(): UserItem? {
-    val handle = listOfNotNull(username, jellyfinUsername, plexUsername).firstOrNull { it.isNotBlank() }
+    val handle = listOfNotNull(jellyfinUsername, plexUsername, username).firstOrNull { it.isNotBlank() }
     val name =
         listOfNotNull(displayName, handle).firstOrNull { it.isNotBlank() }
             ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
@@ -82,7 +82,7 @@ fun SeerrUserDto.toUserItem(): UserItem? {
 
 /** As [toUserItem], but a page for one user has nothing to fall back to: the id stands in for a name. */
 fun SeerrUserDto.toUserItemOrFallback(): UserItem {
-    val handle = listOfNotNull(username, jellyfinUsername, plexUsername).firstOrNull { it.isNotBlank() }
+    val handle = listOfNotNull(jellyfinUsername, plexUsername, username).firstOrNull { it.isNotBlank() }
     val name =
         listOfNotNull(displayName, handle).firstOrNull { it.isNotBlank() }
             ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }

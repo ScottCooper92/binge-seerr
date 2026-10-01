@@ -329,7 +329,7 @@
     <string name="permission_view_blocklist">Ver la lista de bloqueo</string>
     <string name="user_detail_title">Usuario</string>
     <string name="user_actions_cd">Acciones del usuario</string>
-    <string name="user_joined">Se unió</string>
+    <string name="user_joined">Se unió %1$s</string>
     <string name="user_plays">Reproducciones</string>
     <string name="user_permissions_title">Permisos</string>
     <string name="user_recently_watched">Visto recientemente</string>

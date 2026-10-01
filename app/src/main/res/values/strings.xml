@@ -346,7 +346,7 @@
     <string name="permission_view_blocklist">View blocklist</string>
     <string name="user_detail_title">User</string>
     <string name="user_actions_cd">User actions</string>
-    <string name="user_joined">Joined</string>
+    <string name="user_joined">Joined %1$s</string>
     <string name="user_plays">Plays</string>
     <string name="user_permissions_title">Permissions</string>
     <string name="user_recently_watched">Recently watched</string>

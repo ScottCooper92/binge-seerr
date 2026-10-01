@@ -82,4 +82,5 @@
     <dimen name="tv_consent_point_badge">48dp</dimen>
     <dimen name="tv_consent_point_icon">24dp</dimen>
     <dimen name="tv_consent_point_text_gap">6dp</dimen>
+    <dimen name="hub_quota_bar_width">72dp</dimen>
 </resources>

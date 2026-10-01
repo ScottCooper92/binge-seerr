@@ -41,6 +41,8 @@ data class UserDetail(
     val serverUrl: String,
     /** The user in the server's web client. */
     val webUrl: String,
+    /** What the server calls itself: Overseerr, Jellyseerr or Seerr. */
+    val serverName: String = "Seerr",
 )
 
 sealed interface UserDetailUiState {

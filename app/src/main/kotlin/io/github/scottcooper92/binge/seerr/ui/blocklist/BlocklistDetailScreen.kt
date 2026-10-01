@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,9 +29,9 @@ import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
-import com.binge.designsystem.component.InfoRowEntry
-import com.binge.designsystem.component.InfoRowList
 import com.binge.designsystem.component.SectionHeader
+import com.binge.designsystem.component.SettingsGroup
+import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -151,15 +153,23 @@ internal fun BlocklistDetailPage(
 /** Who blocked it, when, and the tags it fell to — the row's own facts, read as a page instead of a line. */
 @Composable
 private fun BlocklistDetailFacts(item: BlocklistItem) {
-    InfoRowList(
-        entries =
-            listOfNotNull(
-                item.addedBy?.let { InfoRowEntry(stringResource(R.string.blocklist_detail_blocked_by), it) },
-                item.addedAtMillis?.let {
-                    InfoRowEntry(stringResource(R.string.blocklist_detail_blocked_at), formatRelativeOrAbsolute(it))
-                },
-            ),
-    )
+    val rows =
+        listOfNotNull(
+            item.addedBy?.let {
+                SettingsRow(icon = Icons.Filled.Person, label = stringResource(R.string.blocklist_detail_blocked_by), detail = it, clickable = false)
+            },
+            item.addedAtMillis?.let {
+                SettingsRow(
+                    icon = Icons.Filled.Schedule,
+                    label = stringResource(R.string.blocklist_detail_blocked_at),
+                    detail = formatRelativeOrAbsolute(it).orEmpty(),
+                    clickable = false,
+                )
+            },
+        )
+    if (rows.isNotEmpty()) {
+        SettingsGroup(title = null, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
+    }
     if (item.tags.isNotEmpty()) {
         SectionHeader(title = stringResource(R.string.request_tags))
         FlowRow(
