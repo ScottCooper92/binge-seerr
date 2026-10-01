@@ -276,7 +276,6 @@
     <string name="users_sort_name">Name</string>
     <string name="users_sort_requests">Most requests</string>
     <string name="users_empty">No users on your server yet.</string>
-    <string name="users_select_cd">Select user</string>
     <string name="users_clear_selection_cd">Clear selection</string>
     <string name="users_edit_permissions">Edit permissions</string>
     <string name="users_edit_permissions_save">Apply</string>

@@ -256,7 +256,6 @@
     <string name="users_sort_name">Nombre</string>
     <string name="users_sort_requests">Más peticiones</string>
     <string name="users_empty">Aún no hay usuarios en tu servidor.</string>
-    <string name="users_select_cd">Seleccionar usuario</string>
     <string name="users_clear_selection_cd">Quitar la selección</string>
     <string name="users_edit_permissions">Editar permisos</string>
     <string name="users_edit_permissions_save">Aplicar</string>
