@@ -59,18 +59,15 @@ class HubViewModel
             reloadTrigger
                 .flatMapLatest {
                     flow {
-                        val baseUrl = currentBaseUrl()
-                        cache.adopt(baseUrl)
+                        val generation = cache.generation()
                         val remembered = cache.server
                         remembered?.let { emit(it) }
                         val fresh = runCatching { loader.server() }.getOrNull()
-                        fresh?.let { cache.remember(baseUrl, server = it) }
+                        fresh?.let { cache.remember(generation, server = it) }
                         // A failed refresh keeps the remembered server rather than blanking the hub.
                         if (fresh != null || remembered == null) emit(fresh)
                     }
                 }.flowOn(dispatcher)
-
-        private suspend fun currentBaseUrl(): String? = runCatching { connection.current().baseUrl }.getOrNull()
 
         private val health: Flow<ConnectionHealth> =
             combine(connection.health, isProbing) { health, probing ->
@@ -82,11 +79,10 @@ class HubViewModel
             reloadTrigger
                 .flatMapLatest {
                     flow {
-                        val baseUrl = currentBaseUrl()
-                        cache.adopt(baseUrl)
+                        val generation = cache.generation()
                         val remembered = cache.overview
                         emit(remembered ?: HubOverview())
-                        emit(refreshed(baseUrl, remembered, loader.load()))
+                        emit(refreshed(generation, remembered, loader.load()))
                     }
                 }.flowOn(dispatcher)
 
@@ -96,12 +92,12 @@ class HubViewModel
          * under the stale-but-useful hub. A rejected session forgets it: permissions may be gone.
          */
         private fun refreshed(
-            baseUrl: String?,
+            generation: Int,
             remembered: HubOverview?,
             fresh: HubOverview,
         ): HubOverview =
             when {
-                fresh.userLoad == HubUserLoad.Loaded -> fresh.also { cache.remember(baseUrl, overview = it) }
+                fresh.userLoad == HubUserLoad.Loaded -> fresh.also { cache.remember(generation, overview = it) }
                 fresh.userLoad == HubUserLoad.Failed && remembered != null -> remembered.copy(userLoad = HubUserLoad.Failed)
                 else -> fresh.also { cache.forgetOverview() }
             }

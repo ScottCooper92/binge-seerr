@@ -134,6 +134,7 @@ class HubViewModelTest {
                         testDispatcher = seerr::newDispatcher,
                     ),
                 healthMonitor = monitor,
+                onServerChanged = { cache.clear() },
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         val vm =
@@ -358,6 +359,21 @@ class HubViewModelTest {
             }
             val ready = returnToHub().awaitReady { it.overview.account?.name == "Other" }
             assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+        }
+
+    @Test
+    fun `a different account on the same server never shows the previous account's overview`() =
+        runTest {
+            healthyServer()
+            viewModel().awaitReady { it.overview.account != null }
+            connection.disconnect()
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("other-k3y")).getOrThrow()
+            serve("/api/v1/auth/me", "", code = 503)
+
+            val vm = returnToHub()
+            runCurrent()
+
+            assertEquals(HubUiState.Loading, vm.uiState.value)
         }
 
     @Test
