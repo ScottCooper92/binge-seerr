@@ -16,6 +16,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
 import io.github.scottcooper92.binge.seerr.ui.requests.seerrMediaType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -92,6 +93,7 @@ class BlocklistDetailViewModel
                     analytics.event(AnalyticsEvents.BLOCKLIST_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "removed"))
                     eventFlow.emit(BlocklistDetailEvent.Removed)
                 }.onFailure {
+                    analytics.operationFailed("unblock_title", it, connection)
                     state.update { current -> current.copy(unblocking = false) }
                     eventFlow.emit(BlocklistDetailEvent.Failed(it.toSeerrError()))
                 }

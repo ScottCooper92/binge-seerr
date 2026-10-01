@@ -36,6 +36,9 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.grpc.ManagedChannel
 import io.grpc.Server
 import io.grpc.Status
@@ -95,6 +98,7 @@ class SeerrRequestServiceTest {
         cache: MediaStatusStore = NoMediaStatusStore,
         now: () -> Long = { 0L },
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
+        analytics: Analytics = NoOpAnalytics,
         warm: Boolean = true,
         publicSettings: String = """{"initialized":true}""",
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
@@ -120,6 +124,7 @@ class SeerrRequestServiceTest {
                     attentionIntervalMillis = 1,
                     statusCache = cache,
                     bingeConnection = bingeConnection,
+                    analytics = analytics,
                 ),
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
@@ -321,6 +326,60 @@ class SeerrRequestServiceTest {
                 Status.Code.NOT_FOUND,
                 stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) },
             )
+        }
+
+    /** The Jellyseerr 2.x bug (#539) that only a device log showed: a 400 on one operation, one lineage and version. */
+    @Test
+    fun `a failed operation is reported with its status and server version and nothing that identifies the title or host`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(version = "2.7.0", analytics = analytics)
+            seerr.enqueue(MockResponse(code = 400, body = """{"message":"Unknown query parameter 'mediaType'"}"""))
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) })
+
+            val expected =
+                mapOf(
+                    "operation" to "unblock_title",
+                    "http_status" to "400",
+                    "grpc_status" to "INVALID_ARGUMENT",
+                    "server_lineage" to "jellyseerr",
+                    "server_version" to "2.7.0",
+                )
+            assertEquals(listOf("request_operation_failed" to expected), analytics.events)
+            val everything =
+                analytics.events
+                    .single()
+                    .second.values
+                    .joinToString()
+            assertTrue(!everything.contains("603") && !everything.contains(seerr.url("/").host) && !everything.contains("mediaType"))
+        }
+
+    @Test
+    fun `an expired sign-in is not reported`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(version = "3.2.0", analytics = analytics)
+            seerr.enqueue(MockResponse(code = 401))
+
+            assertEquals(Status.Code.UNAUTHENTICATED, stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) })
+
+            assertEquals(emptyList<Any>(), analytics.events)
+        }
+
+    @Test
+    fun `reporting a quota refusal leaves it a quota refusal`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(analytics = analytics)
+            seerr.enqueue(MockResponse(code = 403, body = """{"message":"Quota exceeded"}"""))
+
+            assertEquals(
+                Status.Code.RESOURCE_EXHAUSTED,
+                stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) },
+            )
+
+            assertEquals("RESOURCE_EXHAUSTED", analytics.events.single().second["grpc_status"])
         }
 
     @Test
