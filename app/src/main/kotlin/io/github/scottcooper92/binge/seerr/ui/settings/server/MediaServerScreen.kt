@@ -229,7 +229,6 @@ private fun LibrariesSection(
                     library.enabled,
                     library.id !in extras.busyLibraryIds,
                     detail = library.detail(),
-                    dimSwitch = true,
                 ) { on -> actions.onSetLibraryEnabled(library.id, on) }
             },
         )

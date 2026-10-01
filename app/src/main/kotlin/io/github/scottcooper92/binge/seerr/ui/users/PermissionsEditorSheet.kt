@@ -113,7 +113,6 @@ internal fun PermissionsEditorContent(
                             stringResource(permission.labelRes()),
                             permission in selected || implied,
                             !saving && !implied && permission !in locked,
-                            dimSwitch = true,
                         ) { onToggle(permission) }
                     },
                     modifier =
