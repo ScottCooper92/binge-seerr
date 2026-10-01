@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -214,6 +215,11 @@ private fun GeneralPage(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val keyLabel = stringResource(R.string.server_settings_api_key)
+    // The entry leaves composition while Default permissions is on top, so this runs again on return.
+    DisposableEffect(viewModel) {
+        viewModel.refreshDefaultPermissions()
+        onDispose { }
+    }
     ServerGeneralScreen(
         state = state,
         events = viewModel.events,

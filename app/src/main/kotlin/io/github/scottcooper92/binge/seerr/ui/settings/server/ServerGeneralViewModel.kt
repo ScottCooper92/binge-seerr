@@ -5,6 +5,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -17,7 +18,7 @@ import javax.inject.Inject
 
 /**
  * The server's general settings: the main form as an editor over `settings/main`, with the API key
- * and the visitor's view loaded beside it. The server answers a write with the whole record, which
+ * and the default permissions loaded beside it. The server answers a write with the whole record, which
  * is what is adopted; the key lives in the extras rather than the draft because regenerating it is
  * not an edit to save.
  */
@@ -36,10 +37,13 @@ class ServerGeneralViewModel
             coroutineScope {
                 val api = connection.api()
                 val profile = async { connection.profile() }
-                val visitor = async { runCatching { api.publicSettings() }.getOrNull() }
                 val main = api.mainSettings()
-                val visitorView = visitor.await()?.toVisitorView()
-                editExtras { current -> current.copy(apiKey = current.apiKey.copy(key = main.apiKey.orEmpty()), visitor = visitorView) }
+                editExtras { current ->
+                    current.copy(
+                        apiKey = current.apiKey.copy(key = main.apiKey.orEmpty()),
+                        defaultPermissions = ManageablePermission.decode(main.defaultPermissions ?: 0),
+                    )
+                }
                 main.toServerGeneral(profile.await().variant)
             }
 
@@ -49,6 +53,19 @@ class ServerGeneralViewModel
         }
 
         override fun canSave(draft: ServerGeneralSettings): Boolean = draft.urlValid
+
+        /**
+         * Re-reads only the default permissions, for when the page comes back from the editor that
+         * changes them. The draft is left alone: the form may hold edits that are not saved yet.
+         * A failed read keeps the tags already shown.
+         */
+        fun refreshDefaultPermissions() {
+            viewModelScope.launch(dispatcher) {
+                runCatching { connection.api().mainSettings() }.onSuccess { main ->
+                    editExtras { it.copy(defaultPermissions = ManageablePermission.decode(main.defaultPermissions ?: 0)) }
+                }
+            }
+        }
 
         fun toggleReveal() = editExtras { it.copy(apiKey = it.apiKey.copy(revealed = !it.apiKey.revealed)) }
 

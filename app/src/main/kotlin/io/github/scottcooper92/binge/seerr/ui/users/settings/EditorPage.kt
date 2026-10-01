@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -66,7 +67,7 @@ import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
 
 /** M3's disabled content alpha, which it exposes no token for. */
-private const val DISABLED_CONTENT_ALPHA = 0.38f
+internal const val DISABLED_CONTENT_ALPHA = 0.38f
 
 /**
  * The top-bar/bottom-bar insets a `scrolling = false` [EditorPage] does not itself apply. A
@@ -250,27 +251,44 @@ internal fun EditorTextField(
     supporting: String? = null,
     isError: Boolean = false,
     contentType: ContentType? = null,
+    icon: ImageVector? = null,
+    readOnly: Boolean = false,
+    /** With [onToggleReveal], a masked field's reveal state is the caller's rather than the field's own. */
+    revealed: Boolean? = null,
+    onToggleReveal: (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
     // remember rather than rememberSaveable: a field left revealed comes back masked after the app
     // is backgrounded, which is a small leak closed for no loss.
-    var revealed by remember { mutableStateOf(false) }
+    var localRevealed by remember { mutableStateOf(false) }
+    val shown = revealed ?: localRevealed
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
         placeholder = placeholder?.let { { Text(it) } },
         enabled = enabled,
+        readOnly = readOnly,
         singleLine = singleLine,
         isError = isError,
         supportingText = supporting?.let { { Text(it) } },
+        leadingIcon =
+            icon?.let {
+                {
+                    Icon(
+                        it,
+                        contentDescription = null,
+                        tint = rowLabelColor(enabled, MaterialTheme.colorScheme.primary),
+                    )
+                }
+            },
         trailingIcon =
             if (secret) {
-                { RevealToggle(revealed = revealed, enabled = enabled) { revealed = !revealed } }
+                { RevealToggle(revealed = shown, enabled = enabled) { onToggleReveal?.invoke() ?: run { localRevealed = !localRevealed } } }
             } else {
                 null
             },
-        visualTransformation = if (secret && !revealed) PasswordVisualTransformation() else VisualTransformation.None,
+        visualTransformation = if (secret && !shown) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions =
             KeyboardOptions(
                 keyboardType = if (secret) KeyboardType.Password else keyboardType,

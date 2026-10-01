@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -77,6 +78,31 @@ class ServerGeneralViewModelTest {
         } as ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>
 
     @Test
+    fun `the default permissions are decoded into the extras`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+
+            assertEquals(setOf(ManageablePermission.Request), vm.awaitReady().extras.defaultPermissions)
+        }
+
+    @Test
+    fun `refreshing the default permissions updates the tags and keeps the unsaved draft`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.edit { it.copy(applicationTitle = "Edited") }
+
+            seerr.serve("GET /api/v1/settings/main", LINEAGE_MAIN.replace("\"defaultPermissions\":32", "\"defaultPermissions\":160"))
+            vm.refreshDefaultPermissions()
+            val ready =
+                vm.awaitReady { it.extras.defaultPermissions.size == 2 }
+
+            assertEquals("Edited", ready.draft.applicationTitle)
+        }
+
+    @Test
     fun `the jellyseerr lineage shows both regions and its own switches, never the proxy ones`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
@@ -92,10 +118,9 @@ class ServerGeneralViewModelTest {
             assertNull(draft.trustProxy)
             assertNull(draft.csrfProtection)
             assertNull(draft.versionCheck)
-            val extras = vm.awaitReady { it.extras.visitor != null }.extras
+            val extras = vm.awaitReady().extras
             assertEquals("old-key", extras.apiKey.key)
             assertFalse(extras.apiKey.revealed)
-            assertEquals(true, extras.visitor?.localLogin)
         }
 
     @Test
