@@ -64,7 +64,10 @@ data class GeneralSettings(
     val regionValid: Boolean get() = region.isBlank() || LanguageCodeShapes.isRegion(region)
     val originalLanguageValid: Boolean get() = originalLanguage.isBlank() || LanguageCodeShapes.isOriginalLanguage(originalLanguage)
 
-    val valid: Boolean get() = quotasValid && localeValid && regionValid && originalLanguageValid
+    /** Blank clears the ID; anything else has to be digits only. */
+    val discordIdValid: Boolean get() = discordId.isBlank() || discordId.isDiscordIdShape()
+
+    val valid: Boolean get() = quotasValid && localeValid && regionValid && originalLanguageValid && discordIdValid
 
     /** A quota field is a whole number or blank; anything else is not a change the server would take. */
     val quotasValid: Boolean

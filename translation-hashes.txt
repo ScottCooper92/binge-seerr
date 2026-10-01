@@ -47,9 +47,12 @@ app:download_eta_hours  02abf092ccd1
 app:download_eta_minutes  fc01feb5f7e5
 app:field_secret_hide  ad5caeb74e49
 app:field_secret_show  ff5a856d1a08
-app:hub_binge_connected_hint  faa66e79f216
+app:hub_binge_connect_hint  ac2c213c1567
+app:hub_binge_connected_hint  10f092bfe3a5
+app:hub_binge_get  d0d7d58e7428
 app:hub_binge_not_installed_detail  a8e52a9826f0
 app:hub_binge_not_installed_title  d7e27e16cd15
+app:hub_binge_open  f95bbc9b91f4
 app:hub_couldnt_load_body  221fccfe8796
 app:hub_couldnt_load_headline  e12aae2d43bd
 app:hub_disconnect  acfc5be785a9
@@ -465,8 +468,10 @@ app:server_settings_log_info  170322a32f3c
 app:server_settings_log_warn  e981ddae45d8
 app:server_settings_logs  ea2100dc89ae
 app:server_settings_logs_caption  d61c5767f9dd
+app:server_settings_logs_collapse  c9722a7a962a
 app:server_settings_logs_copy  744b288951b4
 app:server_settings_logs_empty  d0c532dc8df4
+app:server_settings_logs_expand  1af77ee273cb
 app:server_settings_logs_search  e8895952bdcd
 app:server_settings_media_server  b44e32763b07
 app:server_settings_media_server_caption  0e4c085f345d

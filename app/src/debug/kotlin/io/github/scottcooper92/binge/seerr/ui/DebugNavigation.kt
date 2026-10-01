@@ -1,36 +1,42 @@
 package io.github.scottcooper92.binge.seerr.ui
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.PaneContent
-import io.github.scottcooper92.binge.seerr.ui.debug.DeveloperOptionsScreen
+import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.debug.BingeHintPrototypeScreen
 import io.github.scottcooper92.binge.seerr.ui.debug.ManageSheetPrototypeScreen
 import io.github.scottcooper92.binge.seerr.ui.debug.RequestCardsPrototypeScreen
+import io.github.scottcooper92.binge.seerr.ui.hub.DeveloperRow
 
-/** The hub's entry point into developer tools, present only in a debug build. */
-internal fun debugOpenDeveloperOptions(backStack: NavBackStack<NavKey>): (() -> Unit)? = { backStack.add(DeveloperOptionsRoute) }
+/** The hub's developer section, present only in a debug build: each prototype opens straight off the hub. */
+internal fun debugDeveloperRows(backStack: NavBackStack<NavKey>): List<DeveloperRow> =
+    listOf(
+        DeveloperRow(Icons.Filled.ViewAgenda, R.string.proto_manage_sheet_title, R.string.proto_manage_sheet_detail) {
+            backStack.add(ManageSheetPrototypeRoute)
+        },
+        DeveloperRow(Icons.Filled.Lightbulb, R.string.proto_binge_hint_title, R.string.proto_binge_hint_detail) {
+            backStack.add(BingeHintPrototypeRoute)
+        },
+        DeveloperRow(Icons.Filled.ViewAgenda, R.string.proto_request_cards_title, R.string.proto_request_cards_detail) {
+            backStack.add(RequestCardsPrototypeRoute)
+        },
+    )
 
-/**
- * Developer options opens straight off the hub, so it takes [showBack] like the account card's
- * destination; the prototype is always stacked above it, so its arrow always shows.
- */
+/** The prototypes' screens. [showBack] is unused here: they are always stacked above the hub, so their arrow always shows. */
 internal fun EntryProviderScope<NavKey>.debugDetailEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
 ) {
-    entry<DeveloperOptionsRoute>(metadata = DetailPane) {
-        PaneContent {
-            val back: () -> Unit = { backStack.removeLastOrNull() }
-            DeveloperOptionsScreen(
-                onBack = back.takeIf { showBack() },
-                onOpenManageSheetPrototype = { backStack.add(ManageSheetPrototypeRoute) },
-                onOpenRequestCardsPrototype = { backStack.add(RequestCardsPrototypeRoute) },
-            )
-        }
-    }
     entry<ManageSheetPrototypeRoute>(metadata = DetailPane) {
         PaneContent { ManageSheetPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+    }
+    entry<BingeHintPrototypeRoute>(metadata = DetailPane) {
+        PaneContent { BingeHintPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
     }
     entry<RequestCardsPrototypeRoute>(metadata = DetailPane) {
         PaneContent { RequestCardsPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }

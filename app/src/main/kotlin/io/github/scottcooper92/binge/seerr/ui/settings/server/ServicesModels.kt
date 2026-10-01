@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrDvrTestResultDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrOverrideRuleDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 
@@ -93,7 +94,10 @@ data class DvrForm(
     val connectionValid: Boolean
         get() = hostAndPortValid(host, port) && apiKey.isNotBlank()
 
-    val valid: Boolean get() = connectionValid && name.isNotBlank() && profileId != null && !rootFolder.isNullOrBlank()
+    /** Blank means "use the address above"; anything else has to be a web address a link can open. */
+    val externalUrlValid: Boolean get() = externalUrl.isBlank() || externalUrl.trim().isWebUrl()
+
+    val valid: Boolean get() = connectionValid && externalUrlValid && name.isNotBlank() && profileId != null && !rootFolder.isNullOrBlank()
 
     companion object {
         /** What a new instance starts as: the kind's usual port, and Sonarr's season folders on. */

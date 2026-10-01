@@ -143,6 +143,7 @@ private fun ConnectionFields(
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
         supporting = stringResource(R.string.server_settings_dvr_external_hint),
+        isError = !draft.externalUrlValid,
     ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
 }
 
