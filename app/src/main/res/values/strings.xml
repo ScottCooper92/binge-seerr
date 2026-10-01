@@ -51,7 +51,10 @@
     <string name="connected_hint">Open Binge and allow this app under Account → Integrations. Requests you make there go to this server.</string>
     <string name="hub_binge_not_installed_title">Looking for a media browser?</string>
     <string name="hub_binge_not_installed_detail">Check out Binge, it works with this app.</string>
-    <string name="hub_binge_connected_hint">Request titles for this server right from Binge\'s Discover and search screens.</string>
+    <string name="hub_binge_get">Get Binge</string>
+    <string name="hub_binge_connect_hint">Connect Binge to this app to send and manage requests directly from Binge</string>
+    <string name="hub_binge_connected_hint">Connected to Binge, request titles and manage requests directly from there</string>
+    <string name="hub_binge_open">Open Binge</string>
 
     <string name="hub_health_connected">Connected</string>
     <string name="hub_update_available">Update available</string>
@@ -990,6 +993,4 @@
          (the row's label/detail), so it stays here rather than in src/debug's strings.xml — its
          own UI prototypes strings live there instead, since that screen is debug-only code (#467). -->
     <string name="debug_group_developer" translatable="false">Developer</string>
-    <string name="debug_developer_options" translatable="false">Developer options</string>
-    <string name="debug_developer_options_detail" translatable="false">UI prototypes and debug tools</string>
 </resources>

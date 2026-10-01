@@ -7,6 +7,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import io.github.scottcooper92.binge.seerr.ui.hub.DeveloperRow
 import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
@@ -27,7 +28,7 @@ internal fun HubEntry(
     onOpenAccount: (Int) -> Unit,
     onOpenRequest: (Int) -> Unit,
     onReconnect: () -> Unit,
-    onOpenDeveloperOptions: (() -> Unit)?,
+    developerRows: List<DeveloperRow>,
     viewModel: HubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -49,7 +50,8 @@ internal fun HubEntry(
                 onRetry = viewModel::recheck,
                 onReconnect = onReconnect,
                 onDisconnect = viewModel::disconnect,
-                onOpenDeveloperOptions = onOpenDeveloperOptions,
+                onDismissBingeHint = viewModel::dismissBingeHint,
+                developerRows = developerRows,
             ),
     )
 }
