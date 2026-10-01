@@ -257,10 +257,10 @@ private fun InfoValue.plainText(): String =
 private fun Fact.isBlank(): Boolean = primary.plainText().isBlank()
 
 @Composable
-private fun Modifier.cardSurface(): Modifier = clip(BingeShapes.Large).background(MaterialTheme.colorScheme.surfaceContainer)
+internal fun Modifier.cardSurface(): Modifier = clip(BingeShapes.Large).background(MaterialTheme.colorScheme.surfaceContainer)
 
 @Composable
-private fun cardRowPadding() =
+internal fun cardRowPadding() =
     PaddingValues(
         horizontal = dimensionResource(DesR.dimen.settings_group_row_padding_h),
         vertical = dimensionResource(DesR.dimen.settings_group_row_padding_v),
