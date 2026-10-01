@@ -77,6 +77,12 @@ class RequestDetailScreenshotTest {
     @Composable
     fun autoApproved() = Frame(autoApprovedDetail())
 
+    /** Enough tags to wrap onto a second line of the request card, scrolled to where the card sits. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun manyTags() = Frame(manyTagsDetail(), scrollState = rememberScrollState(initial = Int.MAX_VALUE))
+
     /**
      * Pending, in a pane narrower than the window (#343): the footer spans the pane it sits in rather
      * than the whole window it is measured against, exactly as [io.github.scottcooper92.binge.seerr.ui.hub.HubScreenshotTest.readyAsListPane]

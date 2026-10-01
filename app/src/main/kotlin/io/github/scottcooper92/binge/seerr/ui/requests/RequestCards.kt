@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +36,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.SettingsGroup
@@ -64,7 +67,8 @@ internal fun RequestCard(
     val people = requestPeopleFacts(detail, onOpenUser).filterNot { it.isBlank() }
     val destination = requestDestinationFacts(detail).filter { it.icon != Icons.Filled.Sell && !it.isBlank() }
     val summary = detail.summaries().first()
-    val hasInfo = destination.isNotEmpty() || summary.is4k || summary.seasonNumbers.isNotEmpty()
+    val tags = detail.destination?.tags.orEmpty()
+    val hasInfo = destination.isNotEmpty() || tags.isNotEmpty() || summary.is4k || summary.seasonNumbers.isNotEmpty()
     val reviewable = detail.actions.canApprove || detail.actions.canRetry
     val actionLabel = stringResource(if (reviewable) R.string.request_primary_review else R.string.request_primary_manage)
     Column(modifier = modifier.fillMaxWidth().cardSurface()) {
@@ -79,7 +83,7 @@ internal fun RequestCard(
         }
         people.forEach { CardPersonRow(it) }
         if (people.isNotEmpty() && hasInfo) CardDivider()
-        if (hasInfo) CardInfoRows(summary, destination)
+        if (hasInfo) CardInfoRows(summary, destination, tags)
         if (onClick != null) {
             BingeTextButton(
                 label = actionLabel,
@@ -195,6 +199,7 @@ private fun CardPersonRow(fact: Fact) {
 private fun CardInfoRows(
     summary: RequestSummary,
     destination: List<Fact>,
+    tags: List<String>,
 ) {
     val asked =
         listOfNotNull(
@@ -207,6 +212,26 @@ private fun CardInfoRows(
         CardPersonRow(Fact(Icons.Filled.Info, stringResource(R.string.request_card_info), primary = "", secondary = asked))
     }
     if (destination.isNotEmpty()) CardDestinationLine(destination)
+    if (tags.isNotEmpty()) CardTagsRow(tags)
+}
+
+/** The request's tags as chips, which wrap where a line of server, quality and folder would have to truncate them. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CardTagsRow(tags: List<String>) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(cardRowPadding()),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FactIconBox(Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), primary = ""))
+        Spacer(Modifier.width(dimensionResource(DesR.dimen.account_card_spacing)))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+        ) {
+            tags.forEach { BingeTag(label = it, uppercase = false) }
+        }
+    }
 }
 
 @Composable

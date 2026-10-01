@@ -104,6 +104,17 @@ Three more are about where a value travels rather than what it is called:
   ignored before it. Without it the server answers 400.
 - `GET /issue` narrows by `createdBy`, not the request list's `requestedBy`.
 
+## What the request page shows of its destination
+
+The request page reads the request's own `serverId`, `profileId`, `rootFolder` and `tags` from
+`GET /request/{id}`, which both lineages serve, and names them from `GET /service/{radarr,sonarr}`
+and `/service/{radarr,sonarr}/{id}`. Tags arrive as ids and are shown by label, so the labels are only
+as available as that second lookup: where it fails (the administrator removed the instance, or the
+server refuses this user) the tags are dropped rather than shown as numbers. A request made without
+tags sends `"tags": null` on the Jellyseerr lineage, which reads as none. The chips and the lines on
+the TV screen are read-outs, so they carry no permission gate of their own; the destination *editor*
+still needs `REQUEST_ADVANCED`.
+
 ## The blocklist path
 
 Jellyseerr 2.x serves the blocklist at `/blacklist`. Seerr 3.x serves it at `/blocklist` and

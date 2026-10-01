@@ -142,6 +142,7 @@
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
     <string name="request_tags">Tags</string>
+    <string name="request_tags_line">Tags: %1$s</string>
     <string name="request_seasons">Seasons requested</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_title_status_caption">The title\'s overall status — this request\'s season may differ below.</string>
