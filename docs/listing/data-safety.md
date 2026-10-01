@@ -18,7 +18,7 @@ chose themselves, such as their own server, is neither.
 
 | Data type | Collected | Shared | Optional | Purpose | Why |
 |---|---|---|---|---|---|
-| App activity: *App interactions* | Yes | No | Yes: asked on first launch, off unless granted | Analytics | The app's own screen names and action names (e.g. a request approved, a DVR instance saved), each with at most a fixed category as a param — never an id, a title or a message — to PostHog, a service provider processing on the developer's behalf. |
+| App activity: *App interactions* | Yes | No | Yes: asked on first launch, off unless granted | Analytics | The app's own screen names and action names (e.g. a request approved, a DVR instance saved), each with at most a fixed category as a param — never an id, a title or a message — to PostHog. A failed server action is also reported, with its action name, HTTP and gRPC status codes, and the server's software name and version. These describe the app's interactions, so *App interactions* still fits; the data is not a crash log. PostHog is a service provider processing on the developer's behalf. |
 | App info and performance: *Crash logs*, *Diagnostics* | Yes | No | Yes: on by default, switch in Settings | App functionality | Crash reports to Firebase Crashlytics, a service provider. No user id; logs are not forwarded. |
 | Device or other IDs | Yes | No | Yes | Analytics, App functionality | The random per-install ids both SDKs mint. Not linked to an account. |
 

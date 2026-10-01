@@ -38,6 +38,7 @@ import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
@@ -62,9 +63,11 @@ internal fun RequestCard(
     isActing: Boolean = false,
 ) {
     val people = requestPeopleFacts(detail, onOpenUser).filterNot { it.isBlank() }
-    val destination = requestDestinationFacts(detail).filter { it.icon != Icons.Filled.Sell && !it.isBlank() }
+    val allDestination = requestDestinationFacts(detail).filterNot { it.isBlank() }
+    val destination = allDestination.filter { it.icon != Icons.Filled.Sell }
+    val tags = allDestination.firstOrNull { it.icon == Icons.Filled.Sell }
     val summary = detail.summaries().first()
-    val hasInfo = destination.isNotEmpty() || summary.is4k || summary.seasonNumbers.isNotEmpty()
+    val hasInfo = destination.isNotEmpty() || tags != null || summary.is4k || summary.seasonNumbers.isNotEmpty()
     val reviewable = detail.actions.canApprove || detail.actions.canRetry
     val actionLabel = stringResource(if (reviewable) R.string.request_primary_review else R.string.request_primary_manage)
     Column(modifier = modifier.fillMaxWidth().cardSurface()) {
@@ -79,7 +82,7 @@ internal fun RequestCard(
         }
         people.forEach { CardPersonRow(it) }
         if (people.isNotEmpty() && hasInfo) CardDivider()
-        if (hasInfo) CardInfoRows(summary, destination)
+        if (hasInfo) CardInfoRows(summary, destination, tags)
         if (onClick != null) {
             BingeTextButton(
                 label = actionLabel,
@@ -147,7 +150,7 @@ internal fun RequestSummaryGroup(
                             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
                             summary.seasonNumbers
                                 .takeIf { it.isNotEmpty() }
-                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.joinToString(", ")) },
+                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
                         ).joinToString(stringResource(R.string.hub_meta_separator)),
                     trailingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -190,23 +193,26 @@ private fun CardPersonRow(fact: Fact) {
     }
 }
 
-/** What it asked for as a row of its own, then server, quality and folder side by side. */
+/** What it asked for as a row of its own, then server, quality and folder side by side, then its tags. */
 @Composable
 private fun CardInfoRows(
     summary: RequestSummary,
     destination: List<Fact>,
+    tags: Fact?,
 ) {
     val asked =
         listOfNotNull(
             summary.seasonNumbers
                 .takeIf { it.isNotEmpty() }
-                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.joinToString(", ")) },
+                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
         ).joinToString(stringResource(R.string.hub_meta_separator))
     if (asked.isNotEmpty()) {
         CardPersonRow(Fact(Icons.Filled.Info, stringResource(R.string.request_card_info), primary = "", secondary = asked))
     }
     if (destination.isNotEmpty()) CardDestinationLine(destination)
+    // Tags are free text of any length, so they get a row of their own rather than a column of the line above.
+    tags?.let { CardPersonRow(Fact(it.icon, it.label, primary = "", secondary = it.primary.plainText())) }
 }
 
 @Composable

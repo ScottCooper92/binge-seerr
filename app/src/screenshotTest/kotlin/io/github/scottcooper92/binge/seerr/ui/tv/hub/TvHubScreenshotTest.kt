@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.hub
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.previewAdminOverview
@@ -82,6 +83,40 @@ class TvHubScreenshotTest {
     fun IssuesTileFocused() {
         TvHubBoard(state = previewReady(), actions = previewTvHubActions(), initialFocusedTile = TILE_ISSUES)
     }
+
+    /** Binge is not installed: a card the remote can select, opening its Play Store listing. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BingeNotInstalled() {
+        TvHubBoard(state = previewReady(bingeStatus = BingeStatus.NotInstalled), actions = previewTvHubActions())
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BingeNotInstalledFocused() {
+        TvHubBoard(
+            state = previewReady(bingeStatus = BingeStatus.NotInstalled),
+            actions = previewTvHubActions(),
+            initialBingeTileFocused = true,
+        )
+    }
+
+    /** Installed but not yet allowed here: the hint that says where to allow it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BingeNotConnected() {
+        TvHubBoard(state = previewReady(bingeStatus = BingeStatus.NotConnected), actions = previewTvHubActions())
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BingeConnected() {
+        TvHubBoard(state = previewReady(bingeStatus = BingeStatus.Connected), actions = previewTvHubActions())
+    }
 }
 
 private fun previewTvHubActions() =
@@ -91,4 +126,5 @@ private fun previewTvHubActions() =
         onRetry = {},
         onReconnect = {},
         onDisconnect = {},
+        onOpenBingeListing = {},
     )
