@@ -63,6 +63,11 @@ import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toRequestStatus
+import io.github.scottcooper92.binge.seerr.seerr.toStatusException
+import io.github.scottcooper92.binge.seerr.telemetry.Analytics
+import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -97,6 +102,7 @@ class SeerrRequestService(
     private val attentionIntervalMillis: Long = ATTENTION_INTERVAL_MILLIS,
     private val statusCache: MediaStatusStore = NoMediaStatusStore,
     private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
+    private val analytics: Analytics = NoOpAnalytics,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val mediaIds = SeerrMediaIds { connection.api() }
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
@@ -142,7 +148,7 @@ class SeerrRequestService(
      * [submitRequest] (never 4K) would have used.
      */
     override suspend fun getAdvancedRequestOptions(request: GetAdvancedRequestOptionsRequest): GetAdvancedRequestOptionsResponse =
-        gatedRead(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
+        gatedRead("get_advanced_request_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetAdvancedRequestOptionsResponse
                 .newBuilder()
@@ -152,7 +158,7 @@ class SeerrRequestService(
 
     /** Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Re-resolves the profile/root-folder axes for the request's `server_id`. */
     override suspend fun getDestinationOptions(request: GetDestinationOptionsRequest): GetDestinationOptionsResponse =
-        gatedRead(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
+        gatedRead("get_destination_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetDestinationOptionsResponse
                 .newBuilder()
@@ -166,7 +172,7 @@ class SeerrRequestService(
      * — so a submit that never touched a picker is a plain request in every way but its path.
      */
     override suspend fun submitAdvancedRequest(request: SubmitAdvancedRequestRequest): SubmitAdvancedRequestResponse =
-        gated(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
+        gated("submit_advanced_request", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
             val media = request.media
             val isTv = media.seerrMediaType().isSeerrTv()
             val destination = connection.api().resolveAdvancedDestination(isTv, request.serverId, request.profileId, request.rootFolderId)
@@ -224,25 +230,25 @@ class SeerrRequestService(
             .map { ObserveStatusResponse.newBuilder().setStatus(it).build() }
 
     override suspend fun cancelRequest(request: CancelRequestRequest): CancelRequestResponse =
-        gated(Capability.CAPABILITY_CANCEL) {
+        gated("cancel_request", Capability.CAPABILITY_CANCEL) {
             connection.api().deleteRequest(request.requestId)
             CancelRequestResponse.getDefaultInstance()
         }
 
     override suspend fun approveRequest(request: ApproveRequestRequest): ApproveRequestResponse =
-        gated(Capability.CAPABILITY_APPROVE) {
+        gated("approve_request", Capability.CAPABILITY_APPROVE) {
             connection.api().approveRequest(request.requestId)
             ApproveRequestResponse.getDefaultInstance()
         }
 
     override suspend fun declineRequest(request: DeclineRequestRequest): DeclineRequestResponse =
-        gated(Capability.CAPABILITY_DECLINE) {
+        gated("decline_request", Capability.CAPABILITY_DECLINE) {
             connection.api().declineRequest(request.requestId)
             DeclineRequestResponse.getDefaultInstance()
         }
 
     override suspend fun retryRequest(request: RetryRequestRequest): RetryRequestResponse =
-        gated(Capability.CAPABILITY_RETRY) {
+        gated("retry_request", Capability.CAPABILITY_RETRY) {
             connection.api().retryRequest(request.requestId)
             RetryRequestResponse.getDefaultInstance()
         }
@@ -255,7 +261,7 @@ class SeerrRequestService(
      * sent for the server to reject in its own words.
      */
     override suspend fun editRequest(request: EditRequestRequest): EditRequestResponse =
-        gated(Capability.CAPABILITY_EDIT_SEASONS) {
+        gated("edit_request", Capability.CAPABILITY_EDIT_SEASONS) {
             if (request.seasonNumbersList.isEmpty()) throw invalidArgument("a request covers at least one season")
             val api = connection.api()
             val current = api.request(request.requestId)
@@ -291,14 +297,14 @@ class SeerrRequestService(
 
     /** The one operation that needs Seerr's own id space: the server's media record, not the TMDB id. */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
-        gated(Capability.CAPABILITY_REPORT_ISSUE) {
+        gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) {
             val mediaId = mediaIds.mediaRecordId(request.media)
             connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))
             ReportIssueResponse.getDefaultInstance()
         }
 
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
-        gated(Capability.CAPABILITY_BLOCK) {
+        gated("block_title", Capability.CAPABILITY_BLOCK) {
             val body =
                 SeerrAddToBlocklistBody(
                     tmdbId = request.media.tmdbId,
@@ -312,7 +318,7 @@ class SeerrRequestService(
 
     /** Keyed by TMDB id and media type, as the block was; a title the server has no entry for is its 404, NOT_FOUND. */
     override suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse =
-        gated(Capability.CAPABILITY_BLOCK) {
+        gated("unblock_title", Capability.CAPABILITY_BLOCK) {
             connection.api().removeFromBlocklist(
                 connection.profile().blocklistPath,
                 request.media.tmdbId,
@@ -356,10 +362,11 @@ class SeerrRequestService(
     }
 
     private suspend fun <T> gated(
+        operation: String,
         capability: Capability,
         block: suspend () -> T,
     ): T =
-        statusCatching {
+        reportingFailure(operation) {
             checkDeclared(capability)
             // Every gated rpc is a write, and a write to any title makes every cached row suspect —
             // most of them name a request id rather than a title, so there is nothing narrower to drop.
@@ -368,12 +375,34 @@ class SeerrRequestService(
 
     /** As [gated], for an rpc that only reads: no cache to invalidate behind it. */
     private suspend fun <T> gatedRead(
+        operation: String,
         capability: Capability,
         block: suspend () -> T,
     ): T =
-        statusCatching {
+        reportingFailure(operation) {
             checkDeclared(capability)
             block()
+        }
+
+    /**
+     * [statusCatching], reporting a failure a server version could explain (#539). The failure is
+     * mapped to its [StatusException] first and that is what is thrown, so what is reported and what
+     * the host receives are the same classification.
+     */
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun <T> reportingFailure(
+        operation: String,
+        block: suspend () -> T,
+    ): T =
+        statusCatching {
+            try {
+                block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                analytics.operationFailed(operation, e, connection)
+                throw e.toStatusException()
+            }
         }
 
     private suspend fun checkDeclared(capability: Capability) {

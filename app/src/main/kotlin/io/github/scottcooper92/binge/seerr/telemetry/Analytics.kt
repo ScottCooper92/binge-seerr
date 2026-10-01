@@ -8,12 +8,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** What this app reports about its own use. Nothing about the server, its titles, or its users. */
+/**
+ * What this app reports about its own use, and about the failures it meets. About the server, only its
+ * software and version, never its address or contents; nothing about its titles or its users.
+ */
 interface Analytics {
     /** A screen was shown; [name] is one of this app's fixed screen names, never an id. */
     fun screen(name: String)
 
-    /** A write-path action committed; [name] is one of [AnalyticsEvents]' fixed names, [properties] plain values only. */
+    /** A write-path action committed or failed; [name] is one of [AnalyticsEvents]' fixed names, [properties] plain values only. */
     fun event(
         name: String,
         properties: Map<String, Any> = emptyMap(),
