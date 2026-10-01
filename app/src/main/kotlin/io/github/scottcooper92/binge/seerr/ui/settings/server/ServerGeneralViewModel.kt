@@ -54,6 +54,19 @@ class ServerGeneralViewModel
 
         override fun canSave(draft: ServerGeneralSettings): Boolean = draft.urlValid
 
+        /**
+         * Re-reads only the default permissions, for when the page comes back from the editor that
+         * changes them. The draft is left alone: the form may hold edits that are not saved yet.
+         * A failed read keeps the tags already shown.
+         */
+        fun refreshDefaultPermissions() {
+            viewModelScope.launch(dispatcher) {
+                runCatching { connection.api().mainSettings() }.onSuccess { main ->
+                    editExtras { it.copy(defaultPermissions = ManageablePermission.decode(main.defaultPermissions ?: 0)) }
+                }
+            }
+        }
+
         fun toggleReveal() = editExtras { it.copy(apiKey = it.apiKey.copy(revealed = !it.apiKey.revealed)) }
 
         /**
