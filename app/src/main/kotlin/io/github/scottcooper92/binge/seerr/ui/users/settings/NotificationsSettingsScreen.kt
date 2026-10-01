@@ -2,6 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,13 +42,31 @@ private fun AgentSection(
     enabled: Boolean,
     onEdit: ((NotificationSettings) -> NotificationSettings) -> Unit,
 ) {
+    EditorSectionCard(stringResource(agent.labelRes())) {
+        AgentFields(agent, settings, enabled, onEdit)
+    }
+}
+
+@Composable
+private fun AgentFields(
+    agent: NotificationAgent,
+    settings: NotificationSettings,
+    enabled: Boolean,
+    onEdit: ((NotificationSettings) -> NotificationSettings) -> Unit,
+) {
     val current = settings.agent(agent)
-    EditorSectionTitle(stringResource(agent.labelRes()))
     if (agent.hasToggle) {
         // Neither Jellyseerr nor Overseerr reads this flag back from a user's own settings save -
         // it only ever reports whether the server has the agent configured at all - so the switch
         // is shown, not edited (#410).
-        EditorSwitchRow(stringResource(R.string.user_settings_agent_enabled), current.enabled, enabled = false) {}
+        EditorToggleRow(
+            editorToggle(
+                Icons.Filled.Notifications,
+                stringResource(R.string.user_settings_agent_enabled),
+                current.enabled,
+                enabled = false,
+            ) {},
+        )
         Text(
             stringResource(R.string.user_settings_agent_enabled_hint),
             style = MaterialTheme.typography.bodySmall,
@@ -75,13 +96,16 @@ private fun AgentSection(
     if (agent == NotificationAgent.Telegram) {
         // Only how a message is delivered, so it follows the agent. The id and chat fields above do
         // not: they are filled in before the agent is turned on.
-        EditorSwitchRow(
-            stringResource(R.string.user_settings_telegram_silent),
-            current.sendSilently,
-            enabled = enabled && current.enabled,
-        ) { value ->
-            onEdit { it.update(agent) { agentSettings -> agentSettings.copy(sendSilently = value) } }
-        }
+        EditorToggleRow(
+            editorToggle(
+                Icons.Filled.NotificationsOff,
+                stringResource(R.string.user_settings_telegram_silent),
+                current.sendSilently,
+                enabled && current.enabled,
+            ) { value ->
+                onEdit { it.update(agent) { agentSettings -> agentSettings.copy(sendSilently = value) } }
+            },
+        )
     }
     if (settings.isOn(agent)) {
         Text(stringResource(R.string.user_settings_types_title), style = MaterialTheme.typography.titleSmall)

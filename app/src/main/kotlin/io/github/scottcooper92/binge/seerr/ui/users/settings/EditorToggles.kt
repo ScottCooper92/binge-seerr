@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
@@ -14,17 +13,23 @@ import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.component.SettingsRows
 import com.binge.designsystem.R as DesR
 
-/** A toggle drawn as the design system's switch [SettingsRow], the same as the Notify me group's. */
+/**
+ * A toggle drawn as the design system's switch [SettingsRow], the same as the Notify me group's.
+ * A row that is not [enabled] is `disabled`: the design system dims it whole and turns off its click.
+ */
 internal fun editorToggle(
     icon: ImageVector,
     label: String,
     checked: Boolean,
     enabled: Boolean = true,
+    detail: String? = null,
     onToggle: (Boolean) -> Unit,
 ) = SettingsRow(
     icon = icon,
     label = label,
+    detail = detail,
     clickable = enabled,
+    disabled = !enabled,
     trailingContent = { Switch(checked = checked, onCheckedChange = null) },
     onClick = { onToggle(!checked) },
 )
@@ -38,7 +43,7 @@ internal fun EditorToggleGroup(
 ) = SettingsGroup(
     title = title,
     rows = toggles,
-    modifier = modifier.alpha(if (toggles.all { !it.clickable }) DISABLED_CONTENT_ALPHA else 1f),
+    modifier = modifier,
 )
 
 /**
@@ -47,13 +52,11 @@ internal fun EditorToggleGroup(
  */
 @Composable
 internal fun EditorToggleRow(toggle: SettingsRow) {
-    // The design-system row dims only its switch; dim the icon and label with it so a row that is off reads as off.
-    val enabled = toggle.clickable
     val bleed = dimensionResource(DesR.dimen.padding_m)
     SettingsRows(
         rows = listOf(toggle),
         modifier =
-            Modifier.fillMaxWidth().alpha(if (enabled) 1f else DISABLED_CONTENT_ALPHA).layout { measurable, constraints ->
+            Modifier.fillMaxWidth().layout { measurable, constraints ->
                 val extra = bleed.roundToPx() * 2
                 val placeable = measurable.measure(Constraints.fixedWidth(constraints.maxWidth + extra))
                 layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }

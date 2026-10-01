@@ -3,6 +3,10 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -20,12 +24,16 @@ class EditorSectionCardScreenshotTest {
             modifier = Modifier.padding(dimensionResource(DesR.dimen.padding_m)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
-            EditorSectionCard(title = "General") {
-                EditorSwitchRow(label = "Trust proxy", checked = true, onToggle = {})
-                EditorSwitchRow(label = "CSRF protection", checked = false, onToggle = {})
-            }
+            EditorToggleGroup(
+                title = "General",
+                toggles =
+                    listOf(
+                        editorToggle(Icons.Filled.Shield, "Trust proxy", checked = true) {},
+                        editorToggle(Icons.Filled.Lock, "CSRF protection", checked = false) {},
+                    ),
+            )
             EditorSectionCard(title = "Proxy") {
-                EditorSwitchRow(label = "Enable proxy", checked = true, onToggle = {})
+                EditorToggleRow(editorToggle(Icons.Filled.PowerSettingsNew, "Enable proxy", checked = true) {})
                 EditorTextField(value = "proxy.example.com", label = "Hostname", onValueChange = {})
                 EditorTextField(value = "b4d455k3y", label = "Password", secret = true, onValueChange = {})
             }
