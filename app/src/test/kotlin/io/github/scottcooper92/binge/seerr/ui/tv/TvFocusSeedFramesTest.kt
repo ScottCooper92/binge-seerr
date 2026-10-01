@@ -25,6 +25,10 @@ import java.io.File
  * Fix a failure by adding a frame, in `app/src/screenshotTest`, that passes the seed, then
  * recording it with `./gradlew updateDebugScreenshotTest`. Do not widen the matching to make it
  * pass.
+ *
+ * The test reads both source trees with `java.io.File`, which Gradle cannot see, so
+ * `app/build.gradle.kts` declares them as inputs of the unit-test tasks. Copy that wiring with the
+ * test, or a change to a frame alone is a cached pass.
  */
 class TvFocusSeedFramesTest {
     @Test
