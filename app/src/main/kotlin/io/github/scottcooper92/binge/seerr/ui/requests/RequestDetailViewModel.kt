@@ -7,6 +7,8 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.NoRequestStore
+import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.HydratedTitle
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
@@ -68,6 +70,7 @@ class RequestDetailViewModel
         @Assisted private val requestId: Int,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val cache: RequestStore = NoRequestStore,
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
 
@@ -86,6 +89,7 @@ class RequestDetailViewModel
                 connection = connection,
                 analytics = analytics,
                 crashBreadcrumbs = crashBreadcrumbs,
+                cache = cache,
                 onModerated = ::reloadAfterAction,
             )
 

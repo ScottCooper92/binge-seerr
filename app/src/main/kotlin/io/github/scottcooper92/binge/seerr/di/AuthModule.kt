@@ -26,6 +26,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
+import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
@@ -138,6 +139,7 @@ object AuthModule {
         health: SeerrConnectionHealthMonitor,
         carrier: ConnectionCarrier,
         issues: IssueStore,
+        requests: RequestStore,
         users: UserStore,
         statuses: MediaStatusStore,
         notifications: NotificationPrefs,
@@ -145,6 +147,7 @@ object AuthModule {
     ): SeerrConnection =
         SeerrConnection(store, apis, health, carrier = carrier, onServerChanged = {
             issues.clearAll()
+            requests.clearAll()
             users.clearAll()
             statuses.clearAll()
             notifications.forgetServer()

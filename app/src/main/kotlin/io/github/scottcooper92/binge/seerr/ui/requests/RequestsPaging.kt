@@ -79,30 +79,6 @@ internal suspend fun SeerrRequestsPageDto.toRequestPage(
         totalPages = pageInfo.pages.takeIf { it > 0 },
     )
 
-/**
- * Pages `GET request` for one [filter] in one [sort], each row titled through [hydrate]
- * concurrently; a failed lookup degrades its row rather than the page. [requestedBy] narrows the
- * list to one user's requests, for a user who may not see everyone's.
- */
-class RequestsPagingSource(
-    private val api: suspend () -> SeerrApi,
-    private val filter: RequestFilter,
-    private val sort: RequestSort,
-    private val requestedBy: Int?,
-    private val hydrate: suspend (SeerrApi, String, Int) -> HydratedTitle?,
-    private val now: () -> Long = System::currentTimeMillis,
-) : OffsetPagingSource<RequestItem>(REQUESTS_PAGE_SIZE) {
-    override suspend fun loadPage(
-        take: Int,
-        skip: Int,
-    ): OffsetPage<RequestItem> {
-        val api = api()
-        return api
-            .requests(take = take, skip = skip, filter = filter.apiValue, sort = sort.apiValue, requestedBy = requestedBy)
-            .toRequestPage(api, hydrate, now())
-    }
-}
-
 /** Null for a request whose media type this app does not render; there is nothing to show. */
 suspend fun SeerrRequestDto.toRequestItem(
     api: SeerrApi,
