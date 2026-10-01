@@ -20,7 +20,12 @@ data class RequestDestination(
     val profileName: String?,
     val rootFolder: String?,
     val tags: List<String>,
-)
+) {
+    /** The tags as one display line, or null when the server named none. The one place tags are joined. */
+    val tagsLabel: String? get() = tags.takeIf { it.isNotEmpty() }?.joinToString(TAGS_SEPARATOR)
+}
+
+private const val TAGS_SEPARATOR = ", "
 
 data class DetailDownload(
     val title: String?,

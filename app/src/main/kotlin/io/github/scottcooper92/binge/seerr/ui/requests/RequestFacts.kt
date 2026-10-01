@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -105,16 +104,13 @@ internal fun requestPeopleFacts(
     )
 }
 
-/** Where it was sent: server, quality profile, root folder and tags. */
+/** Where it was sent: server, quality profile and root folder. Tags are [RequestDestination.tagsLabel]. */
 @Composable
 internal fun requestDestinationFacts(detail: RequestDetail): List<Fact> =
     listOfNotNull(
         detail.destination?.serverName?.let { Fact(Icons.Filled.Dns, stringResource(R.string.request_server), it) },
         detail.destination?.profileName?.let { Fact(Icons.Filled.HighQuality, stringResource(R.string.request_profile), it) },
         detail.destination?.rootFolder?.let { Fact(Icons.Filled.Folder, stringResource(R.string.request_root_folder), it) },
-        detail.destination?.tags?.takeIf { it.isNotEmpty() }?.let {
-            Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), it.joinToString(", "))
-        },
     )
 
 @Composable
