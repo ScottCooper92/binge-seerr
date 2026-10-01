@@ -115,7 +115,6 @@
     <string name="request_open_media_server">Abrir en el servidor multimedia</string>
     <string name="request_stats_title">Estadísticas</string>
     <string name="request_this_request_title">Esta solicitud</string>
-    <string name="request_open_web">Abrir en el servidor</string>
     <string name="request_card_info">Información de la solicitud</string>
     <string name="request_requested_by">Solicitado por</string>
     <string name="request_modified_by">Moderado por</string>

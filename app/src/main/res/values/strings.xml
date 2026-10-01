@@ -134,7 +134,6 @@
     <string name="request_open_media_server">Open in media server</string>
     <string name="request_stats_title">Stats</string>
     <string name="request_this_request_title">This request</string>
-    <string name="request_open_web">Open on the server</string>
     <string name="request_card_info">Request info</string>
     <string name="request_requested_by">Requested by</string>
     <string name="request_modified_by">Moderated by</string>
