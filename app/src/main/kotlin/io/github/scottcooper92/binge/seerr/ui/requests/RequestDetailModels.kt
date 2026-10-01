@@ -204,6 +204,8 @@ sealed interface RequestDetailUiState {
         val report: IssueReport = IssueReport.Idle,
         /** The editor while it is open. */
         val edit: EditState? = null,
+        /** A moderation of this request is in flight: the call itself, then the reload that shows its result. */
+        val isActing: Boolean = false,
     ) : RequestDetailUiState
 
     data class Error(

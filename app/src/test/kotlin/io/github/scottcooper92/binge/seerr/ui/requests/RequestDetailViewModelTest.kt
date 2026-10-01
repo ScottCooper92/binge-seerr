@@ -636,6 +636,35 @@ class RequestDetailViewModelTest {
         }
 
     @Test
+    fun `the page reads as acting from the action through the reload that shows its result, and not after`() =
+        runTest {
+            server(REQUEST or ADMIN)
+            val vm = viewModel()
+            assertFalse(vm.awaitReady().isActing)
+
+            // The approve call holds first, then the reload that follows it, so each window is observable.
+            val approveGate = CountDownLatch(1)
+            val reloadGate = CountDownLatch(1)
+            val page = responses.getValue("/api/v1/request/11")
+            responses["/api/v1/request/11/approve"] = {
+                approveGate.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            responses["/api/v1/request/11"] = {
+                reloadGate.await()
+                page()
+            }
+            val approved = awaitEvent(vm.moderation.events) { it == ModerationEvent.Approved }
+            vm.moderation.approve(11)
+            assertTrue("during the call", vm.awaitReady { it.isActing }.isActing)
+            approveGate.countDown()
+            approved.await()
+            assertTrue("during the reload", (vm.uiState.value as RequestDetailUiState.Ready).isActing)
+            reloadGate.countDown()
+            assertFalse("after the reload", vm.awaitReady { !it.isActing }.isActing)
+        }
+
+    @Test
     fun `a request with a 4K record lists both instances, and moderation targets the one asked for`() =
         runTest {
             server(ADMIN)

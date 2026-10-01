@@ -43,6 +43,12 @@ class RequestDetailScreenshotTest {
     @Composable
     fun settled() = Frame(settledDetail())
 
+    /** A moderation in flight (#563): the bar under the top bar, and the card's chip and action dimmed. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun acting() = Frame(pendingDetail(), isActing = true)
+
     /** A title with a second request against it: the "Requests for this title" list, this request first. */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -107,6 +113,7 @@ class RequestDetailScreenshotTest {
 private fun Frame(
     detail: RequestDetail,
     scrollState: ScrollState = rememberScrollState(),
+    isActing: Boolean = false,
 ) {
     RequestDetailPage(
         detail = detail,
@@ -117,5 +124,6 @@ private fun Frame(
         onOpenRequest = {},
         onOpenUser = {},
         initiallyOverflowing = true,
+        isActing = isActing,
     )
 }

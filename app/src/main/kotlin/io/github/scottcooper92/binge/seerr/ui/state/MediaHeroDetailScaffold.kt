@@ -15,13 +15,17 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailOverlayTopBar
+import com.binge.designsystem.R as DesR
 
 /**
  * The outer frame a media-hero detail page shares — [RequestDetailScreen][io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen]'s
@@ -67,6 +71,9 @@ internal fun MediaHeroDetailScaffold(
  * screen edge in landscape, rather than stopping short of a display-cutout inset it does not need
  * protecting from.
  *
+ * [inFlight] draws a thin indeterminate bar just under [DetailOverlayTopBar], over the page rather than
+ * in its flow, so showing or hiding it reflows nothing.
+ *
  * `tagline`, `showChrome` and `richBackdrop` are not parameters here: every caller today wants `null`,
  * `false` and `true` respectively, and Binge's own movie-detail screen — the one other place
  * [DetailHero] and [DetailOverlayTopBar] pair up — uses a different outer shape entirely (a single
@@ -84,6 +91,7 @@ internal fun MediaHeroDetailPage(
     scrollState: ScrollState = rememberScrollState(),
     topBarActions: @Composable RowScope.(glassBackgroundAlpha: Float) -> Unit = {},
     footer: (@Composable () -> Unit)? = null,
+    inFlight: Boolean = false,
     metaContent: (@Composable () -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
@@ -117,6 +125,16 @@ internal fun MediaHeroDetailPage(
                 body()
             }
             DetailOverlayTopBar(title = title, scrollState = scrollState, onBack = onBack, actions = topBarActions)
+            if (inFlight) {
+                LinearProgressIndicator(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                            .padding(top = dimensionResource(DesR.dimen.person_profile_top_bar_offset)),
+                )
+            }
         }
         footer?.invoke()
     }

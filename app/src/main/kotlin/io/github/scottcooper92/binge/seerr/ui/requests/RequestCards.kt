@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
@@ -45,6 +46,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import com.binge.designsystem.R as DesR
 
+private const val ACTING_ALPHA = 0.5f
+
 /**
  * This request as one card on the same clipped surface a settings group uses: its title beside its state,
  * who asked and who changed it as settings-style rows, what it asked for and where it was sent, and a
@@ -56,6 +59,7 @@ internal fun RequestCard(
     onClick: (() -> Unit)?,
     onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    isActing: Boolean = false,
 ) {
     val people = requestPeopleFacts(detail, onOpenUser).filterNot { it.isBlank() }
     val destination = requestDestinationFacts(detail).filter { it.icon != Icons.Filled.Sell && !it.isBlank() }
@@ -71,13 +75,18 @@ internal fun RequestCard(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f).semantics { heading() },
             )
-            SummaryStatus(summary)
+            Box(Modifier.alpha(if (isActing) ACTING_ALPHA else 1f)) { SummaryStatus(summary) }
         }
         people.forEach { CardPersonRow(it) }
         if (people.isNotEmpty() && hasInfo) CardDivider()
         if (hasInfo) CardInfoRows(summary, destination)
         if (onClick != null) {
-            BingeTextButton(label = actionLabel, onClick = onClick, modifier = Modifier.align(Alignment.CenterHorizontally))
+            BingeTextButton(
+                label = actionLabel,
+                onClick = onClick,
+                enabled = !isActing,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
         }
     }
 }
@@ -92,12 +101,14 @@ internal fun RequestCardSection(
     onOpenRequest: (Int) -> Unit,
     onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    isActing: Boolean = false,
 ) {
     Column(modifier = modifier.padding(horizontal = resolvedContentInset())) {
         RequestCard(
             detail = detail,
             onClick = { onOpenRequest(detail.item.id) }.takeIf { detail.hasPrimaryAction },
             onOpenUser = onOpenUser,
+            isActing = isActing,
         )
         if (detail.siblings.isNotEmpty()) {
             RequestSummaryGroup(detail.siblings, onClick = onOpenRequest)
