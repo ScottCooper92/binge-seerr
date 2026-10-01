@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
+import io.github.scottcooper92.binge.seerr.auth.BingeHint
 import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -94,9 +96,14 @@ class HubViewModel
                 }
             }
 
+        private val bingeHintDismissed: Flow<Boolean> =
+            combine(bingeStatus, bingeConnection.dismissedHints) { status, dismissed -> status.hint() in dismissed }
+
         /** Folded with the downloading strip rather than added as a sixth argument: [combine] has no six-flow overload. */
-        private val downloadingAndBingeStatus: Flow<Pair<List<HubDownload>, BingeStatus>> =
-            combine(downloadsPoller.downloading, bingeStatus) { downloading, status -> downloading to status }
+        private val downloadingAndBingeStatus: Flow<Triple<List<HubDownload>, BingeStatus, Boolean>> =
+            combine(downloadsPoller.downloading, bingeStatus, bingeHintDismissed) { downloading, status, dismissed ->
+                Triple(downloading, status, dismissed)
+            }
 
         val uiState: StateFlow<HubUiState> =
             combine(
@@ -105,7 +112,7 @@ class HubViewModel
                 overview,
                 downloadingAndBingeStatus,
                 refreshedPendingCount,
-            ) { server, health, overview, (downloading, bingeStatus), pending ->
+            ) { server, health, overview, (downloading, bingeStatus, hintDismissed), pending ->
                 // Not loaded is not ready: the overview carries the user's permissions, and every
                 // manage row is gated on one, so a Ready built on the placeholder is a hub with
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
@@ -118,6 +125,7 @@ class HubViewModel
                         overview = overview.copy(pendingRequestCount = pending ?: overview.pendingRequestCount),
                         downloading = downloading,
                         bingeStatus = bingeStatus,
+                        bingeHintDismissed = hintDismissed,
                     )
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, HubUiState.Loading)
@@ -159,9 +167,21 @@ class HubViewModel
             recheckTrigger.value++
         }
 
+        /** Closes the hint the tile is showing; the other state's hint, if the user reaches it later, is still shown. */
+        fun dismissBingeHint() {
+            viewModelScope.launch(dispatcher) { bingeConnection.dismissHint(bingeStatus.first().hint()) }
+        }
+
         fun disconnect() {
             viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
+    }
+
+private fun BingeStatus.hint(): BingeHint =
+    when (this) {
+        BingeStatus.NotInstalled -> BingeHint.NotInstalled
+        BingeStatus.NotConnected -> BingeHint.NotConnected
+        BingeStatus.Connected -> BingeHint.Connected
     }
 
 /**
