@@ -36,6 +36,18 @@ class RequestSheetsScreenshotTest {
     @Composable
     fun actions4kSeason() = SheetFrame { ActionsContent(partiallyAvailable4kDetail()) }
 
+    /** Opened from a list row: the preview's rows under a thin bar while the detail loads (#565). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsDetailLoading() = SheetFrame { ActionsContent(pendingDetail(), SheetDetailLoad.Loading) }
+
+    /** And when that detail fails, the bar gives way to a one-line retry above the same rows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsDetailFailed() = SheetFrame { ActionsContent(pendingDetail(), SheetDetailLoad.Failed(SeerrError.Unreachable)) }
+
     /** Another request's sheet while that request is fetched: it is loaded on open, not held by the page. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -62,14 +74,18 @@ class RequestSheetsScreenshotTest {
 }
 
 @Composable
-private fun ActionsContent(detail: RequestDetail) {
+private fun ActionsContent(
+    detail: RequestDetail,
+    detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
+) {
     RequestActionsContent(
         model =
             RequestSheetModel(
                 item = detail.item,
                 actions = detail.actions,
                 canEdit = detail.canEdit,
-                media = detail.media,
+                media = detail.media.takeIf { detailLoad == SheetDetailLoad.Loaded },
+                detailLoad = detailLoad,
             ),
         callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}),
         blockTitle = false,

@@ -56,6 +56,8 @@ internal fun RequestActionsSheet(
     onOpenUser: ((Int) -> Unit)? = null,
     viewerId: Int? = null,
     canManageUsers: Boolean = false,
+    detailLoad: SheetDetailLoad = SheetDetailLoad.Loaded,
+    onRetryDetail: () -> Unit = {},
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -69,6 +71,7 @@ internal fun RequestActionsSheet(
                     media = media,
                     viewerId = viewerId,
                     canManageUsers = canManageUsers,
+                    detailLoad = detailLoad,
                 ),
             callbacks =
                 RequestSheetCallbacks(
@@ -95,6 +98,7 @@ internal fun RequestActionsSheet(
                     onMarkStatus = onMarkStatus,
                     onDeleteFiles = { is4k -> pending = Pending.DeleteFiles(is4k) },
                     onClearData = { pending = Pending.ClearData },
+                    onRetryDetail = onRetryDetail,
                     onOpenUser =
                         onOpenUser?.let { open ->
                             { id ->

@@ -169,6 +169,7 @@
     <string name="request_sheet_group_request">Petición</string>
     <string name="request_sheet_group_media">Contenido</string>
     <string name="request_sheet_requested_by">Solicitada por %1$s</string>
+    <string name="request_sheet_loading">Cargando los detalles de la petición</string>
     <string name="request_remove_detail">Borra esta petición. El título se puede volver a solicitar.</string>
     <string name="request_remove_block_detail">Borra esta petición e impide que el título se vuelva a solicitar.</string>
     <string name="media_delete_4k_files">Eliminar los archivos 4K</string>
