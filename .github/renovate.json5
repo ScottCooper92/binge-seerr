@@ -7,7 +7,6 @@
   extends: [
     "config:recommended",
     ":dependencyDashboard", // one tracking issue instead of a wall of PRs
-    ":semanticCommitsDisabled", // repo uses conventional subjects written by hand
     "helpers:pinGitHubActionDigests", // keep `uses: owner/repo@<sha> # vX.Y.Z`
   ],
 
