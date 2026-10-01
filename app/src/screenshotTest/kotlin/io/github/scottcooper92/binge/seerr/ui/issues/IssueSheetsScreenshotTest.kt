@@ -21,13 +21,13 @@ class IssueSheetsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun manageWithDelete() = SheetFrame { IssueManageContent(canDelete = true, onOpenWeb = {}, onDelete = {}) }
+    fun manageWithDelete() = SheetFrame { IssueManageContent("Seerr", "Plex", "Radarr", onOpenWeb = {}, onOpenMediaServer = {}, onOpenService = {}) }
 
     /** Without the permission to delete, the web link is all there is. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun manageWithoutDelete() = SheetFrame { IssueManageContent(canDelete = false, onOpenWeb = {}, onDelete = {}) }
+    fun manageWithoutDelete() = SheetFrame { IssueManageContent("Seerr", null, "Radarr", onOpenWeb = {}) }
 
     @PreviewTest
     @SeerrComponentPreviews

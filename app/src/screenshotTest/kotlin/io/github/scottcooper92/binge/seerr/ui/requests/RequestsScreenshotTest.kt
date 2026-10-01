@@ -68,13 +68,9 @@ private fun Frame(state: RequestsUiState) {
                 onFilterChange = {},
                 onSortChange = {},
                 onOpen = {},
-                onOpenActions = {},
-                onDismissActions = {},
                 onRetryLoad = {},
-                onApprove = {},
-                onRetry = {},
-                onDecline = { _, _ -> },
-                onRemove = { _, _ -> },
+                onChanged = {},
+                detailSheet = {},
             ),
     )
 }

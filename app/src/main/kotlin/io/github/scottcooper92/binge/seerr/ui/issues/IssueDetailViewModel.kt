@@ -13,12 +13,14 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.requests.mediaServerName
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
@@ -319,13 +321,14 @@ class IssueDetailViewModel
                 val user = async { runCatching { connection.authenticatedUser() }.getOrNull() }
                 val dto = api.issue(issueId)
                 val item = checkNotNull(dto.toIssueItem(api, titles::get)) { "Unrenderable media type" }
-                dto.toDetail(item, user.await(), connection.current().baseUrl)
+                dto.toDetail(item, user.await(), connection.current().baseUrl, connection.profile())
             }
 
         private fun SeerrIssueDto.toDetail(
             item: IssueItem,
             user: SeerrUserDto?,
             baseUrl: String,
+            profile: SeerrServerProfile,
         ): IssueDetail {
             val permissions = user.toPermissions()
             val comments = comments.sortedBy { it.id }.map { it.toIssueComment(user?.id) }
@@ -341,6 +344,8 @@ class IssueDetailViewModel
                 webUrl = baseUrl + "issues/" + id,
                 mediaServerUrl = media?.mediaUrl?.takeIf { it.isWebUrl() },
                 serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },
+                serverName = profile.variant.displayName,
+                mediaServerName = profile.mediaServerName(),
                 currentUserName = user?.let { listOfNotNull(it.displayName, it.username).firstOrNull { name -> name.isNotBlank() } },
             )
         }

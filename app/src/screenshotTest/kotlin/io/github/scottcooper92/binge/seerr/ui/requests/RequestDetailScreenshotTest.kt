@@ -114,7 +114,6 @@ private fun Frame(
         onBack = {},
         onOpen = {},
         onReport = {},
-        onPrimary = {},
         onOpenRequest = {},
         onOpenUser = {},
         initiallyOverflowing = true,

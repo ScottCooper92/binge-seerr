@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -59,14 +60,13 @@ internal class RequestSheetCallbacks(
     val onMarkStatus: (is4k: Boolean) -> Unit = {},
     val onDeleteFiles: (is4k: Boolean) -> Unit = {},
     val onClearData: () -> Unit = {},
+    val onOpenUser: ((Int) -> Unit)? = null,
 )
 
 /**
  * The request's context heads the sheet; the decision it is waiting on sits directly under that as
- * one bar; everything else is a settings row in one of two groups — the **request**, and the
- * server's **media record** — each destructive row saying what it destroys. The two groups are
- * largely exclusive by state, so whichever the request's state makes live goes first: the request
- * while there is still an approve or a retry to make, the media once that is settled.
+ * one bar; everything else is a settings row in one of two groups — the **request**, then the
+ * server's **media record** — each destructive row saying what it destroys.
  */
 @Composable
 internal fun RequestActionsContent(
@@ -84,33 +84,28 @@ internal fun RequestActionsContent(
                 .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        RequestSheetHeader(model.item)
+        val requesterId = model.item.requestedById?.takeIf { callbacks.onOpenUser != null }
+        RequestSheetHeader(model.item, showRequester = requesterId == null)
         DecisionBar(model.actions, blockTitle, callbacks)
-        val requestRows = requestRows(model, blockTitle, onBlockTitleChange, callbacks)
+        val requestRows =
+            listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
+                requestRows(model, blockTitle, onBlockTitleChange, callbacks)
         val mediaRows =
             model.media
                 ?.takeIf { it.canManage }
                 ?.let { mediaRows(it, callbacks) }
                 .orEmpty()
-        val request: @Composable () -> Unit = {
-            if (requestRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
-        }
-        val media: @Composable () -> Unit = {
-            if (mediaRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
-        }
-        if (model.actions.canApprove || model.actions.canRetry) {
-            request()
-            media()
-        } else {
-            media()
-            request()
-        }
+        if (requestRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
+        if (mediaRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
     }
 }
 
 /** Poster, title, what it is, who asked and when, and where the request stands. */
 @Composable
-private fun RequestSheetHeader(item: RequestItem) {
+private fun RequestSheetHeader(
+    item: RequestItem,
+    showRequester: Boolean,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         verticalAlignment = Alignment.CenterVertically,
@@ -135,18 +130,20 @@ private fun RequestSheetHeader(item: RequestItem) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
-            Text(
-                text =
-                    listOfNotNull(
-                        stringResource(R.string.request_sheet_requested_by, requester),
-                        formatRelativeOrAbsolute(item.requestedAtMillis),
-                    ).joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (showRequester) {
+                val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
+                Text(
+                    text =
+                        listOfNotNull(
+                            stringResource(R.string.request_sheet_requested_by, requester),
+                            formatRelativeOrAbsolute(item.requestedAtMillis),
+                        ).joinToString(stringResource(R.string.hub_meta_separator)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 item.status?.let { RequestStateChip(status = it) }
@@ -170,6 +167,21 @@ private fun RequestSheetHeader(item: RequestItem) {
             }
         }
     }
+}
+
+/** Who asked, as a whole row that opens their profile; the request group's first row. */
+@Composable
+private fun requesterRow(
+    item: RequestItem,
+    onClick: () -> Unit,
+): SettingsRow {
+    val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
+    return SettingsRow(
+        icon = Icons.Filled.Person,
+        label = stringResource(R.string.request_sheet_requested_by, requester),
+        detail = formatRelativeOrAbsolute(item.requestedAtMillis),
+        onClick = onClick,
+    )
 }
 
 /**

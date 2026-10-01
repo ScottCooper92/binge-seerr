@@ -11,6 +11,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
  * The frame [io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailScreen] and
@@ -33,6 +34,8 @@ internal fun OverflowDetailScaffold(
     overflowContentDescription: String,
     onOverflowClick: () -> Unit,
     modifier: Modifier = Modifier,
+    overflowIcon: ImageVector = Icons.Filled.MoreVert,
+    leadingActions: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     ScreenScaffold(
@@ -42,8 +45,9 @@ internal fun OverflowDetailScaffold(
         snackbarHostState = snackbarHostState,
         actions = {
             if (showOverflow) {
+                leadingActions()
                 IconButton(onClick = onOverflowClick) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = overflowContentDescription)
+                    Icon(overflowIcon, contentDescription = overflowContentDescription)
                 }
             }
         },

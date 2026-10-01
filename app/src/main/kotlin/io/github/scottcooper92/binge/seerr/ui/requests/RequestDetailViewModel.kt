@@ -279,6 +279,8 @@ private class DetailSources(
             mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
             serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),
             media = dto.mediaRecord(permissions, profile, watch),
+            serverName = profile.variant.displayName,
+            mediaServerName = profile.mediaServerName(),
             siblings =
                 details
                     ?.mediaInfo

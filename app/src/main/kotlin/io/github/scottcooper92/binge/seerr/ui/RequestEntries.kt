@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailViewModel
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestManagementSheets
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSheetPlaceholder
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsActions
@@ -70,25 +71,25 @@ private fun SiblingRequestSheet(
             if (event.removesTheRequest) current.onDismiss()
         }
     }
-    when (val page = state) {
-        is RequestDetailUiState.Ready ->
-            RequestManagementSheets(
-                state = page,
-                actions =
-                    viewModel.toActions(
-                        requestId = sheet.requestId,
-                        state = page,
-                        onBack = sheet.onDismiss,
-                        onOpenUser = onOpenUser,
-                        siblingSheet = {},
-                    ),
-                acting = sheet.open,
-                onDismissActing = sheet.onDismiss,
-            )
-        else ->
-            if (sheet.open) {
-                RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)
-            }
+    val page = state
+    if (page is RequestDetailUiState.Ready || sheet.preview != null) {
+        RequestManagementSheets(
+            state = page as? RequestDetailUiState.Ready,
+            actions =
+                viewModel.toActions(
+                    requestId = sheet.requestId,
+                    state = page,
+                    onBack = sheet.onDismiss,
+                    onOpenUser = onOpenUser,
+                    siblingSheet = {},
+                    fallbackItem = sheet.preview?.item,
+                ),
+            acting = sheet.open,
+            onDismissActing = sheet.onDismiss,
+            preview = sheet.preview,
+        )
+    } else if (sheet.open) {
+        RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)
     }
 }
 
@@ -99,6 +100,7 @@ private fun RequestDetailViewModel.toActions(
     onBack: () -> Unit,
     onOpenUser: (Int) -> Unit,
     siblingSheet: @Composable (SiblingSheet) -> Unit,
+    fallbackItem: RequestItem? = null,
 ): RequestDetailActions =
     RequestDetailActions(
         onBack = onBack,
@@ -107,8 +109,8 @@ private fun RequestDetailViewModel.toActions(
         onDismissReport = ::dismissReport,
         onApprove = { moderation.approve(requestId) },
         onRetryRequest = { moderation.retry(requestId) },
-        onDecline = { block -> (state as? RequestDetailUiState.Ready)?.let { moderation.decline(it.detail.item, block) } },
-        onRemove = { block -> (state as? RequestDetailUiState.Ready)?.let { moderation.remove(it.detail.item, block) } },
+        onDecline = { block -> ((state as? RequestDetailUiState.Ready)?.detail?.item ?: fallbackItem)?.let { moderation.decline(it, block) } },
+        onRemove = { block -> ((state as? RequestDetailUiState.Ready)?.detail?.item ?: fallbackItem)?.let { moderation.remove(it, block) } },
         onStartEdit = ::startEdit,
         siblingSheet = siblingSheet,
         onOpenUser = onOpenUser,
@@ -144,6 +146,7 @@ internal fun RequestsEntry(
     onBack: () -> Unit,
     showBack: Boolean,
     onOpen: (Int) -> Unit,
+    onOpenUser: (Int) -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -164,13 +167,9 @@ internal fun RequestsEntry(
                 onFilterChange = viewModel::setFilter,
                 onSortChange = viewModel::setSort,
                 onOpen = { item -> onOpen(item.id) },
-                onOpenActions = viewModel::openActions,
-                onDismissActions = viewModel::dismissActions,
                 onRetryLoad = viewModel::retry,
-                onApprove = viewModel.moderation::approve,
-                onRetry = viewModel.moderation::retry,
-                onDecline = viewModel.moderation::decline,
-                onRemove = viewModel.moderation::remove,
+                onChanged = viewModel::listChanged,
+                detailSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser) },
             ),
     )
 }

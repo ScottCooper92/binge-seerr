@@ -42,13 +42,14 @@ class RequestsActions(
     val onFilterChange: (RequestFilter) -> Unit,
     val onSortChange: (RequestSort) -> Unit,
     val onOpen: (RequestItem) -> Unit,
-    val onOpenActions: (RequestItem) -> Unit,
-    val onDismissActions: () -> Unit,
     val onRetryLoad: () -> Unit,
-    val onApprove: (Int) -> Unit,
-    val onRetry: (Int) -> Unit,
-    val onDecline: (RequestItem, Boolean) -> Unit,
-    val onRemove: (RequestItem, Boolean) -> Unit,
+    /** A moderation from a row's sheet finished, so the lists and counts are stale. */
+    val onChanged: () -> Unit,
+    /**
+     * A request's actions sheet. A slot because it is the request's own detail view model that backs it,
+     * so a row's sheet carries the same edit and media rows as the detail page's.
+     */
+    val detailSheet: @Composable (SiblingSheet) -> Unit,
 )
 
 /**
@@ -70,6 +71,11 @@ fun RequestsScreen(
     showBack: Boolean = true,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
+    // The request whose sheet was last opened, and whether it is up: dismissing keeps the id so a
+    // moderation's result, which lands after the sheet closes, still reaches its snackbar and the list.
+    var sheetId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var sheetOpen by rememberSaveable { mutableStateOf(false) }
+    var sheetItem by remember { mutableStateOf<RequestItem?>(null) }
     val ready = state as? RequestsUiState.Ready
     val snackbarHostState = remember { SnackbarHostState() }
     ModerationSnackbarEffect(events, snackbarHostState)
@@ -116,6 +122,11 @@ fun RequestsScreen(
                     requestsFor = requestsFor,
                     shouldRefresh = shouldRefresh,
                     actions = actions,
+                    onManage = { item ->
+                        sheetId = item.id
+                        sheetItem = item
+                        sheetOpen = true
+                    },
                     contentPadding = PaddingValues(top = pagePadding.calculateTopPadding(), bottom = padding.calculateBottomPadding()),
                 )
             }
@@ -130,15 +141,16 @@ fun RequestsScreen(
             onDismiss = { showSort = false },
         )
     }
-    ready?.actionItem?.let { item ->
-        RequestActionsSheet(
-            item = item,
-            actions = item.actions(ready.scope),
-            onApprove = { actions.onApprove(item.id) },
-            onRetry = { actions.onRetry(item.id) },
-            onDecline = { block -> actions.onDecline(item, block) },
-            onRemove = { block -> actions.onRemove(item, block) },
-            onDismiss = actions.onDismissActions,
+    sheetId?.let { id ->
+        actions.detailSheet(
+            SiblingSheet(
+                requestId = id,
+                open = sheetOpen,
+                snackbarHostState = snackbarHostState,
+                onDismiss = { sheetOpen = false },
+                onChanged = actions.onChanged,
+                preview = sheetItem?.takeIf { it.id == id }?.let { RequestPreview(it, it.actions(ready?.scope ?: ModerationScope())) },
+            ),
         )
     }
 }
@@ -155,6 +167,7 @@ private fun RequestsPage(
     requestsFor: (RequestFilter) -> Flow<PagingData<RequestItem>>,
     shouldRefresh: (RequestFilter, Int) -> Boolean,
     actions: RequestsActions,
+    onManage: (RequestItem) -> Unit,
     contentPadding: PaddingValues,
 ) {
     val lazyItems = requestsFor(filter).collectAsLazyPagingItems()
@@ -169,7 +182,7 @@ private fun RequestsPage(
         scope = state.scope,
         actingIds = state.actingIds,
         onOpen = actions.onOpen,
-        onRemove = { item -> actions.onRemove(item, false) },
+        onManage = onManage,
         // A rejected session cannot be retried past: the hub owns reconnecting.
         onReconnect = actions.onBack,
         modifier = Modifier.fillMaxSize(),

@@ -6,6 +6,7 @@ import androidx.navigation3.runtime.NavKey
 import com.binge.designsystem.PaneContent
 import io.github.scottcooper92.binge.seerr.ui.debug.DeveloperOptionsScreen
 import io.github.scottcooper92.binge.seerr.ui.debug.ManageSheetPrototypeScreen
+import io.github.scottcooper92.binge.seerr.ui.debug.RequestCardsPrototypeScreen
 
 /** The hub's entry point into developer tools, present only in a debug build. */
 internal fun debugOpenDeveloperOptions(backStack: NavBackStack<NavKey>): (() -> Unit)? = { backStack.add(DeveloperOptionsRoute) }
@@ -24,10 +25,14 @@ internal fun EntryProviderScope<NavKey>.debugDetailEntries(
             DeveloperOptionsScreen(
                 onBack = back.takeIf { showBack() },
                 onOpenManageSheetPrototype = { backStack.add(ManageSheetPrototypeRoute) },
+                onOpenRequestCardsPrototype = { backStack.add(RequestCardsPrototypeRoute) },
             )
         }
     }
     entry<ManageSheetPrototypeRoute>(metadata = DetailPane) {
         PaneContent { ManageSheetPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+    }
+    entry<RequestCardsPrototypeRoute>(metadata = DetailPane) {
+        PaneContent { RequestCardsPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
     }
 }

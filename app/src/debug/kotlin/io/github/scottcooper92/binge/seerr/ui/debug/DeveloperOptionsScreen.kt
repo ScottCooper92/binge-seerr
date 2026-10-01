@@ -26,6 +26,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 internal fun DeveloperOptionsScreen(
     onBack: (() -> Unit)?,
     onOpenManageSheetPrototype: () -> Unit,
+    onOpenRequestCardsPrototype: () -> Unit,
 ) {
     ScreenScaffold(title = stringResource(R.string.debug_developer_options), onBack = onBack) { padding ->
         Column(
@@ -46,6 +47,12 @@ internal fun DeveloperOptionsScreen(
                             label = stringResource(R.string.proto_manage_sheet_title),
                             detail = stringResource(R.string.proto_manage_sheet_detail),
                             onClick = onOpenManageSheetPrototype,
+                        ),
+                        SettingsRow(
+                            icon = Icons.Filled.ViewAgenda,
+                            label = stringResource(R.string.proto_request_cards_title),
+                            detail = stringResource(R.string.proto_request_cards_detail),
+                            onClick = onOpenRequestCardsPrototype,
                         ),
                     ),
             )

@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -10,10 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,11 +23,9 @@ import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
@@ -182,100 +175,5 @@ internal fun DownloadRow(download: DetailDownload) {
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_xs)))
             Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    }
-}
-
-/**
- * Every request against this title — Seerr allows more than one, e.g. declined and requested
- * again later — this page's own first, then the others. Dropped entirely when this is the only one.
- * Tapping any row, this page's own included, opens that request's actions in a sheet.
- *
- * [MediaRecord.canClearData]'s note is surfaced here rather than only in the manage sheet: another
- * request being visible is exactly where a user would want to know that clearing data removes
- * every request for the title, this one and the ones listed above it.
- */
-@Composable
-internal fun RequestSummaryRows(
-    detail: RequestDetail,
-    onOpen: (Int) -> Unit,
-) {
-    if (detail.siblings.isEmpty()) return
-    SectionHeader(title = stringResource(R.string.request_summaries_title))
-    detail.summaries().forEach { summary -> RequestSummaryRow(summary, onClick = { onOpen(summary.id) }) }
-    if (detail.media?.canClearData == true) {
-        Text(
-            stringResource(R.string.request_siblings_clear_data_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier =
-                Modifier.fillMaxWidth().padding(
-                    horizontal = resolvedContentInset(),
-                    vertical = dimensionResource(DesR.dimen.padding_s),
-                ),
-        )
-    }
-}
-
-@Composable
-private fun RequestSummaryRow(
-    summary: RequestSummary,
-    onClick: () -> Unit,
-) {
-    val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(
-                    horizontal = resolvedContentInset(),
-                    vertical = dimensionResource(DesR.dimen.padding_s),
-                ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RequestStateChip(status = summary.status ?: SeerrRequestStatusCode.Pending)
-                if (summary.is4k) {
-                    Spacer(Modifier.width(gap))
-                    Text(
-                        stringResource(R.string.settings_service_4k),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (summary.seasonNumbers.isNotEmpty()) {
-                    Spacer(Modifier.width(gap))
-                    Text(
-                        pluralStringResource(
-                            R.plurals.requests_seasons,
-                            summary.seasonNumbers.size,
-                            summary.seasonNumbers.joinToString(", "),
-                        ),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-            Spacer(Modifier.height(gap))
-            Text(
-                listOfNotNull(
-                    summary.requestedBy ?: stringResource(R.string.requests_requester_unknown),
-                    formatRelativeOrAbsolute(summary.requestedAtMillis),
-                ).joinToString(stringResource(R.string.hub_meta_separator)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_s)))
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }

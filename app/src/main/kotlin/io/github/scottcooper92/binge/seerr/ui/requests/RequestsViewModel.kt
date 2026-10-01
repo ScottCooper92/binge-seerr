@@ -92,10 +92,13 @@ class RequestsViewModel
                 connection = connection,
                 analytics = analytics,
                 crashBreadcrumbs = crashBreadcrumbs,
-            ) {
-                countsRefresh.value++
-                listVersionState.update { it + 1 }
-            }
+            ) { listChanged() }
+
+        /** A moderation finished, here or in a row's sheet: refetch the counts and stale the lists. */
+        fun listChanged() {
+            countsRefresh.value++
+            listVersionState.update { it + 1 }
+        }
 
         /** True at most once per version per filter, so a freshly composed, current page does not blank-refresh. */
         fun shouldRefresh(

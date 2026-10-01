@@ -53,6 +53,7 @@ internal fun RequestActionsSheet(
     media: MediaRecord? = null,
     mediaActions: ManageMediaActions? = null,
     onMarkStatus: (is4k: Boolean) -> Unit = {},
+    onOpenUser: ((Int) -> Unit)? = null,
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -84,6 +85,13 @@ internal fun RequestActionsSheet(
                     onMarkStatus = onMarkStatus,
                     onDeleteFiles = { is4k -> pending = Pending.DeleteFiles(is4k) },
                     onClearData = { pending = Pending.ClearData },
+                    onOpenUser =
+                        onOpenUser?.let { open ->
+                            { id ->
+                                onDismiss()
+                                open(id)
+                            }
+                        },
                 ),
             blockTitle = blockTitle,
             onBlockTitleChange = { blockTitle = it },
