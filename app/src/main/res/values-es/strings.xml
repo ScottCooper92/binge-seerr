@@ -683,6 +683,8 @@
     <string name="server_settings_force_ipv4">Preferir IPv4</string>
     <string name="server_settings_proxy">Proxy de salida</string>
     <string name="server_settings_proxy_enabled">Usar un proxy</string>
+    <string name="server_settings_proxy_user_missing">Introduce también el usuario del proxy</string>
+    <string name="server_settings_proxy_password_missing">Introduce también la contraseña del proxy</string>
     <string name="server_settings_proxy_bypass">No usarlo para</string>
     <string name="server_settings_proxy_bypass_hint">Hosts para los que no se usa el proxy, separados por comas</string>
     <string name="server_settings_proxy_bypass_local">No usarlo para direcciones locales</string>

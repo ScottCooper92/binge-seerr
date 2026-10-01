@@ -23,7 +23,7 @@ data class NetworkForm(
     val valid: Boolean get() = proxy?.valid != false && dnsCache?.valid != false
 }
 
-/** The outbound proxy: reachable only while it has a host and a port in range, if it is on. */
+/** The outbound proxy: reachable only while it has a host and a port in range, with its credentials as a pair, if it is on. */
 data class ProxyForm(
     val enabled: Boolean = false,
     val host: String = "",
@@ -34,7 +34,13 @@ data class ProxyForm(
     val bypassFilter: String = "",
     val bypassLocalAddresses: Boolean = true,
 ) {
-    val valid: Boolean get() = !enabled || hostAndPortValid(host, port)
+    val addressValid: Boolean get() = hostAndPortValid(host, port)
+
+    /** The username and password go together: a proxy that is given one without the other cannot authenticate. */
+    val userMissing: Boolean get() = user.isBlank() && password.isNotEmpty()
+    val passwordMissing: Boolean get() = user.isNotBlank() && password.isEmpty()
+
+    val valid: Boolean get() = !enabled || (addressValid && !userMissing && !passwordMissing)
 }
 
 /** The DNS cache and the TTL bounds it forces; a blank bound is none. */
