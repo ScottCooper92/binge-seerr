@@ -110,7 +110,7 @@ private fun ProxyFields(
             enabled = editable,
             keyboardType = KeyboardType.Number,
             placeholder = stringResource(R.string.placeholder_port_proxy),
-            isError = proxy.enabled && !proxy.valid && proxy.host.isNotBlank(),
+            isError = proxy.enabled && !proxy.addressValid && proxy.host.isNotBlank(),
         ) { value -> onEdit { it.copy(port = value) } }
         EditorToggleRow(
             editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), proxy.useSsl, editable) { value ->
@@ -123,6 +123,8 @@ private fun ProxyFields(
             icon = Icons.Filled.Person,
             enabled = editable,
             autoCorrect = false,
+            isError = proxy.enabled && proxy.userMissing,
+            supporting = stringResource(R.string.server_settings_proxy_user_missing).takeIf { proxy.enabled && proxy.userMissing },
         ) { value ->
             onEdit {
                 it.copy(user = value)
@@ -134,6 +136,9 @@ private fun ProxyFields(
             icon = Icons.Filled.Key,
             enabled = editable,
             secret = true,
+            isError = proxy.enabled && proxy.passwordMissing,
+            supporting =
+                stringResource(R.string.server_settings_proxy_password_missing).takeIf { proxy.enabled && proxy.passwordMissing },
         ) { value ->
             onEdit { it.copy(password = value) }
         }
@@ -188,8 +193,17 @@ private fun DnsCacheFields(
             icon = Icons.Filled.HourglassFull,
             enabled = editable,
             keyboardType = KeyboardType.Number,
-            isError = cache.enabled && !cache.maxTtl.isTtl(),
-            supporting = stringResource(R.string.server_settings_dns_ttl_hint),
+            isError = cache.enabled && (!cache.maxTtl.isTtl() || !cache.orderValid),
+            supporting =
+                stringResource(
+                    if (cache.enabled &&
+                        !cache.orderValid
+                    ) {
+                        R.string.server_settings_dns_ttl_order
+                    } else {
+                        R.string.server_settings_dns_ttl_hint
+                    },
+                ),
         ) { value -> onEdit { it.copy(maxTtl = value) } }
     }
 }

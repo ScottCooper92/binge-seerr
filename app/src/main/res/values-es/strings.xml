@@ -37,7 +37,10 @@
     <string name="connected_hint">Abre Binge y permite esta app en Cuenta → Integraciones. Las peticiones que hagas allí irán a este servidor.</string>
     <string name="hub_binge_not_installed_title">¿Buscas un explorador de contenido?</string>
     <string name="hub_binge_not_installed_detail">Prueba Binge, funciona con esta app.</string>
-    <string name="hub_binge_connected_hint">Pide títulos para este servidor directamente desde las pantallas de Descubrir y búsqueda de Binge.</string>
+    <string name="hub_binge_get">Obtener Binge</string>
+    <string name="hub_binge_connect_hint">Conecta Binge a esta app para enviar y gestionar peticiones directamente desde Binge</string>
+    <string name="hub_binge_connected_hint">Conectado a Binge, pide títulos y gestiona peticiones directamente desde allí</string>
+    <string name="hub_binge_open">Abrir Binge</string>
     <string name="hub_health_connected">Conectado</string>
     <string name="hub_update_available">Actualización disponible</string>
     <string name="hub_stat_pending">Pendientes</string>
@@ -208,6 +211,7 @@
     <string name="issues_empty_open">No hay incidencias abiertas. Nada requiere tu atención.</string>
     <string name="issues_empty_resolved">Aún no hay incidencias resueltas.</string>
     <string name="issues_empty_all">No se ha informado de ninguna incidencia en tu servidor.</string>
+    <string name="requests_refresh_failed">Mostrando las últimas solicitudes conocidas. Toca para actualizar.</string>
     <string name="issues_refresh_failed">Mostrando las últimas incidencias conocidas. Toca para actualizar.</string>
     <string name="issue_state_open">Abierta</string>
     <string name="issue_state_resolved">Resuelta</string>
@@ -636,6 +640,8 @@
     <string name="server_settings_logs_search">Buscar en el registro</string>
     <string name="server_settings_logs_empty">No hay nada registrado en este nivel</string>
     <string name="server_settings_logs_copy">Copiar la línea</string>
+    <string name="server_settings_logs_expand">Mostrar detalles</string>
+    <string name="server_settings_logs_collapse">Ocultar detalles</string>
     <string name="server_settings_log_debug">Depuración</string>
     <string name="server_settings_log_info">Información</string>
     <string name="server_settings_log_warn">Aviso</string>
@@ -680,6 +686,8 @@
     <string name="server_settings_force_ipv4">Preferir IPv4</string>
     <string name="server_settings_proxy">Proxy de salida</string>
     <string name="server_settings_proxy_enabled">Usar un proxy</string>
+    <string name="server_settings_proxy_user_missing">Introduce también el usuario del proxy</string>
+    <string name="server_settings_proxy_password_missing">Introduce también la contraseña del proxy</string>
     <string name="server_settings_proxy_bypass">No usarlo para</string>
     <string name="server_settings_proxy_bypass_hint">Hosts para los que no se usa el proxy, separados por comas</string>
     <string name="server_settings_proxy_bypass_local">No usarlo para direcciones locales</string>
@@ -688,6 +696,7 @@
     <string name="server_settings_dns_min_ttl">TTL mínimo</string>
     <string name="server_settings_dns_max_ttl">TTL máximo</string>
     <string name="server_settings_dns_ttl_hint">Segundos; en blanco para conservar el de la respuesta</string>
+    <string name="server_settings_dns_ttl_order">El máximo no puede ser menor que el mínimo</string>
     <string name="server_settings_metadata">Proveedores de metadatos</string>
     <string name="server_settings_metadata_caption">De dónde vienen los detalles de series y anime</string>
     <string name="server_settings_metadata_tv">Series</string>

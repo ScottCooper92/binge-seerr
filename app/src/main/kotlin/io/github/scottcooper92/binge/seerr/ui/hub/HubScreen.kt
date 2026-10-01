@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,22 +14,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Movie
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
-import com.binge.designsystem.component.SettingsRowDestination
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
@@ -47,8 +45,9 @@ class HubActions(
     /** The sign-in form on the saved server, for a session it rejected. */
     val onReconnect: () -> Unit,
     val onDisconnect: () -> Unit,
-    /** Debug builds only: the hub's last row, into the developer options. Null hides the row. */
-    val onOpenDeveloperOptions: (() -> Unit)? = null,
+    val onDismissBingeHint: () -> Unit,
+    /** Debug builds only: the rows of the hub's last section. Empty hides the section. */
+    val developerRows: List<DeveloperRow> = emptyList(),
 )
 
 /**
@@ -125,63 +124,81 @@ private fun Dashboard(
             modifier = Modifier.padding(inset),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
-            BingeTile(state.bingeStatus)
+            BingeTile(state.bingeStatus, state.bingeHintDismissed, actions.onDismissBingeHint)
             DisconnectButton(actions.onDisconnect)
         }
-        actions.onOpenDeveloperOptions?.let { open -> DeveloperGroup(open, inset) }
+        if (actions.developerRows.isNotEmpty()) DeveloperGroup(actions.developerRows, inset)
     }
 }
 
 /**
- * Binge's relationship to this device, replacing the old static hint (#469): a row that opens the
- * Play Store where Binge is missing, or the hint that already existed for the other two states —
- * neither needs a dismiss, since installing or connecting retires the message on its own.
+ * Binge's relationship to this device, replacing the old static hint (#469): a hint for each of
+ * the three states, each with the button that takes the user to the next step and a close control.
  */
 @Composable
-private fun BingeTile(status: BingeStatus) {
+internal fun BingeTile(
+    status: BingeStatus,
+    hintDismissed: Boolean,
+    onDismissHint: () -> Unit,
+) {
+    if (hintDismissed) return
+    val context = LocalContext.current
     when (status) {
-        BingeStatus.NotInstalled -> {
-            val context = LocalContext.current
-            SettingsGroup(
-                title = null,
-                rows =
-                    listOf(
-                        SettingsRow(
-                            icon = Icons.Filled.Movie,
-                            label = stringResource(R.string.hub_binge_not_installed_title),
-                            detail = stringResource(R.string.hub_binge_not_installed_detail),
-                            destination = SettingsRowDestination.External,
-                            onClick = { context.openBingeOnPlayStore() },
-                        ),
-                    ),
+        BingeStatus.NotInstalled ->
+            BingeHintCard(
+                text = "${stringResource(
+                    R.string.hub_binge_not_installed_title,
+                )} ${stringResource(R.string.hub_binge_not_installed_detail)}",
+                actionLabel = stringResource(R.string.hub_binge_get),
+                onAction = { context.openBingeOnPlayStore() },
+                onDismiss = onDismissHint,
             )
-        }
-        BingeStatus.NotConnected -> HintCard(text = stringResource(R.string.connected_hint))
-        BingeStatus.Connected -> HintCard(text = stringResource(R.string.hub_binge_connected_hint))
+        BingeStatus.NotConnected ->
+            BingeHintCard(
+                text = stringResource(R.string.hub_binge_connect_hint),
+                actionLabel = stringResource(R.string.hub_binge_open),
+                onAction = { context.openBinge() },
+                onDismiss = onDismissHint,
+            )
+        BingeStatus.Connected ->
+            BingeHintCard(
+                text = stringResource(R.string.hub_binge_connected_hint),
+                actionLabel = stringResource(R.string.hub_binge_open),
+                onAction = { context.openBinge() },
+                onDismiss = onDismissHint,
+            )
     }
 }
 
-/** Debug builds only, after everything else: the way into the developer options. */
+/** Debug builds only, after everything else: the developer tools, one row each. */
 @Composable
 private fun DeveloperGroup(
-    onOpen: () -> Unit,
+    developerRows: List<DeveloperRow>,
     inset: Dp,
 ) {
     SectionHeader(title = stringResource(R.string.debug_group_developer))
     SettingsGroup(
         title = null,
         rows =
-            listOf(
+            developerRows.map { row ->
                 SettingsRow(
-                    icon = Icons.Filled.DeveloperMode,
-                    label = stringResource(R.string.debug_developer_options),
-                    detail = stringResource(R.string.debug_developer_options_detail),
-                    onClick = onOpen,
-                ),
-            ),
+                    icon = row.icon,
+                    label = stringResource(row.label),
+                    detail = stringResource(row.detail),
+                    onClick = row.onClick,
+                )
+            },
         modifier = Modifier.padding(start = inset, end = inset, bottom = inset),
     )
 }
+
+/** One row of the debug-only developer section; the label and detail are resources so a release build never names them. */
+class DeveloperRow(
+    val icon: ImageVector,
+    @StringRes val label: Int,
+    @StringRes val detail: Int,
+    val onClick: () -> Unit,
+)
 
 /** Server gone (retry), the dashboard not loaded yet (retry), or the session rejected (reconnect). */
 @Composable

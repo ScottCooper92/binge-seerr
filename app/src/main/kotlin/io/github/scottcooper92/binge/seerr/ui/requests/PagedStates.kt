@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.LoadState
+import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -32,6 +34,30 @@ internal fun PagedRefreshError(
         error = classified,
         modifier = modifier,
         onRetry = if (classified == SeerrError.Unauthorized) onReconnect else onRetry,
+    )
+}
+
+/** A refresh that failed behind rows still on screen: [messageRes] says the rows are stale, and a tap retries or reconnects. */
+@Composable
+internal fun RefreshFailedLine(
+    error: Throwable,
+    @StringRes messageRes: Int,
+    onRetry: () -> Unit,
+    onReconnect: () -> Unit,
+) {
+    val rejected = error.toSeerrError() == SeerrError.Unauthorized
+    Text(
+        text = stringResource(if (rejected) R.string.requests_reconnect else messageRes),
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (rejected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { if (rejected) onReconnect() else onRetry() }
+                .padding(
+                    horizontal = resolvedContentInset(),
+                    vertical = dimensionResource(DesR.dimen.padding_s),
+                ),
     )
 }
 

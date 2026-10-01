@@ -98,7 +98,7 @@ class NetworkViewModelTest {
             assertFalse(vm.awaitReady().draft.valid)
             vm.edit {
                 it.copy(
-                    proxy = it.proxy?.copy(host = "proxy.local", port = "3128", user = "me"),
+                    proxy = it.proxy?.copy(host = "proxy.local", port = "3128", user = "me", password = "secret"),
                     dnsCache = it.dnsCache?.copy(maxTtl = "600"),
                 )
             }
