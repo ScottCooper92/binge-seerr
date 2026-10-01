@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.ui.LanguageCodeShapes
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 
@@ -58,6 +59,13 @@ data class GeneralSettings(
     val canEditQuotas: Boolean = false,
     val canEditEmail: Boolean = false,
 ) {
+    /** Blank is "use the server's"; anything else has to have the shape of its code. */
+    val localeValid: Boolean get() = locale.isBlank() || LanguageCodeShapes.isLocale(locale)
+    val regionValid: Boolean get() = region.isBlank() || LanguageCodeShapes.isRegion(region)
+    val originalLanguageValid: Boolean get() = originalLanguage.isBlank() || LanguageCodeShapes.isOriginalLanguage(originalLanguage)
+
+    val valid: Boolean get() = quotasValid && localeValid && regionValid && originalLanguageValid
+
     /** A quota field is a whole number or blank; anything else is not a change the server would take. */
     val quotasValid: Boolean
         get() = listOf(movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays).all { it.isBlank() || (it.toIntOrNull() ?: -1) >= 0 }
