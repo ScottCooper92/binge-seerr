@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.DetailDownload
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActions
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDestination
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
@@ -54,7 +55,8 @@ private fun seriesDetail(): RequestDetail =
                 SeasonState(number = 1, name = null, episodeCount = 8, status = SeerrMediaStatusCode.Available),
                 SeasonState(number = 2, name = null, episodeCount = SEASON_TWO_EPISODES, status = SeerrMediaStatusCode.Processing),
             ),
-        destination = null,
+        destination =
+            RequestDestination(serverName = "Sonarr", profileName = "HD-1080p", rootFolder = "/tv", tags = listOf("kids", "4k-hdr")),
         downloads = listOf(DetailDownload(title = "The Bear S02E05", fraction = 0.42f, totalBytes = 2_400_000_000L, etaMinutes = 18)),
         mediaId = 501,
         canReportIssue = false,

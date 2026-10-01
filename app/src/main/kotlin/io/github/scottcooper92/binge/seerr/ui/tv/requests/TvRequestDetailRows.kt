@@ -28,6 +28,7 @@ import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.DetailDownload
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDestination
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.SeasonState
 import io.github.scottcooper92.binge.seerr.ui.requests.pluralStringResourceEpisodes
@@ -49,6 +50,7 @@ import com.binge.designsystem.R as DesR
 internal fun TvRequestDetailFacts(
     item: RequestItem,
     hasSeasons: Boolean,
+    destination: RequestDestination?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xxs))) {
         val chip = item.statusChip()
@@ -81,6 +83,21 @@ internal fun TvRequestDetailFacts(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        destination?.let { TvRequestDestination(it) }
+    }
+}
+
+/** Where it was sent, then its tags, each line dropped when the server named nothing for it. */
+@Composable
+private fun TvRequestDestination(destination: RequestDestination) {
+    val where =
+        listOfNotNull(destination.serverName, destination.profileName, destination.rootFolder)
+            .joinToString(stringResource(R.string.hub_meta_separator))
+    listOfNotNull(
+        where.takeIf { it.isNotEmpty() },
+        destination.tags.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.request_tags_line, it.joinToString(", ")) },
+    ).forEach {
+        Text(text = it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

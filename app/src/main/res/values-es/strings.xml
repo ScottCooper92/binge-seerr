@@ -123,6 +123,7 @@
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>
     <string name="request_tags">Etiquetas</string>
+    <string name="request_tags_line">Etiquetas: %1$s</string>
     <string name="request_seasons">Temporadas solicitadas</string>
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta solicitud puede diferir a continuación.</string>
