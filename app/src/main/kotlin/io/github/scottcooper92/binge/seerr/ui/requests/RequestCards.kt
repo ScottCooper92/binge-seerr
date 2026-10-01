@@ -38,6 +38,7 @@ import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
@@ -147,7 +148,7 @@ internal fun RequestSummaryGroup(
                             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
                             summary.seasonNumbers
                                 .takeIf { it.isNotEmpty() }
-                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.joinToString(", ")) },
+                                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
                         ).joinToString(stringResource(R.string.hub_meta_separator)),
                     trailingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -200,7 +201,7 @@ private fun CardInfoRows(
         listOfNotNull(
             summary.seasonNumbers
                 .takeIf { it.isNotEmpty() }
-                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.joinToString(", ")) },
+                ?.let { pluralStringResource(R.plurals.requests_seasons, it.size, it.formatRanges()) },
             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
         ).joinToString(stringResource(R.string.hub_meta_separator))
     if (asked.isNotEmpty()) {
