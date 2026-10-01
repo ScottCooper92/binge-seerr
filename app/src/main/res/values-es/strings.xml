@@ -688,6 +688,7 @@
     <string name="server_settings_dns_min_ttl">TTL mínimo</string>
     <string name="server_settings_dns_max_ttl">TTL máximo</string>
     <string name="server_settings_dns_ttl_hint">Segundos; en blanco para conservar el de la respuesta</string>
+    <string name="server_settings_dns_ttl_order">El máximo no puede ser menor que el mínimo</string>
     <string name="server_settings_metadata">Proveedores de metadatos</string>
     <string name="server_settings_metadata_caption">De dónde vienen los detalles de series y anime</string>
     <string name="server_settings_metadata_tv">Series</string>

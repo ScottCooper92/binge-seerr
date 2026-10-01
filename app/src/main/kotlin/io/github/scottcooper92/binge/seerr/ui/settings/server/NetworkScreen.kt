@@ -188,8 +188,17 @@ private fun DnsCacheFields(
             icon = Icons.Filled.HourglassFull,
             enabled = editable,
             keyboardType = KeyboardType.Number,
-            isError = cache.enabled && !cache.maxTtl.isTtl(),
-            supporting = stringResource(R.string.server_settings_dns_ttl_hint),
+            isError = cache.enabled && (!cache.maxTtl.isTtl() || !cache.orderValid),
+            supporting =
+                stringResource(
+                    if (cache.enabled &&
+                        !cache.orderValid
+                    ) {
+                        R.string.server_settings_dns_ttl_order
+                    } else {
+                        R.string.server_settings_dns_ttl_hint
+                    },
+                ),
         ) { value -> onEdit { it.copy(maxTtl = value) } }
     }
 }
