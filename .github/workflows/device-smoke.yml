@@ -98,6 +98,14 @@ jobs:
           fi
           echo "/dev/kvm present and writable."
 
+      # restore-avd-cache and save-avd-cache read `env.ANDROID_SDK_ROOT` in their `path:` list. That's
+      # the Actions expression context, which only ever comes from a declared `env:` or a
+      # $GITHUB_ENV write - never from the runner image's own OS environment, so the SDK path the
+      # image sets up front doesn't reach it on its own. Export it once, here, for both composite
+      # actions to read.
+      - name: Export ANDROID_SDK_ROOT for the AVD cache actions
+        run: echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-$ANDROID_HOME}" >> "$GITHUB_ENV"
+
       # A miss is not a failure: the setup step below falls back to the full download and boot.
       - name: Restore AVD cache
         uses: ./.github/actions/restore-avd-cache
