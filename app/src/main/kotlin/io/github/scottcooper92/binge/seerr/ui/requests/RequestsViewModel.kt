@@ -75,7 +75,6 @@ class RequestsViewModel
         private val selectedSort = MutableStateFlow(RequestSort.Added)
         private val refreshTrigger = MutableStateFlow(0)
         private val countsRefresh = MutableStateFlow(0)
-        private val actionItem = MutableStateFlow<RequestItem?>(null)
         private val listVersionState = MutableStateFlow(0)
 
         /**
@@ -185,8 +184,7 @@ class RequestsViewModel
                 counts,
                 scope,
                 moderation.actingIds,
-                actionItem,
-            ) { (filter, sort, version), counts, scope, acting, actionItem ->
+            ) { (filter, sort, version), counts, scope, acting ->
                 when (scope) {
                     ScopeState.Resolving -> RequestsUiState.Loading
                     is ScopeState.Failed -> RequestsUiState.Error(scope.error)
@@ -198,18 +196,9 @@ class RequestsViewModel
                             scope = scope.scope.moderation,
                             actingIds = acting,
                             listVersion = version,
-                            actionItem = actionItem,
                         )
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, RequestsUiState.Loading)
-
-        fun openActions(item: RequestItem) {
-            actionItem.value = item
-        }
-
-        fun dismissActions() {
-            actionItem.value = null
-        }
 
         fun setFilter(filter: RequestFilter) {
             selectedFilter.value = filter

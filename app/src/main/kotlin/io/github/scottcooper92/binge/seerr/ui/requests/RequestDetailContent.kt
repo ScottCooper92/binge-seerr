@@ -106,9 +106,9 @@ internal fun RequestSections(detail: RequestDetail) {
 
 /**
  * A read-out, not a destination: there is no per-season page in this app, so this deliberately does
- * not take the shape of this app's tappable rows (a text column with a status chip pinned to the
- * row's far trailing edge — [RequestSummaryRow] below is that shape, and it opens something). The chip
- * instead sits inline with the season's own name, and there is no leading visual and no chevron.
+ * not take the shape of this app's tappable rows (an icon box and title, opening something — see
+ * [RequestSummaryGroup]'s `SettingsRow`s). The chip instead sits inline with the season's own name,
+ * and there is no leading visual and no chevron.
  */
 @Composable
 internal fun SeasonRow(season: SeasonState) {

@@ -17,20 +17,20 @@ private val SHEET_WIDTH = 411.dp
  * frame renders the content on the sheet's own container colour at a phone's width.
  */
 class IssueSheetsScreenshotTest {
-    /** The issue's overflow for a moderator: the web link and the destructive delete. */
+    /** The issue's overflow with a media server and a *arr service to jump to, alongside the web link. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun manageWithDelete() =
+    fun manageWithServiceLinks() =
         SheetFrame {
             IssueManageContent("Seerr", "Plex", "Radarr", onOpenWeb = {}, onOpenMediaServer = {}, onOpenService = {})
         }
 
-    /** Without the permission to delete, the web link is all there is. */
+    /** Without a media server or service URL to offer, the web link is all there is. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun manageWithoutDelete() = SheetFrame { IssueManageContent("Seerr", null, "Radarr", onOpenWeb = {}) }
+    fun manageWebLinkOnly() = SheetFrame { IssueManageContent("Seerr", null, "Radarr", onOpenWeb = {}) }
 
     @PreviewTest
     @SeerrComponentPreviews

@@ -7,7 +7,6 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 
 /**
@@ -60,7 +59,6 @@ private fun Frame(state: RequestsUiState) {
     RequestsScreen(
         state = state,
         requestsFor = { flowOf(PagingData.from(emptyList())) },
-        events = emptyFlow(),
         shouldRefresh = { _, _ -> false },
         actions =
             RequestsActions(

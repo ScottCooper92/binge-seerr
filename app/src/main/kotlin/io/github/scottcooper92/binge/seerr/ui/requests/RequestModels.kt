@@ -126,7 +126,6 @@ sealed interface RequestsUiState {
         /** Bumped after each successful moderation; the visible list reconciles in place, keeping its scroll. */
         val listVersion: Int,
         /** The request whose actions sheet is open; held here so it survives rotation. */
-        val actionItem: RequestItem? = null,
     ) : RequestsUiState
 
     /** The signed-in user could not be read, so what the list may show is unknown; retrying re-reads it. */
