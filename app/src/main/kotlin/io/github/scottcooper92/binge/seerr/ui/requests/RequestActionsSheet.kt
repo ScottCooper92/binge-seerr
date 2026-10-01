@@ -56,6 +56,9 @@ internal fun RequestActionsSheet(
     onOpenUser: ((Int) -> Unit)? = null,
     viewerId: Int? = null,
     canManageUsers: Boolean = false,
+    isLoadingDetail: Boolean = false,
+    detailError: SeerrError? = null,
+    onRetryDetail: () -> Unit = {},
 ) {
     var blockTitle by rememberSaveable { mutableStateOf(false) }
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
@@ -69,9 +72,12 @@ internal fun RequestActionsSheet(
                     media = media,
                     viewerId = viewerId,
                     canManageUsers = canManageUsers,
+                    isLoadingDetail = isLoadingDetail,
+                    detailError = detailError,
                 ),
             callbacks =
                 RequestSheetCallbacks(
+                    onRetryDetail = onRetryDetail,
                     onApprove = {
                         onApprove()
                         onDismiss()

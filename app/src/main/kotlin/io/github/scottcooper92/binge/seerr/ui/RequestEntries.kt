@@ -72,7 +72,7 @@ private fun SiblingRequestSheet(
         }
     }
     val page = state
-    if (page is RequestDetailUiState.Ready || (page is RequestDetailUiState.Loading && sheet.preview != null)) {
+    if (page is RequestDetailUiState.Ready || sheet.preview != null) {
         RequestManagementSheets(
             state = page as? RequestDetailUiState.Ready,
             actions =
@@ -87,6 +87,7 @@ private fun SiblingRequestSheet(
             acting = sheet.open,
             onDismissActing = sheet.onDismiss,
             preview = sheet.preview,
+            loadState = page,
         )
     } else if (sheet.open) {
         RequestSheetPlaceholder(state = page, onRetry = viewModel::reload, onDismiss = sheet.onDismiss)

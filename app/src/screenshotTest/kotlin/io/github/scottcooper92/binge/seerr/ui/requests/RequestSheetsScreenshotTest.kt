@@ -24,6 +24,18 @@ class RequestSheetsScreenshotTest {
     @Composable
     fun actionsPending() = SheetFrame { ActionsContent(pendingDetail()) }
 
+    /** Opened from a list row before its detail has landed (#565): the preview rows under a progress bar. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsLoadingDetail() = SheetFrame { ActionsContent(pendingDetail(), isLoadingDetail = true) }
+
+    /** The same sheet when the detail failed: the bar is gone and one line offers a retry. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun actionsDetailFailed() = SheetFrame { ActionsContent(pendingDetail(), detailError = SeerrError.Unreachable) }
+
     /** Settled: the media half leads, and the request half is what is left of it. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -62,7 +74,11 @@ class RequestSheetsScreenshotTest {
 }
 
 @Composable
-private fun ActionsContent(detail: RequestDetail) {
+private fun ActionsContent(
+    detail: RequestDetail,
+    isLoadingDetail: Boolean = false,
+    detailError: SeerrError? = null,
+) {
     RequestActionsContent(
         model =
             RequestSheetModel(
@@ -70,6 +86,8 @@ private fun ActionsContent(detail: RequestDetail) {
                 actions = detail.actions,
                 canEdit = detail.canEdit,
                 media = detail.media,
+                isLoadingDetail = isLoadingDetail,
+                detailError = detailError,
             ),
         callbacks = RequestSheetCallbacks(onApprove = {}, onRetry = {}, onDecline = {}, onRemove = {}),
         blockTitle = false,

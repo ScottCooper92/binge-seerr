@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -27,14 +28,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import com.binge.designsystem.R as DesR
 
 /**
@@ -50,6 +54,10 @@ internal class RequestSheetModel(
     val media: MediaRecord? = null,
     val viewerId: Int? = null,
     val canManageUsers: Boolean = false,
+    /** The request's own detail is still loading, so the Request-by and Media rows have not arrived. */
+    val isLoadingDetail: Boolean = false,
+    /** That load failed, so those rows are missing and a retry is offered. */
+    val detailError: SeerrError? = null,
 )
 
 /** What its rows call back into, bundled so the content's parameter list stays readable. */
@@ -63,6 +71,7 @@ internal class RequestSheetCallbacks(
     val onDeleteFiles: (is4k: Boolean) -> Unit = {},
     val onClearData: () -> Unit = {},
     val onOpenUser: ((Int) -> Unit)? = null,
+    val onRetryDetail: () -> Unit = {},
 )
 
 /**
@@ -78,9 +87,22 @@ internal fun RequestActionsContent(
     onBlockTitleChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (model.isLoadingDetail) LinearProgressIndicator(Modifier.fillMaxWidth())
+        RequestActionsBody(model, callbacks, blockTitle, onBlockTitleChange)
+    }
+}
+
+@Composable
+private fun RequestActionsBody(
+    model: RequestSheetModel,
+    callbacks: RequestSheetCallbacks,
+    blockTitle: Boolean,
+    onBlockTitleChange: (Boolean) -> Unit,
+) {
     Column(
         modifier =
-            modifier
+            Modifier
                 .fillMaxWidth()
                 .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
                 .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
@@ -91,6 +113,7 @@ internal fun RequestActionsContent(
                 callbacks.onOpenUser != null && canOpenUser(it, model.viewerId, model.canManageUsers)
             }
         RequestSheetHeader(model.item, showRequester = requesterId == null)
+        model.detailError?.let { DetailLoadFailure(it, callbacks.onRetryDetail) }
         DecisionBar(model.actions, blockTitle, callbacks)
         val requestRows =
             listOfNotNull(requesterId?.let { id -> requesterRow(model.item) { callbacks.onOpenUser?.invoke(id) } }) +
@@ -102,6 +125,23 @@ internal fun RequestActionsContent(
                 .orEmpty()
         if (requestRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
         if (mediaRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
+    }
+}
+
+/** One line saying the rest of the sheet did not load, with a retry; the preview rows stay usable. */
+@Composable
+private fun DetailLoadFailure(
+    error: SeerrError,
+    onRetry: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = stringResource(error.messageRes()),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        BingeTextButton(label = stringResource(R.string.action_try_again), onClick = onRetry)
     }
 }
 

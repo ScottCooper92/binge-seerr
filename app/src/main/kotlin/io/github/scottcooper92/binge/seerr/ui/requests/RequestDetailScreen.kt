@@ -160,6 +160,9 @@ private fun Ready(
  * What one request's actions can open: the actions sheet while [acting], the editor while it has state,
  * and the media status sheet the actions sheet asks for. Shared by this page's own request and by any
  * other request opened over it, so the two cannot drift.
+ *
+ * [loadState] is the detail's own state for a sheet opened from a [preview]: while it has not landed the
+ * sheet shows a progress bar, and if it failed, a retry in place of the bar.
  */
 @Composable
 internal fun RequestManagementSheets(
@@ -168,8 +171,10 @@ internal fun RequestManagementSheets(
     acting: Boolean,
     onDismissActing: () -> Unit,
     preview: RequestPreview? = null,
+    loadState: RequestDetailUiState? = null,
 ) {
     val detail = state?.detail
+    val detailError = (loadState as? RequestDetailUiState.Error)?.error
     // Which instance the status sheet is marking, keyed by is4k because that is what tells the
     // two apart — and because a Boolean survives process death where MediaInstance would not.
     var marking by rememberSaveable { mutableStateOf<Boolean?>(null) }
@@ -192,6 +197,9 @@ internal fun RequestManagementSheets(
             onOpenUser = actions.onOpenUser,
             viewerId = detail?.viewerId,
             canManageUsers = detail?.canManageUsers == true,
+            isLoadingDetail = detail == null && detailError == null,
+            detailError = detailError,
+            onRetryDetail = actions.onRetry,
         )
     }
     state?.edit?.let { edit -> EditRequestSheet(item = state.detail.item, edit = edit, actions = actions.edit) }
