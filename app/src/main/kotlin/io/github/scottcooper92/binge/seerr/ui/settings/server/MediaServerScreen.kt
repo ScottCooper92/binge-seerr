@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeOutlinedButton
@@ -42,6 +43,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
+import io.github.scottcooper92.binge.seerr.ui.users.settings.imeActionIf
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -176,6 +178,7 @@ private fun LinkFields(
         placeholder = externalUrlPlaceholder(draft.kind),
         supporting = stringResource(R.string.server_settings_external_hint),
         isError = !draft.externalUrlValid,
+        imeAction = imeActionIf(last = draft.forgotPasswordUrl == null && draft.apiKey == null),
     ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
     draft.forgotPasswordUrl?.let { url ->
         EditorTextField(
@@ -185,6 +188,7 @@ private fun LinkFields(
             enabled = enabled,
             keyboardType = KeyboardType.Uri,
             placeholder = stringResource(R.string.placeholder_url_https),
+            imeAction = imeActionIf(last = draft.apiKey == null),
         ) { value ->
             actions.onEdit { it.copy(forgotPasswordUrl = value) }
         }
@@ -196,6 +200,7 @@ private fun LinkFields(
             icon = Icons.Filled.Key,
             enabled = enabled,
             secret = true,
+            imeAction = ImeAction.Done,
         ) { value ->
             actions.onEdit { it.copy(apiKey = value) }
         }

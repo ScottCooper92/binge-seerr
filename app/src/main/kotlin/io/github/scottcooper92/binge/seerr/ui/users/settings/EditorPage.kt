@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
@@ -33,13 +35,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -230,6 +237,12 @@ internal fun EditorEventSnackbarEffect(
  *
  * A [secret] field carries its own reveal toggle, so a long pasted key can be checked before it is
  * saved. It is not optional: a masked field with no way out of it is the thing being fixed.
+ *
+ * Any other editable field shows a clear button while it is focused and non-empty.
+ *
+ * [imeAction] is Next, which moves focus on, so the last field of a form passes Done. Done drops the
+ * keyboard and then runs [onDone], where submitting is the sensible next step. A multi-line field
+ * keeps the keyboard's Enter, whatever [imeAction] says.
  */
 @Composable
 internal fun EditorTextField(
@@ -250,12 +263,26 @@ internal fun EditorTextField(
     /** With [onToggleReveal], a masked field's reveal state is the caller's rather than the field's own. */
     revealed: Boolean? = null,
     onToggleReveal: (() -> Unit)? = null,
+    imeAction: ImeAction = ImeAction.Next,
+    onDone: (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+    var focused by remember { mutableStateOf(false) }
     // remember rather than rememberSaveable: a field left revealed comes back masked after the app
     // is backgrounded, which is a small leak closed for no loss.
     var localRevealed by remember { mutableStateOf(false) }
     val shown = revealed ?: localRevealed
+    val trailing: (@Composable () -> Unit)? =
+        when {
+            secret -> {
+                { RevealToggle(revealed = shown, enabled = enabled) { onToggleReveal?.invoke() ?: run { localRevealed = !localRevealed } } }
+            }
+            focused && enabled && !readOnly && value.isNotEmpty() -> {
+                { ClearButton { onValueChange("") } }
+            }
+            else -> null
+        }
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -276,23 +303,46 @@ internal fun EditorTextField(
                     )
                 }
             },
-        trailingIcon =
-            if (secret) {
-                { RevealToggle(revealed = shown, enabled = enabled) { onToggleReveal?.invoke() ?: run { localRevealed = !localRevealed } } }
-            } else {
-                null
-            },
+        trailingIcon = trailing,
         visualTransformation = if (secret && !shown) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions =
             KeyboardOptions(
                 keyboardType = if (secret) KeyboardType.Password else keyboardType,
                 autoCorrectEnabled = autoCorrect,
+                imeAction = editorImeAction(imeAction, singleLine),
+            ),
+        keyboardActions =
+            KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Next) },
+                onDone = {
+                    focusManager.clearFocus()
+                    onDone?.invoke()
+                },
             ),
         modifier =
             modifier
                 .fillMaxWidth()
+                .onFocusChanged { focused = it.isFocused }
                 .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier),
     )
+}
+
+internal fun imeActionIf(last: Boolean): ImeAction = if (last) ImeAction.Done else ImeAction.Next
+
+internal fun editorImeAction(
+    requested: ImeAction,
+    singleLine: Boolean,
+): ImeAction = if (singleLine) requested else ImeAction.Default
+
+/**
+ * The X in a focused, non-empty field's trailing slot. Out of the focus order, as the eye is, so
+ * the keyboard's Next lands on the next field rather than on the button beside this one.
+ */
+@Composable
+private fun ClearButton(onClear: () -> Unit) {
+    IconButton(onClick = onClear, modifier = Modifier.focusProperties { canFocus = false }) {
+        Icon(imageVector = Icons.Filled.Clear, contentDescription = stringResource(R.string.field_clear))
+    }
 }
 
 /**
@@ -307,7 +357,7 @@ private fun RevealToggle(
     enabled: Boolean,
     onToggle: () -> Unit,
 ) {
-    IconButton(onClick = onToggle, enabled = enabled) {
+    IconButton(onClick = onToggle, enabled = enabled, modifier = Modifier.focusProperties { canFocus = false }) {
         Icon(
             imageVector = if (revealed) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
             contentDescription = stringResource(if (revealed) R.string.field_secret_hide else R.string.field_secret_show),
