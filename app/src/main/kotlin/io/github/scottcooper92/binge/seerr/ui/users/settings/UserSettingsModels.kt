@@ -165,6 +165,12 @@ data class NotificationSettings(
 ) {
     fun agent(agent: NotificationAgent): AgentSettings = agents[agent] ?: AgentSettings()
 
+    /** Blank is allowed; anything else must pass the same rule as the profile editor's Discord ID. */
+    val discordIdValid: Boolean
+        get() = agent(NotificationAgent.Discord).fields[AgentField.DiscordId].orEmpty().let { it.isBlank() || it.isDiscordIdShape() }
+
+    val valid: Boolean get() = discordIdValid
+
     /** An agent without a toggle is on once it has a key; the server reads it the same way. */
     fun isOn(agent: NotificationAgent): Boolean =
         if (agent.hasToggle) agent(agent).enabled else agent(agent).fields.values.any { it.isNotBlank() }
