@@ -112,6 +112,7 @@ private fun GeneralFields(
             stringResource(R.string.server_settings_application_title),
             icon = Icons.Filled.Title,
             enabled = enabled,
+            prose = true,
         ) { value ->
             actions.onEdit { it.copy(applicationTitle = value) }
         }

@@ -7,8 +7,14 @@ import org.junit.Test
 
 class EditorKeyboardOptionsTest {
     @Test
-    fun `prose starts sentences capitalised`() {
+    fun `a text field is not capitalised unless it opts in`() {
         val options = editorKeyboardOptions(secret = false, keyboardType = KeyboardType.Text, autoCorrect = true)
+        assertEquals(KeyboardCapitalization.None, options.capitalization)
+    }
+
+    @Test
+    fun `prose starts sentences capitalised`() {
+        val options = editorKeyboardOptions(secret = false, keyboardType = KeyboardType.Text, autoCorrect = true, prose = true)
         assertEquals(KeyboardCapitalization.Sentences, options.capitalization)
         assertEquals(KeyboardType.Text, options.keyboardType)
     }
@@ -22,7 +28,7 @@ class EditorKeyboardOptionsTest {
     @Test
     fun `urls emails and numbers are not capitalised`() {
         listOf(KeyboardType.Uri, KeyboardType.Email, KeyboardType.Number).forEach { type ->
-            val options = editorKeyboardOptions(secret = false, keyboardType = type, autoCorrect = true)
+            val options = editorKeyboardOptions(secret = false, keyboardType = type, autoCorrect = true, prose = true)
             assertEquals(KeyboardCapitalization.None, options.capitalization)
             assertEquals(type, options.keyboardType)
         }
@@ -30,7 +36,7 @@ class EditorKeyboardOptionsTest {
 
     @Test
     fun `a secret is a password keyboard and never capitalised`() {
-        val options = editorKeyboardOptions(secret = true, keyboardType = KeyboardType.Text, autoCorrect = true)
+        val options = editorKeyboardOptions(secret = true, keyboardType = KeyboardType.Text, autoCorrect = true, prose = true)
         assertEquals(KeyboardType.Password, options.keyboardType)
         assertEquals(KeyboardCapitalization.None, options.capitalization)
     }
