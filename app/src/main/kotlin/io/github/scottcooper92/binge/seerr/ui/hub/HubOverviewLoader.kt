@@ -20,7 +20,7 @@ import javax.inject.Inject
 private const val FILTER_PROCESSING = "processing"
 private const val ACTIVE_DOWNLOADS_PAGE = 20
 
-/** The server's profile could not be read: it did not answer `/status` or `/settings/public`. */
+/** The server's profile could not be read: it answered neither `/status` nor `/settings/public`. */
 class HubServerUnavailableException : IOException("The server did not answer")
 
 /**
@@ -35,14 +35,14 @@ class HubOverviewLoader
         private val connection: SeerrConnection,
     ) {
         /**
-         * The server's card. [SeerrConnection.refreshProfile] never fails on the network: it falls back
-         * to an `unknown` profile, which is not a server the hub can name, so that is a failure here.
+         * The server's card. A server that answered either profile call can be named, so a partial
+         * profile is a card with defaults; only a server that answered neither is a failure here.
          *
          * @throws HubServerUnavailableException when neither profile call answered.
          */
         suspend fun server(): HubServer {
-            val profile = connection.refreshProfile()
-            if (!profile.complete) throw HubServerUnavailableException()
+            val profile =
+                connection.refreshProfileOrFail().getOrElse { throw HubServerUnavailableException().apply { initCause(it) } }
             val settings = profile.settings
             return HubServer(
                 baseUrl = connection.current().baseUrl,

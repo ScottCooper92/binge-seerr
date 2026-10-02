@@ -273,6 +273,17 @@ class HubViewModelTest {
         }
 
     @Test
+    fun `a server whose settings call fails but whose status answers still reaches Ready, not the unreachable problem`() =
+        runTest {
+            val vm = viewModelAfterConnect { serve("/api/v1/settings/public", "", code = 503) }
+
+            val ready = vm.awaitReady { it.overview.account != null }
+
+            assertEquals(ConnectionHealth.Healthy, ready.health)
+            assertEquals(SeerrVariant.Seerr, ready.server.variant)
+        }
+
+    @Test
     fun `retrying from the unreachable problem re-reads the server and reaches Ready once it answers`() =
         runTest {
             val vm = viewModelAfterConnect { serverDown.set(true) }

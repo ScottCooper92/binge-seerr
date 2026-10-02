@@ -171,6 +171,18 @@ class SeerrConnection(
     }
 
     /**
+     * [refreshProfile] that says when the server answered neither profile call, rather than
+     * profiling it as a guess. A server that answered either one is a success, however partial.
+     */
+    suspend fun refreshProfileOrFail(): Result<SeerrServerProfile> {
+        val saved = current()
+        return userLock.withLock {
+            cachedProfile = null
+            apis.cached(saved.baseUrl, saved.auth).inspectProfile(saved.variant).onSuccess { if (it.complete) cachedProfile = saved to it }
+        }
+    }
+
+    /**
      * What [rawBaseUrl] is, before any credential: its profile and, best-effort, its artwork. Fails
      * with the `/status` error when the address answers neither profile call, so the form can say
      * "unreachable" before asking for a password it would only reject.
