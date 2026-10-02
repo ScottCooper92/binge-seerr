@@ -90,7 +90,13 @@ private fun ConnectionFields(
     enabled: Boolean,
     actions: EditorActions<DvrForm>,
 ) {
-    EditorTextField(draft.name, stringResource(R.string.server_settings_dvr_name), icon = Icons.Filled.Badge, enabled = enabled) { value ->
+    EditorTextField(
+        draft.name,
+        stringResource(R.string.server_settings_dvr_name),
+        icon = Icons.Filled.Badge,
+        enabled = enabled,
+        prose = true,
+    ) { value ->
         actions.onEdit { it.copy(name = value) }
     }
     EditorTextField(

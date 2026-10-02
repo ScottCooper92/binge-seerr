@@ -57,6 +57,7 @@ private fun ProfileCard(
             stringResource(R.string.user_settings_display_name),
             icon = Icons.Filled.Person,
             enabled = enabled,
+            prose = true,
             // What the server itself shows when this is blank, so the example is also the answer to "or what?".
             placeholder = draft.fallbackName.takeIf { it.isNotBlank() },
         ) { value ->

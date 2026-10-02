@@ -50,6 +50,7 @@ fun DiscoverSliderScreen(
             draft.title,
             stringResource(R.string.server_settings_slider_title),
             enabled = enabled,
+            prose = true,
             supporting = stringResource(R.string.server_settings_slider_title_hint),
         ) { value ->
             actions.onEdit { it.copy(title = value) }

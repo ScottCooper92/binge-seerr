@@ -47,6 +47,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -232,6 +233,10 @@ internal fun EditorEventSnackbarEffect(
 /**
  * [autoCorrect] is off for a value another system has to match exactly, such as a username.
  *
+ * [prose] opts a free-text field (a name, a title) into starting each sentence capitalised. It is off by
+ * default, because a locale, a path or an identifier is case-sensitive and a keyboard would otherwise
+ * change what the user typed.
+ *
  * [contentType] is null by default because most of these fields hold a server's secret rather than
  * the user's own credential, and a credential provider should only be offered the latter.
  *
@@ -254,6 +259,7 @@ internal fun EditorTextField(
     singleLine: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
     autoCorrect: Boolean = true,
+    prose: Boolean = false,
     placeholder: String? = null,
     supporting: String? = null,
     isError: Boolean = false,
@@ -305,12 +311,7 @@ internal fun EditorTextField(
             },
         trailingIcon = trailing,
         visualTransformation = if (secret && !shown) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions =
-            KeyboardOptions(
-                keyboardType = if (secret) KeyboardType.Password else keyboardType,
-                autoCorrectEnabled = autoCorrect,
-                imeAction = editorImeAction(imeAction, singleLine),
-            ),
+        keyboardOptions = editorKeyboardOptions(secret, keyboardType, autoCorrect, prose, editorImeAction(imeAction, singleLine)),
         keyboardActions =
             KeyboardActions(
                 onNext = { focusManager.moveFocus(FocusDirection.Next) },
@@ -343,6 +344,28 @@ private fun ClearButton(onClear: () -> Unit) {
     IconButton(onClick = onClear, modifier = Modifier.focusProperties { canFocus = false }) {
         Icon(imageVector = Icons.Filled.Clear, contentDescription = stringResource(R.string.field_clear))
     }
+}
+
+/**
+ * The keyboard an editor field asks for. Only a field the caller marks as [prose] (a name, a title, a
+ * message) starts each sentence capitalised. Everything else, whether a URL, an email, a number, a
+ * secret or an identifier, is left exactly as typed, and a non-text keyboard never capitalises even
+ * when asked.
+ */
+internal fun editorKeyboardOptions(
+    secret: Boolean,
+    keyboardType: KeyboardType,
+    autoCorrect: Boolean,
+    prose: Boolean = false,
+    imeAction: ImeAction = ImeAction.Unspecified,
+): KeyboardOptions {
+    val type = if (secret) KeyboardType.Password else keyboardType
+    return KeyboardOptions(
+        capitalization = if (prose && type == KeyboardType.Text) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
+        autoCorrectEnabled = autoCorrect,
+        keyboardType = type,
+        imeAction = imeAction,
+    )
 }
 
 /**
