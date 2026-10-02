@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -204,6 +205,7 @@ private fun DnsCacheFields(
                         R.string.server_settings_dns_ttl_hint
                     },
                 ),
+            imeAction = ImeAction.Done,
         ) { value -> onEdit { it.copy(maxTtl = value) } }
     }
 }

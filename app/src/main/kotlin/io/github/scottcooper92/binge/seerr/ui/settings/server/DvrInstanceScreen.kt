@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeOutlinedButton
@@ -149,6 +150,7 @@ private fun ConnectionFields(
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
         supporting = stringResource(R.string.server_settings_dvr_external_hint),
+        imeAction = ImeAction.Done,
         isError = !draft.externalUrlValid,
     ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
 }

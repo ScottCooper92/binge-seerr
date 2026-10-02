@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -85,6 +86,7 @@ fun TautulliScreen(
                 enabled = enabled,
                 keyboardType = KeyboardType.Uri,
                 supporting = stringResource(R.string.server_settings_tautulli_external_hint),
+                imeAction = ImeAction.Done,
                 isError = !draft.externalUrlValid,
             ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
         }

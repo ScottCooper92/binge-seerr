@@ -9,26 +9,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
-import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
-import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
-import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
-import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
-import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
-import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
-import io.github.scottcooper92.binge.seerr.ui.requests.mediaServerName
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,7 +28,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * One issue as a page: the report, the thread, and the composer. Posting is optimistic: the
@@ -65,14 +53,8 @@ class IssueDetailViewModel
         private val eventFlow = MutableSharedFlow<IssueDetailEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<IssueDetailEvent> = eventFlow.asSharedFlow()
 
-        private var nextLocalId = 1L
-
-        /**
-         * The in-flight [send] for each outbox entry, so an edit or a drop can cancel a still-running
-         * one. A [ConcurrentHashMap] because [send] itself removes its own entry from the IO dispatcher
-         * it runs on, while every other mutator here runs on Main.
-         */
-        private val outboxJobs = ConcurrentHashMap<Long, Job>()
+        private val outbox =
+            IssueCommentOutbox(issueId, connection, viewModelScope, dispatcher, state, analytics, crashBreadcrumbs)
 
         init {
             reload()
@@ -121,52 +103,16 @@ class IssueDetailViewModel
         fun setDraft(text: String) = updateReady { it.copy(draft = text) }
 
         /** The draft goes into the outbox and the send runs behind it; the composer clears at once. */
-        fun postComment() {
-            val ready = ready() ?: return
-            val message = ready.draft.trim()
-            if (message.isEmpty() || !ready.detail.canComment) return
-            val entry =
-                OutboxComment(
-                    localId = nextLocalId++,
-                    message = message,
-                    author = ready.detail.currentUserName,
-                    submittedAtMillis = System.currentTimeMillis(),
-                    state = SendState.Sending,
-                )
-            state.value = ready.copy(draft = "", outbox = ready.outbox + entry)
-            crashBreadcrumbs.key("issue_id", issueId.toString())
-            crashBreadcrumbs.log("posting comment on issue")
-            outboxJobs[entry.localId] = viewModelScope.launch(dispatcher) { send(entry.localId, message) }
-        }
+        fun postComment() = outbox.post()
 
-        fun retryOutbox(localId: Long) {
-            val entry = outbox(localId) ?: return
-            outboxJobs.remove(localId)?.cancel()
-            updateOutbox(localId) { it.copy(state = SendState.Sending) }
-            outboxJobs[localId] = viewModelScope.launch(dispatcher) { send(localId, entry.message) }
-        }
+        fun retryOutbox(localId: Long) = outbox.retry(localId)
 
-        /**
-         * A pending comment never reached the server, so its edit is local and re-sent at once. Any
-         * send still in flight for it is cancelled first, so an edit mid-send can never land alongside
-         * the text it replaced.
-         */
         fun editOutbox(
             localId: Long,
             message: String,
-        ) {
-            val trimmed = message.trim()
-            if (trimmed.isEmpty() || outbox(localId) == null) return
-            outboxJobs.remove(localId)?.cancel()
-            updateOutbox(localId) { it.copy(message = trimmed, state = SendState.Sending) }
-            outboxJobs[localId] = viewModelScope.launch(dispatcher) { send(localId, trimmed) }
-        }
+        ) = outbox.edit(localId, message)
 
-        /** Cancels a send still in flight, so a discarded comment can never land after the fact. */
-        fun dropOutbox(localId: Long) {
-            outboxJobs.remove(localId)?.cancel()
-            updateReady { it.copy(outbox = it.outbox.filterNot { entry -> entry.localId == localId }) }
-        }
+        fun dropOutbox(localId: Long) = outbox.drop(localId)
 
         fun editComment(
             commentId: Int,
@@ -271,54 +217,6 @@ class IssueDetailViewModel
         }
 
         /**
-         * The confirmed comment is resolved by diffing the post's answer against what this issue's
-         * comments look like right when this confirmation is applied, not a snapshot taken before the
-         * request went out: a sibling outbox entry that lands first is folded into `detail.comments`
-         * before this one resolves, so it's already "known" and can't be reclaimed here even when both
-         * entries sent identical text. The newest id alone can't be trusted either, because another
-         * comment on the same issue - another user's, another device's, or a second outbox entry - can
-         * arrive between this request and its response and outrank it.
-         */
-        private suspend fun send(
-            localId: Long,
-            message: String,
-        ) {
-            runCatching {
-                val issue = connection.api().commentOnIssue(issueId, SeerrIssueCommentBody(message))
-                val user = runCatching { connection.authenticatedUser() }.getOrNull()
-                issue to user
-            }.onSuccess { (issue, user) ->
-                outboxJobs.remove(localId)
-                var matched = false
-                updateReady { ready ->
-                    val knownIds = setOfNotNull(ready.detail.report?.id) + ready.detail.comments.map { it.id }
-                    val candidates = issue.comments.filter { it.id !in knownIds && it.message == message }
-                    val confirmedDto =
-                        user?.let { u -> candidates.firstOrNull { it.user?.id == u.id } } ?: candidates.minByOrNull { it.id }
-                    val confirmed = confirmedDto?.toIssueComment(user?.id)
-                    if (confirmed == null) {
-                        ready
-                    } else {
-                        matched = true
-                        ready.copy(
-                            detail = ready.detail.copy(comments = ready.detail.comments + confirmed.copy(isMine = true)),
-                            outbox = ready.outbox.filterNot { it.localId == localId },
-                        )
-                    }
-                }
-                if (matched) analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "posted"))
-                if (!matched) updateOutbox(localId) { it.copy(state = SendState.Failed(retryable = true)) }
-            }.onFailure { failure ->
-                // A cancellation means this send was superseded by an edit or a drop, not that it failed:
-                // that entry's outbox state (or its removal) is already handled by whatever cancelled it.
-                if (failure is CancellationException) throw failure
-                outboxJobs.remove(localId)
-                val retryable = failure.toSeerrError().let { it != SeerrError.Forbidden && it != SeerrError.Unauthorized }
-                updateOutbox(localId) { it.copy(state = SendState.Failed(retryable)) }
-            }
-        }
-
-        /**
          * Reloads after a write that already landed on the server, and reports whether the reload
          * itself failed, so a caller never announces success on a page still showing the stale comment.
          */
@@ -342,60 +240,12 @@ class IssueDetailViewModel
                 dto.toDetail(item, user.await(), connection.current().baseUrl, connection.profile())
             }
 
-        private fun SeerrIssueDto.toDetail(
-            item: IssueItem,
-            user: SeerrUserDto?,
-            baseUrl: String,
-            profile: SeerrServerProfile,
-        ): IssueDetail {
-            val permissions = user.toPermissions()
-            val comments = comments.sortedBy { it.id }.map { it.toIssueComment(user?.id) }
-            val isReporter = user != null && createdBy?.id == user.id
-            return IssueDetail(
-                item = item,
-                report = comments.firstOrNull(),
-                comments = comments.drop(1),
-                canComment = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
-                canManage = permissions.canManageIssues,
-                canResolve = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
-                canDelete = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
-                webUrl = baseUrl + "issues/" + id,
-                mediaServerUrl = media?.mediaUrl?.takeIf { it.isWebUrl() },
-                serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },
-                serverName = profile.variant.displayName,
-                mediaServerName = profile.mediaServerName(),
-                currentUserName = user?.let { listOfNotNull(it.displayName, it.username).firstOrNull { name -> name.isNotBlank() } },
-            )
-        }
-
         private fun ready(): IssueDetailUiState.Ready? = state.value as? IssueDetailUiState.Ready
 
-        private fun outbox(localId: Long): OutboxComment? = ready()?.outbox?.firstOrNull { it.localId == localId }
-
-        private fun updateReady(transform: (IssueDetailUiState.Ready) -> IssueDetailUiState.Ready) =
-            state.update { current -> (current as? IssueDetailUiState.Ready)?.let(transform) ?: current }
-
-        private fun updateOutbox(
-            localId: Long,
-            transform: (OutboxComment) -> OutboxComment,
-        ) = updateReady { ready -> ready.copy(outbox = ready.outbox.map { if (it.localId == localId) transform(it) else it }) }
+        private fun updateReady(transform: (IssueDetailUiState.Ready) -> IssueDetailUiState.Ready) = state.updateReady(transform)
 
         @AssistedFactory
         interface Factory {
             fun create(issueId: Int): IssueDetailViewModel
         }
     }
-
-internal const val STATUS_OPEN = "open"
-internal const val STATUS_RESOLVED = "resolved"
-
-private fun io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentDto.toIssueComment(currentUserId: Int?): IssueComment =
-    IssueComment(
-        id = id,
-        author = user?.displayString(),
-        authorId = user?.id,
-        isAdmin = SeerrPermissions.fromBits(user?.permissions).isAdmin,
-        message = message.orEmpty(),
-        createdAtMillis = createdAt?.toEpochMillisOrNull(),
-        isMine = user?.id != null && user.id == currentUserId,
-    )

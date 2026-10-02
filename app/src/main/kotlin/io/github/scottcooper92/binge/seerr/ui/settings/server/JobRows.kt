@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.SettingsRow
@@ -160,6 +161,7 @@ internal fun ScheduleDialog(
                     cron,
                     stringResource(R.string.server_settings_job_cron),
                     supporting = stringResource(R.string.server_settings_job_cron_hint),
+                    imeAction = ImeAction.Done,
                 ) { cron = it }
             }
         },

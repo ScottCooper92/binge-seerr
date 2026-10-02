@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -59,6 +60,7 @@ fun DiscoverSliderScreen(
             stringResource(R.string.server_settings_slider_data),
             enabled = enabled,
             supporting = stringResource(draft.type.dataHintRes()),
+            imeAction = ImeAction.Done,
         ) { value -> actions.onEdit { it.copy(data = value) } }
         if (draft.id != null) DeleteButton(onDelete)
     }

@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -106,6 +107,7 @@ private fun ColumnScope.RuleConditions(
         stringResource(R.string.server_settings_rule_keywords),
         enabled = enabled,
         supporting = stringResource(R.string.server_settings_rule_keywords_hint),
+        imeAction = ImeAction.Done,
     ) { value -> actions.onEdit { it.copy(keywords = value) } }
 }
 
