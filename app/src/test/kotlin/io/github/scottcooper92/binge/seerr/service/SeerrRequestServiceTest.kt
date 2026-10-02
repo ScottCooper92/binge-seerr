@@ -367,6 +367,125 @@ class SeerrRequestServiceTest {
             assertEquals(emptyList<Any>(), analytics.events)
         }
 
+    private fun failedOperation(analytics: RecordingAnalytics): Map<String, String> {
+        val (name, params) = analytics.events.single()
+        assertEquals("request_operation_failed", name)
+        return params.mapValues { it.value.toString() }
+    }
+
+    @Test
+    fun `a failed submit is reported, and a created, conflicting or refused one is not`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(version = "2.7.0", analytics = analytics)
+            val request = SubmitRequestRequest.newBuilder().setMedia(movie).build()
+
+            seerr.enqueue(json("""{"id":77}"""))
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+            stub.submitRequest(request)
+            seerr.enqueue(MockResponse(code = 409))
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+            stub.submitRequest(request)
+            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { submitRequest(request.toBuilder().setIs4K(true).build()) })
+            assertEquals(emptyList<Any>(), analytics.events)
+
+            seerr.enqueue(MockResponse(code = 500, body = """{"message":"boom 603"}"""))
+            stub.code { submitRequest(request) }
+
+            val reported = failedOperation(analytics)
+            assertEquals("submit_request", reported["operation"])
+            assertEquals("500", reported["http_status"])
+            assertEquals("jellyseerr", reported["server_lineage"])
+            assertEquals("2.7.0", reported["server_version"])
+            assertTrue(
+                analytics.events
+                    .single()
+                    .second.values
+                    .none { "603" in it.toString() || "boom" in it.toString() },
+            )
+        }
+
+    @Test
+    fun `a failed status read is reported, and a successful one is not`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(analytics = analytics)
+            val request = GetStatusRequest.newBuilder().setMedia(movie).build()
+
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+            stub.getStatus(request)
+            assertEquals(emptyList<Any>(), analytics.events)
+
+            seerr.enqueue(MockResponse(code = 500))
+            stub.code { getStatus(GetStatusRequest.newBuilder().setMedia(movie.toBuilder().setTmdbId(604)).build()) }
+
+            assertEquals("get_status", failedOperation(analytics)["operation"])
+        }
+
+    @Test
+    fun `a failed attention read is reported, and an expired sign-in is not`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(permissions = ADMIN, analytics = analytics)
+
+            seerr.enqueue(MockResponse(code = 401))
+            assertTrue(stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention.needsReconnect)
+            assertEquals(emptyList<Any>(), analytics.events)
+
+            seerr.enqueue(MockResponse(code = 500))
+            stub.code { getAttention(GetAttentionRequest.getDefaultInstance()) }
+
+            assertEquals("get_attention", failedOperation(analytics)["operation"])
+        }
+
+    @Test
+    fun `a failed handshake is reported`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(analytics = analytics)
+
+            seerr.enqueue(json("""{"version":"2.7.0"}"""))
+            seerr.enqueue(json("""{"initialized":true}"""))
+            seerr.enqueue(MockResponse(code = 500))
+            stub.code { handshake(HandshakeRequest.getDefaultInstance()) }
+
+            val reported = failedOperation(analytics)
+            assertEquals("handshake", reported["operation"])
+            assertEquals("500", reported["http_status"])
+        }
+
+    @Test
+    fun `a failing status stream is reported once, and a healthy one never`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(analytics = analytics)
+            val request = ObserveStatusRequest.newBuilder().setMedia(movie).build()
+
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+            stub.observeStatus(request).take(1).toList()
+            assertEquals(emptyList<Any>(), analytics.events)
+
+            seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
+            seerr.enqueue(MockResponse(code = 500))
+            assertEquals(Status.Code.UNAVAILABLE, stub.code { stub.observeStatus(request).toList() })
+
+            assertEquals("observe_status", failedOperation(analytics)["operation"])
+        }
+
+    @Test
+    fun `a failing attention stream is reported once`() =
+        runTest {
+            val analytics = RecordingAnalytics()
+            val stub = connected(permissions = ADMIN, analytics = analytics)
+            seerr.enqueue(json("""{"pending":1}"""))
+            seerr.enqueue(json("""{"open":0}"""))
+            seerr.enqueue(MockResponse(code = 500))
+
+            stub.code { stub.observeAttention(ObserveAttentionRequest.getDefaultInstance()).toList() }
+
+            assertEquals("observe_attention", failedOperation(analytics)["operation"])
+        }
+
     @Test
     fun `reporting a quota refusal leaves it a quota refusal`() =
         runTest {

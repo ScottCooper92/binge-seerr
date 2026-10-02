@@ -119,7 +119,7 @@ class SeerrRequestService(
      * would otherwise be told what the user could do when the process started.
      */
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
-        statusCatching {
+        reportingFailure("handshake") {
             val profile = connection.refreshProfile()
             val response =
                 handshakeResponse(
@@ -132,7 +132,7 @@ class SeerrRequestService(
         }
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =
-        statusCatching {
+        reportingFailure("submit_request") {
             // Re-checked here, not trusted to the host: only a 4K request needs the capability.
             if (request.is4K) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
             val media = request.media
@@ -213,7 +213,7 @@ class SeerrRequestService(
     }
 
     override suspend fun getStatus(request: GetStatusRequest): GetStatusResponse =
-        statusCatching { GetStatusResponse.newBuilder().setStatus(status(request.media)).build() }
+        reportingFailure("get_status") { GetStatusResponse.newBuilder().setStatus(status(request.media)).build() }
 
     /**
      * Polls the server on this app's own cadence and pushes a status only when it changed. The
@@ -226,7 +226,7 @@ class SeerrRequestService(
             // the row warm, and a poll answering from the row it wrote would never see the server.
             var fromCache = true
             while (true) {
-                emit(statusCatching { status(request.media, allowCached = fromCache) })
+                emit(reportingFailure("observe_status") { status(request.media, allowCached = fromCache) })
                 fromCache = false
                 delay(observeIntervalMillis)
             }
@@ -288,13 +288,13 @@ class SeerrRequestService(
         }
 
     override suspend fun getAttention(request: GetAttentionRequest): GetAttentionResponse =
-        statusCatching { GetAttentionResponse.newBuilder().setAttention(attention()).build() }
+        reportingFailure("get_attention") { GetAttentionResponse.newBuilder().setAttention(attention()).build() }
 
     /** Polled on this app's own cadence, like [observeStatus]; a push only when the value changed. */
     override fun observeAttention(request: ObserveAttentionRequest): Flow<ObserveAttentionResponse> =
         flow {
             while (true) {
-                emit(statusCatching { attention() })
+                emit(reportingFailure("observe_attention") { attention() })
                 delay(attentionIntervalMillis)
             }
         }.distinctUntilChanged()
@@ -395,6 +395,9 @@ class SeerrRequestService(
      * [statusCatching], reporting a failure a server version could explain (#539). The failure is
      * mapped to its [StatusException] first and that is what is thrown, so what is reported and what
      * the host receives are the same classification.
+     *
+     * An `observe*` poll goes through it per tick, and a failure ends the stream, so a failing server
+     * is reported once per stream rather than once per tick.
      */
     @Suppress("TooGenericExceptionCaught")
     private suspend fun <T> reportingFailure(
