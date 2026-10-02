@@ -67,6 +67,19 @@ class MediaServerScreenshotTest {
             ),
         )
 
+    /** A Jellyfin external host with no scheme: the field is flagged and Save stays off. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun badExternalUrl() =
+        Frame(
+            ExtrasEditorUiState.Ready(
+                draft = jellyfinForm().copy(externalUrl = "jellyfin.example.com"),
+                saved = jellyfinForm(),
+                extras = MediaServerExtras(libraries = libraries()),
+            ),
+        )
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
