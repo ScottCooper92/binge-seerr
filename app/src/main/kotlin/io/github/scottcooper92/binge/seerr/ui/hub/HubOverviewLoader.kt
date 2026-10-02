@@ -14,10 +14,14 @@ import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import java.io.IOException
 import javax.inject.Inject
 
 private const val FILTER_PROCESSING = "processing"
 private const val ACTIVE_DOWNLOADS_PAGE = 20
+
+/** The server's profile could not be read: it answered neither `/status` nor `/settings/public`. */
+class HubServerUnavailableException : IOException("The server did not answer")
 
 /**
  * The hub's reads over the saved connection. [load] is the once-per-connect overview: `auth/me`
@@ -30,8 +34,15 @@ class HubOverviewLoader
     constructor(
         private val connection: SeerrConnection,
     ) {
+        /**
+         * The server's card. A server that answered either profile call can be named, so a partial
+         * profile is a card with defaults; only a server that answered neither is a failure here.
+         *
+         * @throws HubServerUnavailableException when neither profile call answered.
+         */
         suspend fun server(): HubServer {
-            val profile = connection.refreshProfile()
+            val profile =
+                connection.refreshProfileOrFail().getOrElse { throw HubServerUnavailableException().apply { initCause(it) } }
             val settings = profile.settings
             return HubServer(
                 baseUrl = connection.current().baseUrl,

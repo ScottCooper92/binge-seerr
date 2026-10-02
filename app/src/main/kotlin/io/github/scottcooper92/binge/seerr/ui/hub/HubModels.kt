@@ -82,6 +82,15 @@ data class HubDownload(
 sealed interface HubUiState {
     data object Loading : HubUiState
 
+    /**
+     * The first read of the server failed and nothing is remembered to show instead, which is every
+     * cold start against a server that does not answer. [health] is the problem the screen names;
+     * it is the same way out as a [Ready] hub whose health [isProblem].
+     */
+    data class Error(
+        val health: ConnectionHealth,
+    ) : HubUiState
+
     data class Ready(
         val server: HubServer,
         val health: ConnectionHealth,

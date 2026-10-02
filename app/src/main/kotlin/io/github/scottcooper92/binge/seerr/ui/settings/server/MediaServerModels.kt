@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPlexSettingsBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPlexSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanStatusDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrTautulliSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 
 private const val CONNECTION_OK = 200
 
@@ -35,7 +36,10 @@ data class MediaServerForm(
     val forgotPasswordUrl: String? = null,
     val apiKey: String? = null,
 ) {
-    val valid: Boolean get() = hostAndPortValid(host, port)
+    /** Blank is allowed; otherwise the web client wants a web address here, for Plex's web app and for Jellyfin's external host alike. */
+    val externalUrlValid: Boolean get() = externalUrl.isBlank() || externalUrl.trim().isWebUrl()
+
+    val valid: Boolean get() = hostAndPortValid(host, port) && externalUrlValid
 }
 
 enum class LibraryType { Movies, Shows }
@@ -100,7 +104,9 @@ data class TautulliForm(
     val apiKey: String = "",
     val externalUrl: String = "",
 ) {
-    val valid: Boolean get() = hostAndPortValid(host, port) && apiKey.isNotBlank()
+    val externalUrlValid: Boolean get() = externalUrl.isBlank() || externalUrl.trim().isWebUrl()
+
+    val valid: Boolean get() = hostAndPortValid(host, port) && apiKey.isNotBlank() && externalUrlValid
 }
 
 /**

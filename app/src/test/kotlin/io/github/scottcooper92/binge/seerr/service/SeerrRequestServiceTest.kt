@@ -39,6 +39,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import io.github.scottcooper92.binge.seerr.util.enqueueProfile
+import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import io.grpc.ManagedChannel
 import io.grpc.Server
 import io.grpc.Status
@@ -81,7 +83,7 @@ class SeerrRequestServiceTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val seerr = MockWebServer().apply { start() }
+    private val seerr = MockWebServer().routeProfiles().apply { start() }
     private lateinit var server: Server
     private lateinit var channel: ManagedChannel
 
@@ -110,8 +112,7 @@ class SeerrRequestServiceTest {
         runBlocking { store.save(SeerrCredentials(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"), SeerrVariant.fromVersion(version))) }
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false))
         if (warm) {
-            seerr.enqueue(json("""{"version":"$version"}"""))
-            seerr.enqueue(json(publicSettings))
+            seerr.enqueueProfile(json("""{"version":"$version"}"""), json(publicSettings))
             seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
         }
         val stub =
@@ -156,8 +157,7 @@ class SeerrRequestServiceTest {
         version: String = "2.7.0",
         publicSettings: String = """{"initialized":true}""",
     ): HandshakeResponse {
-        seerr.enqueue(json("""{"version":"$version"}"""))
-        seerr.enqueue(json(publicSettings))
+        seerr.enqueueProfile(json("""{"version":"$version"}"""), json(publicSettings))
         seerr.enqueue(json("""{"id":1,"permissions":$permissions}"""))
         return handshake(HandshakeRequest.getDefaultInstance()).also { repeat(3) { seerr.takeRequest() } }
     }
@@ -444,8 +444,7 @@ class SeerrRequestServiceTest {
             val analytics = RecordingAnalytics()
             val stub = connected(analytics = analytics)
 
-            seerr.enqueue(json("""{"version":"2.7.0"}"""))
-            seerr.enqueue(json("""{"initialized":true}"""))
+            seerr.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
             seerr.enqueue(MockResponse(code = 500))
             stub.code { handshake(HandshakeRequest.getDefaultInstance()) }
 

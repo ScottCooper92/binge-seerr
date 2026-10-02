@@ -153,9 +153,53 @@ class TvRequestsBoardFocusTest {
         row(HEAT).assertIsFocused()
     }
 
-    private var openRequestId: Int? by mutableStateOf(null)
+    @Test
+    fun aFailedRefreshBehindCachedRowsOffersARetryBetweenTheBandAndTheRows() {
+        setBoard(manager, refresh = TvLoadPhase.Failed(rejected = false))
+        focusBand()
 
-    private fun setBoard(scope: ModerationScope) {
+        pressDown()
+
+        retryButton().assertIsFocused()
+        pressOk()
+        assertEquals(1, retries)
+        assertEquals(0, reconnects)
+        pressDown()
+        row(HEAT).assertIsFocused()
+        pressUp()
+        retryButton().assertIsFocused()
+    }
+
+    @Test
+    fun aRejectedRefreshBehindCachedRowsOffersTheWayBackToReconnect() {
+        setBoard(manager, refresh = TvLoadPhase.Failed(rejected = true))
+        focusBand()
+
+        pressDown()
+
+        composeTestRule.onNode(hasTextExactly(string(R.string.tv_hub_reconnect)) and isFocusable()).assertIsFocused()
+        pressOk()
+        assertEquals(1, reconnects)
+        assertEquals(0, retries)
+    }
+
+    @Test
+    fun aHealthyRefreshShowsNoRetryAboveTheRows() {
+        setBoard(manager)
+
+        composeTestRule.onNode(hasTextExactly(string(R.string.tv_list_refresh_failed)) and isFocusable()).assertDoesNotExist()
+    }
+
+    private var openRequestId: Int? by mutableStateOf(null)
+    private var retries = 0
+    private var reconnects = 0
+
+    private fun retryButton() = composeTestRule.onNode(hasTextExactly(string(R.string.tv_list_refresh_failed)) and isFocusable())
+
+    private fun setBoard(
+        scope: ModerationScope,
+        refresh: TvLoadPhase = TvLoadPhase.Idle,
+    ) {
         val items = listOf(request(1, HEAT), request(2, BEAR))
         composeTestRule.setContent {
             val state =
@@ -170,7 +214,7 @@ class TvRequestsBoardFocusTest {
             BingeTvTheme {
                 TvRequestsBoard(
                     state = state,
-                    rows = TvPagedRows(count = items.size, at = { items.getOrNull(it) }),
+                    rows = TvPagedRows(count = items.size, at = { items.getOrNull(it) }, refresh = refresh),
                     openRequestId = openRequestId,
                     actions =
                         TvRequestsActions(
@@ -180,9 +224,9 @@ class TvRequestsBoardFocusTest {
                                 opened += item.id
                                 openRequestId = item.id
                             },
-                            onRetryLoad = {},
+                            onRetryLoad = { retries++ },
                             onRetryScope = {},
-                            onReconnect = {},
+                            onReconnect = { reconnects++ },
                         ),
                 )
             }
@@ -201,6 +245,8 @@ class TvRequestsBoardFocusTest {
     private fun row(title: String) = composeTestRule.onNode(hasText(title) and isFocusable())
 
     private fun pressDown() = press(Key.DirectionDown)
+
+    private fun pressUp() = press(Key.DirectionUp)
 
     private fun pressLeft() = press(Key.DirectionLeft)
 

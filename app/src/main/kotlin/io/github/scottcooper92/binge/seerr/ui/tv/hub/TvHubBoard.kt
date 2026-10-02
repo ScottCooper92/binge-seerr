@@ -32,6 +32,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
+import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import io.github.scottcooper92.binge.seerr.R
@@ -81,6 +83,7 @@ internal fun TvHubBoard(
     val ready = state as? HubUiState.Ready
     TvBoardFrame(title = ready?.server?.title ?: stringResource(R.string.companion_name), modifier = modifier) {
         when {
+            state is HubUiState.Error -> TvHubProblem(state.health, actions, modifier = Modifier.weight(1f))
             ready == null -> TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
             ready.health.isProblem() -> TvHubProblem(ready.health, actions, modifier = Modifier.weight(1f))
             else -> TvHubDashboard(ready, actions, initialFocusedTile, initialBingeTileFocused)
@@ -96,6 +99,8 @@ private fun TvHubProblem(
     modifier: Modifier = Modifier,
 ) {
     val unauthorized = health == ConnectionHealth.Unauthorized
+    val arrival = rememberTvArrivalFocus()
+    TvArrivalFocusEffect(arrival)
     TvBoardPlate(
         headline =
             stringResource(
@@ -122,6 +127,7 @@ private fun TvHubProblem(
             },
         secondary = stringResource(R.string.hub_disconnect) to actions.onDisconnect,
         modifier = modifier,
+        arrival = arrival,
     )
 }
 

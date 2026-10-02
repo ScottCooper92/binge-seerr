@@ -31,8 +31,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 private const val ADMIN = 2
@@ -64,9 +66,15 @@ class HubViewModelTest {
             override suspend fun await(intervalMs: Long) = awaitCancellation()
         }
 
+    /** The network gone, as with Tailscale off: every call fails with an [IOException] before any answer. */
+    private val serverDown = AtomicBoolean(false)
+
     @Before
     fun setUp() {
-        seerr.dispatcher = { request -> responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404) }
+        seerr.dispatcher = { request ->
+            if (serverDown.get()) throw IOException("unreachable")
+            responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404)
+        }
     }
 
     @After
@@ -202,7 +210,10 @@ class HubViewModelTest {
         }
 
     /** The connection is made while the server is healthy; the hub then opens on a server that has turned. */
-    private suspend fun TestScope.viewModelAfterAuthMeAnswers(code: Int): HubViewModel {
+    private suspend fun TestScope.viewModelAfterAuthMeAnswers(code: Int): HubViewModel =
+        viewModelAfterConnect { serve("/api/v1/auth/me", "", code = code) }
+
+    private suspend fun TestScope.viewModelAfterConnect(turn: () -> Unit): HubViewModel {
         healthyServer()
         val monitor = SeerrConnectionHealthMonitor()
         connection =
@@ -222,7 +233,7 @@ class HubViewModelTest {
                 healthMonitor = monitor,
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        serve("/api/v1/auth/me", "", code = code)
+        turn()
         val vm = HubViewModel(connection, HubOverviewLoader(connection), cache, mainDispatcherRule.dispatcher, boundedTicker)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -249,6 +260,58 @@ class HubViewModelTest {
 
             assertEquals(ConnectionHealth.CouldNotLoad, ready.health)
             assertEquals(listOf(HubSection.Requests), ready.overview.visibleSections())
+        }
+
+    @Test
+    fun `a cold start against a server that does not answer reaches the unreachable problem, not an endless Loading`() =
+        runTest {
+            val vm = viewModelAfterConnect { serverDown.set(true) }
+
+            val error = vm.uiState.first { it is HubUiState.Error } as HubUiState.Error
+
+            assertEquals(ConnectionHealth.Unreachable, error.health)
+        }
+
+    @Test
+    fun `a server whose settings call fails but whose status answers still reaches Ready, not the unreachable problem`() =
+        runTest {
+            val vm = viewModelAfterConnect { serve("/api/v1/settings/public", "", code = 503) }
+
+            val ready = vm.awaitReady { it.overview.account != null }
+
+            assertEquals(ConnectionHealth.Healthy, ready.health)
+            assertEquals(SeerrVariant.Seerr, ready.server.variant)
+        }
+
+    @Test
+    fun `retrying from the unreachable problem re-reads the server and reaches Ready once it answers`() =
+        runTest {
+            val vm = viewModelAfterConnect { serverDown.set(true) }
+            vm.uiState.first { it is HubUiState.Error }
+
+            serverDown.set(false)
+            vm.recheck()
+            val ready = vm.awaitReady { it.overview.account != null }
+
+            assertEquals("Family", ready.server.title)
+            assertEquals(ConnectionHealth.Healthy, ready.health)
+        }
+
+    @Test
+    fun `a warm start against a server that does not answer keeps the remembered hub and reads as a problem on it`() =
+        runTest {
+            healthyServer()
+            viewModel().awaitReady { it.overview.account != null }
+            serverDown.set(true)
+
+            val vm = returnToHub()
+            val states = mutableListOf<HubUiState>()
+            backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
+            val ready = vm.awaitReady { it.overview.userLoad == HubUserLoad.Failed }
+
+            assertEquals("Family", ready.server.title)
+            assertEquals(ConnectionHealth.Unreachable, ready.health)
+            assertTrue(states.none { it is HubUiState.Error })
         }
 
     @Test
@@ -370,14 +433,30 @@ class HubViewModelTest {
         runTest {
             healthyServer()
             viewModel().awaitReady { it.overview.account != null }
+            // The first hub's ViewModel is still live, so it would reload under the new credentials on a real
+            // thread and could remember the fake server's healthy auth/me for them before the 503 below is
+            // scripted. Clearing it and letting its in-flight reads drain leaves the cache to the hub under test.
+            viewModels.clear()
+            seerr.awaitIdle()
             connection.disconnect()
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("other-k3y")).getOrThrow()
-            serve("/api/v1/auth/me", "", code = 503)
+            // Held, then refused: the hub is only Loading while the new account's read is out. Left to answer on
+            // its own, the 503 can land before the assertion on a real thread and make a Ready(Failed) of it.
+            val release = CountDownLatch(1)
+            responses["/api/v1/auth/me"] = {
+                release.await(LATCH_SECONDS, TimeUnit.SECONDS)
+                FakeResponse(code = 503, headers = headersOf("Content-Type", "application/json"), body = "")
+            }
 
-            val vm = returnToHub()
-            runCurrent()
-
-            assertEquals(HubUiState.Loading, vm.uiState.value)
+            try {
+                val vm = returnToHub()
+                runCurrent()
+                assertEquals(HubUiState.Loading, vm.uiState.value)
+            } finally {
+                release.countDown()
+            }
+            val failed = returnToHub().awaitReady { it.overview.userLoad == HubUserLoad.Failed }
+            assertNull(failed.overview.account)
         }
 
     @Test

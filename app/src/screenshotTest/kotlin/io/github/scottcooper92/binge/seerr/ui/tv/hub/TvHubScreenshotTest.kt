@@ -54,6 +54,14 @@ class TvHubScreenshotTest {
         TvHubBoard(state = previewReady(health = ConnectionHealth.Unreachable), actions = previewTvHubActions())
     }
 
+    /** A cold start the server never answered: no server to name, so the board keeps the app's title. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun UnreachableOnFirstRead() {
+        TvHubBoard(state = HubUiState.Error(ConnectionHealth.Unreachable), actions = previewTvHubActions())
+    }
+
     /** It answered, but the overview would not load. */
     @PreviewTest
     @SeerrTvScreenPreviews

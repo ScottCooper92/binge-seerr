@@ -99,6 +99,8 @@ class SeerrConnection(
     /** Runs after the saved server changes or is forgotten, for the caches keyed to one server. */
     private val onServerChanged: suspend () -> Unit = {},
 ) {
+    private val profileReads = ProfileReads()
+
     val credentials: Flow<SeerrCredentials?> get() = store.credentials
 
     /**
@@ -149,9 +151,13 @@ class SeerrConnection(
      */
     suspend fun profile(): SeerrServerProfile {
         val saved = current()
+        val seen = profileReads.failures
         return userLock.withLock {
             cachedProfile?.takeIf { it.first == saved }?.second
-                ?: apis.cached(saved.baseUrl, saved.auth).readProfile(saved.variant).also { if (it.complete) cachedProfile = saved to it }
+                ?: profileReads
+                    .inspect(saved, apis.cached(saved.baseUrl, saved.auth), seen)
+                    .getOrElse { SeerrServerProfile.unknown(saved.variant) }
+                    .also { if (it.complete) cachedProfile = saved to it }
         }
     }
 
@@ -168,6 +174,24 @@ class SeerrConnection(
     suspend fun refreshProfile(): SeerrServerProfile {
         userLock.withLock { cachedProfile = null }
         return profile()
+    }
+
+    /**
+     * [refreshProfile] that says when the server answered neither profile call, rather than
+     * profiling it as a guess. A server that answered either one is a success, however partial.
+     */
+    suspend fun refreshProfileOrFail(): Result<SeerrServerProfile> {
+        val saved = current()
+        val seen = profileReads.failures
+        return userLock.withLock {
+            cachedProfile = null
+            profileReads.inspect(saved, apis.cached(saved.baseUrl, saved.auth), seen).onSuccess {
+                if (it.complete) {
+                    cachedProfile =
+                        saved to it
+                }
+            }
+        }
     }
 
     /**

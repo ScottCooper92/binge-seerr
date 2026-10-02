@@ -30,6 +30,7 @@ fun NotificationsSettingsScreen(
         state = state,
         events = events,
         actions = actions,
+        canSave = { it.valid },
     ) { draft, enabled ->
         NotificationAgent.entries.forEach { agent -> AgentSection(agent, draft, enabled, actions.onEdit) }
     }
@@ -89,6 +90,7 @@ private fun AgentFields(
             enabled = enabled,
             secret = field.secret,
             supporting = field.hintRes()?.let { stringResource(it) },
+            isError = field == AgentField.DiscordId && !settings.discordIdValid,
         ) { value ->
             onEdit { it.update(agent) { agentSettings -> agentSettings.copy(fields = agentSettings.fields + (field to value)) } }
         }

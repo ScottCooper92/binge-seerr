@@ -139,7 +139,7 @@ private fun AddressFields(
         enabled = enabled,
         keyboardType = KeyboardType.Number,
         placeholder = portPlaceholder(draft.kind),
-        isError = draft.port.isNotBlank() && !draft.copy(host = "x").valid,
+        isError = draft.port.isNotBlank() && !hostAndPortValid("x", draft.port),
     ) { value -> actions.onEdit { it.copy(port = value) } }
     EditorToggleRow(
         editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
@@ -175,6 +175,7 @@ private fun LinkFields(
         keyboardType = KeyboardType.Uri,
         placeholder = externalUrlPlaceholder(draft.kind),
         supporting = stringResource(R.string.server_settings_external_hint),
+        isError = !draft.externalUrlValid,
     ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
     draft.forgotPasswordUrl?.let { url ->
         EditorTextField(

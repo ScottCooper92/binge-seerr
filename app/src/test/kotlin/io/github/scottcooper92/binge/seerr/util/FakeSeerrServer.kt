@@ -59,6 +59,8 @@ data class FakeRequest(
  */
 class FakeSeerrServer {
     private val queued = ConcurrentLinkedQueue<FakeResponse>()
+    private val profileStatuses = ConcurrentLinkedQueue<FakeResponse>()
+    private val profileSettings = ConcurrentLinkedQueue<FakeResponse>()
     private val toTake = LinkedBlockingQueue<FakeRequest>()
     private val all = CopyOnWriteArrayList<FakeRequest>()
     private val dispatchers = CopyOnWriteArrayList<Dispatcher>()
@@ -73,6 +75,18 @@ class FakeSeerrServer {
 
     fun enqueue(response: FakeResponse) {
         queued += response
+    }
+
+    /**
+     * Queues one profile read's two answers, each served to its own path. The read issues `status`
+     * and `settings/public` concurrently, so a plain queue would hand one call the other's body.
+     */
+    fun enqueueProfile(
+        status: FakeResponse,
+        settings: FakeResponse,
+    ) {
+        profileStatuses += status
+        profileSettings += settings
     }
 
     /** Blocks for up to [timeoutMillis] for the next request; throws if none arrives, as MockWebServer's did. */
@@ -135,7 +149,7 @@ class FakeSeerrServer {
             val recorded = FakeRequest(request.method, request.url, request.headers, request.bodyAsString())
             all += recorded
             toTake += recorded
-            val answer = dispatcher?.invoke(recorded) ?: queued.poll() ?: FakeResponse(code = 404)
+            val answer = dispatcher?.invoke(recorded) ?: profileAnswer(recorded) ?: queued.poll() ?: FakeResponse(code = 404)
             Cookie.parseAll(request.url, answer.headers).takeIf { it.isNotEmpty() }?.let { cookieJar.saveFromResponse(request.url, it) }
             Response
                 .Builder()
@@ -146,6 +160,13 @@ class FakeSeerrServer {
                 .headers(answer.headers)
                 .body(answer.body.toResponseBody("application/json; charset=utf-8".toMediaType()))
                 .build()
+        }
+
+    private fun profileAnswer(request: FakeRequest): FakeResponse? =
+        when (request.url.encodedPath) {
+            "/api/v1/status" -> profileStatuses.poll()
+            "/api/v1/settings/public" -> profileSettings.poll()
+            else -> null
         }
 
     private fun Request.bodyAsString(): String = body?.let { requestBody -> Buffer().also { requestBody.writeTo(it) }.readUtf8() }.orEmpty()

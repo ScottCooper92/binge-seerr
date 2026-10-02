@@ -91,6 +91,22 @@ class TvRequestsScreenshotTest {
         )
     }
 
+    /** A refresh that failed behind cached rows: the rows stay, with a retry button above them. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RefreshFailedBehindRows() {
+        TvRequestsBoard(
+            state = requestsReady(),
+            rows =
+                TvPagedRows(count = FixedSampleRequests.size, at = {
+                    FixedSampleRequests.getOrNull(it)
+                }, refresh = TvLoadPhase.Failed(rejected = false)),
+            actions = NoRequestsActions,
+            now = REQUESTS_NOW_MILLIS,
+        )
+    }
+
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
