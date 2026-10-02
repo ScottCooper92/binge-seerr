@@ -68,6 +68,8 @@ fun HubScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when {
+                state is HubUiState.Error ->
+                    ConnectionProblem(state.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))
                 ready == null -> LoadingScreen(Modifier.padding(inner))
                 ready.health.isProblem() ->
                     ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))

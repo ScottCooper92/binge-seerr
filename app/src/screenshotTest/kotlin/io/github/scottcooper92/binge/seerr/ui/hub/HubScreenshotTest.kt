@@ -98,6 +98,26 @@ class HubScreenshotTest {
     @Composable
     fun unauthorized() = HubScreen(state = previewReady(health = ConnectionHealth.Unauthorized), actions = previewActions())
 
+    /**
+     * A cold start the server never answered: nothing remembered, so no server to name and the bar
+     * keeps the app's own title. The way out is the same as [unreachable].
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun unreachableOnFirstRead() = HubScreen(state = HubUiState.Error(ConnectionHealth.Unreachable), actions = previewActions())
+
+    /** The same problem in the list pane, where the detail pane beside it is the default section. */
+    @PreviewTest
+    @SeerrListPanePreview
+    @Composable
+    fun unreachableOnFirstReadAsListPane() =
+        CompositionLocalProvider(LocalPaneWidth provides 360.dp) {
+            Box(modifier = Modifier.width(360.dp)) {
+                HubScreen(state = HubUiState.Error(ConnectionHealth.Unreachable), actions = previewActions())
+            }
+        }
+
     /** Before the state resolves the bar has no server to name, so it falls back to the app's own. */
     @PreviewTest
     @SeerrScreenStatePreview
