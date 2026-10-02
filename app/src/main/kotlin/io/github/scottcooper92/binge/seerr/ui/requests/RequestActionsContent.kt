@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -297,7 +296,7 @@ private fun requestRows(
                     icon = Icons.Filled.Block,
                     label = stringResource(R.string.request_block_title),
                     detail = stringResource(R.string.request_block_caption),
-                    trailingContent = { Switch(checked = blockTitle, onCheckedChange = onBlockTitleChange) },
+                    toggled = blockTitle,
                     onClick = { onBlockTitleChange(!blockTitle) },
                 ),
             )
