@@ -40,6 +40,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -283,15 +284,30 @@ internal fun EditorTextField(
                 null
             },
         visualTransformation = if (secret && !shown) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions =
-            KeyboardOptions(
-                keyboardType = if (secret) KeyboardType.Password else keyboardType,
-                autoCorrectEnabled = autoCorrect,
-            ),
+        keyboardOptions = editorKeyboardOptions(secret, keyboardType, autoCorrect),
         modifier =
             modifier
                 .fillMaxWidth()
                 .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier),
+    )
+}
+
+/**
+ * The keyboard an editor field asks for. Free prose (a name, a title, a message) starts each
+ * sentence capitalised; anything that is not prose, whether a URL, an email, a number, a secret or a
+ * field the caller marked as an identifier with `autoCorrect = false`, is left exactly as typed.
+ */
+internal fun editorKeyboardOptions(
+    secret: Boolean,
+    keyboardType: KeyboardType,
+    autoCorrect: Boolean,
+): KeyboardOptions {
+    val type = if (secret) KeyboardType.Password else keyboardType
+    val isProse = type == KeyboardType.Text && autoCorrect
+    return KeyboardOptions(
+        capitalization = if (isProse) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
+        autoCorrectEnabled = autoCorrect,
+        keyboardType = type,
     )
 }
 
