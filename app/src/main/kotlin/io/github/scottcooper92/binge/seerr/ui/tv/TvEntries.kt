@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -343,9 +344,26 @@ private fun <T : Any> LazyPagingItems<T>?.toRows(keyOf: (T) -> Any): TvPagedRows
         count = itemCount,
         at = { index -> this[index] },
         itemKey = itemKey(keyOf),
-        refresh = loadState.refresh.toPhase(),
-        append = loadState.append.toPhase(),
+        refresh = loadState.refreshPhase(),
+        append = loadState.appendPhase(),
     )
+}
+
+/**
+ * The refresh the server's answer decides, as the phone's lists read it: the cache's own refresh reports
+ * only the database, so a failed network refresh behind cached rows is on the mediator's state.
+ */
+internal fun CombinedLoadStates.refreshPhase(): TvLoadPhase = settle(mediator?.refresh, refresh).toPhase()
+
+internal fun CombinedLoadStates.appendPhase(): TvLoadPhase = settle(mediator?.append, append).toPhase()
+
+/** An error from either side wins, then a load in progress. */
+private fun settle(
+    remote: LoadState?,
+    source: LoadState,
+): LoadState {
+    val states = listOfNotNull(remote, source)
+    return states.firstOrNull { it is LoadState.Error } ?: states.firstOrNull { it is LoadState.Loading } ?: source
 }
 
 private fun LoadState.toPhase(): TvLoadPhase =

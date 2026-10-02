@@ -247,14 +247,17 @@ internal fun <T> TvPagedList(
     val refresh = rows.refresh
     when {
         rows.count > 0 ->
-            TvStableFocusScroll {
-                LazyColumn(
-                    modifier = modifier.fillMaxSize().tvFocusGroup(),
-                    contentPadding = PaddingValues(vertical = dimensionResource(TvR.dimen.tv_focus_ring_bleed)),
-                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_list_row_gap)),
-                ) {
-                    items(count = rows.count, key = rows.itemKey) { index -> rows.at(index)?.let { row(it) } }
-                    item { TvAppendFooter(rows.append, onRetryLoad, onReconnect) }
+            Column(modifier = modifier) {
+                if (refresh is TvLoadPhase.Failed) TvRefreshFailedButton(refresh, onRetryLoad, onReconnect)
+                TvStableFocusScroll {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().tvFocusGroup(),
+                        contentPadding = PaddingValues(vertical = dimensionResource(TvR.dimen.tv_focus_ring_bleed)),
+                        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_list_row_gap)),
+                    ) {
+                        items(count = rows.count, key = rows.itemKey) { index -> rows.at(index)?.let { row(it) } }
+                        item { TvAppendFooter(rows.append, onRetryLoad, onReconnect) }
+                    }
                 }
             }
         refresh is TvLoadPhase.Loading -> TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = modifier)
@@ -272,6 +275,23 @@ internal fun <T> TvPagedList(
             )
         else -> TvBoardPlate(body = emptyMessage, icon = Icons.Filled.Inbox, modifier = modifier)
     }
+}
+
+/**
+ * Above rows that are still showing, when the refresh behind them failed: the rows are the last known ones,
+ * and a focusable button retries or, for a rejected session, reconnects. D-pad Up from the first row reaches it.
+ */
+@Composable
+private fun TvRefreshFailedButton(
+    refresh: TvLoadPhase.Failed,
+    onRetryLoad: () -> Unit,
+    onReconnect: () -> Unit,
+) {
+    TvButton(
+        label = stringResource(if (refresh.rejected) R.string.tv_hub_reconnect else R.string.tv_list_refresh_failed),
+        onClick = if (refresh.rejected) onReconnect else onRetryLoad,
+        modifier = Modifier.padding(vertical = dimensionResource(DesR.dimen.padding_m)),
+    )
 }
 
 /** Under a list that is showing: a line while the next page loads, or a button to retry it. */

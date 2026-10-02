@@ -5,6 +5,8 @@ import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
 import io.github.scottcooper92.binge.seerr.ui.tv.NoIssuesActions
+import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
+import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.issue
 import io.github.scottcooper92.binge.seerr.ui.tv.issuesReady
 import io.github.scottcooper92.binge.seerr.ui.tv.rows
@@ -51,6 +53,25 @@ class TvIssuesScreenshotTest {
         TvIssuesBoard(
             state = issuesReady(actionItem = FixedSampleIssues.first()),
             rows = rows(FixedSampleIssues),
+            events = emptyFlow(),
+            actions = NoIssuesActions,
+            now = ISSUES_NOW_MILLIS,
+        )
+    }
+
+    /** A refresh the server rejected behind cached rows: the rows stay, with the way back to reconnect above them. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RejectedRefreshBehindRows() {
+        TvIssuesBoard(
+            state = issuesReady(),
+            rows =
+                TvPagedRows(
+                    count = FixedSampleIssues.size,
+                    at = { FixedSampleIssues.getOrNull(it) },
+                    refresh = TvLoadPhase.Failed(rejected = true),
+                ),
             events = emptyFlow(),
             actions = NoIssuesActions,
             now = ISSUES_NOW_MILLIS,
