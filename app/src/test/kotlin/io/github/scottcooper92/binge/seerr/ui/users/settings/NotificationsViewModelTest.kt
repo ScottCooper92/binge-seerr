@@ -115,6 +115,39 @@ class NotificationsViewModelTest {
         }
 
     @Test
+    fun `a Discord id that is not digits flags the page and blocks the save`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit {
+                it.update(
+                    NotificationAgent.Discord,
+                ) { discord -> discord.copy(fields = mapOf(AgentField.DiscordId to "scott#1234")) }
+            }
+            vm.save()
+
+            val ready = vm.awaitReady()
+            assertFalse(ready.draft.discordIdValid)
+            assertFalse(ready.draft.valid)
+            assertFalse(ready.saving)
+            assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/notifications"))
+        }
+
+    @Test
+    fun `a blank or numeric Discord id is valid, padded or not`() {
+        listOf("", "  ", "0", "80351110224678912", " 80351110224678912 ").forEach { id ->
+            val settings = NotificationSettings().update(NotificationAgent.Discord) { it.copy(fields = mapOf(AgentField.DiscordId to id)) }
+            assertTrue(id, settings.discordIdValid)
+        }
+        assertTrue(NotificationSettings().valid)
+        listOf("@scott", "<@123>", "123 456", "12a").forEach { id ->
+            val settings = NotificationSettings().update(NotificationAgent.Discord) { it.copy(fields = mapOf(AgentField.DiscordId to id)) }
+            assertFalse(id, settings.discordIdValid)
+        }
+    }
+
+    @Test
     fun `Seerr's list of Discord ids reads as the first, and the rest and the Telegram topic survive the save`() =
         runTest {
             seerr.serve(

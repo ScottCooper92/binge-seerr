@@ -43,6 +43,8 @@ class NotificationsViewModel
             return load()
         }
 
+        override fun canSave(draft: NotificationSettings): Boolean = draft.valid
+
         @AssistedFactory
         interface Factory {
             fun create(userId: Int): NotificationsViewModel

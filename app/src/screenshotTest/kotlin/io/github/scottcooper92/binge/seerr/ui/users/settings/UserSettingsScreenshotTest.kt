@@ -183,6 +183,26 @@ class UserNotificationsScreenshotTest {
     @Composable
     fun plainUser() = NotificationsFrame(settled(notifications(moderator = false)))
 
+    /** A pasted username in the Discord ID: the field is flagged and Save stays off. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun badDiscordId() =
+        NotificationsFrame(
+            EditorUiState.Ready(
+                draft =
+                    notifications(moderator = false).update(NotificationAgent.Discord) {
+                        it.copy(
+                            fields =
+                                mapOf(
+                                    AgentField.DiscordId to "scott#1234",
+                                ),
+                        )
+                    },
+                saved = notifications(moderator = false),
+            ),
+        )
+
     /** Nothing configured: each agent offers its fields, and no event chips until one is on. */
     @PreviewTest
     @SeerrScreenStatePreview
