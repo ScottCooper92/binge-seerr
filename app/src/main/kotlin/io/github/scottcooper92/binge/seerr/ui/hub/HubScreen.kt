@@ -24,6 +24,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
@@ -42,7 +43,7 @@ class HubActions(
     val onOpenAccount: (userId: Int) -> Unit,
     val onOpenRequest: (requestId: Int) -> Unit,
     val onRetry: () -> Unit,
-    /** The sign-in form on the saved server, for a session it rejected. */
+    /** The sign-in form on the saved server: for a session the server rejected, and to correct an address that no longer answers. */
     val onReconnect: () -> Unit,
     val onDisconnect: () -> Unit,
     val onDismissBingeHint: () -> Unit,
@@ -202,7 +203,7 @@ class DeveloperRow(
     val onClick: () -> Unit,
 )
 
-/** Server gone (retry), the dashboard not loaded yet (retry), or the session rejected (reconnect). */
+/** Server gone or the dashboard not loaded (retry, or edit the connection), or the session rejected (reconnect). */
 @Composable
 private fun ConnectionProblem(
     health: ConnectionHealth,
@@ -243,6 +244,11 @@ private fun ConnectionProblem(
             ) {
                 if (retryable) {
                     BingeFilledButton(label = stringResource(R.string.hub_retry), onClick = onRetry, modifier = Modifier.fillMaxWidth())
+                    BingeOutlinedButton(
+                        label = stringResource(R.string.settings_edit_connection),
+                        onClick = onReconnect,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 } else {
                     BingeFilledButton(
                         label = stringResource(R.string.hub_sign_in_again),

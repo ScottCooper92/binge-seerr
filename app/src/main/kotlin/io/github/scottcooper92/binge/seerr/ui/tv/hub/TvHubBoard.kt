@@ -91,7 +91,7 @@ internal fun TvHubBoard(
     }
 }
 
-/** Server gone (retry), the dashboard not loaded yet (retry), or the session rejected (reconnect). */
+/** Server gone or the dashboard not loaded (retry, or edit the connection), or the session rejected (reconnect). */
 @Composable
 private fun TvHubProblem(
     health: ConnectionHealth,
@@ -125,6 +125,7 @@ private fun TvHubProblem(
             } else {
                 stringResource(R.string.hub_retry) to actions.onRetry
             },
+        alternate = if (unauthorized) null else stringResource(R.string.settings_edit_connection) to actions.onReconnect,
         secondary = stringResource(R.string.hub_disconnect) to actions.onDisconnect,
         modifier = modifier,
         arrival = arrival,
