@@ -113,7 +113,7 @@ internal fun TvBoardDivider(modifier: Modifier = Modifier) {
     )
 }
 
-/** A board's whole-content message — the first load, its failure, or an empty list — with up to two ways out. */
+/** A board's whole-content message — the first load, its failure, or an empty list — with up to three ways out. */
 @Composable
 internal fun TvBoardPlate(
     body: String,
@@ -123,6 +123,7 @@ internal fun TvBoardPlate(
     primary: Pair<String, () -> Unit>? = null,
     secondary: Pair<String, () -> Unit>? = null,
     arrival: TvArrivalFocus? = null,
+    alternate: Pair<String, () -> Unit>? = null,
 ) {
     TvMessagePlate(
         body = body,
@@ -131,7 +132,7 @@ internal fun TvBoardPlate(
         alignment = Alignment.Center,
         modifier = modifier,
         actions =
-            if (primary == null && secondary == null) {
+            if (primary == null && alternate == null && secondary == null) {
                 null
             } else {
                 {
@@ -144,11 +145,26 @@ internal fun TvBoardPlate(
                                 modifier = arrival?.let { Modifier.tvArrivalTarget(it) } ?: Modifier,
                             )
                         }
-                        secondary?.let { (label, onClick) ->
+                        alternate?.let { (label, onClick) ->
                             TvButton(
                                 label = label,
                                 onClick = onClick,
                                 modifier = if (primary == null && arrival != null) Modifier.tvArrivalTarget(arrival) else Modifier,
+                            )
+                        }
+                        secondary?.let { (label, onClick) ->
+                            TvButton(
+                                label = label,
+                                onClick = onClick,
+                                modifier =
+                                    if (primary == null &&
+                                        alternate == null &&
+                                        arrival != null
+                                    ) {
+                                        Modifier.tvArrivalTarget(arrival)
+                                    } else {
+                                        Modifier
+                                    },
                             )
                         }
                     }

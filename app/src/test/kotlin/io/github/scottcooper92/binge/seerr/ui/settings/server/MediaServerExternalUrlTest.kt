@@ -51,4 +51,46 @@ class MediaServerExternalUrlTest {
             assertFalse(it, tautulli(it).valid)
         }
     }
+
+    private fun withForgotPassword(url: String?) = jellyfin("").copy(forgotPasswordUrl = url)
+
+    @Test
+    fun `a trailing slash on the Jellyfin external url shows the error and blocks saving`() {
+        listOf("https://jf.example.com/", "http://jf.lan:8096/jf/", " https://jf.example.com/ ").forEach {
+            assertFalse(it, jellyfin(it).externalUrlValid)
+            assertFalse(it, jellyfin(it).valid)
+        }
+    }
+
+    @Test
+    fun `Plex and Tautulli keep accepting a trailing slash, as their web forms do`() {
+        assertTrue(plex("https://plex.example.com/").valid)
+        assertTrue(tautulli("https://tautulli.example.com/").valid)
+    }
+
+    @Test
+    fun `a blank or absent forgot password url is allowed`() {
+        listOf(null, "", "   ").forEach { assertTrue(it.orEmpty(), withForgotPassword(it).valid) }
+    }
+
+    @Test
+    fun `a web address without a trailing slash is a valid forgot password url`() {
+        listOf("https://jf.example.com/reset", "  HTTP://jf.lan/reset  ").forEach {
+            assertTrue(it, withForgotPassword(it).forgotPasswordUrlValid)
+            assertTrue(it, withForgotPassword(it).valid)
+        }
+    }
+
+    @Test
+    fun `a forgot password url that is not a web address or ends in a slash blocks saving`() {
+        (notWebAddresses + "https://jf.example.com/reset/").forEach {
+            assertFalse(it, withForgotPassword(it).forgotPasswordUrlValid)
+            assertFalse(it, withForgotPassword(it).valid)
+        }
+    }
+
+    @Test
+    fun `a bad forgot password url does not flag the external url`() {
+        assertTrue(withForgotPassword("nope").externalUrlValid)
+    }
 }
