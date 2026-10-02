@@ -53,7 +53,7 @@ fun TautulliScreen(
                 enabled = enabled,
                 keyboardType = KeyboardType.Number,
                 placeholder = stringResource(R.string.placeholder_port_tautulli),
-                isError = draft.port.isNotBlank() && !draft.copy(host = "x", apiKey = "x").valid,
+                isError = draft.port.isNotBlank() && !hostAndPortValid("x", draft.port),
             ) { value -> actions.onEdit { it.copy(port = value) } }
             EditorToggleRow(
                 editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
@@ -85,6 +85,7 @@ fun TautulliScreen(
                 enabled = enabled,
                 keyboardType = KeyboardType.Uri,
                 supporting = stringResource(R.string.server_settings_tautulli_external_hint),
+                isError = !draft.externalUrlValid,
             ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
         }
     }
