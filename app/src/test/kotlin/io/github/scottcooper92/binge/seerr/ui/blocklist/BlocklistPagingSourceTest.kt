@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
+import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -63,7 +64,7 @@ class BlocklistPagingSourceTest {
         search: String? = null,
     ): BlocklistPagingSource {
         val api = SeerrApiFactory(logRequests = false).cached(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y"))
-        val titles = TitleCache()
+        val titles = TitleCache(FakeTitleDao())
         return BlocklistPagingSource(
             api = { api },
             path = path,

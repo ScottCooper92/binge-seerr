@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.RecordingCrashBreadcrumbs
@@ -110,7 +111,16 @@ class IssueDetailViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = IssueDetailViewModel(connection, TitleCache(), cache, mainDispatcherRule.dispatcher, 31, analytics, crashBreadcrumbs)
+        val vm =
+            IssueDetailViewModel(
+                connection,
+                TitleCache(FakeTitleDao()),
+                cache,
+                mainDispatcherRule.dispatcher,
+                31,
+                analytics,
+                crashBreadcrumbs,
+            )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm

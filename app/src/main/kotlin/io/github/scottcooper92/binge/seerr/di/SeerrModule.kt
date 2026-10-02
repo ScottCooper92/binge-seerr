@@ -18,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.data.RoomMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.RoomRequestStore
 import io.github.scottcooper92.binge.seerr.data.RoomUserStore
 import io.github.scottcooper92.binge.seerr.data.SeerrCacheDatabase
+import io.github.scottcooper92.binge.seerr.data.TitleDao
 import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.feedback.FeedbackPrefs
 import io.github.scottcooper92.binge.seerr.notifications.AndroidNotifier
@@ -70,6 +71,10 @@ object SeerrModule {
             .databaseBuilder(context, SeerrCacheDatabase::class.java, "seerr_cache.db")
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
+
+    @Provides
+    @Singleton
+    fun titleDao(db: SeerrCacheDatabase): TitleDao = db.titleDao()
 
     @Provides
     @Singleton

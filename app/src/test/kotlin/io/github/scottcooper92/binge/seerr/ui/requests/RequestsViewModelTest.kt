@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -98,7 +99,7 @@ class RequestsViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = RequestsViewModel(connection, TitleCache(), FakeRequestStore(), mainDispatcherRule.dispatcher)
+        val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher)
         viewModels.put("requests", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -222,7 +223,7 @@ class RequestsViewModelTest {
             // Fail only the ViewModel's own resolve, not the connect() probe above.
             authShouldFail.set(true)
             val probes = authReads()
-            val vm = RequestsViewModel(connection, TitleCache(), FakeRequestStore(), mainDispatcherRule.dispatcher)
+            val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher)
             viewModels.put("requests", vm)
             // Every emission, not the current value: Loading is also stateIn's seed, so sampling
             // uiState cannot tell "held at Loading" apart from "has not propagated yet".
@@ -263,7 +264,7 @@ class RequestsViewModelTest {
                 }
             }
             val connection = connectedWhile(authStatus)
-            val vm = RequestsViewModel(connection, TitleCache(), FakeRequestStore(), mainDispatcherRule.dispatcher)
+            val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher)
             viewModels.put("requests", vm)
             backgroundScope.launch { vm.uiState.collect {} }
             vm.setScreenVisible(true)
