@@ -7,8 +7,10 @@ import com.binge.designsystem.component.SettingsGroup
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
@@ -134,20 +136,18 @@ class SettingsGroupsScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun jobStates() {
-        val actions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> })
-        val jobs = serverJobs()
-        Group(
-            R.string.settings_group_system,
-            listOf(
-                jobRow(jobs[0], busy = false, outcome = null, actions) {},
-                jobRow(jobs[1], busy = false, outcome = null, actions) {},
-                jobRow(jobs[2], busy = false, outcome = JobOutcome.Succeeded, actions) {},
-                jobRow(jobs[3], busy = false, outcome = JobOutcome.Failed, actions) {},
-                jobRow(jobs[4], busy = true, outcome = null, actions) {},
-            ),
-        )
-    }
+    fun jobStates() = JobStatesGroup()
+
+    /** The same five rows at 1.5 and 2.0 font scale, where the icon actions must not squeeze the names. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun jobStatesFontScale() = JobStatesGroup()
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun jobStatesSpanish() = JobStatesGroup()
 
     /** The system would show nothing, so the row that says so sits between the toggles and the schedule. */
     @PreviewTest
@@ -295,6 +295,22 @@ private fun SettingsFrame(state: SettingsUiState) =
         jobEvents = emptyFlow(),
         jobActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
     )
+
+@Composable
+private fun JobStatesGroup() {
+    val actions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> })
+    val jobs = serverJobs()
+    Group(
+        R.string.settings_group_system,
+        listOf(
+            jobRow(jobs[0], busy = false, outcome = null, actions) {},
+            jobRow(jobs[1], busy = false, outcome = null, actions) {},
+            jobRow(jobs[2], busy = false, outcome = JobOutcome.Succeeded, actions) {},
+            jobRow(jobs[3], busy = false, outcome = JobOutcome.Failed, actions) {},
+            jobRow(jobs[4], busy = true, outcome = null, actions) {},
+        ),
+    )
+}
 
 private fun serverJobs() =
     listOf(

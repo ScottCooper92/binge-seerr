@@ -88,6 +88,32 @@ annotation class SeerrScreenStatePreview
 )
 annotation class SeerrListPanePreview
 
+/**
+ * A phone window at the two larger font scales, 1.5 and 2.0, for a row whose layout has to survive
+ * a user's text size. The 1.0 cell is the screen's own frame.
+ */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(
+    name = "font15",
+    device = "spec:width=411dp,height=891dp,orientation=portrait",
+    fontScale = 1.5f,
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+@Preview(
+    name = "font20",
+    device = "spec:width=411dp,height=891dp,orientation=portrait",
+    fontScale = 2f,
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+annotation class SeerrFontScalePreviews
+
+/** One phone cell in Spanish, whose labels run longer than English ("Unblock" is "Desbloquear"). */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(name = "es", device = "spec:width=411dp,height=891dp,orientation=portrait", uiMode = UI_MODE_NIGHT_YES, locale = "es")
+annotation class SeerrSpanishPreviews
+
 /** A component against both themes, at the size its content asks for. */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "dark", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)

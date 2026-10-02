@@ -2,8 +2,10 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
@@ -221,6 +223,17 @@ class UserNotificationsScreenshotTest {
 }
 
 class UserLinkedAccountsScreenshotTest {
+    /** The Unlink and Link icon buttons at 1.5 and 2.0 font scale. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun fontScale() = LinkedFrame(linkedReady())
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = LinkedFrame(linkedReady())
+
     /** Plex linked, and a Jellyfin account not yet linked. */
     @PreviewTest
     @SeerrScreenPreviews
