@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserMainSettingsDto
+import io.github.scottcooper92.binge.seerr.ui.users.isEmailShape
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -9,7 +10,7 @@ import org.junit.Test
 class EmailShapeTest {
     @Test
     fun `ordinary and unusual valid addresses are accepted`() {
-        listOf("a@b", "scott@example.com", "first.last+tag@sub.example.co.uk", "\"odd\"@example.com", "  a@b.c  ").forEach {
+        listOf("a@b", "scott@example.com", "first.last+tag@sub.example.co.uk", "\"odd\"@example.com", "  a@b.c  ", "a@b.c").forEach {
             assertTrue(it, it.isEmailShape())
         }
     }

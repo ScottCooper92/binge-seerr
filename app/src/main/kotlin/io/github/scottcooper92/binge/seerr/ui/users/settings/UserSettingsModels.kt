@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.LanguageCodeShapes
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
+import io.github.scottcooper92.binge.seerr.ui.users.isEmailShape
 
 /** The pages under a user, in the order the index lists them. */
 enum class UserSettingsPage { General, Password, Notifications, Permissions, LinkedAccounts }
