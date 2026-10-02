@@ -188,6 +188,7 @@ private fun LinkFields(
             enabled = enabled,
             keyboardType = KeyboardType.Uri,
             placeholder = stringResource(R.string.placeholder_url_https),
+            isError = !draft.forgotPasswordUrlValid,
             imeAction = imeActionIf(last = draft.apiKey == null),
         ) { value ->
             actions.onEdit { it.copy(forgotPasswordUrl = value) }

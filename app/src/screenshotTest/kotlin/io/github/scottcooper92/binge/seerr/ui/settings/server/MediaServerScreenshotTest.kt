@@ -80,6 +80,19 @@ class MediaServerScreenshotTest {
             ),
         )
 
+    /** A Jellyfin forgot-password link with a trailing slash: only that field is flagged and Save stays off. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun badForgotPasswordUrl() =
+        Frame(
+            ExtrasEditorUiState.Ready(
+                draft = jellyfinForm().copy(forgotPasswordUrl = "https://jellyfin.example.com/forgot/"),
+                saved = jellyfinForm(),
+                extras = MediaServerExtras(libraries = libraries()),
+            ),
+        )
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
