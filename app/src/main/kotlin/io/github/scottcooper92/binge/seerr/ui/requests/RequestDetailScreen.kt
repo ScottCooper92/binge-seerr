@@ -20,6 +20,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
@@ -291,7 +293,11 @@ internal fun RequestDetailPage(
             }
         },
         body = {
-            RequestHeadline(detail, Modifier.padding(resolvedContentInset()), initiallyOverflowing)
+            RequestHeadline(
+                detail,
+                Modifier.padding(resolvedContentInset()).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
+                initiallyOverflowing,
+            )
             RequestStats(detail)
             RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser, isActing = isActing)
             RequestSections(detail)
