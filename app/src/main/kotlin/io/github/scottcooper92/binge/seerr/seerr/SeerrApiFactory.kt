@@ -152,8 +152,8 @@ class SeerrApiFactory(
             .apply { testDispatcher?.let { dispatcher(it()) } }
             .addNetworkInterceptor(loggingInterceptor(debugLevel))
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
-            .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
 
     /**
@@ -225,12 +225,21 @@ class SeerrApiFactory(
     private companion object {
         const val API_KEY_HEADER = "X-Api-Key"
         const val CONTENT_TYPE = "application/json; charset=UTF-8"
-        const val TIMEOUT_SECONDS = 15L
         const val MAX_IDLE_CONNECTIONS = 5
         const val IDLE_TIMEOUT_SECONDS = 3L
         val REDACTED_HEADERS = listOf(API_KEY_HEADER, "Authorization", "Cookie", "Set-Cookie")
     }
 }
+
+/**
+ * How long OkHttp waits for the TCP socket to the server to connect, per address attempt. A server on
+ * a LAN, VPN or the internet accepts in milliseconds, so a dark host (Tailscale off) fails fast. It
+ * covers the connect only, not the TLS handshake or the response, which [READ_TIMEOUT_SECONDS] bounds.
+ */
+internal const val CONNECT_TIMEOUT_SECONDS = 5L
+
+/** How long a socket read may stall, which also bounds the TLS handshake. Slow servers need this long. */
+internal const val READ_TIMEOUT_SECONDS = 15L
 
 /** The result of a [SeerrApiFactory.login]: the call's [value] plus the captured cookie, if the server set one. */
 data class SeerrLoginResult<T>(
