@@ -24,10 +24,7 @@ import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
-import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
-import io.github.scottcooper92.binge.seerr.data.RequestStore
-import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
@@ -140,20 +137,14 @@ object AuthModule {
         apis: SeerrApiFactory,
         health: SeerrConnectionHealthMonitor,
         carrier: ConnectionCarrier,
-        issues: IssueStore,
-        requests: RequestStore,
-        users: UserStore,
-        statuses: MediaStatusStore,
+        caches: ServerScopedCaches,
         titles: TitleCache,
         notifications: NotificationPrefs,
         bingeConnection: BingeConnectionStore,
         hubOverview: HubOverviewCache,
     ): SeerrConnection =
         SeerrConnection(store, apis, health, carrier = carrier, onServerChanged = {
-            issues.clearAll()
-            requests.clearAll()
-            users.clearAll()
-            statuses.clearAll()
+            caches.clearAll()
             titles.clear()
             notifications.forgetServer()
             bingeConnection.forget()
