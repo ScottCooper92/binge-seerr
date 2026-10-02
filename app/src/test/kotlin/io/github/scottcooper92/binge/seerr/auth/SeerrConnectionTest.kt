@@ -7,6 +7,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVersion
+import io.github.scottcooper92.binge.seerr.util.enqueueProfile
+import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -30,7 +32,7 @@ class SeerrConnectionTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val server = MockWebServer().apply { start() }
+    private val server = MockWebServer().routeProfiles().apply { start() }
     private val baseUrl = server.url("/").toString()
 
     private fun connection(scope: CoroutineScope): SeerrConnection =
@@ -50,8 +52,7 @@ class SeerrConnectionTest {
     fun `connect validates the key, detects the fork and saves`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
-            server.enqueue(json("""{"version":"2.7.0"}"""))
-            server.enqueue(json("""{"initialized":true,"localLogin":false}"""))
+            server.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true,"localLogin":false}"""))
             val sut = connection(backgroundScope)
 
             val result = sut.connect(baseUrl, SeerrAuth.ApiKey("k3y"))
@@ -96,8 +97,7 @@ class SeerrConnectionTest {
             val sut = connection(backgroundScope)
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
 
-            server.enqueue(json("""{"version":"3.4.0"}"""))
-            server.enqueue(json("""{"initialized":true,"mediaServerType":2}"""))
+            server.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"initialized":true,"mediaServerType":2}"""))
             val recovered = sut.profile()
             val served = server.requestCount
             sut.profile()
@@ -112,12 +112,10 @@ class SeerrConnectionTest {
     fun `refreshing the profile re-reads the server`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
-            server.enqueue(json("""{"version":"2.7.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
             val sut = connection(backgroundScope)
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
-            server.enqueue(json("""{"version":"3.0.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"initialized":true}"""))
 
             val refreshed = sut.refreshProfile()
 
@@ -152,8 +150,7 @@ class SeerrConnectionTest {
     fun `login keeps the session cookie the server set`() =
         runTest {
             server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/; HttpOnly")))
-            server.enqueue(json("""{"version":"3.1.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             val sut = connection(backgroundScope)
 
             val saved = sut.logIn(baseUrl, SeerrLoginRequest.Jellyfin("scott", "pw")).getOrThrow()
@@ -186,8 +183,7 @@ class SeerrConnectionTest {
     fun `the authenticated user is fetched once per connection and sent the session cookie`() =
         runTest {
             server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
-            server.enqueue(json("""{"version":"3.1.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             server.enqueue(json("""{"id":42,"permissions":32}"""))
             val sut = connection(backgroundScope)
             sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
@@ -214,8 +210,7 @@ class SeerrConnectionTest {
     fun `health follows the saved server's calls, and connecting or disconnecting resets it`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
-            server.enqueue(json("""{"version":"3.1.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             val monitor = SeerrConnectionHealthMonitor()
             val sut =
                 SeerrConnection(
@@ -244,8 +239,7 @@ class SeerrConnectionTest {
     fun `a cold start over saved credentials is unchecked, not disconnected`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
-            server.enqueue(json("""{"version":"3.1.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             val store =
                 CredentialStore(
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("cold.preferences_pb") },
@@ -266,8 +260,7 @@ class SeerrConnectionTest {
     @Test
     fun `inspecting an address reads its profile and artwork with no credentials`() =
         runTest {
-            server.enqueue(json("""{"version":"3.4.0"}"""))
-            server.enqueue(json("""{"mediaServerType":2,"jellyfinServerName":"Home"}"""))
+            server.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"jellyfinServerName":"Home"}"""))
             server.enqueue(json("""["/one.jpg","/two.jpg"]"""))
             val sut = connection(backgroundScope)
 
@@ -302,10 +295,9 @@ class SeerrConnectionTest {
     @Test
     fun `inspect retries a portless address at the default Seerr port when the default port is unreachable`() =
         runTest {
-            val fallback = MockWebServer().apply { start(5055) }
+            val fallback = MockWebServer().routeProfiles().apply { start(5055) }
             try {
-                fallback.enqueue(json("""{"version":"3.4.0"}"""))
-                fallback.enqueue(json("""{"mediaServerType":2}"""))
+                fallback.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2}"""))
                 fallback.enqueue(json("""[]"""))
                 val sut = connection(backgroundScope)
 
@@ -394,8 +386,7 @@ class SeerrConnectionTest {
             server.enqueue(json("""{"authenticated":false}"""))
             server.enqueue(json("""{"authenticated":true}"""))
             server.enqueue(json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/")))
-            server.enqueue(json("""{"version":"3.4.0"}"""))
-            server.enqueue(json("""{"mediaServerType":2}"""))
+            server.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2}"""))
             val sut =
                 SeerrConnection(
                     store =
@@ -443,8 +434,7 @@ class SeerrConnectionTest {
     fun `a plex token signs in and keeps the session`() =
         runTest {
             server.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
-            server.enqueue(json("""{"version":"1.33.2"}"""))
-            server.enqueue(json("""{"localLogin":true}"""))
+            server.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
             val sut = connection(backgroundScope)
 
             val saved = sut.logInWithPlex(baseUrl, "tok3n").getOrThrow()
@@ -484,8 +474,7 @@ class SeerrConnectionTest {
     fun `disconnecting a session sign-in ends it on the server first, and a key connection posts nothing`() =
         runTest {
             server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
-            server.enqueue(json("""{"version":"3.1.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             server.enqueue(json("""{"status":"ok"}"""))
             val sut = connection(backgroundScope)
             sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
@@ -499,8 +488,7 @@ class SeerrConnectionTest {
             assertNull(sut.credentials.first())
 
             server.enqueue(json("""{"id":1,"permissions":2}"""))
-            server.enqueue(json("""{"version":"3.1.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
 
             sut.disconnect()
@@ -512,8 +500,7 @@ class SeerrConnectionTest {
     fun `disconnect forgets the connection and the cached user`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))
-            server.enqueue(json("""{"version":"3.1.0"}"""))
-            server.enqueue(json("""{"initialized":true}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
             val sut = connection(backgroundScope)
             sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
 
