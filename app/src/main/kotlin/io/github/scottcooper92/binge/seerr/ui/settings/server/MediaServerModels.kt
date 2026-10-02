@@ -36,10 +36,18 @@ data class MediaServerForm(
     val forgotPasswordUrl: String? = null,
     val apiKey: String? = null,
 ) {
-    /** Blank is allowed; otherwise the web client wants a web address here, for Plex's web app and for Jellyfin's external host alike. */
-    val externalUrlValid: Boolean get() = externalUrl.isBlank() || externalUrl.trim().isWebUrl()
+    /**
+     * Blank is allowed; otherwise a web address, for Plex's web app and for Jellyfin's external host alike.
+     * Jellyfin and Emby also refuse a trailing slash there, as Jellyseerr's own form does.
+     */
+    val externalUrlValid: Boolean
+        get() = externalUrl.isBlank() || externalUrl.trim().let { it.isWebUrl() && (kind == MediaServerKind.Plex || !it.endsWith("/")) }
 
-    val valid: Boolean get() = hostAndPortValid(host, port) && externalUrlValid
+    /** Blank or absent is allowed; otherwise a web address with no trailing slash, the two rules Jellyseerr's form applies. */
+    val forgotPasswordUrlValid: Boolean
+        get() = forgotPasswordUrl.isNullOrBlank() || forgotPasswordUrl.trim().let { it.isWebUrl() && !it.endsWith("/") }
+
+    val valid: Boolean get() = hostAndPortValid(host, port) && externalUrlValid && forgotPasswordUrlValid
 }
 
 enum class LibraryType { Movies, Shows }
