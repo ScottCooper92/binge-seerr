@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import io.github.scottcooper92.binge.seerr.R
 import kotlinx.coroutines.flow.Flow
 
@@ -55,6 +56,7 @@ fun PasswordSettingsScreen(
             supporting = stringResource(R.string.user_settings_password_mismatch).takeIf { mismatch },
             isError = mismatch,
             contentType = ContentType.NewPassword,
+            imeAction = ImeAction.Done,
         ) { value -> actions.onEdit { it.copy(confirm = value) } }
     }
 }

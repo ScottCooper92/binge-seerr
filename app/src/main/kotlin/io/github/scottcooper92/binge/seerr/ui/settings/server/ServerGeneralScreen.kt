@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeOutlinedButton
@@ -45,6 +46,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
+import io.github.scottcooper92.binge.seerr.ui.users.settings.imeActionIf
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -167,6 +169,7 @@ private fun DiscoverFields(
             enabled = enabled,
             supporting = stringResource(R.string.server_settings_original_language_hint),
             isError = !draft.originalLanguageValid,
+            imeAction = imeActionIf(last = draft.youtubeUrl == null),
         ) { value -> actions.onEdit { it.copy(originalLanguage = value) } }
     }
 }
@@ -232,6 +235,7 @@ internal fun ServerSwitches(
                 enabled = enabled,
                 keyboardType = KeyboardType.Uri,
                 supporting = stringResource(R.string.server_settings_youtube_url_hint),
+                imeAction = ImeAction.Done,
             ) { value -> actions.onEdit { it.copy(youtubeUrl = value) } }
         }
         draft.trustProxy?.let { on ->

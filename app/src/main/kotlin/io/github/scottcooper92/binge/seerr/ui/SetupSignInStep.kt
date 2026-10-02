@@ -29,6 +29,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
@@ -62,7 +63,7 @@ internal fun SetupSignInStep(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             ModeChips(state.server, state.form.mode) { mode -> actions.onEditForm { copy(mode = mode) } }
-            ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset)
+            ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset, actions.onConnect)
             state.error?.let { error ->
                 Text(
                     stringResource(error.messageRes()),
@@ -143,8 +144,10 @@ private fun ModeFields(
     state: SetupUiState.SignIn,
     onEdit: (SignInForm.() -> SignInForm) -> Unit,
     onRequestPasswordReset: () -> Unit,
+    onConnect: () -> Unit,
 ) {
     val form = state.form
+    val submit = { if (form.canSubmit && !state.isConnecting && state.link == null) onConnect() }
     when (form.mode) {
         // No content type: the key is the server's, not an account credential, and offering to save
         // it as this user's password is how a password manager ends up holding the wrong secret.
@@ -155,6 +158,8 @@ private fun ModeFields(
                 secret = true,
                 // Supporting rather than a placeholder: it has to stay readable while the user goes to fetch the key.
                 supporting = stringResource(R.string.setup_api_key_hint),
+                imeAction = ImeAction.Done,
+                onDone = submit,
             ) { value -> onEdit { copy(apiKey = value) } }
         SeerrSignInMode.Local -> {
             OutlinedTextField(
@@ -163,7 +168,7 @@ private fun ModeFields(
                 label = { Text(stringResource(R.string.setup_email)) },
                 placeholder = { Text(stringResource(R.string.placeholder_email)) },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 // Both types: the local account is an email address and it is also the username the
                 // saved login is filed under.
                 modifier =
@@ -177,6 +182,8 @@ private fun ModeFields(
                 stringResource(R.string.setup_password),
                 secret = true,
                 contentType = ContentType.Password,
+                imeAction = ImeAction.Done,
+                onDone = submit,
             ) { value -> onEdit { copy(password = value) } }
             if (state.server.canResetPassword) {
                 BingeTextButton(
@@ -194,7 +201,7 @@ private fun ModeFields(
                 placeholder = { Text(stringResource(R.string.setup_username_placeholder, form.mode.label(state.server))) },
                 singleLine = true,
                 // A plain text field is autocorrected, and a rewritten username fails sign-in with no visible cause.
-                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Next),
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -206,6 +213,8 @@ private fun ModeFields(
                 stringResource(R.string.setup_password),
                 secret = true,
                 contentType = ContentType.Password,
+                imeAction = ImeAction.Done,
+                onDone = submit,
             ) { value -> onEdit { copy(password = value) } }
         }
         SeerrSignInMode.Plex -> Text(stringResource(R.string.setup_plex_hint), style = MaterialTheme.typography.bodyMedium)

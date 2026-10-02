@@ -26,6 +26,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
@@ -228,6 +229,8 @@ private fun MediaServerLinkSheet(
                 stringResource(R.string.setup_password),
                 secret = true,
                 contentType = ContentType.Password,
+                imeAction = ImeAction.Done,
+                onDone = { if (username.isNotBlank() && password.isNotBlank()) onLink(username, password) },
             ) { password = it }
             BingeFilledButton(
                 label = stringResource(R.string.user_settings_link),

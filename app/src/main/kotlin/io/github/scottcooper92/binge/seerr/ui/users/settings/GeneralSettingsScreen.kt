@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import io.github.scottcooper92.binge.seerr.R
 import kotlinx.coroutines.flow.Flow
@@ -114,6 +115,7 @@ private fun DiscoverCard(
             // The same field as the server-level one, so it says the same thing rather than a second wording of it.
             supporting = stringResource(R.string.server_settings_original_language_hint),
             isError = !draft.originalLanguageValid,
+            imeAction = imeActionIf(last = !draft.canEditQuotas),
         ) { value ->
             actions.onEdit { it.copy(originalLanguage = value) }
         }
@@ -158,6 +160,7 @@ private fun QuotasCard(
             enabled = enabled,
             onLimit = { value -> actions.onEdit { it.copy(tvQuotaLimit = value) } },
             onDays = { value -> actions.onEdit { it.copy(tvQuotaDays = value) } },
+            daysImeAction = ImeAction.Done,
         )
     }
 }
@@ -172,6 +175,7 @@ private fun QuotaFields(
     enabled: Boolean,
     onLimit: (String) -> Unit,
     onDays: (String) -> Unit,
+    daysImeAction: ImeAction = ImeAction.Next,
 ) {
     Text(title, style = MaterialTheme.typography.titleSmall)
     Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)), modifier = Modifier.fillMaxWidth()) {
@@ -192,6 +196,7 @@ private fun QuotaFields(
             enabled = enabled,
             keyboardType = KeyboardType.Number,
             isError = days.isNotBlank() && (days.toIntOrNull() ?: -1) < 0,
+            imeAction = daysImeAction,
         )
     }
     Text(

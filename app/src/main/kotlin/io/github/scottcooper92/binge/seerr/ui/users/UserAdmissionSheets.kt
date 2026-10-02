@@ -28,6 +28,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
@@ -38,6 +39,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PasswordSettings
+import io.github.scottcooper92.binge.seerr.ui.users.settings.imeActionIf
 import io.github.scottcooper92.binge.seerr.ui.users.settings.rowLabelColor
 import com.binge.designsystem.R as DesR
 
@@ -173,6 +175,7 @@ internal fun CreateUserSheetContent(
             enabled = !saving,
             autoCorrect = false,
             placeholder = stringResource(R.string.users_create_username_placeholder),
+            imeAction = imeActionIf(last = draft.generatePassword),
         ) { value ->
             onEditDraft { it.copy(username = value) }
         }
@@ -184,6 +187,7 @@ internal fun CreateUserSheetContent(
                 secret = true,
                 supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
                 isError = draft.passwordTooShort,
+                imeAction = ImeAction.Done,
             ) { value -> onEditDraft { it.copy(password = value) } }
         }
         val canGenerate = !saving && draft.canGeneratePassword
