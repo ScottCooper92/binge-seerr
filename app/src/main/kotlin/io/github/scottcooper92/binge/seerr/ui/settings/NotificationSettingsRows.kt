@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -51,7 +50,7 @@ internal fun notificationRows(
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(signal.labelRes()),
                 detail = stringResource(signal.captionRes()),
-                trailingContent = { Switch(checked = on, onCheckedChange = null) },
+                toggled = on,
                 onClick = {
                     if (!on &&
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
