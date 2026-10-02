@@ -56,6 +56,8 @@ import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
@@ -162,10 +164,22 @@ private fun UserDetailContent(
         contentPadding = PaddingValues(bottom = dimensionResource(DesR.dimen.padding_l)) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        item { ProfileHeader(item, modifier = Modifier.padding(inset)) }
+        item {
+            ProfileHeader(
+                item,
+                modifier = Modifier.padding(inset).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)),
+            )
+        }
         // A failed refresh says so under the profile, which stays; the requests below are their own stream.
         refreshError?.let { error -> item { ErrorScreen(error = error, onRetry = actions.onRetry) } }
-        if (detail?.watch?.playCount != null) item { DetailStatRow(userStats(detail)) }
+        if (detail?.watch?.playCount != null) {
+            item {
+                DetailStatRow(
+                    stats = userStats(detail),
+                    modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS)),
+                )
+            }
+        }
         detail?.quota?.let { quota -> item { Box(Modifier.padding(horizontal = inset)) { QuotaSection(quota) } } }
         // The bitmask is on the row, so a seeded page names the permissions as the loaded one will.
         val permissions = detail?.permissions ?: ManageablePermission.decode(item.permissions)
