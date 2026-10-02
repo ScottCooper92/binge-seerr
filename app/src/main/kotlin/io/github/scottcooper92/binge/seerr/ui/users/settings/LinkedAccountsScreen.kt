@@ -177,13 +177,15 @@ private fun accountRow(
             },
         clickable = false,
         trailingContent = {
-            // One button for both directions, so the tone follows which one it currently is.
+            // One button for both directions, so the tone follows which one it currently is. The icon
+            // takes an explicit tint, which the disabled colour never reaches, so a busy row dims it here.
+            val tone = if (account.linked) MaterialTheme.colorScheme.error else LocalContentColor.current
             ExpressiveIconButton(
                 onClick = if (account.linked) onUnlink else onLink,
                 icon = if (account.linked) Icons.Filled.LinkOff else Icons.Filled.Link,
                 contentDescription = stringResource(if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link),
                 enabled = !busy,
-                tint = if (account.linked) MaterialTheme.colorScheme.error else LocalContentColor.current,
+                tint = if (busy) tone.copy(alpha = DISABLED_CONTENT_ALPHA) else tone,
             )
         },
     )
