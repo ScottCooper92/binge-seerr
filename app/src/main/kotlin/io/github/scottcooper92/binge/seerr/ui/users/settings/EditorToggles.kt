@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,7 +29,7 @@ internal fun editorToggle(
     detail = detail,
     clickable = enabled,
     disabled = !enabled,
-    trailingContent = { Switch(checked = checked, onCheckedChange = null) },
+    toggled = checked,
     onClick = { onToggle(!checked) },
 )
 

@@ -5,7 +5,6 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Vibration
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -43,7 +42,7 @@ internal fun appRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_shake_to_report),
             detail = stringResource(R.string.settings_shake_to_report_caption),
-            trailingContent = { Switch(checked = app.shakeToReport, onCheckedChange = null) },
+            toggled = app.shakeToReport,
             onClick = { onToggleShakeToReport(!app.shakeToReport) },
         ),
         SettingsRow(
@@ -51,7 +50,7 @@ internal fun appRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_share_usage_data),
             detail = stringResource(R.string.settings_share_usage_data_caption),
-            trailingContent = { Switch(checked = app.shareUsageData, onCheckedChange = null) },
+            toggled = app.shareUsageData,
             onClick = { onToggleShareUsageData(!app.shareUsageData) },
         ),
         SettingsRow(
@@ -59,7 +58,7 @@ internal fun appRows(
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_send_crash_reports),
             detail = stringResource(R.string.settings_send_crash_reports_caption),
-            trailingContent = { Switch(checked = app.sendCrashReports, onCheckedChange = null) },
+            toggled = app.sendCrashReports,
             onClick = { onToggleSendCrashReports(!app.sendCrashReports) },
         ),
     )
