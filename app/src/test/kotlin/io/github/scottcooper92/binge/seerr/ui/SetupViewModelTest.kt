@@ -129,8 +129,7 @@ class SetupViewModelTest {
         settings: String,
         backdrops: String = "[]",
     ): SetupUiState.SignIn {
-        seerr.enqueue(json(status))
-        seerr.enqueue(json(settings))
+        seerr.enqueueProfile(json(status), json(settings))
         seerr.enqueue(json(backdrops))
         awaitAddress()
         editAddress(seerr.url("/"))
@@ -231,8 +230,7 @@ class SetupViewModelTest {
             vm.inspect("""{"version":"3.0.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "k3y") }
             seerr.enqueue(json("""{"id":1,"permissions":2}"""))
-            seerr.enqueue(json("""{"version":"3.0.0"}"""))
-            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
 
             vm.connect()
 
@@ -276,8 +274,7 @@ class SetupViewModelTest {
             vm.editForm { copy(mode = SeerrSignInMode.Local, email = "s@example.com", password = "pw") }
             repeat(3) { seerr.takeRequest() }
             seerr.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s; Path=/")))
-            seerr.enqueue(json("""{"version":"2.0.0"}"""))
-            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueueProfile(json("""{"version":"2.0.0"}"""), json("""{"mediaServerType":2}"""))
 
             vm.connect()
 
@@ -314,8 +311,7 @@ class SetupViewModelTest {
             seerr.enqueue(json("""{"authenticated":false}"""))
             seerr.enqueue(json("""{"authenticated":true}"""))
             seerr.enqueue(json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/")))
-            seerr.enqueue(json("""{"version":"3.4.0"}"""))
-            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2}"""))
 
             vm.connect()
 
@@ -362,8 +358,7 @@ class SetupViewModelTest {
             seerr.enqueue(json("""{"authenticated":false}"""))
             seerr.enqueue(json("""{"authenticated":true}"""))
             seerr.enqueue(json("""{"id":7}""", headersOf("Set-Cookie", "connect.sid=qc; Path=/")))
-            seerr.enqueue(json("""{"version":"3.4.0"}"""))
-            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2}"""))
 
             vm.connect()
 
@@ -398,8 +393,7 @@ class SetupViewModelTest {
             plex.enqueue(json("""{"id":41,"code":"ABCD","authToken":null}"""))
             plex.enqueue(json("""{"id":41,"code":"ABCD","authToken":"tok3n"}"""))
             seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
-            seerr.enqueue(json("""{"version":"1.33.2"}"""))
-            seerr.enqueue(json("""{"localLogin":true}"""))
+            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
 
             vm.connect()
 
@@ -423,8 +417,7 @@ class SetupViewModelTest {
             plex.enqueue(json("""{"id":41,"code":"JKLM","expiresAt":"2099-01-01T00:00:00Z"}"""))
             plex.enqueue(json("""{"id":41,"code":"JKLM","authToken":"tok3n"}"""))
             seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
-            seerr.enqueue(json("""{"version":"1.33.2"}"""))
-            seerr.enqueue(json("""{"localLogin":true}"""))
+            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
 
             vm.connect(forLink = true)
 
@@ -457,12 +450,10 @@ class SetupViewModelTest {
 
             // Android reclaims the process while the user is still approving the PIN on plex.tv.
             viewModels.clear()
-            seerr.enqueue(json("""{"version":"1.33.2"}"""))
-            seerr.enqueue(json("""{"localLogin":true}"""))
+            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             seerr.enqueue(json("""{"id":9}""", headersOf("Set-Cookie", "connect.sid=plx; Path=/")))
-            seerr.enqueue(json("""{"version":"1.33.2"}"""))
-            seerr.enqueue(json("""{"localLogin":true}"""))
+            seerr.enqueueProfile(json("""{"version":"1.33.2"}"""), json("""{"localLogin":true}"""))
             val restored = viewModel(reuseConnection = true, savedState = saved)
 
             val link = restored.awaitSignIn { it.link != null }.link as LinkFlow.Plex
@@ -648,16 +639,14 @@ class SetupViewModelTest {
             vm.inspect("""{"version":"3.0.0"}""", """{"mediaServerType":2}""")
             vm.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "k3y") }
             seerr.enqueue(json("""{"id":1,"permissions":2}"""))
-            seerr.enqueue(json("""{"version":"3.0.0"}"""))
-            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
             vm.connect()
             val original = vm.awaitConnected().credentials
             repeat(6) { seerr.takeRequest() }
 
             // Edit connection opens on its own ViewModel over the same connection, as the entry does.
             val editor = viewModel(reuseConnection = true)
-            seerr.enqueue(json("""{"version":"3.0.0"}"""))
-            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
             seerr.enqueue(json("[]"))
             editor.beginEdit()
             val editing = editor.awaitSignIn { !it.isConnecting }
@@ -670,8 +659,7 @@ class SetupViewModelTest {
             assertEquals(original, connection.credentials.first())
 
             seerr.enqueue(json("""{"id":1,"permissions":2}"""))
-            seerr.enqueue(json("""{"version":"3.0.0"}"""))
-            seerr.enqueue(json("""{"mediaServerType":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
             editor.editForm { copy(apiKey = "n3w") }
             editor.connect()
             assertEquals(SeerrAuth.ApiKey("n3w"), editor.awaitConnected().credentials.auth)

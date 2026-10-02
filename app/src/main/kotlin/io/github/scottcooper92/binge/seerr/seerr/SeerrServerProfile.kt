@@ -1,5 +1,8 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
 /** A release version, `major.minor.patch`; a `develop-<sha>` or `local` build has none. */
 data class SeerrVersion(
     val major: Int,
@@ -199,10 +202,16 @@ data class SeerrServerProfile(
  * and each best-effort: a failed `/status` leaves the lineage to the settings or to [fallback], and
  * failed settings leave their defaults. The failure is the `/status` one, and only when neither
  * call answered: that is the setup form's "not a Seerr server, or not reachable".
+ *
+ * The two calls do not depend on each other, so they run concurrently: an unreachable server costs
+ * one timeout rather than two. Cancellation still propagates, from either call.
  */
 suspend fun SeerrApi.inspectProfile(fallback: SeerrVariant): Result<SeerrServerProfile> {
-    val status = runCatching { status() }
-    val settings = runCatching { publicSettings() }.getOrNull()
+    val (status, settings) =
+        coroutineScope {
+            val settingsRead = async { attempt { publicSettings() }.getOrNull() }
+            attempt { status() } to settingsRead.await()
+        }
     val statusDto = status.getOrNull()
     return when {
         statusDto != null -> Result.success(SeerrServerProfile.from(statusDto, settings, fallback))
