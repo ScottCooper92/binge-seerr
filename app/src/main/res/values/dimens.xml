@@ -64,8 +64,7 @@
     <dimen name="request_skeleton_button_width">120dp</dimen>
     <!-- A job row's action slot: a button, a spinner and an outcome icon all sit in the same box,
          fixed so the row never changes height across the three. -->
-    <dimen name="server_settings_job_action_height">48dp</dimen>
-    <dimen name="server_settings_job_action_min_width">96dp</dimen>
+    <dimen name="server_settings_job_action_size">48dp</dimen>
     <!-- The consent screen, after Binge's analytics step. -->
     <dimen name="consent_content_max_width">600dp</dimen>
     <dimen name="consent_hero_size">92dp</dimen>

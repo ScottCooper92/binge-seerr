@@ -3,9 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
@@ -13,9 +11,11 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -33,7 +33,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
@@ -80,25 +80,24 @@ internal fun jobRow(
         detailColor = if (outcome == JobOutcome.Failed) BingeSentiment.Negative.accent() else null,
         trailingContent = {
             Box(
-                modifier =
-                    Modifier
-                        .height(dimensionResource(R.dimen.server_settings_job_action_height))
-                        .widthIn(min = dimensionResource(R.dimen.server_settings_job_action_min_width)),
+                modifier = Modifier.size(dimensionResource(R.dimen.server_settings_job_action_size)),
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 when {
                     outcome != null -> OutcomeIcon(outcome)
                     job.running ->
-                        BingeTextButton(
-                            label = stringResource(R.string.server_settings_job_cancel),
+                        ExpressiveIconButton(
                             onClick = { actions.onCancel(job.id) },
+                            icon = Icons.Filled.Stop,
+                            contentDescription = stringResource(R.string.server_settings_job_cancel),
                             enabled = !busy,
                             loading = busy,
                         )
                     else ->
-                        BingeTextButton(
-                            label = stringResource(R.string.server_settings_job_run),
+                        ExpressiveIconButton(
                             onClick = { actions.onRun(job.id) },
+                            icon = Icons.Filled.PlayArrow,
+                            contentDescription = stringResource(R.string.server_settings_job_run),
                             enabled = !busy,
                             loading = busy,
                         )
@@ -130,7 +129,6 @@ private fun OutcomeIcon(outcome: JobOutcome) {
         imageVector = if (ok) Icons.Filled.CheckCircle else Icons.Filled.Error,
         contentDescription = stringResource(if (ok) R.string.server_settings_job_succeeded else R.string.server_settings_job_failed),
         tint = (if (ok) BingeSentiment.Positive else BingeSentiment.Negative).fill(),
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
     )
 }
 

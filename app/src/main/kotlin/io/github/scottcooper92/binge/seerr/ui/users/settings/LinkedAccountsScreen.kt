@@ -11,6 +11,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -31,7 +33,7 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -175,12 +177,15 @@ private fun accountRow(
             },
         clickable = false,
         trailingContent = {
-            // One button for both directions, so the tone follows which one it currently is.
-            BingeTextButton(
-                label = stringResource(if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link),
+            // One button for both directions, so the tone follows which one it currently is. The icon
+            // takes an explicit tint, which the disabled colour never reaches, so a busy row dims it here.
+            val tone = if (account.linked) MaterialTheme.colorScheme.error else LocalContentColor.current
+            ExpressiveIconButton(
                 onClick = if (account.linked) onUnlink else onLink,
+                icon = if (account.linked) Icons.Filled.LinkOff else Icons.Filled.Link,
+                contentDescription = stringResource(if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link),
                 enabled = !busy,
-                destructive = account.linked,
+                tint = if (busy) tone.copy(alpha = DISABLED_CONTENT_ALPHA) else tone,
             )
         },
     )

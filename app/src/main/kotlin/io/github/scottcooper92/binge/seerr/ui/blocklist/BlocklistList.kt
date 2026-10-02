@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,7 +29,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.ListRow
 import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
@@ -134,9 +135,10 @@ internal fun BlocklistRow(
         trailing =
             onRemove?.let { remove ->
                 {
-                    BingeTextButton(
-                        label = stringResource(R.string.blocklist_unblock),
+                    ExpressiveIconButton(
                         onClick = remove,
+                        icon = Icons.Filled.LockOpen,
+                        contentDescription = stringResource(R.string.blocklist_unblock),
                         enabled = !isActing,
                         loading = isActing,
                     )
