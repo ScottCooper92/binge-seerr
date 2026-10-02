@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Lock
@@ -24,6 +25,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SettingsGroup
 import com.binge.designsystem.component.SettingsRow
@@ -147,25 +149,28 @@ internal fun BingeTile(
     val context = LocalContext.current
     when (status) {
         BingeStatus.NotInstalled ->
-            BingeHintCard(
+            HintCard(
                 text = "${stringResource(
                     R.string.hub_binge_not_installed_title,
                 )} ${stringResource(R.string.hub_binge_not_installed_detail)}",
                 actionLabel = stringResource(R.string.hub_binge_get),
+                actionIcon = Icons.AutoMirrored.Filled.OpenInNew,
                 onAction = { context.openBingeOnPlayStore() },
                 onDismiss = onDismissHint,
             )
         BingeStatus.NotConnected ->
-            BingeHintCard(
+            HintCard(
                 text = stringResource(R.string.hub_binge_connect_hint),
                 actionLabel = stringResource(R.string.hub_binge_open),
+                actionIcon = Icons.AutoMirrored.Filled.OpenInNew,
                 onAction = { context.openBinge() },
                 onDismiss = onDismissHint,
             )
         BingeStatus.Connected ->
-            BingeHintCard(
+            HintCard(
                 text = stringResource(R.string.hub_binge_connected_hint),
                 actionLabel = stringResource(R.string.hub_binge_open),
+                actionIcon = Icons.AutoMirrored.Filled.OpenInNew,
                 onAction = { context.openBinge() },
                 onDismiss = onDismissHint,
             )
