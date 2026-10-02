@@ -37,13 +37,22 @@ class ScreenScaffoldScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun atRest() = Frame(collapsed = 0f, firstRow = 0)
+    fun atRest() = Frame(collapsed = 0f, overlapped = 0f, firstRow = 0)
 
     /** Scrolled: rows pass under a half-collapsed bar, and the scrim and the title's colour are halfway in. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun scrolledUnder() = Frame(collapsed = HALF, firstRow = SCROLLED_ROW)
+    fun scrolledUnder() = Frame(collapsed = HALF, overlapped = HALF, firstRow = SCROLLED_ROW)
+
+    /**
+     * The bar fully showing with rows scrolled up beneath it, as it is after scrolling down and back up a
+     * little. The scrim follows the overlap, not how far the bar has hidden, so it is fully in here.
+     */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun shownOverContent() = Frame(collapsed = 0f, overlapped = 1f, firstRow = SCROLLED_ROW)
 
     /**
      * The pane-depth-1 case: a screen opened straight onto the hub, such as the user detail page from
@@ -53,18 +62,24 @@ class ScreenScaffoldScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun noBack() = Frame(collapsed = 0f, firstRow = 0, onBack = null)
+    fun noBack() = Frame(collapsed = 0f, overlapped = 0f, firstRow = 0, onBack = null)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Frame(
     collapsed: Float,
+    overlapped: Float,
     firstRow: Int,
     onBack: (() -> Unit)? = {},
 ) {
     val limit = with(LocalDensity.current) { TopAppBarDefaults.TopAppBarExpandedHeight.toPx() }
-    val barState = rememberTopAppBarState(initialHeightOffsetLimit = -limit, initialHeightOffset = -limit * collapsed)
+    val barState =
+        rememberTopAppBarState(
+            initialHeightOffsetLimit = -limit,
+            initialHeightOffset = -limit * collapsed,
+            initialContentOffset = -limit * overlapped,
+        )
     Box(Modifier.height(420.dp)) {
         ScreenScaffold(
             title = "Requests",

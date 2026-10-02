@@ -23,8 +23,9 @@ import com.binge.designsystem.component.OverlaidHeaderContent
  * that scrolls under it.
  *
  * The bar draws no container of its own. It slides away as the body scrolls down and comes back as
- * it scrolls up ([TopAppBarDefaults.enterAlwaysScrollBehavior]), and a scrim ramps in with that
- * collapse, so the title stays legible over the rows passing under it.
+ * it scrolls up ([TopAppBarDefaults.enterAlwaysScrollBehavior]). A scrim ramps in with how much of
+ * the bar the body overlaps, not with how far the bar has hidden, so the title stays legible
+ * whenever rows are passing under it, including with the bar fully shown.
  *
  * [content] is handed the Scaffold's padding. Place it with [outerPadding] and [innerPadding]: the
  * top inset belongs inside the scroll, or the body stops at the bar's lower edge and nothing ever
@@ -35,7 +36,7 @@ import com.binge.designsystem.component.OverlaidHeaderContent
  * scrim spans both, and [content]'s top padding already clears the header.
  *
  * [barScrim] is false only where something under the bar draws the scrim for it, such as a filter
- * pager's own header. The title still follows the collapse, so it stays legible on that scrim.
+ * pager's own header. The title still follows the overlap, so it stays legible on that scrim.
  *
  * [bottomBar] is for a screen's one primary action that has to stay reachable regardless of scroll
  * position - a long editable list's "add", say, where the equivalent button buried at the list's own
@@ -56,7 +57,7 @@ internal fun ScreenScaffold(
     bottomBar: @Composable () -> Unit = {},
     content: @Composable (padding: PaddingValues) -> Unit,
 ) {
-    val collapsed = scrollBehavior.state.collapsedFraction
+    val overlapped = scrollBehavior.state.overlappedFraction
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -65,8 +66,8 @@ internal fun ScreenScaffold(
                 onBack = onBack,
                 scrollBehavior = scrollBehavior,
                 containerColor = Color.Transparent,
-                scrimFraction = if (barScrim && header == null) collapsed else 0f,
-                foregroundScrimFraction = collapsed,
+                scrimFraction = if (barScrim && header == null) overlapped else 0f,
+                foregroundScrimFraction = overlapped,
                 actions = actions,
             )
         },
@@ -85,7 +86,7 @@ internal fun ScreenScaffold(
                 },
                 modifier = Modifier.padding(padding.outerPadding()),
                 headerBackground = Color.Transparent,
-                scrimFraction = collapsed,
+                scrimFraction = overlapped,
             ) { overlay ->
                 content(PaddingValues(top = overlay.calculateTopPadding(), bottom = padding.calculateBottomPadding()))
             }
