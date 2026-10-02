@@ -1,4 +1,4 @@
-package io.github.scottcooper92.binge.seerr.ui.users.settings
+package io.github.scottcooper92.binge.seerr.ui.users
 
 /**
  * A deliberately lenient email check: one `@`, something on each side, and no whitespace. It catches a

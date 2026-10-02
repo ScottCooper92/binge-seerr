@@ -11,9 +11,13 @@ data class CreateUserDraft(
     val generatePassword: Boolean = false,
     val canGeneratePassword: Boolean = false,
 ) {
+    /** Blank is untouched rather than wrong, so the field opens quiet; the same rule as the profile editor. */
+    val emailInvalid: Boolean
+        get() = email.isNotBlank() && !email.isEmailShape()
+
     val valid: Boolean
         get() =
-            email.contains('@') &&
+            email.isEmailShape() &&
                 username.isNotBlank() &&
                 (generatePassword || password.length >= PasswordSettings.MIN_PASSWORD_LENGTH)
 

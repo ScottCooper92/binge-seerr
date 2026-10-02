@@ -162,6 +162,8 @@ internal fun CreateUserSheetContent(
             enabled = !saving,
             keyboardType = KeyboardType.Email,
             placeholder = stringResource(R.string.placeholder_email),
+            supporting = stringResource(R.string.user_settings_email_invalid).takeIf { draft.emailInvalid },
+            isError = draft.emailInvalid,
         ) { value ->
             onEditDraft { it.copy(email = value) }
         }

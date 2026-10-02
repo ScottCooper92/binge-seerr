@@ -34,6 +34,31 @@ class CreateUserDraftTest {
     }
 
     @Test
+    fun `an email that is not the shape of one blocks Create and is flagged`() {
+        listOf("@", "a@", "@b", "a@@b", "a@b@c", "a b@c").forEach { bad ->
+            val draft = ready().copy(email = bad)
+            assertFalse(bad, draft.valid)
+            assertTrue(bad, draft.emailInvalid)
+        }
+    }
+
+    @Test
+    fun `a blank email blocks Create but is not flagged until typed`() {
+        val draft = ready().copy(email = "  ")
+        assertFalse(draft.valid)
+        assertFalse(draft.emailInvalid)
+    }
+
+    @Test
+    fun `the shortest address and a padded one pass, the same as the profile editor`() {
+        assertTrue(ready().copy(email = "a@b").valid)
+        assertTrue(ready().copy(email = " ada@example.com ").valid)
+        assertFalse(ready().copy(email = "a@b").emailInvalid)
+    }
+
+    private fun ready() = CreateUserDraft(email = "ada@example.com", username = "Ada", password = LONG_ENOUGH)
+
+    @Test
     fun `the rule matches the one the submit button reads`() {
         val short = CreateUserDraft(email = "ada@example.com", username = "Ada", password = SHORT)
 

@@ -53,6 +53,20 @@ class CreateUserSheetScreenshotTest {
                 canGeneratePassword = false,
             ),
         )
+
+    /** An address that is not the shape of one: the same field error the profile editor shows. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun badEmail() =
+        Frame(
+            CreateUserDraft(
+                email = "ada@",
+                username = "Ada Lovelace",
+                password = "hunter2hunter2",
+                canGeneratePassword = true,
+            ),
+        )
 }
 
 @Composable
