@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -57,17 +58,27 @@ class HubViewModel
         private val reloadTrigger: Flow<SeerrCredentials?> =
             combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, credentials -> credentials }
 
-        /** `flowOn(dispatcher)` per #177/#370: without it, [HubOverviewLoader.server]'s suspend call resumes on Main. */
-        private val server: Flow<HubServer?> =
+        /**
+         * `flowOn(dispatcher)` per #177/#370: without it, [HubOverviewLoader.server]'s suspend call resumes on Main.
+         * Failure is its own value rather than null, because a null cannot say "still reading" from "gave up".
+         */
+        private val server: Flow<ServerRead> =
             reloadTrigger
                 .flatMapLatest { credentials ->
                     flow {
                         val remembered = cache.serverFor(credentials)
-                        remembered?.let { emit(it) }
-                        val fresh = runCatching { loader.server() }.getOrNull()
+                        emit(remembered?.let { ServerRead.Loaded(it) } ?: ServerRead.Pending)
+                        val fresh =
+                            runCatching { loader.server() }
+                                .onFailure { if (it is CancellationException) throw it }
+                                .getOrNull()
                         fresh?.let { cache.remember(credentials, server = it) }
                         // A failed refresh keeps the remembered server rather than blanking the hub.
-                        if (fresh != null || remembered == null) emit(fresh)
+                        if (fresh != null) {
+                            emit(ServerRead.Loaded(fresh))
+                        } else if (remembered == null) {
+                            emit(ServerRead.Failed)
+                        }
                     }
                 }.flowOn(dispatcher)
 
@@ -145,22 +156,29 @@ class HubViewModel
                 // Not loaded is not ready: the overview carries the user's permissions, and every
                 // manage row is gated on one, so a Ready built on the placeholder is a hub with
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
-                if (server == null || !overview.loaded) {
-                    HubUiState.Loading
-                } else {
-                    HubUiState.Ready(
-                        server = server,
-                        health = effectiveHealth(health, overview),
-                        overview = overview.copy(pendingRequestCount = pending ?: overview.pendingRequestCount),
-                        downloading = downloading,
-                        bingeStatus = bingeStatus,
-                        bingeHintDismissed = hintDismissed,
-                    )
+                when {
+                    server is ServerRead.Failed -> HubUiState.Error(ConnectionHealth.Unreachable)
+                    server !is ServerRead.Loaded || !overview.loaded -> HubUiState.Loading
+                    else ->
+                        HubUiState.Ready(
+                            server = server.server,
+                            health = effectiveHealth(health, overview),
+                            overview = overview.copy(pendingRequestCount = pending ?: overview.pendingRequestCount),
+                            downloading = downloading,
+                            bingeStatus = bingeStatus,
+                            bingeHintDismissed = hintDismissed,
+                        )
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, HubUiState.Loading)
 
         private val effectiveHealth: Flow<ConnectionHealth> =
-            uiState.map { (it as? HubUiState.Ready)?.health ?: ConnectionHealth.Checking }
+            uiState.map {
+                when (it) {
+                    is HubUiState.Ready -> it.health
+                    is HubUiState.Error -> it.health
+                    HubUiState.Loading -> ConnectionHealth.Checking
+                }
+            }
 
         init {
             HubAutoRetry(
@@ -205,6 +223,17 @@ class HubViewModel
             viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
     }
+
+/** What the first read of the server has said so far. */
+private sealed interface ServerRead {
+    data object Pending : ServerRead
+
+    data class Loaded(
+        val server: HubServer,
+    ) : ServerRead
+
+    data object Failed : ServerRead
+}
 
 private fun BingeStatus.hint(): BingeHint =
     when (this) {
