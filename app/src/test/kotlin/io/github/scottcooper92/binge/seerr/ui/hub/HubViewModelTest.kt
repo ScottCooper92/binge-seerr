@@ -433,14 +433,30 @@ class HubViewModelTest {
         runTest {
             healthyServer()
             viewModel().awaitReady { it.overview.account != null }
+            // The first hub's ViewModel is still live, so it would reload under the new credentials on a real
+            // thread and could remember the fake server's healthy auth/me for them before the 503 below is
+            // scripted. Clearing it and letting its in-flight reads drain leaves the cache to the hub under test.
+            viewModels.clear()
+            seerr.awaitIdle()
             connection.disconnect()
             connection.connect(seerr.url("/"), SeerrAuth.ApiKey("other-k3y")).getOrThrow()
-            serve("/api/v1/auth/me", "", code = 503)
+            // Held, then refused: the hub is only Loading while the new account's read is out. Left to answer on
+            // its own, the 503 can land before the assertion on a real thread and make a Ready(Failed) of it.
+            val release = CountDownLatch(1)
+            responses["/api/v1/auth/me"] = {
+                release.await(LATCH_SECONDS, TimeUnit.SECONDS)
+                FakeResponse(code = 503, headers = headersOf("Content-Type", "application/json"), body = "")
+            }
 
-            val vm = returnToHub()
-            runCurrent()
-
-            assertEquals(HubUiState.Loading, vm.uiState.value)
+            try {
+                val vm = returnToHub()
+                runCurrent()
+                assertEquals(HubUiState.Loading, vm.uiState.value)
+            } finally {
+                release.countDown()
+            }
+            val failed = returnToHub().awaitReady { it.overview.userLoad == HubUserLoad.Failed }
+            assertNull(failed.overview.account)
         }
 
     @Test
