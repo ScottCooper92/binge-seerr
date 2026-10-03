@@ -1,8 +1,8 @@
 package io.github.scottcooper92.binge.seerr.auth
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.attempt
+import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,13 +43,9 @@ class ConnectionRestore(
             val carried = carrier.read() ?: return
             attempt { apis.probe(carried.baseUrl, carried.auth) { api -> api.authenticatedUser() } }
                 .onSuccess { store.save(carried) }
-                .onFailure { failure -> if (failure.toSeerrError().isRefusal) carrier.clear() }
+                .onFailure { failure -> if (failure.toSeerrError().rejectsSession) carrier.clear() }
         } finally {
             state.value = true
         }
     }
 }
-
-/** The server understood the credentials and would not have them, as opposed to not answering. */
-private val SeerrError.isRefusal: Boolean
-    get() = this == SeerrError.Unauthorized || this == SeerrError.Forbidden
