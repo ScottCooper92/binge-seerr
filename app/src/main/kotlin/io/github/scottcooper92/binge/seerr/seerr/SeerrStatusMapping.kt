@@ -86,12 +86,22 @@ private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
             .setState(status.toApprovalState())
             .addAllSeasonNumbers(seasons.map { it.seasonNumber })
             .setIs4K(is4k)
-    requestedBy?.displayString()?.let(builder::setRequestedBy)
+    requestedBy?.contractName()?.let(builder::setRequestedBy)
     createdAt?.toEpochMillisOrNull()?.let(builder::setRequestedAtEpochMs)
     return builder.build()
 }
 
-/** Email is a last resort and masked to its local part, so a raw address never reaches the host. */
+/**
+ * The requester as REQUEST v1 lets this companion name them to the host: a display name or username, never an
+ * email address or any part of one (binge-companions#121). Unlike [displayString], which the app's own screens use,
+ * there is no email fallback; with no name the field is left empty, which the contract reads as "doesn't say".
+ */
+internal fun SeerrRequestUserDto.contractName(): String? = listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() }
+
+/**
+ * For the app's own screens: email is a last resort, masked to its local part. The host never gets this; it gets
+ * [contractName], which has no email fallback at all.
+ */
 internal fun SeerrRequestUserDto.displayString(): String? =
     listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() }
         ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
