@@ -139,8 +139,9 @@ object AuthModule {
         store: CredentialStore,
         apis: SeerrApiFactory,
         carrier: ConnectionCarrier,
+        cleartext: CleartextConsent,
         @ApplicationScope scope: CoroutineScope,
-    ): ConnectionRestore = ConnectionRestore(store, apis, carrier, scope)
+    ): ConnectionRestore = ConnectionRestore(store, apis, carrier, scope, cleartext)
 
     /** The caches keyed to one server are cleared when the server changes, so nothing of the last one shows. */
     @Provides
