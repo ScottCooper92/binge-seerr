@@ -389,7 +389,7 @@ class SeerrRequestServiceTest {
             seerr.enqueue(MockResponse(code = 409))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
             stub.submitRequest(request)
-            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { submitRequest(request.toBuilder().setIs4K(true).build()) })
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { submitRequest(request.toBuilder().setIs4K(true).build()) })
             assertEquals(emptyList<Any>(), analytics.events)
 
             seerr.enqueue(MockResponse(code = 500, body = """{"message":"boom 603"}"""))
@@ -565,7 +565,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `advanced options lists every server for the shape, preselected on the plain non-4k default`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
 
             seerr.enqueue(
                 json(
@@ -609,9 +609,9 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `advanced options for a shape with only 4K servers still lists them, nothing preselected`() =
+    fun `advanced options for a shape with only 4K servers still lists them to a user who may request 4K, nothing preselected`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
             val before = seerr.requestCount
             seerr.enqueue(json("""[{"id":5,"name":"4K Only","is4k":true,"isDefault":true}]"""))
 
@@ -626,10 +626,49 @@ class SeerrRequestServiceTest {
             assertEquals(before + 1, seerr.requestCount)
         }
 
+    /** A 4K server is a 4K request, so a user who may not make one is not offered one. */
+    @Test
+    fun `advanced options leaves out the 4K servers for a user without the 4K permission`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(
+                json(
+                    """[{"id":1,"name":"Main","is4k":false,"isDefault":true},{"id":2,"name":"Main 4K","is4k":true,"isDefault":true}]""",
+                ),
+            )
+            seerr.enqueue(json("""{"profiles":[],"rootFolders":[]}"""))
+
+            val destination =
+                stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
+
+            assertEquals(listOf(1 to false), destination.serversList.map { it.id.toInt() to it.is4K })
+            assertEquals("1", destination.selectedServerId)
+        }
+
+    @Test
+    fun `destination options for a 4K server, from a user without the 4K permission, is INVALID_ARGUMENT`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("""[{"id":2,"name":"Main 4K","is4k":true}]"""))
+
+            val code =
+                stub.code {
+                    getDestinationOptions(
+                        GetDestinationOptionsRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setServerId("2")
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
+        }
+
     @Test
     fun `destination options re-resolves profile and root folder for the server the host moved to`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
             seerr.enqueue(
                 json(
                     """[{"id":1,"name":"Main","is4k":false,"isDefault":true},{"id":2,"name":"Main 4K","is4k":true,"activeProfileId":9,"activeDirectory":"/media4k"}]""",
@@ -801,7 +840,7 @@ class SeerrRequestServiceTest {
                     )
                 }
 
-            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
             assertEquals(before, seerr.requestCount)
         }
 
@@ -817,7 +856,7 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `a 4K request is refused for a user who does not hold the 4K permission, before it is posted`() =
+    fun `a 4K request from a user who does not hold the 4K permission is INVALID_ARGUMENT, before it is posted`() =
         runTest {
             val stub = connected(permissions = REQUEST)
             val before = seerr.requestCount
@@ -833,12 +872,12 @@ class SeerrRequestServiceTest {
                     )
                 }
 
-            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
             assertEquals(before, seerr.requestCount)
         }
 
     @Test
-    fun `a request to a 4K server through the advanced path needs the 4K permission too`() =
+    fun `a 4K server named through the advanced path by a user without the 4K permission is INVALID_ARGUMENT`() =
         runTest {
             val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
             seerr.enqueue(json("""[{"id":2,"name":"Main 4K","is4k":true}]"""))
@@ -857,7 +896,7 @@ class SeerrRequestServiceTest {
                     )
                 }
 
-            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
             assertEquals(before + 1, seerr.requestCount)
         }
 
