@@ -166,6 +166,26 @@ class NotificationsCheckerTest {
             assertEquals(CheckResult.AuthFailure, checker.check())
         }
 
+    /**
+     * Every lineage answers a dead session with 403 on the feeds, the same code as a permission, so the
+     * poll asks `auth/me` which it is. Before #676 only a 401 paused it, and against a real server a dead
+     * session was a transient failure retried forever.
+     */
+    @Test
+    fun `a feed refused with 403 pauses the poll only when auth_me refuses too`() =
+        runTest {
+            seerr.viewer(id = 7, permissions = MANAGE_ISSUES)
+            val checker = checker(prefs(), NotificationSignal.OpenIssues)
+            seerr.serve("GET /api/v1/issue", """{"pageInfo":{"pages":1,"results":0},"results":[]}""")
+            assertEquals(CheckResult.Ok, checker.check())
+
+            seerr.serve("GET /api/v1/issue", """{"message":"forbidden"}""", code = 403)
+            assertEquals(CheckResult.TransientFailure, checker.check())
+
+            seerr.serve("GET /api/v1/auth/me", """{"message":"forbidden"}""", code = 403)
+            assertEquals(CheckResult.AuthFailure, checker.check())
+        }
+
     @Test
     fun `an own request is announced once on entering a state, and again if it leaves and comes back`() =
         runTest {
