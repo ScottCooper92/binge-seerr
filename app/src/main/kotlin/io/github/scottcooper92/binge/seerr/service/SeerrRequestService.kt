@@ -54,7 +54,6 @@ import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
@@ -116,7 +115,6 @@ class SeerrRequestService(
     private val analytics: Analytics = NoOpAnalytics,
     private val requestCache: RequestStore = NoRequestStore,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
-    private val mediaIds = SeerrMediaIds { connection.api() }
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
 
     /**
