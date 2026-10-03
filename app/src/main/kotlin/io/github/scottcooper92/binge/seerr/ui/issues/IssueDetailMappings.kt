@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
+import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -35,7 +36,7 @@ internal fun SeerrIssueDto.toDetail(
         serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },
         serverName = profile.variant.displayName,
         mediaServerName = profile.mediaServerName(),
-        currentUserName = user?.let { listOfNotNull(it.displayName, it.username).firstOrNull { name -> name.isNotBlank() } },
+        currentUserName = user?.displayString(),
     )
 }
 
