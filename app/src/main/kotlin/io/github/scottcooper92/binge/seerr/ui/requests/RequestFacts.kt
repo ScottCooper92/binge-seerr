@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.ThumbsUpDown
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -89,7 +89,7 @@ internal fun requestPeopleFacts(
         ),
         detail.modifiedBy?.let {
             Fact(
-                icon = Icons.Filled.ThumbsUpDown,
+                icon = Icons.Filled.Gavel,
                 label = stringResource(R.string.request_modified_by),
                 primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
                 secondary = updatedText,

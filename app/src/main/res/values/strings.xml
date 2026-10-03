@@ -958,7 +958,6 @@
     <!-- %1$s is the media server's own name where the administrator set one, else Jellyfin or Emby. -->
     <string name="setup_username_placeholder">Your %1$s username</string>
     <string name="setup_api_key_hint">Find this in Seerr, under Settings → General.</string>
-    <string name="setup_api_key_admin_note">An API key signs in as the server administrator. Any app you allow to use this companion can act with that access.</string>
     <string name="placeholder_ntfy_tags" translatable="false">eyes,warning</string>
     <string name="placeholder_gotify_url" translatable="false">https://gotify.example.com</string>
     <string name="placeholder_ntfy_url" translatable="false">https://ntfy.sh</string>

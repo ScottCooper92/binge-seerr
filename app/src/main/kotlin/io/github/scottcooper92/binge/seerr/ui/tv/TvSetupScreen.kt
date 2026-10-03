@@ -186,7 +186,6 @@ private fun TvModeFields(
             // TvTextField has no supporting slot, and this has to stay readable while the user
             // fetches the key — so it is the note the page already uses for what it wants said.
             TvFormNote(stringResource(R.string.setup_api_key_hint))
-            TvFormNote(stringResource(R.string.setup_api_key_admin_note))
         }
         SeerrSignInMode.Local -> {
             TvTextField(
