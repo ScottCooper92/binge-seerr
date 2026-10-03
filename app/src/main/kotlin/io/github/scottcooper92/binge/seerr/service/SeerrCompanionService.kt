@@ -54,7 +54,8 @@ class SeerrCompanionService : IntegrationService() {
     /**
      * Debug builds admit only Binge's package names, under any certificate: a debug Binge is signed with its
      * developer's own key, which no allowlist can name, but the debug APK goes to Firebase testers, so it must
-     * not hand the session to any app on their phone (#679). Release builds pin Binge's published certificate.
+     * not hand the session to any app on their phone (#679). Release builds pin `BingeHosts.release`, Binge's
+     * published Play App Signing certificate, and refuse any other signer.
      */
     override fun hostPolicy(): SecurityPolicy =
         if (BuildConfig.DEBUG) {
