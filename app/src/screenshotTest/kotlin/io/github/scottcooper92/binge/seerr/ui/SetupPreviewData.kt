@@ -26,7 +26,14 @@ internal fun previewAddress(
     insecure: Boolean = false,
     isInspecting: Boolean = false,
     error: SetupError? = null,
-) = SetupUiState.Address(serverUrl = serverUrl, insecure = insecure, isInspecting = isInspecting, error = error)
+    cleartextAllowed: Boolean = false,
+) = SetupUiState.Address(
+    serverUrl = serverUrl,
+    insecure = insecure,
+    isInspecting = isInspecting,
+    error = error,
+    cleartextAllowed = cleartextAllowed,
+)
 
 internal fun previewSignIn(
     form: SignInForm = SignInForm(mode = SeerrSignInMode.Jellyfin),

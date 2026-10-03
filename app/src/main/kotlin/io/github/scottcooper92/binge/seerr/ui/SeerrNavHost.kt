@@ -313,6 +313,7 @@ internal fun SetupViewModel.actions(): SetupActions =
         onPlexLaunched = ::plexLaunched,
         onCancelLink = ::cancelLink,
         onRequestPasswordReset = ::requestPasswordReset,
+        onAllowCleartext = ::allowCleartext,
     )
 
 /** The television screen's own wiring: the one difference is Connect, whose Plex PIN is the plate's, not the browser's. */
@@ -326,4 +327,5 @@ internal fun SetupViewModel.tvActions(): SetupActions =
         onPlexLaunched = ::plexLaunched,
         onCancelLink = ::cancelLink,
         onRequestPasswordReset = ::requestPasswordReset,
+        onAllowCleartext = ::allowCleartext,
     )

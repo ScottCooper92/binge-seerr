@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Lock
@@ -7,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.tv.component.TvButton
@@ -80,13 +82,19 @@ private fun TvSetupAddressStep(
         )
         if (state.insecure) {
             TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
+            TvOptionRow(
+                label = stringResource(R.string.setup_allow_cleartext),
+                selected = state.cleartextAllowed,
+                onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
+                modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
+            )
         }
         state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
         TvButton(
             label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
             onClick = actions.onInspect,
             style = TvButtonStyle.Primary,
-            enabled = state.serverUrl.isNotBlank() && !state.isInspecting,
+            enabled = state.canContinue,
             initiallyFocused = initialFocus == TvSetupFocus.Continue,
         )
     }

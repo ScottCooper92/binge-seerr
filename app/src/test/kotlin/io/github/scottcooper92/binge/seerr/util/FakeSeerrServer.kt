@@ -27,8 +27,11 @@ private const val AWAIT_IDLE_SETTLE_MILLIS = 50L
  * An explicit port matters, not just a syntactically valid URL: [String.hasExplicitPort] is what a
  * portless address retries against [String.withDefaultSeerrPort] on, same as a real MockWebServer's
  * URL (bound to a real, explicit, random port) never triggered.
+ *
+ * A `.lan` host, as most self-hosted servers are: plain HTTP to a public host needs the user's
+ * opt-in at setup, and a test about something else should not have to give it.
  */
-private const val BASE_URL = "http://fake-seerr.test:8080/"
+private const val BASE_URL = "http://fake-seerr.lan:8080/"
 
 /** A canned answer for [FakeSeerrServer] — the in-memory stand-in for MockWebServer's `MockResponse`. */
 data class FakeResponse(

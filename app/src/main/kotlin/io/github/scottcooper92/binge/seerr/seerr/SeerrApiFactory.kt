@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import io.github.scottcooper92.binge.seerr.auth.CleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthReporter
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
@@ -30,6 +31,8 @@ class SeerrApiFactory(
     private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
+    /** The public hosts the user agreed to reach over plain HTTP. Every client this factory builds enforces it. */
+    private val cleartext: CleartextConsent = CleartextConsent.None,
     /**
      * No socket exists when this is set: every client this factory builds is answered by the
      * interceptor it returns for that call's cookie jar, instead of the network. Test-only (#337).
@@ -151,6 +154,7 @@ class SeerrApiFactory(
     ): OkHttpClient =
         apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
             .apply { testDispatcher?.let { dispatcher(it()) } }
+            .addNetworkInterceptor(CleartextGuard(cleartext))
             .addNetworkInterceptor(loggingInterceptor(debugLevel))
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)

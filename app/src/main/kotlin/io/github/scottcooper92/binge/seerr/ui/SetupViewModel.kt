@@ -18,7 +18,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
-import io.github.scottcooper92.binge.seerr.seerr.isInsecurePublicUrl
+import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -88,13 +88,16 @@ class SetupViewModel
                 when {
                     // While editing, the connection being edited is not "connected": only new credentials are.
                     saved != null && saved != draft.editing -> SetupUiState.Connected(saved)
-                    server == null ->
+                    server == null -> {
+                        val insecureHost = draft.serverUrl.insecurePublicHostOrNull()
                         SetupUiState.Address(
                             serverUrl = draft.serverUrl,
-                            insecure = draft.serverUrl.isInsecurePublicUrl(),
+                            insecure = insecureHost != null,
+                            cleartextAllowed = insecureHost != null && insecureHost == draft.cleartextHost,
                             isInspecting = draft.busy,
                             error = draft.error,
                         )
+                    }
                     else ->
                         SetupUiState.SignIn(
                             server = server,
@@ -113,18 +116,31 @@ class SetupViewModel
             crashBreadcrumbs.log("editing server connection")
             viewModelScope.launch(dispatcher) {
                 val saved = runCatching { connection.current() }.getOrNull() ?: return@launch
-                draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl) }
+                // A connection already opted in to plain HTTP keeps its tick, or Edit would stall on it.
+                val consented = saved.baseUrl.insecurePublicHostOrNull()?.takeIf { connection.allowsCleartextTo(it) }
+                draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl, cleartextHost = consented) }
                 inspect()
             }
         }
 
         fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null) }
 
+        /**
+         * The user's explicit opt-in to plain HTTP to the public host the address names. It is held
+         * against that host, so editing the address to another one asks again.
+         */
+        fun allowCleartext(allowed: Boolean) =
+            draft.update { it.copy(cleartextHost = if (allowed) it.serverUrl.insecurePublicHostOrNull() else null) }
+
         fun inspect() {
             val url = draft.value.serverUrl
             if (url.isBlank() || draft.value.busy) return
+            val insecureHost = url.insecurePublicHostOrNull()
+            // Plain HTTP to a public host is refused until the user opts in for that host.
+            if (insecureHost != null && insecureHost != draft.value.cleartextHost) return
             draft.update { it.copy(busy = true, error = null) }
             viewModelScope.launch(dispatcher) {
+                insecureHost?.let { connection.allowCleartextTo(it) }
                 connection
                     .inspect(url)
                     .onSuccess { preview ->
@@ -272,6 +288,8 @@ class SetupViewModel
             val notice: SetupNotice? = null,
             /** The credentials being edited, which the form must not read as "connected". */
             val editing: SeerrCredentials? = null,
+            /** The public host the user opted in to reach over plain HTTP, if any. */
+            val cleartextHost: String? = null,
         )
 
         private companion object {
