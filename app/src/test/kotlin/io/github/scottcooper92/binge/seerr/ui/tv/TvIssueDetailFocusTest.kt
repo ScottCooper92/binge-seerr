@@ -12,7 +12,6 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -34,6 +33,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
+import io.github.scottcooper92.binge.seerr.util.createSeerrAndroidComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -52,7 +52,7 @@ private const val SEVERANCE = "Severance"
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvIssueDetailFocusTest {
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    val composeTestRule = createSeerrAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun okOnAnUnmanageableRowReachesThePageAndBackReturnsFocusToTheRow() {

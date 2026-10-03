@@ -10,7 +10,7 @@ import java.io.File
  */
 class ComposeRuleConventionTest {
     @Test
-    fun `every compose test uses the module's rule rather than createComposeRule`() {
+    fun `every compose test uses the module's rules rather than the bare ones`() {
         val offenders =
             File("src/test/kotlin")
                 .walkTopDown()
@@ -20,11 +20,11 @@ class ComposeRuleConventionTest {
                 .sorted()
                 .toList()
 
-        assertEquals("Use createSeerrComposeRule() in these files", emptyList<String>(), offenders)
+        assertEquals("Use createSeerrComposeRule() or createSeerrAndroidComposeRule() in these files", emptyList<String>(), offenders)
     }
 
     private companion object {
         // The import, not the call: a use has to import it, and a comment naming it does not.
-        val DIRECT = Regex("""^import androidx\.compose\.ui\.test\.junit4(\.v2)?\.createComposeRule$""", RegexOption.MULTILINE)
+        val DIRECT = Regex("""^import androidx\.compose\.ui\.test\.junit4(\.v2)?\.create(Android)?ComposeRule$""", RegexOption.MULTILINE)
     }
 }
