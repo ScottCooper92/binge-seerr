@@ -30,6 +30,7 @@ class SetupAddressImeTest {
                     state = SetupUiState.Address(serverUrl = serverUrl, insecure = false, isInspecting = false, error = null),
                     onEditAddress = {},
                     onInspect = { inspected++ },
+                    onAllowCleartext = {},
                     contentPadding = PaddingValues(),
                 )
             }

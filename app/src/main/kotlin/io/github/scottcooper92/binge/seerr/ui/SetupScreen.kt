@@ -24,6 +24,8 @@ class SetupActions(
     val onPlexLaunched: () -> Unit,
     val onCancelLink: () -> Unit,
     val onRequestPasswordReset: () -> Unit,
+    /** The opt-in to plain HTTP to a public host. Defaulted so a preview that never shows one need not wire it. */
+    val onAllowCleartext: (Boolean) -> Unit = {},
 )
 
 /**
@@ -43,7 +45,14 @@ fun SetupScreen(
             val inner = padding.innerPadding()
             when (state) {
                 SetupUiState.Loading -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center).padding(inner))
-                is SetupUiState.Address -> SetupAddressStep(state, actions.onEditAddress, actions.onInspect, inner)
+                is SetupUiState.Address ->
+                    SetupAddressStep(
+                        state,
+                        actions.onEditAddress,
+                        actions.onInspect,
+                        actions.onAllowCleartext,
+                        inner,
+                    )
                 is SetupUiState.SignIn -> {
                     SetupSignInStep(state, actions, inner)
                     state.link?.let { link -> SetupLinkSheet(link, actions.onPlexLaunched, actions.onCancelLink) }

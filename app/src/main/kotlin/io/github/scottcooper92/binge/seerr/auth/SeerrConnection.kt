@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import retrofit2.HttpException
 import java.io.IOException
 import kotlin.time.Duration
@@ -98,6 +99,8 @@ class SeerrConnection(
     private val carrier: ConnectionCarrier = NoConnectionCarrier,
     /** Runs after the saved server changes or is forgotten, for the caches keyed to one server. */
     private val onServerChanged: suspend () -> Unit = {},
+    /** Public hosts agreed to over plain HTTP. Narrowed to the saved server whenever it changes. */
+    private val cleartext: CleartextConsent = CleartextConsent.None,
 ) {
     private val profileReads = ProfileReads()
 
@@ -300,6 +303,15 @@ class SeerrConnection(
         }
     }
 
+    /** Whether the user has opted in to plain HTTP to the public [host]. */
+    suspend fun allowsCleartextTo(host: String): Boolean = cleartext.allows(host)
+
+    /**
+     * Records the user's opt-in to plain HTTP to the public [host], ahead of reading it. It outlives
+     * setup only if this host becomes the saved server.
+     */
+    suspend fun allowCleartextTo(host: String) = cleartext.grant(host)
+
     /** Asks the server to email a reset link; it answers 200 whether or not the address is an account's. */
     suspend fun requestPasswordReset(
         rawBaseUrl: String,
@@ -322,6 +334,7 @@ class SeerrConnection(
             cachedProfile = null
         }
         store.clear()
+        cleartext.retainOnly(null)
         carrier.clear()
         apis.evict()
         healthMonitor.reset()
@@ -362,6 +375,7 @@ class SeerrConnection(
         val profile = apis.probe(baseUrl, auth) { it.readProfile(SeerrVariant.Unknown) }
         val credentials = SeerrCredentials(baseUrl, auth, profile.variant)
         if (!store.save(credentials)) throw CredentialsSaveException()
+        cleartext.retainOnly(baseUrl.toHttpUrlOrNull()?.host)
         carrier.put(credentials)
         userLock.withLock {
             cachedUser = null

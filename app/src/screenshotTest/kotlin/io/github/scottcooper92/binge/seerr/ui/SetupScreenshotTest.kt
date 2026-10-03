@@ -38,6 +38,16 @@ class SetupScreenshotTest {
     fun addressInsecure() =
         SetupScreen(state = previewAddress(serverUrl = "http://seerr.example.com", insecure = true), actions = NoSetupActions)
 
+    /** The same address once the user has opted in to plain HTTP for it: Continue is enabled. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun addressInsecureAllowed() =
+        SetupScreen(
+            state = previewAddress(serverUrl = "http://seerr.example.com", insecure = true, cleartextAllowed = true),
+            actions = NoSetupActions,
+        )
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

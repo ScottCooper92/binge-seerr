@@ -57,6 +57,13 @@ An API key signs in as the server's administrator, and every app this companion 
 that access; the setup screen says so before the key is entered. Signing in as yourself with a
 password or Plex keeps the companion to your own permissions.
 
+Plain HTTP would send that secret unencrypted. To a loopback, LAN or tailnet address that is allowed:
+the traffic stays on a network you control or one that is already encrypted. That covers private IPs,
+single-label names and names ending `.local`, `.lan`, `.home.arpa`, `.internal` or `.ts.net`. To any
+other host the app refuses plain HTTP until you tick "Connect over plain HTTP anyway" for that host
+on the setup screen. Every request to the server checks it (`CleartextConsent`, `CleartextGuard`),
+redirects included, and disconnecting forgets it.
+
 ## For the person writing a companion
 
 Binge ships as a plain TMDB client with zero bundled providers. A companion app is a separate APK

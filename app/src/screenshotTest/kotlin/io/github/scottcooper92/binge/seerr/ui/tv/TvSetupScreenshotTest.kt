@@ -30,7 +30,7 @@ class TvSetupScreenshotTest {
             initialFocus = TvSetupFocus.Continue,
         )
 
-    /** Plain http to a name that is not a private address: the warning under the field. */
+    /** Plain http to a name that is not a private address: the warning and the opt-in under the field, Continue held. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

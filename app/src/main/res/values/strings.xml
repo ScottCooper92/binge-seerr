@@ -8,7 +8,8 @@
 
     <string name="setup_intro">Connect your Seerr, Jellyseerr or Overseerr server. Binge will find this app and, once you allow it there, request titles through it.</string>
     <string name="setup_server_url">Server address</string>
-    <string name="setup_insecure_warning">This address uses plain HTTP on a public host. Your key or password will cross the network unencrypted.</string>
+    <string name="setup_insecure_warning">This address uses plain HTTP on a public host, so your key or password would cross the internet unencrypted. Use https:// if the server supports it.</string>
+    <string name="setup_allow_cleartext">Connect over plain HTTP anyway</string>
     <string name="setup_continue">Continue</string>
     <string name="setup_change_server">Change server</string>
     <!-- Format-only: a fork's name and its version. -->

@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
+import io.github.scottcooper92.binge.seerr.auth.DataStoreCleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
@@ -16,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.seerr.plexTvApi
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
+import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
@@ -69,6 +71,9 @@ class SetupViewModelTest {
 
     private lateinit var connection: SeerrConnection
 
+    /** Real consent over an in-memory store, with nothing saved to grandfather in. */
+    private val cleartext = DataStoreCleartextConsent(InMemoryDataStore()) { null }
+
     /** The state is shared WhileSubscribed, so a collector is kept open for the test's life. */
     private fun TestScope.viewModel(
         reuseConnection: Boolean = false,
@@ -86,6 +91,7 @@ class SetupViewModelTest {
                         ),
                     apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
                     quickConnectPollInterval = 10.milliseconds,
+                    cleartext = cleartext,
                 )
         }
         val vm =
@@ -221,6 +227,71 @@ class SetupViewModelTest {
             assertEquals(0, seerr.requestCount)
             vm.editAddress("http://seerr.example.com")
             assertTrue(vm.awaitAddress { it.serverUrl.endsWith("example.com") }.insecure)
+        }
+
+    @Test
+    fun `a public http address is not read until the user opts in, and the opt-in is held against that host`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitAddress()
+            vm.editAddress("http://seerr.example.com:8080/")
+
+            vm.inspect()
+
+            val refused = vm.awaitAddress { it.insecure }
+            assertFalse(refused.canContinue)
+            assertFalse(refused.isInspecting)
+            assertEquals(0, seerr.requestCount)
+
+            vm.allowCleartext(true)
+            assertTrue(vm.awaitAddress { it.cleartextAllowed }.canContinue)
+
+            vm.editAddress("http://other.example.com:8080/")
+            assertFalse(vm.awaitAddress { it.serverUrl.contains("other") }.cleartextAllowed)
+            assertFalse(cleartext.allows("seerr.example.com"))
+        }
+
+    @Test
+    fun `an opted-in public host is read, kept for the saved server, and dropped on disconnect`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitAddress()
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            seerr.enqueue(json("[]"))
+            vm.editAddress("http://seerr.example.com:8080/")
+            vm.allowCleartext(true)
+
+            vm.inspect()
+            vm.awaitSignIn()
+            assertTrue(cleartext.allows("seerr.example.com"))
+
+            vm.editForm { copy(mode = SeerrSignInMode.ApiKey, apiKey = "k3y") }
+            seerr.enqueue(json("""{"id":1,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            vm.connect()
+            vm.awaitConnected()
+            assertTrue(cleartext.allows("seerr.example.com"))
+
+            connection.disconnect()
+            assertFalse(cleartext.allows("seerr.example.com"))
+        }
+
+    @Test
+    fun `editing a connection already opted in to plain http keeps its tick`() =
+        runTest {
+            cleartext.grant("seerr.example.com")
+            val vm = viewModel()
+            vm.awaitAddress()
+            seerr.enqueue(json("""{"id":1,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            connection.connect("http://seerr.example.com:8080/", SeerrAuth.ApiKey("k3y")).getOrThrow()
+            vm.awaitConnected()
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            seerr.enqueue(json("[]"))
+
+            vm.beginEdit()
+
+            assertEquals("http://seerr.example.com:8080/", vm.awaitSignIn().server.baseUrl)
         }
 
     @Test
