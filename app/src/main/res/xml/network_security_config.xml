@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Trust the CAs a user installed as well as the system's, so a self-hosted Seerr behind a self-signed or
+    private-CA certificate works over HTTPS once its CA is on the device (#681), rather than pushing the
+    user to plain HTTP. This is what Jellyfin's and Home Assistant's Android apps do.
+
+    Cleartext stays permitted for now: this file can name hosts and single addresses but not IP ranges,
+    so it cannot allow a LAN Seerr at 192.168.x.y while refusing a public host. The setup screen warns
+    when an http:// address names a public host.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

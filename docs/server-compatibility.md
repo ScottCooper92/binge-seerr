@@ -134,6 +134,18 @@ write when they are off:
   show. A user who may change the destination still gets the editor for that, with no season list,
   and its save sends no `seasons`, so the request keeps the ones it has.
 
+## TLS and self-signed servers
+
+A Seerr behind a self-signed certificate, or one from a private CA, works over HTTPS once that CA is
+installed on the device (Settings → Security → Encryption & credentials → Install a certificate → CA
+certificate). The app trusts user-installed CAs as well as the system's
+(`res/xml/network_security_config.xml`), as Jellyfin's and Home Assistant's apps do. Without the CA
+installed, the TLS handshake fails and the address step says the server could not be reached.
+
+Plain HTTP is still allowed, because a LAN Seerr at a private IP is usually served that way and the
+config file cannot express IP ranges. The setup screen warns when an `http://` address names a
+public host, since the key would then cross the internet in the clear.
+
 ## Where this lives
 
 `SeerrServerProfile` is the one place a version is compared. It exposes named capabilities
