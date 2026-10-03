@@ -275,6 +275,7 @@ dependencies {
     implementation(libs.reorderable)
 
     testImplementation(libs.junit)
+    testImplementation(testFixtures(libs.binge.designsystem))
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.paging.testing)
