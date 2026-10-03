@@ -17,9 +17,11 @@ import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
 import com.binge.companion.contracts.request.v1.IssueType
 import com.binge.companion.contracts.request.v1.ListRequestsRequest
+import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
+import com.binge.companion.contracts.request.v1.RequestFilter
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
@@ -187,6 +189,8 @@ class SeerrRequestServiceTest {
                     Capability.CAPABILITY_CANCEL,
                     Capability.CAPABILITY_EDIT_SEASONS,
                     Capability.CAPABILITY_REPORT_ISSUE,
+                    Capability.CAPABILITY_LIST_REQUESTS,
+                    Capability.CAPABILITY_BATCH_STATUS,
                 ),
                 response.capabilitiesList.toSet(),
             )
@@ -224,11 +228,10 @@ class SeerrRequestServiceTest {
         runTest {
             val response = connected(permissions = ADMIN).handshakeAs(ADMIN, publicSettings = ALL_4K_ENABLED)
 
-            // In the contract but not served here yet, so not declared: MEDIA_FILE_INFO needs a Radarr fetch,
-            // and LIST_REQUESTS / BATCH_STATUS (binge-companions#129) are #703.
+            // In the contract but not served here yet, so not declared: MEDIA_FILE_INFO needs a Radarr fetch (#698).
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
-                    Capability.CAPABILITY_MEDIA_FILE_INFO - Capability.CAPABILITY_LIST_REQUESTS - Capability.CAPABILITY_BATCH_STATUS,
+                    Capability.CAPABILITY_MEDIA_FILE_INFO,
                 response.capabilitiesList.toSet(),
             )
         }
@@ -920,15 +923,6 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `the rpcs this app does not serve yet are refused as undeclared, not unimplemented`() =
-        runTest {
-            val stub = connected(permissions = ADMIN)
-
-            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { listRequests(ListRequestsRequest.getDefaultInstance()) })
-            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { getStatuses(GetStatusesRequest.getDefaultInstance()) })
-        }
-
-    @Test
     fun `the advanced-request rpcs are refused for a user without the permission, before any request`() =
         runTest {
             val stub = connected(permissions = REQUEST)
@@ -1377,6 +1371,222 @@ class SeerrRequestServiceTest {
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.status(media: MediaId): Status.Code =
         code { getStatus(GetStatusRequest.newBuilder().setMedia(media).build()) }
+
+    private val show: MediaId =
+        MediaId
+            .newBuilder()
+            .setMediaType(MediaType.MEDIA_TYPE_TV)
+            .setTmdbId(1399)
+            .build()
+
+    private fun listRequest(
+        filter: RequestFilter,
+        pageSize: Int = 0,
+        pageToken: String = "",
+    ): ListRequestsRequest =
+        ListRequestsRequest
+            .newBuilder()
+            .setFilter(filter)
+            .setPageSize(pageSize)
+            .setPageToken(pageToken)
+            .build()
+
+    private fun emptyPage() = json("""{"pageInfo":{"results":0},"results":[]}""")
+
+    @Test
+    fun `list requests asks seerr for a page of everything the user may see, and pages on with an opaque token`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+            seerr.enqueue(
+                json(
+                    """{"pageInfo":{"results":3},"results":[""" +
+                        """{"id":4,"status":1,"media":{"tmdbId":603,"mediaType":"movie"},"requestedBy":{"id":2,"displayName":"Neo"}},""" +
+                        """{"id":5,"status":2,"is4k":true,"media":{"tmdbId":603,"mediaType":"movie"},"requestedBy":{"id":2}}]}""",
+                ),
+            )
+            // Both requests are for one title, so its status is read once.
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":2,"requests":[{"id":4,"status":1},{"id":5,"status":2,"is4k":true}]}}"""))
+
+            val first = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = 2))
+
+            val asked = seerr.takeRequest().url
+            assertEquals("/api/v1/request", asked.encodedPath)
+            assertEquals("2", asked.queryParameter("take"))
+            assertEquals("0", asked.queryParameter("skip"))
+            assertEquals("all", asked.queryParameter("filter"))
+            assertEquals("added", asked.queryParameter("sort"))
+            assertNull(asked.queryParameter("requestedBy"))
+            assertEquals("/api/v1/movie/603", seerr.takeRequest().url.encodedPath)
+            assertEquals(2, seerr.requestCount - before)
+            assertEquals(listOf(movie, movie), first.entriesList.map { it.media })
+            assertEquals(listOf(4 to false, 5 to true), first.entriesList.map { it.request.id to it.request.is4K })
+            assertEquals("Neo", first.entriesList[0].request.requestedBy)
+            assertEquals(Availability.AVAILABILITY_PENDING, first.entriesList[0].status.availability)
+            assertEquals(2, first.entriesList[0].status.requestsCount)
+            assertTrue(Capability.CAPABILITY_APPROVE in first.entriesList[0].request.allowedActionsList)
+            assertTrue(first.nextPageToken.isNotEmpty())
+
+            seerr.enqueue(
+                json(
+                    """{"pageInfo":{"results":3},"results":[""" +
+                        """{"id":6,"status":2,"media":{"tmdbId":1399,"mediaType":"tv"},"requestedBy":{"id":1}}]}""",
+                ),
+            )
+            seerr.enqueue(json("""{"mediaInfo":{"id":10,"status":5}}"""))
+
+            val last = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = 2, pageToken = first.nextPageToken))
+
+            assertEquals("2", seerr.takeRequest().url.queryParameter("skip"))
+            assertEquals(listOf(show), last.entriesList.map { it.media })
+            assertEquals(
+                Availability.AVAILABILITY_AVAILABLE,
+                last.entriesList
+                    .single()
+                    .status.availability,
+            )
+            assertEquals("", last.nextPageToken)
+        }
+
+    @Test
+    fun `mine asks for the signed-in user's own requests by id`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            seerr.enqueue(emptyPage())
+
+            val response = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_MINE))
+
+            val asked = seerr.takeRequest().url
+            assertEquals("1", asked.queryParameter("requestedBy"))
+            assertEquals("all", asked.queryParameter("filter"))
+            assertEquals(DEFAULT_LIST_PAGE_SIZE.toString(), asked.queryParameter("take"))
+            assertEquals(0, response.entriesCount)
+            assertEquals("", response.nextPageToken)
+        }
+
+    @Test
+    fun `recently available asks for available requests, the most recently changed first`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(emptyPage())
+
+            stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_RECENTLY_AVAILABLE, pageSize = 500))
+
+            val asked = seerr.takeRequest().url
+            assertEquals("available", asked.queryParameter("filter"))
+            assertEquals("modified", asked.queryParameter("sort"))
+            assertEquals(MAX_LIST_PAGE_SIZE.toString(), asked.queryParameter("take"))
+        }
+
+    @Test
+    fun `awaiting moderation asks a moderator's seerr for pending requests`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(emptyPage())
+
+            stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_AWAITING_MODERATION))
+
+            assertEquals("pending", seerr.takeRequest().url.queryParameter("filter"))
+        }
+
+    /** Seerr would answer with the requester's own pending requests, which are not waiting on them. */
+    @Test
+    fun `awaiting moderation is empty for a user who may not moderate, without asking seerr`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            val before = seerr.requestCount
+
+            val nothing = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_AWAITING_MODERATION))
+
+            assertEquals(ListRequestsResponse.getDefaultInstance(), nothing)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `list requests refuses a missing filter and a page token it did not issue for this filter and page size`() =
+        runTest {
+            val stub = connected()
+            val before = seerr.requestCount
+            val mineToken = ListRequestsPageToken.issue(listRequest(RequestFilter.REQUEST_FILTER_MINE, pageSize = 10), skip = 10)
+
+            for (request in listOf(
+                listRequest(RequestFilter.REQUEST_FILTER_UNSPECIFIED),
+                listRequest(RequestFilter.REQUEST_FILTER_ALL, pageToken = "not a token"),
+                listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = 10, pageToken = mineToken),
+                listRequest(RequestFilter.REQUEST_FILTER_MINE, pageSize = 20, pageToken = mineToken),
+                listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = -1),
+            )) {
+                assertEquals(request.toString(), Status.Code.INVALID_ARGUMENT, stub.code { listRequests(request) })
+            }
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a listed request carries what the viewer may do to it`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            seerr.enqueue(
+                json(
+                    """{"pageInfo":{"results":1},"results":[""" +
+                        """{"id":4,"status":1,"media":{"tmdbId":603,"mediaType":"movie"},"requestedBy":{"id":1}}]}""",
+                ),
+            )
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":2,"requests":[{"id":4,"status":1,"requestedBy":{"id":1}}]}}"""))
+
+            val request =
+                stub
+                    .listRequests(listRequest(RequestFilter.REQUEST_FILTER_MINE))
+                    .entriesList
+                    .single()
+                    .request
+
+            assertEquals(listOf(Capability.CAPABILITY_CANCEL), request.allowedActionsList)
+        }
+
+    @Test
+    fun `get statuses answers each title as get status does, a repeated one once per occurrence and read once`() =
+        runTest {
+            val cache = FakeStatusCache()
+            cache.rows[show.mediaTypeValue to show.tmdbId] =
+                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_AVAILABLE).build(), 0L)
+            val stub = connected(cache = cache)
+            val before = seerr.requestCount
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":3}}"""))
+
+            val response =
+                stub.getStatuses(
+                    GetStatusesRequest
+                        .newBuilder()
+                        .addAllMedia(listOf(movie, show, movie))
+                        .build(),
+                )
+
+            assertEquals(listOf(movie, show, movie), response.statusesList.map { it.media })
+            assertEquals(
+                listOf(Availability.AVAILABILITY_PROCESSING, Availability.AVAILABILITY_AVAILABLE, Availability.AVAILABILITY_PROCESSING),
+                response.statusesList.map { it.status.availability },
+            )
+            assertEquals(1, seerr.requestCount - before)
+        }
+
+    @Test
+    fun `get statuses refuses more than 50 titles or an unusable one before asking seerr, and answers none with none`() =
+        runTest {
+            val stub = connected()
+            val before = seerr.requestCount
+            val tooMany = GetStatusesRequest.newBuilder().addAllMedia(List(MAX_STATUSES_PER_CALL + 1) { movie }).build()
+            val unusable =
+                GetStatusesRequest
+                    .newBuilder()
+                    .addMedia(movie)
+                    .addMedia(MediaId.getDefaultInstance())
+                    .build()
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { getStatuses(tooMany) })
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { getStatuses(unusable) })
+            assertEquals(0, stub.getStatuses(GetStatusesRequest.getDefaultInstance()).statusesCount)
+            assertEquals(before, seerr.requestCount)
+        }
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.submit(media: MediaId): Status.Code =
         code { submitRequest(SubmitRequestRequest.newBuilder().setMedia(media).build()) }

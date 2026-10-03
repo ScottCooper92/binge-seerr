@@ -36,6 +36,10 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
             add(Capability.CAPABILITY_CANCEL)
             if (settings.partialRequestsEnabled) add(Capability.CAPABILITY_EDIT_SEASONS)
         }
+        // Seerr's request list is open to any signed-in user and narrows itself to their own requests,
+        // and a batch of statuses is the core GetStatus many times over, so neither needs a permission.
+        add(Capability.CAPABILITY_LIST_REQUESTS)
+        add(Capability.CAPABILITY_BATCH_STATUS)
         if (canCreateIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
         if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
     }
@@ -93,6 +97,18 @@ fun SeerrPermissions.withAllowedActions(
         .addAllAllowedActions(titleActions)
         .build()
 }
+
+/** One request on its own, as a `ListRequests` entry carries it, with what the viewer may do to it; [own] when they made it. */
+fun SeerrPermissions.withAllowedActions(
+    request: RequestInfo,
+    own: Boolean,
+    profile: SeerrServerProfile,
+): RequestInfo =
+    request
+        .toBuilder()
+        .clearAllowedActions()
+        .addAllAllowedActions(requestActions(request, own, toCapabilities(profile)))
+        .build()
 
 /**
  * The checks Seerr makes on one request: approve and decline need a pending request and retry a failed
