@@ -43,6 +43,7 @@ import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
+import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
@@ -52,10 +53,13 @@ import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
+import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
@@ -66,6 +70,7 @@ import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toRequestStatus
+import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toStatusException
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
@@ -117,18 +122,37 @@ class SeerrRequestService(
      * Re-reads the profile and the signed-in user rather than serving the connection's cached copies:
      * this is where the capability set is decided, and a host that rebinds while the process is alive
      * would otherwise be told what the user could do when the process started.
+     *
+     * Never UNAUTHENTICATED (binge-companions#106). The host gates every other call on these
+     * capabilities, so with nothing connected or a rejected session this still answers OK, declaring
+     * only [CAPABILITY_ATTENTION][Capability.CAPABILITY_ATTENTION]: that is how the host reaches
+     * `needs_reconnect`, or the UNAUTHENTICATED that sends the user here to connect. Any other
+     * failure, an unreachable server say, keeps its own code.
      */
     override suspend fun handshake(request: HandshakeRequest): HandshakeResponse =
         reportingFailure("handshake") {
-            val profile = connection.refreshProfile()
+            val profile =
+                try {
+                    connection.refreshProfile()
+                } catch (_: NotConnectedException) {
+                    null
+                }
             val response =
                 handshakeResponse(
-                    capabilities = connection.refreshAuthenticatedUser().toPermissions().toCapabilities(profile),
-                    providerName = profile.variant.displayName,
+                    capabilities = profile?.let { sessionCapabilities(it) } ?: NO_SESSION_CAPABILITIES,
+                    providerName = (profile?.variant ?: SeerrVariant.Unknown).displayName,
                     companionVersionName = versionName,
                 )
             bingeConnection.recordHandshake()
             response
+        }
+
+    private suspend fun sessionCapabilities(profile: SeerrServerProfile): Set<Capability> =
+        try {
+            connection.refreshAuthenticatedUser().toPermissions().toCapabilities(profile)
+        } catch (e: HttpException) {
+            if (e.toSeerrError() != SeerrError.Unauthorized) throw e
+            NO_SESSION_CAPABILITIES
         }
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =
@@ -426,3 +450,6 @@ class SeerrRequestService(
         const val ATTENTION_INTERVAL_MILLIS = 60_000L
     }
 }
+
+/** What a handshake declares with no working session: the attention read, the one rpc that reports it. */
+private val NO_SESSION_CAPABILITIES = setOf(Capability.CAPABILITY_ATTENTION)
