@@ -224,6 +224,19 @@ tasks.register<CheckTranslationStalenessTask>("updateTranslationHashes") {
 
 tasks.named("check") { dependsOn("checkTranslationStaleness") }
 
+// The catalog's grpc must be what both the APK and the unit tests actually run (#702): the SDK brings
+// grpc-binder at binge-companions' version, so a bump here without a submodule bump moves nothing.
+val checkGrpcAlignment by tasks.registering(CheckGrpcAlignmentTask::class) {
+    group = "verification"
+    description = "Checks that every io.grpc module resolves to the catalog's grpc version."
+    expectedVersion.set(libs.versions.grpc)
+    listOf("releaseRuntimeClasspath", "debugUnitTestRuntimeClasspath").forEach { name ->
+        graphs.add(configurations.named(name).flatMap { it.incoming.resolutionResult.rootComponent })
+    }
+}
+
+tasks.named("check") { dependsOn(checkGrpcAlignment) }
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.binge.companion.sdk)

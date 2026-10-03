@@ -195,6 +195,10 @@ is the checks `build` pulls in through `check`; `app/build.gradle.kts` is where 
   PNG. The screenshot plugin does not wire itself into `check` the way ktlint and AGP's lint do, so
   `app/build.gradle.kts` does it by hand; a local `build` and a CI build therefore ask the same
   question.
+- `checkGrpcAlignment` — an `io.grpc` module on the release or unit-test runtime classpath that
+  resolved to a version other than the catalog's `grpc`. The SDK brings `grpc-binder` at
+  binge-companions' catalog version, so a `grpc` bump here needs the `binge-integrations` submodule
+  bumped to a revision on the same release, in a commit of its own.
 - `checkBaselineStaleness` — an entry in `detekt-baseline.xml` that the code no longer produces.
   An orphaned entry reads as debt still owed and absorbs the next real finding of that rule in
   that file. Delete the entry.
