@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +25,7 @@ import com.binge.designsystem.component.BingeFilterChip
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
 /** Report a problem with a tracked title: the kind, and a message for whoever fixes it. */
@@ -66,14 +66,15 @@ internal fun ReportIssueContent(
                 BingeFilterChip(label = stringResource(candidate.labelRes()), selected = candidate == type, onClick = { type = candidate })
             }
         }
-        OutlinedTextField(
-            value = message,
-            onValueChange = { message = it },
-            label = { Text(stringResource(R.string.issue_report_message)) },
-            placeholder = { Text(stringResource(R.string.issue_message_placeholder)) },
-            minLines = 3,
+        EditorTextField(
+            message,
+            stringResource(R.string.issue_report_message),
+            placeholder = stringResource(R.string.issue_message_placeholder),
             enabled = report != IssueReport.Sending,
-            modifier = Modifier.fillMaxWidth(),
+            singleLine = false,
+            minLines = 3,
+            prose = true,
+            onValueChange = { message = it },
         )
         when (report) {
             is IssueReport.Failed ->

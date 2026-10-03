@@ -61,6 +61,8 @@ internal fun EditorTextField(
     enabled: Boolean = true,
     secret: Boolean = false,
     singleLine: Boolean = true,
+    /** For a multi-line field, how tall it starts, so a message box reads as one before anything is typed. */
+    minLines: Int = 1,
     keyboardType: KeyboardType = KeyboardType.Text,
     autoCorrect: Boolean = true,
     prose: Boolean = false,
@@ -101,6 +103,7 @@ internal fun EditorTextField(
         enabled = enabled,
         readOnly = readOnly,
         singleLine = singleLine,
+        minLines = minLines,
         isError = isError,
         supportingText = supporting?.let { { Text(it) } },
         leadingIcon =
