@@ -30,9 +30,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowPoster
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
@@ -89,7 +89,7 @@ internal class RequestSheetCallbacks(
 
 /**
  * The request's context heads the sheet; the decision it is waiting on sits directly under that as
- * one bar; everything else is a settings row in one of two groups — the **request**, then the
+ * one bar; everything else is a list item in one of two groups — the **request**, then the
  * server's **media record** — each destructive row saying what it destroys.
  */
 @Composable
@@ -123,8 +123,8 @@ internal fun RequestActionsContent(
                 ?.takeIf { it.canManage }
                 ?.let { mediaRows(it, callbacks) }
                 .orEmpty()
-        if (requestRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
-        if (mediaRows.isNotEmpty()) SettingsGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
+        if (requestRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_request), rows = requestRows)
+        if (mediaRows.isNotEmpty()) ItemGroup(title = stringResource(R.string.request_sheet_group_media), rows = mediaRows)
     }
 }
 
@@ -231,9 +231,9 @@ private fun RequestSheetHeader(
 private fun requesterRow(
     item: RequestItem,
     onClick: () -> Unit,
-): SettingsRow {
+): ListItem {
     val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
-    return SettingsRow(
+    return ListItem(
         icon = Icons.Filled.Person,
         label = stringResource(R.string.request_sheet_requested_by, requester),
         detail = formatRelativeOrAbsolute(item.requestedAtMillis),
@@ -283,16 +283,16 @@ private fun requestRows(
     blockTitle: Boolean,
     onBlockTitleChange: (Boolean) -> Unit,
     callbacks: RequestSheetCallbacks,
-): List<SettingsRow> {
+): List<ListItem> {
     val actions = model.actions
     val error = MaterialTheme.colorScheme.error
     return buildList {
         if (model.canEdit) {
-            add(SettingsRow(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
+            add(ListItem(icon = Icons.Filled.Edit, label = stringResource(R.string.request_edit_title), onClick = callbacks.onEdit))
         }
         if (actions.canBlock && (actions.canDecline || actions.canRemove)) {
             add(
-                SettingsRow(
+                ListItem(
                     icon = Icons.Filled.Block,
                     label = stringResource(R.string.request_block_title),
                     detail = stringResource(R.string.request_block_caption),
@@ -303,7 +303,7 @@ private fun requestRows(
         }
         if (actions.canRemove) {
             add(
-                SettingsRow(
+                ListItem(
                     icon = Icons.Filled.Delete,
                     iconTint = error,
                     label = stringResource(if (blockTitle) R.string.request_remove_and_block else R.string.request_remove),
@@ -324,7 +324,7 @@ private fun requestRows(
 private fun mediaRows(
     media: MediaRecord,
     callbacks: RequestSheetCallbacks,
-): List<SettingsRow> {
+): List<ListItem> {
     val error = MaterialTheme.colorScheme.error
     val client = stringResource(if (media.isTv) R.string.media_client_sonarr else R.string.media_client_radarr)
     return buildList {
@@ -332,7 +332,7 @@ private fun mediaRows(
             add(instanceRow(instance, media.canSetStatus) { callbacks.onMarkStatus(instance.is4k) })
             if (media.canDeleteFiles && instance.status.hasFiles()) {
                 add(
-                    SettingsRow(
+                    ListItem(
                         icon = Icons.Filled.DeleteSweep,
                         iconTint = error,
                         label = stringResource(if (instance.is4k) R.string.media_delete_4k_files else R.string.media_delete_files),
@@ -345,7 +345,7 @@ private fun mediaRows(
         }
         if (media.canClearData) {
             add(
-                SettingsRow(
+                ListItem(
                     icon = Icons.Filled.DeleteForever,
                     iconTint = error,
                     label = stringResource(R.string.media_clear_data),
@@ -363,8 +363,8 @@ private fun instanceRow(
     instance: MediaInstance,
     canSetStatus: Boolean,
     onMarkStatus: () -> Unit,
-): SettingsRow =
-    SettingsRow(
+): ListItem =
+    ListItem(
         icon = Icons.Filled.Movie,
         label = stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard),
         detail = stringResource(R.string.media_mark_as).takeIf { canSetStatus },

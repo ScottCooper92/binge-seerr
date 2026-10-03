@@ -17,7 +17,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
-import com.binge.designsystem.component.SettingsRows
+import com.binge.designsystem.component.ItemRows
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
@@ -44,7 +44,7 @@ class SwitchRowSemanticsTest {
         var checked by mutableStateOf(true)
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
-                SettingsRows(rows = listOf(editorToggle(Icons.Filled.Vibration, "Trust proxy", checked) { checked = it }))
+                ItemRows(rows = listOf(editorToggle(Icons.Filled.Vibration, "Trust proxy", checked) { checked = it }))
             }
         }
         composeTestRule.onNodeWithText("Trust proxy").assert(isSwitch).assertIsOn()
@@ -58,7 +58,7 @@ class SwitchRowSemanticsTest {
         var taps = 0
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
-                SettingsRows(rows = listOf(editorToggle(Icons.Filled.Vibration, "Trust proxy", true, enabled = false) { taps++ }))
+                ItemRows(rows = listOf(editorToggle(Icons.Filled.Vibration, "Trust proxy", true, enabled = false) { taps++ }))
             }
         }
         composeTestRule.onNodeWithText("Trust proxy").assert(isSwitch).performClick()
@@ -70,7 +70,7 @@ class SwitchRowSemanticsTest {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
-                SettingsRows(rows = appRows(app, {}, {}, {}))
+                ItemRows(rows = appRows(app, {}, {}, {}))
             }
         }
         composeTestRule.onNodeWithText(context.getString(R.string.settings_shake_to_report)).assert(isSwitch).assertIsOn()

@@ -8,8 +8,8 @@ import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsRow
-import com.binge.designsystem.component.SettingsRowDestination
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -26,18 +26,18 @@ internal fun appRows(
     onToggleShakeToReport: (Boolean) -> Unit,
     onToggleShareUsageData: (Boolean) -> Unit,
     onToggleSendCrashReports: (Boolean) -> Unit,
-): List<SettingsRow> {
+): List<ListItem> {
     val context = LocalContext.current
     return listOf(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.BugReport,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_report_bug),
             detail = stringResource(R.string.settings_report_bug_caption),
-            destination = SettingsRowDestination.External,
+            destination = ListItemDestination.External,
             onClick = { context.openInBrowser(app.bugReportUrl) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Vibration,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_shake_to_report),
@@ -45,7 +45,7 @@ internal fun appRows(
             toggled = app.shakeToReport,
             onClick = { onToggleShakeToReport(!app.shakeToReport) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Insights,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_share_usage_data),
@@ -53,7 +53,7 @@ internal fun appRows(
             toggled = app.shareUsageData,
             onClick = { onToggleShareUsageData(!app.shareUsageData) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Healing,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_send_crash_reports),

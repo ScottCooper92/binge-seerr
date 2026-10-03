@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -37,7 +37,7 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 internal fun notificationRows(
     settings: NotificationSettings,
     actions: SettingsActions,
-): List<SettingsRow> {
+): List<ListItem> {
     val context = LocalContext.current
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { actions.onNotificationAccessChanged() }
     val askPermission =
@@ -45,7 +45,7 @@ internal fun notificationRows(
     val toggles =
         settings.offered.map { signal ->
             val on = signal in settings.enabled
-            SettingsRow(
+            ListItem(
                 icon = signal.icon(),
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(signal.labelRes()),
@@ -63,7 +63,7 @@ internal fun notificationRows(
         }
     val blocked =
         if (settings.blocked && settings.enabled.isNotEmpty()) {
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.NotificationsOff,
                 iconTint = BingeSentiment.Negative.fill(),
                 label = stringResource(R.string.settings_notifications_blocked),
@@ -80,7 +80,7 @@ internal fun notificationRows(
         }
     val schedule =
         if (settings.enabled.isNotEmpty()) {
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.Schedule,
                 iconTint = BingeSentiment.Neutral.fill(),
                 label = stringResource(R.string.settings_notifications_poll),

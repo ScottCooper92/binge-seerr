@@ -24,9 +24,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
-import com.binge.designsystem.component.SettingsRowDestination
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -71,7 +71,7 @@ private fun AboutContent(
     val inset = resolvedContentInset()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        SettingsGroup(
+        ItemGroup(
             title = stringResource(R.string.server_settings_about_version),
             rows = versionRows(info, onOpenUrl),
             modifier = Modifier.padding(horizontal = inset),
@@ -79,14 +79,14 @@ private fun AboutContent(
         val serverRows = serverRows(info)
         if (serverRows.isNotEmpty()) {
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            SettingsGroup(
+            ItemGroup(
                 title = stringResource(R.string.settings_server),
                 rows = serverRows,
                 modifier = Modifier.padding(horizontal = inset),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        SettingsGroup(
+        ItemGroup(
             title = stringResource(R.string.server_settings_about_support),
             rows = supportRows(info, onOpenUrl),
             modifier = Modifier.padding(horizontal = inset),
@@ -99,9 +99,9 @@ private fun AboutContent(
 private fun versionRows(
     info: AboutInfo,
     onOpenUrl: (String) -> Unit,
-): List<SettingsRow> =
+): List<ListItem> =
     listOfNotNull(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Info,
             iconTint = BingeSentiment.Neutral.fill(),
             label = info.variant.displayName,
@@ -110,7 +110,7 @@ private fun versionRows(
                     ?: stringResource(R.string.setup_server_development, info.variant.displayName),
             clickable = false,
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Public,
             iconTint = if (info.updateAvailable) BingeSentiment.Caution.fill() else BingeSentiment.Positive.fill(),
             label =
@@ -120,11 +120,11 @@ private fun versionRows(
                     else -> stringResource(R.string.server_settings_about_up_to_date)
                 },
             detail = stringResource(R.string.server_settings_about_release_notes),
-            destination = SettingsRowDestination.External,
+            destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.releaseNotesUrl()) },
         ),
         info.commitTag?.let { tag ->
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.Code,
                 iconTint = BingeSentiment.Neutral.fill(),
                 label = stringResource(R.string.server_settings_about_commit),
@@ -135,10 +135,10 @@ private fun versionRows(
     )
 
 @Composable
-private fun serverRows(info: AboutInfo): List<SettingsRow> =
+private fun serverRows(info: AboutInfo): List<ListItem> =
     listOfNotNull(
         info.totalRequests?.let { count ->
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.RequestPage,
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_about_total_requests),
@@ -147,7 +147,7 @@ private fun serverRows(info: AboutInfo): List<SettingsRow> =
             )
         },
         info.totalMediaItems?.let { count ->
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.Movie,
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_about_total_media),
@@ -156,7 +156,7 @@ private fun serverRows(info: AboutInfo): List<SettingsRow> =
             )
         },
         info.timezone?.let { zone ->
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.Schedule,
                 iconTint = BingeSentiment.Neutral.fill(),
                 label = stringResource(R.string.server_settings_about_timezone),
@@ -165,7 +165,7 @@ private fun serverRows(info: AboutInfo): List<SettingsRow> =
             )
         },
         info.appDataPath?.let { path ->
-            SettingsRow(
+            ListItem(
                 icon = if (info.appDataWarning) Icons.Filled.Warning else Icons.Filled.Folder,
                 iconTint = if (info.appDataWarning) BingeSentiment.Negative.fill() else BingeSentiment.Neutral.fill(),
                 label = stringResource(R.string.server_settings_about_data_directory),
@@ -185,30 +185,30 @@ private fun serverRows(info: AboutInfo): List<SettingsRow> =
 private fun supportRows(
     info: AboutInfo,
     onOpenUrl: (String) -> Unit,
-): List<SettingsRow> =
+): List<ListItem> =
     listOf(
-        SettingsRow(
+        ListItem(
             icon = Icons.AutoMirrored.Filled.MenuBook,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_docs),
             detail = info.variant.docsUrl(),
-            destination = SettingsRowDestination.External,
+            destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.docsUrl()) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Forum,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_discord),
             detail = info.variant.discordUrl(),
-            destination = SettingsRowDestination.External,
+            destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.discordUrl()) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Code,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_github),
             detail = info.variant.githubUrl(),
-            destination = SettingsRowDestination.External,
+            destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.githubUrl()) },
         ),
     )

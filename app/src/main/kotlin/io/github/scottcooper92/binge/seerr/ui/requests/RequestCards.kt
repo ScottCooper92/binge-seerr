@@ -36,8 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.InfoValue
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
@@ -50,7 +50,7 @@ import com.binge.designsystem.R as DesR
 private const val ACTING_ALPHA = 0.5f
 
 /**
- * This request as one card on the same clipped surface a settings group uses: its title beside its state,
+ * This request as one card on the same clipped surface an item group uses: its title beside its state,
  * who asked and who changed it as settings-style rows, what it asked for and where it was sent, and a
  * centred Review or Manage button last.
  */
@@ -118,7 +118,7 @@ internal fun RequestCardSection(
     }
 }
 
-/** Every other request against the title as a settings group, each row opening its own actions. */
+/** Every other request against the title as an item group, each row opening its own actions. */
 @Composable
 internal fun RequestSummaryGroup(
     summaries: List<RequestSummary>,
@@ -131,16 +131,16 @@ internal fun RequestSummaryGroup(
         modifier =
             Modifier
                 .padding(
-                    start = dimensionResource(DesR.dimen.settings_group_row_padding_h),
+                    start = dimensionResource(DesR.dimen.item_group_row_padding_h),
                     top = dimensionResource(DesR.dimen.section_header_padding_v),
                     bottom = dimensionResource(DesR.dimen.padding_s),
                 ).semantics { heading() },
     )
-    SettingsGroup(
+    ItemGroup(
         title = null,
         rows =
             summaries.map { summary ->
-                SettingsRow(
+                ListItem(
                     icon = Icons.Filled.Person,
                     label = summary.requestedBy ?: stringResource(R.string.requests_requester_unknown),
                     detail =
@@ -224,7 +224,7 @@ private fun FactIconBox(
     Box(
         modifier =
             Modifier
-                .size(dimensionResource(DesR.dimen.settings_group_icon_size))
+                .size(dimensionResource(DesR.dimen.item_group_icon_size))
                 .clip(BingeShapes.MoreCard)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
         contentAlignment = Alignment.Center,
@@ -233,7 +233,7 @@ private fun FactIconBox(
             imageVector = fact.icon,
             contentDescription = contentDescription,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(dimensionResource(DesR.dimen.settings_group_icon_glyph)),
+            modifier = Modifier.size(dimensionResource(DesR.dimen.item_group_icon_glyph)),
         )
     }
 }
@@ -280,8 +280,8 @@ internal fun Modifier.cardSurface(): Modifier = clip(BingeShapes.Large).backgrou
 @Composable
 internal fun cardRowPadding() =
     PaddingValues(
-        horizontal = dimensionResource(DesR.dimen.settings_group_row_padding_h),
-        vertical = dimensionResource(DesR.dimen.settings_group_row_padding_v),
+        horizontal = dimensionResource(DesR.dimen.item_group_row_padding_h),
+        vertical = dimensionResource(DesR.dimen.item_group_row_padding_v),
     )
 
 @Composable
@@ -289,7 +289,7 @@ private fun CardDivider() {
     HorizontalDivider(
         thickness = dimensionResource(DesR.dimen.hairline_thickness),
         color = MaterialTheme.colorScheme.outlineVariant,
-        modifier = Modifier.padding(start = dimensionResource(DesR.dimen.settings_group_row_padding_h)),
+        modifier = Modifier.padding(start = dimensionResource(DesR.dimen.item_group_row_padding_h)),
     )
 }
 

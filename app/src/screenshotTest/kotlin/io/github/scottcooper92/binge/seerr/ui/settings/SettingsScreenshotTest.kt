@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
-import com.binge.designsystem.component.SettingsGroup
+import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
@@ -166,8 +166,8 @@ class SettingsGroupsScreenshotTest {
 @Composable
 private fun Group(
     title: Int,
-    rows: List<com.binge.designsystem.component.SettingsRow>,
-) = SettingsGroup(title = stringResource(title), rows = rows)
+    rows: List<com.binge.designsystem.component.ListItem>,
+) = ItemGroup(title = stringResource(title), rows = rows)
 
 private fun connection(kind: SignInKind) = ConnectionSummary(baseUrl = "https://seerr.home.lan", signInKind = kind, userName = "Scott")
 

@@ -20,8 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
@@ -186,9 +186,9 @@ private fun PendingGroups() {
 @Composable
 private fun Group(
     title: String,
-    rows: List<SettingsRow>,
+    rows: List<ListItem>,
 ) {
     if (rows.isEmpty()) return
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-    SettingsGroup(title = title, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
+    ItemGroup(title = title, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
 }

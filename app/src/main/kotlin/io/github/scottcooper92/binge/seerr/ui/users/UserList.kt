@@ -29,9 +29,9 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowSkeletonColumn
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
@@ -114,7 +114,7 @@ private fun UserList(
     }
 }
 
-/** One user as a settings row on its own card: name and how they sign in, their role and request count; a long press starts selecting. */
+/** One user as a list item on its own card: name and how they sign in, their role and request count; a long press starts selecting. */
 @Composable
 internal fun UserRow(
     item: UserItem,
@@ -124,12 +124,12 @@ internal fun UserRow(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    SettingsGroup(
+    ItemGroup(
         title = null,
         modifier = modifier,
         rows =
             listOf(
-                SettingsRow(
+                ListItem(
                     icon = Icons.Filled.Person,
                     leadingContent = {
                         BingeInitialsAvatar(

@@ -20,8 +20,8 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsRow
-import com.binge.designsystem.component.SettingsRowDestination
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -44,19 +44,19 @@ internal fun connectionRows(
     server: ServerSummary,
     onEditConnection: () -> Unit,
     onOpenPage: (ServerSettingsPage) -> Unit,
-): List<SettingsRow> {
+): List<ListItem> {
     val context = LocalContext.current
     return listOf(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Link,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_server),
             detail = connection.baseUrl,
             clickable = connection.baseUrl.isWebUrl(),
-            destination = SettingsRowDestination.External,
+            destination = ListItemDestination.External,
             onClick = { context.openInBrowser(connection.baseUrl) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Person,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_signed_in_as),
@@ -67,23 +67,23 @@ internal fun connectionRows(
                 },
             clickable = false,
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Dns,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_version),
             detail = server.versionDetail(),
             clickable = server.updateAvailable,
-            destination = SettingsRowDestination.External,
+            destination = ListItemDestination.External,
             onClick = { context.openInBrowser(server.variant.releaseNotesUrl()) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Public,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_about),
             detail = stringResource(R.string.settings_about_caption),
             onClick = { onOpenPage(ServerSettingsPage.About) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Edit,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_edit_connection),
@@ -110,9 +110,9 @@ private fun ServerSummary.versionDetail(): String {
 internal fun mediaServerRows(
     server: ServerSummary,
     onOpenPage: (ServerSettingsPage) -> Unit,
-): List<SettingsRow> =
+): List<ListItem> =
     listOf(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Storage,
             iconTint = BingeSentiment.Info.fill(),
             label =
@@ -134,10 +134,10 @@ internal fun mediaServerRows(
 internal fun generalRows(
     general: GeneralSettings,
     onOpenPage: (ServerSettingsPage) -> Unit,
-): List<SettingsRow> {
+): List<ListItem> {
     val context = LocalContext.current
     return listOfNotNull(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Tune,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_edit),
@@ -145,16 +145,16 @@ internal fun generalRows(
             onClick = { onOpenPage(ServerSettingsPage.General) },
         ),
         general.applicationUrl?.takeIf { it.isWebUrl() }?.let { url ->
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.Link,
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.settings_application_url),
                 detail = url,
-                destination = SettingsRowDestination.External,
+                destination = ListItemDestination.External,
                 onClick = { context.openInBrowser(url) },
             )
         },
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Language,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_display_language),
@@ -162,7 +162,7 @@ internal fun generalRows(
             clickable = false,
         ),
         general.hideAvailable?.let { hidden ->
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.VisibilityOff,
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.settings_hide_available),
@@ -171,7 +171,7 @@ internal fun generalRows(
             )
         },
         if (general.discoverSliders) {
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.ViewCarousel,
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_sliders),
@@ -182,7 +182,7 @@ internal fun generalRows(
             null
         },
         if (general.network) {
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.Dns,
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_network),
@@ -193,7 +193,7 @@ internal fun generalRows(
             null
         },
         if (general.metadata) {
-            SettingsRow(
+            ListItem(
                 icon = Icons.Filled.Storage,
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(R.string.server_settings_metadata),
@@ -212,10 +212,10 @@ internal fun serviceRows(
     services: List<ServerService>,
     onOpenPage: (ServerSettingsPage) -> Unit,
     onOpenInstance: (ServiceType, Int) -> Unit,
-): List<SettingsRow> {
+): List<ListItem> {
     val context = LocalContext.current
     val manage =
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Tune,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_services_manage),
@@ -226,7 +226,7 @@ internal fun serviceRows(
         services.map { service ->
             val url = service.url?.takeIf { it.isWebUrl() }
             val id = service.id
-            SettingsRow(
+            ListItem(
                 icon = if (service.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv,
                 iconTint = BingeSentiment.Info.fill(),
                 label = service.label(),
@@ -234,7 +234,7 @@ internal fun serviceRows(
                 clickable = id != null || url != null,
                 // In-app when the instance is known; otherwise this falls back to the service's own
                 // URL, which leaves the app - the row's icon has to say which before it's tapped.
-                destination = if (id != null) SettingsRowDestination.InApp else SettingsRowDestination.External,
+                destination = if (id != null) ListItemDestination.InApp else ListItemDestination.External,
                 onClick = { if (id != null) onOpenInstance(service.type, id) else url?.let { context.openInBrowser(it) } },
             )
         }
@@ -257,9 +257,9 @@ private fun ServerService.detail(): String =
         ?: stringResource(R.string.settings_value_unknown)
 
 @Composable
-internal fun requestPolicyRows(policy: RequestPolicy): List<SettingsRow> =
+internal fun requestPolicyRows(policy: RequestPolicy): List<ListItem> =
     listOf(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Shield,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_default_permissions),
@@ -273,7 +273,7 @@ internal fun requestPolicyRows(policy: RequestPolicy): List<SettingsRow> =
                 ),
             clickable = false,
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.RequestPage,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.settings_request_limit),
@@ -304,9 +304,9 @@ internal fun agentRows(
     agents: NotificationAgents,
     onOpenPage: (ServerSettingsPage) -> Unit,
     onOpenAgent: (ServerAgent) -> Unit,
-): List<SettingsRow> =
+): List<ListItem> =
     listOfNotNull(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Tune,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_agents_manage),
@@ -327,8 +327,8 @@ private fun agentRow(
     label: String,
     on: Boolean,
     onClick: () -> Unit,
-): SettingsRow =
-    SettingsRow(
+): ListItem =
+    ListItem(
         icon = icon,
         iconTint = BingeSentiment.Info.fill(),
         label = label,

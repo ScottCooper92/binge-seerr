@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.binge.designsystem.component.BingeConfirmDialogContent
-import com.binge.designsystem.component.SettingsGroup
+import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 
@@ -23,7 +23,7 @@ class SettingsAppGroupScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun appGroup() =
-        SettingsGroup(
+        ItemGroup(
             title = stringResource(R.string.settings_group_app),
             rows =
                 appRows(SampleApp, onToggleShakeToReport = {
@@ -34,7 +34,7 @@ class SettingsAppGroupScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun appGroupToggled() =
-        SettingsGroup(
+        ItemGroup(
             title = stringResource(R.string.settings_group_app),
             rows =
                 appRows(

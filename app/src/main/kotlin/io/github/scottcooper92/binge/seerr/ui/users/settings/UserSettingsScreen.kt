@@ -10,8 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
@@ -70,7 +70,7 @@ private fun PageList(
 ) {
     val rows =
         pages.map { page ->
-            SettingsRow(
+            ListItem(
                 icon = page.icon(),
                 label = stringResource(page.titleRes()),
                 detail = stringResource(page.descriptionRes()),
@@ -78,7 +78,7 @@ private fun PageList(
             )
         }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        SettingsGroup(
+        ItemGroup(
             title = stringResource(R.string.user_settings_title),
             rows = rows,
             modifier = Modifier.padding(resolvedContentInset()),
