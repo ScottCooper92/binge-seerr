@@ -43,7 +43,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/companion_label"
         android:supportsRtl="true"
-        android:usesCleartextTraffic="true">
+        android:networkSecurityConfig="@xml/network_security_config">
 
         <!--
             Crashlytics starts switched off, so nothing is sent before CrashReportingSwitch has read the
