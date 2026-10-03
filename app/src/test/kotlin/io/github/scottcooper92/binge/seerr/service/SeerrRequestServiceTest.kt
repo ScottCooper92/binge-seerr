@@ -428,6 +428,8 @@ class SeerrRequestServiceTest {
             val analytics = RecordingAnalytics()
             val stub = connected(permissions = ADMIN, analytics = analytics)
 
+            // The refused count, then the `auth/me` re-read that confirms it is the session.
+            seerr.enqueue(MockResponse(code = 401))
             seerr.enqueue(MockResponse(code = 401))
             assertTrue(stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention.needsReconnect)
             assertEquals(emptyList<Any>(), analytics.events)
@@ -1097,12 +1099,57 @@ class SeerrRequestServiceTest {
     fun `a rejected session reads as needs_reconnect`() =
         runTest {
             val stub = connected(permissions = ADMIN)
+            // The count is refused, and the re-read of `auth/me` confirms it is the session.
+            seerr.enqueue(MockResponse(code = 401))
             seerr.enqueue(MockResponse(code = 401))
 
             val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention
 
             assertTrue(attention.needsReconnect)
             assertEquals(0, attention.pendingCount)
+        }
+
+    /** Every lineage answers a dead session on `auth/me` with 403, not 401 (#672). */
+    @Test
+    fun `a cold start whose session auth_me refuses with 403 reads as needs_reconnect`() =
+        runTest {
+            val stub = connected(permissions = ADMIN, warm = false)
+            seerr.enqueue(MockResponse(code = 403))
+
+            val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention
+
+            assertTrue(attention.needsReconnect)
+        }
+
+    /** A count refused with 403 is a session gone stale behind the cache only if `auth/me` now refuses too. */
+    @Test
+    fun `a count refused while auth_me still answers is the error it is, not needs_reconnect`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(MockResponse(code = 403))
+            seerr.enqueue(json("""{"id":1,"permissions":$ADMIN}"""))
+
+            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { getAttention(GetAttentionRequest.getDefaultInstance()) })
+        }
+
+    @Test
+    fun `a count refused because the session expired behind the cache reads as needs_reconnect`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(MockResponse(code = 403))
+            seerr.enqueue(MockResponse(code = 403))
+
+            assertTrue(stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention.needsReconnect)
+        }
+
+    @Test
+    fun `a session auth_me refuses with 403 handshakes with only the attention read`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
+            seerr.enqueue(MockResponse(code = 403))
+
+            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), stub.handshake(HandshakeRequest.getDefaultInstance()).capabilitiesList)
         }
 
     /**

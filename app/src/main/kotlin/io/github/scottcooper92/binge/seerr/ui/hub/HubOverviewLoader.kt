@@ -2,13 +2,13 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaBucketDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
+import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
@@ -148,10 +148,7 @@ class HubOverviewLoader
     }
 
 private fun Throwable?.toUserLoad(): HubUserLoad =
-    when (this?.toSeerrError()) {
-        SeerrError.Unauthorized, SeerrError.Forbidden -> HubUserLoad.Rejected
-        else -> HubUserLoad.Failed
-    }
+    if (this?.toSeerrError()?.rejectsSession == true) HubUserLoad.Rejected else HubUserLoad.Failed
 
 private fun SeerrUserDto.toAccount(isAdmin: Boolean): HubAccount =
     HubAccount(

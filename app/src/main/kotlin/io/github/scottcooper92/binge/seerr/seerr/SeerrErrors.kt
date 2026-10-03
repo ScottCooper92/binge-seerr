@@ -32,6 +32,19 @@ enum class SeerrError {
     Unknown,
 }
 
+/**
+ * Whether a failure of `GET /auth/me` means the server holds no user for these credentials: the session
+ * expired, the API key was rotated, or the user was deleted. The one rule for it, read by the Service and the
+ * screens alike, so the two cannot disagree about a rejected session (#672).
+ *
+ * Every lineage (Overseerr, Jellyseerr, Seerr) guards `auth/me` with `isAuthenticated()` and no permission,
+ * and that middleware answers **403** exactly when no user is attached: `hasPermission(0)` is always true.
+ * The server itself never sends 401 there; a 401 comes from a proxy in front of it, and means the same.
+ * For `auth/me` only: anywhere else a 403 is a real permission refusal, so callers apply this to that call.
+ */
+val SeerrError.rejectsSession: Boolean
+    get() = this == SeerrError.Unauthorized || this == SeerrError.Forbidden
+
 fun Throwable.toSeerrError(): SeerrError =
     when (this) {
         is NotConnectedException -> SeerrError.NotConnected
