@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -54,14 +55,15 @@ class DvrInstanceTvFocusTest {
     }
 
     @Test
-    fun `a closed header is a focus stop and the next one follows it`() {
+    fun `an open header is a focus stop and down enters its own fields before the next header`() {
         show()
         focusHeader("Destination")
 
         rule.onNodeWithText("Destination").assertIsFocused()
         press(Key.DirectionDown)
 
-        rule.onNodeWithText("Advanced").assertIsFocused()
+        rule.onNodeWithText("Destination").assertIsNotFocused()
+        rule.onNodeWithText("Advanced").assertIsNotFocused()
     }
 
     @Test
