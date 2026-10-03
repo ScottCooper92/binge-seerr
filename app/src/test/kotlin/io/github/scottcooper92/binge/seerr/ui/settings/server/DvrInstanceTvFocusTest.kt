@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -15,9 +14,8 @@ import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
-import io.github.scottcooper92.binge.seerr.util.RemovableContent
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import kotlinx.coroutines.flow.emptyFlow
-import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,15 +31,10 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class DvrInstanceTvFocusTest {
     @get:Rule
-    val rule = createComposeRule()
-
-    private val content = RemovableContent(rule)
-
-    @After
-    fun removeContent() = content.remove()
+    val rule = createSeerrComposeRule()
 
     private fun show() =
-        content.setContent {
+        rule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 val draft = completeRadarr()
                 DvrInstanceScreen(

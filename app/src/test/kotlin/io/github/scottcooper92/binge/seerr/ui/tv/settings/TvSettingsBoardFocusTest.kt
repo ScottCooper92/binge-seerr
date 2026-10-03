@@ -4,7 +4,6 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -19,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SignInKind
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
@@ -40,7 +40,7 @@ private val SERVER =
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvSettingsBoardFocusTest {
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createSeerrComposeRule()
 
     private var scans = 0
 

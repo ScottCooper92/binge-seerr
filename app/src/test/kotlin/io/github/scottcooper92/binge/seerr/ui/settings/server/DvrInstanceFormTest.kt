@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -12,9 +11,8 @@ import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
-import io.github.scottcooper92.binge.seerr.util.RemovableContent
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import kotlinx.coroutines.flow.emptyFlow
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -30,16 +28,15 @@ internal fun completeRadarr() =
 @RunWith(RobolectricTestRunner::class)
 class DvrInstanceFormTest {
     @get:Rule
-    val rule = createComposeRule()
+    val rule = createSeerrComposeRule()
 
-    private val content = RemovableContent(rule)
     private var saves = 0
     private var backs = 0
 
     private fun show(
         draft: DvrForm,
         choices: DvrChoices? = TESTED,
-    ) = content.setContent {
+    ) = rule.setContent {
         BingeExpressiveTheme(dynamicColor = false) {
             DvrInstanceScreen(
                 state =
@@ -55,9 +52,6 @@ class DvrInstanceFormTest {
             )
         }
     }
-
-    @After
-    fun removeContent() = content.remove()
 
     @Test
     fun `save with a missing required field does not save and says what is missing`() {
