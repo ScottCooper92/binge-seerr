@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -35,6 +37,7 @@ import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
@@ -162,11 +165,11 @@ private fun ModeFields(
                 onDone = submit,
             ) { value -> onEdit { copy(apiKey = value) } }
             // An API key is the server's own, so it carries the administrator's reach to every host this
-            // companion admits; the user is told before they hand it over (#684).
-            Text(
-                stringResource(R.string.setup_api_key_admin_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // companion admits; the user is told before they hand it over (#684). A hint card, as the
+            // setup flow's other notes are, so it reads as something to know rather than field help.
+            HintCard(
+                text = stringResource(R.string.setup_api_key_admin_note),
+                icon = Icons.Filled.AdminPanelSettings,
             )
         }
         SeerrSignInMode.Local -> {
