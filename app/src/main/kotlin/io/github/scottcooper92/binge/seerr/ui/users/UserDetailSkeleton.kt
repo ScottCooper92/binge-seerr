@@ -29,7 +29,9 @@ import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
-private const val NAME_FRACTION = 0.4f
+private const val NAME_FRACTION = 0.6f
+private const val META_FRACTION = 0.8f
+private const val META_LINE_COUNT = 2
 private const val TAG_COUNT = 2
 private const val STAT_COUNT = 2
 private const val STAT_VALUE_FRACTION = 0.45f
@@ -67,20 +69,34 @@ internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {
 /** Mirrors [ProfileHeader]: a centred avatar, a name bar, and the two tags (role, origin) every user has. */
 @Composable
 private fun ProfileSkeleton(modifier: Modifier = Modifier) {
-    Column(
+    // ProfileHeader's row: the avatar beside a column of the name, two meta lines and the tags. The second
+    // line is an email distinct from the handle, which every user imported from Plex, Jellyfin or Emby has,
+    // the common shape on a server backed by one. A local-only user has one line, so its stat row rises by
+    // that line on resolve: the smaller jump, on the rarer page (#572).
+    Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         SkeletonPlate(
             Modifier.size(dimensionResource(DesR.dimen.avatar_size_lg)),
             shape = BingeShapes.Pill,
         )
-        SkeletonPlate(
-            Modifier.fillMaxWidth(NAME_FRACTION).height(lineHeightOf(MaterialTheme.typography.titleLarge)),
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            repeat(TAG_COUNT) { TagSkeleton() }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+        ) {
+            SkeletonPlate(
+                Modifier.fillMaxWidth(NAME_FRACTION).height(lineHeightOf(MaterialTheme.typography.titleLarge)),
+            )
+            repeat(META_LINE_COUNT) {
+                SkeletonPlate(
+                    Modifier.fillMaxWidth(META_FRACTION).height(lineHeightOf(MaterialTheme.typography.bodyMedium)),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+                repeat(TAG_COUNT) { TagSkeleton() }
+            }
         }
     }
 }
