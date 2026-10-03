@@ -4,6 +4,9 @@
     private-CA certificate works over HTTPS once its CA is on the device (#681), rather than pushing the
     user to plain HTTP. This is what Jellyfin's and Home Assistant's Android apps do.
 
+    The user anchor sits in base-config, so it covers every host the app talks to (plex.tv and Firebase
+    as well as Seerr), not only the Seerr server. That is deliberate: the server's host is known only at runtime.
+
     Cleartext stays permitted for now: this file can name hosts and single addresses but not IP ranges,
     so it cannot allow a LAN Seerr at 192.168.x.y while refusing a public host. The setup screen warns
     when an http:// address names a public host.
