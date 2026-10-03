@@ -112,6 +112,11 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  *
  * [extraActions] composes into the same top-bar row as Save, after it - an overflow menu button,
  * say. [bottomBar] is the page's own, passed straight through to [ScreenScaffold].
+ *
+ * A page passes [validation] to opt into the sectioned form (#549): Cancel and Save move to a bar
+ * pinned at the bottom, Save stays tappable while the draft has issues, and a Save that finds one
+ * shows the page's required fields and scrolls the first issue into view (see [EditorSection]).
+ * Without it the page is exactly as it was.
  */
 @Composable
 internal fun <T> EditorPage(
@@ -120,6 +125,7 @@ internal fun <T> EditorPage(
     events: Flow<EditorEvent>,
     actions: EditorActions<T>,
     canSave: (T) -> Boolean = { true },
+    validation: EditorValidation<T>? = null,
     showSaveAction: Boolean = true,
     scrolling: Boolean = true,
     bottomBar: @Composable () -> Unit = {},
@@ -129,13 +135,26 @@ internal fun <T> EditorPage(
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
     val ready = state as? EditorUiState.Ready<T>
+    val form = rememberEditorFormState(validation?.formKey.orEmpty())
+    val issues = remember(validation, ready?.draft) { ready?.draft?.let { validation?.issues?.invoke(it) }.orEmpty() }
+    EditorRevealEffect(form)
     ScreenScaffold(
         title = title,
         onBack = actions.onBack,
         snackbarHostState = snackbarHostState,
-        bottomBar = bottomBar,
+        bottomBar = {
+            bottomBar()
+            if (validation != null && ready != null) {
+                EditorActionBar(
+                    onCancel = actions.onBack,
+                    onSave = { issues.firstOrNull()?.let(form::saveFailed) ?: actions.onSave() },
+                    saveEnabled = ready.dirty && !ready.saving,
+                    saving = ready.saving,
+                )
+            }
+        },
         actions = {
-            if (showSaveAction && ready != null) {
+            if (showSaveAction && ready != null && validation == null) {
                 BingeTextButton(
                     label = stringResource(R.string.user_settings_save),
                     onClick = actions.onSave,
@@ -173,7 +192,11 @@ internal fun <T> EditorPage(
                                 ).padding(resolvedContentInset()),
                         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
                     ) {
-                        CompositionLocalProvider(LocalEditorPageInsets provides inner) {
+                        CompositionLocalProvider(
+                            LocalEditorPageInsets provides inner,
+                            LocalEditorForm provides form.takeIf { validation != null },
+                            LocalEditorIssues provides issues.visible(form.submitted),
+                        ) {
                             content(state.draft, !state.saving)
                         }
                     }
