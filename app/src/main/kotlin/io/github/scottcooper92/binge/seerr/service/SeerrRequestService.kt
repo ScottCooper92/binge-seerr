@@ -63,6 +63,7 @@ import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
+import io.github.scottcooper92.binge.seerr.seerr.recordIdFor
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
@@ -343,11 +344,7 @@ class SeerrRequestService(
             if (availability != Availability.AVAILABILITY_AVAILABLE && availability != Availability.AVAILABILITY_PARTIALLY_AVAILABLE) {
                 throw StatusException(Status.FAILED_PRECONDITION.withDescription("Nothing to report against: the title is $availability"))
             }
-            val mediaId =
-                info?.id
-                    ?: throw StatusException(
-                        Status.NOT_FOUND.withDescription("Seerr has no record for ${request.media.mediaType} ${request.media.tmdbId}"),
-                    )
+            val mediaId = info.recordIdFor(request.media)
             connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))
             ReportIssueResponse.getDefaultInstance()
         }
@@ -357,7 +354,7 @@ class SeerrRequestService(
      * the contract says (#682). A cold cache falls through to Seerr, whose own refusal maps the same way.
      */
     private suspend fun refuseIfKnownBlocklisted(media: MediaId) {
-        if (statusCache.find(media)?.status?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
+        if (cachedStatus(media)?.status?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
             throw StatusException(Status.FAILED_PRECONDITION.withDescription("The title is blocklisted"))
         }
     }

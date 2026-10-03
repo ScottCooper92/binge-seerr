@@ -21,13 +21,13 @@ class SeerrMediaIds(
     private val api: suspend () -> SeerrApi,
 ) {
     /** The server's internal id for [media], or `NOT_FOUND` when the server does not track the title. */
-    suspend fun mediaRecordId(media: MediaId): Int =
-        api()
-            .details(media)
-            .mediaInfo
-            ?.id
-            ?: throw StatusException(Status.NOT_FOUND.withDescription("Seerr has no record for ${media.mediaType} ${media.tmdbId}"))
+    suspend fun mediaRecordId(media: MediaId): Int = api().details(media).mediaInfo.recordIdFor(media)
 }
+
+/** The server's internal id from a title's [SeerrMediaInfoDto], or `NOT_FOUND` when the server does not track [media]. */
+fun SeerrMediaInfoDto?.recordIdFor(media: MediaId): Int =
+    this?.id
+        ?: throw StatusException(Status.NOT_FOUND.withDescription("Seerr has no record for ${media.mediaType} ${media.tmdbId}"))
 
 /**
  * Seerr's media-type string for a contract [MediaId]; anything but movie or TV is a bad argument. Every path

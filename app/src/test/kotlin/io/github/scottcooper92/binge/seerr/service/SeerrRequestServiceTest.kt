@@ -1040,7 +1040,7 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `a report against a title still pending is FAILED_PRECONDITION, and never reaches seerr`() =
+    fun `a report against a title still pending is FAILED_PRECONDITION, and creates no issue`() =
         runTest {
             val stub = connected()
             seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":2}}"""))
@@ -1097,6 +1097,22 @@ class SeerrRequestServiceTest {
 
             assertEquals(Status.Code.FAILED_PRECONDITION, stub.submit(movie))
             assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a submit for a title whose cached blocklisted row is stale goes to seerr`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache, now = { 24 * 60 * 60 * 1000L })
+            cache.put(
+                movie,
+                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_BLOCKLISTED).build(), 0L),
+            )
+            val before = seerr.requestCount
+
+            stub.submit(movie)
+
+            assertTrue(seerr.requestCount > before)
         }
 
     @Test
