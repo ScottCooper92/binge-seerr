@@ -88,6 +88,7 @@ fun IssuesScreen(
                 IssuesBody(
                     filter = filter,
                     lazyItems = issuesFor(filter).collectAsLazyPagingItems(),
+                    lastRefresh = ready.refreshes[filter],
                     onOpen = actions.onOpen,
                     // A rejected session cannot be retried past: the hub owns reconnecting.
                     onReconnect = actions.onBack,

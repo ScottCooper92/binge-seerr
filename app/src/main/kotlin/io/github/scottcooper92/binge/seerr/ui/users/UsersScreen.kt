@@ -93,6 +93,7 @@ fun UsersScreen(
             Column(Modifier.fillMaxSize().padding(padding.outerPadding())) {
                 UsersBody(
                     lazyItems = users.collectAsLazyPagingItems(),
+                    lastRefresh = ready.refresh,
                     selection = ready.selection,
                     onOpen = actions.onOpen,
                     onToggleSelected = actions.onToggleSelected,

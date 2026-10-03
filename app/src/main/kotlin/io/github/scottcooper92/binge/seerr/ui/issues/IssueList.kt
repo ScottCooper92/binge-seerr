@@ -23,7 +23,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
@@ -35,6 +34,7 @@ import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.requests.RefreshFailedLine
@@ -42,8 +42,10 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.toTagType
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
+import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import com.binge.designsystem.R as DesR
 
@@ -56,41 +58,42 @@ import com.binge.designsystem.R as DesR
 internal fun IssuesBody(
     filter: IssueFilter,
     lazyItems: LazyPagingItems<IssueItem>,
+    /** This list's latest finished network refresh; see [rememberPagedPhase]. */
+    lastRefresh: ListRefresh?,
     onOpen: (IssueItem) -> Unit,
     onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val remote = lazyItems.loadState.mediator?.refresh ?: lazyItems.loadState.refresh
-    when {
-        lazyItems.itemCount > 0 && (remote is LoadState.Loading || remote is LoadState.Error) ->
-            // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
-            Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                if (remote is LoadState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                if (remote is LoadState.Error) {
-                    RefreshFailedLine(
-                        remote.error,
-                        R.string.issues_refresh_failed,
-                        onRetry = lazyItems::retry,
-                        onReconnect = onReconnect,
-                    )
+    when (val phase = lazyItems.rememberPagedPhase(lastRefresh)) {
+        is PagedPhase.Rows ->
+            if (phase.refreshing || phase.refreshError != null) {
+                // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
+                Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                    val error = phase.refreshError
+                    if (error == null) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    } else {
+                        RefreshFailedLine(error, R.string.issues_refresh_failed, onRetry = lazyItems::retry, onReconnect = onReconnect)
+                    }
+                    IssueList(lazyItems, onOpen, onReconnect, contentPadding.belowPinnedLine())
                 }
-                IssueList(lazyItems, onOpen, onReconnect, contentPadding.belowPinnedLine())
+            } else {
+                IssueList(lazyItems, onOpen, onReconnect, contentPadding)
             }
-        lazyItems.itemCount > 0 -> IssueList(lazyItems, onOpen, onReconnect, contentPadding)
-        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
+        PagedPhase.Skeleton ->
             ListRowSkeletonColumn(
                 contentPadding = resolvedListContentPadding(contentPadding),
                 modifier = modifier,
             )
-        remote is LoadState.Error ->
+        is PagedPhase.Failed ->
             PagedRefreshError(
-                remote.error,
+                phase.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
                 modifier = modifier.padding(contentPadding),
             )
-        else ->
+        PagedPhase.Empty ->
             EmptyScreen(
                 message = stringResource(filter.emptyMessageRes()),
                 modifier = modifier.padding(contentPadding),

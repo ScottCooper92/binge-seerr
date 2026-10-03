@@ -120,6 +120,15 @@ class RequestsViewModelTest {
 
             val rows = vm.requests(RequestFilter.All).asSnapshot()
             assertEquals(listOf("Heat"), rows.map { it.title })
+            // The refresh's count reaches the state, so the list can tell an empty answer from rows on their way.
+            assertEquals(
+                1,
+                vm
+                    .awaitReady { RequestFilter.All in it.refreshes }
+                    .refreshes
+                    .getValue(RequestFilter.All)
+                    .rowsWritten,
+            )
             val list = received.last { it.url.encodedPath == "/api/v1/request" }.url
             assertNull(list.queryParameter("requestedBy"))
             assertEquals("added", list.queryParameter("sort"))
