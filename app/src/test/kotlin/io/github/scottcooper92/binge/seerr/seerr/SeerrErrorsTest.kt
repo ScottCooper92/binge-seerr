@@ -2,9 +2,11 @@ package io.github.scottcooper92.binge.seerr.seerr
 
 import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
 import io.grpc.Status
+import kotlinx.serialization.SerializationException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -58,5 +60,25 @@ class SeerrErrorsTest {
         assertEquals(SeerrError.Rejected, http(422).toSeerrError())
         assertEquals(SeerrError.Unreachable, SocketTimeoutException("timeout").toSeerrError())
         assertEquals(SeerrError.Unknown, IllegalStateException("bug").toSeerrError())
+    }
+
+    /** A serialization failure's message quotes the body it choked on; none of it may reach the host (#680). */
+    @Test
+    fun `an unreadable body is UNAVAILABLE, and its contents never reach the description`() {
+        val leak = SerializationException("Unexpected JSON token at offset 2. JSON input: {\"apiKey\":\"s3cret\"}")
+
+        val status = leak.toStatusException().status
+
+        assertEquals(Status.Code.UNAVAILABLE, status.code)
+        assertFalse(status.description.orEmpty().contains("s3cret"))
+        assertFalse(status.description.orEmpty().contains("JSON input"))
+    }
+
+    @Test
+    fun `any other failure is INTERNAL with a fixed description`() {
+        val status = IllegalStateException("token=abc123").toStatusException().status
+
+        assertEquals(Status.Code.INTERNAL, status.code)
+        assertFalse(status.description.orEmpty().contains("abc123"))
     }
 }
