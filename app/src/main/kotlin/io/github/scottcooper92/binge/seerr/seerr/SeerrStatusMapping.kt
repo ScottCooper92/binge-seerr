@@ -78,6 +78,11 @@ fun SeerrRequestStatusCode?.toApprovalState(): ApprovalState =
         else -> ApprovalState.APPROVAL_STATE_PENDING
     }
 
+/** One request as the request list serves it, without `allowed_actions`: as for a status, the service fills those in. */
+fun SeerrRequestDto.toRequestInfo(): RequestInfo =
+    SeerrRequestSummaryDto(id = id, status = status, createdAt = createdAt, requestedBy = requestedBy, is4k = is4k, seasons = seasons)
+        .toRequestInfo()
+
 private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
     val builder =
         RequestInfo

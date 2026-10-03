@@ -33,6 +33,7 @@ import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusResponse
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.ReportIssueResponse
+import com.binge.companion.contracts.request.v1.RequestEntry
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.RetryRequestRequest
@@ -41,6 +42,7 @@ import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestResponse
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestResponse
+import com.binge.companion.contracts.request.v1.TitleStatus
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleResponse
 import com.binge.companion.contracts.v1.MediaId
@@ -73,7 +75,9 @@ import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
+import io.github.scottcooper92.binge.seerr.seerr.toMediaId
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
+import io.github.scottcooper92.binge.seerr.seerr.toRequestInfo
 import io.github.scottcooper92.binge.seerr.seerr.toRequestStatus
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toStatusException
@@ -83,11 +87,16 @@ import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
 import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import retrofit2.HttpException
 
 /** Seerr returns 202 Accepted when there was nothing left to request, and created nothing. */
@@ -399,19 +408,92 @@ class SeerrRequestService(
         }
 
     /**
-     * Not served yet (#703), so CAPABILITY_LIST_REQUESTS is never declared and the contract's answer
-     * to an undeclared rpc is PERMISSION_DENIED. Not UNIMPLEMENTED, which means "not installed".
+     * Requires CAPABILITY_LIST_REQUESTS. One page of Seerr's `GET /request`, filtered as
+     * [SeerrRequestQuery] describes and paged by [ListRequestsPageToken]. Each entry's status is the
+     * title's, read as [getStatus] reads it, so a title's row in the status cache serves both. A title
+     * listed twice on a page (a standard and a 4K request) is looked up once.
+     *
+     * AWAITING_MODERATION is empty for a user who may not moderate, without asking Seerr: the server
+     * would answer with that user's own pending requests, which are not waiting on them.
      */
     override suspend fun listRequests(request: ListRequestsRequest): ListRequestsResponse =
         gatedRead("list_requests", Capability.CAPABILITY_LIST_REQUESTS) {
-            error("CAPABILITY_LIST_REQUESTS is never declared, so checkDeclared refuses first")
+            val query = request.filter.toSeerrQuery()
+            val pageSize = request.effectivePageSize()
+            val skip = ListRequestsPageToken.skipOf(request)
+            val user = connection.authenticatedUser()
+            val permissions = user.toPermissions()
+            if (query == SeerrRequestQuery.AwaitingModeration && !permissions.canManageRequests) {
+                ListRequestsResponse.getDefaultInstance()
+            } else {
+                val page =
+                    connection.api().requests(
+                        take = pageSize,
+                        skip = skip,
+                        filter = query.filter,
+                        sort = query.sort,
+                        requestedBy = user.id.takeIf { query.mine },
+                    )
+                val listed = page.results.mapNotNull { dto -> dto.media.toMediaId()?.let { it to dto } }
+                val statuses = statusesOf(listed.map { it.first })
+                val profile = connection.profile()
+                val response = ListRequestsResponse.newBuilder()
+                listed.forEach { (media, dto) ->
+                    val info = permissions.withAllowedActions(dto.toRequestInfo(), own = dto.requestedBy?.id == user.id, profile = profile)
+                    response.addEntries(
+                        RequestEntry
+                            .newBuilder()
+                            .setMedia(media)
+                            .setStatus(statuses.getValue(media))
+                            .setRequest(info),
+                    )
+                }
+                val next = skip + page.results.size
+                if (page.results.isNotEmpty() && next < page.pageInfo.results) {
+                    response.setNextPageToken(ListRequestsPageToken.issue(request, next))
+                }
+                response.build()
+            }
         }
 
-    /** As [listRequests], for CAPABILITY_BATCH_STATUS (#703). */
+    /**
+     * Requires CAPABILITY_BATCH_STATUS. [getStatus] for each title, through the same cache. Every
+     * title is checked before any is looked up, so an unusable one fails the call without a request
+     * to Seerr. A title named twice is looked up once and answered twice, as the contract says.
+     */
     override suspend fun getStatuses(request: GetStatusesRequest): GetStatusesResponse =
         gatedRead("get_statuses", Capability.CAPABILITY_BATCH_STATUS) {
-            error("CAPABILITY_BATCH_STATUS is never declared, so checkDeclared refuses first")
+            if (request.mediaCount > MAX_STATUSES_PER_CALL) {
+                throw invalidArgument("at most $MAX_STATUSES_PER_CALL titles per call, was ${request.mediaCount}")
+            }
+            request.mediaList.forEach { it.seerrMediaType() }
+            val statuses = statusesOf(request.mediaList)
+            val response = GetStatusesResponse.newBuilder()
+            request.mediaList.forEach { media ->
+                response.addStatuses(
+                    TitleStatus
+                        .newBuilder()
+                        .setMedia(media)
+                        .setStatus(statuses.getValue(media)),
+                )
+            }
+            response.build()
         }
+
+    /**
+     * Each distinct title's status, looked up side by side. At most [MAX_PARALLEL_LOOKUPS] go to the
+     * server at once, so a cold page does not open fifty connections to it.
+     */
+    private suspend fun statusesOf(media: List<MediaId>): Map<MediaId, RequestStatus> {
+        val lookups = Semaphore(MAX_PARALLEL_LOOKUPS)
+        return coroutineScope {
+            media
+                .distinct()
+                .map { title -> async { title to lookups.withPermit { status(title) } } }
+                .awaitAll()
+                .toMap()
+        }
+    }
 
     private suspend fun permissions(): SeerrPermissions = connection.authenticatedUser().toPermissions()
 
@@ -506,6 +588,9 @@ class SeerrRequestService(
 
     private companion object {
         const val OBSERVE_INTERVAL_MILLIS = 15_000L
+
+        /** How many title lookups [statusesOf] sends to the server at once. */
+        const val MAX_PARALLEL_LOOKUPS = 4
 
         /** Coarser than a title's status: the host holds this stream open for as long as it runs. */
         const val ATTENTION_INTERVAL_MILLIS = 60_000L
