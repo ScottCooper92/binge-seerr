@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.service
 
+import android.os.Process
 import com.binge.companion.sdk.BingeHosts
 import com.binge.companion.sdk.HostPolicy
 import com.binge.companion.sdk.IntegrationService
@@ -60,6 +61,7 @@ class SeerrCompanionService : IntegrationService() {
     override fun hostPolicy(): SecurityPolicy =
         if (BuildConfig.DEBUG) {
             BingeOnlyHostPolicy(
+                selfUid = Process.myUid(),
                 packagesForUid = { uid -> packageManager.getPackagesForUid(uid).orEmpty().toList() },
                 warn = logWarning(TAG),
             )

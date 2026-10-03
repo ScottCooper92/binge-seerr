@@ -38,8 +38,8 @@ import javax.inject.Inject
  * the exported Service under its caller policy, the generated stubs and the protobuf runtime under
  * R8, then handshake and one status call served from a connected server. The server is a mock in
  * this process; the unit tests beside the service cover its translation, this covers the crossing.
- * The debug policy admits any caller, which is what lets the test bind as one; a release build's
- * pinned policy would refuse it, so the lane runs the minified debug build.
+ * The debug policy admits Binge's packages and the app's own uid, which is what lets the test bind from
+ * inside the app; a release build's pinned policy would refuse it, so the lane runs the minified debug build.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)

@@ -10,9 +10,10 @@ import org.junit.Test
 /** The debug build admits Binge's packages under any certificate, and refuses every other app (#679). */
 class BingeOnlyPoliciesTest {
     private val uid = 10_042
+    private val selfUid = 10_001
 
     private fun hostCode(vararg packages: String): Status.Code =
-        BingeOnlyHostPolicy(packagesForUid = { packages.toList() }).checkAuthorization(uid).code
+        BingeOnlyHostPolicy(selfUid = selfUid, packagesForUid = { packages.toList() }).checkAuthorization(uid).code
 
     @Test
     fun `the Service admits debug and release Binge`() {
@@ -24,6 +25,14 @@ class BingeOnlyPoliciesTest {
     fun `the Service refuses any other app, and a uid with no package`() {
         assertEquals(Status.Code.PERMISSION_DENIED, hostCode("com.example.other"))
         assertEquals(Status.Code.PERMISSION_DENIED, hostCode())
+    }
+
+    @Test
+    fun `the Service admits its own uid and still refuses another uid with a non-Binge package`() {
+        val policy = BingeOnlyHostPolicy(selfUid = selfUid, packagesForUid = { listOf("com.example.other") })
+
+        assertEquals(Status.Code.OK, policy.checkAuthorization(selfUid).code)
+        assertEquals(Status.Code.PERMISSION_DENIED, policy.checkAuthorization(uid).code)
     }
 
     @Test
