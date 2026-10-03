@@ -8,20 +8,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
 /** Step one: the address alone. The server is read before any credential is asked for. */
@@ -43,15 +43,17 @@ internal fun SetupAddressStep(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         HintCard(text = stringResource(R.string.setup_intro))
-        OutlinedTextField(
-            value = state.serverUrl,
-            onValueChange = onEditAddress,
-            label = { Text(stringResource(R.string.setup_server_url)) },
-            placeholder = { Text(stringResource(R.string.placeholder_server_url)) },
-            singleLine = true,
+        // Done submits, as Continue does: the address is the step's only field.
+        EditorTextField(
+            state.serverUrl,
+            stringResource(R.string.setup_server_url),
+            placeholder = stringResource(R.string.placeholder_server_url),
             enabled = !state.isInspecting,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-            modifier = Modifier.fillMaxWidth(),
+            keyboardType = KeyboardType.Uri,
+            autoCorrect = false,
+            imeAction = ImeAction.Done,
+            onDone = { if (state.serverUrl.isNotBlank() && !state.isInspecting) onInspect() },
+            onValueChange = onEditAddress,
         )
         if (state.insecure) {
             Text(
