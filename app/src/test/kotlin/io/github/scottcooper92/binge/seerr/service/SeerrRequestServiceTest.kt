@@ -429,8 +429,7 @@ class SeerrRequestServiceTest {
             val analytics = RecordingAnalytics()
             val stub = connected(permissions = ADMIN, analytics = analytics)
 
-            // The refused count, then the `auth/me` re-read that confirms it is the session.
-            seerr.enqueue(MockResponse(code = 401))
+            // A 401 is the session outright: nothing asks `auth/me` again.
             seerr.enqueue(MockResponse(code = 401))
             assertTrue(stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention.needsReconnect)
             assertEquals(emptyList<Any>(), analytics.events)
@@ -1161,8 +1160,7 @@ class SeerrRequestServiceTest {
     fun `a rejected session reads as needs_reconnect`() =
         runTest {
             val stub = connected(permissions = ADMIN)
-            // The count is refused, and the re-read of `auth/me` confirms it is the session.
-            seerr.enqueue(MockResponse(code = 401))
+            // A 401 is the session outright: nothing asks `auth/me` again.
             seerr.enqueue(MockResponse(code = 401))
 
             val attention = stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention

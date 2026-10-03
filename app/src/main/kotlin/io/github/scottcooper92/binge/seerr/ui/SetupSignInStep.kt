@@ -151,7 +151,7 @@ private fun ModeFields(
     when (form.mode) {
         // No content type: the key is the server's, not an account credential, and offering to save
         // it as this user's password is how a password manager ends up holding the wrong secret.
-        SeerrSignInMode.ApiKey ->
+        SeerrSignInMode.ApiKey -> {
             EditorTextField(
                 form.apiKey,
                 stringResource(R.string.setup_api_key),
@@ -161,6 +161,14 @@ private fun ModeFields(
                 imeAction = ImeAction.Done,
                 onDone = submit,
             ) { value -> onEdit { copy(apiKey = value) } }
+            // An API key is the server's own, so it carries the administrator's reach to every host this
+            // companion admits; the user is told before they hand it over (#684).
+            Text(
+                stringResource(R.string.setup_api_key_admin_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         SeerrSignInMode.Local -> {
             OutlinedTextField(
                 value = form.email,

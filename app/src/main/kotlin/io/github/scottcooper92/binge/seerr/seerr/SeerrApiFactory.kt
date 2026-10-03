@@ -70,6 +70,7 @@ class SeerrApiFactory(
                         .Builder()
                         .addInterceptor(SeerrHealthInterceptor(health))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
+                        .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)
                         .finish(HttpLoggingInterceptor.Level.BODY, sessionCookieJarOrNull(auth, baseUrl))
                 CachedApi(baseUrl, auth, client, retrofit(baseUrl, client)).also { cached = it }.api

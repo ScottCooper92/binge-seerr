@@ -911,6 +911,7 @@
     <string name="field_clear">Borrar el valor</string>
     <string name="setup_username_placeholder">Tu nombre de usuario de %1$s</string>
     <string name="setup_api_key_hint">Lo encontrarás en Seerr, en Ajustes → General.</string>
+    <string name="setup_api_key_admin_note">Una clave de API inicia sesión como administrador del servidor. Cualquier app a la que permitas usar esta app complementaria puede actuar con ese acceso.</string>
     <string name="user_settings_discord_id_hint">El ID numérico, no tu nombre de usuario: en Discord, activa el Modo desarrollador, haz clic derecho en tu nombre y copia el ID de usuario.</string>
     <string name="user_settings_telegram_chat_id_hint">Escribe a @get_id_bot en Telegram, o añade tu bot a un grupo y usa el ID del grupo.</string>
     <string name="server_settings_agent_discord_bot_username_hint">En blanco, publica con el título de la aplicación del servidor.</string>

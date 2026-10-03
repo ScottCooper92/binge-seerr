@@ -50,7 +50,7 @@ fun Throwable.toSeerrError(): SeerrError =
         is NotConnectedException -> SeerrError.NotConnected
         is HttpException ->
             when {
-                code() == HTTP_UNAUTHORIZED -> SeerrError.Unauthorized
+                code() == HTTP_UNAUTHORIZED || rejectsSessionByProbe() -> SeerrError.Unauthorized
                 code() == HTTP_FORBIDDEN -> if (mentionsQuota()) SeerrError.Quota else SeerrError.Forbidden
                 code() == HTTP_NOT_FOUND -> SeerrError.NotFound
                 code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
@@ -81,13 +81,16 @@ fun Throwable.toStatusException(): StatusException =
 
 private fun HttpException.httpStatus(): Status =
     when {
-        code() == HTTP_UNAUTHORIZED -> Status.UNAUTHENTICATED
+        code() == HTTP_UNAUTHORIZED || rejectsSessionByProbe() -> Status.UNAUTHENTICATED
         code() == HTTP_FORBIDDEN && mentions("blocklisted") -> Status.FAILED_PRECONDITION
         code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
         code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
         code() >= HTTP_SERVER_ERROR_MIN -> Status.UNAVAILABLE
         else -> Status.INVALID_ARGUMENT
     }
+
+/** A 403 [SeerrSessionInterceptor] confirmed against `auth/me`: the session, not a permission. */
+private fun HttpException.rejectsSessionByProbe(): Boolean = response()?.headers()?.get(SESSION_REJECTED_HEADER) != null
 
 /**
  * Seerr refuses a request for a blocklisted title with a 403 whose message is "This media is blocklisted."
@@ -123,7 +126,10 @@ private fun HttpException.mentionsQuota(): Boolean =
             ?.readUtf8()
     }.getOrNull()
         .orEmpty()
-        .contains("quota", ignoreCase = true)
+        .namesQuota()
+
+/** Seerr's one quota signal: the word in a 403 body. */
+internal fun String.namesQuota(): Boolean = contains("quota", ignoreCase = true)
 
 /**
  * Runs [block] and re-throws any failure as the [StatusException] the contract expects.

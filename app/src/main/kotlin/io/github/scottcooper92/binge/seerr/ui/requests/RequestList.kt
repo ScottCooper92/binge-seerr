@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.ThumbsUpDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -151,7 +151,7 @@ internal fun RequestRow(
             onManage?.let {
                 {
                     IconButton(onClick = it, enabled = !isActing) {
-                        Icon(Icons.Filled.Gavel, contentDescription = stringResource(R.string.request_primary_manage))
+                        Icon(Icons.Filled.ThumbsUpDown, contentDescription = stringResource(R.string.request_primary_manage))
                     }
                 }
             },
