@@ -1,11 +1,11 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -16,7 +16,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class HubConnectionProblemTest {
     @get:Rule
-    val rule = createComposeRule()
+    val rule = createSeerrComposeRule()
 
     private fun text(id: Int) = ApplicationProvider.getApplicationContext<android.content.Context>().getString(id)
 

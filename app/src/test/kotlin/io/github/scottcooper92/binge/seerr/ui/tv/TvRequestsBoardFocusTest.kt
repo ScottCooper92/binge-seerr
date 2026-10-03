@@ -8,7 +8,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTextExactly
 import androidx.compose.ui.test.isFocusable
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -25,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -47,7 +47,7 @@ private const val BEAR = "The Bear"
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvRequestsBoardFocusTest {
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createSeerrComposeRule()
 
     private val opened = mutableListOf<Int>()
     private var filters = mutableListOf<RequestFilter>()

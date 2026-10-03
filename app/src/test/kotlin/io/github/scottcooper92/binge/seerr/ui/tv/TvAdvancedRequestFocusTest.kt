@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -16,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestError
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -34,7 +34,7 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvAdvancedRequestFocusTest {
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createSeerrComposeRule()
 
     private val servers = mutableListOf<Int>()
     private val profiles = mutableListOf<Int>()

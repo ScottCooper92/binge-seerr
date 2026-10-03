@@ -9,13 +9,13 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -39,7 +39,7 @@ private val MASKED = "•".repeat(SECRET.length)
 @RunWith(RobolectricTestRunner::class)
 class EditorTextFieldRevealTest {
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createSeerrComposeRule()
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val show get() = context.getString(R.string.field_secret_show)

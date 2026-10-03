@@ -2,9 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueReport
 import io.github.scottcooper92.binge.seerr.ui.requests.ReportIssueContent
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -22,7 +22,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class EditableSheetScrollTest {
     @get:Rule
-    val rule = createComposeRule()
+    val rule = createSeerrComposeRule()
 
     private fun assertScrolls() {
         // Vertical specifically: ReportIssueContent's type chips are a horizontalScroll row, so a

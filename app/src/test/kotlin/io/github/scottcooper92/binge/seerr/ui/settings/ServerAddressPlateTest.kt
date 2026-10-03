@@ -1,7 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings
 
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,7 +15,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ServerAddressPlateTest {
     @get:Rule
-    val rule = createComposeRule()
+    val rule = createSeerrComposeRule()
 
     @Test
     fun `renders the connected server's address`() {
