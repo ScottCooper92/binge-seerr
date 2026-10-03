@@ -21,8 +21,12 @@ import com.binge.companion.contracts.request.v1.GetDestinationOptionsRequest
 import com.binge.companion.contracts.request.v1.GetDestinationOptionsResponse
 import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.GetStatusResponse
+import com.binge.companion.contracts.request.v1.GetStatusesRequest
+import com.binge.companion.contracts.request.v1.GetStatusesResponse
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
+import com.binge.companion.contracts.request.v1.ListRequestsRequest
+import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveAttentionResponse
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
@@ -381,6 +385,21 @@ class SeerrRequestService(
                 connection.profile().unblockMediaType(request.media.seerrMediaType()),
             )
             UnblockTitleResponse.getDefaultInstance()
+        }
+
+    /**
+     * Not served yet (#703), so CAPABILITY_LIST_REQUESTS is never declared and the contract's answer
+     * to an undeclared rpc is PERMISSION_DENIED. Not UNIMPLEMENTED, which means "not installed".
+     */
+    override suspend fun listRequests(request: ListRequestsRequest): ListRequestsResponse =
+        gatedRead("list_requests", Capability.CAPABILITY_LIST_REQUESTS) {
+            error("CAPABILITY_LIST_REQUESTS is never declared, so checkDeclared refuses first")
+        }
+
+    /** As [listRequests], for CAPABILITY_BATCH_STATUS (#703). */
+    override suspend fun getStatuses(request: GetStatusesRequest): GetStatusesResponse =
+        gatedRead("get_statuses", Capability.CAPABILITY_BATCH_STATUS) {
+            error("CAPABILITY_BATCH_STATUS is never declared, so checkDeclared refuses first")
         }
 
     private suspend fun permissions(): SeerrPermissions = connection.authenticatedUser().toPermissions()
