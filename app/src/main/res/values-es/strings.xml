@@ -487,6 +487,20 @@
     <string name="server_settings_dvr_season_folders">Carpetas por temporada</string>
     <string name="server_settings_dvr_anime">Anime</string>
     <string name="server_settings_dvr_behaviour">Comportamiento</string>
+    <string name="server_settings_dvr_advanced">Avanzado</string>
+    <string name="editor_cancel">Cancelar</string>
+    <string name="editor_field_required">Obligatorio</string>
+    <string name="editor_section_expanded">Desplegada</string>
+    <string name="editor_section_collapsed">Contraída</string>
+    <string name="editor_section_expand_action">Desplegar</string>
+    <string name="editor_section_collapse_action">Contraer</string>
+    <plurals name="editor_section_issues">
+        <item quantity="one">%d campo requiere atención</item>
+        <item quantity="many">%d de campos requieren atención</item>
+        <item quantity="other">%d campos requieren atención</item>
+    </plurals>
+    <string name="editor_error_port">Introduce un puerto entre 1 y 65535.</string>
+    <string name="editor_error_web_url">Introduce una dirección web que empiece por http:// o https://.</string>
     <string name="server_settings_dvr_default">Instancia predeterminada</string>
     <string name="server_settings_dvr_4k">Instancia 4K</string>
     <string name="server_settings_dvr_sync">Sincronizar lo que contiene</string>
