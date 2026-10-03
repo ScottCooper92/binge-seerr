@@ -41,6 +41,22 @@ the server you entered and, if you choose to sign in with Plex, to plex.tv. Usag
 only if you agree) and crash reports (Firebase Crashlytics, switchable in Settings) are the only
 other traffic.
 
+### Where the secret lives
+
+The app holds one secret: an API key, or a session cookie from a password or Plex sign-in. It keeps
+two copies, each guarding against something different:
+
+- **On the device**, encrypted with an Android Keystore key (`CredentialStore`, `SecretCipher`). The
+  key never leaves the Keystore, so the stored copy is useless off this device or without this app.
+- **In Google Play's Block Store** (`BlockStoreConnectionCarrier`), so a new device or a reinstall can
+  reconnect without signing in again. It is written as JSON, backed up to the cloud only when the
+  device's backup is end-to-end encrypted, and a restored copy is used only after the server accepts
+  it at `auth/me`.
+
+An API key signs in as the server's administrator, and every app this companion admits can act with
+that access; the setup screen says so before the key is entered. Signing in as yourself with a
+password or Plex keeps the companion to your own permissions.
+
 ## For the person writing a companion
 
 Binge ships as a plain TMDB client with zero bundled providers. A companion app is a separate APK
