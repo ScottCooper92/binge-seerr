@@ -921,15 +921,36 @@ class SeerrRequestServiceTest {
             assertEquals(Status.Code.UNAVAILABLE, stub.status(movie))
         }
 
+    /**
+     * The handshake is the one exception (binge-companions#106): the host gates every call on what it
+     * declares, so it answers OK and declares the attention read, which is how the host finds out.
+     */
     @Test
-    fun `nothing connected is UNAUTHENTICATED everywhere`() =
+    fun `nothing connected is UNAUTHENTICATED everywhere but the handshake`() =
         runTest {
             val store = CredentialStore(PreferenceDataStoreFactory.create { folder.newFile("empty.preferences_pb") }, PlainCipher)
             val stub = serve(SeerrRequestService(SeerrConnection(store, SeerrApiFactory(logRequests = false)), "0.1.0-test"))
 
-            assertEquals(Status.Code.UNAUTHENTICATED, stub.code { handshake(HandshakeRequest.getDefaultInstance()) })
+            val handshake = stub.handshake(HandshakeRequest.getDefaultInstance())
+            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), handshake.capabilitiesList)
+            assertEquals("Seerr", handshake.providerName)
+            assertEquals(Status.Code.UNAUTHENTICATED, stub.code { getAttention(GetAttentionRequest.getDefaultInstance()) })
             assertEquals(Status.Code.UNAUTHENTICATED, stub.status(movie))
             assertEquals(Status.Code.UNAUTHENTICATED, stub.submit(movie))
+        }
+
+    /** A rejected session still handshakes, declaring the attention read that reports it as `needs_reconnect`. */
+    @Test
+    fun `a rejected session handshakes with only the attention read`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueueProfile(json("""{"version":"2.7.0"}"""), json("""{"initialized":true}"""))
+            seerr.enqueue(MockResponse(code = 401))
+
+            val handshake = stub.handshake(HandshakeRequest.getDefaultInstance())
+
+            assertEquals(listOf(Capability.CAPABILITY_ATTENTION), handshake.capabilitiesList)
+            assertEquals("Jellyseerr", handshake.providerName)
         }
 
     @Test
