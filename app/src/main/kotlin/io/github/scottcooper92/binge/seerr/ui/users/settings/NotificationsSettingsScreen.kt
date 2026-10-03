@@ -36,6 +36,13 @@ fun NotificationsSettingsScreen(
     }
 }
 
+/**
+ * The page's last text field, in the order the sections lay their fields out. Each section only sees
+ * its own fields, so without this every section's last field passed Next and the page never offered
+ * Done (#547).
+ */
+private val LAST_FIELD = NotificationAgent.entries.flatMap { agent -> AgentField.entries.filter { it.agent == agent } }.last()
+
 @Composable
 private fun AgentSection(
     agent: NotificationAgent,
@@ -91,6 +98,7 @@ private fun AgentFields(
             secret = field.secret,
             supporting = field.hintRes()?.let { stringResource(it) },
             isError = field == AgentField.DiscordId && !settings.discordIdValid,
+            imeAction = imeActionIf(last = field == LAST_FIELD),
         ) { value ->
             onEdit { it.update(agent) { agentSettings -> agentSettings.copy(fields = agentSettings.fields + (field to value)) } }
         }

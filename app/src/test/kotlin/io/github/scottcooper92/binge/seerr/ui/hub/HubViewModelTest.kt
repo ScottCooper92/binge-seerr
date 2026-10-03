@@ -291,7 +291,8 @@ class HubViewModelTest {
 
             serverDown.set(false)
             vm.recheck()
-            val ready = vm.awaitReady { it.overview.account != null }
+            // The re-check's probe reads Checking until it settles, so wait for it as well as the account.
+            val ready = vm.awaitReady { it.overview.account != null && it.health == ConnectionHealth.Healthy }
 
             assertEquals("Family", ready.server.title)
             assertEquals(ConnectionHealth.Healthy, ready.health)
