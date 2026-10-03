@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- A collapsible editor section: its header is a touch target, so it never shrinks below one. -->
+    <dimen name="editor_section_header_min_height">56dp</dimen>
     <!-- The artwork band above the sign-in form; the server's name sits on its lower edge. -->
     <dimen name="setup_backdrop_height">220dp</dimen>
     <!-- The height a request's actions sheet holds while its request loads or fails to. -->
