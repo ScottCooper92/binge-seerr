@@ -37,7 +37,7 @@ class SeerrStatusMappingTest {
                             id = 4,
                             status = SeerrRequestStatusCode.Completed,
                             createdAt = "2026-06-12T08:30:00.000Z",
-                            requestedBy = SeerrRequestUserDto(email = "scott@example.com"),
+                            requestedBy = SeerrRequestUserDto(displayName = "scott@example.com", email = "scott@example.com"),
                             seasons = listOf(SeerrSeasonStatusDto(1)),
                         ),
                     ),
@@ -151,5 +151,10 @@ class SeerrStatusMappingTest {
         assertEquals("Grace", nameOf(SeerrRequestUserDto(displayName = "Grace", email = "grace@example.com")))
         assertEquals("grace", nameOf(SeerrRequestUserDto(username = "grace", email = "grace@example.com")))
         assertEquals("", nameOf(SeerrRequestUserDto(email = "grace@example.com")))
+        // What a server sends for an email-only user: displayName falls back to the email.
+        assertEquals("", nameOf(SeerrRequestUserDto(displayName = "grace@example.com", email = "grace@example.com")))
+        assertEquals("", nameOf(SeerrRequestUserDto(displayName = "grace@example.com")))
+        val both = SeerrRequestUserDto(displayName = "grace@example.com", username = "grace", email = "grace@example.com")
+        assertEquals("grace", nameOf(both))
     }
 }
