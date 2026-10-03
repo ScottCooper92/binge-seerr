@@ -71,7 +71,7 @@ class SeerrApiFactory(
                 val client =
                     OkHttpClient
                         .Builder()
-                        .addInterceptor(SeerrHealthInterceptor(health))
+                        .addInterceptor(SeerrHealthInterceptor(health, baseUrl))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)
