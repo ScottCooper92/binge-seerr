@@ -78,9 +78,9 @@ and the wire contract in binge-companions' `contracts/`; this app's own roadmap 
 **Pre-alpha, at contract parity.** The exported Service serves every REQUEST v1 operation against
 the connected server; the administration console covers requests, issues, users, the blocklist,
 the server's settings pages and Android TV; release builds are shrunk, signed from a tag and
-proven on a device lane. Not yet released: Binge's release signing certificate is not yet
-published in the SDK, so a release build admits no host until it is, and the Play listing waits on
-its screenshots.
+proven on a device lane. A release build admits Binge through its published Play App Signing
+certificate. Not yet released: the on-device check of that handshake is still open, and the Play
+listing waits on its screenshots.
 
 ## Building
 

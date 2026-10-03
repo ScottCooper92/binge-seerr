@@ -51,8 +51,8 @@ class SeerrCompanionService : IntegrationService() {
 
     /**
      * Debug builds admit any caller, because a debug Binge is signed with its developer's own key
-     * and no allowlist can name it. Release builds pin Binge's published certificate, and until
-     * that digest is published in the SDK they admit nobody: fail closed, not open.
+     * and no allowlist can name it. Release builds pin `BingeHosts.release`, Binge's published
+     * Play App Signing certificate, and refuse any other signer.
      */
     override fun hostPolicy(): SecurityPolicy =
         if (BuildConfig.DEBUG) HostPolicy.anyCaller(TAG) else HostPolicy.pinned(this, listOf(BingeHosts.release))
