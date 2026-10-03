@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
@@ -9,6 +10,24 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 
 /** Set on a 403 that the server sent because the session is gone, not because of a permission. */
 internal const val SESSION_REJECTED_HEADER = "X-Binge-Session-Rejected"
+
+private const val AUTH_ME_PATH = "api/v1/auth/me"
+private const val HTTP_UNAUTHORIZED = 401
+private const val HTTP_FORBIDDEN = 403
+
+/** `GET /auth/me` on the server at [baseUrl]: the one call whose 403 means no user ([rejectsSession]). */
+internal fun authMeUrl(baseUrl: String): HttpUrl? = baseUrl.toHttpUrl().resolve(AUTH_ME_PATH)
+
+/**
+ * Whether an answer means the session is gone, not a permission: a 401, or a 403 [SeerrSessionInterceptor]
+ * marked after `auth/me` refused the same credentials. [toSeerrError] reads it as [SeerrError.Unauthorized],
+ * and the health monitor and telemetry read the same rule, so none of them treats a plain 403 as a dead
+ * session (#689). A 403 from `auth/me` itself is never marked; a caller that sees one applies [rejectsSession].
+ */
+internal fun isSessionRejection(
+    code: Int,
+    headers: Headers,
+): Boolean = code == HTTP_UNAUTHORIZED || headers[SESSION_REJECTED_HEADER] != null
 
 /**
  * Tells a dead session apart from a permission refusal on a 403, once, for every call this client makes
@@ -22,7 +41,7 @@ internal const val SESSION_REJECTED_HEADER = "X-Binge-Session-Rejected"
 class SeerrSessionInterceptor(
     baseUrl: String,
 ) : Interceptor {
-    private val authMe = baseUrl.toHttpUrl().resolve(AUTH_ME_PATH)
+    private val authMe = authMeUrl(baseUrl)
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -53,10 +72,4 @@ class SeerrSessionInterceptor(
                     .get()
                     .build(),
             ).use { probe -> probe.code == HTTP_UNAUTHORIZED || probe.code == HTTP_FORBIDDEN }
-
-    private companion object {
-        const val AUTH_ME_PATH = "api/v1/auth/me"
-        const val HTTP_UNAUTHORIZED = 401
-        const val HTTP_FORBIDDEN = 403
-    }
 }

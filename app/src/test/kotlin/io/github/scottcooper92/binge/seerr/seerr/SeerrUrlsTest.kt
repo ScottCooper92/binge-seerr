@@ -23,9 +23,43 @@ class SeerrUrlsTest {
 
     @Test
     fun `cleartext to a public host is insecure, to a private one is not`() {
-        assertTrue("http://seerr.example.com".isInsecurePublicUrl())
-        assertFalse("http://192.168.1.10:5055".isInsecurePublicUrl())
-        assertFalse("https://seerr.example.com".isInsecurePublicUrl())
+        assertEquals("seerr.example.com", "http://seerr.example.com".insecurePublicHostOrNull())
+        assertEquals(null, "http://192.168.1.10:5055".insecurePublicHostOrNull())
+        assertEquals(null, "https://seerr.example.com".insecurePublicHostOrNull())
+    }
+
+    @Test
+    fun `home network names, loopback and link-local are local, and lookalikes are not`() {
+        listOf(
+            "seerr.lan",
+            "seerr.home.arpa",
+            "seerr.internal",
+            "seerr.localhost",
+            "127.0.1.1",
+            "169.254.10.20",
+            "fe80::1",
+            "fd7a:115c:a1e0::1",
+            "10.0.0.2",
+            "nas",
+        ).forEach { assertTrue(it, it.isLocalOrPrivateHost()) }
+        listOf(
+            "127.example.com",
+            "169.254.example.com",
+            "10.example.com",
+            "192.168.example.com",
+            "172.16.example.com",
+            "100.64.example.com",
+            "seerr.lan.example.com",
+            "internal.example.com",
+        ).forEach { assertFalse(it, it.isLocalOrPrivateHost()) }
+    }
+
+    @Test
+    fun `the host to opt in for is the public one an http address names, lowercased`() {
+        assertEquals("seerr.example.com", " HTTP://Seerr.Example.com:8080/ ".insecurePublicHostOrNull())
+        assertEquals(null, "http://seerr.lan:5055".insecurePublicHostOrNull())
+        assertEquals(null, "https://seerr.example.com".insecurePublicHostOrNull())
+        assertEquals(null, "seerr.example.com".insecurePublicHostOrNull())
     }
 
     @Test

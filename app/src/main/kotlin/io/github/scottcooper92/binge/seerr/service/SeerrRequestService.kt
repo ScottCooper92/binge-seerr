@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.service
 import com.binge.companion.contracts.request.v1.ApproveRequestRequest
 import com.binge.companion.contracts.request.v1.ApproveRequestResponse
 import com.binge.companion.contracts.request.v1.Attention
+import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.BlockTitleResponse
 import com.binge.companion.contracts.request.v1.CancelRequestRequest
@@ -20,8 +21,12 @@ import com.binge.companion.contracts.request.v1.GetDestinationOptionsRequest
 import com.binge.companion.contracts.request.v1.GetDestinationOptionsResponse
 import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.GetStatusResponse
+import com.binge.companion.contracts.request.v1.GetStatusesRequest
+import com.binge.companion.contracts.request.v1.GetStatusesResponse
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
+import com.binge.companion.contracts.request.v1.ListRequestsRequest
+import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveAttentionResponse
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
@@ -53,7 +58,6 @@ import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
@@ -63,6 +67,7 @@ import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
+import io.github.scottcooper92.binge.seerr.seerr.recordIdFor
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
@@ -75,6 +80,8 @@ import io.github.scottcooper92.binge.seerr.seerr.toStatusException
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
+import io.grpc.Status
+import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -113,7 +120,6 @@ class SeerrRequestService(
     private val analytics: Analytics = NoOpAnalytics,
     private val requestCache: RequestStore = NoRequestStore,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
-    private val mediaIds = SeerrMediaIds { connection.api() }
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
 
     /**
@@ -157,9 +163,13 @@ class SeerrRequestService(
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =
         reportingFailure("submit_request") {
-            // Re-checked here, not trusted to the host: only a 4K request needs the capability.
-            if (request.is4K) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
+            // Re-checked here, not trusted to the host. is_4k is a flag on a core rpc, not a gated rpc,
+            // so the contract calls it a bad argument (INVALID_ARGUMENT) rather than PERMISSION_DENIED.
+            if (request.is4K && !mayRequest4k()) {
+                throw invalidArgument("is_4k is set, but CAPABILITY_REQUEST_4K was not declared")
+            }
             val media = request.media
+            refuseIfKnownBlocklisted(media)
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
@@ -171,16 +181,17 @@ class SeerrRequestService(
         }
 
     /**
-     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Every server this media's shape may go to,
-     * and the preselected one's profile/root-folder choices — the same destination a plain
-     * [submitRequest] (never 4K) would have used.
+     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Every server this user may send this media's
+     * shape to (a 4K one only with CAPABILITY_REQUEST_4K), and the preselected one's
+     * profile/root-folder choices — the same destination a plain [submitRequest] (never 4K) would
+     * have used.
      */
     override suspend fun getAdvancedRequestOptions(request: GetAdvancedRequestOptionsRequest): GetAdvancedRequestOptionsResponse =
         gatedRead("get_advanced_request_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetAdvancedRequestOptionsResponse
                 .newBuilder()
-                .setDestination(connection.api().advancedRequestOptions(isTv))
+                .setDestination(connection.api().advancedRequestOptions(isTv, allow4k = mayRequest4k()))
                 .build()
         }
 
@@ -190,7 +201,7 @@ class SeerrRequestService(
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetDestinationOptionsResponse
                 .newBuilder()
-                .setDestination(connection.api().destinationOptions(isTv, request.serverId))
+                .setDestination(connection.api().destinationOptions(isTv, request.serverId, allow4k = mayRequest4k()))
                 .build()
         }
 
@@ -202,10 +213,18 @@ class SeerrRequestService(
     override suspend fun submitAdvancedRequest(request: SubmitAdvancedRequestRequest): SubmitAdvancedRequestResponse =
         gated("submit_advanced_request", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
             val media = request.media
+            refuseIfKnownBlocklisted(media)
             val isTv = media.seerrMediaType().isSeerrTv()
-            val destination = connection.api().resolveAdvancedDestination(isTv, request.serverId, request.profileId, request.rootFolderId)
-            // 4K here is a property of the server the caller named, not a flag, so it is known only now.
-            if (destination.server.is4k) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
+            // 4K here is a property of the server the caller named. A user who may not request 4K is
+            // never offered a 4K server, so naming one is INVALID_ARGUMENT, like any server not offered.
+            val destination =
+                connection.api().resolveAdvancedDestination(
+                    isTv,
+                    request.serverId,
+                    request.profileId,
+                    request.rootFolderId,
+                    allow4k = mayRequest4k(),
+                )
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
@@ -326,13 +345,34 @@ class SeerrRequestService(
 
     private suspend fun attention(): Attention = connection.readAttention()
 
-    /** The one operation that needs Seerr's own id space: the server's media record, not the TMDB id. */
+    /**
+     * The one operation that needs Seerr's own id space: the server's media record, not the TMDB id.
+     *
+     * An issue needs something to report against: the contract answers FAILED_PRECONDITION unless the title is
+     * available or partially available, an unrequested one included (#682). One details read gives both that and
+     * Seerr's own media record id.
+     */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
         gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) {
-            val mediaId = mediaIds.mediaRecordId(request.media)
+            val info = connection.api().details(request.media).mediaInfo
+            val availability = info.toRequestStatus(clock()).availability
+            if (availability != Availability.AVAILABILITY_AVAILABLE && availability != Availability.AVAILABILITY_PARTIALLY_AVAILABLE) {
+                throw StatusException(Status.FAILED_PRECONDITION.withDescription("Nothing to report against: the title is $availability"))
+            }
+            val mediaId = info.recordIdFor(request.media)
             connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))
             ReportIssueResponse.getDefaultInstance()
         }
+
+    /**
+     * A title the cache already knows is blocklisted is refused here, without asking Seerr: FAILED_PRECONDITION, as
+     * the contract says (#682). A cold cache falls through to Seerr, whose own refusal maps the same way.
+     */
+    private suspend fun refuseIfKnownBlocklisted(media: MediaId) {
+        if (cachedStatus(media)?.status?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
+            throw StatusException(Status.FAILED_PRECONDITION.withDescription("The title is blocklisted"))
+        }
+    }
 
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated("block_title", Capability.CAPABILITY_BLOCK) {
@@ -356,6 +396,21 @@ class SeerrRequestService(
                 connection.profile().unblockMediaType(request.media.seerrMediaType()),
             )
             UnblockTitleResponse.getDefaultInstance()
+        }
+
+    /**
+     * Not served yet (#703), so CAPABILITY_LIST_REQUESTS is never declared and the contract's answer
+     * to an undeclared rpc is PERMISSION_DENIED. Not UNIMPLEMENTED, which means "not installed".
+     */
+    override suspend fun listRequests(request: ListRequestsRequest): ListRequestsResponse =
+        gatedRead("list_requests", Capability.CAPABILITY_LIST_REQUESTS) {
+            error("CAPABILITY_LIST_REQUESTS is never declared, so checkDeclared refuses first")
+        }
+
+    /** As [listRequests], for CAPABILITY_BATCH_STATUS (#703). */
+    override suspend fun getStatuses(request: GetStatusesRequest): GetStatusesResponse =
+        gatedRead("get_statuses", Capability.CAPABILITY_BATCH_STATUS) {
+            error("CAPABILITY_BATCH_STATUS is never declared, so checkDeclared refuses first")
         }
 
     private suspend fun permissions(): SeerrPermissions = connection.authenticatedUser().toPermissions()
@@ -439,9 +494,15 @@ class SeerrRequestService(
             }
         }
 
+    private suspend fun declared(): Set<Capability> = permissions().toCapabilities(connection.profile())
+
+    /** For a gated rpc only. A flag on a request is a bad argument, not a refused rpc: see [mayRequest4k]. */
     private suspend fun checkDeclared(capability: Capability) {
-        permissions().toCapabilities(connection.profile()).requireDeclared(capability)
+        declared().requireDeclared(capability)
     }
+
+    /** Whether CAPABILITY_REQUEST_4K is declared, which decides `is_4k` on a submit and the 4K servers on the advanced path. */
+    private suspend fun mayRequest4k(): Boolean = Capability.CAPABILITY_REQUEST_4K in declared()
 
     private companion object {
         const val OBSERVE_INTERVAL_MILLIS = 15_000L

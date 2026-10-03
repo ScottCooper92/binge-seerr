@@ -2,7 +2,8 @@
 <resources>
     <string name="setup_intro">Conecta tu servidor Seerr, Jellyseerr u Overseerr. Binge encontrará esta app y, cuando la permitas allí, solicitará títulos a través de ella.</string>
     <string name="setup_server_url">Dirección del servidor</string>
-    <string name="setup_insecure_warning">Esta dirección usa HTTP sin cifrar en un host público. Tu clave o contraseña cruzará la red sin cifrar.</string>
+    <string name="setup_insecure_warning">Esta dirección usa HTTP sin cifrar en un host público, así que tu clave o contraseña cruzaría internet sin cifrar. Usa https:// si el servidor lo admite.</string>
+    <string name="setup_allow_cleartext">Conectar por HTTP sin cifrar igualmente</string>
     <string name="setup_continue">Continuar</string>
     <string name="setup_change_server">Cambiar de servidor</string>
     <string name="setup_server_development">%1$s, compilación de desarrollo</string>

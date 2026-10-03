@@ -5,10 +5,10 @@ import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
+import okhttp3.Headers
 import retrofit2.HttpException
 import java.io.IOException
 
-private const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
 private const val HTTP_SERVER_ERROR_MIN = 500
 
@@ -51,7 +51,7 @@ fun Throwable.toSeerrError(): SeerrError =
         is NotConnectedException -> SeerrError.NotConnected
         is HttpException ->
             when {
-                code() == HTTP_UNAUTHORIZED || rejectsSessionByProbe() -> SeerrError.Unauthorized
+                rejectsSessionByAnswer() -> SeerrError.Unauthorized
                 code() == HTTP_FORBIDDEN -> if (mentionsQuota()) SeerrError.Quota else SeerrError.Forbidden
                 code() == HTTP_NOT_FOUND -> SeerrError.NotFound
                 code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
@@ -89,34 +89,41 @@ fun Throwable.toStatusException(): StatusException =
 
 private fun HttpException.httpStatus(): Status =
     when {
-        code() == HTTP_UNAUTHORIZED || rejectsSessionByProbe() -> Status.UNAUTHENTICATED
+        rejectsSessionByAnswer() -> Status.UNAUTHENTICATED
+        code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> Status.FAILED_PRECONDITION
         code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
         code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
         code() >= HTTP_SERVER_ERROR_MIN -> Status.UNAVAILABLE
         else -> Status.INVALID_ARGUMENT
     }
 
-/** A 403 [SeerrSessionInterceptor] confirmed against `auth/me`: the session, not a permission. */
-private fun HttpException.rejectsSessionByProbe(): Boolean = response()?.headers()?.get(SESSION_REJECTED_HEADER) != null
+/** A 401, or a 403 [SeerrSessionInterceptor] confirmed against `auth/me`: the session, not a permission. */
+private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
 
 /**
- * Seerr's only signal for a quota breach is the word in its 403 body. A body that fails to read
- * is treated as not mentioning quota, same as a missing or empty one. The body is peeked, not
- * consumed, so classifying the same failure twice (a report, then the screen's own mapping) agrees
- * with itself. This runs inside
- * [toStatusException] itself, so a raw [IOException] here would escape [statusCatching] uncaught
- * rather than become the [Status] the contract expects.
+ * The 403 body, peeked rather than consumed so classifying the same failure twice (a report, then the
+ * screen's own mapping) agrees with itself. A body that fails to read is the same as a missing or empty
+ * one. This runs inside [toStatusException] itself, so a raw [IOException] here would escape
+ * [statusCatching] uncaught rather than become the [Status] the contract expects.
  */
-private fun HttpException.mentionsQuota(): Boolean =
+private fun HttpException.peekedBody(): String =
     runCatching {
         response()
             ?.errorBody()
             ?.source()
             ?.peek()
             ?.readUtf8()
-    }.getOrNull()
-        .orEmpty()
-        .namesQuota()
+    }.getOrNull().orEmpty()
+
+/**
+ * Seerr refuses a request for a blocklisted title with a 403 whose message is "This media is blocklisted."
+ * (`BlocklistedMediaError` in Seerr's and Jellyseerr's `server/routes/request.ts`). The contract calls that
+ * FAILED_PRECONDITION, not a permission (#682).
+ */
+private fun HttpException.mentionsBlocklisted(): Boolean = peekedBody().contains("blocklisted", ignoreCase = true)
+
+/** Seerr's only signal for a quota breach is the word in its 403 body. */
+private fun HttpException.mentionsQuota(): Boolean = peekedBody().namesQuota()
 
 /** Seerr's one quota signal: the word in a 403 body. */
 internal fun String.namesQuota(): Boolean = contains("quota", ignoreCase = true)

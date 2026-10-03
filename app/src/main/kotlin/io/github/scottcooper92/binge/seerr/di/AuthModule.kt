@@ -14,10 +14,12 @@ import dagger.hilt.components.SingletonComponent
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.BlockStoreConnectionCarrier
+import io.github.scottcooper92.binge.seerr.auth.CleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.ConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
+import io.github.scottcooper92.binge.seerr.auth.DataStoreCleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.DeviceIdentityStore
 import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
@@ -32,11 +34,13 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.hub.HubOverviewCache
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 private val Context.credentialsDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_credentials")
 private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_device")
+private val Context.cleartextConsentDataStore: DataStore<Preferences> by preferencesDataStore(name = "cleartext_consent")
 private val Context.bingeConnectionDataStore: DataStore<Preferences> by preferencesDataStore(name = "binge_connection")
 
 /** The name plex.tv lists this app under on the user's authorised devices. A brand name, never translated. */
@@ -82,13 +86,22 @@ object AuthModule {
     fun apiFactory(
         health: SeerrConnectionHealthMonitor,
         statuses: MediaStatusStore,
+        cleartext: CleartextConsent,
         @ApplicationScope scope: CoroutineScope,
     ): SeerrApiFactory =
         SeerrApiFactory(
             logRequests = BuildConfig.DEBUG,
             health = health,
             onWrite = { scope.launch { statuses.clearAll() } },
+            cleartext = cleartext,
         )
+
+    @Provides
+    @Singleton
+    fun cleartextConsent(
+        @ApplicationContext context: Context,
+        store: CredentialStore,
+    ): CleartextConsent = DataStoreCleartextConsent(context.cleartextConsentDataStore) { store.credentials.first()?.baseUrl }
 
     @Provides
     @Singleton
@@ -142,8 +155,9 @@ object AuthModule {
         notifications: NotificationPrefs,
         bingeConnection: BingeConnectionStore,
         hubOverview: HubOverviewCache,
+        cleartext: CleartextConsent,
     ): SeerrConnection =
-        SeerrConnection(store, apis, health, carrier = carrier, onServerChanged = {
+        SeerrConnection(store, apis, health, carrier = carrier, cleartext = cleartext, onServerChanged = {
             caches.clearAll()
             titles.clear()
             notifications.forgetServer()

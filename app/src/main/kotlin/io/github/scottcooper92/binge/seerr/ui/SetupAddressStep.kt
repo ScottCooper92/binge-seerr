@@ -18,18 +18,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
-/** Step one: the address alone. The server is read before any credential is asked for. */
+/**
+ * Step one: the address alone. The server is read before any credential is asked for, and an
+ * address in plain HTTP to a public host is not read at all until the user ticks the opt-in under it.
+ */
 @Composable
 internal fun SetupAddressStep(
     state: SetupUiState.Address,
     onEditAddress: (String) -> Unit,
     onInspect: () -> Unit,
+    onAllowCleartext: (Boolean) -> Unit,
     contentPadding: PaddingValues,
 ) {
     Column(
@@ -52,7 +57,7 @@ internal fun SetupAddressStep(
             keyboardType = KeyboardType.Uri,
             autoCorrect = false,
             imeAction = ImeAction.Done,
-            onDone = { if (state.serverUrl.isNotBlank() && !state.isInspecting) onInspect() },
+            onDone = { if (state.canContinue) onInspect() },
             onValueChange = onEditAddress,
         )
         if (state.insecure) {
@@ -61,6 +66,12 @@ internal fun SetupAddressStep(
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
             )
+            CheckboxRow(
+                label = stringResource(R.string.setup_allow_cleartext),
+                checked = state.cleartextAllowed,
+                onToggle = onAllowCleartext,
+                enabled = !state.isInspecting,
+            )
         }
         state.error?.let { error ->
             Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
@@ -68,7 +79,7 @@ internal fun SetupAddressStep(
         BingeFilledButton(
             label = stringResource(R.string.setup_continue),
             onClick = onInspect,
-            enabled = state.serverUrl.isNotBlank() && !state.isInspecting,
+            enabled = state.canContinue,
             loading = state.isInspecting,
             modifier = Modifier.fillMaxWidth(),
         )

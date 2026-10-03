@@ -1,11 +1,13 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import io.github.scottcooper92.binge.seerr.auth.CleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthReporter
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.Dispatcher
+import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
@@ -30,6 +32,8 @@ class SeerrApiFactory(
     private val health: SeerrConnectionHealthReporter = SeerrConnectionHealthReporter.NoOp,
     /** Called on the cached client only, whenever the saved server accepts a write. */
     private val onWrite: () -> Unit = {},
+    /** The public hosts the user agreed to reach over plain HTTP. Every client this factory builds enforces it. */
+    private val cleartext: CleartextConsent = CleartextConsent.None,
     /**
      * No socket exists when this is set: every client this factory builds is answered by the
      * interceptor it returns for that call's cookie jar, instead of the network. Test-only (#337).
@@ -41,6 +45,12 @@ class SeerrApiFactory(
      * `FakeSeerrServer.awaitIdle`.
      */
     internal val testDispatcher: (() -> Dispatcher)? = null,
+    /**
+     * Resolves every host for every client this factory builds, when set. Test-only (#709): it sends
+     * a public name such as `seerr.example.com` to a local server, so the request is a real one that
+     * passes the network interceptors, which a [testTransport] answers before they run.
+     */
+    internal val testDns: Dns? = null,
 ) {
     /**
      * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
@@ -68,7 +78,7 @@ class SeerrApiFactory(
                 val client =
                     OkHttpClient
                         .Builder()
-                        .addInterceptor(SeerrHealthInterceptor(health))
+                        .addInterceptor(SeerrHealthInterceptor(health, baseUrl))
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)
@@ -151,6 +161,8 @@ class SeerrApiFactory(
     ): OkHttpClient =
         apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
             .apply { testDispatcher?.let { dispatcher(it()) } }
+            .apply { testDns?.let { dns(it) } }
+            .addNetworkInterceptor(CleartextGuard(cleartext))
             .addNetworkInterceptor(loggingInterceptor(debugLevel))
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)

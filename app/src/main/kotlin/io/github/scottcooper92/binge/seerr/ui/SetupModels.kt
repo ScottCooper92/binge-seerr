@@ -106,13 +106,19 @@ internal sealed interface PendingLink {
 sealed interface SetupUiState {
     data object Loading : SetupUiState
 
-    /** Step one: the address, and nothing else until the server answers. */
+    /**
+     * Step one: the address, and nothing else until the server answers. An [insecure] address, plain
+     * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it.
+     */
     data class Address(
         val serverUrl: String,
         val insecure: Boolean,
         val isInspecting: Boolean,
         val error: SetupError?,
-    ) : SetupUiState
+        val cleartextAllowed: Boolean = false,
+    ) : SetupUiState {
+        val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)
+    }
 
     /** Step two: this server's own sign-in modes. */
     data class SignIn(
