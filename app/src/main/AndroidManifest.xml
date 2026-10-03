@@ -18,7 +18,8 @@
         android:required="false" />
 
     <!--
-        Package visibility: whether Binge answers its own binge:// link (the title hand-off), and
+        Package visibility: whether Binge answers the title link the SDK builds
+        (CompanionManifest.hostTitleUri, scheme HOST_TITLE_SCHEME), and
         whether Binge is installed at all (the Hub tile, #469) — a plain getPackageInfo() on its
         package name is invisible without this on a targetSdk this high.
     -->
