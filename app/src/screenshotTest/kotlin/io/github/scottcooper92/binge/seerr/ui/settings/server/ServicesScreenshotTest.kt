@@ -6,18 +6,24 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrTallComponentPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorIssues
+import io.github.scottcooper92.binge.seerr.ui.users.settings.invalid
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -86,6 +92,26 @@ class DvrInstanceScreenshotTest {
     @Composable
     fun invalidPort() = DvrFrame(dvrReady(radarrForm().copy(port = "78x8")))
 
+    /** A bad external URL sits in Advanced, which starts closed: the section opens itself and counts it. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun invalidExternalUrlOpensAdvanced() =
+        DvrFrame(dvrReady(radarrForm().copy(externalUrl = "ftp://nope"), extras = DvrExtras(choices = choices(languages = false))))
+
+    /** The same page in Spanish, whose headers and messages run longer. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun testedRadarrSpanish() =
+        DvrFrame(dvrReady(radarrForm().copy(port = "78x8"), extras = DvrExtras(choices = choices(languages = false))))
+
+    /** The page at 1.5x and 2x text, where the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun testedRadarrLargeText() = DvrFrame(dvrReady(radarrForm(), extras = DvrExtras(choices = choices(languages = false))))
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -119,6 +145,19 @@ class DvrInstanceSectionsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun behaviour() = SectionFrame { FlagSwitches(sonarrForm().copy(syncEnabled = true), enabled = true, actions = noActions()) }
+
+    /** Advanced is closed until asked for, so its own frame is the one place its fields and flags are seen open. */
+    @PreviewTest
+    @SeerrTallComponentPreviews
+    @Composable
+    fun advancedOpen() =
+        SectionFrame {
+            CompositionLocalProvider(
+                LocalEditorIssues provides listOf(invalid(DvrSections.ADVANCED, DvrFields.EXTERNAL_URL, R.string.editor_error_web_url)),
+            ) {
+                AdvancedFields(sonarrForm().copy(externalUrl = "ftp://nope"), enabled = true, actions = noActions())
+            }
+        }
 }
 
 class OverrideRuleScreenshotTest {
