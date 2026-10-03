@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
 import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.SerializationException
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -69,6 +70,12 @@ fun Throwable.toSeerrError(): SeerrError =
  * body names a quota, which is `RESOURCE_EXHAUSTED` — Seerr returns 403 for both, and the message
  * text is its only signal. Transport failures and 5xx are `UNAVAILABLE`; any other 4xx is a
  * rejection on the merits, `INVALID_ARGUMENT`.
+ *
+ * A body this app cannot parse ([SerializationException]) is `UNAVAILABLE` too: the server speaking a shape
+ * this app does not expect, which a retry after a server update may fix. Every description here is a fixed
+ * string. An exception's own message never crosses to the host, because a serialization failure's message
+ * quotes the body it choked on, and that can be the server's secrets (#680). The exception stays on
+ * `withCause`, which gRPC never serialises, for local logging.
  */
 fun Throwable.toStatusException(): StatusException =
     when (this) {
@@ -76,7 +83,8 @@ fun Throwable.toStatusException(): StatusException =
         is NotConnectedException -> StatusException(Status.UNAUTHENTICATED.withDescription(message))
         is HttpException -> StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
         is IOException -> StatusException(Status.UNAVAILABLE.withDescription("Seerr could not be reached").withCause(this))
-        else -> StatusException(Status.INTERNAL.withDescription(message).withCause(this))
+        is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
+        else -> StatusException(Status.INTERNAL.withDescription(UNREADABLE).withCause(this))
     }
 
 private fun HttpException.httpStatus(): Status =
@@ -133,3 +141,5 @@ suspend inline fun <T> statusCatching(block: () -> T): T =
  */
 internal inline fun <T> attempt(block: () -> T): Result<T> =
     runCatching(block).onFailure { failure -> if (failure is CancellationException) throw failure }
+
+private const val UNREADABLE = "Seerr returned something this companion could not read"

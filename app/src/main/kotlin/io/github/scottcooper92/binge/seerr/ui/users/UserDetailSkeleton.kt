@@ -29,9 +29,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
-private const val NAME_FRACTION = 0.6f
-private const val META_FRACTION = 0.8f
-private const val META_LINE_COUNT = 2
+private const val NAME_FRACTION = 0.4f
 private const val TAG_COUNT = 2
 private const val STAT_COUNT = 2
 private const val STAT_VALUE_FRACTION = 0.45f
@@ -39,7 +37,7 @@ private const val REQUEST_ROW_COUNT = 3
 
 /**
  * Loading placeholder for [UserDetailScreen]'s [UserDetailUiState.Ready] arm: the profile (avatar,
- * name, two meta lines, the role/origin tags every user has), the two stats every user has (request count, joined
+ * name, the role/origin tags every user has), the two stats every user has (request count, joined
  * date — a play count only appears once the server reports watch data), the Requests section header,
  * and a few request-row plates standing in for the paged list. Quota, permissions and the two title
  * carousels are all conditional on what the server and the user's own history return, so nothing is
@@ -66,39 +64,23 @@ internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * Mirrors [ProfileHeader]: a row with the avatar beside a column of the name, two meta lines and
- * the two tags (role, origin) every user has. The second meta line is an email distinct from the
- * handle, which a user imported from Plex, Jellyfin or Emby typically has, the common shape on a
- * server backed by one. A local-only user has one line, so its stat row rises by that line on
- * resolve: the smaller jump, on the rarer page (#572).
- */
+/** Mirrors [ProfileHeader]: a centred avatar, a name bar, and the two tags (role, origin) every user has. */
 @Composable
 private fun ProfileSkeleton(modifier: Modifier = Modifier) {
-    Row(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
     ) {
         SkeletonPlate(
             Modifier.size(dimensionResource(DesR.dimen.avatar_size_lg)),
             shape = BingeShapes.Pill,
         )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
-        ) {
-            SkeletonPlate(
-                Modifier.fillMaxWidth(NAME_FRACTION).height(lineHeightOf(MaterialTheme.typography.titleLarge)),
-            )
-            repeat(META_LINE_COUNT) {
-                SkeletonPlate(
-                    Modifier.fillMaxWidth(META_FRACTION).height(lineHeightOf(MaterialTheme.typography.bodyMedium)),
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-                repeat(TAG_COUNT) { TagSkeleton() }
-            }
+        SkeletonPlate(
+            Modifier.fillMaxWidth(NAME_FRACTION).height(lineHeightOf(MaterialTheme.typography.titleLarge)),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+            repeat(TAG_COUNT) { TagSkeleton() }
         }
     }
 }
