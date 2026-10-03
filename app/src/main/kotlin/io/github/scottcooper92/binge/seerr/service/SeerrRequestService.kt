@@ -53,7 +53,6 @@ import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaIds
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
@@ -64,6 +63,7 @@ import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
+import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
@@ -151,7 +151,7 @@ class SeerrRequestService(
         try {
             connection.refreshAuthenticatedUser().toPermissions().toCapabilities(profile)
         } catch (e: HttpException) {
-            if (e.toSeerrError() != SeerrError.Unauthorized) throw e
+            if (!e.toSeerrError().rejectsSession) throw e
             NO_SESSION_CAPABILITIES
         }
 
