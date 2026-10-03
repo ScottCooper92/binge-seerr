@@ -365,10 +365,13 @@ class SeerrRequestService(
         gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) {
             val info = connection.api().details(request.media).mediaInfo
             val status = info.toRequestStatus(clock())
-            if (!status.isReportable(sees4k = mayRequest4k())) {
+            val sees4k = mayRequest4k()
+            if (!status.isReportable(sees4k = sees4k)) {
+                // The 4K state is named only to a user who may see it, as withAllowedActions does for every status.
+                val fourK = if (sees4k) " (4K: ${status.availability4K})" else ""
                 throw StatusException(
                     Status.FAILED_PRECONDITION.withDescription(
-                        "Nothing to report against: the title is ${status.availability} (4K: ${status.availability4K})",
+                        "Nothing to report against: the title is ${status.availability}$fourK",
                     ),
                 )
             }

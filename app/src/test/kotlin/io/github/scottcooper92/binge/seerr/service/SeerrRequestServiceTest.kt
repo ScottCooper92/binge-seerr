@@ -1137,18 +1137,20 @@ class SeerrRequestServiceTest {
             val stub = connected()
             seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
 
-            val code =
-                stub.code {
-                    reportIssue(
+            val failure =
+                runCatching {
+                    stub.reportIssue(
                         ReportIssueRequest
                             .newBuilder()
                             .setMedia(movie)
                             .setType(IssueType.ISSUE_TYPE_VIDEO)
                             .build(),
                     )
-                }
+                }.exceptionOrNull() as StatusException
 
-            assertEquals(Status.Code.FAILED_PRECONDITION, code)
+            assertEquals(Status.Code.FAILED_PRECONDITION, failure.status.code)
+            val description = failure.status.description.orEmpty()
+            assertFalse(description, description.contains("4K", ignoreCase = true))
         }
 
     @Test
