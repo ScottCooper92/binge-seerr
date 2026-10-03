@@ -18,4 +18,13 @@ class OpenTitleTest {
             BingeHandOff.target(bingeAnswers = false, RequestMediaType.Tv, 1396, "https://s/tv/1396"),
         )
     }
+
+    @Test
+    fun `a title with no tmdb id has no link, so it goes to the server's page`() {
+        assertEquals(null, BingeHandOff.titleUri(RequestMediaType.Movie, 0))
+        assertEquals(
+            TitleTarget.Web("https://s/movie/0"),
+            BingeHandOff.target(bingeAnswers = true, RequestMediaType.Movie, 0, "https://s/movie/0"),
+        )
+    }
 }
