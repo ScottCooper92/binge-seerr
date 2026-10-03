@@ -1,7 +1,9 @@
 package io.github.scottcooper92.binge.seerr.seerr
 
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
+import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 
@@ -25,25 +27,32 @@ class SeerrSessionInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)
+        val authMe = authMe
         if (response.code != HTTP_FORBIDDEN || request.url == authMe || authMe == null) return response
         // Buffered so the original can be returned after the probe: these bodies are a short JSON error.
+        // The probe is an extra opinion on a response already held, so losing the body or the probe
+        // returns the 403 unmarked rather than a transport failure ([mentionsQuota] reads a body the same way).
         val body = response.body
-        val bytes = body.bytes()
+        val bytes = runCatching { body.bytes() }.getOrDefault(ByteArray(0))
         val buffered = response.newBuilder().body(bytes.toResponseBody(body.contentType())).build()
-        if (bytes.decodeToString().contains("quota", ignoreCase = true)) return buffered
-        val rejected =
-            chain
-                .proceed(
-                    request
-                        .newBuilder()
-                        .url(authMe)
-                        .get()
-                        .build(),
-                ).use { probe ->
-                    probe.code == HTTP_UNAUTHORIZED || probe.code == HTTP_FORBIDDEN
-                }
+        if (bytes.decodeToString().namesQuota()) return buffered
+        val rejected = runCatching { rejectsSession(chain, request, authMe) }.getOrDefault(false)
         return if (rejected) buffered.newBuilder().header(SESSION_REJECTED_HEADER, "true").build() else buffered
     }
+
+    private fun rejectsSession(
+        chain: Interceptor.Chain,
+        request: Request,
+        authMe: HttpUrl,
+    ): Boolean =
+        chain
+            .proceed(
+                request
+                    .newBuilder()
+                    .url(authMe)
+                    .get()
+                    .build(),
+            ).use { probe -> probe.code == HTTP_UNAUTHORIZED || probe.code == HTTP_FORBIDDEN }
 
     private companion object {
         const val AUTH_ME_PATH = "api/v1/auth/me"

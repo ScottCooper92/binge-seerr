@@ -99,7 +99,6 @@ private fun HttpException.rejectsSessionByProbe(): Boolean = response()?.headers
  * [toStatusException] itself, so a raw [IOException] here would escape [statusCatching] uncaught
  * rather than become the [Status] the contract expects.
  */
-
 private fun HttpException.mentionsQuota(): Boolean =
     runCatching {
         response()
@@ -109,7 +108,10 @@ private fun HttpException.mentionsQuota(): Boolean =
             ?.readUtf8()
     }.getOrNull()
         .orEmpty()
-        .contains("quota", ignoreCase = true)
+        .namesQuota()
+
+/** Seerr's one quota signal: the word in a 403 body. */
+internal fun String.namesQuota(): Boolean = contains("quota", ignoreCase = true)
 
 /**
  * Runs [block] and re-throws any failure as the [StatusException] the contract expects.

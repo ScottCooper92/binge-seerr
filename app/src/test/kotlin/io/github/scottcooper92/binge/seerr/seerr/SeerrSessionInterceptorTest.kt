@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.SocketEffect
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.After
@@ -48,6 +49,14 @@ class SeerrSessionInterceptorTest {
 
         assertEquals(SeerrError.Quota, classify("/api/v1/request"))
         assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun `a 403 whose probe fails at the transport is still a permission`() {
+        server.enqueue(MockResponse(code = 403))
+        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.ShutdownConnection).build())
+
+        assertEquals(SeerrError.Forbidden, classify("/api/v1/request"))
     }
 
     @Test
