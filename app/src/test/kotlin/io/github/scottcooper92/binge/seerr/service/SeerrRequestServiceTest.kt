@@ -221,11 +221,11 @@ class SeerrRequestServiceTest {
         runTest {
             val response = connected(permissions = ADMIN).handshakeAs(ADMIN, publicSettings = ALL_4K_ENABLED)
 
-            // MEDIA_FILE_INFO is in the contract but not served here yet: it needs a Radarr fetch, and
-            // declaring it would promise the host a file_info this companion cannot fill.
+            // In the contract but not served here yet, so not declared: MEDIA_FILE_INFO needs a Radarr fetch,
+            // and LIST_REQUESTS / BATCH_STATUS (binge-companions#129) are #703.
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
-                    Capability.CAPABILITY_MEDIA_FILE_INFO,
+                    Capability.CAPABILITY_MEDIA_FILE_INFO - Capability.CAPABILITY_LIST_REQUESTS - Capability.CAPABILITY_BATCH_STATUS,
                 response.capabilitiesList.toSet(),
             )
         }
