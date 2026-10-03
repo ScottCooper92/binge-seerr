@@ -163,8 +163,11 @@ class SeerrRequestService(
 
     override suspend fun submitRequest(request: SubmitRequestRequest): SubmitRequestResponse =
         reportingFailure("submit_request") {
-            // Re-checked here, not trusted to the host: only a 4K request needs the capability.
-            if (request.is4K) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
+            // Re-checked here, not trusted to the host. is_4k is a flag on a core rpc, not a gated rpc,
+            // so the contract calls it a bad argument (INVALID_ARGUMENT) rather than PERMISSION_DENIED.
+            if (request.is4K && !mayRequest4k()) {
+                throw invalidArgument("is_4k is set, but CAPABILITY_REQUEST_4K was not declared")
+            }
             val media = request.media
             refuseIfKnownBlocklisted(media)
             val body =
@@ -178,16 +181,17 @@ class SeerrRequestService(
         }
 
     /**
-     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Every server this media's shape may go to,
-     * and the preselected one's profile/root-folder choices — the same destination a plain
-     * [submitRequest] (never 4K) would have used.
+     * Requires CAPABILITY_ADVANCED_REQUEST_OPTIONS. Every server this user may send this media's
+     * shape to (a 4K one only with CAPABILITY_REQUEST_4K), and the preselected one's
+     * profile/root-folder choices — the same destination a plain [submitRequest] (never 4K) would
+     * have used.
      */
     override suspend fun getAdvancedRequestOptions(request: GetAdvancedRequestOptionsRequest): GetAdvancedRequestOptionsResponse =
         gatedRead("get_advanced_request_options", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetAdvancedRequestOptionsResponse
                 .newBuilder()
-                .setDestination(connection.api().advancedRequestOptions(isTv))
+                .setDestination(connection.api().advancedRequestOptions(isTv, allow4k = mayRequest4k()))
                 .build()
         }
 
@@ -197,7 +201,7 @@ class SeerrRequestService(
             val isTv = request.media.seerrMediaType().isSeerrTv()
             GetDestinationOptionsResponse
                 .newBuilder()
-                .setDestination(connection.api().destinationOptions(isTv, request.serverId))
+                .setDestination(connection.api().destinationOptions(isTv, request.serverId, allow4k = mayRequest4k()))
                 .build()
         }
 
@@ -211,9 +215,16 @@ class SeerrRequestService(
             val media = request.media
             refuseIfKnownBlocklisted(media)
             val isTv = media.seerrMediaType().isSeerrTv()
-            val destination = connection.api().resolveAdvancedDestination(isTv, request.serverId, request.profileId, request.rootFolderId)
-            // 4K here is a property of the server the caller named, not a flag, so it is known only now.
-            if (destination.server.is4k) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
+            // 4K here is a property of the server the caller named. A user who may not request 4K is
+            // never offered a 4K server, so naming one is INVALID_ARGUMENT, like any server not offered.
+            val destination =
+                connection.api().resolveAdvancedDestination(
+                    isTv,
+                    request.serverId,
+                    request.profileId,
+                    request.rootFolderId,
+                    allow4k = mayRequest4k(),
+                )
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
@@ -483,9 +494,15 @@ class SeerrRequestService(
             }
         }
 
+    private suspend fun declared(): Set<Capability> = permissions().toCapabilities(connection.profile())
+
+    /** For a gated rpc only. A flag on a request is a bad argument, not a refused rpc: see [mayRequest4k]. */
     private suspend fun checkDeclared(capability: Capability) {
-        permissions().toCapabilities(connection.profile()).requireDeclared(capability)
+        declared().requireDeclared(capability)
     }
+
+    /** Whether CAPABILITY_REQUEST_4K is declared, which decides `is_4k` on a submit and the 4K servers on the advanced path. */
+    private suspend fun mayRequest4k(): Boolean = Capability.CAPABILITY_REQUEST_4K in declared()
 
     private companion object {
         const val OBSERVE_INTERVAL_MILLIS = 15_000L
