@@ -16,13 +16,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.tv.nav.LocalTvContentInset
 import com.binge.designsystem.tv.theme.BingeTvTheme
+import io.github.scottcooper92.binge.seerr.util.createSeerrAndroidComposeRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,7 +40,7 @@ private const val PAST_SETTLE_MILLIS = CONTENT_SETTLE_MILLIS + 100L
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvShellScaffoldFocusTest {
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    val composeTestRule = createSeerrAndroidComposeRule<ComponentActivity>()
 
     private val railItem = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 

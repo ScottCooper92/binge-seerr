@@ -1,18 +1,21 @@
 package io.github.scottcooper92.binge.seerr.util
 
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
 /**
  * The module's compose rule: [createComposeRule], with the content taken down before the rule
- * disposes it. Every Robolectric Compose test here uses this one; [ComposeRuleConventionTest] holds
- * that.
+ * disposes it. Every Robolectric Compose test here uses this one, or [createSeerrAndroidComposeRule] when it
+ * needs the activity; [ComposeRuleConventionTest] holds that.
  *
  * A text field still focused when the rule disposes the composition leaves work pending on Compose's
  * shared UI dispatcher. Robolectric discards that work, and the dispatcher never runs anything again.
@@ -23,7 +26,22 @@ import org.junit.runners.model.Statement
  */
 fun createSeerrComposeRule(): ComposeContentTestRule = TakeDownComposeRule(createComposeRule())
 
-private class TakeDownComposeRule(
+/**
+ * [createSeerrComposeRule] for a test that needs the hosting activity, such as one pressing Back through
+ * its dispatcher: the same take-down around `createAndroidComposeRule`, with [SeerrAndroidComposeRule.activity]
+ * passed through (#670).
+ */
+inline fun <reified A : ComponentActivity> createSeerrAndroidComposeRule(): SeerrAndroidComposeRule<A> =
+    SeerrAndroidComposeRule(createAndroidComposeRule<A>())
+
+/** An activity-hosted compose rule whose content is taken down before it disposes; see [createSeerrComposeRule]. */
+class SeerrAndroidComposeRule<A : ComponentActivity>(
+    private val rule: AndroidComposeTestRule<*, A>,
+) : ComposeContentTestRule by TakeDownComposeRule(rule) {
+    val activity: A get() = rule.activity
+}
+
+internal class TakeDownComposeRule(
     private val rule: ComposeContentTestRule,
 ) : ComposeContentTestRule by rule {
     private var shown by mutableStateOf(true)

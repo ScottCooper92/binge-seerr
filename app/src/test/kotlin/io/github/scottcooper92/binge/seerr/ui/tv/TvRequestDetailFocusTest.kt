@@ -13,7 +13,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isFocused
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -35,6 +34,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
+import io.github.scottcooper92.binge.seerr.util.createSeerrAndroidComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -56,7 +56,7 @@ private const val HEAT = "Heat"
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvRequestDetailFocusTest {
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+    val composeTestRule = createSeerrAndroidComposeRule<ComponentActivity>()
 
     private val approved = mutableListOf<Int>()
 
