@@ -42,8 +42,16 @@ class SeerrUrlsTest {
             "10.0.0.2",
             "nas",
         ).forEach { assertTrue(it, it.isLocalOrPrivateHost()) }
-        listOf("127.example.com", "169.254.example.com", "seerr.lan.example.com", "internal.example.com")
-            .forEach { assertFalse(it, it.isLocalOrPrivateHost()) }
+        listOf(
+            "127.example.com",
+            "169.254.example.com",
+            "10.example.com",
+            "192.168.example.com",
+            "172.16.example.com",
+            "100.64.example.com",
+            "seerr.lan.example.com",
+            "internal.example.com",
+        ).forEach { assertFalse(it, it.isLocalOrPrivateHost()) }
     }
 
     @Test

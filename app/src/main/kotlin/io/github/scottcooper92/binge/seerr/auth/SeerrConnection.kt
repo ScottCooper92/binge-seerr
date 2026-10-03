@@ -307,8 +307,8 @@ class SeerrConnection(
     suspend fun allowsCleartextTo(host: String): Boolean = cleartext.allows(host)
 
     /**
-     * Records the user's opt-in to plain HTTP to the public [host], ahead of reading it. It outlives
-     * setup only if this host becomes the saved server.
+     * Records the user's opt-in to plain HTTP to the public [host], ahead of reading it. It is dropped
+     * the next time a server is saved or forgotten, so an abandoned setup leaves it until then.
      */
     suspend fun allowCleartextTo(host: String) = cleartext.grant(host)
 

@@ -28,10 +28,11 @@ private val LOCAL_ADDRESSES =
         // Loopback, link-local, and the RFC 1918 ranges.
         Regex("""127(\.\d{1,3}){3}"""),
         Regex("""169\.254(\.\d{1,3}){2}"""),
-        Regex("""(10|192\.168)\..*"""),
-        Regex("""172\.(1[6-9]|2\d|3[01])\..*"""),
+        Regex("""10(\.\d{1,3}){3}"""),
+        Regex("""192\.168(\.\d{1,3}){2}"""),
+        Regex("""172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}"""),
         // The CGNAT range Tailscale assigns from.
-        Regex("""100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\..*"""),
+        Regex("""100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])(\.\d{1,3}){2}"""),
         // IPv6 unique-local (Tailscale's too) and link-local.
         Regex("""(f[cd]|fe80)[0-9a-f]*:.*"""),
     )
