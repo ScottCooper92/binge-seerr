@@ -49,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -99,6 +100,7 @@ fun LogsScreen(
     events: Flow<LogsEvent>,
     actions: LogsActions,
 ) {
+    val focusManager = LocalFocusManager.current
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     ScreenScaffold(
         title = stringResource(R.string.server_settings_logs),
@@ -122,6 +124,8 @@ fun LogsScreen(
                     onQueryChange = actions.onSearchChange,
                     onClear = { actions.onSearchChange("") },
                     placeholder = stringResource(R.string.server_settings_logs_search),
+                    // The list filters as it is typed, so Search has nothing left to run: it puts the keyboard away.
+                    onSubmit = { focusManager.clearFocus() },
                     modifier = Modifier.padding(horizontal = resolvedContentInset()),
                 )
             },

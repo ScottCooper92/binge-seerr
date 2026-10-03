@@ -1,10 +1,15 @@
 package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.paging.PagingData
 import com.binge.designsystem.theme.BingeExpressiveTheme
@@ -52,6 +57,20 @@ class BlocklistPagerTest {
 
         composeTestRule.onNodeWithText(titleFor(BlocklistFilter.All)).assertIsDisplayed()
         composeTestRule.onNodeWithText(titleFor(BlocklistFilter.Manual)).assertDoesNotExist()
+    }
+
+    /** The list filters as it is typed, so the keyboard's Search key only puts the keyboard away. */
+    @Test
+    fun `the Search key drops focus from the search field`() {
+        setContent(state(BlocklistFilter.All, hasFilters = false))
+        val field = composeTestRule.onNode(hasSetTextAction())
+
+        field.performClick()
+        field.assertIsFocused()
+        field.performImeAction()
+        composeTestRule.waitForIdle()
+
+        field.assertIsNotFocused()
     }
 
     private fun setContent(

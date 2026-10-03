@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -129,6 +130,7 @@ private fun BlocklistPages(
     bottomPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
     val filters = if (state.hasFilters) BlocklistFilter.entries else listOf(BlocklistFilter.All)
     val pagerState =
         rememberFilterPagerState(
@@ -148,6 +150,8 @@ private fun BlocklistPages(
                 onQueryChange = actions.onSearchChange,
                 onClear = { actions.onSearchChange("") },
                 placeholder = stringResource(R.string.blocklist_search_hint),
+                // The list filters as it is typed, so Search has nothing left to run: it puts the keyboard away.
+                onSubmit = { focusManager.clearFocus() },
                 modifier =
                     Modifier
                         .fillMaxWidth()
