@@ -28,8 +28,9 @@ Status is pre-alpha, at contract parity: the exported Service serves every REQUE
 operation against the connected server, the capability set is derived from the signed-in
 user's permissions and the server's profile, the console covers the server end to end, release
 builds are shrunk, signed from a tag and proven on a device lane, and the app ships in English
-and Spanish. Not yet released: Binge's release certificate is not yet published in the SDK, and
-the Play listing under `docs/listing/` waits on its screenshots.
+and Spanish. A release build admits Binge through its published Play App Signing certificate. Not
+yet released: the on-device check of that handshake is still open (#85), and the Play listing under
+`docs/listing/` waits on its screenshots.
 
 The contracts and the SDK are consumed as source: `binge-integrations/` is a git
 submodule of the binge-companions repository (the path keeps the name it had before the

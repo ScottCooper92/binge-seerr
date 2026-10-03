@@ -601,8 +601,11 @@ class SetupViewModelTest {
         runTest {
             val approved = AtomicBoolean(false)
             seerr.dispatcher = quickConnectServer(approved)
-            val saved = SavedStateHandle()
-            val vm = viewModel(savedState = saved)
+            // The first sign-in keeps a saved state of its own, as the setup screen's entry does in the
+            // app. `Connected` shows as soon as the credentials are saved, and its link is forgotten
+            // only after that. Sharing `saved` with it let a slow runner remove the edit's link after
+            // the edit had stored it, and the resume below then waited for a link that was gone (#705).
+            val vm = viewModel()
             vm.awaitAddress()
             vm.editAddress(seerr.url("/"))
             vm.inspect()
@@ -614,6 +617,7 @@ class SetupViewModelTest {
 
             // Editing the live connection, then the process dies mid-approval.
             approved.set(false)
+            val saved = SavedStateHandle()
             val editing = viewModel(reuseConnection = true, savedState = saved)
             editing.beginEdit()
             editing.awaitSignIn()

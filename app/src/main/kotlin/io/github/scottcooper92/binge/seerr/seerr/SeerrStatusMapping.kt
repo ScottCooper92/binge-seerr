@@ -124,7 +124,16 @@ internal fun SeerrRequestUserDto.contractName(): String? =
  * For the app's own screens: email is a last resort, masked to its local part. The host never gets this; it gets
  * [contractName], which has no email fallback at all.
  */
-internal fun SeerrRequestUserDto.displayString(): String? =
+internal fun SeerrRequestUserDto.displayString(): String? = screenName(displayName, username, email)
+
+/** The same name for a full user record, so a requester and an account are named by one rule (#700). */
+internal fun SeerrUserDto.displayString(): String? = screenName(displayName, username, email)
+
+private fun screenName(
+    displayName: String?,
+    username: String?,
+    email: String?,
+): String? =
     listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() }
         ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
 

@@ -9,7 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueStatusCode
-import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestUserDto
+import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
@@ -162,7 +162,3 @@ fun IssueEntity.toIssueItem(): IssueItem =
         problemSeason = problemSeason,
         problemEpisode = problemEpisode,
     )
-
-/** Email is a last resort and masked to its local part. */
-internal fun SeerrRequestUserDto.displayString(): String? =
-    listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() } ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }

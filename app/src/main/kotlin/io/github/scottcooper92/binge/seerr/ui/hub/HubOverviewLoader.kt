@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.details
+import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -153,7 +154,7 @@ private fun Throwable?.toUserLoad(): HubUserLoad =
 private fun SeerrUserDto.toAccount(isAdmin: Boolean): HubAccount =
     HubAccount(
         id = id,
-        name = listOfNotNull(displayName, username, email?.substringBefore('@')).firstOrNull { it.isNotBlank() } ?: "#$id",
+        name = displayString() ?: "#$id",
         isAdmin = isAdmin,
         avatarUrl = avatar?.takeIf { it.startsWith("http") },
     )
