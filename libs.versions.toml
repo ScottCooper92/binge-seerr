@@ -23,6 +23,7 @@ detekt = "1.23.8"
 kover = "0.9.9"
 # Must agree with binge-companions' catalog: the SDK brings grpc-binder at its version, and the
 # in-process transport the tests use has to be the same release or the two disagree on internals.
+# `checkGrpcAlignment` enforces it on the resolved classpaths.
 grpc = "1.68.1"
 kotlinxCoroutines = "1.11.0"
 # KSP is the Hilt compiler's host; the pair is the one Binge builds with at this Kotlin.
