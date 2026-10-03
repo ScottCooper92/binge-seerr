@@ -29,9 +29,9 @@ import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.IconButtonTone
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -156,7 +156,7 @@ private fun BlocklistDetailFacts(item: BlocklistItem) {
     val rows =
         listOfNotNull(
             item.addedBy?.let {
-                SettingsRow(
+                ListItem(
                     icon = Icons.Filled.Person,
                     label = stringResource(R.string.blocklist_detail_blocked_by),
                     detail = it,
@@ -164,7 +164,7 @@ private fun BlocklistDetailFacts(item: BlocklistItem) {
                 )
             },
             formatRelativeOrAbsolute(item.addedAtMillis)?.let {
-                SettingsRow(
+                ListItem(
                     icon = Icons.Filled.Schedule,
                     label = stringResource(R.string.blocklist_detail_blocked_at),
                     detail = it,
@@ -173,7 +173,7 @@ private fun BlocklistDetailFacts(item: BlocklistItem) {
             },
         )
     if (rows.isNotEmpty()) {
-        SettingsGroup(title = null, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
+        ItemGroup(title = null, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
     }
     if (item.tags.isNotEmpty()) {
         SectionHeader(title = stringResource(R.string.request_tags))

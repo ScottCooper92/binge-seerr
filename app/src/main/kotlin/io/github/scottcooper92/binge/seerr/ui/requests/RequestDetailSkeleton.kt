@@ -179,7 +179,7 @@ private fun RequestCardSkeleton(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth().padding(cardRowPadding()),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SkeletonPlate(Modifier.size(dimensionResource(DesR.dimen.settings_group_icon_size)), shape = BingeShapes.MoreCard)
+            SkeletonPlate(Modifier.size(dimensionResource(DesR.dimen.item_group_icon_size)), shape = BingeShapes.MoreCard)
             Spacer(Modifier.width(dimensionResource(DesR.dimen.account_card_spacing)))
             Column(modifier = Modifier.weight(1f)) {
                 SkeletonPlate(

@@ -35,9 +35,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
-import com.binge.designsystem.component.SettingsRows
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ItemRows
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
@@ -181,7 +181,7 @@ internal fun AccountCard(
 ) {
     // The card carries no padding of its own: the name row and the quota rows each bring their row padding, so none is doubled.
     HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, inset, contentPadding = PaddingValues()) {
-        val rowPadding = dimensionResource(DesR.dimen.settings_group_row_padding_h)
+        val rowPadding = dimensionResource(DesR.dimen.item_group_row_padding_h)
         Row(
             modifier =
                 Modifier.padding(
@@ -223,7 +223,7 @@ internal fun AccountCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = rowPadding).semantics { heading() },
                 )
-                SettingsRows(quotaRows(it))
+                ItemRows(quotaRows(it))
             }
         }
     }
@@ -235,11 +235,11 @@ internal fun QuotaSection(
     quota: HubQuota,
     modifier: Modifier = Modifier,
 ) {
-    SettingsGroup(title = stringResource(R.string.hub_quota_title), rows = quotaRows(quota), modifier = modifier)
+    ItemGroup(title = stringResource(R.string.hub_quota_title), rows = quotaRows(quota), modifier = modifier)
 }
 
 @Composable
-private fun quotaRows(quota: HubQuota): List<SettingsRow> =
+private fun quotaRows(quota: HubQuota): List<ListItem> =
     listOf(
         quotaRow(Icons.Filled.Movie, stringResource(R.string.hub_quota_movies), quota.movie),
         quotaRow(Icons.Filled.Tv, stringResource(R.string.hub_quota_tv), quota.tv),
@@ -251,8 +251,8 @@ private fun quotaRow(
     icon: ImageVector,
     label: String,
     bucket: HubQuotaBucket?,
-): SettingsRow =
-    SettingsRow(
+): ListItem =
+    ListItem(
         icon = icon,
         label = label,
         detail =

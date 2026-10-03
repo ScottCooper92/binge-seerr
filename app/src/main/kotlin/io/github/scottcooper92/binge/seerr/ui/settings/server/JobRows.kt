@@ -34,7 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.ExpressiveIconButton
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
@@ -50,7 +50,7 @@ class JobsActions(
     val onSchedule: (id: String, cron: String) -> Unit,
 )
 
-/** One scheduled job as a settings row: run or cancel in place, the last run's outcome briefly, and a tap to reschedule where the job allows it. */
+/** One scheduled job as a list item: run or cancel in place, the last run's outcome briefly, and a tap to reschedule where the job allows it. */
 @Composable
 internal fun jobRow(
     job: ServerJob,
@@ -58,8 +58,8 @@ internal fun jobRow(
     outcome: JobOutcome?,
     actions: JobsActions,
     onSchedule: () -> Unit,
-): SettingsRow =
-    SettingsRow(
+): ListItem =
+    ListItem(
         icon = jobIcon(job.id),
         iconTint =
             when (outcome) {

@@ -34,8 +34,8 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ExpressiveIconButton
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
@@ -125,7 +125,7 @@ private fun LinkedAccountsContent(
             },
         )
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        SettingsGroup(title = null, rows = rows, modifier = Modifier.padding(resolvedContentInset()))
+        ItemGroup(title = null, rows = rows, modifier = Modifier.padding(resolvedContentInset()))
     }
     unlinking?.let { origin ->
         BingeConfirmDialog(
@@ -165,8 +165,8 @@ private fun accountRow(
     busy: Boolean,
     onLink: () -> Unit,
     onUnlink: () -> Unit,
-): SettingsRow =
-    SettingsRow(
+): ListItem =
+    ListItem(
         icon = Icons.Filled.Link,
         label = stringResource(account.origin.labelRes()),
         detail =

@@ -17,7 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
@@ -223,7 +223,7 @@ private fun EditorEvent?.tvNoteOrNull(): String? =
 /** The phone's rows as read-outs: the label and its detail, and where to change it. */
 private fun readOnlyGroup(
     title: String,
-    rows: List<SettingsRow>,
+    rows: List<ListItem>,
     note: String,
 ): TvPaneGroup =
     TvPaneGroup(
