@@ -509,6 +509,21 @@
     <string name="server_settings_dvr_season_folders">Season folders</string>
     <string name="server_settings_dvr_anime">Anime</string>
     <string name="server_settings_dvr_behaviour">Behaviour</string>
+    <string name="server_settings_dvr_advanced">Advanced</string>
+    <string name="editor_cancel">Cancel</string>
+    <string name="editor_field_required">Required</string>
+    <!-- Format-only: a field's label and the mark that it is required. -->
+    <string name="editor_field_required_label" translatable="false">%1$s *</string>
+    <string name="editor_section_expanded">Expanded</string>
+    <string name="editor_section_collapsed">Collapsed</string>
+    <string name="editor_section_expand_action">Expand</string>
+    <string name="editor_section_collapse_action">Collapse</string>
+    <plurals name="editor_section_issues">
+        <item quantity="one">%d field needs attention</item>
+        <item quantity="other">%d fields need attention</item>
+    </plurals>
+    <string name="editor_error_port">Enter a port between 1 and 65535.</string>
+    <string name="editor_error_web_url">Enter a web address that starts with http:// or https://.</string>
     <string name="server_settings_dvr_default">Default instance</string>
     <string name="server_settings_dvr_4k">4K instance</string>
     <string name="server_settings_dvr_sync">Sync what it holds</string>
