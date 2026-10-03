@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
@@ -42,7 +41,9 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.toTagType
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
+import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import com.binge.designsystem.R as DesR
 
@@ -59,28 +60,31 @@ internal fun BlocklistBody(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val refresh = lazyItems.loadState.refresh
-    when {
-        lazyItems.itemCount > 0 && refresh is LoadState.Loading ->
-            // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
-            Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
-                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding.belowPinnedLine())
+    // Read straight from a paging source, so there is no network refresh to wait on.
+    when (val phase = lazyItems.rememberPagedPhase(lastRefresh = null)) {
+        is PagedPhase.Rows ->
+            if (phase.refreshing) {
+                // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
+                Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding.belowPinnedLine())
+                }
+            } else {
+                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
             }
-        lazyItems.itemCount > 0 -> BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
-        refresh is LoadState.Loading ->
+        PagedPhase.Skeleton ->
             ListRowSkeletonColumn(
                 contentPadding = resolvedListContentPadding(contentPadding),
                 modifier = modifier,
             )
-        refresh is LoadState.Error ->
+        is PagedPhase.Failed ->
             PagedRefreshError(
-                refresh.error,
+                phase.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
                 modifier = modifier.padding(contentPadding),
             )
-        else ->
+        PagedPhase.Empty ->
             EmptyScreen(
                 message = stringResource(if (isFiltered) R.string.blocklist_empty_filtered else R.string.blocklist_empty),
                 modifier = modifier.padding(contentPadding),

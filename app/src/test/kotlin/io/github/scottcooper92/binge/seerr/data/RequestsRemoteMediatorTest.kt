@@ -136,6 +136,30 @@ class RequestsRemoteMediatorTest {
         }
 
     @Test
+    fun `a refresh reports itself starting and then the rows it wrote, an append and a failure report no count`() =
+        runTest {
+            start()
+            val store = FakeRequestStore()
+            val reports = mutableListOf<Int?>()
+
+            fun reporting() =
+                RequestsRemoteMediator(
+                    query = RequestListQuery("all", "added", requestedBy = null),
+                    api = ::api,
+                    store = store,
+                    onRefresh = { reports += it },
+                ) { dto, api, key, index -> dto.toRequestEntity(api, TitleCache(FakeTitleDao())::get, key, index, nowMillis = 0L) }
+
+            reporting().load(LoadType.REFRESH, pagingState)
+            reporting().load(LoadType.APPEND, pagingState)
+            assertEquals(listOf(null, 3), reports)
+
+            pageBody = { MockResponse(code = 500) }
+            reporting().load(LoadType.REFRESH, pagingState)
+            assertEquals(listOf(null, 3, null), reports)
+        }
+
+    @Test
     fun `an append reads the next page off the stored cursor and ends pagination on the last`() =
         runTest {
             start()

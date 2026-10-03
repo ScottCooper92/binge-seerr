@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
@@ -34,16 +33,21 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
+import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
 
 /** The rows with the states the pager reports, as the issues browser shows them. */
 @Composable
 internal fun UsersBody(
     lazyItems: LazyPagingItems<UserItem>,
+    /** The list's latest finished network refresh; see [rememberPagedPhase]. */
+    lastRefresh: ListRefresh?,
     selection: Set<Int>,
     onOpen: (UserItem) -> Unit,
     onToggleSelected: (UserItem) -> Unit,
@@ -51,29 +55,31 @@ internal fun UsersBody(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val remote = lazyItems.loadState.mediator?.refresh ?: lazyItems.loadState.refresh
-    when {
-        lazyItems.itemCount > 0 && remote is LoadState.Loading ->
-            // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
-            Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
-                UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding.belowPinnedLine())
+    when (val phase = lazyItems.rememberPagedPhase(lastRefresh)) {
+        is PagedPhase.Rows ->
+            if (phase.refreshing) {
+                // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
+                Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding.belowPinnedLine())
+                }
+            } else {
+                UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
             }
-        lazyItems.itemCount > 0 -> UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
-        remote is LoadState.Loading || lazyItems.loadState.refresh is LoadState.Loading ->
+        PagedPhase.Skeleton ->
             ListRowSkeletonColumn(
                 contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
                 height = dimensionResource(R.dimen.users_row_skeleton_height),
                 modifier = modifier,
             )
-        remote is LoadState.Error ->
+        is PagedPhase.Failed ->
             PagedRefreshError(
-                remote.error,
+                phase.error,
                 onRetry = lazyItems::retry,
                 onReconnect = onReconnect,
                 modifier = modifier.padding(contentPadding),
             )
-        else ->
+        PagedPhase.Empty ->
             EmptyScreen(
                 message = stringResource(R.string.users_empty),
                 modifier = modifier.padding(contentPadding),
