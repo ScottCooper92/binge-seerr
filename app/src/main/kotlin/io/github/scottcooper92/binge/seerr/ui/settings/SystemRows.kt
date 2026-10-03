@@ -6,7 +6,7 @@ import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -18,12 +18,12 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 internal fun systemRows(
     system: SystemInfo,
     onOpenPage: (ServerSettingsPage) -> Unit,
-): List<SettingsRow> = readOnlyJobRows(system) + systemLinkRows(onOpenPage)
+): List<ListItem> = readOnlyJobRows(system) + systemLinkRows(onOpenPage)
 
 @Composable
-private fun readOnlyJobRows(system: SystemInfo): List<SettingsRow> =
+private fun readOnlyJobRows(system: SystemInfo): List<ListItem> =
     system.jobs.map { job ->
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Cached,
             iconTint = BingeSentiment.Neutral.fill(),
             label = job.name,
@@ -40,16 +40,16 @@ private fun readOnlyJobRows(system: SystemInfo): List<SettingsRow> =
 
 /** The caches and the log: the System group's rows that open a page. */
 @Composable
-internal fun systemLinkRows(onOpenPage: (ServerSettingsPage) -> Unit): List<SettingsRow> =
+internal fun systemLinkRows(onOpenPage: (ServerSettingsPage) -> Unit): List<ListItem> =
     listOf(
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Storage,
             iconTint = BingeSentiment.Neutral.fill(),
             label = stringResource(R.string.server_settings_cache),
             detail = stringResource(R.string.server_settings_cache_caption),
             onClick = { onOpenPage(ServerSettingsPage.Cache) },
         ),
-        SettingsRow(
+        ListItem(
             icon = Icons.AutoMirrored.Filled.Article,
             iconTint = BingeSentiment.Neutral.fill(),
             label = stringResource(R.string.server_settings_logs),

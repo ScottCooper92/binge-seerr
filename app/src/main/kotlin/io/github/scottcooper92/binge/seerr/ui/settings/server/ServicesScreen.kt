@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -67,7 +67,7 @@ private fun ServicesContent(
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         ServiceType.entries.forEach { type ->
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            SettingsGroup(
+            ItemGroup(
                 title = type.name,
                 rows = instanceRows(type, state.instances.filter { it.type == type }, actions),
                 modifier = Modifier.padding(horizontal = resolvedContentInset()),
@@ -75,7 +75,7 @@ private fun ServicesContent(
         }
         state.rules?.let { rules ->
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            SettingsGroup(
+            ItemGroup(
                 title = stringResource(R.string.server_settings_rules),
                 rows = ruleRows(rules, actions),
                 modifier = Modifier.padding(horizontal = resolvedContentInset()),
@@ -90,9 +90,9 @@ private fun instanceRows(
     type: ServiceType,
     instances: List<DvrSummary>,
     actions: ServicesActions,
-): List<SettingsRow> =
+): List<ListItem> =
     instances.map { instance ->
-        SettingsRow(
+        ListItem(
             icon = if (type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv,
             iconTint = BingeSentiment.Info.fill(),
             label = instance.label(),
@@ -100,7 +100,7 @@ private fun instanceRows(
             onClick = { actions.onOpenInstance(type, instance.id) },
         )
     } +
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Add,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_dvr_add, type.name),
@@ -121,9 +121,9 @@ private fun DvrSummary.label(): String {
 private fun ruleRows(
     rules: List<OverrideRuleSummary>,
     actions: ServicesActions,
-): List<SettingsRow> =
+): List<ListItem> =
     rules.map { rule ->
-        SettingsRow(
+        ListItem(
             icon = Icons.AutoMirrored.Filled.Rule,
             iconTint = BingeSentiment.Info.fill(),
             label = rule.instanceName,
@@ -131,7 +131,7 @@ private fun ruleRows(
             onClick = { actions.onOpenRule(rule.id) },
         )
     } +
-        SettingsRow(
+        ListItem(
             icon = Icons.Filled.Add,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_rule_add),

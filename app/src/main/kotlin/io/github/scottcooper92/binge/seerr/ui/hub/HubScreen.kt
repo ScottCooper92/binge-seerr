@@ -27,9 +27,9 @@ import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.HintCard
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
@@ -108,11 +108,11 @@ private fun Dashboard(
             DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, inset = inset)
         }
         SectionHeader(title = stringResource(R.string.hub_manage))
-        SettingsGroup(
+        ItemGroup(
             title = null,
             rows =
                 state.overview.visibleSections().map { section ->
-                    SettingsRow(
+                    ListItem(
                         icon = section.icon,
                         iconTint = section.iconTint(),
                         label = stringResource(section.titleRes),
@@ -185,11 +185,11 @@ private fun DeveloperGroup(
     inset: Dp,
 ) {
     SectionHeader(title = stringResource(R.string.debug_group_developer))
-    SettingsGroup(
+    ItemGroup(
         title = null,
         rows =
             developerRows.map { row ->
-                SettingsRow(
+                ListItem(
                     icon = row.icon,
                     label = stringResource(row.label),
                     detail = stringResource(row.detail),

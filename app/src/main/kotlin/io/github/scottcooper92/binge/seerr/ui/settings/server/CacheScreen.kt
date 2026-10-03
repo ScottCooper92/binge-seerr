@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.SettingsGroup
-import com.binge.designsystem.component.SettingsRow
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -66,14 +66,14 @@ private fun CacheContent(
     val inset = resolvedContentInset()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        SettingsGroup(
+        ItemGroup(
             title = stringResource(R.string.server_settings_api_caches),
             rows = state.apiCaches.map { cache -> apiCacheRow(cache, busy = cache.id in state.busyIds, actions.onFlush) },
             modifier = Modifier.padding(horizontal = inset),
         )
         if (state.imageCaches.isNotEmpty()) {
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            SettingsGroup(
+            ItemGroup(
                 title = stringResource(R.string.server_settings_image_caches),
                 rows = state.imageCaches.map { imageCacheRow(it) },
                 modifier = Modifier.padding(horizontal = inset),
@@ -81,7 +81,7 @@ private fun CacheContent(
         }
         state.dns?.let { dns ->
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            SettingsGroup(
+            ItemGroup(
                 title = stringResource(R.string.server_settings_dns_cache),
                 rows =
                     listOf(dnsStatsRow(dns)) +
@@ -100,8 +100,8 @@ private fun apiCacheRow(
     cache: ApiCache,
     busy: Boolean,
     onFlush: (String) -> Unit,
-): SettingsRow =
-    SettingsRow(
+): ListItem =
+    ListItem(
         icon = Icons.Filled.Storage,
         iconTint = BingeSentiment.Neutral.fill(),
         label = cache.name,
@@ -111,8 +111,8 @@ private fun apiCacheRow(
     )
 
 @Composable
-private fun imageCacheRow(cache: ImageCache): SettingsRow =
-    SettingsRow(
+private fun imageCacheRow(cache: ImageCache): ListItem =
+    ListItem(
         icon = Icons.Filled.Image,
         iconTint = BingeSentiment.Neutral.fill(),
         label = cache.name,
@@ -126,8 +126,8 @@ private fun imageCacheRow(cache: ImageCache): SettingsRow =
     )
 
 @Composable
-private fun dnsStatsRow(dns: DnsCache): SettingsRow =
-    SettingsRow(
+private fun dnsStatsRow(dns: DnsCache): ListItem =
+    ListItem(
         icon = Icons.Filled.Dns,
         iconTint = BingeSentiment.Neutral.fill(),
         label = stringResource(R.string.server_settings_dns_entries, dns.size, dns.maxSize),
@@ -140,8 +140,8 @@ private fun dnsEntryRow(
     entry: DnsEntry,
     busy: Boolean,
     onFlush: (String) -> Unit,
-): SettingsRow =
-    SettingsRow(
+): ListItem =
+    ListItem(
         icon = Icons.Filled.Dns,
         iconTint = BingeSentiment.Info.fill(),
         label = entry.hostname,

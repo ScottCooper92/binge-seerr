@@ -18,7 +18,7 @@ import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.R as DesR
 
 /**
- * One section of an editor form, laid out like the design system's `SettingsGroup`: the title sits
+ * One section of an editor form, laid out like the design system's `ItemGroup`: the title sits
  * above the surface and the fields sit on it. The title is a `heading()` so TalkBack can jump card
  * to card, and it is required, because a card with nothing naming it is the old unlabelled form.
  */

@@ -15,7 +15,7 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 /**
  * The hub, which had no committed baseline until now (#241). It is the app's most-touched screen —
  * the list pane of the wide-window layout, and the one screen assembled almost entirely from
- * design-system components — so a submodule bump that moves the settings row, the tag or the
+ * design-system components — so a submodule bump that moves the list item, the tag or the
  * progress meter lands here first.
  */
 class HubScreenshotTest {
