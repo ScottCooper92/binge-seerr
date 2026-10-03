@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.service
 import com.binge.companion.contracts.request.v1.ApproveRequestRequest
 import com.binge.companion.contracts.request.v1.ApproveRequestResponse
 import com.binge.companion.contracts.request.v1.Attention
+import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.BlockTitleRequest
 import com.binge.companion.contracts.request.v1.BlockTitleResponse
 import com.binge.companion.contracts.request.v1.CancelRequestRequest
@@ -75,6 +76,8 @@ import io.github.scottcooper92.binge.seerr.seerr.toStatusException
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
+import io.grpc.Status
+import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -160,6 +163,7 @@ class SeerrRequestService(
             // Re-checked here, not trusted to the host: only a 4K request needs the capability.
             if (request.is4K) checkDeclared(Capability.CAPABILITY_REQUEST_4K)
             val media = request.media
+            refuseIfKnownBlocklisted(media)
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
@@ -202,6 +206,7 @@ class SeerrRequestService(
     override suspend fun submitAdvancedRequest(request: SubmitAdvancedRequestRequest): SubmitAdvancedRequestResponse =
         gated("submit_advanced_request", Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS) {
             val media = request.media
+            refuseIfKnownBlocklisted(media)
             val isTv = media.seerrMediaType().isSeerrTv()
             val destination = connection.api().resolveAdvancedDestination(isTv, request.serverId, request.profileId, request.rootFolderId)
             // 4K here is a property of the server the caller named, not a flag, so it is known only now.
@@ -326,13 +331,38 @@ class SeerrRequestService(
 
     private suspend fun attention(): Attention = connection.readAttention()
 
-    /** The one operation that needs Seerr's own id space: the server's media record, not the TMDB id. */
+    /**
+     * The one operation that needs Seerr's own id space: the server's media record, not the TMDB id.
+     *
+     * An issue needs something to report against: the contract answers FAILED_PRECONDITION unless the title is
+     * available or partially available, an unrequested one included (#682). One details read gives both that and
+     * Seerr's own media record id.
+     */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
         gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) {
-            val mediaId = mediaIds.mediaRecordId(request.media)
+            val info = connection.api().details(request.media).mediaInfo
+            val availability = info.toRequestStatus(clock()).availability
+            if (availability != Availability.AVAILABILITY_AVAILABLE && availability != Availability.AVAILABILITY_PARTIALLY_AVAILABLE) {
+                throw StatusException(Status.FAILED_PRECONDITION.withDescription("Nothing to report against: the title is $availability"))
+            }
+            val mediaId =
+                info?.id
+                    ?: throw StatusException(
+                        Status.NOT_FOUND.withDescription("Seerr has no record for ${request.media.mediaType} ${request.media.tmdbId}"),
+                    )
             connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))
             ReportIssueResponse.getDefaultInstance()
         }
+
+    /**
+     * A title the cache already knows is blocklisted is refused here, without asking Seerr: FAILED_PRECONDITION, as
+     * the contract says (#682). A cold cache falls through to Seerr, whose own refusal maps the same way.
+     */
+    private suspend fun refuseIfKnownBlocklisted(media: MediaId) {
+        if (statusCache.find(media)?.status?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
+            throw StatusException(Status.FAILED_PRECONDITION.withDescription("The title is blocklisted"))
+        }
+    }
 
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated("block_title", Capability.CAPABILITY_BLOCK) {

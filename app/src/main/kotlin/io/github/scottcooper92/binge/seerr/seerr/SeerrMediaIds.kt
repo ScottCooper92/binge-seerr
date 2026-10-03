@@ -29,14 +29,20 @@ class SeerrMediaIds(
             ?: throw StatusException(Status.NOT_FOUND.withDescription("Seerr has no record for ${media.mediaType} ${media.tmdbId}"))
 }
 
-/** Seerr's media-type string for a contract [MediaId]; anything but movie or TV is a bad argument. */
-fun MediaId.seerrMediaType(): String =
-    when (mediaType) {
+/**
+ * Seerr's media-type string for a contract [MediaId]; anything but movie or TV is a bad argument. Every path
+ * that sends a [MediaId] to Seerr passes through here, so it is also where an unusable one stops: a
+ * `tmdb_id` <= 0 is INVALID_ARGUMENT, as the contract's header says, not a request Seerr answers 404 to (#682).
+ */
+fun MediaId.seerrMediaType(): String {
+    if (tmdbId <= 0) throw StatusException(Status.INVALID_ARGUMENT.withDescription("tmdb_id must be positive, was $tmdbId"))
+    return when (mediaType) {
         MediaType.MEDIA_TYPE_MOVIE -> SEERR_MEDIA_TYPE_MOVIE
         MediaType.MEDIA_TYPE_TV -> SEERR_MEDIA_TYPE_TV
         MediaType.MEDIA_TYPE_UNSPECIFIED, MediaType.UNRECOGNIZED ->
             throw StatusException(Status.INVALID_ARGUMENT.withDescription("media_type must be movie or tv"))
     }
+}
 
 /** True when a Seerr media-type string — [SeerrRequestMediaDto.mediaType] and its like — names a TV show. */
 fun String.isSeerrTv(): Boolean = this == SEERR_MEDIA_TYPE_TV

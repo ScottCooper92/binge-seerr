@@ -82,11 +82,28 @@ fun Throwable.toStatusException(): StatusException =
 private fun HttpException.httpStatus(): Status =
     when {
         code() == HTTP_UNAUTHORIZED -> Status.UNAUTHENTICATED
+        code() == HTTP_FORBIDDEN && mentions("blocklisted") -> Status.FAILED_PRECONDITION
         code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
         code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
         code() >= HTTP_SERVER_ERROR_MIN -> Status.UNAVAILABLE
         else -> Status.INVALID_ARGUMENT
     }
+
+/**
+ * Seerr refuses a request for a blocklisted title with a 403 whose message is "This media is blocklisted."
+ * (`BlocklistedMediaError` in Seerr's and Jellyseerr's `server/routes/request.ts`). The contract calls that
+ * FAILED_PRECONDITION, not a permission (#682). Read the same way as the quota word.
+ */
+private fun HttpException.mentions(word: String): Boolean =
+    runCatching {
+        response()
+            ?.errorBody()
+            ?.source()
+            ?.peek()
+            ?.readUtf8()
+    }.getOrNull()
+        .orEmpty()
+        .contains(word, ignoreCase = true)
 
 /**
  * Seerr's only signal for a quota breach is the word in its 403 body. A body that fails to read
@@ -96,6 +113,7 @@ private fun HttpException.httpStatus(): Status =
  * [toStatusException] itself, so a raw [IOException] here would escape [statusCatching] uncaught
  * rather than become the [Status] the contract expects.
  */
+
 private fun HttpException.mentionsQuota(): Boolean =
     runCatching {
         response()

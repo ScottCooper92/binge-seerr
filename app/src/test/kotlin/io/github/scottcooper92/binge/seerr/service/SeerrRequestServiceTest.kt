@@ -19,6 +19,7 @@ import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
+import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
@@ -1018,8 +1019,9 @@ class SeerrRequestServiceTest {
             )
         }
 
+    /** The contract: nothing to report against unless the title is available or partially available (#682). */
     @Test
-    fun `a report against an untracked title is NOT_FOUND`() =
+    fun `a report against an untracked title is FAILED_PRECONDITION`() =
         runTest {
             val stub = connected()
             seerr.enqueue(json("""{}"""))
@@ -1035,7 +1037,67 @@ class SeerrRequestServiceTest {
                     )
                 }
 
-            assertEquals(Status.Code.NOT_FOUND, code)
+            assertEquals(Status.Code.FAILED_PRECONDITION, code)
+        }
+
+    @Test
+    fun `a report against a title still pending is FAILED_PRECONDITION, and never reaches seerr`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":2}}"""))
+            val before = seerr.requestCount
+
+            val code =
+                stub.code {
+                    reportIssue(
+                        ReportIssueRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setType(IssueType.ISSUE_TYPE_VIDEO)
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.FAILED_PRECONDITION, code)
+            assertEquals(before + 1, seerr.requestCount)
+        }
+
+    /** An unusable MediaId is INVALID_ARGUMENT, not a 404 the host would read as "refresh your view" (#682). */
+    @Test
+    fun `a tmdb id of zero is INVALID_ARGUMENT, before any request`() =
+        runTest {
+            val stub = connected()
+            val before = seerr.requestCount
+            val zero = movie.toBuilder().setTmdbId(0).build()
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.status(zero))
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.submit(zero))
+            assertEquals(before, seerr.requestCount)
+        }
+
+    /** Seerr refuses a blocklisted title with 403 "This media is blocklisted."; the contract calls it FAILED_PRECONDITION (#682). */
+    @Test
+    fun `a submit seerr refuses as blocklisted is FAILED_PRECONDITION`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(MockResponse(code = 403, body = """{"message":"This media is blocklisted."}"""))
+
+            assertEquals(Status.Code.FAILED_PRECONDITION, stub.submit(movie))
+        }
+
+    @Test
+    fun `a submit for a title the cache knows is blocklisted is refused without asking seerr`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache)
+            cache.put(
+                movie,
+                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_BLOCKLISTED).build(), 0L),
+            )
+            val before = seerr.requestCount
+
+            assertEquals(Status.Code.FAILED_PRECONDITION, stub.submit(movie))
+            assertEquals(before, seerr.requestCount)
         }
 
     @Test
