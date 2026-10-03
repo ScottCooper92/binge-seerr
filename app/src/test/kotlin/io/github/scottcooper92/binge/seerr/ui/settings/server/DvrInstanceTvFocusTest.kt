@@ -15,7 +15,9 @@ import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.util.RemovableContent
 import kotlinx.coroutines.flow.emptyFlow
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,8 +35,13 @@ class DvrInstanceTvFocusTest {
     @get:Rule
     val rule = createComposeRule()
 
+    private val content = RemovableContent(rule)
+
+    @After
+    fun removeContent() = content.remove()
+
     private fun show() =
-        rule.setContent {
+        content.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 val draft = completeRadarr()
                 DvrInstanceScreen(

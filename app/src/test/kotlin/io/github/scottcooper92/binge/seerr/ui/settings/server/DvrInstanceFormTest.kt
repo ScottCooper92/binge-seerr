@@ -12,7 +12,9 @@ import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.util.RemovableContent
 import kotlinx.coroutines.flow.emptyFlow
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -30,13 +32,14 @@ class DvrInstanceFormTest {
     @get:Rule
     val rule = createComposeRule()
 
+    private val content = RemovableContent(rule)
     private var saves = 0
     private var backs = 0
 
     private fun show(
         draft: DvrForm,
         choices: DvrChoices? = TESTED,
-    ) = rule.setContent {
+    ) = content.setContent {
         BingeExpressiveTheme(dynamicColor = false) {
             DvrInstanceScreen(
                 state =
@@ -52,6 +55,9 @@ class DvrInstanceFormTest {
             )
         }
     }
+
+    @After
+    fun removeContent() = content.remove()
 
     @Test
     fun `save with a missing required field does not save and says what is missing`() {
