@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.service
 
 import com.binge.companion.contracts.request.v1.Attention
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -32,21 +33,12 @@ internal suspend fun SeerrConnection.readAttention(): Attention {
             .setNeedsReconnect(false)
             .build()
     } catch (e: HttpException) {
-        // A count refused with the user served from cache is either a permission or a session that expired
-        // since: every lineage answers both with 403 there. Only `auth/me` tells them apart, so it is read
-        // again rather than trusting the cached copy (#672).
-        if (e.toSeerrError().rejectsSession && sessionRejected()) RECONNECT else throw e
+        // A count refused with the user served from cache is a permission or a session that expired since.
+        // The client has already asked `auth/me` which (SeerrSessionInterceptor), so only the session
+        // reads as Unauthorized here (#673, #676).
+        if (e.toSeerrError() == SeerrError.Unauthorized) RECONNECT else throw e
     }
 }
-
-/** Re-reads `auth/me`: true when the server refuses the session, false when it still answers for the user. */
-private suspend fun SeerrConnection.sessionRejected(): Boolean =
-    try {
-        refreshAuthenticatedUser()
-        false
-    } catch (e: HttpException) {
-        if (e.toSeerrError().rejectsSession) true else throw e
-    }
 
 private val RECONNECT: Attention =
     Attention
