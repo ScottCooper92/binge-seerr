@@ -37,7 +37,7 @@ class SeerrStatusMappingTest {
                             id = 4,
                             status = SeerrRequestStatusCode.Completed,
                             createdAt = "2026-06-12T08:30:00.000Z",
-                            requestedBy = SeerrRequestUserDto(email = "scott@example.com"),
+                            requestedBy = SeerrRequestUserDto(displayName = "scott@example.com", email = "scott@example.com"),
                             seasons = listOf(SeerrSeasonStatusDto(1)),
                         ),
                     ),
@@ -51,7 +51,8 @@ class SeerrStatusMappingTest {
         assertEquals(Availability.AVAILABILITY_PENDING, status.seasonsList[1].availability)
         val request = status.requestsList.single()
         assertEquals(ApprovalState.APPROVAL_STATE_APPROVED, request.state)
-        assertEquals("scott", request.requestedBy)
+        // Only an email: the contract never sends any part of one, so the field stays empty (#695).
+        assertEquals("", request.requestedBy)
         assertEquals(1_781_253_000_000L, request.requestedAtEpochMs)
         assertEquals(listOf(1), request.seasonNumbersList)
         assertEquals("https://jellyfin.local/web/#/details?id=1", status.watchUrl)
@@ -137,5 +138,23 @@ class SeerrStatusMappingTest {
         // And the two it must still accept, so the refusals above cannot pass by refusing everything.
         assertEquals(1_562, listOf(SeerrDownloadStatusDto(timeLeft = "1.02:01:30")).etaMinutes(NOW))
         assertEquals(5, listOf(SeerrDownloadStatusDto(timeLeft = "00:04:30.5")).etaMinutes(NOW))
+    }
+
+    @Test
+    fun `requested_by is the requester's display name or username, never their email`() {
+        fun nameOf(user: SeerrRequestUserDto): String =
+            SeerrMediaInfoDto(
+                status = SeerrMediaStatusCode.Pending,
+                requests = listOf(SeerrRequestSummaryDto(id = 1, status = SeerrRequestStatusCode.Pending, requestedBy = user)),
+            ).toRequestStatus(NOW).requestsList.single().requestedBy
+
+        assertEquals("Grace", nameOf(SeerrRequestUserDto(displayName = "Grace", email = "grace@example.com")))
+        assertEquals("grace", nameOf(SeerrRequestUserDto(username = "grace", email = "grace@example.com")))
+        assertEquals("", nameOf(SeerrRequestUserDto(email = "grace@example.com")))
+        // What a server sends for an email-only user: displayName falls back to the email.
+        assertEquals("", nameOf(SeerrRequestUserDto(displayName = "grace@example.com", email = "grace@example.com")))
+        assertEquals("", nameOf(SeerrRequestUserDto(displayName = "grace@example.com")))
+        val both = SeerrRequestUserDto(displayName = "grace@example.com", username = "grace", email = "grace@example.com")
+        assertEquals("grace", nameOf(both))
     }
 }
