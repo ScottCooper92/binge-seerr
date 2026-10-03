@@ -6,10 +6,12 @@ import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
+import io.github.scottcooper92.binge.seerr.auth.CleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
-import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
+import io.github.scottcooper92.binge.seerr.di.AuthModule
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailEvent
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailViewModel
@@ -22,7 +24,6 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -81,11 +82,11 @@ class ConsoleWritesDropStatusCacheTest {
         seerr.close()
     }
 
-    /** The connection as `AuthModule` builds it: the write hook clears the status store on the application scope. */
+    /** The connection over `AuthModule`'s own factory, so its write hook is the one under test. */
     private suspend fun TestScope.connection(): SeerrConnection =
         seerr.connection(
             this,
-            apis = SeerrApiFactory(logRequests = false, onWrite = { backgroundScope.launch { statuses.clearAll() } }),
+            apis = AuthModule.apiFactory(SeerrConnectionHealthMonitor(), statuses, CleartextConsent.None, backgroundScope),
         )
 
     private fun blocklisted() {
