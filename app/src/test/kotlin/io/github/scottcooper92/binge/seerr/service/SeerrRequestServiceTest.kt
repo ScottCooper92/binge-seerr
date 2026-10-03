@@ -76,6 +76,9 @@ private const val REQUEST_4K_PERMISSION = 1 shl 10
 private const val CREATE_ISSUES = 1 shl 22
 
 private const val ALL_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true,"series4kEnabled":true}"""
+
+/** Seerr's record for a movie whose only version is the 4K one: `status` Unknown, `status4k` Available. */
+private const val AVAILABLE_ONLY_IN_4K = """{"mediaInfo":{"id":9,"status":1,"status4k":5}}"""
 private const val MOVIE_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true}"""
 
 /**
@@ -1081,6 +1084,73 @@ class SeerrRequestServiceTest {
                 }
 
             assertEquals(Status.Code.FAILED_PRECONDITION, code)
+        }
+
+    /** Seerr moves only `status4k` for a 4K request; the contract carries it apart (#704). */
+    @Test
+    fun `a 4k-only title reads as such to a user who may request 4k`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED)
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, status.availability4K)
+        }
+
+    /** The contract sets the 4K state only under CAPABILITY_REQUEST_4K, so a version they cannot request is not shown. */
+    @Test
+    fun `a user who may not request 4k is told nothing about the 4k version`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
+            assertEquals(Availability.AVAILABILITY_UNSPECIFIED, status.availability4K)
+        }
+
+    @Test
+    fun `a report against a title available only in 4k is filed for a user who may request 4k`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED)
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.reportIssue(
+                ReportIssueRequest
+                    .newBuilder()
+                    .setMedia(movie)
+                    .setType(IssueType.ISSUE_TYPE_VIDEO)
+                    .build(),
+            )
+
+            seerr.takeRequest()
+            assertEquals("/api/v1/issue", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `a report against a title available only in 4k is FAILED_PRECONDITION for a user who may not request 4k`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+
+            val failure =
+                runCatching {
+                    stub.reportIssue(
+                        ReportIssueRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setType(IssueType.ISSUE_TYPE_VIDEO)
+                            .build(),
+                    )
+                }.exceptionOrNull() as StatusException
+
+            assertEquals(Status.Code.FAILED_PRECONDITION, failure.status.code)
+            val description = failure.status.description.orEmpty()
+            assertFalse(description, description.contains("4K", ignoreCase = true))
         }
 
     @Test
