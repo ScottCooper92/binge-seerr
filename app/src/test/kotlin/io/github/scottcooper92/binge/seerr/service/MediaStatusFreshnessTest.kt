@@ -81,4 +81,15 @@ class MediaStatusFreshnessTest {
         assertFalse(freshness.isFresh(available, nowMillis = 9_000))
         assertTrue(freshness.isFresh(available, nowMillis = 10_000))
     }
+
+    @Test
+    fun `the 4k version moving keeps the row as fresh as the standard one moving would`() {
+        val settledWith4k: (Availability) -> RequestStatus = {
+            status(Availability.AVAILABILITY_AVAILABLE).toBuilder().setAvailability4K(it).build()
+        }
+
+        assertEquals(POLL, freshness.maxAgeMillis(settledWith4k(Availability.AVAILABILITY_PROCESSING)))
+        assertEquals(3 * MINUTE, freshness.maxAgeMillis(settledWith4k(Availability.AVAILABILITY_PENDING)))
+        assertEquals(30 * MINUTE, freshness.maxAgeMillis(settledWith4k(Availability.AVAILABILITY_AVAILABLE)))
+    }
 }
