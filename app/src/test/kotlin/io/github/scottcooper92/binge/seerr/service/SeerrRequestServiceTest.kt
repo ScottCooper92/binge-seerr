@@ -12,9 +12,11 @@ import com.binge.companion.contracts.request.v1.GetAdvancedRequestOptionsRequest
 import com.binge.companion.contracts.request.v1.GetAttentionRequest
 import com.binge.companion.contracts.request.v1.GetDestinationOptionsRequest
 import com.binge.companion.contracts.request.v1.GetStatusRequest
+import com.binge.companion.contracts.request.v1.GetStatusesRequest
 import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
 import com.binge.companion.contracts.request.v1.IssueType
+import com.binge.companion.contracts.request.v1.ListRequestsRequest
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
@@ -875,6 +877,15 @@ class SeerrRequestServiceTest {
                 )
 
             assertEquals(90, created.requestId)
+        }
+
+    @Test
+    fun `the rpcs this app does not serve yet are refused as undeclared, not unimplemented`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+
+            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { listRequests(ListRequestsRequest.getDefaultInstance()) })
+            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { getStatuses(GetStatusesRequest.getDefaultInstance()) })
         }
 
     @Test
