@@ -2,8 +2,10 @@ package io.github.scottcooper92.binge.seerr.telemetry
 
 import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.attempt
+import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toStatusException
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
@@ -12,17 +14,21 @@ import java.io.IOException
 
 private const val UNAVAILABLE = "none"
 private const val UNKNOWN = "unknown"
-private const val HTTP_UNAUTHORIZED = 401
 
 /**
  * Reports that [operation] failed against the connected server, so a failure only one server
  * version produces can be found from the field (#539): "400 on `unblock_title`, Jellyseerr 2.x only".
  *
  * Only a failure that can say something about version compatibility is sent. Skipped: cancellation,
- * a 401 (the sign-in expired, which only this app can repair), a transport failure (the network),
+ * a dead session (only this app can repair it), a transport failure (the network),
  * and a [io.grpc.StatusException] or `NotConnectedException` (this app refusing, or not connected,
  * before the server was asked). What remains is an HTTP answer the server chose to give, and an
  * unclassified failure, which is usually a body this app could not read.
+ *
+ * A dead session is whatever [toSeerrError] reads as [SeerrError.Unauthorized]: a 401, or a 403
+ * `SeerrSessionInterceptor` marked after `auth/me` refused the same credentials. On Seerr an expired
+ * sign-in arrives as that marked 403, so skipping only a 401 would report it (#689). An unmarked 403
+ * is a permission refusal and is still sent.
  *
  * Every param is low-cardinality and none is free text: never an id, a title, a URL, a host or a
  * response body, the rule `CrashBreadcrumbs` states for its notes. [operation] must be one of this
@@ -63,7 +69,7 @@ fun Analytics.operationFailed(
 private fun Throwable.isVersionSignal(): Boolean =
     when (this) {
         is CancellationException -> false
-        is HttpException -> code() != HTTP_UNAUTHORIZED
+        is HttpException -> toSeerrError() != SeerrError.Unauthorized
         is IOException, is StatusException, is NotConnectedException -> false
         else -> true
     }

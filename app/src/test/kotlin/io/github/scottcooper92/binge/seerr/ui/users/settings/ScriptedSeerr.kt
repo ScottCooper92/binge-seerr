@@ -148,6 +148,7 @@ internal class ScriptedSeerr(
         scope: TestScope,
         quickConnectPollInterval: Duration = 10.milliseconds,
         onServerChanged: suspend () -> Unit = {},
+        apis: SeerrApiFactory = SeerrApiFactory(logRequests = false),
     ): SeerrConnection {
         val connection =
             SeerrConnection(
@@ -156,7 +157,7 @@ internal class ScriptedSeerr(
                         PreferenceDataStoreFactory.create(scope = scope.backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false),
+                apis = apis,
                 quickConnectPollInterval = quickConnectPollInterval,
                 onServerChanged = onServerChanged,
             )

@@ -5,10 +5,10 @@ import io.grpc.Status
 import io.grpc.StatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
+import okhttp3.Headers
 import retrofit2.HttpException
 import java.io.IOException
 
-private const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
 private const val HTTP_SERVER_ERROR_MIN = 500
 
@@ -51,7 +51,7 @@ fun Throwable.toSeerrError(): SeerrError =
         is NotConnectedException -> SeerrError.NotConnected
         is HttpException ->
             when {
-                code() == HTTP_UNAUTHORIZED || rejectsSessionByProbe() -> SeerrError.Unauthorized
+                rejectsSessionByAnswer() -> SeerrError.Unauthorized
                 code() == HTTP_FORBIDDEN -> if (mentionsQuota()) SeerrError.Quota else SeerrError.Forbidden
                 code() == HTTP_NOT_FOUND -> SeerrError.NotFound
                 code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
@@ -89,7 +89,7 @@ fun Throwable.toStatusException(): StatusException =
 
 private fun HttpException.httpStatus(): Status =
     when {
-        code() == HTTP_UNAUTHORIZED || rejectsSessionByProbe() -> Status.UNAUTHENTICATED
+        rejectsSessionByAnswer() -> Status.UNAUTHENTICATED
         code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> Status.FAILED_PRECONDITION
         code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
         code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
@@ -97,8 +97,8 @@ private fun HttpException.httpStatus(): Status =
         else -> Status.INVALID_ARGUMENT
     }
 
-/** A 403 [SeerrSessionInterceptor] confirmed against `auth/me`: the session, not a permission. */
-private fun HttpException.rejectsSessionByProbe(): Boolean = response()?.headers()?.get(SESSION_REJECTED_HEADER) != null
+/** A 401, or a 403 [SeerrSessionInterceptor] confirmed against `auth/me`: the session, not a permission. */
+private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
 
 /**
  * The 403 body, peeked rather than consumed so classifying the same failure twice (a report, then the
