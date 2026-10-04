@@ -15,7 +15,18 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** The page stacks one section per agent, and only the last field on the whole page offers Done. */
+/**
+ * The page stacks one section per agent, and only the last field on the whole page offers Done. Every
+ * agent is on here, so every section is open and every field is composed.
+ */
+private val ALL_ON =
+    NotificationSettings(
+        agents =
+            NotificationAgent.entries.associateWith { agent ->
+                AgentSettings(enabled = true, fields = AgentField.entries.filter { it.agent == agent }.associateWith { "1" })
+            },
+    )
+
 @RunWith(RobolectricTestRunner::class)
 class NotificationsImeTest {
     @get:Rule
@@ -29,7 +40,7 @@ class NotificationsImeTest {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 NotificationsSettingsScreen(
-                    state = EditorUiState.Ready(draft = NotificationSettings(), saved = NotificationSettings()),
+                    state = EditorUiState.Ready(draft = ALL_ON, saved = ALL_ON),
                     events = emptyFlow(),
                     actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
                 )
