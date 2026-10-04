@@ -35,7 +35,7 @@ internal fun MediaServerForm.issues(): List<EditorIssue> =
         if (host.isBlank()) add(missing(MediaServerSections.CONNECTION, MediaServerFields.HOST))
         when {
             port.isBlank() -> add(missing(MediaServerSections.CONNECTION, MediaServerFields.PORT))
-            !hostAndPortValid("x", port) -> add(invalid(MediaServerSections.CONNECTION, MediaServerFields.PORT, R.string.editor_error_port))
+            !portValid(port) -> add(invalid(MediaServerSections.CONNECTION, MediaServerFields.PORT, R.string.editor_error_port))
         }
         if (!externalUrlValid) {
             val message = if (kind == MediaServerKind.Plex) R.string.editor_error_web_url else R.string.editor_error_web_url_no_slash

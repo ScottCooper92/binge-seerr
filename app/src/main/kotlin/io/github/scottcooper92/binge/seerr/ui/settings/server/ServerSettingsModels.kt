@@ -19,7 +19,13 @@ private const val PORT_MAX = 65_535
 internal fun hostAndPortValid(
     host: String,
     port: String,
-): Boolean = host.isNotBlank() && port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true
+): Boolean = host.isNotBlank() && portValid(port)
+
+/**
+ * Whether a typed port is one: a whole number in 1..65535, once surrounding spaces are trimmed. A
+ * form that marks the port field on its own asks this, so it does not need a host to pass.
+ */
+internal fun portValid(port: String): Boolean = port.trim().toIntOrNull()?.let { it in 1..PORT_MAX } == true
 
 /** The server's own settings pages, for a user who manages settings. */
 enum class ServerSettingsPage {
