@@ -41,7 +41,7 @@ private fun ProxyForm.issues(): List<EditorIssue> {
         if (host.isBlank()) add(missing(NetworkSections.PROXY, NetworkFields.PROXY_HOST))
         when {
             port.isBlank() -> add(missing(NetworkSections.PROXY, NetworkFields.PROXY_PORT))
-            !hostAndPortValid("x", port) -> add(invalid(NetworkSections.PROXY, NetworkFields.PROXY_PORT, R.string.editor_error_port))
+            !portValid(port) -> add(invalid(NetworkSections.PROXY, NetworkFields.PROXY_PORT, R.string.editor_error_port))
         }
         if (userMissing) add(invalid(NetworkSections.PROXY, NetworkFields.PROXY_USER, R.string.server_settings_proxy_user_missing))
         if (passwordMissing) {

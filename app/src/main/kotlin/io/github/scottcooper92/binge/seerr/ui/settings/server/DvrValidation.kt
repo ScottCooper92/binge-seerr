@@ -39,7 +39,7 @@ internal fun DvrForm.issues(choicesLoaded: Boolean): List<EditorIssue> =
         if (host.isBlank()) add(missing(DvrSections.CONNECTION, DvrFields.HOST))
         when {
             port.isBlank() -> add(missing(DvrSections.CONNECTION, DvrFields.PORT))
-            !hostAndPortValid("x", port) -> add(invalid(DvrSections.CONNECTION, DvrFields.PORT, R.string.editor_error_port))
+            !portValid(port) -> add(invalid(DvrSections.CONNECTION, DvrFields.PORT, R.string.editor_error_port))
         }
         if (apiKey.isBlank()) add(missing(DvrSections.CONNECTION, DvrFields.API_KEY))
         addAll(destinationIssues(choicesLoaded))

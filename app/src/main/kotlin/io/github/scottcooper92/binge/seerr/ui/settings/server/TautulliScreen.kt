@@ -54,7 +54,7 @@ fun TautulliScreen(
                 enabled = enabled,
                 keyboardType = KeyboardType.Number,
                 placeholder = stringResource(R.string.placeholder_port_tautulli),
-                isError = draft.port.isNotBlank() && !hostAndPortValid("x", draft.port),
+                isError = draft.port.isNotBlank() && !portValid(draft.port),
             ) { value -> actions.onEdit { it.copy(port = value) } }
             EditorToggleRow(
                 editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
