@@ -2,7 +2,6 @@ package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,18 +31,18 @@ private const val NAME_FRACTION = 0.6f
 private const val META_FRACTION = 0.8f
 private const val META_LINE_COUNT = 2
 private const val TAG_COUNT = 2
-private const val STAT_COUNT = 2
-private const val STAT_VALUE_FRACTION = 0.45f
 private const val REQUEST_ROW_COUNT = 3
 
 /**
  * Loading placeholder for [UserDetailScreen]'s [UserDetailUiState.Ready] arm: the profile (avatar,
- * name, two meta lines, the role/origin tags every user has), the two stats every user has (request count, joined
- * date — a play count only appears once the server reports watch data), the Requests section header,
- * and a few request-row plates standing in for the paged list. Quota, permissions and the two title
- * carousels are all conditional on what the server and the user's own history return, so nothing is
- * reserved for them — the same "reserve only what's unconditional" trade [RequestDetailSkeleton]
- * makes, and the one Binge's own `DetailScreenSkeleton` makes for its details band (#373).
+ * name, two meta lines, the role/origin tags every user has), the Requests section header, and a few
+ * request-row plates standing in for the paged list. Everything else on the page is conditional on
+ * what the server and the user's own history return, so nothing is reserved for it: the stat row,
+ * whose one cell is a play count shown only once the server reports watch data, as well as quota,
+ * permissions and the two title carousels. It is the same "reserve only what's unconditional" trade
+ * [RequestDetailSkeleton] makes, and the one Binge's own `DetailScreenSkeleton` makes for its
+ * details band (#373). A user with watch data gets the stat row on resolve, and what sits below it
+ * moves down by its height (#687).
  */
 @Composable
 internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {
@@ -56,7 +54,6 @@ internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         ProfileSkeleton(modifier = Modifier.padding(inset).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)))
-        StatRowSkeleton(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.STATS)))
         SectionHeaderSkeleton()
         repeat(REQUEST_ROW_COUNT) {
             ListRowSkeleton(
@@ -70,8 +67,8 @@ internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {
  * Mirrors [ProfileHeader]: a row with the avatar beside a column of the name, two meta lines and
  * the two tags (role, origin) every user has. The second meta line is an email distinct from the
  * handle, which a user imported from Plex, Jellyfin or Emby typically has, the common shape on a
- * server backed by one. A local-only user has one line, so its stat row rises by that line on
- * resolve: the smaller jump, on the rarer page (#572).
+ * server backed by one. A local-only user has one line, so what follows the profile rises by that
+ * line on resolve: the smaller jump, on the rarer page (#572).
  */
 @Composable
 private fun ProfileSkeleton(modifier: Modifier = Modifier) {
@@ -112,43 +109,4 @@ private fun TagSkeleton(modifier: Modifier = Modifier) {
             .heightIn(min = lineHeightOf(MaterialTheme.typography.labelSmallEmphasis) + dimensionResource(DesR.dimen.tag_padding_v) * 2),
         shape = BingeShapes.Tag,
     )
-}
-
-/**
- * Mirrors [DetailStatRow]'s own cell — the icon, the value line and the label line, divided —
- * for the two stats [userStats] always has: request count and joined date. A play count only
- * appears once the server reports watch data, so a third cell isn't reserved.
- */
-@Composable
-private fun StatRowSkeleton(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = resolvedContentInset()).height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(STAT_COUNT) { index ->
-            if (index > 0) {
-                VerticalDivider(
-                    modifier =
-                        Modifier
-                            .height(dimensionResource(DesR.dimen.detail_stat_divider_height))
-                            .padding(vertical = dimensionResource(DesR.dimen.detail_meta_spacing)),
-                )
-            }
-            StatCellSkeleton(modifier = Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun StatCellSkeleton(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(vertical = dimensionResource(DesR.dimen.detail_meta_spacing)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)),
-    ) {
-        SkeletonPlate(Modifier.size(dimensionResource(DesR.dimen.detail_stat_icon_size)))
-        SkeletonPlate(Modifier.fillMaxWidth(STAT_VALUE_FRACTION).height(lineHeightOf(MaterialTheme.typography.titleSmall)))
-        SkeletonPlate(Modifier.fillMaxWidth(STAT_VALUE_FRACTION).height(lineHeightOf(MaterialTheme.typography.labelSmall)))
-    }
 }

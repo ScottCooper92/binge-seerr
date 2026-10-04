@@ -16,9 +16,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The resolved user page carries the anchors [UserDetailSkeleton] declares, so a geometry check can
- * compare the two once the harness is shared (#572). An anchor missing here would read as "never
- * compared" rather than as a failure.
+ * The resolved user page carries the anchor [UserDetailSkeleton] declares, `PROFILE`, so a geometry
+ * check can compare the two once the harness is shared (#572). An anchor missing here would read as
+ * "never compared" rather than as a failure. The skeleton reserves no stat row, so `STATS` is
+ * checked on the page alone.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
@@ -27,7 +28,20 @@ class UserDetailAnchorsTest {
     val rule = createSeerrComposeRule()
 
     @Test
-    fun `the resolved page tags the profile and stats the skeleton reserves`() {
+    fun `the resolved page tags the profile the skeleton reserves`() {
+        setResolvedPage()
+
+        rule.onNodeWithTag(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the resolved page tags the stat row for a user with watch data`() {
+        setResolvedPage()
+
+        rule.onNodeWithTag(LayoutAnchors.section(LayoutAnchors.Detail.STATS)).assertIsDisplayed()
+    }
+
+    private fun setResolvedPage() {
         rule.setContent {
             SeerrTheme {
                 UserDetailScreen(
@@ -38,12 +52,9 @@ class UserDetailAnchorsTest {
                 )
             }
         }
-
-        rule.onNodeWithTag(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)).assertIsDisplayed()
-        rule.onNodeWithTag(LayoutAnchors.section(LayoutAnchors.Detail.STATS)).assertIsDisplayed()
     }
 
-    /** The common shape: a user with watch data, which is when the page shows the stat row the skeleton reserves. */
+    /** The common shape: a user with watch data, which is when the page shows the stat row. */
     private fun detail(): UserDetail =
         UserDetail(
             item =

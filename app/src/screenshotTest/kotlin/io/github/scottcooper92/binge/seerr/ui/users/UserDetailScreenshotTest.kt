@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.flowOf
 
 /** No Ready-state phone screenshot coverage existed for this screen before [manageable]. */
 class UserDetailScreenshotTest {
-    /** The Loading arm (#373): the profile, the two unconditional stats, and the Requests section header and rows. */
+    /** The Loading arm (#373): the profile, and the Requests section header and rows. The stat row is conditional, so not reserved (#687). */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
