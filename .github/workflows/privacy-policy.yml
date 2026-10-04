@@ -32,11 +32,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # configure-pages reads the repository's Pages settings, which is how a run before Pages is
-    # turned on fails with a message saying so rather than at the deploy.
+    # No configure-pages step: it only tells a static-site generator the site's base path, and this
+    # page is rendered by pandoc with no links into the site. Its settings read answered 404 here with
+    # Pages on and `pages: read` granted, failing the build before anything was published.
     permissions:
       contents: read
-      pages: read
     steps:
       # Full history, so the last-updated date is that of the last commit to change the policy. A
       # shallow clone would give the date of whatever commit triggered the run.
@@ -90,8 +90,6 @@ jobs:
             echo "::error::The rendered page loads an external resource"
             exit 1
           fi
-
-      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
