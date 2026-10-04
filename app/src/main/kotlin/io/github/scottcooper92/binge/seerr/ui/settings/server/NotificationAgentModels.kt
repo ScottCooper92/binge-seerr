@@ -124,10 +124,17 @@ enum class AgentOption(
     val ownControl: Boolean
         get() = this != EmailIgnoreTls && this != EmailRequireTls
 
-    /** Whether [value] is something this option can be saved with: non-blank, and parseable if [kind] is [OptionKind.Number]. */
+    /** Whether this option is a TCP port, so a number outside the port range is not one. ntfy's priority is a number but not a port. */
+    val port: Boolean get() = this == EmailSmtpPort
+
+    /**
+     * Whether [value] is something this option can be saved with: non-blank, parseable if [kind] is
+     * [OptionKind.Number], and in the port range if it is a [port].
+     */
     fun satisfiedBy(value: String): Boolean =
-        when (kind) {
-            OptionKind.Number -> value.trim().toIntOrNull() != null
+        when {
+            port -> portValid(value)
+            kind == OptionKind.Number -> value.trim().toIntOrNull() != null
             else -> value.isNotBlank()
         }
 
