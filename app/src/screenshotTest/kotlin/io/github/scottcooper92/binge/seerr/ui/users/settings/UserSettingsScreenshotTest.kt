@@ -156,6 +156,24 @@ class UserPermissionsScreenshotTest {
     @Composable
     fun lockedLayout() = PermissionsFrame(settled(permissions()))
 
+    /** An admin's grant opens Administration, which otherwise starts closed. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun administrationOpen() =
+        PermissionsFrame(settled(permissions().copy(selected = setOf(ManageablePermission.ManageUsers), locked = emptySet())))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = PermissionsFrame(settled(permissions()))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = PermissionsFrame(settled(permissions()))
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
