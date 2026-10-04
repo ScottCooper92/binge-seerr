@@ -7,12 +7,16 @@ import io.grpc.binder.SecurityPolicy
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /**
  * Debug-only: `hostPolicy()` branches on `BuildConfig.DEBUG`, so this only means anything built
  * against the debug variant. `hostPolicy()` is protected on the SDK's `IntegrationService` for
  * every companion, this one included, so reaching it here means reflection rather than a cast.
+ * It reads `Process.myUid()`, which the plain JVM stubs do not implement, hence Robolectric.
  */
+@RunWith(RobolectricTestRunner::class)
 class SeerrCompanionServiceTest {
     @Test
     fun `a debug build's policy is not the pinned one`() {

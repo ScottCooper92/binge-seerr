@@ -17,28 +17,39 @@ import kotlin.time.Duration.Companion.seconds
  * Seerr's view of a title as the contract's [RequestStatus]. A title the server does not track has
  * no `mediaInfo`, which is the contract's `AVAILABILITY_NOT_REQUESTED` with nothing else set.
  *
+ * Seerr keeps the 4K version's state apart (`status4k`), and so does the contract: it goes in
+ * `availability_4k` and `seasons_4k`, never folded into `availability` (#704). Both are always
+ * filled here; the service clears them for a user it does not declare `CAPABILITY_REQUEST_4K` to.
+ *
  * `allowed_actions` is not filled here: it is the intersection of what the user may do and what
  * the title's state admits, which the service computes with the permissions in hand.
  */
 fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
-    val info = this ?: return RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_NOT_REQUESTED).build()
+    val info =
+        this ?: return RequestStatus
+            .newBuilder()
+            .setAvailability(Availability.AVAILABILITY_NOT_REQUESTED)
+            .setAvailability4K(Availability.AVAILABILITY_NOT_REQUESTED)
+            .build()
     val builder =
         RequestStatus
             .newBuilder()
             .setAvailability(info.status.toAvailability())
-            .addAllSeasons(
-                info.seasons.map {
-                    SeasonAvailability
-                        .newBuilder()
-                        .setSeasonNumber(it.seasonNumber)
-                        .setAvailability(it.status.toAvailability())
-                        .build()
-                },
-            ).addAllRequests(info.requests.map { it.toRequestInfo() })
+            .addAllSeasons(info.seasons.map { it.toSeasonAvailability(it.status) })
+            .setAvailability4K(info.status4k.toAvailability())
+            .addAllSeasons4K(info.seasons.map { it.toSeasonAvailability(it.status4k) })
+            .addAllRequests(info.requests.map { it.toRequestInfo() })
     info.downloadStatus.toDownloadProgress(nowMillis)?.let(builder::setDownload)
     (info.mediaUrl ?: info.jellyfinMediaUrl ?: info.plexUrl)?.let(builder::setWatchUrl)
     return builder.build()
 }
+
+private fun SeerrSeasonStatusDto.toSeasonAvailability(status: SeerrMediaStatusCode?): SeasonAvailability =
+    SeasonAvailability
+        .newBuilder()
+        .setSeasonNumber(seasonNumber)
+        .setAvailability(status.toAvailability())
+        .build()
 
 /** Who made each request, by user id; a request whose requester the server did not name is left out. */
 fun SeerrMediaInfoDto?.requesterIds(): Map<Int, Int> =
@@ -78,6 +89,11 @@ fun SeerrRequestStatusCode?.toApprovalState(): ApprovalState =
         else -> ApprovalState.APPROVAL_STATE_PENDING
     }
 
+/** One request as the request list serves it, without `allowed_actions`: as for a status, the service fills those in. */
+fun SeerrRequestDto.toRequestInfo(): RequestInfo =
+    SeerrRequestSummaryDto(id = id, status = status, createdAt = createdAt, requestedBy = requestedBy, is4k = is4k, seasons = seasons)
+        .toRequestInfo()
+
 private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
     val builder =
         RequestInfo
@@ -90,27 +106,6 @@ private fun SeerrRequestSummaryDto.toRequestInfo(): RequestInfo {
     createdAt?.toEpochMillisOrNull()?.let(builder::setRequestedAtEpochMs)
     return builder.build()
 }
-
-/**
- * The requester as REQUEST v1 lets this companion name them to the host: a display name or username, never an
- * email address or any part of one (binge-companions#121). Seerr's `displayName` is not always a name: the server
- * fills it with `username || plexUsername || jellyfinUsername || email`, so for a user created by email it is the
- * email itself. That is why this filters: a candidate equal to [SeerrRequestUserDto.email], or containing an `@` when
- * the payload carries no email to compare with, is dropped. Unlike [displayString], which the app's own screens use,
- * there is no email fallback; with no name left the field stays empty, which the contract reads as "doesn't say".
- */
-internal fun SeerrRequestUserDto.contractName(): String? =
-    listOfNotNull(displayName, username).firstOrNull {
-        it.isNotBlank() && '@' !in it && !it.equals(email, ignoreCase = true)
-    }
-
-/**
- * For the app's own screens: email is a last resort, masked to its local part. The host never gets this; it gets
- * [contractName], which has no email fallback at all.
- */
-internal fun SeerrRequestUserDto.displayString(): String? =
-    listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() }
-        ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
 
 private const val STATUS_DOWNLOADING = "downloading"
 private const val TIME_LEFT_FIELD_COUNT = 3

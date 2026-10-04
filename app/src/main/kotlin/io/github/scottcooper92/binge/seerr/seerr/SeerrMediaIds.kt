@@ -44,6 +44,24 @@ fun MediaId.seerrMediaType(): String {
     }
 }
 
+/**
+ * The other direction: the contract's [MediaId] for a title as Seerr's request list names it. Null for a
+ * media type the contract has no value for, which a caller leaves out rather than guesses at.
+ */
+fun SeerrRequestMediaDto.toMediaId(): MediaId? {
+    val type =
+        when (mediaType) {
+            SEERR_MEDIA_TYPE_MOVIE -> MediaType.MEDIA_TYPE_MOVIE
+            SEERR_MEDIA_TYPE_TV -> MediaType.MEDIA_TYPE_TV
+            else -> return null
+        }
+    return MediaId
+        .newBuilder()
+        .setMediaType(type)
+        .setTmdbId(tmdbId)
+        .build()
+}
+
 /** True when a Seerr media-type string — [SeerrRequestMediaDto.mediaType] and its like — names a TV show. */
 fun String.isSeerrTv(): Boolean = this == SEERR_MEDIA_TYPE_TV
 

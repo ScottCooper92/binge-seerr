@@ -1,14 +1,17 @@
 package io.github.scottcooper92.binge.seerr.service
 
+import android.os.Process
 import com.binge.companion.sdk.BingeHosts
 import com.binge.companion.sdk.HostPolicy
 import com.binge.companion.sdk.IntegrationService
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.scottcooper92.binge.seerr.BingeOnlyHostPolicy
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.RequestStore
+import io.github.scottcooper92.binge.seerr.logWarning
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.grpc.BindableService
 import io.grpc.binder.SecurityPolicy
@@ -50,12 +53,21 @@ class SeerrCompanionService : IntegrationService() {
         )
 
     /**
-     * Debug builds admit any caller, because a debug Binge is signed with its developer's own key
-     * and no allowlist can name it. Release builds pin `BingeHosts.release`, Binge's published
-     * Play App Signing certificate, and refuse any other signer.
+     * Debug builds admit only Binge's package names, under any certificate: a debug Binge is signed with its
+     * developer's own key, which no allowlist can name, but the debug APK goes to Firebase testers, so it must
+     * not hand the session to any app on their phone (#679). Release builds pin `BingeHosts.release`, Binge's
+     * published Play App Signing certificate, and refuse any other signer.
      */
     override fun hostPolicy(): SecurityPolicy =
-        if (BuildConfig.DEBUG) HostPolicy.anyCaller(TAG) else HostPolicy.pinned(this, listOf(BingeHosts.release))
+        if (BuildConfig.DEBUG) {
+            BingeOnlyHostPolicy(
+                selfUid = Process.myUid(),
+                packagesForUid = { uid -> packageManager.getPackagesForUid(uid).orEmpty().toList() },
+                warn = logWarning(TAG),
+            )
+        } else {
+            HostPolicy.pinned(this, listOf(BingeHosts.release))
+        }
 
     private companion object {
         const val TAG = "SeerrCompanion"
