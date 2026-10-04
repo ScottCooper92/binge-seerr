@@ -13,7 +13,8 @@ import org.junit.Test
  * matters is that a round trip is lossless and that anything else is refused rather than guessed at.
  */
 class ConnectionCarrierTest {
-    private fun roundTrip(credentials: SeerrCredentials): SeerrCredentials? = decodeCarriedConnection(encodeCarriedConnection(credentials))
+    private fun roundTrip(credentials: SeerrCredentials): SeerrCredentials? =
+        decodeCarriedConnection(encodeCarriedConnection(CarriedCredentials(credentials)))?.credentials
 
     @Test
     fun `a key connection survives the round trip whole`() {
@@ -34,7 +35,7 @@ class ConnectionCarrierTest {
         val credentials = SeerrCredentials("https://seerr.example/", SeerrAuth.Session("connect.sid=${"a".repeat(512)}", 7))
 
         // Block Store's ceiling is 4096 bytes, and a session cookie is the largest thing carried.
-        assertTrue(encodeCarriedConnection(credentials).size < 4096)
+        assertTrue(encodeCarriedConnection(CarriedCredentials(credentials, cleartext = true)).size < 4096)
     }
 
     @Test
@@ -54,6 +55,22 @@ class ConnectionCarrierTest {
     fun `an unknown variant reads as Unknown rather than failing the whole restore`() {
         val decoded = decodeCarriedConnection("""{"url":"https://a/","kind":"api_key","secret":"k","variant":"Plexseerr"}""".toByteArray())
 
-        assertEquals(SeerrVariant.Unknown, decoded?.variant)
+        assertEquals(SeerrVariant.Unknown, decoded?.credentials?.variant)
+    }
+
+    @Test
+    fun `the plain-http opt-in travels with the connection`() {
+        val carried = CarriedCredentials(SeerrCredentials("http://seerr.example.com/", SeerrAuth.ApiKey("k3y")), cleartext = true)
+
+        assertEquals(carried, decodeCarriedConnection(encodeCarriedConnection(carried)))
+    }
+
+    @Test
+    fun `a payload written before the opt-in was carried still decodes, without it`() {
+        val written = """{"url":"http://seerr.example.com/","kind":"api_key","secret":"k","variant":"Seerr"}"""
+
+        val decoded = decodeCarriedConnection(written.toByteArray())
+
+        assertEquals(CarriedCredentials(SeerrCredentials("http://seerr.example.com/", SeerrAuth.ApiKey("k"), SeerrVariant.Seerr)), decoded)
     }
 }
