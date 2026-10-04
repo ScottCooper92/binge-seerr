@@ -28,14 +28,17 @@ class MediaStatusFreshness(
     private val movingMaxAgeMillis: Long,
 ) {
     /** Null where the status says nothing worth keeping, which is never written and never read. */
-    fun maxAgeMillis(status: RequestStatus): Long? =
-        when {
-            status.availability == Availability.AVAILABILITY_UNSPECIFIED -> null
+    fun maxAgeMillis(status: RequestStatus): Long? {
+        if (status.availability == Availability.AVAILABILITY_UNSPECIFIED) return null
+        // The 4K version is graded the same way, and whichever of the two moves faster sets the age.
+        val versions = listOf(status.availability, status.availability4K)
+        return when {
             status.isMoving() -> movingMaxAgeMillis
-            status.availability == Availability.AVAILABILITY_PENDING -> WAITING_MAX_AGE_MILLIS
-            status.availability == Availability.AVAILABILITY_PARTIALLY_AVAILABLE -> WAITING_MAX_AGE_MILLIS
+            versions.any { it == Availability.AVAILABILITY_PENDING || it == Availability.AVAILABILITY_PARTIALLY_AVAILABLE } ->
+                WAITING_MAX_AGE_MILLIS
             else -> SETTLED_MAX_AGE_MILLIS
         }
+    }
 
     fun isFresh(
         cached: CachedStatus,
@@ -54,4 +57,5 @@ class MediaStatusFreshness(
  */
 private fun RequestStatus.isMoving(): Boolean =
     availability == Availability.AVAILABILITY_PROCESSING ||
+        availability4K == Availability.AVAILABILITY_PROCESSING ||
         (hasDownload() && download.state != DownloadState.DOWNLOAD_STATE_UNSPECIFIED)

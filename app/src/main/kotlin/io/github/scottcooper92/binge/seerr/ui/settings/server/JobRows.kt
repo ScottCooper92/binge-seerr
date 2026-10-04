@@ -3,9 +3,10 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Image
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -122,14 +124,21 @@ private fun jobIcon(id: String): ImageVector =
         else -> Icons.Filled.Schedule
     }
 
+/**
+ * The last run's outcome, where the run and stop buttons sit: centred in the same box, so the glyph
+ * stays put from play to stop to check. Success is a plain check in the buttons' own colour; the
+ * row's icon and detail already say it went well. A failure keeps its error colour.
+ */
 @Composable
 private fun OutcomeIcon(outcome: JobOutcome) {
     val ok = outcome == JobOutcome.Succeeded
-    Icon(
-        imageVector = if (ok) Icons.Filled.CheckCircle else Icons.Filled.Error,
-        contentDescription = stringResource(if (ok) R.string.server_settings_job_succeeded else R.string.server_settings_job_failed),
-        tint = (if (ok) BingeSentiment.Positive else BingeSentiment.Negative).fill(),
-    )
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Icon(
+            imageVector = if (ok) Icons.Filled.Check else Icons.Filled.Error,
+            contentDescription = stringResource(if (ok) R.string.server_settings_job_succeeded else R.string.server_settings_job_failed),
+            tint = if (ok) LocalContentColor.current else BingeSentiment.Negative.fill(),
+        )
+    }
 }
 
 /** A preset, or a cron of the admin's own; the field shows whichever was picked last. */
