@@ -1,11 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.AltRoute
 import androidx.compose.material.icons.filled.Dns
@@ -19,34 +14,27 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.formatRelativeOrAbsolute
-import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
-import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.imeActionIf
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
 
 /** What the page does beside the form: the libraries, the scan, the Plex picker, and the way to Tautulli. */
 class MediaServerActions(
@@ -60,6 +48,11 @@ class MediaServerActions(
     val onOpenTautulli: () -> Unit,
 )
 
+/**
+ * The media-server page, as collapsible sections (#549): the connection, with its host and port
+ * required; the links users open, closed until asked for; the libraries; the full scan, closed unless
+ * one is running; and, for Plex, the way to Tautulli.
+ */
 @Composable
 fun MediaServerScreen(
     state: ExtrasEditorUiState<MediaServerForm, MediaServerExtras>,
@@ -68,18 +61,20 @@ fun MediaServerScreen(
     serverActions: MediaServerActions,
 ) {
     val extras = (state as? ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>)?.extras ?: MediaServerExtras()
+    val validation = remember { EditorValidation<MediaServerForm>(MEDIA_SERVER_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(R.string.server_settings_media_server),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        canSave = { it.valid },
+        validation = validation,
     ) { draft, enabled ->
         ConnectionFields(draft, enabled, actions, serverActions)
+        LinkFields(draft, enabled, actions)
         LibrariesSection(extras, serverActions)
         ScanSection(extras.scan, serverActions)
         if (draft.kind == MediaServerKind.Plex) {
-            EditorSectionCard(stringResource(R.string.server_settings_tautulli)) {
+            EditorSection(MediaServerSections.TAUTULLI, stringResource(R.string.server_settings_tautulli)) {
                 BingeOutlinedButton(
                     label = stringResource(R.string.server_settings_tautulli_open),
                     onClick = serverActions.onOpenTautulli,
@@ -98,7 +93,7 @@ private fun ConnectionFields(
     actions: EditorActions<MediaServerForm>,
     serverActions: MediaServerActions,
 ) {
-    EditorSectionCard(stringResource(R.string.settings_group_connection)) {
+    EditorSection(MediaServerSections.CONNECTION, stringResource(R.string.settings_group_connection)) {
         Text(
             stringResource(R.string.server_settings_media_server_lead, stringResource(draft.kind.labelRes()), draft.serverName)
                 .trimEnd(' ', ':'),
@@ -114,7 +109,6 @@ private fun ConnectionFields(
             )
         }
         AddressFields(draft, enabled, actions)
-        LinkFields(draft, enabled, actions)
     }
 }
 
@@ -131,6 +125,8 @@ private fun AddressFields(
         enabled = enabled,
         keyboardType = KeyboardType.Uri,
         placeholder = stringResource(R.string.placeholder_host),
+        fieldId = MediaServerFields.HOST,
+        required = true,
     ) { value ->
         actions.onEdit { it.copy(host = value) }
     }
@@ -141,7 +137,8 @@ private fun AddressFields(
         enabled = enabled,
         keyboardType = KeyboardType.Number,
         placeholder = portPlaceholder(draft.kind),
-        isError = draft.port.isNotBlank() && !hostAndPortValid("x", draft.port),
+        fieldId = MediaServerFields.PORT,
+        required = true,
     ) { value -> actions.onEdit { it.copy(port = value) } }
     EditorToggleRow(
         editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
@@ -159,14 +156,26 @@ private fun AddressFields(
             actions.onEdit { it.copy(urlBase = value) }
         }
     }
+    draft.apiKey?.let { key ->
+        EditorTextField(
+            key,
+            stringResource(R.string.server_settings_api_key),
+            icon = Icons.Filled.Key,
+            enabled = enabled,
+            secret = true,
+        ) { value ->
+            actions.onEdit { it.copy(apiKey = value) }
+        }
+    }
 }
 
+/** The addresses users are sent to, rather than the one the server is reached at. Optional, so closed until asked for. */
 @Composable
 private fun LinkFields(
     draft: MediaServerForm,
     enabled: Boolean,
     actions: EditorActions<MediaServerForm>,
-) {
+) = EditorSection(MediaServerSections.LINKS, stringResource(R.string.server_settings_media_server_links), defaultExpanded = false) {
     EditorTextField(
         draft.externalUrl,
         stringResource(
@@ -177,8 +186,8 @@ private fun LinkFields(
         keyboardType = KeyboardType.Uri,
         placeholder = externalUrlPlaceholder(draft.kind),
         supporting = stringResource(R.string.server_settings_external_hint),
-        isError = !draft.externalUrlValid,
-        imeAction = imeActionIf(last = draft.forgotPasswordUrl == null && draft.apiKey == null),
+        fieldId = MediaServerFields.EXTERNAL_URL,
+        imeAction = imeActionIf(last = draft.forgotPasswordUrl == null),
     ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
     draft.forgotPasswordUrl?.let { url ->
         EditorTextField(
@@ -188,22 +197,10 @@ private fun LinkFields(
             enabled = enabled,
             keyboardType = KeyboardType.Uri,
             placeholder = stringResource(R.string.placeholder_url_https),
-            isError = !draft.forgotPasswordUrlValid,
-            imeAction = imeActionIf(last = draft.apiKey == null),
-        ) { value ->
-            actions.onEdit { it.copy(forgotPasswordUrl = value) }
-        }
-    }
-    draft.apiKey?.let { key ->
-        EditorTextField(
-            key,
-            stringResource(R.string.server_settings_api_key),
-            icon = Icons.Filled.Key,
-            enabled = enabled,
-            secret = true,
+            fieldId = MediaServerFields.FORGOT_PASSWORD_URL,
             imeAction = ImeAction.Done,
         ) { value ->
-            actions.onEdit { it.copy(apiKey = value) }
+            actions.onEdit { it.copy(forgotPasswordUrl = value) }
         }
     }
 }
@@ -214,31 +211,25 @@ private fun LibrariesSection(
     extras: MediaServerExtras,
     actions: MediaServerActions,
 ) {
-    val title = stringResource(R.string.server_settings_libraries)
-    if (extras.libraries.isEmpty()) {
-        EditorSectionCard(title) {
+    EditorSection(MediaServerSections.LIBRARIES, stringResource(R.string.server_settings_libraries)) {
+        if (extras.libraries.isEmpty()) {
             Text(
                 stringResource(R.string.server_settings_libraries_none),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            SyncLibrariesButton(extras, actions)
         }
-        return
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-        EditorToggleGroup(
-            title,
-            extras.libraries.map { library ->
+        extras.libraries.forEach { library ->
+            EditorToggleRow(
                 editorToggle(
                     Icons.Filled.VideoLibrary,
                     library.name,
                     library.enabled,
                     library.id !in extras.busyLibraryIds,
                     detail = library.detail(),
-                ) { on -> actions.onSetLibraryEnabled(library.id, on) }
-            },
-        )
+                ) { on -> actions.onSetLibraryEnabled(library.id, on) },
+            )
+        }
         SyncLibrariesButton(extras, actions)
     }
 }
@@ -270,13 +261,13 @@ private fun MediaLibrary.detail(): String {
     }
 }
 
-/** The full scan: its progress while running with a way to stop it, else a way to start one. */
+/** The full scan: its progress while running with a way to stop it, else a way to start one. Closed unless one is running. */
 @Composable
 private fun ScanSection(
     scan: LibraryScan?,
     actions: MediaServerActions,
 ) {
-    EditorSectionCard(stringResource(R.string.server_settings_scan)) {
+    EditorSection(MediaServerSections.SCAN, stringResource(R.string.server_settings_scan), defaultExpanded = scan?.running == true) {
         ScanContent(scan, actions)
     }
 }
@@ -311,73 +302,6 @@ private fun ScanContent(
             onClick = actions.onStartScan,
             modifier = Modifier.fillMaxWidth(),
         )
-    }
-}
-
-/** The admin's own Plex servers, each connection a row: picking one fills the address fields. */
-@Composable
-private fun PlexServerSheet(
-    picker: PlexServerPicker,
-    actions: MediaServerActions,
-) {
-    BingeBottomSheet(onDismissRequest = actions.onCloseServerPicker) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.screen_content_inset)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        ) {
-            Text(stringResource(R.string.server_settings_plex_pick), style = MaterialTheme.typography.titleLarge)
-            when (picker) {
-                PlexServerPicker.Loading -> LoadingScreen()
-                is PlexServerPicker.Failed -> ErrorScreen(error = picker.error, onRetry = actions.onOpenServerPicker)
-                is PlexServerPicker.Ready ->
-                    if (picker.servers.isEmpty()) {
-                        Text(stringResource(R.string.server_settings_plex_none), style = MaterialTheme.typography.bodyMedium)
-                    } else {
-                        picker.servers.forEach { server -> PlexServerRows(server, actions) }
-                    }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlexServerRows(
-    server: PlexServerChoice,
-    actions: MediaServerActions,
-) {
-    Text(server.name, style = MaterialTheme.typography.titleSmall)
-    server.connections.forEach { connection ->
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { actions.onChooseConnection(server, connection) }
-                    .padding(vertical = dimensionResource(DesR.dimen.padding_xs)),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                Text(
-                    stringResource(R.string.server_settings_plex_connection, connection.address, connection.port),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    listOfNotNull(
-                        stringResource(if (connection.local) R.string.server_settings_plex_local else R.string.server_settings_plex_remote),
-                        if (connection.useSsl) stringResource(R.string.server_settings_use_ssl) else null,
-                    ).joinToString(stringResource(R.string.hub_meta_separator)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            connection.reachable?.let { reachable ->
-                Text(
-                    stringResource(if (reachable) R.string.server_settings_plex_reachable else R.string.server_settings_plex_unreachable),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (reachable) BingeSentiment.Positive.fill() else BingeSentiment.Negative.fill(),
-                )
-            }
-        }
     }
 }
 
