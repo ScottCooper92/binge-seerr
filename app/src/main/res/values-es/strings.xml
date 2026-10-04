@@ -505,6 +505,7 @@
     <string name="editor_error_port">Introduce un puerto entre 1 y 65535.</string>
     <string name="editor_error_web_url">Introduce una dirección web que empiece por http:// o https://.</string>
     <string name="editor_error_web_url_no_slash">Introduce una dirección web que empiece por http:// o https://, sin barra al final.</string>
+    <string name="editor_error_whole_number">Introduce un número entero o déjalo en blanco.</string>
     <string name="server_settings_dvr_default">Instancia predeterminada</string>
     <string name="server_settings_dvr_4k">Instancia 4K</string>
     <string name="server_settings_dvr_sync">Sincronizar lo que contiene</string>

@@ -25,6 +25,8 @@ import androidx.compose.ui.res.dimensionResource
 import com.binge.designsystem.component.BingeSnackbarHost
 import com.binge.designsystem.component.DetailHero
 import com.binge.designsystem.component.DetailOverlayTopBar
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.R as DesR
 
 /**
@@ -70,6 +72,9 @@ internal fun MediaHeroDetailScaffold(
  * that wraps them, rather than the outer [Column] — so a raised footer's own surface reaches the true
  * screen edge in landscape, rather than stopping short of a display-cutout inset it does not need
  * protecting from.
+ *
+ * The hero carries the [LayoutAnchors.Detail.HERO] anchor, so a page's skeleton can be checked against it
+ * with the geometry harness (#572). Every caller has a hero, so the tag is not a parameter.
  *
  * [inFlight] draws a thin indeterminate bar just under [DetailOverlayTopBar], over the page rather than
  * in its flow, so showing or hiding it reflows nothing.
@@ -121,6 +126,7 @@ internal fun MediaHeroDetailPage(
                     showChrome = false,
                     richBackdrop = true,
                     metaContent = metaContent,
+                    modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.HERO)),
                 )
                 body()
             }
