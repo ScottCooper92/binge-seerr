@@ -77,7 +77,7 @@ data class GeneralSettings(
 
     /** A quota field is a whole number or blank; anything else is not a change the server would take. */
     val quotasValid: Boolean
-        get() = listOf(movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays).all { it.isBlank() || (it.toIntOrNull() ?: -1) >= 0 }
+        get() = listOf(movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays).all(::quotaValueValid)
 }
 
 /** The password page: whether the account has one, whether the caller must give it, and the two new entries. */
