@@ -14,7 +14,7 @@ re-report anything that set decides. The audit's value is what it *doesn't* gate
 
 Scope to the whole repo or named packages under `app/src/main/kotlin/io/github/scottcooper92/binge/seerr/`
 (`ui/`, `ui/tv/`, `seerr/`, `service/`, `auth/`, `data/`, `notifications/`, `feedback/`,
-`telemetry/`, `di/`). Skip `binge-integrations/` and `design-system/` (submodules with their own
+`telemetry/`, `di/`). Skip `binge-companions/` and `design-system/` (submodules with their own
 repos and audits) and `build/`.
 
 **Three disciplines make this useful rather than noisy:**

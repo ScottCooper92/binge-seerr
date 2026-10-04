@@ -43,7 +43,7 @@ abstract class CheckGrpcAlignmentTask : DefaultTask() {
                 "Every io.grpc module must resolve to the catalog's grpc = $expected, but:\n" +
                     misaligned.joinToString("\n") { "  - $it" } +
                     "\nThe SDK brings grpc-binder at binge-companions' catalog version: bump the " +
-                    "binge-integrations submodule to a revision on the same grpc, in a commit of its own.",
+                    "binge-companions submodule to a revision on the same grpc, in a commit of its own.",
             )
         }
     }

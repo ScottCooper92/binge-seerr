@@ -22,7 +22,7 @@ app was built against.
   needs something a companion could not use, it does not belong there.
 - **Then bump the submodule here in a commit of its own.** `.gitmodules` and the pin are
   agent-governed paths, so an author bot's commit can revert them — check the pin after any bot
-  push, exactly as for `binge-integrations/`.
+  push, exactly as for `binge-companions/`.
 - **The screen itself** — an ordinary change here. Reach for a design-system component before
   writing chrome, and for its `padding_*` tokens (`import com.binge.designsystem.R as DesR`)
   before adding a dimen of your own. A dimen this repository declares is a sign the component
