@@ -140,8 +140,9 @@ write when they are off:
 and `RequestStatus.file_info` is never set. The contract makes both optional. Seerr's API does not
 carry a finished download's file; only Radarr does. Radarr's host and API key are only in Seerr's
 admin-only `GET /settings/radarr`. Serving it would mean holding a Radarr key and calling a second
-host, for admins only. That would break the privacy promise that this app talks to the Seerr server
-and nothing else, except plex.tv (#483). If Seerr ever returns the file itself, this becomes a
+host, for admins only. That would break the privacy promise that the app's server traffic goes only
+to the Seerr server the user entered (and plex.tv for a Plex sign-in), never to a second host such
+as Radarr (#483). If Seerr ever returns the file itself, this becomes a
 mapping change.
 
 ## TLS and self-signed servers
