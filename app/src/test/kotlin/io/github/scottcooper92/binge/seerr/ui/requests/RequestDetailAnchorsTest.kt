@@ -13,8 +13,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The resolved request page carries the anchors its skeleton declares, so a geometry check can
- * compare the two once the harness is shared (#572). An anchor missing here would read as "never
+ * The resolved request page carries the anchors its skeleton declares, `HERO` and `OVERVIEW`, so the
+ * geometry check can compare the two (#572). An anchor missing here would read as "never
  * compared" rather than as a failure.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -25,6 +25,19 @@ class RequestDetailAnchorsTest {
 
     @Test
     fun `the resolved page tags the overview the skeleton reserves`() {
+        setResolvedPage()
+
+        rule.onNodeWithTag(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the resolved page tags the hero the skeleton reserves`() {
+        setResolvedPage()
+
+        rule.onNodeWithTag(LayoutAnchors.section(LayoutAnchors.Detail.HERO)).assertIsDisplayed()
+    }
+
+    private fun setResolvedPage() {
         rule.setContent {
             SeerrTheme {
                 RequestDetailPage(
@@ -37,8 +50,6 @@ class RequestDetailAnchorsTest {
                 )
             }
         }
-
-        rule.onNodeWithTag(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)).assertIsDisplayed()
     }
 
     private fun detail(): RequestDetail =

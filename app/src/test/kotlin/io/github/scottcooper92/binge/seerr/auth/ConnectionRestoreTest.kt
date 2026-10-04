@@ -53,12 +53,13 @@ class ConnectionRestoreTest {
         scope: CoroutineScope,
         store: CredentialStore,
         carrier: ConnectionCarrier,
+        consent: CleartextConsent = cleartext,
     ) = ConnectionRestore(
         store,
-        SeerrApiFactory(logRequests = false, cleartext = cleartext, testDns = { listOf(InetAddress.getLoopbackAddress()) }),
+        SeerrApiFactory(logRequests = false, cleartext = consent, testDns = { listOf(InetAddress.getLoopbackAddress()) }),
         carrier,
         scope,
-        cleartext,
+        consent,
     )
 
     @Test
@@ -192,14 +193,84 @@ class ConnectionRestoreTest {
             assertEquals(unreachable, carrier.held?.credentials)
         }
 
+    /** #721: a connection carried before the payload held the opt-in gets it on the next start. */
+    @Test
+    fun `a carrier missing the opt-in the saved public plain-http server holds is rewritten with it`() =
+        runTest {
+            val store = store(backgroundScope)
+            store.save(publicCarried)
+            cleartext.grant(PUBLIC_HOST)
+            val carrier = FakeCarrier(publicCarried)
+
+            restore(backgroundScope, store, carrier).refreshCarrier()
+
+            assertEquals(CarriedCredentials(publicCarried, cleartext = true), carrier.held)
+        }
+
+    /** A user whose consent was grandfathered in never saw the opt-in, so no save ever carried it. */
+    @Test
+    fun `a grandfathered consent is carried on the next start`() =
+        runTest {
+            val store = store(backgroundScope)
+            store.save(publicCarried)
+            val grandfathered = DataStoreCleartextConsent(InMemoryDataStore()) { publicCarried.baseUrl }
+            val carrier = FakeCarrier(publicCarried)
+
+            restore(backgroundScope, store, carrier, grandfathered).refreshCarrier()
+
+            assertEquals(CarriedCredentials(publicCarried, cleartext = true), carrier.held)
+        }
+
+    @Test
+    fun `a carrier already in step is not written again`() =
+        runTest {
+            val store = store(backgroundScope)
+            store.save(publicCarried)
+            cleartext.grant(PUBLIC_HOST)
+            val carrier = FakeCarrier(publicCarried, cleartext = true)
+
+            restore(backgroundScope, store, carrier).refreshCarrier()
+
+            assertEquals(0, carrier.puts)
+        }
+
+    /** The opt-in is carried only for a host that needs it: a server reached over https never carries one. */
+    @Test
+    fun `a carrier for a server that needs no opt-in is left without one`() =
+        runTest {
+            val store = store(backgroundScope)
+            val secure = SeerrCredentials("https://$PUBLIC_HOST/", SeerrAuth.ApiKey("k3y"))
+            store.save(secure)
+            cleartext.grant(PUBLIC_HOST)
+            val carrier = FakeCarrier(secure)
+
+            restore(backgroundScope, store, carrier).refreshCarrier()
+
+            assertEquals(0, carrier.puts)
+            assertEquals(CarriedCredentials(secure, cleartext = false), carrier.held)
+        }
+
+    @Test
+    fun `a device with nothing saved leaves the carrier alone`() =
+        runTest {
+            val carrier = FakeCarrier(publicCarried)
+
+            restore(backgroundScope, store(backgroundScope), carrier).refreshCarrier()
+
+            assertEquals(0, carrier.reads)
+            assertEquals(CarriedCredentials(publicCarried), carrier.held)
+        }
+
     private class FakeCarrier(
         credentials: SeerrCredentials?,
         cleartext: Boolean = false,
     ) : ConnectionCarrier {
         var held: CarriedCredentials? = credentials?.let { CarriedCredentials(it, cleartext) }
         var reads = 0
+        var puts = 0
 
         override suspend fun put(carried: CarriedCredentials) {
+            puts++
             held = carried
         }
 

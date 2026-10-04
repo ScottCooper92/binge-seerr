@@ -5,6 +5,7 @@ import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.DownloadState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -174,5 +175,25 @@ class SeerrStatusMappingTest {
         assertEquals(Availability.AVAILABILITY_AVAILABLE, status.seasonsList.single().availability)
         assertEquals(Availability.AVAILABILITY_PENDING, status.seasons4KList.single().availability)
         assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, (null as SeerrMediaInfoDto?).toRequestStatus(NOW).availability4K)
+    }
+
+    @Test
+    fun `the download takes in the 4k downloads, and the standard download leaves them out`() {
+        val info =
+            SeerrMediaInfoDto(
+                downloadStatus = listOf(SeerrDownloadStatusDto(title = "Standard", size = 1_000.0, sizeLeft = 500.0)),
+                downloadStatus4k = listOf(SeerrDownloadStatusDto(title = "UHD", size = 3_000.0, sizeLeft = 3_000.0)),
+            )
+
+        assertEquals(4_000L, info.toRequestStatus(NOW).download.totalBytes)
+        assertEquals(1_000L, checkNotNull(info.standardDownload(NOW)).totalBytes)
+    }
+
+    @Test
+    fun `a title downloading only in 4k has a download but no standard one`() {
+        val info = SeerrMediaInfoDto(downloadStatus4k = listOf(SeerrDownloadStatusDto(size = 3_000.0, sizeLeft = 1_500.0)))
+
+        assertEquals(0.5f, info.toRequestStatus(NOW).download.fraction, 0.0001f)
+        assertNull(info.standardDownload(NOW))
     }
 }

@@ -10,6 +10,7 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.ListRefreshes
 import io.github.scottcooper92.binge.seerr.data.RequestListQuery
 import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestsRemoteMediator
@@ -156,6 +157,8 @@ class RequestsViewModel
                 }.flowOn(dispatcher)
                 .stateIn(viewModelScope, SharingStarted.Lazily, ScopeState.Resolving)
 
+        private val refreshes = ListRefreshes<RequestFilter>()
+
         private val streams: Map<RequestFilter, Flow<PagingData<RequestItem>>> =
             RequestFilter.entries.associateWith { filter ->
                 combine(selectedSort, scope.filterIsInstance<ScopeState.Resolved>()) { sort, resolved -> sort to resolved.scope }
@@ -164,7 +167,12 @@ class RequestsViewModel
                         Pager(
                             config = PagingConfig(pageSize = REQUESTS_PAGE_SIZE),
                             remoteMediator =
-                                RequestsRemoteMediator(query = query, api = connection::api, store = store) { dto, api, key, index ->
+                                RequestsRemoteMediator(
+                                    query = query,
+                                    api = connection::api,
+                                    store = store,
+                                    onRefresh = { rows -> refreshes.record(filter, rows) },
+                                ) { dto, api, key, index ->
                                     dto.toRequestEntity(api, titles::get, key, index, System.currentTimeMillis())
                                 },
                         ) { store.pagingSource(query.listKey) }.flow
@@ -193,7 +201,8 @@ class RequestsViewModel
                 counts,
                 scope,
                 moderation.actingIds,
-            ) { (filter, sort, version), counts, scope, acting ->
+                refreshes.latest,
+            ) { (filter, sort, version), counts, scope, acting, refreshes ->
                 when (scope) {
                     ScopeState.Resolving -> RequestsUiState.Loading
                     is ScopeState.Failed -> RequestsUiState.Error(scope.error)
@@ -205,6 +214,7 @@ class RequestsViewModel
                             scope = scope.scope.moderation,
                             actingIds = acting,
                             listVersion = version,
+                            refreshes = refreshes,
                         )
                 }
             }.stateIn(viewModelScope, SharingStarted.Lazily, RequestsUiState.Loading)

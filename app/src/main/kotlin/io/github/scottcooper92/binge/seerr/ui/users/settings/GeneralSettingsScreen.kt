@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -23,19 +24,24 @@ import io.github.scottcooper92.binge.seerr.R
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
-/** The general page: identity and contact, the discovery locale, and, for a manager, the quotas. */
+/**
+ * The general page, as collapsible sections (#549): identity and contact, the discovery locale, and,
+ * for a manager, the quotas. Nothing is required. Profile starts open; Discover and the quotas start
+ * closed, and open themselves when they hold a value of the wrong shape.
+ */
 @Composable
 fun GeneralSettingsScreen(
     state: EditorUiState<GeneralSettings>,
     events: Flow<EditorEvent>,
     actions: EditorActions<GeneralSettings>,
 ) {
+    val validation = remember { EditorValidation<GeneralSettings>(GENERAL_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(R.string.user_settings_page_general),
         state = state,
         events = events,
         actions = actions,
-        canSave = { it.valid },
+        validation = validation,
     ) { draft, enabled ->
         ProfileCard(draft, enabled, actions)
         DiscoverCard(draft, enabled, actions)
@@ -51,7 +57,7 @@ private fun ProfileCard(
     enabled: Boolean,
     actions: EditorActions<GeneralSettings>,
 ) {
-    EditorSectionCard(stringResource(R.string.user_settings_section_profile)) {
+    EditorSection(GeneralSections.PROFILE, stringResource(R.string.user_settings_section_profile)) {
         EditorTextField(
             draft.displayName,
             stringResource(R.string.user_settings_display_name),
@@ -70,8 +76,7 @@ private fun ProfileCard(
             enabled = enabled && draft.canEditEmail,
             keyboardType = KeyboardType.Email,
             placeholder = stringResource(R.string.placeholder_email),
-            supporting = stringResource(R.string.user_settings_email_invalid).takeIf { !draft.emailValid },
-            isError = !draft.emailValid,
+            fieldId = GeneralFields.EMAIL,
         ) { value -> actions.onEdit { it.copy(email = value) } }
         EditorTextField(
             draft.discordId,
@@ -80,7 +85,7 @@ private fun ProfileCard(
             enabled = enabled,
             keyboardType = KeyboardType.Number,
             supporting = stringResource(R.string.user_settings_discord_id_hint),
-            isError = !draft.discordIdValid,
+            fieldId = GeneralFields.DISCORD_ID,
         ) { value -> actions.onEdit { it.copy(discordId = value) } }
     }
 }
@@ -91,14 +96,14 @@ private fun DiscoverCard(
     enabled: Boolean,
     actions: EditorActions<GeneralSettings>,
 ) {
-    EditorSectionCard(stringResource(R.string.user_settings_section_discover)) {
+    EditorSection(GeneralSections.DISCOVER, stringResource(R.string.user_settings_section_discover), defaultExpanded = false) {
         EditorTextField(
             draft.locale,
             stringResource(R.string.settings_display_language),
             icon = Icons.Filled.Translate,
             enabled = enabled,
             supporting = stringResource(R.string.user_settings_locale_hint),
-            isError = !draft.localeValid,
+            fieldId = GeneralFields.LOCALE,
         ) { value -> actions.onEdit { it.copy(locale = value) } }
         EditorTextField(
             draft.region,
@@ -106,7 +111,7 @@ private fun DiscoverCard(
             icon = Icons.Filled.Public,
             enabled = enabled,
             supporting = stringResource(R.string.user_settings_region_hint),
-            isError = !draft.regionValid,
+            fieldId = GeneralFields.REGION,
         ) { value -> actions.onEdit { it.copy(region = value) } }
         EditorTextField(
             draft.originalLanguage,
@@ -115,7 +120,7 @@ private fun DiscoverCard(
             enabled = enabled,
             // The same field as the server-level one, so it says the same thing rather than a second wording of it.
             supporting = stringResource(R.string.server_settings_original_language_hint),
-            isError = !draft.originalLanguageValid,
+            fieldId = GeneralFields.ORIGINAL_LANGUAGE,
             imeAction = imeActionIf(last = !draft.canEditQuotas),
         ) { value ->
             actions.onEdit { it.copy(originalLanguage = value) }
@@ -143,12 +148,13 @@ private fun QuotasCard(
     enabled: Boolean,
     actions: EditorActions<GeneralSettings>,
 ) {
-    EditorSectionCard(stringResource(R.string.user_settings_quotas)) {
+    EditorSection(GeneralSections.QUOTAS, stringResource(R.string.user_settings_quotas), defaultExpanded = false) {
         QuotaFields(
             title = stringResource(R.string.hub_quota_movies),
             limit = draft.movieQuotaLimit,
             days = draft.movieQuotaDays,
             default = draft.defaultMovieQuota,
+            fieldIds = GeneralFields.MOVIE_QUOTA_LIMIT to GeneralFields.MOVIE_QUOTA_DAYS,
             enabled = enabled,
             onLimit = { value -> actions.onEdit { it.copy(movieQuotaLimit = value) } },
             onDays = { value -> actions.onEdit { it.copy(movieQuotaDays = value) } },
@@ -158,6 +164,7 @@ private fun QuotasCard(
             limit = draft.tvQuotaLimit,
             days = draft.tvQuotaDays,
             default = draft.defaultTvQuota,
+            fieldIds = GeneralFields.TV_QUOTA_LIMIT to GeneralFields.TV_QUOTA_DAYS,
             enabled = enabled,
             onLimit = { value -> actions.onEdit { it.copy(tvQuotaLimit = value) } },
             onDays = { value -> actions.onEdit { it.copy(tvQuotaDays = value) } },
@@ -173,6 +180,8 @@ private fun QuotaFields(
     limit: String,
     days: String,
     default: QuotaDefault?,
+    /** The limit's and the window's ids, so a value of the wrong shape is reported beside its own field. */
+    fieldIds: Pair<String, String>,
     enabled: Boolean,
     onLimit: (String) -> Unit,
     onDays: (String) -> Unit,
@@ -187,7 +196,7 @@ private fun QuotaFields(
             modifier = Modifier.weight(1f),
             enabled = enabled,
             keyboardType = KeyboardType.Number,
-            isError = limit.isNotBlank() && (limit.toIntOrNull() ?: -1) < 0,
+            fieldId = fieldIds.first,
         )
         EditorTextField(
             days,
@@ -196,7 +205,7 @@ private fun QuotaFields(
             modifier = Modifier.weight(1f),
             enabled = enabled,
             keyboardType = KeyboardType.Number,
-            isError = days.isNotBlank() && (days.toIntOrNull() ?: -1) < 0,
+            fieldId = fieldIds.second,
             imeAction = daysImeAction,
         )
     }

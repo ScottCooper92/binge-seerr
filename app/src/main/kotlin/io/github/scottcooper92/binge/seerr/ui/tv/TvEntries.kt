@@ -23,6 +23,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import androidx.tv.material3.MaterialTheme
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.LocalAnalytics
@@ -44,6 +45,8 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
+import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailActions
@@ -166,7 +169,7 @@ private fun TvRequestsEntry(
     }
     TvRequestsBoard(
         state = state,
-        rows = lazyItems.toRows { it.id },
+        rows = lazyItems.toRows(ready?.refreshes?.get(ready.filter)) { it.id },
         openRequestId = openRequestId,
         actions =
             TvRequestsActions(
@@ -236,7 +239,7 @@ private fun TvIssuesEntry(
     val lazyItems = ready?.let { viewModel.issues(it.filter).collectAsLazyPagingItems() }
     TvIssuesBoard(
         state = state,
-        rows = lazyItems.toRows { it.id },
+        rows = lazyItems.toRows(ready?.refreshes?.get(ready.filter)) { it.id },
         events = viewModel.events,
         openIssueId = openIssueId,
         actions =
@@ -337,23 +340,38 @@ private fun TvEditConnectionOverlay(
     }
 }
 
-/** The pager's count, accessor and load states, in the form the boards take; empty while there is no pager. */
-private fun <T : Any> LazyPagingItems<T>?.toRows(keyOf: (T) -> Any): TvPagedRows<T> {
+/**
+ * The pager's count, accessor and load states, in the form the boards take; still loading while there is no
+ * pager. The refresh is the phone's [rememberPagedPhase], so the two never disagree on what an empty list is.
+ */
+@Composable
+private fun <T : Any> LazyPagingItems<T>?.toRows(
+    lastRefresh: ListRefresh?,
+    keyOf: (T) -> Any,
+): TvPagedRows<T> {
     if (this == null) return TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Loading)
     return TvPagedRows(
         count = itemCount,
         at = { index -> this[index] },
         itemKey = itemKey(keyOf),
-        refresh = loadState.refreshPhase(),
+        refresh = rememberPagedPhase(lastRefresh).tvRefresh(),
         append = loadState.appendPhase(),
     )
 }
 
 /**
- * The refresh the server's answer decides, as the phone's lists read it: the cache's own refresh reports
- * only the database, so a failed network refresh behind cached rows is on the mediator's state.
+ * A [PagedPhase] as the boards' refresh. [TvPagedList] shows rows whenever there are any, so an idle refresh
+ * with none is the empty plate and a loading one is the loading plate.
  */
-internal fun CombinedLoadStates.refreshPhase(): TvLoadPhase = settle(mediator?.refresh, refresh).toPhase()
+internal fun PagedPhase.tvRefresh(): TvLoadPhase =
+    when (this) {
+        PagedPhase.Skeleton -> TvLoadPhase.Loading
+        PagedPhase.Empty -> TvLoadPhase.Idle
+        is PagedPhase.Rows -> refreshError?.toTvFailed() ?: if (refreshing) TvLoadPhase.Loading else TvLoadPhase.Idle
+        is PagedPhase.Failed -> error.toTvFailed()
+    }
+
+private fun Throwable.toTvFailed() = TvLoadPhase.Failed(rejected = toSeerrError() == SeerrError.Unauthorized)
 
 internal fun CombinedLoadStates.appendPhase(): TvLoadPhase = settle(mediator?.append, append).toPhase()
 

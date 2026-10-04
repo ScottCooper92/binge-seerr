@@ -10,6 +10,7 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.data.ListRefreshes
 import io.github.scottcooper92.binge.seerr.data.USERS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.data.UsersRemoteMediator
@@ -108,13 +109,20 @@ class UsersViewModel
                 }.flowOn(dispatcher)
                 .stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
 
+        private val refreshes = ListRefreshes<UserSort>()
+
         val users: Flow<PagingData<UserItem>> =
             combine(selectedSort, listVersion) { sort, _ -> sort }
                 .flatMapLatest { sort ->
                     Pager(
                         config = PagingConfig(pageSize = USERS_PAGE_SIZE),
                         remoteMediator =
-                            UsersRemoteMediator(sort = sort.apiValue, api = connection::api, store = store) { dto, key, index ->
+                            UsersRemoteMediator(
+                                sort = sort.apiValue,
+                                api = connection::api,
+                                store = store,
+                                onRefresh = { rows -> refreshes.record(sort, rows) },
+                            ) { dto, key, index ->
                                 dto.toUserItem()?.toEntity(key, index)
                             },
                     ) { store.pagingSource(sort.apiValue) }.flow
@@ -122,7 +130,13 @@ class UsersViewModel
                 .cachedIn(viewModelScope)
 
         val uiState: StateFlow<UsersUiState> =
-            combine(selectedSort, selection, edit, scope, admission.state) { sort, selection, edit, scope, admission ->
+            combine(
+                combine(selectedSort, refreshes.latest) { sort, refreshes -> sort to refreshes[sort] },
+                selection,
+                edit,
+                scope,
+                admission.state,
+            ) { (sort, refresh), selection, edit, scope, admission ->
                 UsersUiState.Ready(
                     sort = sort,
                     selection = selection,
@@ -132,6 +146,7 @@ class UsersViewModel
                     importSource = scope.importSource,
                     canGeneratePassword = scope.canGeneratePassword,
                     admission = admission,
+                    refresh = refresh,
                 )
             }.stateIn(viewModelScope, SharingStarted.Lazily, UsersUiState.Loading)
 

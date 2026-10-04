@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.data.ISSUES_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.data.IssueListQuery
 import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.data.IssuesRemoteMediator
+import io.github.scottcooper92.binge.seerr.data.ListRefreshes
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -86,6 +87,8 @@ class IssuesViewModel
                 }.flowOn(dispatcher)
                 .stateIn(viewModelScope, SharingStarted.Lazily, IssueListScope())
 
+        private val refreshes = ListRefreshes<IssueFilter>()
+
         private val streams: Map<IssueFilter, Flow<PagingData<IssueItem>>> =
             IssueFilter.entries.associateWith { filter ->
                 combine(selectedSort, scope) { sort, scope -> IssueListQuery(filter.apiValue, sort.apiValue, scope.createdBy) }
@@ -93,7 +96,12 @@ class IssuesViewModel
                         Pager(
                             config = PagingConfig(pageSize = ISSUES_PAGE_SIZE),
                             remoteMediator =
-                                IssuesRemoteMediator(query = query, api = connection::api, store = store) { dto, api, key, index ->
+                                IssuesRemoteMediator(
+                                    query = query,
+                                    api = connection::api,
+                                    store = store,
+                                    onRefresh = { rows -> refreshes.record(filter, rows) },
+                                ) { dto, api, key, index ->
                                     dto.toIssueEntity(api, titles::get, key, index)
                                 },
                         ) { store.pagingSource(query.listKey, filter.statusValue()) }.flow
@@ -125,9 +133,9 @@ class IssuesViewModel
                 combine(selectedFilter, selectedSort) { filter, sort -> filter to sort },
                 counts,
                 scope,
-                actingState,
-                actionItem,
-            ) { (filter, sort), counts, scope, acting, actionItem ->
+                combine(actingState, actionItem) { acting, actionItem -> acting to actionItem },
+                refreshes.latest,
+            ) { (filter, sort), counts, scope, (acting, actionItem), refreshes ->
                 IssuesUiState.Ready(
                     filter = filter,
                     sort = sort,
@@ -135,6 +143,7 @@ class IssuesViewModel
                     scope = scope,
                     actingIds = acting,
                     actionItem = actionItem,
+                    refreshes = refreshes,
                 )
             }.stateIn(viewModelScope, SharingStarted.Lazily, IssuesUiState.Loading)
 

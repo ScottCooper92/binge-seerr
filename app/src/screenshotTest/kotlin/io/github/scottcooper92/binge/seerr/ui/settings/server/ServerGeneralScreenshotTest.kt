@@ -10,8 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
@@ -35,12 +37,30 @@ class ServerGeneralScreenshotTest {
     @Composable
     fun overseerr() = GeneralFrame(generalReady(overseerrSettings()))
 
-    /** An application URL that is not a web address is marked and keeps Save off. */
+    /** An application URL that is not a web address is marked with what it wants, and Application is held open. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun invalidUrl() =
         GeneralFrame(generalReady(jellyseerrSettings(), draft = jellyseerrSettings().copy(applicationUrl = "requests.home.lan")))
+
+    /** A discover region of the wrong shape opens Discover, which starts closed, and shows its hint as the message. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun invalidRegionOpensDiscover() =
+        GeneralFrame(generalReady(jellyseerrSettings(), draft = jellyseerrSettings().copy(discoverRegion = "Britain")))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = GeneralFrame(generalReady(jellyseerrSettings()))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = GeneralFrame(generalReady(jellyseerrSettings()))
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -63,39 +83,57 @@ class ServerGeneralScreenshotTest {
     fun failed() = GeneralFrame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
 }
 
-/** The general page's lower sections: the server switches, and the API key. */
+/** The general page's sections that start closed, framed open: the request and server switches, and the API key. */
 class ServerGeneralSectionsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun serverSwitchesJellyseerr() = SectionFrame { ServerSwitches(jellyseerrSettings(), enabled = true, actions = noActions()) }
+    fun requestSwitches() =
+        SectionFrame {
+            RequestSwitches(jellyseerrSettings(), enabled = true, actions = noActions(), defaultExpanded = true)
+        }
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun serverSwitchesOverseerr() = SectionFrame { ServerSwitches(overseerrSettings(), enabled = true, actions = noActions()) }
+    fun serverSwitchesJellyseerr() =
+        SectionFrame {
+            ServerSwitches(jellyseerrSettings(), enabled = true, actions = noActions(), defaultExpanded = true)
+        }
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun apiKeyMasked() = SectionFrame { ApiKeySection(ApiKeyState(key = API_KEY), noKeyActions()) }
+    fun serverSwitchesOverseerr() =
+        SectionFrame {
+            ServerSwitches(overseerrSettings(), enabled = true, actions = noActions(), defaultExpanded = true)
+        }
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun apiKeyRevealed() = SectionFrame { ApiKeySection(ApiKeyState(key = API_KEY, revealed = true), noKeyActions()) }
+    fun apiKeyMasked() = SectionFrame { ApiKeySection(ApiKeyState(key = API_KEY), noKeyActions(), defaultExpanded = true) }
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun apiKeyRevealed() =
+        SectionFrame { ApiKeySection(ApiKeyState(key = API_KEY, revealed = true), noKeyActions(), defaultExpanded = true) }
 
     /** The key is being replaced: its button shows progress, and the old key is already dead. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun apiKeyRegenerating() = SectionFrame { ApiKeySection(ApiKeyState(key = API_KEY, regenerating = true), noKeyActions()) }
+    fun apiKeyRegenerating() =
+        SectionFrame {
+            ApiKeySection(ApiKeyState(key = API_KEY, regenerating = true), noKeyActions(), defaultExpanded = true)
+        }
 
     /** No key has been read, so Reveal and Copy are off. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun apiKeyUnread() = SectionFrame { ApiKeySection(ApiKeyState(), noKeyActions()) }
+    fun apiKeyUnread() = SectionFrame { ApiKeySection(ApiKeyState(), noKeyActions(), defaultExpanded = true) }
 }
 
 private const val API_KEY = "MTc1NzQ2MDk5MzEyNA1234abcd"

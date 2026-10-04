@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
+import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -125,6 +126,8 @@ sealed interface RequestsUiState {
         val actingIds: Set<Int>,
         /** Bumped after each successful moderation; the visible list reconciles in place, keeping its scroll. */
         val listVersion: Int,
+        /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
+        val refreshes: Map<RequestFilter, ListRefresh> = emptyMap(),
         /** The request whose actions sheet is open; held here so it survives rotation. */
     ) : RequestsUiState
 
