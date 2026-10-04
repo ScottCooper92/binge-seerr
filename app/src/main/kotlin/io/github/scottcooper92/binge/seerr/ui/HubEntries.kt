@@ -7,6 +7,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import io.github.scottcooper92.binge.seerr.ADMITS_UNVERIFIED_CALLERS
 import io.github.scottcooper92.binge.seerr.ui.hub.DeveloperRow
 import io.github.scottcooper92.binge.seerr.ui.hub.HubActions
 import io.github.scottcooper92.binge.seerr.ui.hub.HubScreen
@@ -42,6 +43,7 @@ internal fun HubEntry(
     HubScreen(
         state = state,
         selectedSection = selectedSection,
+        admitsUnverifiedCallers = ADMITS_UNVERIFIED_CALLERS,
         actions =
             HubActions(
                 onOpenSection = onOpenSection,

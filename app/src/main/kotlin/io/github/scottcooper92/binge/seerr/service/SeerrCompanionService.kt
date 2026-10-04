@@ -5,6 +5,7 @@ import com.binge.companion.sdk.BingeHosts
 import com.binge.companion.sdk.HostPolicy
 import com.binge.companion.sdk.IntegrationService
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.scottcooper92.binge.seerr.ADMITS_UNVERIFIED_CALLERS
 import io.github.scottcooper92.binge.seerr.BingeOnlyHostPolicy
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
@@ -59,7 +60,7 @@ class SeerrCompanionService : IntegrationService() {
      * published Play App Signing certificate, and refuse any other signer.
      */
     override fun hostPolicy(): SecurityPolicy =
-        if (BuildConfig.DEBUG) {
+        if (ADMITS_UNVERIFIED_CALLERS) {
             BingeOnlyHostPolicy(
                 selfUid = Process.myUid(),
                 packagesForUid = { uid -> packageManager.getPackagesForUid(uid).orEmpty().toList() },

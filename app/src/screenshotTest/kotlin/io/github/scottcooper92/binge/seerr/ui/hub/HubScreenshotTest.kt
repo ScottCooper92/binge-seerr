@@ -58,6 +58,15 @@ class HubScreenshotTest {
     fun readyIdle() = HubScreen(state = previewReady(downloading = emptyList()), actions = previewActions())
 
     /**
+     * A debug build's hub: the banner that says this build admits Binge's package names under any
+     * certificate (#679). A tester build and a release build pin Binge's certificate and never show it.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun readyDebugBuild() = HubScreen(state = previewReady(), actions = previewActions(), admitsUnverifiedCallers = true)
+
+    /**
      * The hub as the list pane: a wide window, but the hub itself only as wide as the pane it sits in.
      *
      * The other wide frames render it across the whole window, where `screen_content_inset`'s 32dp

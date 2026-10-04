@@ -11,11 +11,10 @@ private const val HAND_OFF_TAG = "SeerrCompanion"
  * and must not drift apart on the answer.
  *
  * Pinned in release. In debug, Binge's package names under any certificate (#679): a debug Binge is signed with
- * a key no allowlist can name, but its package is known. Selected by [BuildConfig.DEBUG] rather than by anything
- * that can be switched on in a shipped build.
+ * a key no allowlist can name, but its package is known. [ADMITS_UNVERIFIED_CALLERS] makes the choice.
  */
 internal fun Context.bingeHandOffPolicy(): HandOffGate =
-    if (BuildConfig.DEBUG) {
+    if (ADMITS_UNVERIFIED_CALLERS) {
         bingeOnlyHandOffGate(logWarning(HAND_OFF_TAG))
     } else {
         val pinned = HandOffPolicy.pinned(this, listOf(BingeHosts.release))
