@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
+import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
@@ -82,6 +83,8 @@ sealed interface IssuesUiState {
         val actingIds: Set<Int> = emptySet(),
         /** The issue whose actions sheet is open; held here so it survives rotation. */
         val actionItem: IssueItem? = null,
+        /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
+        val refreshes: Map<IssueFilter, ListRefresh> = emptyMap(),
     ) : IssuesUiState
 }
 

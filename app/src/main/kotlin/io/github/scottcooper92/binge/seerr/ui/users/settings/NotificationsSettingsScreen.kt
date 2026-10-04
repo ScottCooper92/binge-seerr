@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeFilterChip
@@ -16,8 +17,9 @@ import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
 /**
- * The notifications page: one section per agent with its switch where it has one, its own
- * fields, and the events it is sent while it is on.
+ * The notifications page: one collapsible section per agent (#549) with its switch where it has one,
+ * its own fields, and the events it is sent while it is on. An agent that is on starts open, and one
+ * that is off starts closed, so the page opens on what the user already gets.
  */
 @Composable
 fun NotificationsSettingsScreen(
@@ -25,12 +27,13 @@ fun NotificationsSettingsScreen(
     events: Flow<EditorEvent>,
     actions: EditorActions<NotificationSettings>,
 ) {
+    val validation = remember { EditorValidation<NotificationSettings>(NOTIFICATIONS_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(R.string.user_settings_page_notifications),
         state = state,
         events = events,
         actions = actions,
-        canSave = { it.valid },
+        validation = validation,
     ) { draft, enabled ->
         NotificationAgent.entries.forEach { agent -> AgentSection(agent, draft, enabled, actions.onEdit) }
     }
@@ -50,7 +53,10 @@ private fun AgentSection(
     enabled: Boolean,
     onEdit: ((NotificationSettings) -> NotificationSettings) -> Unit,
 ) {
-    EditorSectionCard(stringResource(agent.labelRes())) {
+    // Read once: for an agent with no switch, "on" means a field is filled in, so following the live
+    // draft would close the section under the user as they clear its last field.
+    val startsOpen = remember(agent) { settings.isOn(agent) }
+    EditorSection(agent.sectionId, stringResource(agent.labelRes()), defaultExpanded = startsOpen) {
         AgentFields(agent, settings, enabled, onEdit)
     }
 }
@@ -97,7 +103,7 @@ private fun AgentFields(
             enabled = enabled,
             secret = field.secret,
             supporting = field.hintRes()?.let { stringResource(it) },
-            isError = field == AgentField.DiscordId && !settings.discordIdValid,
+            fieldId = field.fieldId,
             imeAction = imeActionIf(last = field == LAST_FIELD),
         ) { value ->
             onEdit { it.update(agent) { agentSettings -> agentSettings.copy(fields = agentSettings.fields + (field to value)) } }

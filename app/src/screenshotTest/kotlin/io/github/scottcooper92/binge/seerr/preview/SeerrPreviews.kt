@@ -21,8 +21,8 @@ import com.binge.designsystem.tv.preview.TV_PREVIEW_WIDTH_DP
 private const val DEFAULT_LOCALE = "en-rGB"
 
 /**
- * The device matrix for a screen's canonical layout frame, mirroring the design system's
- * `@ScreenPreviews` cell for cell and adding [DEFAULT_LOCALE].
+ * The device matrix for a screen's canonical layout frame: the design system's `@ScreenPreviews`
+ * with [DEFAULT_LOCALE] added, less its `tablet` cell.
  *
  * | cell          | window        | theme |
  * |---------------|---------------|-------|
@@ -30,7 +30,12 @@ private const val DEFAULT_LOCALE = "en-rGB"
  * | `phone-light` | 411×891 port  | light |
  * | `phone-land`  | 891×411 land  | dark  |
  * | `foldable`    | 840×1180 port | dark  |
- * | `tablet`      | 1280×800 land | dark  |
+ *
+ * No `tablet`. This app's layouts change only at 600dp and 840dp (`resolvedContentInset`, the grid
+ * column count), and phone-land, foldable and a 1280×800 tablet all sit past 840dp. So a tablet frame
+ * showed the foldable's layout, wider, at a height between the other two. It was 39 frames of the
+ * screenshot job, the longest job in CI, for no layout of its own. Add it back if a screen ever
+ * gains a breakpoint above 840dp.
  */
 @PreviewWrapper(SeerrScreenshotThemeWrapper::class)
 @Preview(name = "phone", device = "spec:width=411dp,height=891dp,orientation=portrait", uiMode = UI_MODE_NIGHT_YES, locale = DEFAULT_LOCALE)
@@ -49,12 +54,6 @@ private const val DEFAULT_LOCALE = "en-rGB"
 @Preview(
     name = "foldable",
     device = "spec:width=840dp,height=1180dp,orientation=portrait",
-    uiMode = UI_MODE_NIGHT_YES,
-    locale = DEFAULT_LOCALE,
-)
-@Preview(
-    name = "tablet",
-    device = "spec:width=800dp,height=1280dp,orientation=landscape",
     uiMode = UI_MODE_NIGHT_YES,
     locale = DEFAULT_LOCALE,
 )

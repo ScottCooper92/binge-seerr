@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.service
 import com.binge.companion.contracts.request.v1.ApprovalState
 import com.binge.companion.contracts.request.v1.Availability
 import com.binge.companion.contracts.request.v1.Capability
+import com.binge.companion.contracts.request.v1.DownloadProgress
 import com.binge.companion.contracts.request.v1.RequestInfo
 import com.binge.companion.contracts.request.v1.RequestStatus
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
@@ -57,7 +58,8 @@ private val REQUEST_SCOPED =
 /**
  * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
  * its own set. The 4K state is cleared unless this user is declared `CAPABILITY_REQUEST_4K`, as the
- * contract asks, so it never tells them about a version they cannot request. The title's set holds a
+ * contract asks, so it never tells them about a version they cannot request; their `download` leaves
+ * the 4K downloads out for the same reason. The title's set holds a
  * report only against something available in a version they can see, and the block
  * capability either way: it offers a block on a title and an unblock on a blocked one. Its
  * request-scoped entries are the union of the requests', so a
@@ -92,12 +94,18 @@ fun SeerrPermissions.withAllowedActions(
         }
     return status
         .toBuilder()
-        .apply { if (!sees4k) clearAvailability4K().clearSeasons4K() }
+        .apply { if (!sees4k) leaveOut4k(server.standardDownload) }
         .clearRequests()
         .addAllRequests(requests)
         .clearAllowedActions()
         .addAllAllowedActions(titleActions)
         .build()
+}
+
+/** Everything about the 4K version: its state, and its downloads, which leaves [standardDownload] as the download. */
+private fun RequestStatus.Builder.leaveOut4k(standardDownload: DownloadProgress?) {
+    clearAvailability4K().clearSeasons4K()
+    if (standardDownload != null) setDownload(standardDownload) else clearDownload()
 }
 
 /**

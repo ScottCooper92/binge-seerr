@@ -5,6 +5,14 @@ import com.binge.companion.sdk.BingeHosts
 import io.grpc.Status
 import io.grpc.binder.SecurityPolicy
 
+/**
+ * Whether this build admits callers without verifying their certificate: true on debug, where the policies
+ * below stand in for the pinned ones. One switch, so the hub's banner (#679) cannot disagree with the policy
+ * the Service and the hand-off Activities actually run. Read from [BuildConfig.DEBUG] rather than from
+ * anything that can be switched on in a shipped build.
+ */
+internal val ADMITS_UNVERIFIED_CALLERS: Boolean = BuildConfig.DEBUG
+
 /** The package names the debug policies admit: debug and release Binge. */
 internal val BINGE_PACKAGE_NAMES: Set<String> = setOf(BingeHosts.RELEASE_PACKAGE_NAME, BingeHosts.DEBUG_PACKAGE_NAME)
 

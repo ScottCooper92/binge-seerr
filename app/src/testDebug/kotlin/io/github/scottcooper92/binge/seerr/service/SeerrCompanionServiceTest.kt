@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.service
 
 import com.binge.companion.sdk.HostSecurityPolicy
 import com.binge.companion.sdk.IntegrationService
+import io.github.scottcooper92.binge.seerr.ADMITS_UNVERIFIED_CALLERS
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.grpc.binder.SecurityPolicy
 import org.junit.Assert.assertFalse
@@ -27,5 +28,10 @@ class SeerrCompanionServiceTest {
         val policy = hostPolicy.invoke(SeerrCompanionService()) as SecurityPolicy
 
         assertFalse(policy is HostSecurityPolicy)
+    }
+
+    @Test
+    fun `a debug build says it admits unverified callers, so the hub shows its banner`() {
+        assertTrue(ADMITS_UNVERIFIED_CALLERS)
     }
 }

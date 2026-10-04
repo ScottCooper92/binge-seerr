@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.data
 
+import com.binge.companion.contracts.request.v1.DownloadProgress
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.v1.MediaId
 import java.util.Base64
@@ -8,11 +9,16 @@ import java.util.Base64
  * One cached status and the moment the server gave it. [requesterIds] maps each request's id to the
  * id of the user who made it: the contract carries only a display name, and the per-request actions
  * turn on whether the request is the signed-in user's own.
+ *
+ * [status]'s `download` covers the 4K downloads too, and [standardDownload] is the same progress
+ * without them: what a user who may not request 4K is shown. A title with no 4K download has the
+ * one progress in both, which is the default.
  */
 data class CachedStatus(
     val status: RequestStatus,
     val fetchedAtMillis: Long,
     val requesterIds: Map<Int, Int> = emptyMap(),
+    val standardDownload: DownloadProgress? = status.takeIf { it.hasDownload() }?.download,
 )
 
 /**
@@ -40,7 +46,9 @@ class RoomMediaStatusStore(
 
     override suspend fun find(media: MediaId): CachedStatus? =
         dao.find(media.mediaTypeValue, media.tmdbId)?.let { row ->
-            decodeStatus(row.status)?.let { CachedStatus(it, row.fetchedAtMillis, decodeRequesterIds(row.requesterIds)) }
+            decodeStatus(row.status)?.let { status ->
+                CachedStatus(status, row.fetchedAtMillis, decodeRequesterIds(row.requesterIds), decodeDownload(row.standardDownload))
+            }
         }
 
     override suspend fun put(
@@ -54,6 +62,7 @@ class RoomMediaStatusStore(
                 status = encodeStatus(cached.status),
                 fetchedAtMillis = cached.fetchedAtMillis,
                 requesterIds = encodeRequesterIds(cached.requesterIds),
+                standardDownload = encodeDownload(cached.standardDownload),
             ),
         )
     }
@@ -70,6 +79,14 @@ internal fun encodeStatus(status: RequestStatus): String = Base64.getEncoder().e
  */
 internal fun decodeStatus(encoded: String): RequestStatus? =
     runCatching { RequestStatus.parseFrom(Base64.getDecoder().decode(encoded)) }.getOrNull()
+
+/** No download is the empty string, so the column needs no null. */
+internal fun encodeDownload(download: DownloadProgress?): String =
+    download?.let { Base64.getEncoder().encodeToString(it.toByteArray()) }.orEmpty()
+
+/** As [decodeStatus], a value that does not parse reads as none: the standard user is shown no download rather than a 4K one. */
+internal fun decodeDownload(encoded: String): DownloadProgress? =
+    encoded.takeIf { it.isNotEmpty() }?.let { runCatching { DownloadProgress.parseFrom(Base64.getDecoder().decode(it)) }.getOrNull() }
 
 internal fun encodeRequesterIds(ids: Map<Int, Int>): String = ids.entries.joinToString(",") { (request, user) -> "$request:$user" }
 

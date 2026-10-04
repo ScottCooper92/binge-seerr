@@ -32,6 +32,8 @@ class RequestsRemoteMediator(
     private val query: RequestListQuery,
     private val api: suspend () -> SeerrApi,
     private val store: RequestStore,
+    /** Told as a refresh starts (null) and once it has written its rows; see [ListRefreshes]. */
+    private val onRefresh: (rowsWritten: Int?) -> Unit = {},
     /** One row from one request, titled through the API; null for a request the app cannot show. */
     private val toEntity: suspend (SeerrRequestDto, SeerrApi, String, Int) -> RequestEntity?,
 ) : RemoteMediator<Int, RequestEntity>() {
@@ -47,6 +49,7 @@ class RequestsRemoteMediator(
                 LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true)
                 LoadType.APPEND -> store.nextSkip(query.listKey) ?: return MediatorResult.Success(endOfPaginationReached = true)
             }
+        if (loadType == LoadType.REFRESH) onRefresh(null)
         return try {
             val api = api()
             val page =
@@ -67,6 +70,7 @@ class RequestsRemoteMediator(
             val cursor = pageCursorAfter(skip, REQUESTS_PAGE_SIZE, page.pageInfo.pages)
             if (loadType == LoadType.REFRESH) {
                 store.refresh(query.listKey, rows, cursor.nextSkip)
+                onRefresh(rows.size)
             } else {
                 store.append(query.listKey, rows, cursor.nextSkip)
             }

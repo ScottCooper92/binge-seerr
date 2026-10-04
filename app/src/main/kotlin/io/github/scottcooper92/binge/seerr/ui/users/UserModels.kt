@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.users
 
+import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 
@@ -55,6 +56,8 @@ sealed interface UsersUiState {
         val importSource: UserOrigin? = null,
         val canGeneratePassword: Boolean = false,
         val admission: UserAdmissionState? = null,
+        /** The list's latest finished network refresh, for [sort]; missing while its refresh runs. */
+        val refresh: ListRefresh? = null,
     ) : UsersUiState
 }
 

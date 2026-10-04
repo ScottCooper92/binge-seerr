@@ -19,6 +19,8 @@ import kotlinx.coroutines.launch
  * Carried credentials are never saved on the strength of being present: the server is asked who they
  * belong to first. One that rejects them empties the carrier; one that merely cannot be reached
  * leaves it be, because a flat battery today is not a reason to lose the connection for good.
+ *
+ * On a device that is already connected, it brings the carrier up to date instead: see [refreshCarrier].
  */
 class ConnectionRestore(
     private val store: CredentialStore,
@@ -35,7 +37,10 @@ class ConnectionRestore(
 
     /** Fired once from the application, so the first screen has an answer to wait for. */
     fun start() {
-        scope.launch { run() }
+        scope.launch {
+            run()
+            refreshCarrier()
+        }
     }
 
     /** Runs at most once per process; a second call returns without touching the carrier. */
@@ -55,5 +60,22 @@ class ConnectionRestore(
         } finally {
             state.value = true
         }
+    }
+
+    /**
+     * Rewrites the carrier when it does not hold what a save of the saved connection would put there.
+     *
+     * Only a save writes the carrier, so a connection saved before the carrier held the plain-HTTP opt-in
+     * is carried without it (#721). So is one whose consent was grandfathered in by
+     * [DataStoreCleartextConsent], whose user never saw the opt-in. A new device would refuse to restore
+     * either, so this runs on every start. It reads the carrier first, so a carrier already in step is not
+     * written again. The saved connection is read again before the write, so a connect that lands
+     * meanwhile is not overwritten with the one it replaced.
+     */
+    suspend fun refreshCarrier() {
+        val saved = store.credentials.first() ?: return
+        val expected = cleartext.carriedFor(saved)
+        if (carrier.read() == expected) return
+        if (store.credentials.first() == saved) carrier.put(expected)
     }
 }

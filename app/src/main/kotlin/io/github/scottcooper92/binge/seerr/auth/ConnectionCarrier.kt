@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.auth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -36,6 +37,15 @@ data class CarriedCredentials(
     val credentials: SeerrCredentials,
     val cleartext: Boolean = false,
 )
+
+/**
+ * What the carrier should hold for the saved [credentials]: the opt-in is set only when the server is a
+ * public plain-HTTP host, since only that host needs it on a new device, and only when it is held.
+ */
+internal suspend fun CleartextConsent.carriedFor(credentials: SeerrCredentials): CarriedCredentials {
+    val optedIn = credentials.baseUrl.insecurePublicHostOrNull()?.let { allows(it) } ?: false
+    return CarriedCredentials(credentials, cleartext = optedIn)
+}
 
 /** The carrier on a device with nothing to carry it. Every call is a no-op. */
 object NoConnectionCarrier : ConnectionCarrier {

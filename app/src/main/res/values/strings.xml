@@ -56,6 +56,7 @@
     <string name="hub_binge_connect_hint">Connect Binge to this app to send and manage requests directly from Binge</string>
     <string name="hub_binge_connected_hint">Connected to Binge, request titles and manage requests directly from there</string>
     <string name="hub_binge_open">Open Binge</string>
+    <string name="hub_unverified_callers">Debug build: accepts Binge\'s package names under any certificate.</string>
 
     <string name="hub_health_connected">Connected</string>
     <string name="hub_update_available">Update available</string>
@@ -469,6 +470,7 @@
     <string name="server_settings_plex_web_url">Web app URL</string>
     <string name="server_settings_external_host">External host</string>
     <string name="server_settings_external_hint">Where users open the media server from their own devices; blank for the address above.</string>
+    <string name="server_settings_media_server_links">Links for users</string>
     <string name="server_settings_forgot_password_url">Forgot-password URL</string>
     <string name="server_settings_libraries">Libraries</string>
     <string name="server_settings_libraries_none">No libraries yet. Save the connection, then sync them.</string>
@@ -525,6 +527,8 @@
     </plurals>
     <string name="editor_error_port">Enter a port between 1 and 65535.</string>
     <string name="editor_error_web_url">Enter a web address that starts with http:// or https://.</string>
+    <string name="editor_error_web_url_no_slash">Enter a web address that starts with http:// or https://, with no slash at the end.</string>
+    <string name="editor_error_whole_number">Enter a whole number, or leave it blank.</string>
     <string name="server_settings_dvr_default">Default instance</string>
     <string name="server_settings_dvr_4k">4K instance</string>
     <string name="server_settings_dvr_sync">Sync what it holds</string>
