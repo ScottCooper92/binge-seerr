@@ -64,12 +64,30 @@ class UserGeneralSettingsScreenshotTest {
             settled(managerGeneral().copy(canEditQuotas = false, canEditEmail = false, watchlistSyncMovies = null, watchlistSyncTv = null)),
         )
 
-    /** A quota that is not a whole number is marked and keeps Save off. */
+    /** A quota that is not a whole number opens the quotas, which start closed, and says what it wants. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun invalidQuota() =
         GeneralFrame(EditorUiState.Ready(draft = managerGeneral().copy(movieQuotaLimit = "five"), saved = managerGeneral()))
+
+    /** A region of the wrong shape opens Discover and shows its hint as the message. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun invalidRegionOpensDiscover() =
+        GeneralFrame(EditorUiState.Ready(draft = managerGeneral().copy(region = "Britain"), saved = managerGeneral()))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = GeneralFrame(settled(managerGeneral()))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = GeneralFrame(settled(managerGeneral()))
 
     @PreviewTest
     @SeerrScreenStatePreview
