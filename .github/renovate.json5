@@ -29,7 +29,7 @@
   // Submodule pointers are bumped on purpose, in a commit of their own (CLAUDE.md). Renovate must
   // not touch .gitmodules or the pins, and the submodules' own build files belong to their repos.
   enabledManagers: ["gradle", "github-actions"],
-  ignorePaths: ["design-system/**", "binge-integrations/**"],
+  ignorePaths: ["design-system/**", "binge-companions/**"],
 
   packageRules: [
     {

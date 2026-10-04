@@ -32,9 +32,8 @@ and Spanish. A release build admits Binge through its published Play App Signing
 yet released: the on-device check of that handshake is still open (#85), and the Play listing under
 `docs/listing/` waits on its screenshots.
 
-The contracts and the SDK are consumed as source: `binge-integrations/` is a git
-submodule of the binge-companions repository (the path keeps the name it had before the
-rename, and `consumer-check.yml` in that repository relies on it), and `settings.gradle.kts` includes it as a composite build. So is the
+The contracts and the SDK are consumed as source: `binge-companions/` is a git
+submodule of the binge-companions repository, and `settings.gradle.kts` includes it as a composite build. So is the
 shared design system, `design-system/` (binge-design-system): the screens are built
 from its theme and components, which is what makes this app read as part of Binge's
 family without depending on it. The brand deliberately does not follow — `theme/SeerrTheme.kt`
@@ -204,7 +203,7 @@ touching `ci.yml`, because that job excludes tasks rather than listing them.
   question.
 - `checkGrpcAlignment` — an `io.grpc` module on the release or unit-test runtime classpath that
   resolved to a version other than the catalog's `grpc`. The SDK brings `grpc-binder` at
-  binge-companions' catalog version, so a `grpc` bump here needs the `binge-integrations` submodule
+  binge-companions' catalog version, so a `grpc` bump here needs the `binge-companions` submodule
   bumped to a revision on the same release, in a commit of its own.
 - `checkBaselineStaleness` — an entry in `detekt-baseline.xml` that the code no longer produces.
   An orphaned entry reads as debt still owed and absorbs the next real finding of that rule in

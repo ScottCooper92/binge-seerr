@@ -38,7 +38,7 @@ rootProject.name = "binge-seerr"
 // composite build, rather than as a published artifact: nothing is published yet, and a companion
 // author reading this repository gets the exact contract this app was built against. Gradle
 // substitutes `io.github.scottcooper92:contracts` and `:sdk` with the included build's projects.
-includeBuild("binge-integrations")
+includeBuild("binge-companions")
 
 // The shared design system arrives the same way (Binge#2427): the theme and the components this
 // app's screen wears come from binge-design-system as source, so a user moving between Binge and
