@@ -16,7 +16,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.hasExplicitPort
-import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import io.github.scottcooper92.binge.seerr.seerr.inspectProfile
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
@@ -378,8 +377,7 @@ class SeerrConnection(
         if (!store.save(credentials)) throw CredentialsSaveException()
         cleartext.retainOnly(baseUrl.toHttpUrlOrNull()?.host)
         // A public plain-HTTP server is only reachable with the opt-in, so a new device needs it too.
-        val optedIn = baseUrl.insecurePublicHostOrNull()?.let { cleartext.allows(it) } ?: false
-        carrier.put(CarriedCredentials(credentials, cleartext = optedIn))
+        carrier.put(cleartext.carriedFor(credentials))
         userLock.withLock {
             cachedUser = null
             cachedProfile = (credentials to profile).takeIf { profile.complete }
