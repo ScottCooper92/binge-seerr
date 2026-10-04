@@ -1,21 +1,20 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -35,6 +34,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.DetailStat
+import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ItemRows
 import com.binge.designsystem.component.ListItem
@@ -127,46 +128,30 @@ internal fun ServerCard(
     }
 }
 
+/**
+ * The server's totals as the design system's stat row, the same row Binge's title pages use: an icon,
+ * the count, and what it counts. The card already pads its content, so the row adds none of its own.
+ */
 @Composable
 private fun ServerStatStrip(overview: HubOverview) {
     val placeholder = stringResource(R.string.hub_stat_placeholder)
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        ServerStat(overview.movieRequestCount?.toString() ?: placeholder, stringResource(R.string.hub_quota_movies), Modifier.weight(1f))
-        StatDivider()
-        ServerStat(overview.tvRequestCount?.toString() ?: placeholder, stringResource(R.string.hub_quota_tv), Modifier.weight(1f))
-        StatDivider()
-        ServerStat(overview.userCount?.toString() ?: placeholder, stringResource(R.string.hub_section_users), Modifier.weight(1f))
-        StatDivider()
-        ServerStat(overview.pendingRequestCount?.toString() ?: placeholder, stringResource(R.string.hub_stat_pending), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun ServerStat(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
-        Text(
-            label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun StatDivider() {
-    Box(
-        modifier =
-            Modifier
-                .width(dimensionResource(DesR.dimen.hairline_thickness))
-                .height(dimensionResource(R.dimen.hub_stat_divider_height))
-                .background(MaterialTheme.colorScheme.outlineVariant),
+    DetailStatRow(
+        stats =
+            listOf(
+                DetailStat(
+                    Icons.Filled.Movie,
+                    overview.movieRequestCount?.toString() ?: placeholder,
+                    stringResource(R.string.hub_quota_movies),
+                ),
+                DetailStat(Icons.Filled.Tv, overview.tvRequestCount?.toString() ?: placeholder, stringResource(R.string.hub_quota_tv)),
+                DetailStat(Icons.Filled.People, overview.userCount?.toString() ?: placeholder, stringResource(R.string.hub_section_users)),
+                DetailStat(
+                    Icons.Filled.HourglassEmpty,
+                    overview.pendingRequestCount?.toString() ?: placeholder,
+                    stringResource(R.string.hub_stat_pending),
+                ),
+            ),
+        contentPadding = PaddingValues(),
     )
 }
 
