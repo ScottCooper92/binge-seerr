@@ -1,6 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsFocused
@@ -38,6 +42,18 @@ private fun Network(
     )
 }
 
+@Composable
+private fun EditableNetwork(initial: NetworkForm) {
+    var draft by remember { mutableStateOf(initial) }
+    BingeExpressiveTheme(dynamicColor = false) {
+        NetworkScreen(
+            state = EditorUiState.Ready(draft = draft, saved = ALL_OFF),
+            events = emptyFlow(),
+            actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = {}),
+        )
+    }
+}
+
 /** The network page's sections: a proxy or cache that is off starts closed, and one that is on and wrong blocks Save. */
 @RunWith(RobolectricTestRunner::class)
 class NetworkFormTest {
@@ -67,6 +83,19 @@ class NetworkFormTest {
 
         assertEquals(0, saves)
         assertEquals(2, rule.onAllNodesWithText("Required").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun `turning off a proxy that started on keeps its section open`() {
+        rule.setContent {
+            EditableNetwork(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "proxy.local", port = "8080")))
+        }
+
+        rule.onNodeWithText("Use a proxy").assertExists()
+        rule.onNodeWithText("Use a proxy").performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithText("Use a proxy").assertExists()
     }
 
     @Test
