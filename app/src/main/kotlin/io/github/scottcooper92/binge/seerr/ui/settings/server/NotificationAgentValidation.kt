@@ -23,8 +23,8 @@ internal const val AGENT_FORM_KEY = "notification_agent"
 /**
  * Everything standing between this draft and a save. An agent that is off is not read, so it has
  * none. One that is on needs each [AgentOption.required] option: a blank one is missing, and a number
- * that does not parse is invalid. The one required number is the SMTP port, so that message is the
- * port's. It is empty exactly when [AgentForm.valid] is true, which
+ * that does not parse, or a port outside 1-65535, is invalid. The one required number is the SMTP
+ * port, so that message is the port's. It is empty exactly when [AgentForm.valid] is true, which
  * `NotificationAgentValidationTest` holds it to.
  */
 internal fun AgentForm.issues(): List<EditorIssue> {
