@@ -148,7 +148,17 @@ data class OverrideRuleForm(
     val rootFolder: String? = null,
     val tagIds: Set<Int> = emptySet(),
 ) {
-    val valid: Boolean get() = serviceId != null && serviceType != null
+    /**
+     * Whether the rule would match anything narrower than every request: at least one condition that
+     * survives [toDto]'s encoding, so a genre field holding only spaces or a non-id does not count.
+     */
+    val hasCondition: Boolean get() = toDto().let { it.users != null || it.genre != null || it.language != null || it.keywords != null }
+
+    /** Whether the rule changes anything about a matching request. */
+    val hasOverride: Boolean get() = profileId != null || rootFolder != null || tagIds.isNotEmpty()
+
+    /** Seerr's web client saves a rule only with an instance, a condition and an override (#733). */
+    val valid: Boolean get() = serviceId != null && serviceType != null && hasCondition && hasOverride
 }
 
 /** What the rule page picks from: every instance, the users, and the chosen instance's own choices. */

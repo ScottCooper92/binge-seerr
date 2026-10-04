@@ -37,7 +37,7 @@ private val RULE_EXTRAS =
 
 private val ON_RADARR = OverrideRuleForm(serviceType = ServiceType.Radarr, serviceId = 1)
 
-/** The override rule form's page behaviour: what Save does without an instance, and where it takes the user. */
+/** The override rule form's page behaviour: what Save does when the rule is short of something, and where it takes the user. */
 @RunWith(RobolectricTestRunner::class)
 class OverrideRuleFormTest {
     @get:Rule
@@ -66,7 +66,7 @@ class OverrideRuleFormTest {
 
     @Test
     fun `save without an instance does not save and says it is missing`() {
-        show(OverrideRuleForm(genres = "16"))
+        show(OverrideRuleForm(genres = "16", profileId = 4))
 
         assertEquals(0, rule.onAllNodesWithText("Required").fetchSemanticsNodes().size)
         rule.onNodeWithText("Save").performClick()
@@ -79,7 +79,7 @@ class OverrideRuleFormTest {
 
     @Test
     fun `a failed save opens the instance section the user had closed`() {
-        show(OverrideRuleForm(genres = "16"))
+        show(OverrideRuleForm(genres = "16", profileId = 4))
 
         rule.onNodeWithText("Applies to").performClick()
         rule.onNodeWithText("Server *").assertDoesNotExist()
@@ -91,8 +91,34 @@ class OverrideRuleFormTest {
     }
 
     @Test
-    fun `save on an instance saves`() {
-        show(ON_RADARR.copy(genres = "16"))
+    fun `save without a condition or an override does not save and says what each section needs`() {
+        show(ON_RADARR)
+
+        rule.onNodeWithText("Save").performClick()
+        rule.waitForIdle()
+
+        assertEquals(0, saves)
+        rule.onNodeWithText("Add at least one condition: a user, genre, language or keyword.").assertExists()
+        rule.onNodeWithText("Pick at least one override: a quality profile, root folder or tag.").assertExists()
+    }
+
+    @Test
+    fun `a failed save opens the conditions section the user had closed`() {
+        show(ON_RADARR.copy(profileId = 4))
+
+        rule.onNodeWithText("When a request matches").performClick()
+        rule.onNodeWithText("Genres").assertDoesNotExist()
+        rule.onNodeWithText("Save").performClick()
+        rule.waitForIdle()
+
+        assertEquals(0, saves)
+        rule.onNodeWithText("Add at least one condition: a user, genre, language or keyword.").assertIsDisplayed()
+        rule.onNodeWithText("Pick at least one override: a quality profile, root folder or tag.").assertDoesNotExist()
+    }
+
+    @Test
+    fun `save with a condition, an override and an instance saves`() {
+        show(ON_RADARR.copy(genres = "16", profileId = 4))
 
         rule.onNodeWithText("Save").performClick()
 
