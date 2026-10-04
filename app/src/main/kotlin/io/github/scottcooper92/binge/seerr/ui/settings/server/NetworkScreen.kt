@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,30 +24,34 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import kotlinx.coroutines.flow.Flow
 
-/** The network page: the switches every lineage has, then the proxy and the DNS cache where the server sent them. */
+/**
+ * The network page, as collapsible sections (#549): the switches every lineage has, then the proxy
+ * and the DNS cache where the server sent them. The proxy and the DNS cache start open only while
+ * they are on; a host and port are required of a proxy that is on.
+ */
 @Composable
 fun NetworkScreen(
     state: EditorUiState<NetworkForm>,
     events: Flow<EditorEvent>,
     actions: EditorActions<NetworkForm>,
 ) {
+    val validation = remember { EditorValidation<NetworkForm>(NETWORK_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(R.string.server_settings_network),
         state = state,
         events = events,
         actions = actions,
-        canSave = { it.valid },
+        validation = validation,
     ) { draft, enabled ->
-        EditorToggleGroup(
-            stringResource(R.string.settings_group_general),
+        EditorSection(NetworkSections.GENERAL, stringResource(R.string.settings_group_general)) {
             listOfNotNull(
                 editorToggle(
                     Icons.Filled.Shield,
@@ -64,8 +69,8 @@ fun NetworkScreen(
                         actions.onEdit { it.copy(forceIpv4First = value) }
                     }
                 },
-            ),
-        )
+            ).forEach { EditorToggleRow(it) }
+        }
         draft.proxy?.let { proxy ->
             ProxyFields(proxy, enabled) { transform -> actions.onEdit { it.copy(proxy = it.proxy?.let(transform)) } }
         }
@@ -81,7 +86,7 @@ private fun ProxyFields(
     enabled: Boolean,
     onEdit: ((ProxyForm) -> ProxyForm) -> Unit,
 ) {
-    EditorSectionCard(stringResource(R.string.server_settings_proxy)) {
+    EditorSection(NetworkSections.PROXY, stringResource(R.string.server_settings_proxy), defaultExpanded = proxy.enabled) {
         EditorToggleRow(
             editorToggle(
                 Icons.Filled.PowerSettingsNew,
@@ -102,7 +107,8 @@ private fun ProxyFields(
             enabled = editable,
             keyboardType = KeyboardType.Uri,
             placeholder = stringResource(R.string.placeholder_proxy_host),
-            isError = proxy.enabled && proxy.host.isBlank(),
+            fieldId = NetworkFields.PROXY_HOST,
+            required = proxy.enabled,
         ) { value -> onEdit { it.copy(host = value) } }
         EditorTextField(
             proxy.port,
@@ -111,7 +117,8 @@ private fun ProxyFields(
             enabled = editable,
             keyboardType = KeyboardType.Number,
             placeholder = stringResource(R.string.placeholder_port_proxy),
-            isError = proxy.enabled && !proxy.addressValid && proxy.host.isNotBlank(),
+            fieldId = NetworkFields.PROXY_PORT,
+            required = proxy.enabled,
         ) { value -> onEdit { it.copy(port = value) } }
         EditorToggleRow(
             editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), proxy.useSsl, editable) { value ->
@@ -124,8 +131,7 @@ private fun ProxyFields(
             icon = Icons.Filled.Person,
             enabled = editable,
             autoCorrect = false,
-            isError = proxy.enabled && proxy.userMissing,
-            supporting = stringResource(R.string.server_settings_proxy_user_missing).takeIf { proxy.enabled && proxy.userMissing },
+            fieldId = NetworkFields.PROXY_USER,
         ) { value ->
             onEdit {
                 it.copy(user = value)
@@ -137,9 +143,7 @@ private fun ProxyFields(
             icon = Icons.Filled.Key,
             enabled = editable,
             secret = true,
-            isError = proxy.enabled && proxy.passwordMissing,
-            supporting =
-                stringResource(R.string.server_settings_proxy_password_missing).takeIf { proxy.enabled && proxy.passwordMissing },
+            fieldId = NetworkFields.PROXY_PASSWORD,
         ) { value ->
             onEdit { it.copy(password = value) }
         }
@@ -167,7 +171,7 @@ private fun DnsCacheFields(
     enabled: Boolean,
     onEdit: ((DnsCacheForm) -> DnsCacheForm) -> Unit,
 ) {
-    EditorSectionCard(stringResource(R.string.server_settings_dns_cache)) {
+    EditorSection(NetworkSections.DNS_CACHE, stringResource(R.string.server_settings_dns_cache), defaultExpanded = cache.enabled) {
         EditorToggleRow(
             editorToggle(
                 Icons.Filled.Storage,
@@ -185,8 +189,8 @@ private fun DnsCacheFields(
             icon = Icons.Filled.Timer,
             enabled = editable,
             keyboardType = KeyboardType.Number,
-            isError = cache.enabled && !cache.minTtl.isTtl(),
             supporting = stringResource(R.string.server_settings_dns_ttl_hint),
+            fieldId = NetworkFields.MIN_TTL,
         ) { value -> onEdit { it.copy(minTtl = value) } }
         EditorTextField(
             cache.maxTtl,
@@ -194,17 +198,8 @@ private fun DnsCacheFields(
             icon = Icons.Filled.HourglassFull,
             enabled = editable,
             keyboardType = KeyboardType.Number,
-            isError = cache.enabled && (!cache.maxTtl.isTtl() || !cache.orderValid),
-            supporting =
-                stringResource(
-                    if (cache.enabled &&
-                        !cache.orderValid
-                    ) {
-                        R.string.server_settings_dns_ttl_order
-                    } else {
-                        R.string.server_settings_dns_ttl_hint
-                    },
-                ),
+            supporting = stringResource(R.string.server_settings_dns_ttl_hint),
+            fieldId = NetworkFields.MAX_TTL,
             imeAction = ImeAction.Done,
         ) { value -> onEdit { it.copy(maxTtl = value) } }
     }

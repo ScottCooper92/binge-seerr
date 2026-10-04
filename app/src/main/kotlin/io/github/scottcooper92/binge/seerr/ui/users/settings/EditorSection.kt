@@ -39,7 +39,7 @@ import com.binge.designsystem.R as DesR
  *
  * The header is one button: it toggles the body, says whether it is open, and carries a count of the
  * fields that need attention. Whether it is open is remembered per editor and section, through
- * rotation and process death, and starts as [defaultExpanded] until the user chooses. A section with
+ * rotation and process death, and starts as [defaultExpanded] as it was when the section first appeared, until the user chooses. A section with
  * an issue to show (the page's [LocalEditorIssues]) is held open and its header is inert, so an error
  * cannot be collapsed out of sight. Put a section that holds a required field open by default; an
  * optional one can start closed.
@@ -63,7 +63,10 @@ internal fun EditorSection(
     val formKey = LocalEditorForm.current?.key.orEmpty()
     val issueCount = LocalEditorIssues.current.count { it.section == sectionId }
     var userChoice by rememberSaveable(formKey, sectionId, key = "editor-section:$formKey/$sectionId") { mutableStateOf<Boolean?>(null) }
-    val expanded = sectionExpanded(userChoice, defaultExpanded, issueCount)
+    // Read once: a caller may pass a value that follows the draft, and a section the user is
+    // working in must not close under their finger when it changes.
+    val openedAs = rememberSaveable(formKey, sectionId, key = "editor-section-default:$formKey/$sectionId") { defaultExpanded }
+    val expanded = sectionExpanded(userChoice, openedAs, issueCount)
     Column(
         modifier =
             modifier
