@@ -1,9 +1,19 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrTallComponentPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
@@ -45,7 +55,7 @@ class NotificationAgentScreenshotTest {
     @Composable
     fun emailLayout() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
 
-    /** A Discord agent that is on with its webhook blank: the required field is marked and Save stays off. */
+    /** A Discord agent that is on with its webhook blank: the field is marked required, and says so once Save is tried. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -58,30 +68,22 @@ class NotificationAgentScreenshotTest {
     @Composable
     fun discordOff() = AgentFrame(agentReady(AgentForm(ServerAgent.Discord)), ServerAgent.Discord)
 
-    /** ntfy signs in one way: the password pair is live and the token field follows its switch off. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun ntfyPasswordAuth() = AgentFrame(agentReady(ntfyForm()), ServerAgent.Ntfy)
-
-    /** Pushover offers the sounds its application answered with, where other agents type their options. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun pushoverWithSounds() =
-        AgentFrame(
-            agentReady(
-                pushoverForm(),
-                AgentExtras(sounds = listOf(PushoverSound("pushover", "Pushover (default)"), PushoverSound("bike", "Bike"))),
-            ),
-            ServerAgent.Pushover,
-        )
-
     /** The webhook's JSON body is a multi-line field. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun webhookPayload() = AgentFrame(agentReady(webhookForm()), ServerAgent.Webhook)
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun emailSpanish() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun emailLargeText() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
 
     @PreviewTest
     @SeerrScreenStatePreview
@@ -167,6 +169,50 @@ private fun webhookForm() =
                 AgentOption.WebhookJsonPayload to "{\n  \"subject\": \"{{subject}}\",\n  \"message\": \"{{message}}\"\n}",
             ),
     )
+
+/** An agent's optional settings, which start closed on the page, framed open. */
+class NotificationAgentSectionsScreenshotTest {
+    /** Email's optional half: the sender name, the encryption picker, the credentials and the PGP key. */
+    @PreviewTest
+    @SeerrTallComponentPreviews
+    @Composable
+    fun emailMoreSettings() = MoreSettingsFrame(emailForm())
+
+    /** ntfy signs in one way: the password pair is live and the token field follows its switch off. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun ntfyPasswordAuth() = MoreSettingsFrame(ntfyForm())
+
+    /** Pushover offers the sounds its application answered with, where other agents type their options. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun pushoverWithSounds() =
+        MoreSettingsFrame(
+            pushoverForm(),
+            AgentExtras(sounds = listOf(PushoverSound("pushover", "Pushover (default)"), PushoverSound("bike", "Bike"))),
+        )
+}
+
+private val SECTION_WIDTH = 411.dp
+private val SECTION_PADDING = 16.dp
+
+@Composable
+private fun MoreSettingsFrame(
+    form: AgentForm,
+    extras: AgentExtras = AgentExtras(),
+) = Column(modifier = Modifier.width(SECTION_WIDTH).padding(SECTION_PADDING)) {
+    OptionFields(
+        AgentSections.MORE_SETTINGS,
+        R.string.server_settings_agent_section_more,
+        form,
+        extras,
+        enabled = true,
+        actions = AgentActions(onSetEnabled = {}, onSetOption = { _, _ -> }, onSetEncryption = {}, onToggleType = {}, onTest = {}),
+        defaultExpanded = true,
+    )
+}
 
 private fun agentReady(
     form: AgentForm,

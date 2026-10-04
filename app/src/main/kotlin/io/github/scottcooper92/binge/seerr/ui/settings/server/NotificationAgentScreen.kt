@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -20,10 +22,11 @@ import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
@@ -42,8 +45,9 @@ class AgentActions(
 )
 
 /**
- * One agent's page: its switch, its own options as the kind of each asks, the events it is sent
- * as two groups of chips, and a test that sends through the draft as typed.
+ * One agent's page: its switch, then collapsible sections (#549) for the options it cannot send
+ * without, the rest of its options, and the events it is sent as two groups of chips; then a test
+ * that sends through the draft as typed. The optional settings start closed.
  */
 @Composable
 fun NotificationAgentScreen(
@@ -54,12 +58,13 @@ fun NotificationAgentScreen(
     agent: ServerAgent,
 ) {
     val extras = (state as? ExtrasEditorUiState.Ready<AgentForm, AgentExtras>)?.extras ?: AgentExtras()
+    val validation = remember { EditorValidation<AgentForm>(AGENT_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(agent.labelRes()),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        canSave = { it.valid },
+        validation = validation,
     ) { draft, enabled ->
         EditorToggleGroup(
             stringResource(agent.labelRes()),
@@ -73,7 +78,8 @@ fun NotificationAgentScreen(
                 ),
             ),
         )
-        OptionFields(draft, extras, enabled, agentActions)
+        OptionFields(AgentSections.SETTINGS, R.string.server_settings_agent_section_options, draft, extras, enabled, agentActions)
+        OptionFields(AgentSections.MORE_SETTINGS, R.string.server_settings_agent_section_more, draft, extras, enabled, agentActions)
         TypeChips(draft, enabled, agentActions.onToggleType)
         BingeOutlinedButton(
             label = stringResource(R.string.server_settings_agent_test),
@@ -85,16 +91,23 @@ fun NotificationAgentScreen(
     }
 }
 
+/**
+ * The agent's options that belong in [sectionId]: the required ones open, the rest closed until asked
+ * for. [defaultExpanded] is for a frame of the section alone.
+ */
 @Composable
-private fun OptionFields(
+internal fun OptionFields(
+    sectionId: String,
+    @StringRes titleRes: Int,
     draft: AgentForm,
     extras: AgentExtras,
     enabled: Boolean,
     actions: AgentActions,
+    defaultExpanded: Boolean = sectionId == AgentSections.SETTINGS,
 ) {
-    val options = AgentOption.of(draft.agent).filter { it.ownControl }
+    val options = AgentOption.of(draft.agent).filter { it.ownControl && it.sectionId == sectionId }
     if (options.isEmpty()) return
-    EditorSectionCard(stringResource(R.string.server_settings_agent_section_options)) {
+    EditorSection(sectionId, stringResource(titleRes), defaultExpanded = defaultExpanded) {
         options.forEach { option -> OptionField(option, draft, extras, enabled, actions) }
     }
 }
@@ -149,7 +162,8 @@ private fun OptionField(
                 autoCorrect = option.autoCorrect,
                 placeholder = option.placeholderRes()?.let { stringResource(it) },
                 supporting = option.hintRes()?.let { stringResource(it) },
-                isError = draft.enabled && option.required && !option.satisfiedBy(draft.option(option)),
+                fieldId = option.fieldId,
+                required = option.required && draft.enabled,
             ) { value -> actions.onSetOption(option, value) }
     }
 }
@@ -160,7 +174,7 @@ private fun TypeChips(
     enabled: Boolean,
     onToggle: (Int) -> Unit,
 ) {
-    EditorSectionCard(stringResource(R.string.user_settings_types_title)) {
+    EditorSection(AgentSections.TYPES, stringResource(R.string.user_settings_types_title)) {
         TypeChipGroups(draft, enabled, onToggle)
     }
 }

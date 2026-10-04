@@ -789,6 +789,7 @@
     <string name="server_settings_slider_tv_streaming">Series on a streaming service</string>
     <string name="server_settings_agents_manage_caption">Every agent this server can send through</string>
     <string name="server_settings_agent_section_options">Settings</string>
+    <string name="server_settings_agent_section_more">More settings</string>
     <string name="server_settings_agent_test">Send a test notification</string>
     <string name="server_settings_agent_tested">Test notification sent</string>
     <string name="server_settings_agent_email_from">Sender address</string>
