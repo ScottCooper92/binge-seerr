@@ -5,11 +5,17 @@ name: CI
 # one, and author-conflicts on one completing against main. They match it by NAME,
 # so renaming this workflow silently unhooks all three.
 #
-# One job, deliberately. `./gradlew build` already runs every check `CLAUDE.md` lists under
-# Gates, because the plugins wire themselves into `check` (or `app/build.gradle.kts` does
-# it by hand) and `build` depends on `check`. Splitting them into
-# separate jobs would buy parallelism this build is far too small to need, and would
-# cost a second required status check to keep in sync with branch protection.
+# Four jobs in parallel, then `build`. `./gradlew build` runs every check `CLAUDE.md` lists under
+# Gates, because the plugins wire themselves into `check` (or `app/build.gradle.kts` does it by
+# hand) and `build` depends on `check`. Run as one job it took about 20 minutes, end to end: the
+# screenshot validation, R8, the unit tests and lint/detekt each take minutes and ran one after
+# another. So three of the slowest pieces run as jobs of their own (`tests`, `screenshots`,
+# `release`), and `checks` runs `build` with exactly those tasks excluded. Excluding, not listing:
+# a gate added to `check` later lands in `checks` without anyone touching this file.
+#
+# `build` is the job branch protection requires, and the one the bots read through this workflow's
+# conclusion. It runs after the four, passes only if all four passed, and folds their report
+# artifacts back into the one `build-reports` artifact author-ci-fix downloads.
 #
 # Deliberately NO paths-ignore, matching binge-companions. bot-review requires a
 # SUCCESSFUL run of this workflow against the head, so a skipped run means a PR that
@@ -41,21 +47,21 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    # Skip while a PR is a draft, so a stack can be opened as drafts and promoted one
-    # at a time without each queued run preempting the last. Push events to main always
-    # run — `pull_request` is null there. A draft therefore reports conclusion
+  # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
+  # compile, lint, detekt and its baseline-staleness check, ktlint, the translation and gRPC gates,
+  # and the debug assemble. It also runs the submodule-pin check, which fails fast.
+  checks:
+    # Skip while a PR is a draft, so a stack can be opened as drafts and promoted one at a time
+    # without each queued run preempting the last. Push events to main always run — `pull_request`
+    # is null there. Every job below carries the same condition, so a draft's `build` reports
     # "skipped", which author-ci-fix and bot-review both already treat as "not green".
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Job level, not workflow level: only the submodule-pin step reads a PR label (#561).
     permissions:
       contents: read
       pull-requests: read
-    # Generous against a build that currently takes a couple of minutes, so it catches
-    # a hang rather than a slow day. The Android SDK is preinstalled on the runner
-    # image; nothing here installs one.
-    timeout-minutes: 30
     steps:
       # The contracts and SDK are a submodule (see settings.gradle.kts); without this the
       # included build is an empty directory and Gradle fails at settings evaluation.
@@ -118,33 +124,140 @@ jobs:
       # --continue surfaces every failure in one run rather than stopping at the first,
       # which matters most to author-ci-fix: it gets exactly one repair attempt per
       # commit, and a log showing only the first of three failures spends that attempt
-      # fixing a third of the problem.
-      - name: Build, test and lint
-        run: ./gradlew build --continue
+      # fixing a third of the problem. Each -x names a task another job runs; -x also drops
+      # whatever only that task needed, which is the point for assembleRelease's R8.
+      - name: Build and lint, less what the other jobs run
+        run: ./gradlew build --continue -x :app:testDebugUnitTest -x :app:koverVerify -x :app:validateDebugScreenshotTest -x :app:assembleRelease
 
-      # Reports for triaging a red run. Listed explicitly rather than globbing
-      # **/build/reports/ — the greedy glob is fail-OPEN, so every new report type
-      # Gradle and AGP invent silently reappears in the artifact. Both the test reports
-      # and the lint results are named, because a red run here is as likely to be lint
-      # as it is to be a failing test, and author-ci-fix triages from what it can read. detekt
-      # and kover are named for the same reason: `build` runs both, and without their reports a
-      # red detekt or a coverage-floor failure leaves only the log. Screenshots are narrowed to
-      # the diffs, not the whole results tree. `build` is one Gradle step, so there is no
-      # failed-step gate to hang that on; if-no-files-found covers a run with no diffs.
       - name: Upload reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: build-reports
+          name: build-reports-checks
           path: |
-            **/build/reports/tests/**
             **/build/reports/lint-results-*.html
             **/build/reports/ktlint/**
             **/build/reports/detekt/**
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # The unit tests and the coverage floor read from them.
+  tests:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+      - name: Unit tests and coverage
+        run: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
+
+      - name: Upload reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: build-reports-tests
+          path: |
+            **/build/reports/tests/**
             **/build/reports/kover/**
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # The screenshot frames. The plugin renders in one fork, so this is the longest job and the one
+  # to watch: trimming a preview matrix is the way to shorten it.
+  screenshots:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+      - name: Validate screenshots
+        run: ./gradlew :app:validateDebugScreenshotTest --continue
+
+      - name: Upload reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: build-reports-screenshots
+          path: |
             **/build/outputs/screenshotTest-results/**/diffs/**
           if-no-files-found: ignore
+          retention-days: 1
+
+  # The release build: R8 with this app's keep rules, and lint-vital. A keep rule that no longer
+  # compiles fails here on the PR, not on the next tag.
+  release:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+      - name: Assemble the release build
+        run: ./gradlew :app:assembleRelease --continue
+
+      - name: Upload reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: build-reports-release
+          path: |
+            **/build/reports/lint-results-*.html
+            **/build/outputs/mapping/**/missing_rules.txt
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # The check branch protection requires, and the job the bots read through this workflow's
+  # conclusion. Green only when all four are green; `always()` so a failure upstream still reaches
+  # the merge step instead of skipping this job, which would read as "not run" rather than red.
+  build:
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
+    needs: [checks, tests, screenshots, release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # The four jobs' reports as the one artifact author-ci-fix downloads by name. Artifact names
+      # must be unique within a run, so each job uploads its own and they are merged here.
+      - name: Merge reports
+        if: ${{ contains(needs.*.result, 'failure') }}
+        uses: actions/upload-artifact/merge@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: build-reports
+          pattern: build-reports-*
+          delete-merged: true
           retention-days: ${{ github.event_name == 'schedule' && 7 || 1 }}
+        continue-on-error: true
+
+      - name: Fail unless every job passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "checks, tests, screenshots, release: $RESULTS"
+          for result in $RESULTS; do
+            [ "$result" = success ] || exit 1
+          done
 
   # Lints the workflow files, which is where a typo turns into a silent startup_failure. It lives
   # in this workflow rather than its own so there is still one required check to keep in sync with
