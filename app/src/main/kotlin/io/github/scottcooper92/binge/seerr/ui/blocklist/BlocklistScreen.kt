@@ -170,7 +170,8 @@ private fun BlocklistPages(
             }
         },
     ) { overlay ->
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+        // The filters either side stay composed, so their rows are loading before the swipe reaches them.
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1) { page ->
             BlocklistPage(
                 filter = filters[page],
                 state = state,
@@ -184,10 +185,10 @@ private fun BlocklistPages(
 }
 
 /**
- * One filter's page. The pager composes a page before the selection lands on it, while it is swiped
- * into view, so a page collects its own [filter]'s rows and never the selected one's. The confirm
- * dialog belongs to the selected page alone: a title can sit under two filters, and two composed
- * pages would otherwise raise two dialogs for it.
+ * One filter's page. The pager composes a page before the selection lands on it — the pages either side
+ * of the selected one are kept composed — so a page collects its own [filter]'s rows and never the
+ * selected one's. Refreshing is the selected page's alone, and so is the confirm dialog: a title can
+ * sit under two filters, and two composed pages would otherwise raise two dialogs for it.
  */
 @Composable
 private fun BlocklistPage(

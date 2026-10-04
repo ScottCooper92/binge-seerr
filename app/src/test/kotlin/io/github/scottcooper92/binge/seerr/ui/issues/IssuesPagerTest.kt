@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
@@ -49,6 +50,36 @@ class IssuesPagerTest {
 
         composeTestRule.onNodeWithText(titleFor(IssueFilter.Resolved)).assertIsDisplayed()
         assertEquals(listOf(IssueFilter.Resolved), selections)
+    }
+
+    /**
+     * The pages either side of the selected one are composed before any swipe, so their rows are loading
+     * already. Neither is selected by being composed: nothing is reported, and only the selected page is on screen.
+     */
+    @Test
+    fun `the filters either side are composed without a swipe, and the selection stays put`() {
+        val selections = mutableListOf<IssueFilter>()
+        composeTestRule.setContent {
+            BingeExpressiveTheme {
+                IssuesScreen(
+                    state =
+                        IssuesUiState.Ready(
+                            filter = IssueFilter.Resolved,
+                            sort = IssueSort.Added,
+                            counts = null,
+                            scope = IssueListScope(),
+                        ),
+                    issuesFor = ::rowsFor,
+                    actions = IssuesActions(onBack = {}, onFilterChange = { selections += it }, onSortChange = {}, onOpen = {}),
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(titleFor(IssueFilter.Resolved)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(titleFor(IssueFilter.Open)).assertExists().assertIsNotDisplayed()
+        composeTestRule.onNodeWithText(titleFor(IssueFilter.All)).assertExists().assertIsNotDisplayed()
+        assertEquals(emptyList<IssueFilter>(), selections)
     }
 
     private fun rowsFor(filter: IssueFilter): Flow<PagingData<IssueItem>> = flowOf(PagingData.from(listOf(item(filter))))
