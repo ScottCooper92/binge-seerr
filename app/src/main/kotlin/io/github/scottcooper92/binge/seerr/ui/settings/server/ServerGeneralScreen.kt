@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -40,10 +41,10 @@ import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.imeActionIf
@@ -59,8 +60,10 @@ class ApiKeyActions(
 )
 
 /**
- * The general page: the main settings form — a field the lineage lacks is simply absent — then the
- * way into the default permissions and the API key behind a reveal.
+ * The general page, as collapsible sections (#549): the main settings form — a field the lineage
+ * lacks is simply absent — then the way into the default permissions and the API key behind a
+ * reveal. Application starts open; the rest start closed, and a section holding a value of the wrong
+ * shape opens itself.
  */
 @Composable
 fun ServerGeneralScreen(
@@ -72,18 +75,19 @@ fun ServerGeneralScreen(
 ) {
     val extras =
         (state as? ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>)?.extras ?: ServerGeneralExtras()
+    val validation = remember { EditorValidation<ServerGeneralSettings>(SERVER_GENERAL_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(R.string.server_settings_general_title),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        canSave = { it.valid },
+        validation = validation,
     ) { draft, enabled ->
         GeneralFields(draft, enabled, actions)
         DiscoverFields(draft, enabled, actions)
         RequestSwitches(draft, enabled, actions)
         ServerSwitches(draft, enabled, actions)
-        EditorSectionCard(stringResource(R.string.server_settings_section_users)) {
+        EditorSection(ServerGeneralSections.NEW_USERS, stringResource(R.string.server_settings_section_users), defaultExpanded = false) {
             if (extras.defaultPermissions.isNotEmpty()) {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
@@ -108,7 +112,7 @@ private fun GeneralFields(
     enabled: Boolean,
     actions: EditorActions<ServerGeneralSettings>,
 ) {
-    EditorSectionCard(stringResource(R.string.server_settings_section_application)) {
+    EditorSection(ServerGeneralSections.APPLICATION, stringResource(R.string.server_settings_section_application)) {
         EditorTextField(
             draft.applicationTitle,
             stringResource(R.string.server_settings_application_title),
@@ -125,7 +129,7 @@ private fun GeneralFields(
             enabled = enabled,
             keyboardType = KeyboardType.Uri,
             supporting = stringResource(R.string.server_settings_application_url_hint),
-            isError = !draft.urlValid,
+            fieldId = ServerGeneralFields.APPLICATION_URL,
         ) { value -> actions.onEdit { it.copy(applicationUrl = value) } }
     }
 }
@@ -136,14 +140,14 @@ private fun DiscoverFields(
     enabled: Boolean,
     actions: EditorActions<ServerGeneralSettings>,
 ) {
-    EditorSectionCard(stringResource(R.string.user_settings_section_discover)) {
+    EditorSection(ServerGeneralSections.DISCOVER, stringResource(R.string.user_settings_section_discover), defaultExpanded = false) {
         EditorTextField(
             draft.locale,
             stringResource(R.string.settings_display_language),
             icon = Icons.Filled.Translate,
             enabled = enabled,
             supporting = stringResource(R.string.server_settings_locale_hint),
-            isError = !draft.localeValid,
+            fieldId = ServerGeneralFields.LOCALE,
         ) { value -> actions.onEdit { it.copy(locale = value) } }
         EditorTextField(
             draft.discoverRegion,
@@ -151,7 +155,7 @@ private fun DiscoverFields(
             icon = Icons.Filled.Public,
             enabled = enabled,
             supporting = stringResource(R.string.server_settings_region_hint),
-            isError = !draft.discoverRegionValid,
+            fieldId = ServerGeneralFields.DISCOVER_REGION,
         ) { value -> actions.onEdit { it.copy(discoverRegion = value) } }
         draft.streamingRegion?.let { region ->
             EditorTextField(
@@ -160,7 +164,7 @@ private fun DiscoverFields(
                 icon = Icons.Filled.LiveTv,
                 enabled = enabled,
                 supporting = stringResource(R.string.server_settings_region_hint),
-                isError = !draft.streamingRegionValid,
+                fieldId = ServerGeneralFields.STREAMING_REGION,
             ) { value -> actions.onEdit { it.copy(streamingRegion = value) } }
         }
         EditorTextField(
@@ -169,20 +173,21 @@ private fun DiscoverFields(
             icon = Icons.Filled.Language,
             enabled = enabled,
             supporting = stringResource(R.string.server_settings_original_language_hint),
-            isError = !draft.originalLanguageValid,
+            fieldId = ServerGeneralFields.ORIGINAL_LANGUAGE,
             imeAction = imeActionIf(last = draft.youtubeUrl == null),
         ) { value -> actions.onEdit { it.copy(originalLanguage = value) } }
     }
 }
 
+/** [defaultExpanded] is off on the page; a frame of the section alone passes true to show its body. */
 @Composable
-private fun RequestSwitches(
+internal fun RequestSwitches(
     draft: ServerGeneralSettings,
     enabled: Boolean,
     actions: EditorActions<ServerGeneralSettings>,
+    defaultExpanded: Boolean = false,
 ) {
-    EditorToggleGroup(
-        stringResource(R.string.settings_group_requests),
+    EditorSection(ServerGeneralSections.REQUESTS, stringResource(R.string.settings_group_requests), defaultExpanded = defaultExpanded) {
         listOfNotNull(
             editorToggle(Icons.Filled.Visibility, stringResource(R.string.settings_hide_available), draft.hideAvailable, enabled) { value ->
                 actions.onEdit { it.copy(hideAvailable = value) }
@@ -205,17 +210,19 @@ private fun RequestSwitches(
                     actions.onEdit { it.copy(specialEpisodes = value) }
                 }
             },
-        ),
-    )
+        ).forEach { EditorToggleRow(it) }
+    }
 }
 
+/** [defaultExpanded] is off on the page; a frame of the section alone passes true to show its body. */
 @Composable
 internal fun ServerSwitches(
     draft: ServerGeneralSettings,
     enabled: Boolean,
     actions: EditorActions<ServerGeneralSettings>,
+    defaultExpanded: Boolean = false,
 ) {
-    EditorSectionCard(stringResource(R.string.settings_server)) {
+    EditorSection(ServerGeneralSections.SERVER, stringResource(R.string.settings_server), defaultExpanded = defaultExpanded) {
         draft.versionCheck?.let { on ->
             EditorToggleRow(
                 editorToggle(Icons.Filled.Update, stringResource(R.string.server_settings_version_check), on, enabled) { value ->
@@ -256,14 +263,18 @@ internal fun ServerSwitches(
     }
 }
 
-/** Masked until revealed; regenerating asks first, since the old key stops working at once. */
+/**
+ * Masked until revealed, and closed until asked for; regenerating asks first, since the old key stops
+ * working at once. [defaultExpanded] is for a frame of the section alone.
+ */
 @Composable
 internal fun ApiKeySection(
     apiKey: ApiKeyState,
     actions: ApiKeyActions,
+    defaultExpanded: Boolean = false,
 ) {
     var confirming by rememberSaveable { mutableStateOf(false) }
-    EditorSectionCard(stringResource(R.string.server_settings_api_key)) {
+    EditorSection(ServerGeneralSections.API_KEY, stringResource(R.string.server_settings_api_key), defaultExpanded = defaultExpanded) {
         EditorTextField(
             apiKey.key,
             stringResource(R.string.server_settings_api_key),
