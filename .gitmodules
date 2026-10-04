@@ -1,5 +1,5 @@
 [submodule "binge-integrations"]
-	path = binge-integrations
+	path = binge-companions
 	url = https://github.com/ScottCooper92/binge-companions
 [submodule "design-system"]
 	path = design-system
