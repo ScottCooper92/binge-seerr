@@ -53,7 +53,10 @@ private fun AgentSection(
     enabled: Boolean,
     onEdit: ((NotificationSettings) -> NotificationSettings) -> Unit,
 ) {
-    EditorSection(agent.sectionId, stringResource(agent.labelRes()), defaultExpanded = settings.isOn(agent)) {
+    // Read once: for an agent with no switch, "on" means a field is filled in, so following the live
+    // draft would close the section under the user as they clear its last field.
+    val startsOpen = remember(agent) { settings.isOn(agent) }
+    EditorSection(agent.sectionId, stringResource(agent.labelRes()), defaultExpanded = startsOpen) {
         AgentFields(agent, settings, enabled, onEdit)
     }
 }
