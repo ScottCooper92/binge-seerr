@@ -358,15 +358,22 @@ class SeerrRequestService(
      * The one operation that needs Seerr's own id space: the server's media record, not the TMDB id.
      *
      * An issue needs something to report against: the contract answers FAILED_PRECONDITION unless the title is
-     * available or partially available, an unrequested one included (#682). One details read gives both that and
-     * Seerr's own media record id.
+     * available or partially available, an unrequested one included (#682). The 4K version counts for a user
+     * declared `CAPABILITY_REQUEST_4K` (#704). One details read gives both that and Seerr's own media record id.
      */
     override suspend fun reportIssue(request: ReportIssueRequest): ReportIssueResponse =
         gated("report_issue", Capability.CAPABILITY_REPORT_ISSUE) {
             val info = connection.api().details(request.media).mediaInfo
-            val availability = info.toRequestStatus(clock()).availability
-            if (availability != Availability.AVAILABILITY_AVAILABLE && availability != Availability.AVAILABILITY_PARTIALLY_AVAILABLE) {
-                throw StatusException(Status.FAILED_PRECONDITION.withDescription("Nothing to report against: the title is $availability"))
+            val status = info.toRequestStatus(clock())
+            val sees4k = mayRequest4k()
+            if (!status.isReportable(sees4k = sees4k)) {
+                // The 4K state is named only to a user who may see it, as withAllowedActions does for every status.
+                val fourK = if (sees4k) " (4K: ${status.availability4K})" else ""
+                throw StatusException(
+                    Status.FAILED_PRECONDITION.withDescription(
+                        "Nothing to report against: the title is ${status.availability}$fourK",
+                    ),
+                )
             }
             val mediaId = info.recordIdFor(request.media)
             connection.api().createIssue(SeerrCreateIssueBody(mediaId, request.type.toSeerrIssueType(), request.message))

@@ -56,7 +56,9 @@ private val REQUEST_SCOPED =
 
 /**
  * The server's status with its allowed actions filled in for the user [viewerId]. Each request carries
- * its own set. The title's set holds a report only against something available, and the block
+ * its own set. The 4K state is cleared unless this user is declared `CAPABILITY_REQUEST_4K`, as the
+ * contract asks, so it never tells them about a version they cannot request. The title's set holds a
+ * report only against something available in a version they can see, and the block
  * capability either way: it offers a block on a title and an unblock on a blocked one. Its
  * request-scoped entries are the union of the requests', so a
  * host that reads only the title-level list is never offered an action that every request refuses.
@@ -78,9 +80,8 @@ fun SeerrPermissions.withAllowedActions(
                 .build()
         }
     val requestActions = requests.flatMapTo(mutableSetOf()) { it.allowedActionsList }
-    val reportable =
-        status.availability == Availability.AVAILABILITY_AVAILABLE ||
-            status.availability == Availability.AVAILABILITY_PARTIALLY_AVAILABLE
+    val sees4k = Capability.CAPABILITY_REQUEST_4K in declared
+    val reportable = status.isReportable(sees4k)
     val titleActions =
         declared.filter { capability ->
             when (capability) {
@@ -91,12 +92,22 @@ fun SeerrPermissions.withAllowedActions(
         }
     return status
         .toBuilder()
+        .apply { if (!sees4k) clearAvailability4K().clearSeasons4K() }
         .clearRequests()
         .addAllRequests(requests)
         .clearAllowedActions()
         .addAllAllowedActions(titleActions)
         .build()
 }
+
+/**
+ * Whether there is something to report an issue against: the standard version available, or partly,
+ * or the 4K one where [sees4k]. `ReportIssue` refuses anything else with FAILED_PRECONDITION.
+ */
+fun RequestStatus.isReportable(sees4k: Boolean): Boolean = availability.isReportable() || (sees4k && availability4K.isReportable())
+
+private fun Availability.isReportable(): Boolean =
+    this == Availability.AVAILABILITY_AVAILABLE || this == Availability.AVAILABILITY_PARTIALLY_AVAILABLE
 
 /** One request on its own, as a `ListRequests` entry carries it, with what the viewer may do to it; [own] when they made it. */
 fun SeerrPermissions.withAllowedActions(

@@ -1041,6 +1041,8 @@ data class SeerrMediaInfoDto(
     /** The server's internal media id — the issue endpoint keys on this, not the TMDB id. */
     @SerialName("id") val id: Int? = null,
     @SerialName("status") val status: SeerrMediaStatusCode? = null,
+    /** The 4K version's status, which Seerr tracks apart from [status]: a 4K request moves only this one. */
+    @SerialName("status4k") val status4k: SeerrMediaStatusCode? = null,
     @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
     @SerialName("downloadStatus") val downloadStatus: List<SeerrDownloadStatusDto> = emptyList(),
     @SerialName("requests") val requests: List<SeerrRequestSummaryDto> = emptyList(),
