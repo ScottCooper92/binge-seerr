@@ -916,6 +916,41 @@
     <string name="tv_loading">Loading…</string>
     <string name="tv_advanced_submitting">Sending the request…</string>
 
+    <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
+    <string name="tv_setup_send_from_phone">Send the address from your phone</string>
+    <string name="tv_handoff_title">Send the address from your phone</string>
+    <string name="tv_handoff_body">Scan the code with your phone\'s camera. It opens a page where you can type the address on the phone\'s keyboard, or send it from the phone app if you\'re signed in there.</string>
+    <string name="tv_handoff_no_camera">No camera app? Open the address under the code in the phone\'s browser.</string>
+    <string name="tv_handoff_note">The code works once, for 5 minutes, from a phone on the same network as this TV.</string>
+    <string name="tv_handoff_code_description">Code to scan with your phone</string>
+    <string name="tv_handoff_no_network">This TV isn\'t on a Wi-Fi or wired home network, so a phone can\'t reach it. Type the address instead.</string>
+    <string name="tv_handoff_could_not_listen">This TV couldn\'t open a connection for your phone. Type the address instead.</string>
+    <string name="tv_handoff_type_instead">Type it instead</string>
+    <string name="setup_error_handoff_expired">The code expired before a phone sent an address. Try again.</string>
+    <string name="handoff_page_title">Send the server address to your TV</string>
+    <string name="handoff_page_body">Type the address of your Seerr, Jellyseerr or Overseerr server. Your TV checks it, then asks you to sign in there.</string>
+    <string name="handoff_page_field">Server address</string>
+    <string name="handoff_page_placeholder" translatable="false">http://192.168.1.10:5055</string>
+    <string name="handoff_page_send">Send to TV</string>
+    <string name="handoff_page_invalid">That isn\'t an address the TV can use. Check it and try again.</string>
+    <string name="handoff_page_app_body">Is %1$s on this phone and connected to your server? It can send the address for you.</string>
+    <string name="handoff_page_open_app">Open %1$s</string>
+    <string name="handoff_page_sent_title">Sent</string>
+    <string name="handoff_page_sent_body">Your TV has the address and is checking the server. You can close this page.</string>
+
+    <!-- The phone's side of the hand-off: the confirmation before it sends its server's address to a TV. -->
+    <string name="send_address_title">Send the address to your TV</string>
+    <string name="send_address_confirm">Send this server address to the TV at %1$s?</string>
+    <string name="send_address_only_address">Only the address is sent. Your sign-in stays on this phone, and you sign in on the TV yourself.</string>
+    <string name="send_address_send">Send</string>
+    <string name="send_address_sending">Sending…</string>
+    <string name="send_address_failed">The TV didn\'t take the address. Check that it still shows the code and that both are on the same Wi-Fi, then try again.</string>
+    <string name="send_address_sent">Sent. The TV at %1$s has the address and is checking the server. Carry on there.</string>
+    <string name="send_address_not_connected">This phone isn\'t connected to a server, so there\'s no address to send. Type the address on the page the code opened instead.</string>
+    <string name="send_address_refused">This link doesn\'t point to a TV on your home network, so nothing was sent.</string>
+    <string name="send_address_done">Done</string>
+    <string name="send_address_close">Close</string>
+
     <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->
     <string name="tv_rail_hub">Home</string>
     <string name="tv_hub_health_checking">Checking the server…</string>

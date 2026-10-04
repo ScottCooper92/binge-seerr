@@ -26,6 +26,9 @@ class SetupActions(
     val onRequestPasswordReset: () -> Unit,
     /** The opt-in to plain HTTP to a public host. Defaulted so a preview that never shows one need not wire it. */
     val onAllowCleartext: (Boolean) -> Unit = {},
+    /** The television's hand-off from a phone (#323). Defaulted for the same reason: the phone never offers it. */
+    val onStartHandOff: () -> Unit = {},
+    val onCancelHandOff: () -> Unit = {},
 )
 
 /**
@@ -72,4 +75,5 @@ internal fun SetupError.messageRes(): Int =
         SetupError.Unreachable -> R.string.setup_error_unreachable
         SetupError.Unknown -> R.string.setup_error_unknown
         SetupError.LinkExpired -> R.string.setup_error_link_expired
+        SetupError.HandOffExpired -> R.string.setup_error_handoff_expired
     }

@@ -13,6 +13,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -60,6 +61,7 @@ class SetupViewModel
         plex: PlexPinFlow,
         savedState: SavedStateHandle,
         cipher: SecretCipher,
+        handOffs: AddressHandOffs,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
@@ -76,6 +78,22 @@ class SetupViewModel
                 cipher = cipher,
                 onLink = { link -> draft.update { it.copy(busy = false, link = link) } },
                 onFinished = ::finish,
+            )
+
+        private val handOff =
+            SetupHandOff(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                handOffs = handOffs,
+                onState = { handOff -> draft.update { it.copy(handOff = handOff) } },
+                // An address a phone sent, already checked as a base URL, goes exactly where a typed
+                // one does - into the field, then inspect() - so the plain-HTTP opt-in and the sign-in
+                // after it are the same as for an address entered on the remote.
+                onAddress = { address ->
+                    draft.update { it.copy(serverUrl = address, handOff = null, error = null) }
+                    inspect()
+                },
+                onExpired = { draft.update { it.copy(error = SetupError.HandOffExpired) } },
             )
 
         init {
@@ -96,6 +114,7 @@ class SetupViewModel
                             cleartextAllowed = insecureHost != null && insecureHost == draft.cleartextHost,
                             isInspecting = draft.busy,
                             error = draft.error,
+                            handOff = draft.handOff,
                         )
                     }
                     else ->
@@ -149,6 +168,22 @@ class SetupViewModel
                     }.onFailure { failure -> draft.update { it.copy(error = failure.toSetupError()) } }
                 draft.update { it.copy(busy = false) }
             }
+        }
+
+        /**
+         * The television's "send the address from your phone": [showing] puts up a code with a
+         * listener behind it, and taking the plate down stops listening at once.
+         */
+        fun showHandOff(showing: Boolean) {
+            if (!showing) {
+                handOff.cancel()
+                draft.update { it.copy(handOff = null) }
+                return
+            }
+            val current = draft.value
+            if (current.server != null || current.busy) return
+            draft.update { it.copy(error = null) }
+            handOff.start()
         }
 
         fun changeServer() {
@@ -290,6 +325,8 @@ class SetupViewModel
             val editing: SeerrCredentials? = null,
             /** The public host the user opted in to reach over plain HTTP, if any. */
             val cleartextHost: String? = null,
+            /** The television's hand-off from a phone, while its plate is up. */
+            val handOff: AddressHandOff? = null,
         )
 
         private companion object {

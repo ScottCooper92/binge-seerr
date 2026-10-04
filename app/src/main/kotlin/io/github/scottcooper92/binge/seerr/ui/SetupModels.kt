@@ -6,7 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import kotlinx.serialization.Serializable
 
 /** Why an attempt failed, as the setup form shows it. */
-enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, Unknown, LinkExpired }
+enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, Unknown, LinkExpired, HandOffExpired }
 
 /** Something that went right and wants saying: the only one so far is the reset email. */
 enum class SetupNotice { ResetEmailSent, }
@@ -102,13 +102,37 @@ internal sealed interface PendingLink {
     }
 }
 
+/**
+ * The television's "send the address from your phone" plate (#323): the code a phone scans while the
+ * TV listens for an address, or why it cannot listen at all.
+ */
+sealed interface AddressHandOff {
+    /** Listening; [url] is what the QR code carries and what the plate spells out under it. */
+    data class Listening(
+        val url: String,
+    ) : AddressHandOff
+
+    data class Unavailable(
+        val reason: Reason,
+    ) : AddressHandOff
+
+    enum class Reason {
+        /** No private IPv4 address on Wi-Fi or Ethernet. */
+        NoLocalNetwork,
+
+        /** The listener could not be opened, or failed while open. */
+        CouldNotListen,
+    }
+}
+
 /** The screen's state: which step of setup the user is on, or the saved connection. */
 sealed interface SetupUiState {
     data object Loading : SetupUiState
 
     /**
      * Step one: the address, and nothing else until the server answers. An [insecure] address, plain
-     * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it.
+     * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it. A
+     * [handOff] in progress takes the television's page over until it ends.
      */
     data class Address(
         val serverUrl: String,
@@ -116,6 +140,7 @@ sealed interface SetupUiState {
         val isInspecting: Boolean,
         val error: SetupError?,
         val cleartextAllowed: Boolean = false,
+        val handOff: AddressHandOff? = null,
     ) : SetupUiState {
         val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)
     }

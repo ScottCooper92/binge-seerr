@@ -250,7 +250,7 @@ ViewModels, the Seerr client, the stores and the exported service together.
 
 What is excluded is generated code and Android entry points: Hilt's graph and the whole `di`
 package, Room's `*_Impl*` including the inner classes it emits, `*ComposableSingletons*`,
-`*PreviewData*`, the two Activities and the Application class, and every `@Composable` by
+`*PreviewData*`, the Activities and the Application class, and every `@Composable` by
 annotation — UI appearance is not a line-coverage question. Nothing is excluded for merely lacking
 tests, and the patterns match fully-qualified names, so each needs its leading `*`.
 
