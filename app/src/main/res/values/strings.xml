@@ -555,6 +555,8 @@
     <string name="server_settings_rule_keywords_hint">TMDB keyword ids, comma-separated; blank for any.</string>
     <string name="server_settings_rule_overrides_title">Send it with</string>
     <string name="server_settings_rule_pick_instance">Pick an instance to see what it offers.</string>
+    <string name="server_settings_rule_needs_condition">Add at least one condition: a user, genre, language or keyword.</string>
+    <string name="server_settings_rule_needs_override">Pick at least one override: a quality profile, root folder or tag.</string>
     <string name="server_settings_tautulli_external_hint">Where Tautulli opens from a user\'s page; blank for the address above.</string>
     <string name="user_settings_linked">Linked</string>
     <string name="user_settings_not_linked">Not linked</string>

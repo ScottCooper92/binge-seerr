@@ -268,6 +268,20 @@ class OverrideRuleSectionsScreenshotTest {
                 RuleInstance(OverrideRuleExtras(instances = instances()), OverrideRuleForm(), enabled = true, onSelectInstance = {})
             }
         }
+
+    /** A Save on a rule with no condition and no override: both sections are held open and say what they need (#733). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun missingConditionAndOverride() =
+        SectionFrame {
+            val draft = OverrideRuleForm(serviceType = ServiceType.Radarr, serviceId = 1)
+            val extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false))
+            CompositionLocalProvider(LocalEditorIssues provides draft.issues()) {
+                RuleConditions(extras, draft, enabled = true, actions = noActions(), onToggleUser = {})
+                RuleOverrides(extras, draft, enabled = true, actions = noActions(), onToggleTag = {})
+            }
+        }
 }
 
 private val SECTION_WIDTH = 411.dp
