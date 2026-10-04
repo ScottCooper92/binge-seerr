@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -18,6 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.net.InetAddress
 
 /**
  * Restoring a transferred connection, against a real HTTP server on the JVM. What is carried is only
@@ -41,11 +43,23 @@ class ConnectionRestoreTest {
             cipher = ReversingCipher,
         )
 
+    /** Real consent, shared by the factory's guard and the restore, as the app wires them. */
+    private val cleartext = DataStoreCleartextConsent(InMemoryDataStore()) { null }
+
+    /** A public plain-HTTP address for [server]: every name resolves to it, so the guard judges a real request. */
+    private val publicCarried = SeerrCredentials("http://$PUBLIC_HOST:${server.port}/", SeerrAuth.ApiKey("k3y"))
+
     private fun restore(
         scope: CoroutineScope,
         store: CredentialStore,
         carrier: ConnectionCarrier,
-    ) = ConnectionRestore(store, SeerrApiFactory(logRequests = false), carrier, scope)
+    ) = ConnectionRestore(
+        store,
+        SeerrApiFactory(logRequests = false, cleartext = cleartext, testDns = { listOf(InetAddress.getLoopbackAddress()) }),
+        carrier,
+        scope,
+        cleartext,
+    )
 
     @Test
     fun `a carried connection the server still accepts is proved, then saved`() =
@@ -85,7 +99,7 @@ class ConnectionRestoreTest {
             restore(backgroundScope, store, carrier).run()
 
             assertNull(store.credentials.first())
-            assertEquals(carried, carrier.held)
+            assertEquals(carried, carrier.held?.credentials)
         }
 
     @Test
@@ -105,7 +119,7 @@ class ConnectionRestoreTest {
     @Test
     fun `settling is what tells the home to stop waiting, and it happens even with nothing to restore`() =
         runTest {
-            val carrier = FakeCarrier(held = null)
+            val carrier = FakeCarrier(credentials = null)
             val sut = restore(backgroundScope, store(backgroundScope), carrier)
             assertFalse(sut.settled.value)
 
@@ -127,16 +141,69 @@ class ConnectionRestoreTest {
             assertEquals(1, carrier.reads)
         }
 
-    private class FakeCarrier(
-        var held: SeerrCredentials?,
-    ) : ConnectionCarrier {
-        var reads = 0
+    @Test
+    fun `a carried plain-http opt-in is granted for the probe and kept with the restored connection`() =
+        runTest {
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            val store = store(backgroundScope)
 
-        override suspend fun put(credentials: SeerrCredentials) {
-            held = credentials
+            restore(backgroundScope, store, FakeCarrier(publicCarried, cleartext = true)).run()
+
+            assertEquals(publicCarried, store.credentials.first())
+            assertTrue(cleartext.allows(PUBLIC_HOST))
         }
 
-        override suspend fun read(): SeerrCredentials? {
+    @Test
+    fun `without a carried opt-in a public plain-http connection is refused, and kept for a later setup`() =
+        runTest {
+            val store = store(backgroundScope)
+            val carrier = FakeCarrier(publicCarried)
+
+            restore(backgroundScope, store, carrier).run()
+
+            assertNull(store.credentials.first())
+            assertEquals(0, server.requestCount)
+            assertFalse(cleartext.allows(PUBLIC_HOST))
+            assertEquals(publicCarried, carrier.held?.credentials)
+        }
+
+    @Test
+    fun `a carried opt-in is dropped again when the server refuses the connection`() =
+        runTest {
+            server.enqueue(MockResponse(code = 401))
+            val carrier = FakeCarrier(publicCarried, cleartext = true)
+
+            restore(backgroundScope, store(backgroundScope), carrier).run()
+
+            assertFalse(cleartext.allows(PUBLIC_HOST))
+            assertNull(carrier.held)
+        }
+
+    @Test
+    fun `a carried opt-in is dropped again when the server cannot be reached`() =
+        runTest {
+            val unreachable = publicCarried
+            server.close()
+            val carrier = FakeCarrier(unreachable, cleartext = true)
+
+            restore(backgroundScope, store(backgroundScope), carrier).run()
+
+            assertFalse(cleartext.allows(PUBLIC_HOST))
+            assertEquals(unreachable, carrier.held?.credentials)
+        }
+
+    private class FakeCarrier(
+        credentials: SeerrCredentials?,
+        cleartext: Boolean = false,
+    ) : ConnectionCarrier {
+        var held: CarriedCredentials? = credentials?.let { CarriedCredentials(it, cleartext) }
+        var reads = 0
+
+        override suspend fun put(carried: CarriedCredentials) {
+            held = carried
+        }
+
+        override suspend fun read(): CarriedCredentials? {
             reads++
             return held
         }
@@ -148,6 +215,10 @@ class ConnectionRestoreTest {
 
     private fun json(body: String): MockResponse =
         MockResponse(code = 200, headers = okhttp3.Headers.headersOf("Content-Type", "application/json"), body = body)
+
+    private companion object {
+        const val PUBLIC_HOST = "seerr.example.com"
+    }
 
     private object ReversingCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext.reversed()

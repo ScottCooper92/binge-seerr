@@ -4,7 +4,6 @@ import com.google.android.gms.auth.blockstore.BlockstoreClient
 import com.google.android.gms.auth.blockstore.DeleteBytesRequest
 import com.google.android.gms.auth.blockstore.RetrieveBytesRequest
 import com.google.android.gms.auth.blockstore.StoreBytesData
-import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.tasks.await
 
@@ -21,8 +20,8 @@ private const val CONNECTION_KEY = "io.github.scottcooper92.binge.seerr.CONNECTI
 class BlockStoreConnectionCarrier(
     private val client: BlockstoreClient,
 ) : ConnectionCarrier {
-    override suspend fun put(credentials: SeerrCredentials) {
-        val bytes = encodeCarriedConnection(credentials)
+    override suspend fun put(carried: CarriedCredentials) {
+        val bytes = encodeCarriedConnection(carried)
         if (bytes.size > BlockstoreClient.MAX_SIZE) return
         // Cloud backup only where Google holds no key to it. Without end-to-end encryption this is
         // a server-side secret in someone else's datacentre, so the entry stays on the device.
@@ -37,7 +36,7 @@ class BlockStoreConnectionCarrier(
         attempt { client.storeBytes(data).await() }
     }
 
-    override suspend fun read(): SeerrCredentials? {
+    override suspend fun read(): CarriedCredentials? {
         val request = RetrieveBytesRequest.Builder().setKeys(listOf(CONNECTION_KEY)).build()
         val response = attempt { client.retrieveBytes(request).await() }.getOrNull() ?: return null
         val bytes = response.blockstoreDataMap[CONNECTION_KEY]?.bytes ?: return null

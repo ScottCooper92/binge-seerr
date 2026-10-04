@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr
 
 import android.content.Intent
+import com.binge.companion.sdk.BingeHosts
 import com.binge.companion.sdk.CompanionManifest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -38,12 +39,24 @@ class SettingsHandOffActivityTest {
     @Test
     fun `a host that started it for a result is handed on to the hub`() {
         val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
-        shadowOf(controller.get()).setCallingPackage("com.binge")
+        shadowOf(controller.get()).setCallingPackage(BingeHosts.DEBUG_PACKAGE_NAME)
 
         controller.create()
 
         val next = shadowOf(controller.get()).nextStartedActivity
         assertEquals(MainActivity::class.java.name, next.component?.className)
+        assertTrue(controller.get().isFinishing)
+    }
+
+    /** The debug build still admits only Binge's packages, never any app that started it for a result (#679). */
+    @Test
+    fun `a caller that is not Binge opens nothing`() {
+        val controller = Robolectric.buildActivity(SettingsHandOffActivity::class.java)
+        shadowOf(controller.get()).setCallingPackage("com.example.other")
+
+        controller.create()
+
+        assertNull(shadowOf(controller.get()).nextStartedActivity)
         assertTrue(controller.get().isFinishing)
     }
 

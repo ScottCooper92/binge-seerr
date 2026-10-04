@@ -157,4 +157,22 @@ class SeerrStatusMappingTest {
         val both = SeerrRequestUserDto(displayName = "grace@example.com", username = "grace", email = "grace@example.com")
         assertEquals("grace", nameOf(both))
     }
+
+    @Test
+    fun `the 4k version's state is carried apart from the standard one, title and seasons`() {
+        val info =
+            SeerrMediaInfoDto(
+                status = SeerrMediaStatusCode.Unknown,
+                status4k = SeerrMediaStatusCode.Processing,
+                seasons = listOf(SeerrSeasonStatusDto(1, status = SeerrMediaStatusCode.Available, status4k = SeerrMediaStatusCode.Pending)),
+            )
+
+        val status = info.toRequestStatus(NOW)
+
+        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
+        assertEquals(Availability.AVAILABILITY_PROCESSING, status.availability4K)
+        assertEquals(Availability.AVAILABILITY_AVAILABLE, status.seasonsList.single().availability)
+        assertEquals(Availability.AVAILABILITY_PENDING, status.seasons4KList.single().availability)
+        assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, (null as SeerrMediaInfoDto?).toRequestStatus(NOW).availability4K)
+    }
 }

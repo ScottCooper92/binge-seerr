@@ -17,19 +17,31 @@ import kotlinx.serialization.json.Json
  */
 interface ConnectionCarrier {
     /** Mirrors the saved connection out. Best-effort: a carrier that refuses must not fail the save. */
-    suspend fun put(credentials: SeerrCredentials)
+    suspend fun put(carried: CarriedCredentials)
 
     /** The carried connection as stored, unproven. Null when there is none, or it cannot be read. */
-    suspend fun read(): SeerrCredentials?
+    suspend fun read(): CarriedCredentials?
 
     suspend fun clear()
 }
 
+/**
+ * What a carrier holds: the connection, and whether the user opted in to plain HTTP to its host.
+ *
+ * That opt-in is kept on the device in [CleartextConsent], so without it here a restored connection to
+ * a public `http://` server is refused before it can be proved. It is set only when the saved host
+ * needs it and holds it.
+ */
+data class CarriedCredentials(
+    val credentials: SeerrCredentials,
+    val cleartext: Boolean = false,
+)
+
 /** The carrier on a device with nothing to carry it. Every call is a no-op. */
 object NoConnectionCarrier : ConnectionCarrier {
-    override suspend fun put(credentials: SeerrCredentials) = Unit
+    override suspend fun put(carried: CarriedCredentials) = Unit
 
-    override suspend fun read(): SeerrCredentials? = null
+    override suspend fun read(): CarriedCredentials? = null
 
     override suspend fun clear() = Unit
 }
@@ -48,19 +60,22 @@ private data class CarriedConnection(
     @SerialName("secret") val secret: String,
     @SerialName("user") val userId: Int? = null,
     @SerialName("variant") val variant: String? = null,
+    /** Absent from what earlier builds wrote, which carried no opt-in. */
+    @SerialName("cleartext") val cleartext: Boolean = false,
 )
 
 private val carrierJson = Json { ignoreUnknownKeys = true }
 
-/** The bytes a carrier stores for [credentials]. */
-internal fun encodeCarriedConnection(credentials: SeerrCredentials): ByteArray {
-    val carried =
+/** The bytes a carrier stores for [carried]. */
+internal fun encodeCarriedConnection(carried: CarriedCredentials): ByteArray {
+    val credentials = carried.credentials
+    val connection =
         when (val auth = credentials.auth) {
             is SeerrAuth.ApiKey -> CarriedConnection(credentials.baseUrl, KIND_API_KEY, auth.key, variant = credentials.variant.name)
             is SeerrAuth.Session ->
                 CarriedConnection(credentials.baseUrl, KIND_SESSION, auth.cookie, auth.userId, credentials.variant.name)
         }
-    return carrierJson.encodeToString(carried).toByteArray(Charsets.UTF_8)
+    return carrierJson.encodeToString(connection.copy(cleartext = carried.cleartext)).toByteArray(Charsets.UTF_8)
 }
 
 /**
@@ -68,7 +83,7 @@ internal fun encodeCarriedConnection(credentials: SeerrCredentials): ByteArray {
  * understand, a kind it does not know, a session with no user. A carrier holds what an older build
  * wrote, so refusing beats guessing.
  */
-internal fun decodeCarriedConnection(bytes: ByteArray): SeerrCredentials? {
+internal fun decodeCarriedConnection(bytes: ByteArray): CarriedCredentials? {
     val carried =
         runCatching { carrierJson.decodeFromString<CarriedConnection>(bytes.toString(Charsets.UTF_8)) }.getOrNull()
             ?: return null
@@ -80,5 +95,5 @@ internal fun decodeCarriedConnection(bytes: ByteArray): SeerrCredentials? {
             else -> null
         } ?: return null
     val variant = carried.variant?.let { name -> runCatching { SeerrVariant.valueOf(name) }.getOrNull() } ?: SeerrVariant.Unknown
-    return SeerrCredentials(carried.baseUrl, auth, variant)
+    return CarriedCredentials(SeerrCredentials(carried.baseUrl, auth, variant), carried.cleartext)
 }

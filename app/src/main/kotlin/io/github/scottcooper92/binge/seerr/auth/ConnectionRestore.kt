@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.auth
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.attempt
+import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,8 @@ class ConnectionRestore(
     private val apis: SeerrApiFactory,
     private val carrier: ConnectionCarrier,
     private val scope: CoroutineScope,
+    /** The same consent [apis] enforces: a carried opt-in is granted here so the probe may go out. */
+    private val cleartext: CleartextConsent = CleartextConsent.None,
 ) {
     private val state = MutableStateFlow(false)
 
@@ -40,10 +43,15 @@ class ConnectionRestore(
         if (state.value) return
         try {
             if (store.credentials.first() != null) return
-            val carried = carrier.read() ?: return
-            attempt { apis.probe(carried.baseUrl, carried.auth) { api -> api.authenticatedUser() } }
-                .onSuccess { store.save(carried) }
-                .onFailure { failure -> if (failure.toSeerrError().rejectsSession) carrier.clear() }
+            val (carried, optedIn) = carrier.read() ?: return
+            // The opt-in travelled with the connection, so it is granted before the probe and dropped
+            // again unless the connection is saved: consent belongs to the saved server only.
+            val host = carried.baseUrl.insecurePublicHostOrNull()?.takeIf { optedIn }
+            host?.let { cleartext.grant(it) }
+            val proved = attempt { apis.probe(carried.baseUrl, carried.auth) { api -> api.authenticatedUser() } }
+            val saved = proved.isSuccess && store.save(carried)
+            if (host != null && !saved) cleartext.retainOnly(null)
+            proved.onFailure { failure -> if (failure.toSeerrError().rejectsSession) carrier.clear() }
         } finally {
             state.value = true
         }

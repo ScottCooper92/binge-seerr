@@ -53,15 +53,30 @@ suspend fun SeerrApi.destinationChoicesFor(
 }
 
 /**
+ * The servers this user may send this media's shape to. A 4K server is a 4K request, so it is
+ * offered only when [allow4k] is true: the caller holds CAPABILITY_REQUEST_4K. A server left out
+ * here is one this integration did not offer, and naming it later is INVALID_ARGUMENT, as the
+ * contract says for any `server_id` it did not offer.
+ */
+private suspend fun SeerrApi.offeredServers(
+    isTv: Boolean,
+    allow4k: Boolean,
+): List<SeerrServerDto> = arrServers(isTv).filter { allow4k || !it.is4k }
+
+/**
  * The full advanced-request destination for a fresh picker: every server this media's shape may go
  * to, and the preselected one's profile/root-folder choices — the same server a plain
- * `SubmitRequest` (never 4K) would have used. Empty only when this shape has no server configured
- * at all. A shape with servers but no non-4K default (every instance is 4K-only) still lists them
- * — the servers axis is the whole point of this rpc over the old single-axis hand-off — just with
- * nothing preselected and no profile/root-folder axis to resolve against.
+ * `SubmitRequest` (never 4K) would have used. Empty when this shape has no server this user may
+ * use. A shape with servers but no non-4K default (every instance is 4K-only) still lists them
+ * to a user who may request 4K — the servers axis is the whole point of this rpc over the old
+ * single-axis hand-off — just with nothing preselected and no profile/root-folder axis to resolve
+ * against.
  */
-suspend fun SeerrApi.advancedRequestOptions(isTv: Boolean): DestinationChoices {
-    val servers = arrServers(isTv)
+suspend fun SeerrApi.advancedRequestOptions(
+    isTv: Boolean,
+    allow4k: Boolean,
+): DestinationChoices {
+    val servers = offeredServers(isTv, allow4k)
     if (servers.isEmpty()) return DestinationChoices.getDefaultInstance()
     val server = servers.forRequest(is4k = false).preferred()
     val destination = server?.let { destinationChoicesFor(isTv, it) } ?: DestinationChoices.getDefaultInstance()
@@ -76,9 +91,10 @@ suspend fun SeerrApi.advancedRequestOptions(isTv: Boolean): DestinationChoices {
 suspend fun SeerrApi.destinationOptions(
     isTv: Boolean,
     serverId: String,
+    allow4k: Boolean,
 ): DestinationChoices {
     val server =
-        arrServers(isTv).firstOrNull { it.id.toString() == serverId }
+        offeredServers(isTv, allow4k).firstOrNull { it.id.toString() == serverId }
             ?: throw StatusException(Status.INVALID_ARGUMENT.withDescription("unknown server_id $serverId"))
     return destinationChoicesFor(isTv, server)
 }
@@ -96,7 +112,8 @@ data class ResolvedAdvancedDestination(
  * preselected, so a submit with every field untouched is a plain request in every way but its
  * path. An explicit but unrecognised server id is a bad argument, not a silent fall-through to the
  * default — unlike an empty one, it names a choice the picker offered, so a submit against it
- * failing loudly is what tells the host its own picker state is stale. A profile id that is not a
+ * failing loudly is what tells the host its own picker state is stale. A 4K server named by a
+ * user who may not request 4K is the same: it was never offered. A profile id that is not a
  * number is the same, since it can name no profile: it is refused rather than dropped for the
  * server's default. Whether a well-formed profile or root folder is one the server offers is left to
  * Seerr, which refuses it, so a submit carrying both still pays for no extra lookup.
@@ -111,8 +128,9 @@ suspend fun SeerrApi.resolveAdvancedDestination(
     serverId: String,
     profileId: String,
     rootFolderId: String,
+    allow4k: Boolean,
 ): ResolvedAdvancedDestination {
-    val servers = arrServers(isTv)
+    val servers = offeredServers(isTv, allow4k)
     val server =
         if (serverId.isEmpty()) {
             servers.forRequest(is4k = false).preferred()

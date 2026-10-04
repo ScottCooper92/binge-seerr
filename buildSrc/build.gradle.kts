@@ -7,3 +7,15 @@ plugins {
 repositories {
     mavenCentral()
 }
+
+// A gate that breaks usually breaks by passing everything, so each task is tested against a case it
+// must pass and a case it must fail. ProjectBuilder comes with the Gradle API that kotlin-dsl adds.
+dependencies {
+    testImplementation(libs.junit)
+}
+
+// Gradle builds only buildSrc's jar before the app configures, never its `check`, and the root build
+// cannot depend on a buildSrc task. So the tests finalize the jar, which the test compile itself needs:
+// a gate that stopped failing breaks every build before any app task runs. They are up to date unless
+// buildSrc changed.
+tasks.named("jar") { finalizedBy(tasks.named("test")) }

@@ -17,9 +17,11 @@ import com.binge.companion.contracts.request.v1.HandshakeRequest
 import com.binge.companion.contracts.request.v1.HandshakeResponse
 import com.binge.companion.contracts.request.v1.IssueType
 import com.binge.companion.contracts.request.v1.ListRequestsRequest
+import com.binge.companion.contracts.request.v1.ListRequestsResponse
 import com.binge.companion.contracts.request.v1.ObserveAttentionRequest
 import com.binge.companion.contracts.request.v1.ObserveStatusRequest
 import com.binge.companion.contracts.request.v1.ReportIssueRequest
+import com.binge.companion.contracts.request.v1.RequestFilter
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
@@ -74,6 +76,9 @@ private const val REQUEST_4K_PERMISSION = 1 shl 10
 private const val CREATE_ISSUES = 1 shl 22
 
 private const val ALL_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true,"series4kEnabled":true}"""
+
+/** Seerr's record for a movie whose only version is the 4K one: `status` Unknown, `status4k` Available. */
+private const val AVAILABLE_ONLY_IN_4K = """{"mediaInfo":{"id":9,"status":1,"status4k":5}}"""
 private const val MOVIE_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true}"""
 
 /**
@@ -187,6 +192,8 @@ class SeerrRequestServiceTest {
                     Capability.CAPABILITY_CANCEL,
                     Capability.CAPABILITY_EDIT_SEASONS,
                     Capability.CAPABILITY_REPORT_ISSUE,
+                    Capability.CAPABILITY_LIST_REQUESTS,
+                    Capability.CAPABILITY_BATCH_STATUS,
                 ),
                 response.capabilitiesList.toSet(),
             )
@@ -224,11 +231,10 @@ class SeerrRequestServiceTest {
         runTest {
             val response = connected(permissions = ADMIN).handshakeAs(ADMIN, publicSettings = ALL_4K_ENABLED)
 
-            // In the contract but not served here yet, so not declared: MEDIA_FILE_INFO needs a Radarr fetch,
-            // and LIST_REQUESTS / BATCH_STATUS (binge-companions#129) are #703.
+            // In the contract but not served here yet, so not declared: MEDIA_FILE_INFO needs a Radarr fetch (#698).
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
-                    Capability.CAPABILITY_MEDIA_FILE_INFO - Capability.CAPABILITY_LIST_REQUESTS - Capability.CAPABILITY_BATCH_STATUS,
+                    Capability.CAPABILITY_MEDIA_FILE_INFO,
                 response.capabilitiesList.toSet(),
             )
         }
@@ -389,7 +395,7 @@ class SeerrRequestServiceTest {
             seerr.enqueue(MockResponse(code = 409))
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
             stub.submitRequest(request)
-            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { submitRequest(request.toBuilder().setIs4K(true).build()) })
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { submitRequest(request.toBuilder().setIs4K(true).build()) })
             assertEquals(emptyList<Any>(), analytics.events)
 
             seerr.enqueue(MockResponse(code = 500, body = """{"message":"boom 603"}"""))
@@ -565,7 +571,7 @@ class SeerrRequestServiceTest {
     @Test
     fun `advanced options lists every server for the shape, preselected on the plain non-4k default`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
 
             seerr.enqueue(
                 json(
@@ -609,9 +615,9 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `advanced options for a shape with only 4K servers still lists them, nothing preselected`() =
+    fun `advanced options for a shape with only 4K servers still lists them to a user who may request 4K, nothing preselected`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
             val before = seerr.requestCount
             seerr.enqueue(json("""[{"id":5,"name":"4K Only","is4k":true,"isDefault":true}]"""))
 
@@ -626,10 +632,49 @@ class SeerrRequestServiceTest {
             assertEquals(before + 1, seerr.requestCount)
         }
 
+    /** A 4K server is a 4K request, so a user who may not make one is not offered one. */
+    @Test
+    fun `advanced options leaves out the 4K servers for a user without the 4K permission`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(
+                json(
+                    """[{"id":1,"name":"Main","is4k":false,"isDefault":true},{"id":2,"name":"Main 4K","is4k":true,"isDefault":true}]""",
+                ),
+            )
+            seerr.enqueue(json("""{"profiles":[],"rootFolders":[]}"""))
+
+            val destination =
+                stub.getAdvancedRequestOptions(GetAdvancedRequestOptionsRequest.newBuilder().setMedia(movie).build()).destination
+
+            assertEquals(listOf(1 to false), destination.serversList.map { it.id.toInt() to it.is4K })
+            assertEquals("1", destination.selectedServerId)
+        }
+
+    @Test
+    fun `destination options for a 4K server, from a user without the 4K permission, is INVALID_ARGUMENT`() =
+        runTest {
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            seerr.enqueue(json("""[{"id":2,"name":"Main 4K","is4k":true}]"""))
+
+            val code =
+                stub.code {
+                    getDestinationOptions(
+                        GetDestinationOptionsRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setServerId("2")
+                            .build(),
+                    )
+                }
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
+        }
+
     @Test
     fun `destination options re-resolves profile and root folder for the server the host moved to`() =
         runTest {
-            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
+            val stub = connected(permissions = REQUEST or REQUEST_ADVANCED or REQUEST_4K, publicSettings = MOVIE_4K_ENABLED)
             seerr.enqueue(
                 json(
                     """[{"id":1,"name":"Main","is4k":false,"isDefault":true},{"id":2,"name":"Main 4K","is4k":true,"activeProfileId":9,"activeDirectory":"/media4k"}]""",
@@ -801,7 +846,7 @@ class SeerrRequestServiceTest {
                     )
                 }
 
-            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
             assertEquals(before, seerr.requestCount)
         }
 
@@ -817,7 +862,7 @@ class SeerrRequestServiceTest {
         }
 
     @Test
-    fun `a 4K request is refused for a user who does not hold the 4K permission, before it is posted`() =
+    fun `a 4K request from a user who does not hold the 4K permission is INVALID_ARGUMENT, before it is posted`() =
         runTest {
             val stub = connected(permissions = REQUEST)
             val before = seerr.requestCount
@@ -833,12 +878,12 @@ class SeerrRequestServiceTest {
                     )
                 }
 
-            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
             assertEquals(before, seerr.requestCount)
         }
 
     @Test
-    fun `a request to a 4K server through the advanced path needs the 4K permission too`() =
+    fun `a 4K server named through the advanced path by a user without the 4K permission is INVALID_ARGUMENT`() =
         runTest {
             val stub = connected(permissions = REQUEST or REQUEST_ADVANCED)
             seerr.enqueue(json("""[{"id":2,"name":"Main 4K","is4k":true}]"""))
@@ -857,7 +902,7 @@ class SeerrRequestServiceTest {
                     )
                 }
 
-            assertEquals(Status.Code.PERMISSION_DENIED, code)
+            assertEquals(Status.Code.INVALID_ARGUMENT, code)
             assertEquals(before + 1, seerr.requestCount)
         }
 
@@ -878,15 +923,6 @@ class SeerrRequestServiceTest {
                 )
 
             assertEquals(90, created.requestId)
-        }
-
-    @Test
-    fun `the rpcs this app does not serve yet are refused as undeclared, not unimplemented`() =
-        runTest {
-            val stub = connected(permissions = ADMIN)
-
-            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { listRequests(ListRequestsRequest.getDefaultInstance()) })
-            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { getStatuses(GetStatusesRequest.getDefaultInstance()) })
         }
 
     @Test
@@ -1048,6 +1084,73 @@ class SeerrRequestServiceTest {
                 }
 
             assertEquals(Status.Code.FAILED_PRECONDITION, code)
+        }
+
+    /** Seerr moves only `status4k` for a 4K request; the contract carries it apart (#704). */
+    @Test
+    fun `a 4k-only title reads as such to a user who may request 4k`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED)
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
+            assertEquals(Availability.AVAILABILITY_AVAILABLE, status.availability4K)
+        }
+
+    /** The contract sets the 4K state only under CAPABILITY_REQUEST_4K, so a version they cannot request is not shown. */
+    @Test
+    fun `a user who may not request 4k is told nothing about the 4k version`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+
+            val status = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status
+
+            assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
+            assertEquals(Availability.AVAILABILITY_UNSPECIFIED, status.availability4K)
+        }
+
+    @Test
+    fun `a report against a title available only in 4k is filed for a user who may request 4k`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED)
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+            seerr.enqueue(MockResponse(code = 201))
+
+            stub.reportIssue(
+                ReportIssueRequest
+                    .newBuilder()
+                    .setMedia(movie)
+                    .setType(IssueType.ISSUE_TYPE_VIDEO)
+                    .build(),
+            )
+
+            seerr.takeRequest()
+            assertEquals("/api/v1/issue", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `a report against a title available only in 4k is FAILED_PRECONDITION for a user who may not request 4k`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(AVAILABLE_ONLY_IN_4K))
+
+            val failure =
+                runCatching {
+                    stub.reportIssue(
+                        ReportIssueRequest
+                            .newBuilder()
+                            .setMedia(movie)
+                            .setType(IssueType.ISSUE_TYPE_VIDEO)
+                            .build(),
+                    )
+                }.exceptionOrNull() as StatusException
+
+            assertEquals(Status.Code.FAILED_PRECONDITION, failure.status.code)
+            val description = failure.status.description.orEmpty()
+            assertFalse(description, description.contains("4K", ignoreCase = true))
         }
 
     @Test
@@ -1338,6 +1441,222 @@ class SeerrRequestServiceTest {
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.status(media: MediaId): Status.Code =
         code { getStatus(GetStatusRequest.newBuilder().setMedia(media).build()) }
+
+    private val show: MediaId =
+        MediaId
+            .newBuilder()
+            .setMediaType(MediaType.MEDIA_TYPE_TV)
+            .setTmdbId(1399)
+            .build()
+
+    private fun listRequest(
+        filter: RequestFilter,
+        pageSize: Int = 0,
+        pageToken: String = "",
+    ): ListRequestsRequest =
+        ListRequestsRequest
+            .newBuilder()
+            .setFilter(filter)
+            .setPageSize(pageSize)
+            .setPageToken(pageToken)
+            .build()
+
+    private fun emptyPage() = json("""{"pageInfo":{"results":0},"results":[]}""")
+
+    @Test
+    fun `list requests asks seerr for a page of everything the user may see, and pages on with an opaque token`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+            seerr.enqueue(
+                json(
+                    """{"pageInfo":{"results":3},"results":[""" +
+                        """{"id":4,"status":1,"media":{"tmdbId":603,"mediaType":"movie"},"requestedBy":{"id":2,"displayName":"Neo"}},""" +
+                        """{"id":5,"status":2,"is4k":true,"media":{"tmdbId":603,"mediaType":"movie"},"requestedBy":{"id":2}}]}""",
+                ),
+            )
+            // Both requests are for one title, so its status is read once.
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":2,"requests":[{"id":4,"status":1},{"id":5,"status":2,"is4k":true}]}}"""))
+
+            val first = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = 2))
+
+            val asked = seerr.takeRequest().url
+            assertEquals("/api/v1/request", asked.encodedPath)
+            assertEquals("2", asked.queryParameter("take"))
+            assertEquals("0", asked.queryParameter("skip"))
+            assertEquals("all", asked.queryParameter("filter"))
+            assertEquals("added", asked.queryParameter("sort"))
+            assertNull(asked.queryParameter("requestedBy"))
+            assertEquals("/api/v1/movie/603", seerr.takeRequest().url.encodedPath)
+            assertEquals(2, seerr.requestCount - before)
+            assertEquals(listOf(movie, movie), first.entriesList.map { it.media })
+            assertEquals(listOf(4 to false, 5 to true), first.entriesList.map { it.request.id to it.request.is4K })
+            assertEquals("Neo", first.entriesList[0].request.requestedBy)
+            assertEquals(Availability.AVAILABILITY_PENDING, first.entriesList[0].status.availability)
+            assertEquals(2, first.entriesList[0].status.requestsCount)
+            assertTrue(Capability.CAPABILITY_APPROVE in first.entriesList[0].request.allowedActionsList)
+            assertTrue(first.nextPageToken.isNotEmpty())
+
+            seerr.enqueue(
+                json(
+                    """{"pageInfo":{"results":3},"results":[""" +
+                        """{"id":6,"status":2,"media":{"tmdbId":1399,"mediaType":"tv"},"requestedBy":{"id":1}}]}""",
+                ),
+            )
+            seerr.enqueue(json("""{"mediaInfo":{"id":10,"status":5}}"""))
+
+            val last = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = 2, pageToken = first.nextPageToken))
+
+            assertEquals("2", seerr.takeRequest().url.queryParameter("skip"))
+            assertEquals(listOf(show), last.entriesList.map { it.media })
+            assertEquals(
+                Availability.AVAILABILITY_AVAILABLE,
+                last.entriesList
+                    .single()
+                    .status.availability,
+            )
+            assertEquals("", last.nextPageToken)
+        }
+
+    @Test
+    fun `mine asks for the signed-in user's own requests by id`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            seerr.enqueue(emptyPage())
+
+            val response = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_MINE))
+
+            val asked = seerr.takeRequest().url
+            assertEquals("1", asked.queryParameter("requestedBy"))
+            assertEquals("all", asked.queryParameter("filter"))
+            assertEquals(DEFAULT_LIST_PAGE_SIZE.toString(), asked.queryParameter("take"))
+            assertEquals(0, response.entriesCount)
+            assertEquals("", response.nextPageToken)
+        }
+
+    @Test
+    fun `recently available asks for available requests, the most recently changed first`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(emptyPage())
+
+            stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_RECENTLY_AVAILABLE, pageSize = 500))
+
+            val asked = seerr.takeRequest().url
+            assertEquals("available", asked.queryParameter("filter"))
+            assertEquals("modified", asked.queryParameter("sort"))
+            assertEquals(MAX_LIST_PAGE_SIZE.toString(), asked.queryParameter("take"))
+        }
+
+    @Test
+    fun `awaiting moderation asks a moderator's seerr for pending requests`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(emptyPage())
+
+            stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_AWAITING_MODERATION))
+
+            assertEquals("pending", seerr.takeRequest().url.queryParameter("filter"))
+        }
+
+    /** Seerr would answer with the requester's own pending requests, which are not waiting on them. */
+    @Test
+    fun `awaiting moderation is empty for a user who may not moderate, without asking seerr`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            val before = seerr.requestCount
+
+            val nothing = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_AWAITING_MODERATION))
+
+            assertEquals(ListRequestsResponse.getDefaultInstance(), nothing)
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `list requests refuses a missing filter and a page token it did not issue for this filter and page size`() =
+        runTest {
+            val stub = connected()
+            val before = seerr.requestCount
+            val mineToken = ListRequestsPageToken.issue(listRequest(RequestFilter.REQUEST_FILTER_MINE, pageSize = 10), skip = 10)
+
+            for (request in listOf(
+                listRequest(RequestFilter.REQUEST_FILTER_UNSPECIFIED),
+                listRequest(RequestFilter.REQUEST_FILTER_ALL, pageToken = "not a token"),
+                listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = 10, pageToken = mineToken),
+                listRequest(RequestFilter.REQUEST_FILTER_MINE, pageSize = 20, pageToken = mineToken),
+                listRequest(RequestFilter.REQUEST_FILTER_ALL, pageSize = -1),
+            )) {
+                assertEquals(request.toString(), Status.Code.INVALID_ARGUMENT, stub.code { listRequests(request) })
+            }
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a listed request carries what the viewer may do to it`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            seerr.enqueue(
+                json(
+                    """{"pageInfo":{"results":1},"results":[""" +
+                        """{"id":4,"status":1,"media":{"tmdbId":603,"mediaType":"movie"},"requestedBy":{"id":1}}]}""",
+                ),
+            )
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":2,"requests":[{"id":4,"status":1,"requestedBy":{"id":1}}]}}"""))
+
+            val request =
+                stub
+                    .listRequests(listRequest(RequestFilter.REQUEST_FILTER_MINE))
+                    .entriesList
+                    .single()
+                    .request
+
+            assertEquals(listOf(Capability.CAPABILITY_CANCEL), request.allowedActionsList)
+        }
+
+    @Test
+    fun `get statuses answers each title as get status does, a repeated one once per occurrence and read once`() =
+        runTest {
+            val cache = FakeStatusCache()
+            cache.rows[show.mediaTypeValue to show.tmdbId] =
+                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_AVAILABLE).build(), 0L)
+            val stub = connected(cache = cache)
+            val before = seerr.requestCount
+            seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":3}}"""))
+
+            val response =
+                stub.getStatuses(
+                    GetStatusesRequest
+                        .newBuilder()
+                        .addAllMedia(listOf(movie, show, movie))
+                        .build(),
+                )
+
+            assertEquals(listOf(movie, show, movie), response.statusesList.map { it.media })
+            assertEquals(
+                listOf(Availability.AVAILABILITY_PROCESSING, Availability.AVAILABILITY_AVAILABLE, Availability.AVAILABILITY_PROCESSING),
+                response.statusesList.map { it.status.availability },
+            )
+            assertEquals(1, seerr.requestCount - before)
+        }
+
+    @Test
+    fun `get statuses refuses more than 50 titles or an unusable one before asking seerr, and answers none with none`() =
+        runTest {
+            val stub = connected()
+            val before = seerr.requestCount
+            val tooMany = GetStatusesRequest.newBuilder().addAllMedia(List(MAX_STATUSES_PER_CALL + 1) { movie }).build()
+            val unusable =
+                GetStatusesRequest
+                    .newBuilder()
+                    .addMedia(movie)
+                    .addMedia(MediaId.getDefaultInstance())
+                    .build()
+
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { getStatuses(tooMany) })
+            assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { getStatuses(unusable) })
+            assertEquals(0, stub.getStatuses(GetStatusesRequest.getDefaultInstance()).statusesCount)
+            assertEquals(before, seerr.requestCount)
+        }
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.submit(media: MediaId): Status.Code =
         code { submitRequest(SubmitRequestRequest.newBuilder().setMedia(media).build()) }
