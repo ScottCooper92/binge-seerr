@@ -1045,6 +1045,8 @@ data class SeerrMediaInfoDto(
     @SerialName("status4k") val status4k: SeerrMediaStatusCode? = null,
     @SerialName("seasons") val seasons: List<SeerrSeasonStatusDto> = emptyList(),
     @SerialName("downloadStatus") val downloadStatus: List<SeerrDownloadStatusDto> = emptyList(),
+    /** The 4K version's active downloads, which Seerr tracks apart from [downloadStatus] on the 4K server. */
+    @SerialName("downloadStatus4k") val downloadStatus4k: List<SeerrDownloadStatusDto> = emptyList(),
     @SerialName("requests") val requests: List<SeerrRequestSummaryDto> = emptyList(),
     /** Link to the title in the media server's web UI; [mediaUrl] is general, the others server-specific. */
     @SerialName("mediaUrl") val mediaUrl: String? = null,

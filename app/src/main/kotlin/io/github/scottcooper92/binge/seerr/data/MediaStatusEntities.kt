@@ -11,7 +11,9 @@ import androidx.room.Query
  *
  * [status] is the contract's `RequestStatus` message, serialised and Base64-encoded, minus its
  * allowed actions — those are what this user may do *now* and are recomputed on every read, against
- * [requesterIds]: `request:user` id pairs, the one server fact they need that the message lacks. Storing
+ * [requesterIds]: `request:user` id pairs, a server fact they need that the message lacks.
+ * [standardDownload] is the other: the download progress without the 4K downloads, Base64-encoded
+ * the same way, or empty when there is none. A user who may not request 4K is shown it. Storing
  * the message rather than a column per field is deliberate: the contract only ever adds fields, and
  * this table is dropped on a schema change anyway, so a column per field would be migration work
  * for a cache.
@@ -23,6 +25,7 @@ data class MediaStatusEntity(
     val status: String,
     val fetchedAtMillis: Long,
     val requesterIds: String,
+    val standardDownload: String = "",
 )
 
 @Dao
