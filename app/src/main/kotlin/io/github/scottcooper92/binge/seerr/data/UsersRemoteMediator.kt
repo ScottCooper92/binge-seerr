@@ -20,6 +20,8 @@ class UsersRemoteMediator(
     private val sort: String,
     private val api: suspend () -> SeerrApi,
     private val store: UserStore,
+    /** Told as a refresh starts (null) and once it has written its rows; see [ListRefreshes]. */
+    private val onRefresh: (rowsWritten: Int?) -> Unit = {},
     private val toEntity: (SeerrUserDto, String, Int) -> UserEntity?,
 ) : RemoteMediator<Int, UserEntity>() {
     override suspend fun initialize(): InitializeAction = InitializeAction.LAUNCH_INITIAL_REFRESH
@@ -34,11 +36,17 @@ class UsersRemoteMediator(
                 LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true)
                 LoadType.APPEND -> store.nextSkip(sort) ?: return MediatorResult.Success(endOfPaginationReached = true)
             }
+        if (loadType == LoadType.REFRESH) onRefresh(null)
         return try {
             val page = api().users(take = USERS_PAGE_SIZE, skip = skip, sort = sort)
             val rows = page.results.mapIndexedNotNull { index, dto -> toEntity(dto, sort, skip + index) }
             val cursor = pageCursorAfter(skip, USERS_PAGE_SIZE, page.pageInfo.pages)
-            if (loadType == LoadType.REFRESH) store.refresh(sort, rows, cursor.nextSkip) else store.append(sort, rows, cursor.nextSkip)
+            if (loadType == LoadType.REFRESH) {
+                store.refresh(sort, rows, cursor.nextSkip)
+                onRefresh(rows.size)
+            } else {
+                store.append(sort, rows, cursor.nextSkip)
+            }
             MediatorResult.Success(endOfPaginationReached = cursor.endReached)
         } catch (e: CancellationException) {
             throw e

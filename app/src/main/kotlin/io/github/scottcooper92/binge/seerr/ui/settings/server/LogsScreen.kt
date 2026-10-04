@@ -54,7 +54,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -72,8 +71,10 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
+import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -183,9 +184,9 @@ private fun LogsBody(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val refresh = lazyItems.loadState.refresh
-    when {
-        lazyItems.itemCount > 0 ->
+    // Read straight from a paging source, so there is no network refresh to wait on.
+    when (val phase = lazyItems.rememberPagedPhase(lastRefresh = null)) {
+        is PagedPhase.Rows ->
             LazyColumn(
                 state = listState,
                 modifier = modifier,
@@ -197,15 +198,15 @@ private fun LogsBody(
                 }
                 item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry, onReconnect = actions.onBack) }
             }
-        refresh is LoadState.Loading -> LoadingScreen(modifier.padding(contentPadding))
-        refresh is LoadState.Error ->
+        PagedPhase.Skeleton -> LoadingScreen(modifier.padding(contentPadding))
+        is PagedPhase.Failed ->
             PagedRefreshError(
-                refresh.error,
+                phase.error,
                 onRetry = lazyItems::retry,
                 onReconnect = actions.onBack,
                 modifier = modifier.padding(contentPadding),
             )
-        else ->
+        PagedPhase.Empty ->
             EmptyScreen(
                 message = stringResource(R.string.server_settings_logs_empty),
                 modifier = modifier.padding(contentPadding),

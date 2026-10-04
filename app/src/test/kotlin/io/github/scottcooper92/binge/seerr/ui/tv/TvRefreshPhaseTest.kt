@@ -3,55 +3,55 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 
-/** A paged list's refresh as the boards read it: the mediator's failure behind cached rows is the one that counts (#625). */
+/**
+ * A paged list's refresh as the boards read it. The decision is the phone's [PagedPhase]; this is only how
+ * a board shows it. A mediator's failure behind cached rows is the one that counts (#625).
+ */
 class TvRefreshPhaseTest {
     private val idle = LoadState.NotLoading(endOfPaginationReached = false)
-    private val failure = LoadState.Error(IOException("unreachable"))
-
-    private fun states(
-        refresh: LoadState,
-        mediatorRefresh: LoadState? = null,
-        mediatorAppend: LoadState = idle,
-        append: LoadState = idle,
-    ) = CombinedLoadStates(
-        refresh = refresh,
-        prepend = idle,
-        append = append,
-        source = LoadStates(refresh = refresh, prepend = idle, append = append),
-        mediator = mediatorRefresh?.let { LoadStates(refresh = it, prepend = idle, append = mediatorAppend) },
-    )
+    private val failure = IOException("unreachable")
 
     @Test
-    fun `a failed network refresh behind a finished database read is a failed refresh`() {
-        val phase = states(refresh = idle, mediatorRefresh = failure).refreshPhase()
-
-        assertEquals(TvLoadPhase.Failed(rejected = false), phase)
+    fun `the skeleton is the loading plate and an empty list is idle`() {
+        assertEquals(TvLoadPhase.Loading, PagedPhase.Skeleton.tvRefresh())
+        assertEquals(TvLoadPhase.Idle, PagedPhase.Empty.tvRefresh())
     }
 
     @Test
-    fun `a failure on the source alone still fails`() {
-        assertEquals(TvLoadPhase.Failed(rejected = false), states(refresh = failure).refreshPhase())
+    fun `a failed refresh behind rows fails, a running one loads, and a quiet one is idle`() {
+        assertEquals(TvLoadPhase.Failed(rejected = false), PagedPhase.Rows(refreshing = false, refreshError = failure).tvRefresh())
+        assertEquals(TvLoadPhase.Loading, PagedPhase.Rows(refreshing = true, refreshError = null).tvRefresh())
+        assertEquals(TvLoadPhase.Idle, PagedPhase.Rows(refreshing = false, refreshError = null).tvRefresh())
     }
 
     @Test
-    fun `a mediator still loading is loading, and a quiet one is idle`() {
-        assertEquals(TvLoadPhase.Loading, states(refresh = idle, mediatorRefresh = LoadState.Loading).refreshPhase())
-        assertEquals(TvLoadPhase.Idle, states(refresh = idle, mediatorRefresh = idle).refreshPhase())
+    fun `a first load the server rejected offers to reconnect`() {
+        assertEquals(
+            TvLoadPhase.Failed(rejected = true),
+            PagedPhase.Failed(HttpException(Response.error<Unit>(401, "{}".toResponseBody()))).tvRefresh(),
+        )
+        assertEquals(TvLoadPhase.Failed(rejected = false), PagedPhase.Failed(failure).tvRefresh())
     }
 
     @Test
-    fun `an error outranks a load in progress on the other side`() {
-        assertEquals(TvLoadPhase.Failed(rejected = false), states(refresh = LoadState.Loading, mediatorRefresh = failure).refreshPhase())
-    }
+    fun `the append reads the mediator, and its error outranks the source`() {
+        val states =
+            CombinedLoadStates(
+                refresh = idle,
+                prepend = idle,
+                append = idle,
+                source = LoadStates(refresh = idle, prepend = idle, append = LoadState.Loading),
+                mediator = LoadStates(refresh = idle, prepend = idle, append = LoadState.Error(failure)),
+            )
 
-    @Test
-    fun `the append reads the mediator the same way`() {
-        val phase = states(refresh = idle, mediatorRefresh = idle, mediatorAppend = failure).appendPhase()
-
-        assertEquals(TvLoadPhase.Failed(rejected = false), phase)
+        assertEquals(TvLoadPhase.Failed(rejected = false), states.appendPhase())
     }
 }
