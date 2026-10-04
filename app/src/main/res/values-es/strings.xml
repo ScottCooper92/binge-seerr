@@ -769,6 +769,7 @@
     <string name="server_settings_slider_tv_streaming">Series en un servicio de streaming</string>
     <string name="server_settings_agents_manage_caption">Todos los agentes por los que puede enviar este servidor</string>
     <string name="server_settings_agent_section_options">Ajustes</string>
+    <string name="server_settings_agent_section_more">Más ajustes</string>
     <string name="server_settings_agent_test">Enviar una notificación de prueba</string>
     <string name="server_settings_agent_tested">Notificación de prueba enviada</string>
     <string name="server_settings_agent_email_from">Dirección del remitente</string>
