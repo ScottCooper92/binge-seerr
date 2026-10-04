@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -59,12 +60,16 @@ class HubActions(
  *
  * @param selectedSection the section open beside the hub, marked in the Manage group. Null on a
  * window narrow enough that the hub is alone on screen, where nothing is open beside it.
+ * @param admitsUnverifiedCallers whether this build admits Binge's package names under any certificate.
+ * True only on a debug build, where it puts a banner at the top of the dashboard so a tester knows what
+ * they are running (#679).
  */
 @Composable
 fun HubScreen(
     state: HubUiState,
     actions: HubActions,
     selectedSection: HubSection? = null,
+    admitsUnverifiedCallers: Boolean = false,
 ) {
     val ready = state as? HubUiState.Ready
     ScreenScaffold(title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
@@ -76,7 +81,7 @@ fun HubScreen(
                 ready == null -> LoadingScreen(Modifier.padding(inner))
                 ready.health.isProblem() ->
                     ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))
-                else -> Dashboard(ready, actions, selectedSection, contentPadding = inner)
+                else -> Dashboard(ready, actions, selectedSection, admitsUnverifiedCallers, contentPadding = inner)
             }
         }
     }
@@ -90,10 +95,18 @@ private fun Dashboard(
     state: HubUiState.Ready,
     actions: HubActions,
     selectedSection: HubSection?,
+    admitsUnverifiedCallers: Boolean,
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        if (admitsUnverifiedCallers) {
+            HintCard(
+                text = stringResource(R.string.hub_unverified_callers),
+                icon = Icons.Filled.Warning,
+                modifier = Modifier.padding(start = inset, end = inset, bottom = dimensionResource(DesR.dimen.padding_m)),
+            )
+        }
         ServerCard(server = state.server, overview = state.overview, inset = inset)
         state.overview.account?.let { account ->
             AccountCard(

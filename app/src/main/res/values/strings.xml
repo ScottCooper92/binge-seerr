@@ -56,6 +56,7 @@
     <string name="hub_binge_connect_hint">Connect Binge to this app to send and manage requests directly from Binge</string>
     <string name="hub_binge_connected_hint">Connected to Binge, request titles and manage requests directly from there</string>
     <string name="hub_binge_open">Open Binge</string>
+    <string name="hub_unverified_callers">Debug build: accepts Binge\'s package names under any certificate.</string>
 
     <string name="hub_health_connected">Connected</string>
     <string name="hub_update_available">Update available</string>
