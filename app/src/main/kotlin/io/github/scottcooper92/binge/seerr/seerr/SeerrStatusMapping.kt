@@ -21,6 +21,10 @@ import kotlin.time.Duration.Companion.seconds
  * `availability_4k` and `seasons_4k`, never folded into `availability` (#704). Both are always
  * filled here; the service clears them for a user it does not declare `CAPABILITY_REQUEST_4K` to.
  *
+ * `download` is the progress of every active download, so it takes in Seerr's `downloadStatus4k` as
+ * well as `downloadStatus` (#724). For a user it does not declare `CAPABILITY_REQUEST_4K` to, the
+ * service swaps it for [standardDownload], which leaves the 4K downloads out.
+ *
  * `allowed_actions` is not filled here: it is the intersection of what the user may do and what
  * the title's state admits, which the service computes with the permissions in hand.
  */
@@ -39,7 +43,7 @@ fun SeerrMediaInfoDto?.toRequestStatus(nowMillis: Long): RequestStatus {
             .setAvailability4K(info.status4k.toAvailability())
             .addAllSeasons4K(info.seasons.map { it.toSeasonAvailability(it.status4k) })
             .addAllRequests(info.requests.map { it.toRequestInfo() })
-    info.downloadStatus.toDownloadProgress(nowMillis)?.let(builder::setDownload)
+    (info.downloadStatus + info.downloadStatus4k).toDownloadProgress(nowMillis)?.let(builder::setDownload)
     (info.mediaUrl ?: info.jellyfinMediaUrl ?: info.plexUrl)?.let(builder::setWatchUrl)
     return builder.build()
 }
@@ -50,6 +54,9 @@ private fun SeerrSeasonStatusDto.toSeasonAvailability(status: SeerrMediaStatusCo
         .setSeasonNumber(seasonNumber)
         .setAvailability(status.toAvailability())
         .build()
+
+/** The standard version's downloads alone: the `download` a user who may not request 4K is shown. */
+fun SeerrMediaInfoDto?.standardDownload(nowMillis: Long): DownloadProgress? = this?.downloadStatus?.toDownloadProgress(nowMillis)
 
 /** Who made each request, by user id; a request whose requester the server did not name is left out. */
 fun SeerrMediaInfoDto?.requesterIds(): Map<Int, Int> =

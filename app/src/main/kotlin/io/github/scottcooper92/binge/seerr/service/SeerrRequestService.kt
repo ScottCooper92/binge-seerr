@@ -74,6 +74,7 @@ import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
+import io.github.scottcooper92.binge.seerr.seerr.standardDownload
 import io.github.scottcooper92.binge.seerr.seerr.statusCatching
 import io.github.scottcooper92.binge.seerr.seerr.toMediaId
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -531,7 +532,7 @@ class SeerrRequestService(
     private suspend fun fetchStatus(media: MediaId): CachedStatus {
         val now = clock()
         val info = connection.api().details(media).mediaInfo
-        val fetched = CachedStatus(info.toRequestStatus(now), now, info.requesterIds())
+        val fetched = CachedStatus(info.toRequestStatus(now), now, info.requesterIds(), info.standardDownload(now))
         if (freshness.maxAgeMillis(fetched.status) != null) statusCache.put(media, fetched)
         return fetched
     }

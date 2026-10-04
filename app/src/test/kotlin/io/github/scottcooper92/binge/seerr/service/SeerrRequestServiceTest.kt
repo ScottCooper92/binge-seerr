@@ -79,6 +79,20 @@ private const val ALL_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true,
 
 /** Seerr's record for a movie whose only version is the 4K one: `status` Unknown, `status4k` Available. */
 private const val AVAILABLE_ONLY_IN_4K = """{"mediaInfo":{"id":9,"status":1,"status4k":5}}"""
+
+/**
+ * A movie downloading in both versions: 1,000 bytes on the standard server, half done, and 3,000 on
+ * the 4K one, not started. Seerr reports them in `downloadStatus` and `downloadStatus4k`.
+ */
+private const val DOWNLOADING_IN_BOTH =
+    """{"mediaInfo":{"id":9,"status":3,"status4k":3,""" +
+        """"downloadStatus":[{"title":"Standard","size":1000,"sizeLeft":500,"status":"downloading"}],""" +
+        """"downloadStatus4k":[{"title":"UHD","size":3000,"sizeLeft":3000,"status":"queued"}]}}"""
+
+/** A movie downloading only in 4K. */
+private const val DOWNLOADING_ONLY_IN_4K =
+    """{"mediaInfo":{"id":9,"status":1,"status4k":3,"downloadStatus4k":[{"title":"UHD","size":3000,"sizeLeft":1500}]}}"""
+
 private const val MOVIE_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true}"""
 
 /**
@@ -1110,6 +1124,57 @@ class SeerrRequestServiceTest {
 
             assertEquals(Availability.AVAILABILITY_NOT_REQUESTED, status.availability)
             assertEquals(Availability.AVAILABILITY_UNSPECIFIED, status.availability4K)
+        }
+
+    /** `download` is every active download, so a user who may request 4K sees the 4K ones in it too (#724). */
+    @Test
+    fun `the download takes in the 4k downloads for a user who may request 4k`() =
+        runTest {
+            val stub = connected(publicSettings = MOVIE_4K_ENABLED)
+            seerr.enqueue(json(DOWNLOADING_IN_BOTH))
+
+            val download = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status.download
+
+            assertEquals(4_000L, download.totalBytes)
+            assertEquals(0.125f, download.fraction, 0.0001f)
+            assertEquals("Standard", download.label)
+        }
+
+    @Test
+    fun `the download leaves the 4k downloads out for a user who may not request 4k`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(DOWNLOADING_IN_BOTH))
+
+            val download = stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status.download
+
+            assertEquals(1_000L, download.totalBytes)
+            assertEquals(0.5f, download.fraction, 0.0001f)
+        }
+
+    @Test
+    fun `a title downloading only in 4k shows no download to a user who may not request 4k`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(json(DOWNLOADING_ONLY_IN_4K))
+
+            assertFalse(stub.getStatus(GetStatusRequest.newBuilder().setMedia(movie).build()).status.hasDownload())
+        }
+
+    /** The cache keeps the server's full answer, so a cached read has to leave the 4K downloads out the same way. */
+    @Test
+    fun `a cached status leaves the 4k downloads out for a user who may not request 4k`() =
+        runTest {
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache)
+            seerr.enqueue(json(DOWNLOADING_IN_BOTH))
+            getStatus(stub)
+            val before = seerr.requestCount
+
+            val download = getStatus(stub).download
+
+            assertEquals("served from the cache", before, seerr.requestCount)
+            assertEquals(1_000L, download.totalBytes)
         }
 
     @Test
