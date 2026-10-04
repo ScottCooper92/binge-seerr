@@ -2,8 +2,10 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
@@ -27,8 +29,8 @@ class MediaServerScreenshotTest {
     fun jellyfin() = Frame(ready(jellyfinForm(), MediaServerExtras(libraries = libraries())))
 
     /**
-     * A full scan on its second library, with a cancel where the start button was. The scan section sits
-     * below the libraries and the phone cell ends before it, so this frame leaves the libraries out to keep it in view.
+     * A full scan on its second library, with a cancel where the start button was. A running scan holds its
+     * section open. The scan section sits below the libraries, so this frame leaves the libraries out to keep it in view.
      */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -54,7 +56,7 @@ class MediaServerScreenshotTest {
     fun syncingLibraries() =
         Frame(ready(plexForm(), MediaServerExtras(libraries = libraries(), syncingLibraries = true, busyLibraryIds = setOf("2"))))
 
-    /** A form with no host cannot be saved. */
+    /** A form with no host: Host is marked required, and says so once Save is tried. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -67,7 +69,7 @@ class MediaServerScreenshotTest {
             ),
         )
 
-    /** A Jellyfin external host with no scheme: the field is flagged and Save stays off. */
+    /** A Jellyfin external host with no scheme: Links for users opens itself and the field says what it wants. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -80,7 +82,7 @@ class MediaServerScreenshotTest {
             ),
         )
 
-    /** A Jellyfin forgot-password link with a trailing slash: only that field is flagged and Save stays off. */
+    /** A Jellyfin forgot-password link with a trailing slash: only that field is flagged, and its section opens itself. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -92,6 +94,17 @@ class MediaServerScreenshotTest {
                 extras = MediaServerExtras(libraries = libraries()),
             ),
         )
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = Frame(ready(jellyfinForm(), MediaServerExtras(libraries = libraries())))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = Frame(ready(jellyfinForm(), MediaServerExtras(libraries = libraries())))
 
     @PreviewTest
     @SeerrScreenStatePreview
