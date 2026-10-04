@@ -82,8 +82,11 @@ fun IssuesScreen(
                 // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
                 // through underneath it once it's pinned at the top.
                 header = { Spacer(Modifier.height(padding.calculateTopPadding())) },
+                // The filters either side stay composed, so their rows are loading before the swipe reaches them.
+                beyondViewportPageCount = 1,
             ) { pagePadding, page ->
-                // Its own filter, never the selected one: the pager composes a page while it is swiped into view.
+                // Its own filter, never the selected one: the pager composes a page while it is swiped into view,
+                // and keeps the pages either side of the selected one composed.
                 val filter = IssueFilter.entries[page]
                 IssuesBody(
                     filter = filter,

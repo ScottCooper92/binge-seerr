@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
@@ -58,6 +59,24 @@ class RequestsPagerTest {
 
         assertTrue(refreshAsks.isNotEmpty())
         assertTrue("asked for $refreshAsks", refreshAsks.all { it == RequestFilter.All })
+    }
+
+    /**
+     * The pages either side of the selected one are composed before any swipe, so their rows are loading
+     * already. Neither is selected by being composed: nothing is reported, and only the selected page is on
+     * screen or asks to refresh.
+     */
+    @Test
+    fun `the filters either side are composed without a swipe, and the selection stays put`() {
+        setScreen(selected = RequestFilter.Pending)
+
+        composeTestRule.onNodeWithText(titleFor(RequestFilter.Pending)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(titleFor(RequestFilter.All)).assertExists().assertIsNotDisplayed()
+        composeTestRule.onNodeWithText(titleFor(RequestFilter.Approved)).assertExists().assertIsNotDisplayed()
+        composeTestRule.onNodeWithText(titleFor(RequestFilter.Processing)).assertDoesNotExist()
+        assertEquals(emptyList<RequestFilter>(), selections)
+        assertTrue(refreshAsks.isNotEmpty())
+        assertTrue("asked for $refreshAsks", refreshAsks.all { it == RequestFilter.Pending })
     }
 
     @Test
