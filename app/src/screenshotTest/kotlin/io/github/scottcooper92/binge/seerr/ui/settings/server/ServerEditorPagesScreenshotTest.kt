@@ -2,8 +2,10 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
@@ -34,7 +36,7 @@ class NetworkScreenshotTest {
     @Composable
     fun unsavedEdit() = NetworkFrame(EditorUiState.Ready(draft = seerrNetwork().copy(trustProxy = true), saved = seerrNetwork()))
 
-    /** An enabled proxy with no host cannot be saved, so Save stays off. */
+    /** An enabled proxy with no host: its host and port are marked required, and Required shows once Save is tried. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -45,6 +47,35 @@ class NetworkScreenshotTest {
                 saved = seerrNetwork(),
             ),
         )
+
+    /** A maximum TTL below the minimum says so beside the maximum, at once. The proxy is off, so its section is closed. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun crossedTtls() =
+        NetworkFrame(
+            EditorUiState.Ready(
+                draft = seerrNetwork().copy(proxy = ProxyForm(), dnsCache = DnsCacheForm(enabled = true, minTtl = "60", maxTtl = "5")),
+                saved = seerrNetwork(),
+            ),
+        )
+
+    /** A proxy and a DNS cache that are off start closed. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun proxyAndCacheOff() = NetworkFrame(settled(seerrNetwork().copy(proxy = ProxyForm(), dnsCache = DnsCacheForm())))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = NetworkFrame(settled(seerrNetwork()))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = NetworkFrame(settled(seerrNetwork()))
 
     @PreviewTest
     @SeerrScreenStatePreview
