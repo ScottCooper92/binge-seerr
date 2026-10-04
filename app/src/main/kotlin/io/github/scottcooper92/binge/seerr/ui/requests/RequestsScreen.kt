@@ -113,6 +113,8 @@ fun RequestsScreen(
                 // chip-tabs-over-grid pattern, whose solid background never lets scrolled rows show
                 // through underneath it, rather than staying translucent once content scrolls under.
                 header = { Spacer(Modifier.height(padding.calculateTopPadding())) },
+                // The filters either side stay composed, so their rows are loading before the swipe reaches them.
+                beyondViewportPageCount = 1,
             ) { pagePadding, page ->
                 RequestsPage(
                     filter = RequestFilter.entries[page],
@@ -154,9 +156,10 @@ fun RequestsScreen(
 }
 
 /**
- * One filter's page. The pager composes a page before the selection lands on it, while it is swiped into
- * view, so a page collects its own [filter]'s rows and never the selected one's. Refreshing is the
- * selected page's alone: a page only swiped past must not spend the list's one refresh for this version.
+ * One filter's page. The pager composes a page before the selection lands on it — the pages either side of
+ * the selected one are kept composed — so a page collects its own [filter]'s rows and never the selected
+ * one's. Refreshing is the selected page's alone: a neighbour or a page only swiped past must not spend the
+ * list's one refresh for this version.
  */
 @Composable
 private fun RequestsPage(
