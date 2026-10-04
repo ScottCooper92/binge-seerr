@@ -520,6 +520,7 @@ app:server_settings_proxy_password_missing  ccf0fcec85d2
 app:server_settings_proxy_user_missing  2c4065c0ec0d
 app:server_settings_region_hint  f6510423baf2
 app:server_settings_rule_add  bed79361ea53
+app:server_settings_rule_applies_to  6687458beee5
 app:server_settings_rule_conditions  2ff17c09dfc9
 app:server_settings_rule_conditions_title  86f95469c678
 app:server_settings_rule_genres  3561abfe8067

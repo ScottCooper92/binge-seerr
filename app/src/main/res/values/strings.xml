@@ -540,6 +540,7 @@
     <string name="server_settings_rules">Override rules</string>
     <string name="server_settings_rule_add">Add a rule</string>
     <string name="server_settings_rule_title">Override rule</string>
+    <string name="server_settings_rule_applies_to">Applies to</string>
     <plurals name="server_settings_rule_conditions">
         <item quantity="one">%1$d condition</item>
         <item quantity="other">%1$d conditions</item>

@@ -517,6 +517,7 @@
     <string name="server_settings_rules">Reglas de anulación</string>
     <string name="server_settings_rule_add">Añadir una regla</string>
     <string name="server_settings_rule_title">Regla de anulación</string>
+    <string name="server_settings_rule_applies_to">Se aplica a</string>
     <plurals name="server_settings_rule_conditions">
         <item quantity="one">%1$d condición</item>
         <item quantity="many">%1$d condiciones</item>
