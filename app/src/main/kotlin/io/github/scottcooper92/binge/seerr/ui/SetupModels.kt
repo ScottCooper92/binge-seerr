@@ -6,7 +6,19 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import kotlinx.serialization.Serializable
 
 /** Why an attempt failed, as the setup form shows it. */
-enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, LocalNetworkDenied, Unknown, LinkExpired }
+enum class SetupError {
+    InvalidUrl,
+    NotSeerr,
+    Rejected,
+    Unreachable,
+
+    /** [Unreachable], for an address a phone sent that is an IP literal off the home network. */
+    UnreachableNotLocal,
+    LocalNetworkDenied,
+    Unknown,
+    LinkExpired,
+    HandOffExpired,
+}
 
 /** Something that went right and wants saying: the only one so far is the reset email. */
 enum class SetupNotice { ResetEmailSent, }
@@ -102,6 +114,29 @@ internal sealed interface PendingLink {
     }
 }
 
+/**
+ * The television's "send the address from your phone" plate (#323): the code a phone scans while the
+ * TV listens for an address, or why it cannot listen at all.
+ */
+sealed interface AddressHandOff {
+    /** Listening; [url] is what the QR code carries and what the plate spells out under it. */
+    data class Listening(
+        val url: String,
+    ) : AddressHandOff
+
+    data class Unavailable(
+        val reason: Reason,
+    ) : AddressHandOff
+
+    enum class Reason {
+        /** No private IPv4 address on Wi-Fi or Ethernet. */
+        NoLocalNetwork,
+
+        /** The listener could not be opened, or failed while open. */
+        CouldNotListen,
+    }
+}
+
 /** The screen's state: which step of setup the user is on, or the saved connection. */
 sealed interface SetupUiState {
     data object Loading : SetupUiState
@@ -110,7 +145,8 @@ sealed interface SetupUiState {
      * Step one: the address, and nothing else until the server answers. An [insecure] address, plain
      * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it. A local
      * address on a platform that gates the local network shows [needsLocalNetwork] until it is allowed;
-     * it never disables Continue, so an address misjudged as local cannot block setup.
+     * it never disables Continue, so an address misjudged as local cannot block setup. A [handOff] in
+     * progress takes the television's page over until it ends.
      */
     data class Address(
         val serverUrl: String,
@@ -118,6 +154,7 @@ sealed interface SetupUiState {
         val isInspecting: Boolean,
         val error: SetupError?,
         val cleartextAllowed: Boolean = false,
+        val handOff: AddressHandOff? = null,
         val needsLocalNetwork: Boolean = false,
     ) : SetupUiState {
         val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)

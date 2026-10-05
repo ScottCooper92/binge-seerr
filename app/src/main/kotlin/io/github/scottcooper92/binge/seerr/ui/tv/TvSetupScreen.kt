@@ -46,7 +46,11 @@ internal fun TvSetupScreen(
     when (state) {
         // The home swaps to the connected plate on the credentials landing; this is the frame in between.
         SetupUiState.Loading, is SetupUiState.Connected -> TvLoadingPlate(modifier = modifier)
-        is SetupUiState.Address -> TvSetupAddressStep(state, actions, modifier, initialFocus)
+        // The hand-off from a phone takes the whole page too: a code to scan, and nothing to type.
+        is SetupUiState.Address ->
+            state.handOff
+                ?.let { handOff -> TvAddressHandOffPlate(handOff, actions.onCancelHandOff, modifier) }
+                ?: TvSetupAddressStep(state, actions, modifier, initialFocus)
         // A link flow takes the whole page: the code is the only thing to read, and the only thing to do
         // is wait or back out.
         is SetupUiState.SignIn ->
@@ -102,6 +106,11 @@ private fun TvSetupAddressStep(
             style = TvButtonStyle.Primary,
             enabled = state.canContinue,
             initiallyFocused = initialFocus == TvSetupFocus.Continue,
+        )
+        TvButton(
+            label = stringResource(R.string.tv_setup_send_from_phone),
+            onClick = actions.onStartHandOff,
+            enabled = !state.isInspecting,
         )
     }
 }
