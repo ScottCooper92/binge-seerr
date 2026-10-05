@@ -15,9 +15,15 @@ import androidx.tv.material3.ColorScheme as TvColorScheme
  * This app's own accent: the icon's indigo, not Binge's amber (#281). `ic_launcher_background.xml`
  * already tints the launcher and the TV banner towards it — every screen behind them should agree.
  *
- * Every slot but the brand family — `primary`/`secondary`/`tertiary` and their containers, plus
- * `inversePrimary` — is [DarkColorScheme]/[LightColorScheme] unchanged: the neutral surface ramp and
- * `error` are shared meaning, not brand, and stay Binge's.
+ * Every slot but the brand family — `primary`/`secondary`/`tertiary` and their containers,
+ * `inversePrimary` and the four fixed roles — is [DarkColorScheme]/[LightColorScheme] unchanged: the
+ * neutral surface ramp and `error` are shared meaning, not brand, and stay Binge's.
+ *
+ * The fixed roles are the same in both schemes, as Material defines them. The design system paints
+ * its big fills on them: filled buttons, selected filter chips, switches, the month-year picker
+ * header and the hero wash. Left unset, they stay Binge's amber. They follow Binge's own mapping:
+ * `primaryFixedDim` is the dark scheme's `primary`, so a dark fill looks as it did on `primary`, and
+ * `primaryFixed` is a lighter step of the same hue. `onPrimaryFixed` clears 4.5:1 on both fills.
  */
 private val Indigo100 = Color(0xFFE0E7FF)
 private val Indigo200 = Color(0xFFC7D2FE)
@@ -58,6 +64,10 @@ val SeerrDarkColorScheme: ColorScheme =
         onTertiary = RoseInk,
         tertiaryContainer = Rose900,
         onTertiaryContainer = Rose200,
+        primaryFixed = Indigo200,
+        primaryFixedDim = Indigo400,
+        onPrimaryFixed = IndigoInk,
+        onPrimaryFixedVariant = Indigo900,
     )
 
 val SeerrLightColorScheme: ColorScheme =
@@ -75,6 +85,10 @@ val SeerrLightColorScheme: ColorScheme =
         onTertiary = Color.White,
         tertiaryContainer = Rose100,
         onTertiaryContainer = RoseInk,
+        primaryFixed = Indigo200,
+        primaryFixedDim = Indigo400,
+        onPrimaryFixed = IndigoInk,
+        onPrimaryFixedVariant = Indigo900,
     )
 
 /** [BingeBrand.Binge], with this app's indigo in place of Binge's amber. */
