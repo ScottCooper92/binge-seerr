@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -11,7 +10,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.binge.designsystem.tv.component.TvMessagePlate
+import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.tv.template.TvTwoPaneCopy
 import com.binge.designsystem.tv.template.TvTwoPanePage
@@ -76,15 +75,15 @@ internal fun TvFormNote(
     )
 }
 
-/** The frame between two states: setup while the store answers, the picker while the choices load. */
+/**
+ * The frame between two states: setup while the store answers, the picker while the choices load. A loading
+ * [TvMessagePage], so the swap to the real message does not reflow, and focus has somewhere to wait meanwhile.
+ */
 @Composable
 internal fun TvLoadingPlate(
     modifier: Modifier = Modifier,
+    hosting: TvPageHosting = TvPageHosting.PreShell,
     body: String = stringResource(R.string.tv_loading),
 ) {
-    TvMessagePlate(
-        body = body,
-        modifier = modifier.background(MaterialTheme.colorScheme.background),
-        alignment = Alignment.Center,
-    )
+    TvMessagePage(body = body, modifier = modifier, hosting = hosting, loading = true)
 }

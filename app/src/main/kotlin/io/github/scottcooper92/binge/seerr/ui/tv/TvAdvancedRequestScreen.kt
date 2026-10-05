@@ -1,23 +1,20 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.tv.material3.MaterialTheme
 import com.binge.designsystem.tv.component.TvButton
-import com.binge.designsystem.tv.component.TvMessagePlate
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
-import com.binge.designsystem.tv.focus.tvArrivalTarget
+import com.binge.designsystem.tv.template.TvMessagePage
+import com.binge.designsystem.tv.template.TvPageAction
+import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestError
@@ -52,8 +49,9 @@ internal fun TvAdvancedRequestScreen(
     initialSubmitFocused: Boolean = false,
 ) {
     when (state) {
-        AdvancedRequestUiState.Loading -> TvLoadingPlate(modifier = modifier)
-        AdvancedRequestUiState.Submitted -> TvLoadingPlate(modifier = modifier, body = stringResource(R.string.tv_advanced_submitting))
+        AdvancedRequestUiState.Loading -> TvLoadingPlate(modifier = modifier, hosting = TvPageHosting.Overlay)
+        AdvancedRequestUiState.Submitted ->
+            TvLoadingPlate(modifier = modifier, hosting = TvPageHosting.Overlay, body = stringResource(R.string.tv_advanced_submitting))
         is AdvancedRequestUiState.Failed -> TvFailurePlate(state.error, actions, modifier)
         is AdvancedRequestUiState.Ready -> TvOptionsForm(state, actions, modifier, initialFocusedLabel, initialSubmitFocused)
     }
@@ -124,30 +122,15 @@ private fun TvFailurePlate(
     actions: TvAdvancedRequestActions,
     modifier: Modifier,
 ) {
-    val arrival = rememberTvArrivalFocus()
-    TvArrivalFocusEffect(arrival)
+    val close = TvPageAction(stringResource(R.string.advanced_close), actions.onClose)
     val notConnected = error == AdvancedRequestError.NotConnected
-    TvMessagePlate(
+    TvMessagePage(
         headline = stringResource(R.string.advanced_title),
         body = stringResource(error.messageRes()),
         icon = Icons.Filled.Warning,
-        alignment = Alignment.Center,
-        modifier = modifier.background(MaterialTheme.colorScheme.background),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            if (notConnected) {
-                TvButton(
-                    label = stringResource(R.string.advanced_open_setup),
-                    onClick = actions.onOpenSetup,
-                    style = TvButtonStyle.Primary,
-                    modifier = Modifier.tvArrivalTarget(arrival),
-                )
-            }
-            TvButton(
-                label = stringResource(R.string.advanced_close),
-                onClick = actions.onClose,
-                modifier = if (notConnected) Modifier else Modifier.tvArrivalTarget(arrival),
-            )
-        }
-    }
+        hosting = TvPageHosting.Overlay,
+        primary = if (notConnected) TvPageAction(stringResource(R.string.advanced_open_setup), actions.onOpenSetup) else close,
+        secondary = if (notConnected) close else null,
+        modifier = modifier,
+    )
 }
