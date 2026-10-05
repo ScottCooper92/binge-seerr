@@ -920,13 +920,10 @@
     <string name="send_address_refused">Este enlace no apunta a un televisor de tu red doméstica, así que no se ha enviado nada.</string>
     <string name="send_address_done">Hecho</string>
     <string name="send_address_close">Cerrar</string>
-    <string name="send_address_choose">¿Qué dirección debe usar el televisor en %1$s?</string>
-    <string name="send_address_source_connected">La dirección que usa este móvil</string>
-    <string name="send_address_source_application_url">La URL de la aplicación del servidor</string>
-    <string name="send_address_source_remembered">Enviada antes desde este móvil</string>
-    <string name="send_address_not_local">No es una dirección local</string>
-    <string name="send_address_not_local_note">Puede que tu televisor no consiga llegar a ella.</string>
-    <string name="send_address_other">Usar otra dirección…</string>
+    <string name="send_address_not_local">No es una dirección local: puede que tu televisor no consiga llegar a ella.</string>
+    <string name="send_address_tag_server_url">URL del servidor</string>
+    <string name="send_address_tag_sent_before">Enviada antes</string>
+    <string name="send_address_tag_this_phone">Este móvil</string>
     <string name="setup_error_unreachable_not_local">No se pudo conectar con el servidor. Esa no es una dirección local, así que puede que este televisor no consiga llegar a ella. Prueba con una dirección de tu red doméstica.</string>
     <string name="tv_rail_hub">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>

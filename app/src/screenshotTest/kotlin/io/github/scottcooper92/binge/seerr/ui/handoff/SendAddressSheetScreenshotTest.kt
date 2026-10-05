@@ -16,8 +16,9 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 private val SHEET_WIDTH = 411.dp
 
 /**
- * The phone's confirmation before it sends a server address to a television (#323): one address on
- * its own, a choice with an Application URL or an address that is not local, and a typed one. The modal
+ * The phone's confirmation before it sends a server address to a television (#323): the field on its
+ * own, with a not-local note, with the server's other addresses as suggestions, and with an entry that
+ * is not an address. The modal
  * window does not capture, so each frame renders the sheet's content on its container colour at a
  * phone's width, as `MediaStatusSheetScreenshotTest` does.
  */
@@ -45,37 +46,28 @@ class SendAddressSheetScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun singleNotLocal() = Frame(ready(candidate("http://100.101.102.103:5055/", AddressSource.Connected, AddressLocality.NotLocal)))
+    fun singleNotLocal() = Frame(ready(candidate("http://100.103.24.117:30042/", AddressSource.Connected, AddressLocality.NotLocal)))
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun choiceWithApplicationUrl() =
+    fun suggestionsWithServerUrl() =
         Frame(
             ready(
-                candidate("http://192.168.86.20:5055/", AddressSource.ApplicationUrl, AddressLocality.Local),
-                candidate("https://seerr.example.com/", AddressSource.Connected, AddressLocality.Unknown),
+                candidate("http://192.168.86.20:5055/", AddressSource.Remembered, AddressLocality.Local),
+                candidate("https://seerr.example.com/", AddressSource.ApplicationUrl, AddressLocality.Unknown),
+                candidate("http://100.103.24.117:30042/", AddressSource.Connected, AddressLocality.NotLocal),
             ),
         )
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun choiceWithNotLocal() =
+    fun invalidEntry() =
         Frame(
             ready(
-                candidate("http://nas:5055/", AddressSource.Remembered, AddressLocality.Local),
-                candidate("http://100.101.102.103:5055/", AddressSource.Connected, AddressLocality.NotLocal),
-            ),
-        )
-
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun anotherAddress() =
-        Frame(
-            ready(candidate("http://100.101.102.103:5055/", AddressSource.Connected, AddressLocality.NotLocal))
-                .copy(choice = AddressChoice.Other, otherAddress = "http://192.168.86:5055", otherInvalid = true),
+                candidate("http://100.103.24.117:30042/", AddressSource.Connected, AddressLocality.NotLocal),
+            ).copy(address = "http://:5055"),
         )
 }
 
@@ -89,9 +81,7 @@ private fun ready(vararg candidates: AddressCandidate) =
     SendAddressUiState.Ready(
         tv = "192.168.86.53",
         candidates = candidates.toList(),
-        choice = AddressChoice.Candidate(candidates.first().address),
-        otherAddress = "http://:5055",
-        otherInvalid = false,
+        address = candidates.first().address,
         isSending = false,
         failed = false,
     )

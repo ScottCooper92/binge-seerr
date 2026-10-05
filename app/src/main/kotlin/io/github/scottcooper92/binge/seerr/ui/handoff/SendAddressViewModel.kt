@@ -17,8 +17,8 @@ import io.github.scottcooper92.binge.seerr.handoff.HandOffAddressMemory
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffLinks
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffTarget
 import io.github.scottcooper92.binge.seerr.handoff.addressCandidates
+import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.handoff.normaliseServerAddress
-import io.github.scottcooper92.binge.seerr.handoff.otherAddressPrefill
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,15 +26,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-/** Which address the user has chosen to send: one of the candidates, or one they type. */
-sealed interface AddressChoice {
-    data class Candidate(
-        val address: String,
-    ) : AddressChoice
-
-    data object Other : AddressChoice
-}
 
 /** The phone's confirmation before it sends a server address to a television (#323). */
 sealed interface SendAddressUiState {
@@ -47,23 +38,30 @@ sealed interface SendAddressUiState {
     data object NotConnected : SendAddressUiState
 
     /**
-     * The addresses to choose from, best first, and the [choice] made — the best one until the user
-     * picks another. [otherAddress] is the "use another address" field, and [otherInvalid] says the
-     * last attempt to send it failed the TV's own rules. [tv] is where it goes.
+     * The address field, filled with the best of [candidates] until the user edits it, and [tv], where
+     * it goes. Everything else is read from [address] as it stands, so the note under the field always
+     * describes what Send would send.
      */
     data class Ready(
         val tv: String,
         val candidates: List<AddressCandidate>,
-        val choice: AddressChoice,
-        val otherAddress: String,
-        val otherInvalid: Boolean,
+        val address: String,
         val isSending: Boolean,
         val failed: Boolean,
     ) : SendAddressUiState {
-        /** One address and nothing typed: shown on its own, with no list to choose from. */
-        val isSingle: Boolean get() = candidates.size == 1 && choice !is AddressChoice.Other
+        /** The field as it would be sent, or null when the TV's own form would refuse it. */
+        val normalised: String? get() = normaliseServerAddress(address)
 
-        val canSend: Boolean get() = !isSending && (choice !is AddressChoice.Other || otherAddress.isNotBlank())
+        /** Whether the field holds something to complain about: an entry that is not an address. Blank is not an error, only unsendable. */
+        val isInvalid: Boolean get() = address.isNotBlank() && normalised == null
+
+        val isNotLocal: Boolean get() = normalised?.let(::addressLocality) == AddressLocality.NotLocal
+
+        val canSend: Boolean get() = !isSending && normalised != null
+
+        /** The other addresses to offer as one-tap fills: none when there is only one, and never the one already in the field. */
+        val suggestions: List<AddressCandidate>
+            get() = if (candidates.size < 2) emptyList() else candidates.filter { it.address != normalised }
     }
 
     data class Sent(
@@ -72,9 +70,10 @@ sealed interface SendAddressUiState {
 }
 
 /**
- * Reads a hand-off link and offers the addresses this phone knows for its server — the one it is
- * connected on, the server's Application URL, and any the user typed before — and sends the one the
- * user picks, only when they tap Send, to the television that showed the code.
+ * Reads a hand-off link, fills an editable address field with the best address this phone knows for
+ * its server — the one it is connected on, the server's Application URL, or one sent before — offers
+ * the others as suggestions, and sends what is in the field, only when the user taps Send, to the
+ * television that showed the code.
  *
  * The link is refused unless it names a private IPv4 address on the user's network
  * ([TvHandOffTarget.isOnLan]): a link is just text a web page can write, and this is the check
@@ -118,32 +117,25 @@ class SendAddressViewModel
                 SendAddressUiState.Ready(
                     tv = target.host,
                     candidates = candidates,
-                    choice = AddressChoice.Candidate(candidates.first().address),
-                    otherAddress = otherAddressPrefill(connected),
-                    otherInvalid = false,
+                    address = candidates.first().address,
                     isSending = false,
                     failed = false,
                 )
         }
 
-        fun choose(choice: AddressChoice) = updateReady { if (it.isSending) it else it.copy(choice = choice, failed = false) }
+        /** The field changed, by typing or by a suggestion; the note under it follows. */
+        fun editAddress(value: String) = updateReady { if (it.isSending) it else it.copy(address = value, failed = false) }
 
-        fun editOther(value: String) = updateReady { it.copy(otherAddress = value, otherInvalid = false, failed = false) }
-
-        /** Sends the chosen address. Nothing reaches the TV any other way: this runs only from the Send button. */
+        /** Sends what is in the field. Nothing reaches the TV any other way: this runs only from the Send button. */
         fun send() {
             val ready = _uiState.value as? SendAddressUiState.Ready ?: return
             val target = target ?: return
             if (!ready.canSend) return
-            val address =
-                when (val choice = ready.choice) {
-                    is AddressChoice.Candidate -> choice.address
-                    AddressChoice.Other -> normaliseServerAddress(ready.otherAddress)
-                } ?: return _uiState.update { ready.copy(otherInvalid = true) }
+            val address = ready.normalised ?: return
             _uiState.value = ready.copy(isSending = true, failed = false)
             viewModelScope.launch(dispatcher) {
                 if (sender.send(target, address)) {
-                    if (ready.typedOrRemembered(address)) server?.let { memory.remember(it, address) }
+                    if (ready.isWorthRemembering(address)) server?.let { memory.remember(it, address) }
                     _uiState.value = SendAddressUiState.Sent(tv = ready.tv)
                 } else {
                     _uiState.value = ready.copy(isSending = false, failed = true)
@@ -151,12 +143,9 @@ class SendAddressViewModel
             }
         }
 
-        /** Typed now, or typed before: kept, or moved to the front. The server's own addresses are found again anyway. */
-        private fun SendAddressUiState.Ready.typedOrRemembered(address: String): Boolean =
-            when (choice) {
-                AddressChoice.Other -> candidates.none { it.address == address && it.source != AddressSource.Remembered }
-                is AddressChoice.Candidate -> candidates.any { it.address == address && it.source == AddressSource.Remembered }
-            }
+        /** Anything but the server's own addresses, which are found again without being kept. */
+        private fun SendAddressUiState.Ready.isWorthRemembering(address: String): Boolean =
+            candidates.none { it.address == address && it.source != AddressSource.Remembered }
 
         private fun updateReady(transform: (SendAddressUiState.Ready) -> SendAddressUiState.Ready) =
             _uiState.update { state -> (state as? SendAddressUiState.Ready)?.let(transform) ?: state }
@@ -166,6 +155,3 @@ class SendAddressViewModel
             fun create(link: String?): SendAddressViewModel
         }
     }
-
-/** Whether the TV may not reach [this]: an IP literal that is not on a home network. */
-internal val AddressCandidate.mayBeUnreachable: Boolean get() = locality == AddressLocality.NotLocal

@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.handoff
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Where an address the phone could send to a television came from. */
@@ -79,13 +78,3 @@ private val AddressLocality.preference: Int
             AddressLocality.Unknown -> 1
             AddressLocality.NotLocal -> 2
         }
-
-/**
- * What the "use another address" field starts with: [connected]'s scheme, and its port where it named
- * one, so the user types only the host between them. Empty when [connected] does not parse.
- */
-fun otherAddressPrefill(connected: String): String {
-    val url = connected.toHttpUrlOrNull() ?: return ""
-    val port = if (url.port == HttpUrl.defaultPort(url.scheme)) "" else ":${url.port}"
-    return "${url.scheme}://$port"
-}

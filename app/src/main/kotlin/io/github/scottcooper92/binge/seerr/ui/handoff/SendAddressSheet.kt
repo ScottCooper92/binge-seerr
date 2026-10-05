@@ -13,13 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeTextButton
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 
@@ -34,18 +32,16 @@ internal fun SendAddressSheet(
     }
 }
 
-/** What the sheet can ask for. Only [onSend] sends anything; choosing and typing change the choice. */
+/** What the sheet can ask for. Only [onSend] sends anything; editing changes the field. */
 internal data class SendAddressActions(
-    val onChoose: (AddressChoice) -> Unit = {},
-    val onEditOther: (String) -> Unit = {},
+    val onEdit: (String) -> Unit = {},
     val onSend: () -> Unit = {},
     val onClose: () -> Unit = {},
 )
 
 /**
- * What the sheet says for each state: the address, or the addresses to choose from, and the TV it
- * would go to, then the outcome. An address is shown as it will be sent, in monospace, so what the
- * user confirms is exactly that.
+ * What the sheet says for each state: the address in an editable field, and the TV it would go to,
+ * then the outcome. Send sends what the field holds, normalised, and nothing else.
  */
 @Composable
 internal fun SendAddressSheetContent(
@@ -83,12 +79,8 @@ private fun ReadyContent(
     state: SendAddressUiState.Ready,
     actions: SendAddressActions,
 ) {
-    if (state.isSingle) {
-        SingleAddress(state, actions)
-    } else {
-        Body(stringResource(R.string.send_address_choose, state.tv))
-        AddressChoices(state, actions.onChoose, actions.onEditOther)
-    }
+    Body(stringResource(R.string.send_address_confirm, state.tv))
+    SendAddressField(state, actions.onEdit, actions.onSend)
     Text(
         stringResource(R.string.send_address_only_address),
         style = MaterialTheme.typography.bodySmall,
@@ -111,23 +103,6 @@ private fun ReadyContent(
         modifier = Modifier.fillMaxWidth(),
     )
     BingeOutlinedButton(label = stringResource(R.string.link_cancel), onClick = actions.onClose, modifier = Modifier.fillMaxWidth())
-}
-
-/** The one address there is, read-only: no list to choose from, and a way to type another. */
-@Composable
-private fun SingleAddress(
-    state: SendAddressUiState.Ready,
-    actions: SendAddressActions,
-) {
-    val candidate = state.candidates.single()
-    Body(stringResource(R.string.send_address_confirm, state.tv))
-    Text(candidate.address, style = MaterialTheme.typography.titleMedium, fontFamily = FontFamily.Monospace, textAlign = TextAlign.Center)
-    if (candidate.mayBeUnreachable) NotLocalNote(centred = true)
-    BingeTextButton(
-        label = stringResource(R.string.send_address_other),
-        onClick = { actions.onChoose(AddressChoice.Other) },
-        enabled = !state.isSending,
-    )
 }
 
 @Composable

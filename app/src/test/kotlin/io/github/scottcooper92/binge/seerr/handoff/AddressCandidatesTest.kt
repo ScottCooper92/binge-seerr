@@ -99,12 +99,4 @@ class AddressCandidatesTest {
         assertNull(read("""{"applicationTitle":"Seerr"}"""))
         assertNull(read("""{"applicationUrl":null}"""))
     }
-
-    @Test
-    fun `the other-address field starts with the connected scheme and any port it named`() {
-        assertEquals("http://:5055", otherAddressPrefill("http://192.168.1.10:5055/"))
-        assertEquals("https://", otherAddressPrefill("https://seerr.example.com/"))
-        assertEquals("http://", otherAddressPrefill("http://nas/"))
-        assertEquals("", otherAddressPrefill("not a url"))
-    }
 }

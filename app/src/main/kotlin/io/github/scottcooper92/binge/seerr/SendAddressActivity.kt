@@ -15,8 +15,8 @@ import io.github.scottcooper92.binge.seerr.ui.handoff.SendAddressViewModel
 
 /**
  * The phone's end of the TV address hand-off (#323): the page a television serves links here with
- * `seerr-companion://tv-handoff?to=<ip:port>&token=<token>`, and this offers the addresses it knows
- * for the connected server and sends the one the user picks to that TV, only on their tap.
+ * `seerr-companion://tv-handoff?to=<ip:port>&token=<token>`, and this fills in the best address it
+ * knows for the connected server and sends what the user confirms to that TV, only on their tap.
  *
  * Exported, and reachable from any browser page, so it trusts nothing in the link: the ViewModel
  * refuses a target that is not a private address on this network, and sends nothing without the
@@ -40,8 +40,7 @@ class SendAddressActivity : ComponentActivity() {
                     state = state,
                     actions =
                         SendAddressActions(
-                            onChoose = viewModel::choose,
-                            onEditOther = viewModel::editOther,
+                            onEdit = viewModel::editAddress,
                             onSend = viewModel::send,
                             onClose = ::finish,
                         ),
