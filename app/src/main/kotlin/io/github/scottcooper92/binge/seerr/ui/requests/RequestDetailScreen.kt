@@ -27,7 +27,7 @@ import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailPage
-import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailPlaceholder
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -91,14 +91,15 @@ fun RequestDetailScreen(
     LaunchedEffect(events) {
         events.collect { if (it.removesTheRequest) actions.onBack() }
     }
-    MediaHeroDetailScaffold(snackbarHostState = snackbarHostState) {
-        when (state) {
-            RequestDetailUiState.Loading -> RequestDetailSkeleton()
-            is RequestDetailUiState.Seeded -> RequestDetailSeeded(state, onBack = actions.onBack, onRetry = actions.onRetry)
-            is RequestDetailUiState.Error ->
+    when (state) {
+        RequestDetailUiState.Loading -> MediaHeroDetailPlaceholder { RequestDetailSkeleton() }
+        is RequestDetailUiState.Seeded ->
+            RequestDetailSeeded(state, onBack = actions.onBack, onRetry = actions.onRetry, snackbarHostState = snackbarHostState)
+        is RequestDetailUiState.Error ->
+            MediaHeroDetailPlaceholder {
                 ErrorScreen(error = state.error, modifier = Modifier.safeDrawingPadding(), onRetry = actions.onRetry)
-            is RequestDetailUiState.Ready -> Ready(state, actions, snackbarHostState)
-        }
+            }
+        is RequestDetailUiState.Ready -> Ready(state, actions, snackbarHostState)
     }
 }
 
@@ -111,6 +112,7 @@ private fun RequestDetailSeeded(
     state: RequestDetailUiState.Seeded,
     onBack: () -> Unit,
     onRetry: () -> Unit,
+    snackbarHostState: SnackbarHostState,
 ) {
     val item = state.item
     MediaHeroDetailPage(
@@ -119,6 +121,7 @@ private fun RequestDetailSeeded(
         metaText = "",
         metaContent = { RequestHeroMeta(item) },
         onBack = onBack,
+        snackbarHostState = snackbarHostState,
         body = { RequestDetailSeededBody(error = state.error, onRetry = onRetry) },
     )
 }
@@ -151,6 +154,7 @@ private fun Ready(
             }
         },
         onOpenUser = actions.onOpenUser,
+        snackbarHostState = snackbarHostState,
         isActing = state.isActing,
     )
     RequestManagementSheets(state = state, actions = actions, acting = acting, onDismissActing = { acting = false })
@@ -256,6 +260,7 @@ internal fun RequestDetailPage(
     onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     initiallyOverflowing: Boolean = false,
     isActing: Boolean = false,
 ) {
@@ -270,6 +275,7 @@ internal fun RequestDetailPage(
         onBack = onBack,
         modifier = modifier,
         scrollState = scrollState,
+        snackbarHostState = snackbarHostState,
         topBarActions = {
             onOpen?.let {
                 ExpressiveIconButton(
