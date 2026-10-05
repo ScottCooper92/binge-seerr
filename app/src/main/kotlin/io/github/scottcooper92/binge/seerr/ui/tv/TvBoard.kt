@@ -1,13 +1,12 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,7 +30,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
@@ -42,7 +40,6 @@ import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.focus.tvFocusGroup
-import com.binge.designsystem.tv.nav.LocalTvContentInset
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
@@ -53,65 +50,6 @@ import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
 
 private const val TRANSIENT_MESSAGE_MILLIS = 4_000L
-
-/**
- * A rail destination's frame: the theme background, the rail cleared on the start edge through
- * [LocalTvContentInset], overscan on the other three, and the board's title on the rail's top line.
- */
-@Composable
-internal fun TvBoardFrame(
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val verticalInset = dimensionResource(TvR.dimen.tv_overscan_vertical)
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(
-                    start = LocalTvContentInset.current + dimensionResource(TvR.dimen.tv_content_gutter_start),
-                    end = dimensionResource(TvR.dimen.tv_overscan_horizontal),
-                    top = verticalInset,
-                    bottom = verticalInset,
-                ),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_board_section_gap)),
-    ) {
-        TvBoardTitle(title)
-        content()
-    }
-}
-
-/** The title band, as tall as the rail's own top item so the two sit on one line. */
-@Composable
-internal fun TvBoardTitle(
-    title: String,
-    modifier: Modifier = Modifier,
-) {
-    val bandHeight = dimensionResource(TvR.dimen.tv_nav_rail_item_height)
-    Box(modifier = modifier.height(bandHeight), contentAlignment = Alignment.CenterStart) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-/** The rule between a board's two panes. */
-@Composable
-internal fun TvBoardDivider(modifier: Modifier = Modifier) {
-    Box(
-        modifier =
-            modifier
-                .fillMaxHeight()
-                .width(dimensionResource(DesR.dimen.hairline_thickness))
-                .background(MaterialTheme.colorScheme.border),
-    )
-}
 
 /** A board's whole-content message — the first load, its failure, or an empty list — with up to three ways out. */
 @Composable
@@ -263,7 +201,9 @@ internal fun <T> TvPagedList(
     val refresh = rows.refresh
     when {
         rows.count > 0 ->
-            Column(modifier = modifier) {
+            // One group, so Up from the first row finds the retry before the search leaves the list: across the
+            // board a full-width row scores the band's centred pills nearer than a button at the start edge.
+            Column(modifier = modifier.focusGroup()) {
                 if (refresh is TvLoadPhase.Failed) TvRefreshFailedButton(refresh, onRetryLoad, onReconnect)
                 TvStableFocusScroll {
                     LazyColumn(

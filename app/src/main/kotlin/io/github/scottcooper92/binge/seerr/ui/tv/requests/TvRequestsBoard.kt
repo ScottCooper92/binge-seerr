@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
+import com.binge.designsystem.tv.template.TvBoard
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestCounts
@@ -26,7 +27,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.emptyMessageRes
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardBands
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedList
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
@@ -72,10 +72,10 @@ internal fun TvRequestsBoard(
         if (openRequestId == null && restoreRowId != null) restoreTvOverlayFocus(restoreFocus)
     }
     Box(modifier = modifier.fillMaxSize()) {
-        TvBoardFrame(title = stringResource(R.string.hub_section_requests)) {
+        TvBoard(title = stringResource(R.string.hub_section_requests)) {
             if (ready == null) {
                 TvRequestsUnresolved(state, actions, Modifier.weight(1f))
-                return@TvBoardFrame
+                return@TvBoard
             }
             TvBoardBands(
                 filters = RequestFilter.entries.map { filter -> filter to filterLabel(filter, ready.counts) },

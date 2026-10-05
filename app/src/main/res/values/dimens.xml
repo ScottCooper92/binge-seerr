@@ -29,7 +29,6 @@
     <!-- The hand-off code (#323): big enough for a phone camera to read from a sofa, small enough to leave room for the URL under it. -->
     <dimen name="tv_handoff_qr_size">200dp</dimen>
     <!-- The television shell: boards, list rows, the action sheet and the list/pane board. -->
-    <dimen name="tv_board_section_gap">20dp</dimen>
     <dimen name="tv_filter_band_gap">8dp</dimen>
     <dimen name="tv_list_row_height">76dp</dimen>
     <dimen name="tv_list_row_gap">8dp</dimen>
