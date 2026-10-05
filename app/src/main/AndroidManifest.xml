@@ -142,12 +142,15 @@
             tv-handoff host of this app's own scheme: the notification links on MainActivity stay
             unreachable from a web page. What guards it is in SendAddressViewModel - a LAN-only
             target, and nothing sent without the user's tap.
+
+            Deliberately not singleTask: the ViewModel reads its target once, from the intent that
+            created it, so a second link must get a new instance. singleTask would hand it to
+            onNewIntent and leave the sheet pointing at the first TV's port and token.
         -->
         <activity
             android:name=".SendAddressActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/Theme.SeerrSendAddress">
             <intent-filter>
