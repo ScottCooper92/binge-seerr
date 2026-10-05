@@ -13,12 +13,14 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
+import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -63,6 +65,7 @@ class SetupViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
     ) : ViewModel() {
         private val draft = MutableStateFlow(Draft())
 
@@ -96,6 +99,7 @@ class SetupViewModel
                             cleartextAllowed = insecureHost != null && insecureHost == draft.cleartextHost,
                             isInspecting = draft.busy,
                             error = draft.error,
+                            needsLocalNetwork = draft.serverUrl.isBlockedByLocalNetwork(localNetwork),
                         )
                     }
                     else ->
@@ -123,6 +127,9 @@ class SetupViewModel
             }
         }
 
+        /** The permission prompt came back, or the user returned from Settings: read the permission again. */
+        fun localNetworkResult() = draft.update { it.copy(permissionReads = it.permissionReads + 1, error = null) }
+
         fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null) }
 
         /**
@@ -146,7 +153,9 @@ class SetupViewModel
                     .onSuccess { preview ->
                         val server = preview.toSetupServer()
                         draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
-                    }.onFailure { failure -> draft.update { it.copy(error = failure.toSetupError()) } }
+                    }.onFailure { failure ->
+                        draft.update { it.copy(error = failure.toSetupError().orLocalNetworkDenied(url, localNetwork)) }
+                    }
                 draft.update { it.copy(busy = false) }
             }
         }
@@ -290,6 +299,8 @@ class SetupViewModel
             val editing: SeerrCredentials? = null,
             /** The public host the user opted in to reach over plain HTTP, if any. */
             val cleartextHost: String? = null,
+            /** Bumped when the local-network permission may have changed, so the state is built again from the live answer. */
+            val permissionReads: Int = 0,
         )
 
         private companion object {
@@ -325,3 +336,9 @@ private fun Throwable.toSetupError(): SetupError =
                 else -> SetupError.Unknown
             }
     }
+
+/** An unreachable local server with the permission refused is the permission, not the server. */
+private fun SetupError.orLocalNetworkDenied(
+    url: String,
+    permission: LocalNetworkPermission,
+): SetupError = if (this == SetupError.Unreachable && url.isBlockedByLocalNetwork(permission)) SetupError.LocalNetworkDenied else this

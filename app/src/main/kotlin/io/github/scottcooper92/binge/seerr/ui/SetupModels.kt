@@ -6,7 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import kotlinx.serialization.Serializable
 
 /** Why an attempt failed, as the setup form shows it. */
-enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, Unknown, LinkExpired }
+enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, LocalNetworkDenied, Unknown, LinkExpired }
 
 /** Something that went right and wants saying: the only one so far is the reset email. */
 enum class SetupNotice { ResetEmailSent, }
@@ -108,7 +108,9 @@ sealed interface SetupUiState {
 
     /**
      * Step one: the address, and nothing else until the server answers. An [insecure] address, plain
-     * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it.
+     * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it. A local
+     * address on a platform that gates the local network shows [needsLocalNetwork] until it is allowed;
+     * it never disables Continue, so an address misjudged as local cannot block setup.
      */
     data class Address(
         val serverUrl: String,
@@ -116,6 +118,7 @@ sealed interface SetupUiState {
         val isInspecting: Boolean,
         val error: SetupError?,
         val cleartextAllowed: Boolean = false,
+        val needsLocalNetwork: Boolean = false,
     ) : SetupUiState {
         val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)
     }

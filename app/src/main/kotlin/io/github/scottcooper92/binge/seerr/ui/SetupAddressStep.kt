@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
@@ -35,6 +36,7 @@ internal fun SetupAddressStep(
     onEditAddress: (String) -> Unit,
     onInspect: () -> Unit,
     onAllowCleartext: (Boolean) -> Unit,
+    onLocalNetworkChanged: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     Column(
@@ -76,6 +78,7 @@ internal fun SetupAddressStep(
         state.error?.let { error ->
             Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
         }
+        if (state.needsLocalNetwork) LocalNetworkAsk(onLocalNetworkChanged)
         BingeFilledButton(
             label = stringResource(R.string.setup_continue),
             onClick = onInspect,
@@ -83,5 +86,15 @@ internal fun SetupAddressStep(
             loading = state.isInspecting,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+/** Said before the system prompt, so a permission dialog is never the first the user hears of it. */
+@Composable
+private fun LocalNetworkAsk(onChanged: () -> Unit) {
+    val allow = rememberAllowLocalNetwork(onChanged)
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+        Text(stringResource(R.string.setup_local_network_explanation), style = MaterialTheme.typography.bodyMedium)
+        BingeOutlinedButton(label = stringResource(allow.label), onClick = allow.run, modifier = Modifier.fillMaxWidth())
     }
 }

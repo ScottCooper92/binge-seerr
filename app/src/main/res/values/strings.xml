@@ -38,6 +38,11 @@
     <string name="setup_error_not_seerr">That address did not answer as a Seerr server.</string>
     <string name="setup_error_rejected">The server rejected the credentials.</string>
     <string name="setup_error_unreachable">The server could not be reached.</string>
+    <string name="setup_error_local_network_denied">Android is blocking access to your local network. Allow it for this app, then try again.</string>
+    <string name="setup_local_network_explanation">This server is on your local network. Android asks for your permission before an app can reach other devices on it.</string>
+    <string name="local_network_allow">Allow local network access</string>
+    <string name="local_network_allow_short">Allow access</string>
+    <string name="local_network_open_settings">Open settings</string>
     <string name="setup_error_unknown">The server answered with an error.</string>
     <string name="setup_error_link_expired">The code expired before it was approved. Try again.</string>
 
@@ -850,6 +855,8 @@
     <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
     <string name="hub_unreachable_headline">Can\'t reach your server</string>
     <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and retry.</string>
+    <string name="hub_local_network_headline">Local network access is off</string>
+    <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
     <string name="hub_unauthorized_headline">Reconnect needed</string>
     <string name="hub_unauthorized_body">The server rejected the saved sign-in. Sign in again to carry on.</string>
     <string name="hub_sign_in_again">Sign in again</string>

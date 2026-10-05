@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
 import io.github.scottcooper92.binge.seerr.ui.label
 import io.github.scottcooper92.binge.seerr.ui.messageRes
+import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.submitLabelRes
 
 /** The control a preview seeds as focused; production passes null and the page lands where it lands. */
@@ -90,6 +91,11 @@ private fun TvSetupAddressStep(
             )
         }
         state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
+        if (state.needsLocalNetwork) {
+            val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
+            TvFormNote(stringResource(R.string.setup_local_network_explanation))
+            TvButton(label = stringResource(allow.label), onClick = allow.run, style = TvButtonStyle.Secondary)
+        }
         TvButton(
             label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
             onClick = actions.onInspect,

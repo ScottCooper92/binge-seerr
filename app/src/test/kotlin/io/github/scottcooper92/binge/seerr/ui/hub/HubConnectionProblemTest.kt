@@ -59,6 +59,19 @@ class HubConnectionProblemTest {
     }
 
     @Test
+    fun `a refused local network offers to allow it instead of a retry, and still lets the connection be edited`() {
+        var reconnects = 0
+        show(ConnectionHealth.LocalNetworkDenied) { reconnects++ }
+
+        rule.onNode(hasText(text(R.string.hub_local_network_headline))).assertExists()
+        rule.onNode(hasText(text(R.string.local_network_allow))).assertExists()
+        rule.onNode(hasText(text(R.string.hub_retry))).assertDoesNotExist()
+        rule.onNode(hasText(text(R.string.settings_edit_connection))).performClick()
+
+        assertEquals(1, reconnects)
+    }
+
+    @Test
     fun `a rejected session keeps its single sign in again action`() {
         show(ConnectionHealth.Unauthorized)
 

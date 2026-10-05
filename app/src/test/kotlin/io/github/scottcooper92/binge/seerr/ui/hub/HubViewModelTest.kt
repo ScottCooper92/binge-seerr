@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
+import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
@@ -213,7 +214,10 @@ class HubViewModelTest {
     private suspend fun TestScope.viewModelAfterAuthMeAnswers(code: Int): HubViewModel =
         viewModelAfterConnect { serve("/api/v1/auth/me", "", code = code) }
 
-    private suspend fun TestScope.viewModelAfterConnect(turn: () -> Unit): HubViewModel {
+    private suspend fun TestScope.viewModelAfterConnect(
+        localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
+        turn: () -> Unit,
+    ): HubViewModel {
         healthyServer()
         val monitor = SeerrConnectionHealthMonitor()
         connection =
@@ -234,7 +238,15 @@ class HubViewModelTest {
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         turn()
-        val vm = HubViewModel(connection, HubOverviewLoader(connection), cache, mainDispatcherRule.dispatcher, boundedTicker)
+        val vm =
+            HubViewModel(
+                connection,
+                HubOverviewLoader(connection),
+                cache,
+                mainDispatcherRule.dispatcher,
+                boundedTicker,
+                localNetwork = localNetwork,
+            )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -270,6 +282,16 @@ class HubViewModelTest {
             val error = vm.uiState.first { it is HubUiState.Error } as HubUiState.Error
 
             assertEquals(ConnectionHealth.Unreachable, error.health)
+        }
+
+    @Test
+    fun `an unreachable server on the local network is the permission when it is refused`() =
+        runTest {
+            val vm = viewModelAfterConnect(localNetwork = { false }) { serverDown.set(true) }
+
+            val error = vm.uiState.first { it is HubUiState.Error } as HubUiState.Error
+
+            assertEquals(ConnectionHealth.LocalNetworkDenied, error.health)
         }
 
     @Test

@@ -22,4 +22,21 @@ class TvSetupAddressStepScreenshotTest {
             state = SetupUiState.Address(serverUrl = "", insecure = false, isInspecting = false, error = null),
             actions = NoSetupActions,
         )
+
+    /** A local address on a platform that gates the local network: the note and the ask sit above Continue. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressNeedsLocalNetwork() =
+        TvSetupScreen(
+            state =
+                SetupUiState.Address(
+                    serverUrl = "http://192.168.1.20:5055",
+                    insecure = false,
+                    isInspecting = false,
+                    error = null,
+                    needsLocalNetwork = true,
+                ),
+            actions = NoSetupActions,
+        )
 }
