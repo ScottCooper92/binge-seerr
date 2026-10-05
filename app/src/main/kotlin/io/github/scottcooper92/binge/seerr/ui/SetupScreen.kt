@@ -9,10 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeLoadingIndicator
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 
 /** Everything the setup screen can ask of its ViewModel, in one place so the entry stays a wiring. */
 class SetupActions(
@@ -41,10 +42,10 @@ fun SetupScreen(
     title: String = stringResource(R.string.companion_name),
     onBack: (() -> Unit)? = null,
 ) {
-    ScreenScaffold(title = title, onBack = onBack) { padding ->
+    BingeScreenScaffold(bar = ScreenBar.Small, title = title, onBack = onBack) { padding ->
         // The bars' insets are consumed here so a step's keyboard padding does not count the navigation bar twice.
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding()).consumeWindowInsets(padding)) {
-            val inner = padding.innerPadding()
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()).consumeWindowInsets(padding)) {
+            val inner = padding.screenInnerPadding()
             when (state) {
                 SetupUiState.Loading -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center).padding(inner))
                 is SetupUiState.Address ->

@@ -12,10 +12,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 
 /**
  * The frame [io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailScreen] and
- * [io.github.scottcooper92.binge.seerr.ui.users.UserDetailScreen] share: [ScreenScaffold]'s top bar
+ * [io.github.scottcooper92.binge.seerr.ui.users.UserDetailScreen] share: [BingeScreenScaffold]'s top bar
  * with an overflow button that opens a manage sheet, and the `outerPadding()`/`innerPadding()` split
  * every scrolling body under it uses.
  *
@@ -38,7 +42,8 @@ internal fun OverflowDetailScaffold(
     leadingActions: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = title,
         modifier = modifier,
         onBack = onBack,
@@ -52,8 +57,8 @@ internal fun OverflowDetailScaffold(
             }
         },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            content(padding.innerPadding())
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            content(padding.screenInnerPadding())
         }
     }
 }

@@ -13,13 +13,14 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 
 class UserSettingsActions(
     val onBack: () -> Unit,
@@ -41,12 +42,13 @@ fun UserSettingsScreen(
     showBack: Boolean = true,
 ) {
     val ready = state as? UserSettingsUiState.Ready
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = ready?.index?.userName ?: stringResource(R.string.user_settings_title),
         onBack = actions.onBack.takeIf { showBack },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            val inner = padding.innerPadding()
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            val inner = padding.screenInnerPadding()
             when (state) {
                 UserSettingsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is UserSettingsUiState.Error ->

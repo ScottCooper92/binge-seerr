@@ -39,15 +39,16 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.SetupLinkSheet
 import io.github.scottcooper92.binge.seerr.ui.savedLoginRequest
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import kotlinx.coroutines.flow.Flow
@@ -92,13 +93,14 @@ fun LinkedAccountsScreen(
             snackbarHostState.showSnackbar(resources.getString(message), kind)
         }
     }
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.user_settings_page_linked),
         onBack = actions.onBack,
         snackbarHostState = snackbarHostState,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            val inner = padding.innerPadding()
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            val inner = padding.screenInnerPadding()
             when (state) {
                 LinkedAccountsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is LinkedAccountsUiState.Error ->

@@ -22,10 +22,11 @@ import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPageActionBar
 import com.binge.designsystem.R as DesR
 
@@ -45,7 +46,8 @@ fun AdvancedRequestScreen(
     onClose: () -> Unit,
 ) {
     val ready = state as? AdvancedRequestUiState.Ready
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.advanced_title),
         onBack = onClose,
         bottomBar = {
@@ -59,8 +61,8 @@ fun AdvancedRequestScreen(
             }
         },
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            val inner = padding.innerPadding()
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            val inner = padding.screenInnerPadding()
             when (state) {
                 AdvancedRequestUiState.Loading, AdvancedRequestUiState.Submitted ->
                     BingeLoadingIndicator(modifier = Modifier.align(Alignment.Center).padding(inner))

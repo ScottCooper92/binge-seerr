@@ -13,11 +13,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestCardSection
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.launch
 import com.binge.designsystem.R as DesR
 
@@ -28,14 +29,19 @@ internal fun RequestCardsPrototypeScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val tapped = stringResource(R.string.proto_tapped)
     val detail = remember { cardsPrototypeDetail() }
-    ScreenScaffold(title = stringResource(R.string.proto_request_cards_title), onBack = onBack, snackbarHostState = snackbar) { padding ->
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
+        title = stringResource(R.string.proto_request_cards_title),
+        onBack = onBack,
+        snackbarHostState = snackbar,
+    ) { padding ->
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(padding.outerPadding())
+                    .padding(padding.screenOuterPadding())
                     .verticalScroll(rememberScrollState())
-                    .padding(padding.innerPadding()),
+                    .padding(padding.screenInnerPadding()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
             RequestCardSection(

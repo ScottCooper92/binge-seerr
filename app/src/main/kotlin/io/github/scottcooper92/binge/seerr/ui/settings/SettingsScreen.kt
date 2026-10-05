@@ -23,6 +23,10 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
@@ -34,10 +38,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEventSnackbarEffect
 import kotlinx.coroutines.flow.Flow
@@ -79,13 +80,14 @@ fun SettingsScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(jobEvents, snackbarHostState)
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_settings),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            val inner = padding.innerPadding()
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            val inner = padding.screenInnerPadding()
             when (state) {
                 SettingsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is SettingsUiState.Ready -> SettingsContent(state, actions, jobs, jobActions, contentPadding = inner)

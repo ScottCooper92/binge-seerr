@@ -15,15 +15,16 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.onOffRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 class AgentsActions(
@@ -38,9 +39,13 @@ fun NotificationAgentsScreen(
     state: AgentsUiState,
     actions: AgentsActions,
 ) {
-    ScreenScaffold(title = stringResource(R.string.settings_group_notifications), onBack = actions.onBack) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
-            val inner = padding.innerPadding()
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
+        title = stringResource(R.string.settings_group_notifications),
+        onBack = actions.onBack,
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            val inner = padding.screenInnerPadding()
             when (state) {
                 AgentsUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is AgentsUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)

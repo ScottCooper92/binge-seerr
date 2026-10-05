@@ -9,9 +9,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEventSnackbarEffect
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +32,7 @@ internal fun ServerActionPage(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
-    ScreenScaffold(title = title, onBack = onBack, snackbarHostState = snackbarHostState) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) { content(padding.innerPadding()) }
+    BingeScreenScaffold(bar = ScreenBar.Small, title = title, onBack = onBack, snackbarHostState = snackbarHostState) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) { content(padding.screenInnerPadding()) }
     }
 }
