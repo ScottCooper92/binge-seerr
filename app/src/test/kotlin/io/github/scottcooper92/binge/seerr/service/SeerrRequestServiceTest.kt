@@ -245,7 +245,7 @@ class SeerrRequestServiceTest {
         runTest {
             val response = connected(permissions = ADMIN).handshakeAs(ADMIN, publicSettings = ALL_4K_ENABLED)
 
-            // In the contract but not served here yet, so not declared: MEDIA_FILE_INFO needs a Radarr fetch (#698).
+            // In the contract but deliberately not offered: MEDIA_FILE_INFO would need a Radarr key and host (#483).
             assertEquals(
                 Capability.entries.toSet() - Capability.UNRECOGNIZED - Capability.CAPABILITY_UNSPECIFIED -
                     Capability.CAPABILITY_MEDIA_FILE_INFO,

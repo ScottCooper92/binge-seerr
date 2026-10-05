@@ -38,6 +38,11 @@
     <string name="setup_error_not_seerr">That address did not answer as a Seerr server.</string>
     <string name="setup_error_rejected">The server rejected the credentials.</string>
     <string name="setup_error_unreachable">The server could not be reached.</string>
+    <string name="setup_error_local_network_denied">Android is blocking access to your local network. Allow it for this app, then try again.</string>
+    <string name="setup_local_network_explanation">This server is on your local network. Android asks for your permission before an app can reach other devices on it.</string>
+    <string name="local_network_allow">Allow local network access</string>
+    <string name="local_network_allow_short">Allow access</string>
+    <string name="local_network_open_settings">Open settings</string>
     <string name="setup_error_unknown">The server answered with an error.</string>
     <string name="setup_error_link_expired">The code expired before it was approved. Try again.</string>
 
@@ -470,6 +475,7 @@
     <string name="server_settings_plex_web_url">Web app URL</string>
     <string name="server_settings_external_host">External host</string>
     <string name="server_settings_external_hint">Where users open the media server from their own devices; blank for the address above.</string>
+    <string name="server_settings_media_server_links">Links for users</string>
     <string name="server_settings_forgot_password_url">Forgot-password URL</string>
     <string name="server_settings_libraries">Libraries</string>
     <string name="server_settings_libraries_none">No libraries yet. Save the connection, then sync them.</string>
@@ -526,6 +532,8 @@
     </plurals>
     <string name="editor_error_port">Enter a port between 1 and 65535.</string>
     <string name="editor_error_web_url">Enter a web address that starts with http:// or https://.</string>
+    <string name="editor_error_web_url_no_slash">Enter a web address that starts with http:// or https://, with no slash at the end.</string>
+    <string name="editor_error_whole_number">Enter a whole number, or leave it blank.</string>
     <string name="server_settings_dvr_default">Default instance</string>
     <string name="server_settings_dvr_4k">4K instance</string>
     <string name="server_settings_dvr_sync">Sync what it holds</string>
@@ -537,6 +545,7 @@
     <string name="server_settings_rules">Override rules</string>
     <string name="server_settings_rule_add">Add a rule</string>
     <string name="server_settings_rule_title">Override rule</string>
+    <string name="server_settings_rule_applies_to">Applies to</string>
     <plurals name="server_settings_rule_conditions">
         <item quantity="one">%1$d condition</item>
         <item quantity="other">%1$d conditions</item>
@@ -551,6 +560,8 @@
     <string name="server_settings_rule_keywords_hint">TMDB keyword ids, comma-separated; blank for any.</string>
     <string name="server_settings_rule_overrides_title">Send it with</string>
     <string name="server_settings_rule_pick_instance">Pick an instance to see what it offers.</string>
+    <string name="server_settings_rule_needs_condition">Add at least one condition: a user, genre, language or keyword.</string>
+    <string name="server_settings_rule_needs_override">Pick at least one override: a quality profile, root folder or tag.</string>
     <string name="server_settings_tautulli_external_hint">Where Tautulli opens from a user\'s page; blank for the address above.</string>
     <string name="user_settings_linked">Linked</string>
     <string name="user_settings_not_linked">Not linked</string>
@@ -789,6 +800,7 @@
     <string name="server_settings_slider_tv_streaming">Series on a streaming service</string>
     <string name="server_settings_agents_manage_caption">Every agent this server can send through</string>
     <string name="server_settings_agent_section_options">Settings</string>
+    <string name="server_settings_agent_section_more">More settings</string>
     <string name="server_settings_agent_test">Send a test notification</string>
     <string name="server_settings_agent_tested">Test notification sent</string>
     <string name="server_settings_agent_email_from">Sender address</string>
@@ -843,6 +855,8 @@
     <string name="hub_disconnect_confirm_message">You will need to sign in again to reconnect. Binge stops seeing this server until you do.</string>
     <string name="hub_unreachable_headline">Can\'t reach your server</string>
     <string name="hub_unreachable_body">It did not answer. It may be offline or its address may have changed. Check the server and retry.</string>
+    <string name="hub_local_network_headline">Local network access is off</string>
+    <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
     <string name="hub_unauthorized_headline">Reconnect needed</string>
     <string name="hub_unauthorized_body">The server rejected the saved sign-in. Sign in again to carry on.</string>
     <string name="hub_sign_in_again">Sign in again</string>

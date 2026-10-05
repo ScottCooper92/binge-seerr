@@ -18,8 +18,8 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * The request skeleton reserves what the resolved page fills (#572), swapped inside the screen's own
  * scaffold as [RequestDetailScreen] swaps them. The page is in its common shape, with an action and a
- * sibling request, so a placeholder sized for the bare page fails. `HERO` is not checked: the hero is
- * the design system's `MediaHeroDetailPage`, which does not tag it.
+ * sibling request, so a placeholder sized for the bare page fails. `HERO` is tagged by `MediaHeroDetailPage`,
+ * on the design system's `DetailHero`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
@@ -29,8 +29,9 @@ class RequestDetailSkeletonGeometryTest {
     val rule = createSeerrComposeRule()
 
     @Test
-    fun `the skeleton holds the overview where the page puts it`() {
-        rule.assertSkeletonReservesGeometry(listOf(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW))) { resolved ->
+    fun `the skeleton holds the hero and the overview where the page puts them`() {
+        val anchors = listOf(LayoutAnchors.Detail.HERO, LayoutAnchors.Detail.OVERVIEW).map(LayoutAnchors::section)
+        rule.assertSkeletonReservesGeometry(anchors) { resolved ->
             SeerrTheme {
                 MediaHeroDetailScaffold(snackbarHostState = remember { SnackbarHostState() }) {
                     if (resolved) {

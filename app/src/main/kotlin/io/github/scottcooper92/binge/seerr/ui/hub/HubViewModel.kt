@@ -9,7 +9,9 @@ import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,6 +48,7 @@ class HubViewModel
         private val pollerTicker: DownloadsPollerTicker = DownloadsPollerTicker(),
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
         private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
+        private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
     ) : ViewModel() {
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)
@@ -83,8 +86,12 @@ class HubViewModel
                 }.flowOn(dispatcher)
 
         private val health: Flow<ConnectionHealth> =
-            combine(connection.health, isProbing) { health, probing ->
-                if (probing) ConnectionHealth.Checking else health.toConnectionHealth()
+            combine(connection.health, isProbing, connection.credentials) { health, probing, credentials ->
+                if (probing) {
+                    ConnectionHealth.Checking
+                } else {
+                    health.toConnectionHealth().orLocalNetworkDenied(credentials?.baseUrl, localNetwork)
+                }
             }
 
         /** Same `flowOn(dispatcher)` reason as [server]: [HubOverviewLoader.load] suspends too. */
@@ -157,7 +164,8 @@ class HubViewModel
                 // manage row is gated on one, so a Ready built on the placeholder is a hub with
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
                 when {
-                    server is ServerRead.Failed -> HubUiState.Error(ConnectionHealth.Unreachable)
+                    server is ServerRead.Failed ->
+                        HubUiState.Error(health.takeIf { it == ConnectionHealth.LocalNetworkDenied } ?: ConnectionHealth.Unreachable)
                     server !is ServerRead.Loaded || !overview.loaded -> HubUiState.Loading
                     else ->
                         HubUiState.Ready(
@@ -269,4 +277,19 @@ internal fun SeerrConnectionHealth.toConnectionHealth(): ConnectionHealth =
         // Unchecked is every cold start: the credentials are saved and the overview has not landed
         // yet. NotConnected means they vanished mid-check, and the shell swaps to setup on it.
         SeerrConnectionHealth.Unchecked, SeerrConnectionHealth.NotConnected -> ConnectionHealth.Checking
+    }
+
+/**
+ * An unreachable server on the user's own network, while the platform refuses this app that network,
+ * is the permission and not the server. Judged when the health is read, so granting it in Settings and
+ * retrying clears it; any other health, and any public server, is left as it was.
+ */
+internal fun ConnectionHealth.orLocalNetworkDenied(
+    baseUrl: String?,
+    permission: LocalNetworkPermission,
+): ConnectionHealth =
+    if (this == ConnectionHealth.Unreachable && baseUrl?.isBlockedByLocalNetwork(permission) == true) {
+        ConnectionHealth.LocalNetworkDenied
+    } else {
+        this
     }

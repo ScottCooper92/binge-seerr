@@ -314,6 +314,7 @@ internal fun SetupViewModel.actions(): SetupActions =
         onCancelLink = ::cancelLink,
         onRequestPasswordReset = ::requestPasswordReset,
         onAllowCleartext = ::allowCleartext,
+        onLocalNetworkChanged = ::localNetworkResult,
     )
 
 /**
@@ -333,4 +334,5 @@ internal fun SetupViewModel.tvActions(): SetupActions =
         onAllowCleartext = ::allowCleartext,
         onStartHandOff = { showHandOff(true) },
         onCancelHandOff = { showHandOff(false) },
+        onLocalNetworkChanged = ::localNetworkResult,
     )

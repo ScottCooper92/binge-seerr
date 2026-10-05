@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorIssues
 import io.github.scottcooper92.binge.seerr.ui.users.settings.invalid
+import io.github.scottcooper92.binge.seerr.ui.users.settings.missing
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -203,6 +204,30 @@ class OverrideRuleScreenshotTest {
             ),
         )
 
+    /** The saved rule in Spanish, whose section headers run longer. */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun existingRuleSpanish() =
+        RuleFrame(
+            ruleReady(
+                savedRule(),
+                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)),
+            ),
+        )
+
+    /** The saved rule at 1.5x and 2x text, where the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun existingRuleLargeText() =
+        RuleFrame(
+            ruleReady(
+                savedRule(),
+                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)),
+            ),
+        )
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -212,6 +237,51 @@ class OverrideRuleScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun failed() = RuleFrame(ExtrasEditorUiState.Error(SeerrError.Unauthorized))
+}
+
+/** The rule form's sections that a static frame of the whole page never reaches, or never shows flagged. */
+class OverrideRuleSectionsScreenshotTest {
+    /** What a matching request is sent with: the instance's profile, folder and tags. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun overrides() =
+        SectionFrame {
+            RuleOverrides(
+                OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)),
+                savedRule().copy(tagIds = setOf(1)),
+                enabled = true,
+                actions = noActions(),
+                onToggleTag = {},
+            )
+        }
+
+    /** A Save without an instance: the section is held open, counts the issue and says it is required. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun missingInstance() =
+        SectionFrame {
+            CompositionLocalProvider(
+                LocalEditorIssues provides listOf(missing(OverrideRuleSections.INSTANCE, OverrideRuleFields.INSTANCE)),
+            ) {
+                RuleInstance(OverrideRuleExtras(instances = instances()), OverrideRuleForm(), enabled = true, onSelectInstance = {})
+            }
+        }
+
+    /** A Save on a rule with no condition and no override: both sections are held open and say what they need (#733). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun missingConditionAndOverride() =
+        SectionFrame {
+            val draft = OverrideRuleForm(serviceType = ServiceType.Radarr, serviceId = 1)
+            val extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false))
+            CompositionLocalProvider(LocalEditorIssues provides draft.issues()) {
+                RuleConditions(extras, draft, enabled = true, actions = noActions(), onToggleUser = {})
+                RuleOverrides(extras, draft, enabled = true, actions = noActions(), onToggleTag = {})
+            }
+        }
 }
 
 private val SECTION_WIDTH = 411.dp

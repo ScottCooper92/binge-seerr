@@ -27,12 +27,14 @@ internal fun previewAddress(
     isInspecting: Boolean = false,
     error: SetupError? = null,
     cleartextAllowed: Boolean = false,
+    needsLocalNetwork: Boolean = false,
 ) = SetupUiState.Address(
     serverUrl = serverUrl,
     insecure = insecure,
     isInspecting = isInspecting,
     error = error,
     cleartextAllowed = cleartextAllowed,
+    needsLocalNetwork = needsLocalNetwork,
 )
 
 internal fun previewSignIn(

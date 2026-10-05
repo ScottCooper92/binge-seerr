@@ -37,12 +37,14 @@ import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.AllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
 import io.github.scottcooper92.binge.seerr.ui.hub.HubDownload
 import io.github.scottcooper92.binge.seerr.ui.hub.HubServer
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
+import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
@@ -81,11 +83,14 @@ internal fun TvHubBoard(
     initialBingeTileFocused: Boolean = false,
 ) {
     val ready = state as? HubUiState.Ready
+    // Held here, above the health branches: a re-probe passes through Checking and would drop it from the problem panel.
+    val health = if (state is HubUiState.Error) state.health else ready?.health
+    val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     TvBoardFrame(title = ready?.server?.title ?: stringResource(R.string.companion_name), modifier = modifier) {
         when {
-            state is HubUiState.Error -> TvHubProblem(state.health, actions, modifier = Modifier.weight(1f))
+            state is HubUiState.Error -> TvHubProblem(state.health, actions, allow, modifier = Modifier.weight(1f))
             ready == null -> TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
-            ready.health.isProblem() -> TvHubProblem(ready.health, actions, modifier = Modifier.weight(1f))
+            ready.health.isProblem() -> TvHubProblem(ready.health, actions, allow, modifier = Modifier.weight(1f))
             else -> TvHubDashboard(ready, actions, initialFocusedTile, initialBingeTileFocused)
         }
     }
@@ -96,6 +101,7 @@ internal fun TvHubBoard(
 private fun TvHubProblem(
     health: ConnectionHealth,
     actions: TvHubActions,
+    allow: AllowLocalNetwork,
     modifier: Modifier = Modifier,
 ) {
     val unauthorized = health == ConnectionHealth.Unauthorized
@@ -107,6 +113,7 @@ private fun TvHubProblem(
                 when (health) {
                     ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_headline
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
+                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
                     else -> R.string.hub_unreachable_headline
                 },
             ),
@@ -115,6 +122,7 @@ private fun TvHubProblem(
                 when (health) {
                     ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_body
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
+                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
                     else -> R.string.hub_unreachable_body
                 },
             ),
@@ -122,6 +130,8 @@ private fun TvHubProblem(
         primary =
             if (unauthorized) {
                 stringResource(R.string.tv_hub_reconnect) to actions.onReconnect
+            } else if (health == ConnectionHealth.LocalNetworkDenied) {
+                stringResource(allow.shortLabel) to allow.run
             } else {
                 stringResource(R.string.hub_retry) to actions.onRetry
             },

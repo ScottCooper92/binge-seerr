@@ -50,10 +50,18 @@ internal fun EditorToggleGroup(
  * the row's own inset lines its icon up with the card edge, as it does in a [ItemGroup].
  */
 @Composable
-internal fun EditorToggleRow(toggle: ListItem) {
+internal fun EditorToggleRow(toggle: ListItem) = EditorToggleRows(listOf(toggle))
+
+/**
+ * Several toggles inside an [EditorSectionCard] or [EditorSection], drawn as one run of rows with the
+ * design system's dividers between them rather than as separately spaced rows. Bleeds as
+ * [EditorToggleRow] does.
+ */
+@Composable
+internal fun EditorToggleRows(toggles: List<ListItem>) {
     val bleed = dimensionResource(DesR.dimen.padding_m)
     ItemRows(
-        rows = listOf(toggle),
+        rows = toggles,
         modifier =
             Modifier.fillMaxWidth().layout { measurable, constraints ->
                 val extra = bleed.roundToPx() * 2

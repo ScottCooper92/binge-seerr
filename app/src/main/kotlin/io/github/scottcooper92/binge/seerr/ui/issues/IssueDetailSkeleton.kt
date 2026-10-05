@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.binge.designsystem.CARD_ASPECT_RATIO
 import com.binge.designsystem.component.lineHeightOf
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
@@ -29,17 +31,22 @@ import com.binge.designsystem.R as DesR
 private const val TITLE_FRACTION = 0.6f
 private const val META_FRACTION = 0.4f
 private const val TYPE_LABEL_FRACTION = 0.25f
+private const val REPORT_LINE_COUNT = 2
+private const val REPORT_LAST_LINE_FRACTION = 0.6f
 
 /**
  * Loading placeholder for [IssueDetailScreen]'s [IssueDetailUiState.Ready] arm: the issue header —
  * poster, title, the media-type/year meta line, and the type label plus status chip row — all
- * unconditional on [IssueItem], then the divider and the Comments section header every issue has.
+ * unconditional on [IssueItem], then the divider, the problem report and the Comments section header.
  *
- * The problem report, the media-server/service link buttons and the thread's own comments are all
- * conditional on the server's own data ([IssueDetail.report] is nullable, [IssueDetail.mediaServerUrl]/
- * [IssueDetail.serviceUrl] likewise, and the thread's length is whatever the server returns), so
- * nothing is reserved for them — the scroll grows on resolve rather than reflowing a guess, the same
- * trade [RequestDetailSkeleton] and [UserDetailSkeleton] make (#373).
+ * The report is reserved because every issue has one: the server creates an issue together with its
+ * opening comment, and that comment is [IssueDetail.report]. Leaving it out sized the skeleton for a
+ * page without a report, so the Comments heading jumped down by the whole report on resolve (#572).
+ * Its length is the server's, so the placeholder holds two lines and the scroll grows or shrinks from
+ * there. The media-server/service link buttons and the thread's own comments are conditional on the
+ * server's data ([IssueDetail.mediaServerUrl]/[IssueDetail.serviceUrl] are nullable, and the thread's
+ * length is whatever the server returns), so nothing is reserved for them — the same trade
+ * [RequestDetailSkeleton] and [UserDetailSkeleton] make (#373).
  *
  * The pinned composer/resolve bar is skipped for a different reason than either of those two skip
  * their own conditional content: its shape itself varies with permissions (a composer alone, a
@@ -53,7 +60,33 @@ internal fun IssueDetailSkeleton(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         HeaderSkeleton(modifier = Modifier.padding(inset))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
+        IssueBodySkeleton()
+    }
+}
+
+/**
+ * What sits under the header and divider while the issue loads: the problem report and the Comments
+ * heading. Shared with the seeded page, which shows the real header above it, so both resolve the same way.
+ */
+@Composable
+internal fun IssueBodySkeleton() {
+    ReportSkeleton(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)))
+    SectionHeaderSkeleton()
+}
+
+/** The report section: its Problem heading and two `bodyLarge` lines at the content inset, as the page sets the report's text. */
+@Composable
+private fun ReportSkeleton(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
         SectionHeaderSkeleton()
+        repeat(REPORT_LINE_COUNT) { index ->
+            SkeletonPlate(
+                Modifier
+                    .padding(horizontal = resolvedContentInset())
+                    .fillMaxWidth(if (index == REPORT_LINE_COUNT - 1) REPORT_LAST_LINE_FRACTION else 1f)
+                    .height(lineHeightOf(MaterialTheme.typography.bodyLarge)),
+            )
+        }
     }
 }
 

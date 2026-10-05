@@ -134,6 +134,17 @@ write when they are off:
   show. A user who may change the destination still gets the editor for that, with no season list,
   and its save sends no `seasons`, so the request keeps the ones it has.
 
+## A capability this companion does not offer
+
+`CAPABILITY_MEDIA_FILE_INFO`, a movie's file name, size, resolution and codec, is never declared,
+and `RequestStatus.file_info` is never set. The contract makes both optional. Seerr's API does not
+carry a finished download's file; only Radarr does. Radarr's host and API key are only in Seerr's
+admin-only `GET /settings/radarr`. Serving it would mean holding a Radarr key and calling a second
+host, for admins only. That would break the privacy promise that the app's server traffic goes only
+to the Seerr server the user entered (and plex.tv for a Plex sign-in), never to a second host such
+as Radarr (#483). If Seerr ever returns the file itself, this becomes a
+mapping change.
+
 ## TLS and self-signed servers
 
 A Seerr behind a self-signed certificate, or one from a private CA, works over HTTPS once that CA is

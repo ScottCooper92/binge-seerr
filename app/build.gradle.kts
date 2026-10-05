@@ -378,8 +378,9 @@ tasks.withType<Test>().configureEach {
 }
 
 // The screenshot plugin does not wire itself into `check` the way ktlint and AGP's lint do, so
-// without this `./gradlew build` — which is this repository's whole gate, and all CI runs — would
-// carry the frames and never compare them. Named here rather than in ci.yml so a local build and a
+// without this `./gradlew build` — which is this repository's whole gate — would carry the frames
+// and never compare them. CI runs the comparison in a job of its own (see ci.yml), but it is the same
+// task `build` reaches through this line. Named here rather than in ci.yml so a local build and a
 // CI build answer the same question (#146).
 tasks.named("check") {
     dependsOn("validateDebugScreenshotTest")

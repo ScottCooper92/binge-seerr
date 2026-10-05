@@ -13,6 +13,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--
+        Reaching a Seerr on the user's own network (a private IP, .local, .lan, a single-label name) is
+        refused from SDK 37 unless this is granted, and an app targeting 37 no longer gets it
+        automatically. Nothing changes below 37; setup asks for it when the address is a local one.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+
+    <!--
         Both required="false", as Binge declares them, so the one APK serves phones and televisions.
         Without the touchscreen declaration Play assumes a touchscreen is required and hides the app
         from every TV; the leanback category alone does not override that default.

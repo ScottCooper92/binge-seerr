@@ -1,6 +1,6 @@
 name: Consumer canary
 
-# Builds this app against the HEADS of design-system/ and binge-integrations/ instead of the
+# Builds this app against the HEADS of design-system/ and binge-companions/ instead of the
 # commits pinned here. Both upstreams say a green build in their repository does not mean a green
 # build in their consumers, and this app is where a breaking change on their main first shows. CI
 # only ever builds the pins, so without this the break surfaces in the bump PR.
@@ -34,7 +34,7 @@ jobs:
       - name: Move the submodules to their upstream heads
         run: |
           set -euo pipefail
-          git submodule update --init --remote design-system binge-integrations
+          git submodule update --init --remote design-system binge-companions
           git submodule status
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
@@ -107,7 +107,7 @@ jobs:
                 body: [
                   `The scheduled canary failed: ${runUrl}`,
                   '',
-                  'This build uses the heads of design-system/ (binge-design-system) and binge-integrations/ (binge-companions), not the pinned commits. If the nightly CI run is green, an upstream commit broke this app: the log names the submodule commits it built against, and bumping the pin would be red too.',
+                  'This build uses the heads of design-system/ (binge-design-system) and binge-companions/, not the pinned commits. If the nightly CI run is green, an upstream commit broke this app: the log names the submodule commits it built against, and bumping the pin would be red too.',
                   '',
                   'The canary-reports artifact is kept for seven days. This issue closes itself on the next green canary run.',
                 ].join('\n'),

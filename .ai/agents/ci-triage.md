@@ -4,17 +4,25 @@ Maps a red CI run to its correct fix. `author-ci-fix.yml` reads this file from
 `main` and works from the table below; it gets exactly one repair attempt per
 commit, so a guess is expensive and stopping is cheap.
 
-CI is one job:
+CI runs the tasks of `./gradlew build` as four jobs in parallel, then a fifth that
+aggregates them. `.github/workflows/ci.yml` is the source of truth for the split:
 
 | Job | Runs |
 | --- | --- |
-| `build` | `./gradlew build` — Kotlin compile, `:app:test`, `ktlintCheck`, `detekt`, Android `lint`, `checkTranslationStaleness`, `koverVerify`, `validateDebugScreenshotTest`, `checkBaselineStaleness` |
+| `checks` | `./gradlew build` minus the tasks the next three jobs own — Kotlin compile, `ktlintCheck`, `detekt`, `checkBaselineStaleness`, Android `lint`, `checkTranslationStaleness`, the debug assemble. On a PR it first checks that every submodule pin is merged upstream |
+| `tests` | `:app:testDebugUnitTest` and `:app:koverVerify` |
+| `screenshots` | `:app:validateDebugScreenshotTest` |
+| `release` | `:app:assembleRelease` — R8 with this app's keep rules, and lint-vital |
+| `build` | Nothing of its own. Waits on the four, and is green only if all four are. It merges their reports into the one `build-reports` artifact |
 
-Everything after the compile and the tests arrives through `check` or is wired onto `build` by hand — the
-screenshot plugin does the latter, per `CLAUDE.md`'s Gates section — but `build`
-pulls in either way. Nothing in the repository names them separately, so a red run
-whose log ends in a lint report, a coverage report or a screenshot diff is still
-the `build` job, not a second gate that appeared from somewhere.
+`build` is the check branch protection requires, and the one `author-ci-fix.yml` reads.
+Its log only says which of the four failed. Read the failing job's log, not
+`build`'s: that is where the error is. The reports in `build-reports` come from
+whichever jobs failed.
+
+`checks` excludes tasks rather than listing them, so a gate added to `check` later
+lands there. A red run whose log ends in a report you did not expect is still one of
+these jobs, not a second gate that appeared from somewhere.
 
 There is a coverage floor (`koverVerify`, 78% of `:app`'s lines) and a screenshot
 suite (`validateDebugScreenshotTest`), and both are real, gating checks. There is

@@ -42,6 +42,8 @@ import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.layout.LayoutAnchors
+import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
@@ -49,7 +51,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
-import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -157,7 +158,7 @@ fun IssueDetailScreen(
 }
 
 /**
- * The tapped row's header while the issue loads, with the skeleton's own Comments heading under it;
+ * The tapped row's header while the issue loads, with the skeleton's own report and Comments heading under it;
  * a failed refresh swaps the rest of the page for the error and its retry, and the header stays.
  */
 @Composable
@@ -173,7 +174,7 @@ private fun Seeded(
         if (state.error != null) {
             ErrorScreen(error = state.error, onRetry = actions.onRetry)
         } else {
-            SectionHeaderSkeleton()
+            IssueBodySkeleton()
         }
     }
 }
@@ -204,25 +205,27 @@ private fun Ready(
             IssueHeader(detail.item, onOpen = { context.openInBrowser(detail.webUrl) }, modifier = Modifier.padding(inset))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
             detail.report?.let { report ->
-                SectionHeader(title = stringResource(R.string.issue_problem))
-                Text(
-                    text = report.message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .then(
-                                if (detail.canActOn(report)) {
-                                    Modifier.combinedClickable(
-                                        onClick = { modals.openEdit(report) },
-                                        onLongClick = { modals.actingOnCommentId = report.id },
-                                        onLongClickLabel = stringResource(R.string.issue_comment_actions_cd),
-                                    )
-                                } else {
-                                    Modifier
-                                },
-                            ).padding(horizontal = inset),
-                )
+                Column(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW))) {
+                    SectionHeader(title = stringResource(R.string.issue_problem))
+                    Text(
+                        text = report.message,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (detail.canActOn(report)) {
+                                        Modifier.combinedClickable(
+                                            onClick = { modals.openEdit(report) },
+                                            onLongClick = { modals.actingOnCommentId = report.id },
+                                            onLongClickLabel = stringResource(R.string.issue_comment_actions_cd),
+                                        )
+                                    } else {
+                                        Modifier
+                                    },
+                                ).padding(horizontal = inset),
+                    )
+                }
             }
             SectionHeader(title = stringResource(R.string.issue_comments_title))
             IssueThread(

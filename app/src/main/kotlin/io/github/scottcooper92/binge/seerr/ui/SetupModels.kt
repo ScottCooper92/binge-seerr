@@ -14,6 +14,7 @@ enum class SetupError {
 
     /** [Unreachable], for an address a phone sent that is an IP literal off the home network. */
     UnreachableNotLocal,
+    LocalNetworkDenied,
     Unknown,
     LinkExpired,
     HandOffExpired,
@@ -142,8 +143,10 @@ sealed interface SetupUiState {
 
     /**
      * Step one: the address, and nothing else until the server answers. An [insecure] address, plain
-     * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it. A
-     * [handOff] in progress takes the television's page over until it ends.
+     * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it. A local
+     * address on a platform that gates the local network shows [needsLocalNetwork] until it is allowed;
+     * it never disables Continue, so an address misjudged as local cannot block setup. A [handOff] in
+     * progress takes the television's page over until it ends.
      */
     data class Address(
         val serverUrl: String,
@@ -152,6 +155,7 @@ sealed interface SetupUiState {
         val error: SetupError?,
         val cleartextAllowed: Boolean = false,
         val handOff: AddressHandOff? = null,
+        val needsLocalNetwork: Boolean = false,
     ) : SetupUiState {
         val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)
     }

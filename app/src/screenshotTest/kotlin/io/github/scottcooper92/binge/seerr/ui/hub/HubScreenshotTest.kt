@@ -95,6 +95,12 @@ class HubScreenshotTest {
     @Composable
     fun unreachable() = HubScreen(state = previewReady(health = ConnectionHealth.Unreachable), actions = previewActions())
 
+    /** The server is on the local network and Android refuses this app that network: the way out is the permission, not a retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun localNetworkDenied() = HubScreen(state = previewReady(health = ConnectionHealth.LocalNetworkDenied), actions = previewActions())
+
     /** Reached but the dashboard never loaded — the same way out as [unreachable], a different glyph and copy. */
     @PreviewTest
     @SeerrScreenStatePreview

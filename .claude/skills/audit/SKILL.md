@@ -5,16 +5,17 @@ description: Whole-codebase (or package-scoped) sweep of binge-seerr for bugs, c
 
 # Codebase audit
 
-CI runs `./gradlew build`: compile, `:app:test`, ktlint, detekt (type-resolved, zero new
+CI runs the tasks of `./gradlew build`, split across four parallel jobs and one aggregate `build`
+job (`.github/workflows/ci.yml`): compile, `:app:test`, ktlint, detekt (type-resolved, zero new
 against `detekt-baseline.xml`), Android lint (translation checks and `UnusedResources` pinned to
-error), `checkTranslationStaleness`, `koverVerify` (78%) and `validateDebugScreenshotTest`. Do not
+error), `checkTranslationStaleness`, `koverVerify` (78%), `validateDebugScreenshotTest` and the R8 release build. Do not
 re-report anything that set decides. The audit's value is what it *doesn't* gate: conventions held
 "in review or nowhere" (`CLAUDE.md` > Screens and ViewModels), the one-rule-everything-serves
 ("this repository is read as documentation"), server-gating, the exported Service, and doc drift.
 
 Scope to the whole repo or named packages under `app/src/main/kotlin/io/github/scottcooper92/binge/seerr/`
 (`ui/`, `ui/tv/`, `seerr/`, `service/`, `auth/`, `data/`, `notifications/`, `feedback/`,
-`telemetry/`, `di/`). Skip `binge-integrations/` and `design-system/` (submodules with their own
+`telemetry/`, `di/`). Skip `binge-companions/` and `design-system/` (submodules with their own
 repos and audits) and `build/`.
 
 **Three disciplines make this useful rather than noisy:**

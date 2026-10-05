@@ -20,6 +20,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -131,6 +132,23 @@ class OverrideRuleViewModelTest {
         }
 
     @Test
+    fun `a rule on an instance is not saved until it has a condition and an override`() =
+        runTest {
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectInstance(vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances[0])
+            vm.awaitReady { it.extras.choices != null }
+            vm.save()
+            vm.toggleUser(3)
+            vm.save()
+            assertFalse(vm.awaitReady().draft.valid)
+            assertEquals(0, seerr.count("POST", "/api/v1/overrideRule"))
+
+            vm.toggleTag(2)
+            assertTrue(vm.awaitReady().draft.valid)
+        }
+
+    @Test
     fun `saving encodes users and tags with commas, languages with pipes, and leaves empty conditions out`() =
         runTest {
             seerr.serve("POST /api/v1/overrideRule", """{"id":12,"radarrServiceId":1,"users":"3","language":"en|de","tags":"2"}""")
@@ -178,6 +196,8 @@ class OverrideRuleViewModelTest {
             vm.awaitReady()
             vm.selectInstance(vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances[0])
             vm.awaitReady { it.extras.choices != null }
+            vm.toggleUser(3)
+            vm.toggleTag(2)
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())

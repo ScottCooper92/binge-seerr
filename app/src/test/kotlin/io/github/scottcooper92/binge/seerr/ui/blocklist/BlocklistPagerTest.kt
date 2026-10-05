@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.blocklist
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,6 +52,31 @@ class BlocklistPagerTest {
         assertEquals(listOf(BlocklistFilter.Tagged), selections)
     }
 
+    /**
+     * The pages either side of the selected one are composed before any swipe, so their rows are loading
+     * already. Neither is selected by being composed: nothing is reported, and only the selected page is on
+     * screen or asks to refresh.
+     */
+    @Test
+    fun `the filters either side are composed without a swipe, and the selection stays put`() {
+        val selections = mutableListOf<BlocklistFilter>()
+        val refreshAsks = mutableListOf<BlocklistFilter>()
+        setContent(
+            state(BlocklistFilter.Manual, hasFilters = true),
+            shouldRefresh = { asked, _ ->
+                refreshAsks += asked
+                false
+            },
+        ) { selections += it }
+
+        composeTestRule.onNodeWithText(titleFor(BlocklistFilter.Manual)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(titleFor(BlocklistFilter.All)).assertExists().assertIsNotDisplayed()
+        composeTestRule.onNodeWithText(titleFor(BlocklistFilter.Tagged)).assertExists().assertIsNotDisplayed()
+        assertEquals(emptyList<BlocklistFilter>(), selections)
+        assertTrue(refreshAsks.isNotEmpty())
+        assertTrue("asked for $refreshAsks", refreshAsks.all { it == BlocklistFilter.Manual })
+    }
+
     /** Jellyseerr 2.x has one list and no chips, so there is one page and nothing to swipe to. */
     @Test
     fun `a server without the source chips shows its one list`() {
@@ -75,6 +102,7 @@ class BlocklistPagerTest {
 
     private fun setContent(
         state: BlocklistUiState.Ready,
+        shouldRefresh: (BlocklistFilter, Int) -> Boolean = { _, _ -> false },
         onFilterChange: (BlocklistFilter) -> Unit = {},
     ) {
         composeTestRule.setContent {
@@ -83,7 +111,7 @@ class BlocklistPagerTest {
                     state = state,
                     itemsFor = ::rowsFor,
                     events = emptyFlow(),
-                    shouldRefresh = { _, _ -> false },
+                    shouldRefresh = shouldRefresh,
                     actions =
                         BlocklistActions(
                             onBack = {},

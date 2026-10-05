@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.HandOffOpening
+import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
@@ -27,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.Interceptor
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,6 +37,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.IOException
 import java.security.GeneralSecurityException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -73,6 +76,17 @@ class SetupViewModelTest {
 
     private lateinit var connection: SeerrConnection
 
+    /** Flipped to make the server unanswering, as a network the app is refused or a server that is off looks. */
+    private val serverDown = AtomicBoolean(false)
+
+    private fun transport(cookies: okhttp3.CookieJar): Interceptor {
+        val scripted = seerr.interceptor(cookies)
+        return Interceptor { chain ->
+            if (serverDown.get()) throw IOException("unreachable")
+            scripted.intercept(chain)
+        }
+    }
+
     /** Real consent over an in-memory store, with nothing saved to grandfather in. */
     private val cleartext = DataStoreCleartextConsent(InMemoryDataStore()) { null }
 
@@ -83,6 +97,7 @@ class SetupViewModelTest {
         cipher: SecretCipher = PlainCipher,
         seen: MutableList<SetupUiState>? = null,
         handOffs: AddressHandOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
+        localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
     ): SetupViewModel {
         if (!reuseConnection) {
             connection =
@@ -92,7 +107,7 @@ class SetupViewModelTest {
                             PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
                             PlainCipher,
                         ),
-                    apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
+                    apis = SeerrApiFactory(logRequests = false, testTransport = ::transport, testDispatcher = seerr::newDispatcher),
                     quickConnectPollInterval = 10.milliseconds,
                     cleartext = cleartext,
                 )
@@ -118,6 +133,7 @@ class SetupViewModelTest {
                 handOffs = handOffs,
                 dispatcher = mainDispatcherRule.dispatcher,
                 analytics = analytics,
+                localNetwork = localNetwork,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect { state -> seen?.add(state) } }
@@ -216,6 +232,46 @@ class SetupViewModelTest {
             assertEquals(2, seerr.requestCount)
             vm.editAddress("other")
             assertNull(vm.awaitAddress { it.serverUrl == "other" }.error)
+        }
+
+    @Test
+    fun `a local address asks for the local network permission while it is refused, and a public one never does`() =
+        runTest {
+            var granted = false
+            val vm = viewModel(localNetwork = { granted })
+            vm.awaitAddress()
+
+            vm.editAddress("192.168.1.10:5055")
+            assertTrue(vm.awaitAddress { it.serverUrl == "192.168.1.10:5055" }.needsLocalNetwork)
+            assertTrue("Continue is never held back by the ask", vm.awaitAddress { it.serverUrl == "192.168.1.10:5055" }.canContinue)
+
+            vm.editAddress("https://seerr.example.com")
+            assertFalse(vm.awaitAddress { it.serverUrl.endsWith("example.com") }.needsLocalNetwork)
+
+            vm.editAddress("seerr.lan")
+            assertTrue(vm.awaitAddress { it.serverUrl == "seerr.lan" }.needsLocalNetwork)
+            granted = true
+            vm.localNetworkResult()
+            assertFalse(vm.awaitAddress { !it.needsLocalNetwork }.needsLocalNetwork)
+        }
+
+    @Test
+    fun `an unreachable local server is the permission when it is refused, and unreachable when it is not`() =
+        runTest {
+            serverDown.set(true)
+            var granted = false
+            val vm = viewModel(localNetwork = { granted })
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/"))
+
+            vm.inspect()
+            assertEquals(SetupError.LocalNetworkDenied, vm.awaitAddress { it.error != null }.error)
+
+            granted = true
+            vm.localNetworkResult()
+            assertNull(vm.awaitAddress { it.error == null && !it.isInspecting }.error)
+            vm.inspect()
+            assertEquals(SetupError.Unreachable, vm.awaitAddress { it.error != null }.error)
         }
 
     @Test

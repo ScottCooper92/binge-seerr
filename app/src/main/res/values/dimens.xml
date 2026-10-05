@@ -9,7 +9,6 @@
     <!-- The hub's dashboard cards and the downloading strip. -->
     <dimen name="hub_card_section_spacing">14dp</dimen>
     <dimen name="hub_server_card_logo">40dp</dimen>
-    <dimen name="hub_stat_divider_height">28dp</dimen>
     <dimen name="hub_quota_meter_spacing">10dp</dimen>
     <dimen name="hub_quota_meter_line_spacing">5dp</dimen>
     <dimen name="hub_download_card_width">248dp</dimen>

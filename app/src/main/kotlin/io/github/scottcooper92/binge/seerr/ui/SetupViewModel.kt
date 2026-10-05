@@ -16,12 +16,14 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
 import io.github.scottcooper92.binge.seerr.handoff.addressLocality
+import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
+import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -67,6 +69,7 @@ class SetupViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
     ) : ViewModel() {
         private val draft = MutableStateFlow(Draft())
 
@@ -117,6 +120,7 @@ class SetupViewModel
                             isInspecting = draft.busy,
                             error = draft.error,
                             handOff = draft.handOff,
+                            needsLocalNetwork = draft.serverUrl.isBlockedByLocalNetwork(localNetwork),
                         )
                     }
                     else ->
@@ -144,6 +148,9 @@ class SetupViewModel
             }
         }
 
+        /** The permission prompt came back, or the user returned from Settings: read the permission again. */
+        fun localNetworkResult() = draft.update { it.copy(permissionReads = it.permissionReads + 1, error = null) }
+
         fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null, received = false) }
 
         /**
@@ -167,7 +174,11 @@ class SetupViewModel
                     .onSuccess { preview ->
                         val server = preview.toSetupServer()
                         draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
-                    }.onFailure { failure -> draft.update { it.copy(error = failure.toSetupError().forAddress(url, it.received)) } }
+                    }.onFailure { failure ->
+                        draft.update {
+                            it.copy(error = failure.toSetupError().orLocalNetworkDenied(url, localNetwork).forAddress(url, it.received))
+                        }
+                    }
                 draft.update { it.copy(busy = false) }
             }
         }
@@ -273,30 +284,28 @@ class SetupViewModel
         private fun restore() {
             val pending = links.pending() ?: return
             draft.update { it.copy(serverUrl = pending.serverUrl, busy = true) }
-            viewModelScope.launch(dispatcher) { resume(pending) }
-        }
-
-        private suspend fun resume(pending: PendingLink) {
-            // Before the server is read, not after: while `editing` is unset the saved credentials
-            // read as connected, and the screen would leave for the hub mid-resume.
-            if (pending.editing) {
-                val editing = runCatching { connection.current() }.getOrNull()
-                draft.update { it.copy(editing = editing) }
-            }
-            val server =
-                connection.inspect(pending.serverUrl).map { it.toSetupServer() }.getOrElse { failure ->
-                    // The address is kept and the failure shown, but the link is not: a server that
-                    // cannot be reached now would otherwise resume into the same failure every launch.
-                    links.forget()
-                    // finish() reads the draft's form.mode for the sign_in event; set it to the mode
-                    // actually being resumed before that early return, or it reports the stale default.
-                    draft.update { it.copy(form = SignInForm(mode = pending.mode)) }
-                    return finish(failure)
+            viewModelScope.launch(dispatcher) {
+                // Before the server is read, not after: while `editing` is unset the saved credentials
+                // read as connected, and the screen would leave for the hub mid-resume.
+                if (pending.editing) {
+                    val editing = runCatching { connection.current() }.getOrNull()
+                    draft.update { it.copy(editing = editing) }
                 }
-            // `busy` stays true here: `links.resume()` genuinely suspends before `onLink` fires for
-            // Plex, and clearing it early would re-enable Connect and let a second flow start.
-            draft.update { it.copy(server = server, form = SignInForm(mode = pending.mode)) }
-            links.resume(server, pending)
+                val server =
+                    connection.inspect(pending.serverUrl).map { it.toSetupServer() }.getOrElse { failure ->
+                        // The address is kept and the failure shown, but the link is not: a server that
+                        // cannot be reached now would otherwise resume into the same failure every launch.
+                        links.forget()
+                        // finish() reads the draft's form.mode for the sign_in event; set it to the mode
+                        // actually being resumed before that early return, or it reports the stale default.
+                        draft.update { it.copy(form = SignInForm(mode = pending.mode)) }
+                        return@launch finish(failure)
+                    }
+                // `busy` stays true here: `links.resume()` genuinely suspends before `onLink` fires for
+                // Plex, and clearing it early would re-enable Connect and let a second flow start.
+                draft.update { it.copy(server = server, form = SignInForm(mode = pending.mode)) }
+                links.resume(server, pending)
+            }
         }
 
         /** Every attempt ends here: the secret leaves the form once it is stored encrypted, or the failure is shown. */
@@ -331,6 +340,8 @@ class SetupViewModel
             val handOff: AddressHandOff? = null,
             /** Whether [serverUrl] is the address a phone sent, untouched since. */
             val received: Boolean = false,
+            /** Bumped when the local-network permission may have changed, so the state is built again from the live answer. */
+            val permissionReads: Int = 0,
         )
 
         private companion object {
@@ -380,3 +391,9 @@ private fun Throwable.toSetupError(): SetupError =
                 else -> SetupError.Unknown
             }
     }
+
+/** An unreachable local server with the permission refused is the permission, not the server. */
+private fun SetupError.orLocalNetworkDenied(
+    url: String,
+    permission: LocalNetworkPermission,
+): SetupError = if (this == SetupError.Unreachable && url.isBlockedByLocalNetwork(permission)) SetupError.LocalNetworkDenied else this

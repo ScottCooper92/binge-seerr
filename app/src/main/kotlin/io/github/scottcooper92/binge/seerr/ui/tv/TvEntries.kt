@@ -16,16 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.CombinedLoadStates
-import androidx.paging.LoadState
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import androidx.tv.material3.MaterialTheme
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.data.ListRefresh
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
-import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.LocalAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.screenName
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
@@ -45,8 +38,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
-import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
-import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailActions
@@ -339,54 +330,3 @@ private fun TvEditConnectionOverlay(
         TvSetupScreen(state = state, actions = viewModel.tvActions())
     }
 }
-
-/**
- * The pager's count, accessor and load states, in the form the boards take; still loading while there is no
- * pager. The refresh is the phone's [rememberPagedPhase], so the two never disagree on what an empty list is.
- */
-@Composable
-private fun <T : Any> LazyPagingItems<T>?.toRows(
-    lastRefresh: ListRefresh?,
-    keyOf: (T) -> Any,
-): TvPagedRows<T> {
-    if (this == null) return TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Loading)
-    return TvPagedRows(
-        count = itemCount,
-        at = { index -> this[index] },
-        itemKey = itemKey(keyOf),
-        refresh = rememberPagedPhase(lastRefresh).tvRefresh(),
-        append = loadState.appendPhase(),
-    )
-}
-
-/**
- * A [PagedPhase] as the boards' refresh. [TvPagedList] shows rows whenever there are any, so an idle refresh
- * with none is the empty plate and a loading one is the loading plate.
- */
-internal fun PagedPhase.tvRefresh(): TvLoadPhase =
-    when (this) {
-        PagedPhase.Skeleton -> TvLoadPhase.Loading
-        PagedPhase.Empty -> TvLoadPhase.Idle
-        is PagedPhase.Rows -> refreshError?.toTvFailed() ?: if (refreshing) TvLoadPhase.Loading else TvLoadPhase.Idle
-        is PagedPhase.Failed -> error.toTvFailed()
-    }
-
-private fun Throwable.toTvFailed() = TvLoadPhase.Failed(rejected = toSeerrError() == SeerrError.Unauthorized)
-
-internal fun CombinedLoadStates.appendPhase(): TvLoadPhase = settle(mediator?.append, append).toPhase()
-
-/** An error from either side wins, then a load in progress. */
-private fun settle(
-    remote: LoadState?,
-    source: LoadState,
-): LoadState {
-    val states = listOfNotNull(remote, source)
-    return states.firstOrNull { it is LoadState.Error } ?: states.firstOrNull { it is LoadState.Loading } ?: source
-}
-
-private fun LoadState.toPhase(): TvLoadPhase =
-    when (this) {
-        is LoadState.Loading -> TvLoadPhase.Loading
-        is LoadState.Error -> TvLoadPhase.Failed(rejected = error.toSeerrError() == SeerrError.Unauthorized)
-        is LoadState.NotLoading -> TvLoadPhase.Idle
-    }
