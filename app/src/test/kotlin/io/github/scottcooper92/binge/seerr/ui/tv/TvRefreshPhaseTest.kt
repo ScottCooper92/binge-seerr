@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
-import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
+import com.binge.designsystem.template.PagedPhase
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Test

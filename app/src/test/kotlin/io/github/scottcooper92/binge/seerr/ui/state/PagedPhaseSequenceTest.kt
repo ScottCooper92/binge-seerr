@@ -7,6 +7,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingDataEvent
 import androidx.paging.PagingDataPresenter
+import com.binge.designsystem.template.PagedPhase
+import com.binge.designsystem.template.PagedPhaseTracker
 import io.github.scottcooper92.binge.seerr.data.CacheDatabaseRule
 import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.data.ListRefreshes
@@ -124,13 +126,13 @@ class PagedPhaseSequenceTest {
                     val refresh = refreshes.latest.value[Unit]
                     refresh != null &&
                         states.mediator?.refresh !is LoadState.Loading &&
-                        settled.phase(states, presenter.size, refresh) == last
+                        settled.phase(states, presenter.size, refresh.toPagedRefresh()) == last
                 }
             }
             collecting.cancelAndJoin()
             recording.cancelAndJoin()
             val tracker = PagedPhaseTracker()
-            frames.map { tracker.phase(it.states, it.count, it.refresh) }.fold(emptyList()) { seen, phase ->
+            frames.map { tracker.phase(it.states, it.count, it.refresh?.toPagedRefresh()) }.fold(emptyList()) { seen, phase ->
                 if (seen.lastOrNull() == phase) seen else seen + phase
             }
         }

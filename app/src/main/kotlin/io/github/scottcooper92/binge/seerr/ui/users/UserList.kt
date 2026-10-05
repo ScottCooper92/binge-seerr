@@ -32,12 +32,12 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.PagedPhase
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
-import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR

@@ -63,6 +63,7 @@ import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenListPadding
 import com.binge.designsystem.template.screenOuterPadding
@@ -74,7 +75,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
