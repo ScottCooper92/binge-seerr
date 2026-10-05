@@ -938,6 +938,7 @@
     <string name="send_address_tag_server_url">URL del servidor</string>
     <string name="send_address_tag_sent_before">Enviada antes</string>
     <string name="send_address_tag_this_phone">Este móvil</string>
+    <string name="send_address_clear">Borrar dirección</string>
     <string name="setup_error_unreachable_not_local">No se pudo conectar con el servidor. Esa no es una dirección local, así que puede que este televisor no consiga llegar a ella. Prueba con una dirección de tu red doméstica.</string>
     <string name="tv_rail_hub">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
@@ -1016,5 +1017,4 @@
     <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
     <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
     <string name="tv_consent_either_choice">Con cualquiera de las dos opciones sigues a la aplicación.</string>
-    <string name="send_address_clear">Borrar dirección</string>
 </resources>

@@ -971,6 +971,7 @@
     <string name="send_address_tag_server_url">Server URL</string>
     <string name="send_address_tag_sent_before">Sent before</string>
     <string name="send_address_tag_this_phone">This phone</string>
+    <string name="send_address_clear">Clear address</string>
     <string name="setup_error_unreachable_not_local">The server could not be reached. That isn\'t a local address, so this TV may not be able to reach it. Try an address on your home network.</string>
 
     <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->
@@ -1077,5 +1078,4 @@
          (the row's label/detail), so it stays here rather than in src/debug's strings.xml — its
          own UI prototypes strings live there instead, since that screen is debug-only code (#467). -->
     <string name="debug_group_developer" translatable="false">Developer</string>
-    <string name="send_address_clear">Clear address</string>
 </resources>

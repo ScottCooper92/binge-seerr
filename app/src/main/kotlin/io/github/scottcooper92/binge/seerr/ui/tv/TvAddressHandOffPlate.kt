@@ -68,11 +68,13 @@ internal fun TvAddressHandOffPlate(
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
     BackHandler(onBack = onCancel)
+    // Held above the `when`: a listener that fails while open swaps Listening for Unavailable at this
+    // call site, and effects inside the Listening branch would dispose then and cancel the plate away.
+    val cancel by rememberUpdatedState(onCancel)
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { cancel() }
+    DisposableEffect(Unit) { onDispose { cancel() } }
     when (handOff) {
         is AddressHandOff.Listening -> {
-            val cancel by rememberUpdatedState(onCancel)
-            LifecycleEventEffect(Lifecycle.Event.ON_STOP) { cancel() }
-            DisposableEffect(Unit) { onDispose { cancel() } }
             TvFormPage(
                 headline = stringResource(R.string.tv_handoff_title),
                 body = stringResource(R.string.tv_handoff_body),
