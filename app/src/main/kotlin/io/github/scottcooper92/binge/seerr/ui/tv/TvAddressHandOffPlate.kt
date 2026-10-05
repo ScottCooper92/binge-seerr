@@ -3,7 +3,13 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.runtime.Composable
@@ -11,17 +17,21 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -33,6 +43,8 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
+import com.binge.designsystem.R as DesR
+import com.binge.designsystem.tv.R as TvR
 
 /** The four-module quiet zone the QR specification asks for around a code. */
 private const val QR_QUIET_ZONE = 4
@@ -68,9 +80,7 @@ internal fun TvAddressHandOffPlate(
                 icon = Icons.Filled.QrCode2,
                 modifier = modifier,
             ) {
-                TvQrCode(handOff.url)
-                // Monospace for the same reason as the link plate's code: read across a room and typed on a phone.
-                Text(text = handOff.url, style = MaterialTheme.typography.titleMedium, fontFamily = FontFamily.Monospace)
+                TvHandOffCodeCard(handOff.url)
                 TvFormNote(stringResource(R.string.tv_handoff_note))
                 TvButton(
                     label = stringResource(R.string.link_cancel),
@@ -96,6 +106,37 @@ internal fun TvAddressHandOffPlate(
             }
     }
 }
+
+/**
+ * The code and its address together on one card, as Binge's TV sign-in sets its code: the address is the
+ * fallback for a phone without a camera app, so it belongs with the code, legible from across a room. Shown
+ * without `http://` — a phone's browser adds it — so it fits under the code; monospace because it is typed.
+ */
+@Composable
+private fun TvHandOffCodeCard(url: String) {
+    Column(
+        modifier =
+            Modifier
+                .clip(BingeShapes.AccountCard)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(dimensionResource(TvR.dimen.tv_button_border_width), MaterialTheme.colorScheme.border, BingeShapes.AccountCard)
+                .padding(dimensionResource(DesR.dimen.padding_l)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        TvQrCode(url)
+        Text(
+            text = url.removePrefix(HTTP_PREFIX),
+            style = MaterialTheme.typography.bodyLarge,
+            fontFamily = FontFamily.Monospace,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = dimensionResource(R.dimen.tv_handoff_qr_size) * 2),
+        )
+    }
+}
+
+private const val HTTP_PREFIX = "http://"
 
 private fun AddressHandOff.Reason.messageRes(): Int =
     when (this) {
