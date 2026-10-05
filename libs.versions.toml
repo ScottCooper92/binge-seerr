@@ -53,7 +53,7 @@ composeBom = "2026.08.00"
 # Pinned ahead of the BOM to the version binge-design-system pins: its expressive theme reads
 # material3 APIs the BOM's stable line does not have, and a consumer that includes that build has
 # to agree with it or resolution silently picks one of the two.
-material3 = "1.5.0-alpha27"
+material3 = "1.5.0-alpha29"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
 browser = "1.9.0"
