@@ -26,7 +26,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
-import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -48,7 +48,7 @@ private const val HORSES = "Slow Horses"
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvIssuesBoardFocusTest {
     @get:Rule
-    val composeTestRule = createSeerrComposeRule()
+    val composeTestRule = createSeerrKeyboardComposeRule()
 
     private val resolved = mutableListOf<Int>()
     private val deleted = mutableListOf<Int>()

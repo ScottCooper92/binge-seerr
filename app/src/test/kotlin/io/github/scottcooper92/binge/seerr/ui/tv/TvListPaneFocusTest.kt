@@ -13,7 +13,7 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
-import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +33,7 @@ private const val OPTION_DISCONNECT = "Disconnect now"
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvListPaneFocusTest {
     @get:Rule
-    val composeTestRule = createSeerrComposeRule()
+    val composeTestRule = createSeerrKeyboardComposeRule()
 
     private val committed = mutableListOf<String>()
     private var selected = 0

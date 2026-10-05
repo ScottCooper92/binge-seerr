@@ -22,7 +22,7 @@ import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupServer
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
-import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -43,7 +43,7 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvSetupFocusTest {
     @get:Rule
-    val composeTestRule = createSeerrComposeRule()
+    val composeTestRule = createSeerrKeyboardComposeRule()
 
     private val edits = mutableListOf<String>()
     private val formEdits = mutableListOf<SignInForm.() -> SignInForm>()
