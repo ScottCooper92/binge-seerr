@@ -8,6 +8,9 @@ import java.util.Locale
  */
 internal val HAND_OFF_PAGE_LANGUAGES = listOf("en", "es")
 
+/** The release app's Play listing — the build a phone should get, whichever build the TV runs. */
+internal const val HAND_OFF_STORE_URL = "https://play.google.com/store/apps/details?id=io.github.scottcooper92.binge.seerr"
+
 /** The page's words in one language, read from the app's own strings so they are translated like any other screen. */
 internal data class HandOffPageCopy(
     val language: String,
@@ -19,7 +22,9 @@ internal data class HandOffPageCopy(
     val invalid: String,
     val appBody: String,
     val openApp: String,
-    val appHelp: String,
+    /** "You can install Seerr from the Google Play Store": the sentence, with [storeName] inside it as the link. */
+    val install: String,
+    val storeName: String,
     val sentTitle: String,
     val sentBody: String,
 )
@@ -55,14 +60,15 @@ internal fun pickLanguage(
 /**
  * One small self-contained page: inline styles, no scripts, nothing fetched from anywhere. The
  * form posts back to the URL it was served from, and the app link opens this app on a phone that
- * has it, so the connected server's address can be sent without typing. An installed build too old to
- * know the link swallows the tap with no fallback, and the page can't notice (no scripts), so a standing
- * note under the link says what to do when nothing happens.
+ * has it, so the connected server's address can be sent without typing. A note under it points a phone
+ * without the app at its store listing.
  */
 internal class HandOffPageTemplate(
     private val copyFor: (language: String) -> HandOffPageCopy,
     /** The `intent:` link into this app; see [TvHandOffLinks.intentUrl]. */
     private val appLink: String,
+    /** This app's store listing, for a phone that doesn't have it yet. */
+    private val storeLink: String = HAND_OFF_STORE_URL,
 ) : HandOffPage {
     override fun form(
         acceptLanguage: String?,
@@ -85,9 +91,20 @@ internal class HandOffPageTemplate(
             <hr>
             <p>${copy.appBody.escapeHtml()}</p>
             <a class="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
-            <p class="note">${copy.appHelp.escapeHtml()}</p>
+            <p class="note">${installLine(copy)}</p>
             """.trimIndent(),
         )
+    }
+
+    /** The install sentence with the store's name as the link; the whole sentence as the link if a translation drops the name. */
+    private fun installLine(copy: HandOffPageCopy): String {
+        val link = """<a href="${storeLink.escapeHtml()}">${copy.storeName.escapeHtml()}</a>"""
+        val at = copy.install.indexOf(copy.storeName)
+        return if (copy.storeName.isEmpty() || at < 0) {
+            """<a href="${storeLink.escapeHtml()}">${copy.install.escapeHtml()}</a>"""
+        } else {
+            copy.install.substring(0, at).escapeHtml() + link + copy.install.substring(at + copy.storeName.length).escapeHtml()
+        }
     }
 
     override fun sent(acceptLanguage: String?): String {
@@ -130,6 +147,7 @@ internal class HandOffPageTemplate(
                 "a.app{border:1px solid #8f8a9e;color:#bcc2ff}" +
                 "hr{border:0;border-top:1px solid #2b2a33;margin:1.5rem 0}" +
                 ".error{color:#ffb4ab}" +
-                ".note{margin:.75rem 0 0;color:#a6a1b4;font-size:.875rem;text-align:center}"
+                ".note{margin:.75rem 0 0;color:#a6a1b4;font-size:.875rem;text-align:center}" +
+                ".note a{color:#bcc2ff}"
     }
 }

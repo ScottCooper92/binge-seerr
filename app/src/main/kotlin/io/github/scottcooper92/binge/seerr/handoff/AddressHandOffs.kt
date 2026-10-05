@@ -77,7 +77,9 @@ internal class LanAddressHandOffs
         private fun copyFor(language: String): HandOffPageCopy {
             val configuration = Configuration(context.resources.configuration).apply { setLocale(Locale.forLanguageTag(language)) }
             val resources = context.createConfigurationContext(configuration).resources
-            val appName = resources.getString(R.string.companion_label)
+            // The product's name, not this build's launcher label: a phone gets the store app, so "Seerr Debug" from a
+            // debug TV build would name something the phone can't install.
+            val appName = resources.getString(R.string.handoff_page_app_name)
             return HandOffPageCopy(
                 language = language,
                 title = resources.getString(R.string.handoff_page_title),
@@ -88,7 +90,13 @@ internal class LanAddressHandOffs
                 invalid = resources.getString(R.string.handoff_page_invalid),
                 appBody = resources.getString(R.string.handoff_page_app_body, appName),
                 openApp = resources.getString(R.string.handoff_page_open_app, appName),
-                appHelp = resources.getString(R.string.handoff_page_app_help, appName),
+                install =
+                    resources.getString(
+                        R.string.handoff_page_install,
+                        appName,
+                        resources.getString(R.string.handoff_page_store_name),
+                    ),
+                storeName = resources.getString(R.string.handoff_page_store_name),
                 sentTitle = resources.getString(R.string.handoff_page_sent_title),
                 sentBody = resources.getString(R.string.handoff_page_sent_body),
             )

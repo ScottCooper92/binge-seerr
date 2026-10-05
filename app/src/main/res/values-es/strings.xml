@@ -903,9 +903,10 @@
     <string name="handoff_page_field">Dirección del servidor</string>
     <string name="handoff_page_send">Enviar al televisor</string>
     <string name="handoff_page_invalid">Esa no es una dirección que el televisor pueda usar. Revísala e inténtalo de nuevo.</string>
-    <string name="handoff_page_app_body">¿Tienes %1$s en este móvil y conectada a tu servidor? Puede enviar la dirección por ti.</string>
+    <string name="handoff_page_app_body">¿Usas %1$s en este dispositivo? Ábrela para conectar tu TV con los mismos datos.</string>
     <string name="handoff_page_open_app">Abrir %1$s</string>
-    <string name="handoff_page_app_help">¿No pasa nada? Actualiza %1$s a la última versión o escribe la dirección de arriba.</string>
+    <string name="handoff_page_install">Puedes instalar %1$s desde %2$s</string>
+    <string name="handoff_page_store_name">Google Play Store</string>
     <string name="handoff_page_sent_title">Enviada</string>
     <string name="handoff_page_sent_body">Tu televisor tiene la dirección y está comprobando el servidor. Ya puedes cerrar esta página.</string>
     <string name="send_address_title">Enviar la dirección a tu televisor</string>

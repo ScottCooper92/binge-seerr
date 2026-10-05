@@ -20,7 +20,8 @@ class HandOffPageTest {
             invalid = "Invalid & wrong",
             appBody = "App body",
             openApp = "Open \"app\"",
-            appHelp = "Nothing happens? Update <app>",
+            install = "Install <app> from the Store",
+            storeName = "Store",
             sentTitle = "Sent",
             sentBody = "Sent body",
         )
@@ -28,10 +29,10 @@ class HandOffPageTest {
     private val page = HandOffPageTemplate(copyFor = ::copy, appLink = "intent://tv-handoff?to=1.2.3.4:5&token=t#Intent;end")
 
     @Test
-    fun `the form tells a phone what to do when the app link does nothing`() {
+    fun `the form's install line links the store name to the release app's listing`() {
         val html = page.form(acceptLanguage = null, invalid = false)
 
-        assertTrue(html.contains("""<p class="note">Nothing happens? Update &lt;app&gt;</p>"""))
+        assertTrue(html.contains("""<p class="note">Install &lt;app&gt; from the <a href="$HAND_OFF_STORE_URL">Store</a></p>"""))
     }
 
     @Test
