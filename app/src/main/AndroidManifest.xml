@@ -4,6 +4,13 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+        A normal permission: the television's address hand-off (#323) reads its own LAN address
+        from the active network's link properties. The phone-to-TV traffic is LAN traffic, which on
+        SDK 37 needs ACCESS_LOCAL_NETWORK once this app targets 37 (#732); targeting 36, it is
+        granted automatically, so it is not declared or requested here.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--
         Reaching a Seerr on the user's own network (a private IP, .local, .lan, a single-label name) is
@@ -126,6 +133,33 @@
             <intent-filter>
                 <action android:name="com.binge.companion.SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            The phone's end of the TV address hand-off (#323). The page a television serves links
+            here from the phone's browser, so it is exported and BROWSABLE, and matches only the
+            tv-handoff host of this app's own scheme: the notification links on MainActivity stay
+            unreachable from a web page. What guards it is in SendAddressViewModel - a LAN-only
+            target, and nothing sent without the user's tap.
+
+            Deliberately not singleTask: the ViewModel reads its target once, from the intent that
+            created it, so a second link must get a new instance. singleTask would hand it to
+            onNewIntent and leave the sheet pointing at the first TV's port and token.
+        -->
+        <activity
+            android:name=".SendAddressActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.SeerrSendAddress">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="tv-handoff"
+                    android:scheme="seerr-companion" />
             </intent-filter>
         </activity>
 

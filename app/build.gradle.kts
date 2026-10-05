@@ -286,6 +286,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.reorderable)
+    implementation(libs.zxing.core)
 
     testImplementation(libs.junit)
     testImplementation(testFixtures(libs.binge.designsystem))
@@ -531,6 +532,7 @@ kover {
                     // Their content is `setContent { … }` and Hilt's own initialisation.
                     "io.github.scottcooper92.binge.seerr.MainActivity*",
                     "io.github.scottcooper92.binge.seerr.AdvancedRequestActivity*",
+                    "io.github.scottcooper92.binge.seerr.SendAddressActivity*",
                     "io.github.scottcooper92.binge.seerr.SeerrApp",
                 )
                 annotatedBy("androidx.compose.runtime.Composable")
