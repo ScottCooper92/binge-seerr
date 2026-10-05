@@ -37,6 +37,9 @@ import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.focus.tvArrivalTarget
+import com.binge.designsystem.tv.template.TvMessagePage
+import com.binge.designsystem.tv.template.TvPageAction
+import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -49,7 +52,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.isError
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.messageRes
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadingPlate
@@ -95,7 +97,7 @@ internal fun TvRequestDetailScreen(
             RequestDetailUiState.Loading, is RequestDetailUiState.Seeded -> {
                 val failure = (state as? RequestDetailUiState.Seeded)?.error
                 if (failure == null) {
-                    TvLoadingPlate(modifier = Modifier.fillMaxSize())
+                    TvLoadingPlate(modifier = Modifier.fillMaxSize(), hosting = TvPageHosting.Overlay)
                 } else {
                     TvErrorPlate(failure, actions.onRetry)
                 }
@@ -111,11 +113,11 @@ private fun TvErrorPlate(
     error: SeerrError,
     onRetry: () -> Unit,
 ) {
-    TvBoardPlate(
+    TvMessagePage(
         body = stringResource(error.messageRes()),
+        hosting = TvPageHosting.Overlay,
         icon = Icons.Filled.Warning,
-        primary = stringResource(R.string.hub_retry) to onRetry,
-        modifier = Modifier.fillMaxSize(),
+        primary = TvPageAction(stringResource(R.string.hub_retry), onRetry),
     )
 }
 
