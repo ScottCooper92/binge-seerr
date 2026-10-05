@@ -15,7 +15,7 @@ import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestError
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
-import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -34,7 +34,7 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvAdvancedRequestFocusTest {
     @get:Rule
-    val composeTestRule = createSeerrComposeRule()
+    val composeTestRule = createSeerrKeyboardComposeRule()
 
     private val servers = mutableListOf<Int>()
     private val profiles = mutableListOf<Int>()

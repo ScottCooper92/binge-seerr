@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import com.binge.designsystem.testing.KeyboardComposeUiTestConfig
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
@@ -27,12 +28,23 @@ import org.junit.runners.model.Statement
 fun createSeerrComposeRule(): ComposeContentTestRule = TakeDownComposeRule(createComposeRule())
 
 /**
+ * [createSeerrComposeRule] in keyboard input mode, for a test that drives focus with a D-pad or Tab. From
+ * Compose UI 1.13 the plain rule starts in touch mode, where `clickable` refuses focus; a TV never enters
+ * touch mode, so this is the faithful fixture rather than a workaround.
+ */
+fun createSeerrKeyboardComposeRule(): ComposeContentTestRule = TakeDownComposeRule(createComposeRule(KeyboardComposeUiTestConfig))
+
+/**
  * [createSeerrComposeRule] for a test that needs the hosting activity, such as one pressing Back through
  * its dispatcher: the same take-down around `createAndroidComposeRule`, with [SeerrAndroidComposeRule.activity]
  * passed through (#670).
  */
 inline fun <reified A : ComponentActivity> createSeerrAndroidComposeRule(): SeerrAndroidComposeRule<A> =
     SeerrAndroidComposeRule(createAndroidComposeRule<A>())
+
+/** [createSeerrAndroidComposeRule] in keyboard input mode; see [createSeerrKeyboardComposeRule]. */
+inline fun <reified A : ComponentActivity> createSeerrKeyboardAndroidComposeRule(): SeerrAndroidComposeRule<A> =
+    SeerrAndroidComposeRule(createAndroidComposeRule<A>(KeyboardComposeUiTestConfig))
 
 /** An activity-hosted compose rule whose content is taken down before it disposes; see [createSeerrComposeRule]. */
 class SeerrAndroidComposeRule<A : ComponentActivity>(
