@@ -22,8 +22,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.tv.component.TvIllustration
-import com.binge.designsystem.tv.component.TvMessagePlate
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
+import com.binge.designsystem.tv.template.TvMessagePage
+import com.binge.designsystem.tv.template.TvPageHosting
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
@@ -122,15 +123,15 @@ internal fun TvFormNote(
     )
 }
 
-/** The frame between two states: setup while the store answers, the picker while the choices load. */
+/**
+ * The frame between two states: setup while the store answers, the picker while the choices load. A loading
+ * [TvMessagePage], so the swap to the real message does not reflow, and focus has somewhere to wait meanwhile.
+ */
 @Composable
 internal fun TvLoadingPlate(
     modifier: Modifier = Modifier,
+    hosting: TvPageHosting = TvPageHosting.PreShell,
     body: String = stringResource(R.string.tv_loading),
 ) {
-    TvMessagePlate(
-        body = body,
-        modifier = modifier.background(MaterialTheme.colorScheme.background),
-        alignment = Alignment.Center,
-    )
+    TvMessagePage(body = body, modifier = modifier, hosting = hosting, loading = true)
 }

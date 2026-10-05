@@ -17,6 +17,8 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
+import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueComment
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetail
@@ -35,10 +37,12 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
 import kotlinx.coroutines.flow.emptyFlow
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val SEVERANCE = "Severance"
@@ -102,6 +106,25 @@ class TvIssueDetailFocusTest {
         pressBack()
         settleFocusRestore()
         row(SEVERANCE).assertIsFocused()
+    }
+
+    @Test
+    fun aFailedLoadLandsOnRetry() {
+        var retries = 0
+        composeTestRule.setContent {
+            BingeTvTheme {
+                TvIssueDetailScreen(
+                    state = IssueDetailUiState.Error(SeerrError.Server),
+                    actions = TvIssueDetailActions(onBack = {}, onRetry = { retries++ }),
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val retry = RuntimeEnvironment.getApplication().getString(R.string.hub_retry)
+        composeTestRule.onNode(hasText(retry) and isFocusable()).assertIsFocused()
+        pressOk()
+        assertEquals(1, retries)
     }
 
     @Test
