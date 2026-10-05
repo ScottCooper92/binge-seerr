@@ -6,7 +6,18 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import kotlinx.serialization.Serializable
 
 /** Why an attempt failed, as the setup form shows it. */
-enum class SetupError { InvalidUrl, NotSeerr, Rejected, Unreachable, Unknown, LinkExpired, HandOffExpired }
+enum class SetupError {
+    InvalidUrl,
+    NotSeerr,
+    Rejected,
+    Unreachable,
+
+    /** [Unreachable], for an address a phone sent that is an IP literal off the home network. */
+    UnreachableNotLocal,
+    Unknown,
+    LinkExpired,
+    HandOffExpired,
+}
 
 /** Something that went right and wants saying: the only one so far is the reset email. */
 enum class SetupNotice { ResetEmailSent, }

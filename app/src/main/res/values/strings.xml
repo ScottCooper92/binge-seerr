@@ -953,6 +953,14 @@
     <string name="send_address_refused">This link doesn\'t point to a TV on your home network, so nothing was sent.</string>
     <string name="send_address_done">Done</string>
     <string name="send_address_close">Close</string>
+    <string name="send_address_choose">Which address should the TV at %1$s use?</string>
+    <string name="send_address_source_connected">The address this phone uses</string>
+    <string name="send_address_source_application_url">The server\'s Application URL</string>
+    <string name="send_address_source_remembered">Sent from this phone before</string>
+    <string name="send_address_not_local">Not a local address</string>
+    <string name="send_address_not_local_note">Your TV may not be able to reach it.</string>
+    <string name="send_address_other">Use another address…</string>
+    <string name="setup_error_unreachable_not_local">The server could not be reached. That isn\'t a local address, so this TV may not be able to reach it. Try an address on your home network.</string>
 
     <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->
     <string name="tv_rail_hub">Home</string>

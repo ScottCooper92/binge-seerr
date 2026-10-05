@@ -5,11 +5,15 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
 import io.github.scottcooper92.binge.seerr.handoff.AddressSender
+import io.github.scottcooper92.binge.seerr.handoff.AddressSource
+import io.github.scottcooper92.binge.seerr.handoff.DataStoreHandOffAddressMemory
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffTarget
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
@@ -17,6 +21,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -27,7 +32,8 @@ private const val LINK = "seerr-companion://tv-handoff?to=192.168.86.53:41234&to
 
 /**
  * The phone's confirmation: it refuses a link that does not name a TV on the LAN, says when there is
- * nothing to send, and sends the server's address and nothing of the session.
+ * nothing to send, offers the addresses it knows best first, and sends the chosen one — and nothing
+ * of the session — only when asked to.
  */
 class SendAddressViewModelTest {
     @get:Rule
@@ -60,9 +66,12 @@ class SendAddressViewModelTest {
 
     private val sender = RecordingSender()
 
+    private val memory = DataStoreHandOffAddressMemory(InMemoryDataStore())
+
     private suspend fun TestScope.viewModel(
         link: String?,
         saved: SeerrCredentials? = null,
+        applicationUrl: String? = null,
     ): SendAddressViewModel {
         val store =
             CredentialStore(
@@ -74,6 +83,8 @@ class SendAddressViewModelTest {
             SendAddressViewModel(
                 connection = SeerrConnection(store, SeerrApiFactory(logRequests = false)),
                 sender = sender,
+                applicationUrl = { applicationUrl },
+                memory = memory,
                 dispatcher = mainDispatcherRule.dispatcher,
                 link = link,
             )
@@ -112,7 +123,8 @@ class SendAddressViewModelTest {
             val vm = viewModel(LINK, saved)
 
             val ready = vm.settled() as SendAddressUiState.Ready
-            assertEquals("http://seerr.lan:5055/", ready.serverAddress)
+            assertEquals(listOf("http://seerr.lan:5055/"), ready.candidates.map { it.address })
+            assertTrue(ready.isSingle)
             assertEquals("192.168.86.53", ready.tv)
             assertTrue(sender.sent.isEmpty())
 
@@ -143,6 +155,85 @@ class SendAddressViewModelTest {
             sender.accept = CompletableDeferred(true)
             vm.send()
             assertEquals(SendAddressUiState.Sent(tv = "192.168.86.53"), vm.uiState.first { it is SendAddressUiState.Sent })
+        }
+
+    @Test
+    fun `the Application URL is offered beside the phone's own, and a local one is chosen first`() =
+        runTest {
+            val vm = viewModel(LINK, SeerrCredentials("https://seerr.example.com/", SeerrAuth.ApiKey("k")), "http://192.168.1.10:5055")
+
+            val ready = vm.settled() as SendAddressUiState.Ready
+            assertFalse(ready.isSingle)
+            assertEquals(
+                listOf(AddressSource.ApplicationUrl, AddressSource.Connected),
+                ready.candidates.map { it.source },
+            )
+            assertEquals(AddressChoice.Candidate("http://192.168.1.10:5055/"), ready.choice)
+            assertTrue(sender.sent.isEmpty())
+        }
+
+    @Test
+    fun `an Application URL that is the phone's own address is not offered twice`() =
+        runTest {
+            val vm = viewModel(LINK, SeerrCredentials("http://192.168.1.10:5055/", SeerrAuth.ApiKey("k")), "HTTP://192.168.1.10:5055")
+
+            assertTrue((vm.settled() as SendAddressUiState.Ready).isSingle)
+        }
+
+    @Test
+    fun `a not-local address alone is still the one shown, and another can be chosen instead`() =
+        runTest {
+            val vm = viewModel(LINK, SeerrCredentials("http://100.101.102.103:5055/", SeerrAuth.ApiKey("k")))
+            val ready = vm.settled() as SendAddressUiState.Ready
+            assertTrue(ready.isSingle)
+            assertEquals(AddressLocality.NotLocal, ready.candidates.single().locality)
+
+            vm.choose(AddressChoice.Other)
+            val choosing = vm.uiState.value as SendAddressUiState.Ready
+            assertFalse(choosing.isSingle)
+            assertEquals("http://:5055", choosing.otherAddress)
+        }
+
+    @Test
+    fun `a typed address is checked, sent only on the tap, and offered first next time`() =
+        runTest {
+            val saved = SeerrCredentials("http://100.101.102.103:5055/", SeerrAuth.ApiKey("k"))
+            val vm = viewModel(LINK, saved)
+            vm.settled()
+            vm.choose(AddressChoice.Other)
+
+            vm.editOther("http://:5055")
+            vm.send()
+            assertTrue((vm.uiState.value as SendAddressUiState.Ready).otherInvalid)
+            assertTrue(sender.sent.isEmpty())
+
+            vm.editOther("http://192.168.1.10:5055")
+            assertTrue(sender.sent.isEmpty())
+            vm.send()
+
+            vm.uiState.first { it is SendAddressUiState.Sent }
+            assertEquals("http://192.168.1.10:5055/", sender.sent.single().second)
+            assertEquals(listOf("http://192.168.1.10:5055/"), memory.remembered("http://100.101.102.103:5055/"))
+
+            val next = viewModel(LINK, saved).settled() as SendAddressUiState.Ready
+            assertEquals(AddressChoice.Candidate("http://192.168.1.10:5055/"), next.choice)
+            assertEquals(AddressSource.Remembered, next.candidates.first().source)
+        }
+
+    @Test
+    fun `a TV that refuses a typed address does not have it remembered`() =
+        runTest {
+            val saved = SeerrCredentials("http://192.168.1.10:5055/", SeerrAuth.ApiKey("k"))
+            val vm = viewModel(LINK, saved)
+            vm.settled()
+            vm.choose(AddressChoice.Other)
+            vm.editOther("http://nas:5055")
+            sender.accept = CompletableDeferred(false)
+
+            vm.send()
+
+            vm.uiState.first { it is SendAddressUiState.Ready && it.failed }
+            assertEquals(emptyList<String>(), memory.remembered("http://192.168.1.10:5055/"))
         }
 
     private object PlainCipher : SecretCipher {

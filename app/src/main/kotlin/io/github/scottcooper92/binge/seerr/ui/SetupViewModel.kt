@@ -14,6 +14,8 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
+import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
+import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -90,7 +92,7 @@ class SetupViewModel
                 // one does - into the field, then inspect() - so the plain-HTTP opt-in and the sign-in
                 // after it are the same as for an address entered on the remote.
                 onAddress = { address ->
-                    draft.update { it.copy(serverUrl = address, handOff = null, error = null) }
+                    draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
                     inspect()
                 },
                 onExpired = { draft.update { it.copy(error = SetupError.HandOffExpired) } },
@@ -142,7 +144,7 @@ class SetupViewModel
             }
         }
 
-        fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null) }
+        fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null, received = false) }
 
         /**
          * The user's explicit opt-in to plain HTTP to the public host the address names. It is held
@@ -165,7 +167,7 @@ class SetupViewModel
                     .onSuccess { preview ->
                         val server = preview.toSetupServer()
                         draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
-                    }.onFailure { failure -> draft.update { it.copy(error = failure.toSetupError()) } }
+                    }.onFailure { failure -> draft.update { it.copy(error = failure.toSetupError().forAddress(url, it.received)) } }
                 draft.update { it.copy(busy = false) }
             }
         }
@@ -327,6 +329,8 @@ class SetupViewModel
             val cleartextHost: String? = null,
             /** The television's hand-off from a phone, while its plate is up. */
             val handOff: AddressHandOff? = null,
+            /** Whether [serverUrl] is the address a phone sent, untouched since. */
+            val received: Boolean = false,
         )
 
         private companion object {
@@ -348,6 +352,20 @@ private fun SeerrServerPreview.toSetupServer(): SetupServer {
         backdropUrl = backdropUrls.firstOrNull(),
     )
 }
+
+/**
+ * An address a phone sent that could not be reached says so more usefully when it is not a local
+ * address: a phone can reach a public or VPN address that a TV on the home network cannot.
+ */
+internal fun SetupError.forAddress(
+    url: String,
+    received: Boolean,
+): SetupError =
+    if (this == SetupError.Unreachable && received && addressLocality(url) == AddressLocality.NotLocal) {
+        SetupError.UnreachableNotLocal
+    } else {
+        this
+    }
 
 /** The address's own cases first, then an expired code; a 401 or 403 is the credentials; the rest is the server or the network. */
 private fun Throwable.toSetupError(): SetupError =
