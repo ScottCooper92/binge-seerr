@@ -5,20 +5,34 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.handoff.AddressCandidate
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
@@ -35,6 +49,19 @@ internal fun SendAddressField(
     onEdit: (String) -> Unit,
     onSend: () -> Unit,
 ) {
+    // Its own tighter column, so the suggestions read as belonging to the field rather than as the sheet's next block.
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
+        AddressField(state, onEdit, onSend)
+        if (state.suggestions.isNotEmpty()) Suggestions(state.suggestions, enabled = !state.isSending, onPick = onEdit)
+    }
+}
+
+@Composable
+private fun AddressField(
+    state: SendAddressUiState.Ready,
+    onEdit: (String) -> Unit,
+    onSend: () -> Unit,
+) {
     OutlinedTextField(
         value = state.address,
         onValueChange = onEdit,
@@ -43,6 +70,16 @@ internal fun SendAddressField(
         enabled = !state.isSending,
         isError = state.isInvalid,
         supportingText = supportingText(state),
+        trailingIcon =
+            if (state.address.isNotEmpty() && !state.isSending) {
+                {
+                    IconButton(onClick = { onEdit("") }) {
+                        Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.send_address_clear))
+                    }
+                }
+            } else {
+                null
+            },
         keyboardOptions =
             KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
@@ -54,7 +91,6 @@ internal fun SendAddressField(
         textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
         modifier = Modifier.fillMaxWidth(),
     )
-    if (state.suggestions.isNotEmpty()) Suggestions(state.suggestions, enabled = !state.isSending, onPick = onEdit)
 }
 
 private fun supportingText(state: SendAddressUiState.Ready): (@Composable () -> Unit)? =
@@ -76,23 +112,46 @@ private fun Suggestions(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         suggestions.forEach { candidate ->
+            // One line: an icon for where the address came from, its tag, then the address itself without the
+            // scheme's noise — the field shows the full form once picked.
             SuggestionChip(
                 onClick = { onPick(candidate.address) },
                 enabled = enabled,
+                icon = {
+                    Icon(
+                        candidate.source.icon(),
+                        contentDescription = null,
+                        modifier = Modifier.size(SuggestionChipDefaults.IconSize),
+                    )
+                },
                 label = {
-                    Column {
-                        Text(candidate.address, style = MaterialTheme.typography.labelLarge, fontFamily = FontFamily.Monospace)
-                        Text(
-                            stringResource(candidate.source.tagRes()),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    Text(
+                        buildAnnotatedString {
+                            append(stringResource(candidate.source.tagRes()))
+                            append("  ")
+                            withStyle(SpanStyle(fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                                append(candidate.address.displayAddress())
+                            }
+                        },
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 },
             )
         }
     }
 }
+
+private fun AddressSource.icon(): ImageVector =
+    when (this) {
+        AddressSource.Remembered -> Icons.Filled.History
+        AddressSource.ApplicationUrl -> Icons.Filled.Dns
+        AddressSource.Connected -> Icons.Filled.PhoneAndroid
+    }
+
+/** `http://192.168.86.38:30042/` → `192.168.86.38:30042`; https keeps its scheme, since it's a real difference. */
+internal fun String.displayAddress(): String = removePrefix("http://").trimEnd('/')
 
 internal fun AddressSource.tagRes(): Int =
     when (this) {
