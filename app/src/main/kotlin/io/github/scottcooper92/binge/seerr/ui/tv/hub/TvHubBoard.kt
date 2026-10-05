@@ -36,6 +36,7 @@ import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
+import com.binge.designsystem.tv.template.TvBoard
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.AllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
@@ -46,7 +47,6 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
 import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPoster
 import com.binge.designsystem.R as DesR
@@ -86,7 +86,7 @@ internal fun TvHubBoard(
     // Held here, above the health branches: a re-probe passes through Checking and would drop it from the problem panel.
     val health = if (state is HubUiState.Error) state.health else ready?.health
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
-    TvBoardFrame(title = ready?.server?.title ?: stringResource(R.string.companion_name), modifier = modifier) {
+    TvBoard(title = ready?.server?.title ?: stringResource(R.string.companion_name), modifier = modifier) {
         when {
             state is HubUiState.Error -> TvHubProblem(state.health, actions, allow, modifier = Modifier.weight(1f))
             ready == null -> TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))

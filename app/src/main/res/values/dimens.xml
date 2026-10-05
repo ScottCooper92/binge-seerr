@@ -30,7 +30,6 @@
     <dimen name="tv_form_option_gap">8dp</dimen>
     <dimen name="tv_form_section_gap">20dp</dimen>
     <!-- The television shell: boards, list rows, the action sheet and the list/pane board. -->
-    <dimen name="tv_board_section_gap">20dp</dimen>
     <dimen name="tv_filter_band_gap">8dp</dimen>
     <dimen name="tv_list_row_height">76dp</dimen>
     <dimen name="tv_list_row_gap">8dp</dimen>

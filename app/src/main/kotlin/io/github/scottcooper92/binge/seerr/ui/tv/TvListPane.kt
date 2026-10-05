@@ -37,9 +37,11 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvIllustration
+import com.binge.designsystem.tv.component.TvVerticalDivider
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.tvEntryFocusGroup
 import com.binge.designsystem.tv.focus.tvFocusGroup
+import com.binge.designsystem.tv.template.TvBoard
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
@@ -100,7 +102,7 @@ internal fun TvListPaneBoard(
 ) {
     val describedRow = groups.firstNotNullOfOrNull { group -> group.rows.firstOrNull { it.key == focusedKey } }
     val focusedRowFocus = remember { FocusRequester() }
-    TvBoardFrame(title = title, modifier = modifier) {
+    TvBoard(title = title, modifier = modifier) {
         Row(modifier = Modifier.fillMaxSize()) {
             TvPaneList(
                 groups = groups,
@@ -110,7 +112,7 @@ internal fun TvListPaneBoard(
                 modifier = Modifier.weight(LIST_WEIGHT),
                 initialColumnHasFocus = initialListHasFocus,
             )
-            TvBoardDivider()
+            TvVerticalDivider()
             TvPane(
                 row = describedRow,
                 backToListFocus = focusedRowFocus,

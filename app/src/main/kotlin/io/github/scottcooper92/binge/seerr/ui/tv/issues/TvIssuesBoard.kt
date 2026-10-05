@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
+import com.binge.designsystem.tv.template.TvBoard
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
@@ -33,7 +34,6 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetRow
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetStepFocus
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetTitle
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardBands
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
@@ -91,10 +91,10 @@ internal fun TvIssuesBoard(
         if (openIssueId == null && restoreRowId != null) restoreTvOverlayFocus(restoreFocus)
     }
     Box(modifier = modifier.fillMaxSize()) {
-        TvBoardFrame(title = stringResource(R.string.hub_section_issues)) {
+        TvBoard(title = stringResource(R.string.hub_section_issues)) {
             if (ready == null) {
                 TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
-                return@TvBoardFrame
+                return@TvBoard
             }
             TvBoardBands(
                 filters = IssueFilter.entries.map { filter -> filter to filterLabel(filter, ready.counts) },

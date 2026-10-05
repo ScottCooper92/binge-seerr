@@ -19,6 +19,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
+import com.binge.designsystem.tv.template.TvBoard
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
@@ -32,7 +33,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.systemRows
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardFrame
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvListPaneBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
@@ -74,7 +74,7 @@ internal fun TvSettingsBoard(
 ) {
     val ready = state as? SettingsUiState.Ready
     if (ready == null) {
-        TvBoardFrame(title = stringResource(R.string.hub_section_settings), modifier = modifier) {
+        TvBoard(title = stringResource(R.string.hub_section_settings), modifier = modifier) {
             TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
         }
         return
