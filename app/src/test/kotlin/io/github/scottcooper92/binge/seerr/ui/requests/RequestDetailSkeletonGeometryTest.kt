@@ -1,12 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.remember
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.testing.assertSkeletonReservesGeometry
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
-import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailPlaceholder
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Rule
 import org.junit.Test
@@ -16,8 +14,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The request skeleton reserves what the resolved page fills (#572), swapped inside the screen's own
- * scaffold as [RequestDetailScreen] swaps them. The page is in its common shape, with an action and a
+ * The request skeleton reserves what the resolved page fills (#572), swapped as [RequestDetailScreen]
+ * swaps them. The page is in its common shape, with an action and a
  * sibling request, so a placeholder sized for the bare page fails. `HERO` is tagged by `MediaHeroDetailPage`,
  * on the design system's `DetailHero`.
  */
@@ -33,19 +31,17 @@ class RequestDetailSkeletonGeometryTest {
         val anchors = listOf(LayoutAnchors.Detail.HERO, LayoutAnchors.Detail.OVERVIEW).map(LayoutAnchors::section)
         rule.assertSkeletonReservesGeometry(anchors) { resolved ->
             SeerrTheme {
-                MediaHeroDetailScaffold(snackbarHostState = remember { SnackbarHostState() }) {
-                    if (resolved) {
-                        RequestDetailPage(
-                            detail = detail(),
-                            onBack = {},
-                            onOpen = null,
-                            onReport = null,
-                            onOpenRequest = {},
-                            onOpenUser = {},
-                        )
-                    } else {
-                        RequestDetailSkeleton()
-                    }
+                if (resolved) {
+                    RequestDetailPage(
+                        detail = detail(),
+                        onBack = {},
+                        onOpen = null,
+                        onReport = null,
+                        onOpenRequest = {},
+                        onOpenUser = {},
+                    )
+                } else {
+                    MediaHeroDetailPlaceholder { RequestDetailSkeleton() }
                 }
             }
         }

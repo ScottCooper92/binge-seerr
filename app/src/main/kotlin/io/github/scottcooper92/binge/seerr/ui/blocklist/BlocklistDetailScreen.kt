@@ -42,7 +42,6 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openTitle
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailPage
-import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -79,9 +78,7 @@ fun BlocklistDetailScreen(
             }
         }
     }
-    MediaHeroDetailScaffold(snackbarHostState = snackbarHostState) {
-        BlocklistDetailPage(state = state, onBack = actions.onBack, onPrimary = { confirming = true })
-    }
+    BlocklistDetailPage(state = state, onBack = actions.onBack, onPrimary = { confirming = true }, snackbarHostState = snackbarHostState)
     if (confirming) {
         BingeConfirmDialog(
             title =
@@ -113,6 +110,7 @@ internal fun BlocklistDetailPage(
     onPrimary: () -> Unit,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val item = state.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
@@ -130,6 +128,7 @@ internal fun BlocklistDetailPage(
         onBack = onBack,
         modifier = modifier,
         scrollState = scrollState,
+        snackbarHostState = snackbarHostState,
         topBarActions = {
             if (state.webUrl.isNotEmpty()) {
                 ExpressiveIconButton(
