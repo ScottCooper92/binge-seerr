@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.Constraints
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ItemRows
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.template.FormSection
 import com.binge.designsystem.R as DesR
 
 /**
@@ -46,14 +47,14 @@ internal fun EditorToggleGroup(
 )
 
 /**
- * One toggle inside an [EditorSectionCard] beside text fields. It bleeds past the card's padding so
+ * One toggle inside an [FormSection] beside text fields. It bleeds past the card's padding so
  * the row's own inset lines its icon up with the card edge, as it does in a [ItemGroup].
  */
 @Composable
 internal fun EditorToggleRow(toggle: ListItem) = EditorToggleRows(listOf(toggle))
 
 /**
- * Several toggles inside an [EditorSectionCard] or [EditorSection], drawn as one run of rows with the
+ * Several toggles inside an [FormSection] or [EditorSection], drawn as one run of rows with the
  * design system's dividers between them rather than as separately spaced rows. Bleeds as
  * [EditorToggleRow] does.
  */
