@@ -26,13 +26,14 @@ import com.binge.designsystem.component.BingeFilterChipRow
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActionsContent
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSheetCallbacks
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.launch
 import com.binge.designsystem.R as DesR
 
@@ -55,7 +56,8 @@ internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
         RequestActionsContent(model, callbacks, blockTitle, onBlockTitleChange = { blockTitle = it })
     }
 
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.proto_manage_sheet_title),
         onBack = onBack,
         snackbarHostState = snackbar,
@@ -64,9 +66,9 @@ internal fun ManageSheetPrototypeScreen(onBack: () -> Unit) {
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(padding.outerPadding())
+                    .padding(padding.screenOuterPadding())
                     .verticalScroll(rememberScrollState())
-                    .padding(padding.innerPadding()),
+                    .padding(padding.screenInnerPadding()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             BingeFilterChipRow(

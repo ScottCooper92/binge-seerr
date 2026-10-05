@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,12 +33,13 @@ import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.rememberFilterPagerState
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -93,12 +93,11 @@ fun BlocklistScreen(
             snackbarHostState.showSnackbar(resources.getString(message), kind)
         }
     }
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_blocklist),
         onBack = actions.onBack.takeIf { showBack },
         snackbarHostState = snackbarHostState,
-        scrollBehavior = scrollBehavior,
         // The overlay below draws the one opaque background over the bar, the search field and the chips together.
         barScrim = state !is BlocklistUiState.Ready,
     ) { padding ->
@@ -113,7 +112,7 @@ fun BlocklistScreen(
                     actions = actions,
                     barHeight = padding.calculateTopPadding(),
                     bottomPadding = padding.calculateBottomPadding(),
-                    modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
+                    modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()),
                 )
         }
     }

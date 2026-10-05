@@ -35,7 +35,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -63,6 +62,10 @@ import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenListPadding
+import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.accent
@@ -72,10 +75,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.PagedPhase
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
-import io.github.scottcooper92.binge.seerr.ui.state.resolvedListContentPadding
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
 
@@ -102,11 +102,10 @@ fun LogsScreen(
     actions: LogsActions,
 ) {
     val focusManager = LocalFocusManager.current
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.server_settings_logs),
         onBack = actions.onBack,
-        scrollBehavior = scrollBehavior,
         // The pager's header draws the one opaque background over the bar, the search field and the chips together.
         barScrim = false,
     ) { padding ->
@@ -114,7 +113,7 @@ fun LogsScreen(
             items = LogLevel.entries.map { FilterChipItem(label = stringResource(it.labelRes())) },
             selectedIndex = state.level.ordinal,
             onSelectedIndexChange = { actions.onLevelChange(LogLevel.entries[it]) },
-            modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
+            modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()),
             header = {
                 // The bar's height joins the header, so the lines reach the top of the window and pass under both.
                 // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
@@ -190,7 +189,7 @@ private fun LogsBody(
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = resolvedListContentPadding(contentPadding),
+                contentPadding = contentPadding.screenListPadding(),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
             ) {
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

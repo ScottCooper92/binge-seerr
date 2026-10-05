@@ -32,14 +32,15 @@ import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -111,7 +112,7 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  * is off for a body that scrolls itself.
  *
  * [extraActions] composes into the same top-bar row as Save, after it - an overflow menu button,
- * say. [bottomBar] is the page's own, passed straight through to [ScreenScaffold].
+ * say. [bottomBar] is the page's own, passed straight through to [BingeScreenScaffold].
  *
  * A page passes [validation] to opt into the sectioned form (#549): Cancel and Save move to a bar
  * pinned at the bottom, Save stays tappable while the draft has issues, and a Save that finds one
@@ -138,7 +139,8 @@ internal fun <T> EditorPage(
     val form = rememberEditorFormState(validation?.formKey.orEmpty())
     val issues = remember(validation, ready?.draft) { ready?.draft?.let { validation?.issues?.invoke(it) }.orEmpty() }
     EditorRevealEffect(form)
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = title,
         onBack = actions.onBack,
         snackbarHostState = snackbarHostState,
@@ -167,8 +169,8 @@ internal fun <T> EditorPage(
     ) { padding ->
         // The keyboard lifts the form rather than covering the field being typed in. The bars' insets are
         // consumed first, so the navigation bar under the keyboard is not counted twice.
-        Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding()).consumeWindowInsets(padding)) {
-            val inner = padding.innerPadding()
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()).consumeWindowInsets(padding)) {
+            val inner = padding.screenInnerPadding()
             when (state) {
                 EditorUiState.Loading -> LoadingScreen(Modifier.padding(inner))
                 is EditorUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)

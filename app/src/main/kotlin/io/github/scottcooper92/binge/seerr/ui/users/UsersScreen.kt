@@ -26,14 +26,15 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 
@@ -69,7 +70,8 @@ fun UsersScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     UsersSnackbarEffect(events, snackbarHostState)
     val selected = ready?.selection?.size ?: 0
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         // The bar in both of its modes: the count while rows are ticked, the screen's own title otherwise.
         title =
             if (selected > 0) {
@@ -90,7 +92,7 @@ fun UsersScreen(
         if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
-            Column(Modifier.fillMaxSize().padding(padding.outerPadding())) {
+            Column(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
                 UsersBody(
                     lazyItems = users.collectAsLazyPagingItems(),
                     lastRefresh = ready.refresh,
@@ -100,7 +102,7 @@ fun UsersScreen(
                     // A rejected session cannot be retried past: the hub owns reconnecting.
                     onReconnect = actions.onBack,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = padding.innerPadding(),
+                    contentPadding = padding.screenInnerPadding(),
                 )
             }
         }

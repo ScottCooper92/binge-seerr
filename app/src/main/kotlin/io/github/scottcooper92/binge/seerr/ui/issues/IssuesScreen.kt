@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,11 +21,12 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.BingeFilterChipPager
 import com.binge.designsystem.component.FilterChipItem
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import kotlinx.coroutines.flow.Flow
 
 class IssuesActions(
@@ -52,11 +52,10 @@ fun IssuesScreen(
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssuesUiState.Ready
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    ScreenScaffold(
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
         title = stringResource(R.string.hub_section_issues),
         onBack = actions.onBack.takeIf { showBack },
-        scrollBehavior = scrollBehavior,
         // The pager's header draws the one opaque background over the bar and the chips together.
         barScrim = ready == null,
         actions = {
@@ -77,7 +76,7 @@ fun IssuesScreen(
                     },
                 selectedIndex = ready.filter.ordinal,
                 onSelectedIndexChange = { actions.onFilterChange(IssueFilter.entries[it]) },
-                modifier = Modifier.fillMaxSize().padding(padding.outerPadding()),
+                modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()),
                 // The bar's height joins the pager's header, so the rows reach the top of the window and pass under both.
                 // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
                 // through underneath it once it's pinned at the top.

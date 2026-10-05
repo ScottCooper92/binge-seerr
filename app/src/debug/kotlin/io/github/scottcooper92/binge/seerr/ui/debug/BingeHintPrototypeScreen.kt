@@ -19,12 +19,13 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeTile
-import io.github.scottcooper92.binge.seerr.ui.state.ScreenScaffold
-import io.github.scottcooper92.binge.seerr.ui.state.innerPadding
-import io.github.scottcooper92.binge.seerr.ui.state.outerPadding
 import com.binge.designsystem.R as DesR
 
 private class StateRow(
@@ -46,14 +47,14 @@ private val rows =
 @Composable
 internal fun BingeHintPrototypeScreen(onBack: () -> Unit) {
     var dismissed by rememberSaveable { mutableStateOf(emptySet<String>()) }
-    ScreenScaffold(title = stringResource(R.string.proto_binge_hint_title), onBack = onBack) { padding ->
+    BingeScreenScaffold(bar = ScreenBar.Small, title = stringResource(R.string.proto_binge_hint_title), onBack = onBack) { padding ->
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(padding.outerPadding())
+                    .padding(padding.screenOuterPadding())
                     .verticalScroll(rememberScrollState())
-                    .padding(padding.innerPadding())
+                    .padding(padding.screenInnerPadding())
                     .padding(horizontal = resolvedContentInset()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {

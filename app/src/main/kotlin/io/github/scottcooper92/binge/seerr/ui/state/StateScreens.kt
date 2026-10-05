@@ -29,32 +29,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.LoadingMessageScreen
+import com.binge.designsystem.template.MessageScreen
+import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import com.binge.designsystem.R as DesR
 
-/** The three whole-screen states every ported screen renders around its content. */
+/**
+ * The three whole-screen states every screen renders around its content, drawn by the design system's
+ * [MessageScreen] so they read as Binge's do. What is this app's own is the copy, and the mapping from
+ * a [SeerrError] to it.
+ */
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        BingeLoadingIndicator()
-    }
+    LoadingMessageScreen(modifier)
 }
 
+/**
+ * An empty state. With [action] it keeps this app's own layout, for the hub's connection problem, whose
+ * stacked actions are more than [MessageScreen]'s two buttons hold.
+ */
 @Composable
 fun EmptyScreen(
     message: String,
@@ -63,7 +63,11 @@ fun EmptyScreen(
     icon: ImageVector = Icons.Filled.SearchOff,
     action: @Composable (() -> Unit)? = null,
 ) {
-    StateLayout(icon = icon, title = title, message = message, modifier = modifier, action = action)
+    if (action == null) {
+        MessageScreen(body = message, headline = title, icon = icon, modifier = modifier)
+    } else {
+        StateLayout(icon = icon, title = title, message = message, modifier = modifier, action = action)
+    }
 }
 
 /** The failure classified once in `SeerrErrors.kt`, with a retry where the caller offers one. */
@@ -73,23 +77,14 @@ fun ErrorScreen(
     modifier: Modifier = Modifier,
     onRetry: (() -> Unit)? = null,
 ) {
-    StateLayout(
+    MessageScreen(
+        body = stringResource(error.messageRes()),
+        headline = stringResource(error.titleRes()),
         icon = error.icon(),
-        title = stringResource(error.titleRes()),
-        message = stringResource(error.messageRes()),
-        // Merged so the announcement is the whole message, not just the title; the retry button
-        // keeps its own merge boundary, so it stays an independent focus stop.
-        modifier = modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-        action =
-            onRetry?.let { retry ->
-                {
-                    BingeFilledButton(
-                        label = stringResource(R.string.action_try_again),
-                        leadingIcon = Icons.Filled.Refresh,
-                        onClick = retry,
-                    )
-                }
-            },
+        primary = onRetry?.let { ScreenAction(stringResource(R.string.action_try_again), it, Icons.Filled.Refresh) },
+        // The whole message is announced, not just the headline: it replaced what the user was reading.
+        announce = true,
+        modifier = modifier,
     )
 }
 
