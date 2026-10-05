@@ -3,6 +3,9 @@ package io.github.scottcooper92.binge.seerr.ui.state
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
+import com.binge.designsystem.template.PagedPhase
+import com.binge.designsystem.template.PagedPhaseTracker
+import com.binge.designsystem.template.pagedPhase
 import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -47,7 +50,7 @@ private fun Frame.states(): CombinedLoadStates {
 
 private fun phases(vararg frames: Frame): List<PagedPhase> {
     val tracker = PagedPhaseTracker()
-    return frames.map { tracker.phase(it.states(), it.count, it.refresh) }
+    return frames.map { tracker.phase(it.states(), it.count, it.refresh?.toPagedRefresh()) }
 }
 
 private fun wrote(rows: Int) = ListRefresh(rowsWritten = rows, sequence = rows.toLong() + 1)
