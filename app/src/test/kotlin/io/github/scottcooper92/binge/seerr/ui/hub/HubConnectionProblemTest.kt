@@ -1,5 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -69,6 +72,37 @@ class HubConnectionProblemTest {
         rule.onNode(hasText(text(R.string.settings_edit_connection))).performClick()
 
         assertEquals(1, reconnects)
+    }
+
+    @Test
+    fun `the allow button stays on open settings across a re-probe`() {
+        var health by mutableStateOf(ConnectionHealth.LocalNetworkDenied)
+        rule.setContent {
+            SeerrTheme {
+                HubScreen(
+                    state = HubUiState.Error(health),
+                    actions =
+                        HubActions(
+                            onOpenSection = {},
+                            onOpenAccount = {},
+                            onOpenRequest = {},
+                            onRetry = {},
+                            onReconnect = {},
+                            onDisconnect = {},
+                            onDismissBingeHint = {},
+                        ),
+                )
+            }
+        }
+
+        rule.onNode(hasText(text(R.string.local_network_allow))).performClick()
+        health = ConnectionHealth.Unreachable
+        rule.waitForIdle()
+        health = ConnectionHealth.LocalNetworkDenied
+        rule.waitForIdle()
+
+        rule.onNode(hasText(text(R.string.local_network_open_settings))).assertExists()
+        rule.onNode(hasText(text(R.string.local_network_allow))).assertDoesNotExist()
     }
 
     @Test

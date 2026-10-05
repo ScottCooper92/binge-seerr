@@ -33,6 +33,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.AllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
@@ -73,15 +74,32 @@ fun HubScreen(
     admitsUnverifiedCallers: Boolean = false,
 ) {
     val ready = state as? HubUiState.Ready
+    // Held here, above the health branches: a re-probe passes through Checking and would drop it from the problem panel.
+    val health = if (state is HubUiState.Error) state.health else ready?.health
+    val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     ScreenScaffold(title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.outerPadding())) {
             val inner = padding.innerPadding()
             when {
                 state is HubUiState.Error ->
-                    ConnectionProblem(state.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))
+                    ConnectionProblem(
+                        state.health,
+                        allow,
+                        actions.onRetry,
+                        actions.onReconnect,
+                        actions.onDisconnect,
+                        Modifier.padding(inner),
+                    )
                 ready == null -> LoadingScreen(Modifier.padding(inner))
                 ready.health.isProblem() ->
-                    ConnectionProblem(ready.health, actions.onRetry, actions.onReconnect, actions.onDisconnect, Modifier.padding(inner))
+                    ConnectionProblem(
+                        ready.health,
+                        allow,
+                        actions.onRetry,
+                        actions.onReconnect,
+                        actions.onDisconnect,
+                        Modifier.padding(inner),
+                    )
                 else -> Dashboard(ready, actions, selectedSection, admitsUnverifiedCallers, contentPadding = inner)
             }
         }
@@ -229,6 +247,7 @@ class DeveloperRow(
 @Composable
 private fun ConnectionProblem(
     health: ConnectionHealth,
+    allow: AllowLocalNetwork,
     onRetry: () -> Unit,
     onReconnect: () -> Unit,
     onDisconnect: () -> Unit,
@@ -267,7 +286,6 @@ private fun ConnectionProblem(
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
             ) {
                 if (health == ConnectionHealth.LocalNetworkDenied) {
-                    val allow = rememberAllowLocalNetwork(onRetry)
                     BingeFilledButton(label = stringResource(allow.label), onClick = allow.run, modifier = Modifier.fillMaxWidth())
                     BingeOutlinedButton(
                         label = stringResource(R.string.settings_edit_connection),
