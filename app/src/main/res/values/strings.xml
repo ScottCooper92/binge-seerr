@@ -935,6 +935,7 @@
     <string name="handoff_page_invalid">That isn\'t an address the TV can use. Check it and try again.</string>
     <string name="handoff_page_app_body">Is %1$s on this phone and connected to your server? It can send the address for you.</string>
     <string name="handoff_page_open_app">Open %1$s</string>
+    <string name="handoff_page_app_help">Nothing happens? Update %1$s to the latest version, or type the address above.</string>
     <string name="handoff_page_sent_title">Sent</string>
     <string name="handoff_page_sent_body">Your TV has the address and is checking the server. You can close this page.</string>
 

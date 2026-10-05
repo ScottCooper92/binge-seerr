@@ -20,11 +20,19 @@ class HandOffPageTest {
             invalid = "Invalid & wrong",
             appBody = "App body",
             openApp = "Open \"app\"",
+            appHelp = "Nothing happens? Update <app>",
             sentTitle = "Sent",
             sentBody = "Sent body",
         )
 
     private val page = HandOffPageTemplate(copyFor = ::copy, appLink = "intent://tv-handoff?to=1.2.3.4:5&token=t#Intent;end")
+
+    @Test
+    fun `the form tells a phone what to do when the app link does nothing`() {
+        val html = page.form(acceptLanguage = null, invalid = false)
+
+        assertTrue(html.contains("""<p class="note">Nothing happens? Update &lt;app&gt;</p>"""))
+    }
 
     @Test
     fun `the form is self-contained, escapes its copy, and posts back to itself`() {

@@ -58,6 +58,7 @@ app:field_clear  a8ff550536c7
 app:field_secret_hide  ad5caeb74e49
 app:field_secret_show  ff5a856d1a08
 app:handoff_page_app_body  f1dcc53fd46a
+app:handoff_page_app_help  e08dec2ca4f6
 app:handoff_page_body  d33f581c072f
 app:handoff_page_field  8be89710b2f1
 app:handoff_page_invalid  f66c620771bd

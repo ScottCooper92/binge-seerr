@@ -88,6 +88,7 @@ internal class LanAddressHandOffs
                 invalid = resources.getString(R.string.handoff_page_invalid),
                 appBody = resources.getString(R.string.handoff_page_app_body, appName),
                 openApp = resources.getString(R.string.handoff_page_open_app, appName),
+                appHelp = resources.getString(R.string.handoff_page_app_help, appName),
                 sentTitle = resources.getString(R.string.handoff_page_sent_title),
                 sentBody = resources.getString(R.string.handoff_page_sent_body),
             )

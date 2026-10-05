@@ -19,6 +19,7 @@ internal data class HandOffPageCopy(
     val invalid: String,
     val appBody: String,
     val openApp: String,
+    val appHelp: String,
     val sentTitle: String,
     val sentBody: String,
 )
@@ -54,7 +55,9 @@ internal fun pickLanguage(
 /**
  * One small self-contained page: inline styles, no scripts, nothing fetched from anywhere. The
  * form posts back to the URL it was served from, and the app link opens this app on a phone that
- * has it, so the connected server's address can be sent without typing.
+ * has it, so the connected server's address can be sent without typing. An installed build too old to
+ * know the link swallows the tap with no fallback, and the page can't notice (no scripts), so a standing
+ * note under the link says what to do when nothing happens.
  */
 internal class HandOffPageTemplate(
     private val copyFor: (language: String) -> HandOffPageCopy,
@@ -82,6 +85,7 @@ internal class HandOffPageTemplate(
             <hr>
             <p>${copy.appBody.escapeHtml()}</p>
             <a class="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
+            <p class="note">${copy.appHelp.escapeHtml()}</p>
             """.trimIndent(),
         )
     }
@@ -125,6 +129,7 @@ internal class HandOffPageTemplate(
                 "button{background:#bcc2ff;color:#1a2178}" +
                 "a.app{border:1px solid #8f8a9e;color:#bcc2ff}" +
                 "hr{border:0;border-top:1px solid #2b2a33;margin:1.5rem 0}" +
-                ".error{color:#ffb4ab}"
+                ".error{color:#ffb4ab}" +
+                ".note{margin:.75rem 0 0;color:#a6a1b4;font-size:.875rem;text-align:center}"
     }
 }
