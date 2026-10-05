@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.data.TitleDao
 import io.github.scottcooper92.binge.seerr.data.TitleEntity
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,6 +17,9 @@ data class HydratedTitle(
     val title: String?,
     val posterUrl: String?,
     val year: String?,
+    val backdropUrl: String? = null,
+    val overview: String? = null,
+    val certification: String? = null,
 )
 
 /**
@@ -61,7 +65,14 @@ class TitleCache
                 runCatching {
                     if (mediaType == SEERR_MEDIA_TYPE_MOVIE) api.movieDetails(tmdbId) else api.tvDetails(tmdbId)
                 }.getOrNull() ?: return null
-            return HydratedTitle(details.displayTitle, details.posterPath?.toTmdbPosterUrl(), details.year)
+            return HydratedTitle(
+                details.displayTitle,
+                details.posterPath?.toTmdbPosterUrl(),
+                details.year,
+                details.backdropPath?.toTmdbBackdropUrl(),
+                details.overview,
+                details.certification(Locale.getDefault().country),
+            )
         }
 
         suspend fun clear() {
@@ -83,7 +94,7 @@ class TitleCache
         ): HydratedTitle? =
             runCatching { dao.find(mediaType, tmdbId, now() - MAX_AGE_MILLIS) }
                 .getOrNull()
-                ?.let { HydratedTitle(it.title, it.posterUrl, it.year) }
+                ?.let { HydratedTitle(it.title, it.posterUrl, it.year, it.backdropUrl, it.overview, it.certification) }
 
         private suspend fun persist(
             mediaType: String,
@@ -96,7 +107,19 @@ class TitleCache
                     dao.deleteOlderThan(now() - MAX_AGE_MILLIS)
                     dao.trimTo(MAX_PERSISTED)
                 }
-                dao.upsert(TitleEntity(mediaType, tmdbId, hydrated.title, hydrated.posterUrl, hydrated.year, now()))
+                dao.upsert(
+                    TitleEntity(
+                        mediaType,
+                        tmdbId,
+                        hydrated.title,
+                        hydrated.posterUrl,
+                        hydrated.year,
+                        now(),
+                        hydrated.backdropUrl,
+                        hydrated.overview,
+                        hydrated.certification,
+                    ),
+                )
             }
         }
     }

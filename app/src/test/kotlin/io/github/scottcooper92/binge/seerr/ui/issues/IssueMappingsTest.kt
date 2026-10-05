@@ -31,6 +31,9 @@ class IssueMappingsTest {
                 problemSeason = 2,
                 problemEpisode = 5,
                 orderIndex = 0,
+                backdropUrl = "https://image.tmdb.org/t/p/w1280/sev.jpg",
+                overview = "Mark leads a team.",
+                certification = "TV-MA",
             )
 
         val item = entity.toIssueItem()
@@ -40,6 +43,10 @@ class IssueMappingsTest {
         assertEquals(IssueStatus.Resolved, item.status)
         assertEquals(7, item.reportedById)
         assertEquals(5, item.problemEpisode)
+        assertEquals("https://image.tmdb.org/t/p/w1280/sev.jpg", item.backdropUrl)
+        assertEquals("Mark leads a team.", item.overview)
+        assertEquals("TV-MA", item.certification)
+        assertEquals(entity, item.toEntity(listKey = "open:added", orderIndex = 0))
     }
 
     @Test

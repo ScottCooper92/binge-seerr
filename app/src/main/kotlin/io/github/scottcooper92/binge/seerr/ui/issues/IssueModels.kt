@@ -60,6 +60,9 @@ data class IssueItem(
     val problem: String?,
     val problemSeason: Int?,
     val problemEpisode: Int?,
+    val backdropUrl: String? = null,
+    val overview: String? = null,
+    val certification: String? = null,
 )
 
 /** Who is looking: the permissions decide whether the list is everyone's issues or only the user's own. */

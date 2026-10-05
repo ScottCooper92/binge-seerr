@@ -95,6 +95,9 @@ data class RequestItem(
     val download: RequestDownload?,
     val seasonNumbers: List<Int>,
     val is4k: Boolean,
+    val backdropUrl: String? = null,
+    val overview: String? = null,
+    val certification: String? = null,
 )
 
 /** What the connected user may do to one request, from the server's own rules. */

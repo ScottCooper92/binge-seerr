@@ -18,6 +18,9 @@ data class TitleEntity(
     val posterUrl: String?,
     val year: String?,
     val fetchedAtMillis: Long,
+    val backdropUrl: String? = null,
+    val overview: String? = null,
+    val certification: String? = null,
 )
 
 @Dao

@@ -28,6 +28,9 @@ data class IssueEntity(
     val problemSeason: Int?,
     val problemEpisode: Int?,
     val orderIndex: Int,
+    val backdropUrl: String? = null,
+    val overview: String? = null,
+    val certification: String? = null,
 )
 
 /** One list's pagination cursor: the next server `skip`, or null once its last page is cached. */

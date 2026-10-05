@@ -103,6 +103,9 @@ suspend fun SeerrRequestDto.toRequestItem(
         download = statuses.toDownload(nowMillis),
         seasonNumbers = seasons.map { it.seasonNumber },
         is4k = is4k,
+        backdropUrl = details?.backdropUrl,
+        overview = details?.overview,
+        certification = details?.certification,
     )
 }
 

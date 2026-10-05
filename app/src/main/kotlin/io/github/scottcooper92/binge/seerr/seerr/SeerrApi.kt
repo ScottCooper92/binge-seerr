@@ -1027,14 +1027,64 @@ data class SeerrMediaDetailsDto(
     @SerialName("firstAirDate") val firstAirDate: String? = null,
     /** A show's seasons as TMDB lists them; specials are season 0. */
     @SerialName("seasons") val seasons: List<SeerrSeasonDto> = emptyList(),
+    /** A movie's release dates by country, which carry its certification. */
+    @SerialName("releases") val releases: SeerrReleasesDto? = null,
+    /** A show's age ratings by country. */
+    @SerialName("contentRatings") val contentRatings: SeerrContentRatingsDto? = null,
 ) {
     val displayTitle: String? get() = title ?: name
+
+    /** The age rating for [region] (`US`, `GB`), falling back to the US one; null when the title has none there. */
+    fun certification(region: String): String? =
+        listOf(region, FALLBACK_CERTIFICATION_REGION).firstNotNullOfOrNull { country ->
+            val movie =
+                releases
+                    ?.results
+                    ?.firstOrNull { it.country == country }
+                    ?.releaseDates
+                    ?.firstNotNullOfOrNull { it.certification.takeIf(String::isNotBlank) }
+            val show =
+                contentRatings
+                    ?.results
+                    ?.firstOrNull { it.country == country }
+                    ?.rating
+                    ?.takeIf(String::isNotBlank)
+            movie ?: show
+        }
 
     val year: String? get() = (releaseDate ?: firstAirDate)?.take(YEAR_LENGTH)?.takeIf { it.length == YEAR_LENGTH }
 }
 
 /** A `yyyy-mm-dd` date's year; a serializable class cannot hide this in a private companion. */
 private const val YEAR_LENGTH = 4
+private const val FALLBACK_CERTIFICATION_REGION = "US"
+
+@Serializable
+data class SeerrReleasesDto(
+    @SerialName("results") val results: List<SeerrCountryReleasesDto> = emptyList(),
+)
+
+@Serializable
+data class SeerrCountryReleasesDto(
+    @SerialName("iso_3166_1") val country: String = "",
+    @SerialName("release_dates") val releaseDates: List<SeerrReleaseDateDto> = emptyList(),
+)
+
+@Serializable
+data class SeerrReleaseDateDto(
+    @SerialName("certification") val certification: String = "",
+)
+
+@Serializable
+data class SeerrContentRatingsDto(
+    @SerialName("results") val results: List<SeerrContentRatingDto> = emptyList(),
+)
+
+@Serializable
+data class SeerrContentRatingDto(
+    @SerialName("iso_3166_1") val country: String = "",
+    @SerialName("rating") val rating: String = "",
+)
 
 @Serializable
 data class SeerrMediaInfoDto(
