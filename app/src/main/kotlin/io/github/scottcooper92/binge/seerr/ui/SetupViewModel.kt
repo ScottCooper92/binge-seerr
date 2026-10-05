@@ -13,6 +13,9 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
+import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
+import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
@@ -62,6 +65,7 @@ class SetupViewModel
         plex: PlexPinFlow,
         savedState: SavedStateHandle,
         cipher: SecretCipher,
+        handOffs: AddressHandOffs,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
@@ -79,6 +83,22 @@ class SetupViewModel
                 cipher = cipher,
                 onLink = { link -> draft.update { it.copy(busy = false, link = link) } },
                 onFinished = ::finish,
+            )
+
+        private val handOff =
+            SetupHandOff(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                handOffs = handOffs,
+                onState = { handOff -> draft.update { it.copy(handOff = handOff) } },
+                // An address a phone sent, already checked as a base URL, goes exactly where a typed
+                // one does - into the field, then inspect() - so the plain-HTTP opt-in and the sign-in
+                // after it are the same as for an address entered on the remote.
+                onAddress = { address ->
+                    draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
+                    inspect()
+                },
+                onExpired = { draft.update { it.copy(error = SetupError.HandOffExpired) } },
             )
 
         init {
@@ -99,6 +119,7 @@ class SetupViewModel
                             cleartextAllowed = insecureHost != null && insecureHost == draft.cleartextHost,
                             isInspecting = draft.busy,
                             error = draft.error,
+                            handOff = draft.handOff,
                             needsLocalNetwork = draft.serverUrl.isBlockedByLocalNetwork(localNetwork),
                         )
                     }
@@ -130,7 +151,7 @@ class SetupViewModel
         /** The permission prompt came back, or the user returned from Settings: read the permission again. */
         fun localNetworkResult() = draft.update { it.copy(permissionReads = it.permissionReads + 1, error = null) }
 
-        fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null) }
+        fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null, received = false) }
 
         /**
          * The user's explicit opt-in to plain HTTP to the public host the address names. It is held
@@ -154,10 +175,28 @@ class SetupViewModel
                         val server = preview.toSetupServer()
                         draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
                     }.onFailure { failure ->
-                        draft.update { it.copy(error = failure.toSetupError().orLocalNetworkDenied(url, localNetwork)) }
+                        draft.update {
+                            it.copy(error = failure.toSetupError().orLocalNetworkDenied(url, localNetwork).forAddress(url, it.received))
+                        }
                     }
                 draft.update { it.copy(busy = false) }
             }
+        }
+
+        /**
+         * The television's "send the address from your phone": [showing] puts up a code with a
+         * listener behind it, and taking the plate down stops listening at once.
+         */
+        fun showHandOff(showing: Boolean) {
+            if (!showing) {
+                handOff.cancel()
+                draft.update { it.copy(handOff = null) }
+                return
+            }
+            val current = draft.value
+            if (current.server != null || current.busy) return
+            draft.update { it.copy(error = null) }
+            handOff.start()
         }
 
         fun changeServer() {
@@ -245,30 +284,28 @@ class SetupViewModel
         private fun restore() {
             val pending = links.pending() ?: return
             draft.update { it.copy(serverUrl = pending.serverUrl, busy = true) }
-            viewModelScope.launch(dispatcher) { resume(pending) }
-        }
-
-        private suspend fun resume(pending: PendingLink) {
-            // Before the server is read, not after: while `editing` is unset the saved credentials
-            // read as connected, and the screen would leave for the hub mid-resume.
-            if (pending.editing) {
-                val editing = runCatching { connection.current() }.getOrNull()
-                draft.update { it.copy(editing = editing) }
-            }
-            val server =
-                connection.inspect(pending.serverUrl).map { it.toSetupServer() }.getOrElse { failure ->
-                    // The address is kept and the failure shown, but the link is not: a server that
-                    // cannot be reached now would otherwise resume into the same failure every launch.
-                    links.forget()
-                    // finish() reads the draft's form.mode for the sign_in event; set it to the mode
-                    // actually being resumed before that early return, or it reports the stale default.
-                    draft.update { it.copy(form = SignInForm(mode = pending.mode)) }
-                    return finish(failure)
+            viewModelScope.launch(dispatcher) {
+                // Before the server is read, not after: while `editing` is unset the saved credentials
+                // read as connected, and the screen would leave for the hub mid-resume.
+                if (pending.editing) {
+                    val editing = runCatching { connection.current() }.getOrNull()
+                    draft.update { it.copy(editing = editing) }
                 }
-            // `busy` stays true here: `links.resume()` genuinely suspends before `onLink` fires for
-            // Plex, and clearing it early would re-enable Connect and let a second flow start.
-            draft.update { it.copy(server = server, form = SignInForm(mode = pending.mode)) }
-            links.resume(server, pending)
+                val server =
+                    connection.inspect(pending.serverUrl).map { it.toSetupServer() }.getOrElse { failure ->
+                        // The address is kept and the failure shown, but the link is not: a server that
+                        // cannot be reached now would otherwise resume into the same failure every launch.
+                        links.forget()
+                        // finish() reads the draft's form.mode for the sign_in event; set it to the mode
+                        // actually being resumed before that early return, or it reports the stale default.
+                        draft.update { it.copy(form = SignInForm(mode = pending.mode)) }
+                        return@launch finish(failure)
+                    }
+                // `busy` stays true here: `links.resume()` genuinely suspends before `onLink` fires for
+                // Plex, and clearing it early would re-enable Connect and let a second flow start.
+                draft.update { it.copy(server = server, form = SignInForm(mode = pending.mode)) }
+                links.resume(server, pending)
+            }
         }
 
         /** Every attempt ends here: the secret leaves the form once it is stored encrypted, or the failure is shown. */
@@ -299,6 +336,10 @@ class SetupViewModel
             val editing: SeerrCredentials? = null,
             /** The public host the user opted in to reach over plain HTTP, if any. */
             val cleartextHost: String? = null,
+            /** The television's hand-off from a phone, while its plate is up. */
+            val handOff: AddressHandOff? = null,
+            /** Whether [serverUrl] is the address a phone sent, untouched since. */
+            val received: Boolean = false,
             /** Bumped when the local-network permission may have changed, so the state is built again from the live answer. */
             val permissionReads: Int = 0,
         )
@@ -322,6 +363,20 @@ private fun SeerrServerPreview.toSetupServer(): SetupServer {
         backdropUrl = backdropUrls.firstOrNull(),
     )
 }
+
+/**
+ * An address a phone sent that could not be reached says so more usefully when it is not a local
+ * address: a phone can reach a public or VPN address that a TV on the home network cannot.
+ */
+internal fun SetupError.forAddress(
+    url: String,
+    received: Boolean,
+): SetupError =
+    if (this == SetupError.Unreachable && received && addressLocality(url) == AddressLocality.NotLocal) {
+        SetupError.UnreachableNotLocal
+    } else {
+        this
+    }
 
 /** The address's own cases first, then an expired code; a 401 or 403 is the credentials; the rest is the server or the network. */
 private fun Throwable.toSetupError(): SetupError =

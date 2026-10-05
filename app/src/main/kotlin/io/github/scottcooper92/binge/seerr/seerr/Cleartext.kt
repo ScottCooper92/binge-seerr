@@ -45,6 +45,9 @@ private val LOCAL_ADDRESSES =
  *
  * Judged on the name as typed, never on what it resolves to: a public name that resolves to a LAN
  * address is still public here, because the same name resolves publicly off that LAN.
+ *
+ * Not the TV-reachability test: `hostLocality` treats the CGNAT and Tailscale ranges as not local,
+ * and the two disagree on purpose.
  */
 internal fun String.isLocalOrPrivateHost(): Boolean =
     this in LOCAL_NAMES ||

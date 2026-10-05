@@ -8,6 +8,8 @@ import io.github.scottcooper92.binge.seerr.auth.DataStoreCleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
+import io.github.scottcooper92.binge.seerr.handoff.HandOffOpening
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
@@ -94,6 +96,7 @@ class SetupViewModelTest {
         savedState: SavedStateHandle = SavedStateHandle(),
         cipher: SecretCipher = PlainCipher,
         seen: MutableList<SetupUiState>? = null,
+        handOffs: AddressHandOffs = AddressHandOffs { HandOffOpening.NoLocalNetwork },
         localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,
     ): SetupViewModel {
         if (!reuseConnection) {
@@ -127,6 +130,7 @@ class SetupViewModelTest {
                     ),
                 savedState = savedState,
                 cipher = cipher,
+                handOffs = handOffs,
                 dispatcher = mainDispatcherRule.dispatcher,
                 analytics = analytics,
                 localNetwork = localNetwork,

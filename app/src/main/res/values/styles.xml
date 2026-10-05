@@ -14,6 +14,12 @@
     <style name="Theme.SeerrHandOff" parent="@android:style/Theme.Translucent.NoTitleBar" />
 
     <!--
+        The phone's "send the address to the TV" confirmation (#323) is a sheet over whatever opened
+        it, usually the browser page the TV served, so its window is translucent too.
+    -->
+    <style name="Theme.SeerrSendAddress" parent="@android:style/Theme.Translucent.NoTitleBar" />
+
+    <!--
         The launch theme. Android draws a splash of its own only from API 31, and this app runs on
         televisions that lag OS versions badly, so on much of that install base nothing was shown
         between tapping the icon and the first frame. core-splashscreen backports it to API 21+.
