@@ -1,16 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
@@ -28,14 +21,13 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
-import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenInnerPadding
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.FormAction
+import com.binge.designsystem.template.FormActionPlacement
+import com.binge.designsystem.template.FormScreen
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
@@ -139,69 +131,57 @@ internal fun <T> EditorPage(
     val form = rememberEditorFormState(validation?.formKey.orEmpty())
     val issues = remember(validation, ready?.draft) { ready?.draft?.let { validation?.issues?.invoke(it) }.orEmpty() }
     EditorRevealEffect(form)
-    BingeScreenScaffold(
-        bar = ScreenBar.Small,
+    FormScreen(
         title = title,
         onBack = actions.onBack,
         snackbarHostState = snackbarHostState,
-        bottomBar = {
-            bottomBar()
-            if (validation != null && ready != null) {
-                EditorActionBar(
-                    onCancel = actions.onBack,
-                    onSave = { issues.firstOrNull()?.let(form::saveFailed) ?: actions.onSave() },
-                    saveEnabled = ready.dirty && !ready.saving,
-                    saving = ready.saving,
-                )
-            }
-        },
-        actions = {
-            if (showSaveAction && ready != null && validation == null) {
-                BingeTextButton(
-                    label = stringResource(R.string.user_settings_save),
-                    onClick = actions.onSave,
-                    enabled = ready.dirty && !ready.saving && canSave(ready.draft),
-                    loading = ready.saving,
-                )
-            }
-            extraActions()
-        },
-    ) { padding ->
-        // The keyboard lifts the form rather than covering the field being typed in. The bars' insets are
-        // consumed first, so the navigation bar under the keyboard is not counted twice.
-        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()).consumeWindowInsets(padding)) {
-            val inner = padding.screenInnerPadding()
+        placement = if (validation != null) FormActionPlacement.Footer else FormActionPlacement.TopBar,
+        primaryAction =
+            ready?.let { draft ->
+                when {
+                    validation != null ->
+                        // Save stays tappable while the draft has issues: the tap is what shows the user which ones.
+                        FormAction(
+                            label = stringResource(R.string.user_settings_save),
+                            onClick = { issues.firstOrNull()?.let(form::saveFailed) ?: actions.onSave() },
+                            enabled = draft.dirty && !draft.saving,
+                            busy = draft.saving,
+                        )
+                    showSaveAction ->
+                        FormAction(
+                            label = stringResource(R.string.user_settings_save),
+                            onClick = actions.onSave,
+                            enabled = draft.dirty && !draft.saving && canSave(draft.draft),
+                            busy = draft.saving,
+                        )
+                    else -> null
+                }
+            },
+        secondaryAction =
+            ready?.takeIf { validation != null }?.let { draft ->
+                FormAction(label = stringResource(R.string.editor_cancel), onClick = actions.onBack, enabled = !draft.saving)
+            },
+        scrolling = scrolling,
+        extraActions = extraActions,
+        bottomBar = bottomBar,
+        notReady =
             when (state) {
-                EditorUiState.Loading -> LoadingScreen(Modifier.padding(inner))
-                is EditorUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-                is EditorUiState.Ready ->
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .imePadding()
-                                // scrolling: folded into the scroll itself, so content scrolls fully
-                                // under both bars like every other screen's. !scrolling: left for
-                                // content to fold into its own scrollable via LocalEditorPageInsets -
-                                // applied out here it would hard-clip that scrollable's viewport at
-                                // the bars' edge rather than let it scroll under them.
-                                .then(
-                                    if (scrolling) {
-                                        Modifier.verticalScroll(rememberScrollState()).padding(inner)
-                                    } else {
-                                        Modifier
-                                    },
-                                ).padding(resolvedContentInset()),
-                        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-                    ) {
-                        CompositionLocalProvider(
-                            LocalEditorPageInsets provides inner,
-                            LocalEditorForm provides form.takeIf { validation != null },
-                            LocalEditorIssues provides issues.visible(form.submitted),
-                        ) {
-                            content(state.draft, !state.saving)
-                        }
-                    }
+                EditorUiState.Loading -> { inner -> LoadingScreen(Modifier.padding(inner)) }
+                is EditorUiState.Error -> { inner ->
+                    ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
+                }
+                is EditorUiState.Ready -> null
+            },
+    ) { inner ->
+        // A page that scrolls itself folds [inner] into its own scrollable through LocalEditorPageInsets; a page
+        // the template scrolls is handed none, since the scroll already carries it.
+        ready?.let { draft ->
+            CompositionLocalProvider(
+                LocalEditorPageInsets provides inner,
+                LocalEditorForm provides form.takeIf { validation != null },
+                LocalEditorIssues provides issues.visible(form.submitted),
+            ) {
+                content(draft.draft, !draft.saving)
             }
         }
     }

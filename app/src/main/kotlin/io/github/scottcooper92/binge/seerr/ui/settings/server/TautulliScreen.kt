@@ -11,11 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import com.binge.designsystem.template.FormSection
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSectionCard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
@@ -36,7 +36,7 @@ fun TautulliScreen(
         actions = actions,
         canSave = { it.valid },
     ) { draft, enabled ->
-        EditorSectionCard(stringResource(R.string.settings_group_connection)) {
+        FormSection(stringResource(R.string.settings_group_connection)) {
             EditorTextField(
                 draft.host,
                 stringResource(R.string.server_settings_host),
