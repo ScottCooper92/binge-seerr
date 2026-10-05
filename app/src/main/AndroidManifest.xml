@@ -138,7 +138,10 @@
         -->
         <activity
             android:name=".SendAddressActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
             android:theme="@style/Theme.SeerrSendAddress">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

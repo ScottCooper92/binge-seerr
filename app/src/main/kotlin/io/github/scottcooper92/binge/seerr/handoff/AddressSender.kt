@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import io.github.scottcooper92.binge.seerr.logWarning
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,6 +32,8 @@ fun interface AddressSender {
 internal class OkHttpAddressSender(
     private val client: OkHttpClient,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    /** Why a send failed, for the device log; a no-op where there is no Android log (unit tests). */
+    private val warn: (String) -> Unit = {},
 ) : AddressSender {
     @Inject
     constructor() : this(
@@ -41,7 +44,12 @@ internal class OkHttpAddressSender(
             .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .followRedirects(false)
             .followSslRedirects(false)
+            // Never replay the POST. The TV takes exactly one address and then stops listening, so a silent
+            // retry after a slow or dropped first response reaches a closed port and reports a failure for a
+            // send that worked.
+            .retryOnConnectionFailure(false)
             .build(),
+        warn = logWarning(TAG),
     )
 
     override suspend fun send(
@@ -56,14 +64,21 @@ internal class OkHttpAddressSender(
                     .post(FormBody.Builder().add("address", address).build())
                     .build()
             try {
-                client.newCall(request).execute().use { it.code == HTTP_OK }
-            } catch (_: IOException) {
+                client.newCall(request).execute().use { response ->
+                    if (response.code != HTTP_OK) warn("The TV answered ${response.code}")
+                    response.code == HTTP_OK
+                }
+            } catch (e: IOException) {
+                warn("Sending the address failed: ${e.javaClass.simpleName}: ${e.message}")
                 false
             }
         }
 
     private companion object {
-        const val TIMEOUT_SECONDS = 5L
+        const val TAG = "AddressSender"
+
+        // Long enough for a phone whose LAN traffic goes through a VPN to hear back.
+        const val TIMEOUT_SECONDS = 15L
         const val HTTP_OK = 200
     }
 }

@@ -12,13 +12,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NorthWest
 import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -114,14 +115,22 @@ private fun Suggestions(
         suggestions.forEach { candidate ->
             // One line: an icon for where the address came from, its tag, then the address itself without the
             // scheme's noise — the field shows the full form once picked.
-            SuggestionChip(
+            AssistChip(
                 onClick = { onPick(candidate.address) },
                 enabled = enabled,
-                icon = {
+                leadingIcon = {
                     Icon(
                         candidate.source.icon(),
                         contentDescription = null,
-                        modifier = Modifier.size(SuggestionChipDefaults.IconSize),
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                },
+                // The fill-in arrow search suggestions use: tapping puts this address in the field, it doesn't send it.
+                trailingIcon = {
+                    Icon(
+                        Icons.Filled.NorthWest,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
                     )
                 },
                 label = {
