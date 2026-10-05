@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -89,7 +90,7 @@ class GeneralSettingsFormTest {
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class GeneralSettingsTvFocusTest {
     @get:Rule
-    val rule = createSeerrComposeRule()
+    val rule = createSeerrKeyboardComposeRule()
 
     private fun press(key: Key) {
         rule.onRoot().performKeyInput { pressKey(key) }

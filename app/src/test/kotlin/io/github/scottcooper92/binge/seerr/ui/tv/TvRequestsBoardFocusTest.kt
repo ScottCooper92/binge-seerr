@@ -24,7 +24,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
-import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -47,7 +47,7 @@ private const val BEAR = "The Bear"
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvRequestsBoardFocusTest {
     @get:Rule
-    val composeTestRule = createSeerrComposeRule()
+    val composeTestRule = createSeerrKeyboardComposeRule()
 
     private val opened = mutableListOf<Int>()
     private var filters = mutableListOf<RequestFilter>()

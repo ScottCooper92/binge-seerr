@@ -14,7 +14,7 @@ import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
-import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +31,7 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class DvrInstanceTvFocusTest {
     @get:Rule
-    val rule = createSeerrComposeRule()
+    val rule = createSeerrKeyboardComposeRule()
 
     private fun show() =
         rule.setContent {

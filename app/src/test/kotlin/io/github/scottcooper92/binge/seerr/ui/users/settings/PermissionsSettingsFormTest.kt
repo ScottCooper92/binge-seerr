@@ -15,6 +15,7 @@ import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.PermissionGroup
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -110,7 +111,7 @@ class PermissionsSettingsFormTest {
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class PermissionsSettingsTvFocusTest {
     @get:Rule
-    val rule = createSeerrComposeRule()
+    val rule = createSeerrKeyboardComposeRule()
 
     @Test
     fun `down from the closed administration header lands on the requests header`() {

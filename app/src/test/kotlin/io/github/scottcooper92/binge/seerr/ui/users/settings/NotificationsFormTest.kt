@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -110,7 +111,7 @@ class NotificationsFormTest {
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class NotificationsTvFocusTest {
     @get:Rule
-    val rule = createSeerrComposeRule()
+    val rule = createSeerrKeyboardComposeRule()
 
     @Test
     fun `down from a closed agent lands on the next agent's header`() {
