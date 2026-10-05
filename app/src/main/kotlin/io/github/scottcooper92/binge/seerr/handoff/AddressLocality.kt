@@ -9,6 +9,9 @@ import java.net.InetAddress
 /**
  * Whether a server address is one a television on the same home network can be expected to reach,
  * judged on the host as written and never on what it resolves to.
+ *
+ * This is not `isLocalOrPrivateHost`, which answers the cleartext-consent question and counts the
+ * CGNAT and Tailscale ranges as local. The two disagree on purpose; do not unify them.
  */
 enum class AddressLocality {
     /** A private, link-local or loopback IP literal, a `.local` name, or a single-label name such as `nas`. */

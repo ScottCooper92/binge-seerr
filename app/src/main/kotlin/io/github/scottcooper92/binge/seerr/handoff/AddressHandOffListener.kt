@@ -11,6 +11,7 @@ import java.net.Socket
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 
 /** One open hand-off on the television: the URL its code carries, and the wait for an address. */
 interface AddressHandOffSession {
@@ -113,18 +114,22 @@ internal class AddressHandOffListener(
     /**
      * After refusing a request it stopped reading, the listener reads and drops what is left, up to
      * a bound, before it closes. Closing on unread bytes resets the connection, and the client would
-     * see a reset instead of the refusal.
+     * see a reset instead of the refusal. The drain is bounded by time as well as bytes, so a client
+     * that trickles one byte per read timeout cannot hold the listener.
      */
     private fun drain(client: Socket) {
         try {
             client.shutdownOutput()
             val input = client.getInputStream()
             val buffer = ByteArray(DRAIN_CHUNK)
+            val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(limits.drainDeadlineMillis)
             var total = 0
-            while (total < MAX_DRAIN_BYTES) {
+            var remaining = limits.drainDeadlineMillis
+            while (total < MAX_DRAIN_BYTES && remaining > 0) {
+                client.soTimeout = minOf(remaining, limits.readTimeoutMillis.toLong()).toInt()
                 val count = input.read(buffer)
-                if (count < 0) break
-                total += count
+                total = if (count < 0) MAX_DRAIN_BYTES else total + count
+                remaining = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
             }
         } catch (_: IOException) {
             // A client that keeps sending or goes quiet is closed on regardless.

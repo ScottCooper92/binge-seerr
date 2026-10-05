@@ -60,9 +60,18 @@ class TvHandOffLinksTest {
         listOf("192.168.1.20", "10.0.0.5", "172.16.4.1", "169.254.10.10").forEach {
             assertTrue(it, target.copy(host = it).isOnLan)
         }
-        listOf("8.8.8.8", "127.0.0.1", "seerr.lan", "tv", "evil.example.com", "192.168.1", "192.168.1.300", "fd00::1").forEach {
-            assertFalse(it, target.copy(host = it).isOnLan)
-        }
+        listOf(
+            "8.8.8.8",
+            "127.0.0.1",
+            "seerr.lan",
+            "tv",
+            "evil.example.com",
+            "192.168.1",
+            "192.168.1.300",
+            "fd00::1",
+            "100.64.0.1",
+            "100.100.100.100",
+        ).forEach { assertFalse(it, target.copy(host = it).isOnLan) }
     }
 
     @Test

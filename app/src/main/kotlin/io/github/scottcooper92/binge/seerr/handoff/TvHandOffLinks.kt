@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
-import io.github.scottcooper92.binge.seerr.seerr.isLocalOrPrivateHost
 import io.github.scottcooper92.binge.seerr.ui.DeepLinks
 import java.net.URI
 import java.net.URISyntaxException
@@ -42,13 +41,15 @@ data class TvHandOffTarget(
     /**
      * Whether this names a television on the user's own network: an IPv4 literal in a private or
      * link-local range, never loopback. The TV only ever writes its own LAN address into a link,
-     * so a name, a public address or this phone itself is a link someone else wrote.
+     * so a name, a public address, an overlay address (`100.64.0.0/10`) or this phone itself is a
+     * link someone else wrote. This uses [hostLocality], not `isLocalOrPrivateHost`: that one
+     * answers the cleartext-consent question and counts the overlay range as local on purpose.
      */
     val isOnLan: Boolean
         get() {
             val octets = host.split('.').map { it.toIntOrNull() }
             val ipv4 = octets.size == IPV4_OCTETS && octets.all { it != null && it in 0..MAX_OCTET }
-            return ipv4 && octets.first() != LOOPBACK_FIRST_OCTET && host.isLocalOrPrivateHost()
+            return ipv4 && octets.first() != LOOPBACK_FIRST_OCTET && hostLocality(host) == AddressLocality.Local
         }
 
     private companion object {

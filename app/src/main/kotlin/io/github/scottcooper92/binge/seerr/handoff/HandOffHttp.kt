@@ -23,6 +23,8 @@ internal data class HandOffLimits(
     val readTimeoutMillis: Int = 5_000,
     /** How long the whole request may take to arrive, so a client cannot hold the one connection byte by byte. */
     val requestDeadlineMillis: Long = 10_000,
+    /** How long the listener reads and drops what a refused client still sends, before it closes. */
+    val drainDeadlineMillis: Long = 2_000,
 )
 
 /** A request as far as the listener reads it: header names are lower-cased. */

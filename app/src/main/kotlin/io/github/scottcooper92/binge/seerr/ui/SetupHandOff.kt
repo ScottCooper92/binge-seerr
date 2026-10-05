@@ -64,8 +64,10 @@ internal class SetupHandOff(
             opening as? HandOffOpening.Opened
                 ?: return onState(AddressHandOff.Unavailable(AddressHandOff.Reason.NoLocalNetwork))
         val listening = opened.session
-        session = listening
         try {
+            // open() is not cancellable: a cancel() that ran meanwhile must not bring the plate back.
+            currentCoroutineContext().ensureActive()
+            session = listening
             onState(AddressHandOff.Listening(listening.url))
             val address = withTimeoutOrNull(timeout) { listening.awaitAddress() }
             onState(null)

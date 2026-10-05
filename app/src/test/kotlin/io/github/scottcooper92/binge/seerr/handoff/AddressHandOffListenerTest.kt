@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -17,6 +18,7 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.nio.charset.StandardCharsets
+import kotlin.concurrent.thread
 
 private const val TOKEN = "abcdefghijklmnopqrstuv"
 
@@ -33,7 +35,7 @@ class AddressHandOffListenerTest {
             token = TOKEN,
             url = "http://127.0.0.1:$port/a/$TOKEN",
             page = FakePage,
-            limits = HandOffLimits(readTimeoutMillis = 300, requestDeadlineMillis = 1_000),
+            limits = HandOffLimits(readTimeoutMillis = 300, requestDeadlineMillis = 1_000, drainDeadlineMillis = 500),
         )
 
     @After
@@ -149,6 +151,35 @@ class AddressHandOffListenerTest {
             silent.close()
 
             assertTrue(get("/a/$TOKEN").startsWith("HTTP/1.1 200 "))
+            waiting.cancelAndJoin()
+        }
+
+    @Test
+    fun `a refused client that trickles bytes cannot hold the listener past the drain deadline`() =
+        runBlocking {
+            val waiting = listening()
+            val trickler = Socket(InetAddress.getLoopbackAddress(), port)
+            val sending =
+                thread {
+                    try {
+                        trickler.getOutputStream().apply {
+                            write("GET /a/$TOKEN HTTP/1.1\r\nX: ${"a".repeat(9_000)}\r\n\r\n".toByteArray())
+                            repeat(100) {
+                                Thread.sleep(100)
+                                write('x'.code)
+                                flush()
+                            }
+                        }
+                    } catch (_: IOException) {
+                        // The listener closed on us, which is the point.
+                    }
+                }
+
+            val answer = withTimeout(3_000) { runInterruptible(Dispatchers.IO) { get("/a/$TOKEN") } }
+
+            assertTrue(answer.startsWith("HTTP/1.1 200 "))
+            trickler.close()
+            sending.join()
             waiting.cancelAndJoin()
         }
 
