@@ -6,9 +6,11 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 /**
  * Live reachability of the connected server as the hub shows it. [Checking] is the brief re-probe;
  * [CouldNotLoad] is a server that answered but whose `auth/me` failed transiently, retryable in
- * place and distinct from a session the server rejected, [Unauthorized].
+ * place and distinct from a session the server rejected, [Unauthorized]. [LocalNetworkDenied] is an
+ * unreachable server on the user's own network while Android refuses this app that network: the
+ * permission, not the server, so the way out is Settings rather than a retry.
  */
-enum class ConnectionHealth { Checking, Healthy, Unreachable, CouldNotLoad, Unauthorized }
+enum class ConnectionHealth { Checking, Healthy, Unreachable, LocalNetworkDenied, CouldNotLoad, Unauthorized }
 
 /** The outcome of the overview's `auth/me`, kept apart from its data so a failed load is never read as a restricted user. */
 enum class HubUserLoad { Pending, Loaded, Failed, Rejected }

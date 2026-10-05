@@ -18,7 +18,7 @@ private const val MAX_AUTO_RETRIES = 5
 
 /**
  * Heals a transient failure in place: while the hub is on screen and its health is retryable
- * ([ConnectionHealth.Unreachable] or [ConnectionHealth.CouldNotLoad]) it re-probes on a bounded
+ * ([ConnectionHealth.Unreachable], [ConnectionHealth.LocalNetworkDenied] or [ConnectionHealth.CouldNotLoad]) it re-probes on a bounded
  * exponential backoff, so a network that comes up a moment after launch recovers by itself.
  * `collectLatest` restarts on every change, so leaving the retryable set or the screen cancels the
  * in-flight delay and a later relapse gets a fresh budget.
@@ -52,4 +52,5 @@ class HubAutoRetry(
     }
 }
 
-private fun ConnectionHealth.isRetryable(): Boolean = this == ConnectionHealth.Unreachable || this == ConnectionHealth.CouldNotLoad
+private fun ConnectionHealth.isRetryable(): Boolean =
+    this == ConnectionHealth.Unreachable || this == ConnectionHealth.LocalNetworkDenied || this == ConnectionHealth.CouldNotLoad

@@ -26,6 +26,11 @@
     <string name="setup_error_not_seerr">Esa dirección no respondió como un servidor Seerr.</string>
     <string name="setup_error_rejected">El servidor rechazó las credenciales.</string>
     <string name="setup_error_unreachable">No se pudo conectar con el servidor.</string>
+    <string name="setup_error_local_network_denied">Android está bloqueando el acceso a tu red local. Permítelo para esta aplicación y vuelve a intentarlo.</string>
+    <string name="setup_local_network_explanation">Este servidor está en tu red local. Android pide tu permiso antes de que una aplicación pueda acceder a otros dispositivos de ella.</string>
+    <string name="local_network_allow">Permitir acceso a la red local</string>
+    <string name="local_network_allow_short">Permitir acceso</string>
+    <string name="local_network_open_settings">Abrir ajustes</string>
     <string name="setup_error_unknown">El servidor respondió con un error.</string>
     <string name="setup_error_link_expired">El código caducó antes de aprobarse. Inténtalo de nuevo.</string>
     <string name="link_plex_title">Aprobar en plex.tv</string>
@@ -827,6 +832,8 @@
     <string name="hub_disconnect_confirm_message">Tendrás que iniciar sesión de nuevo para reconectar. Binge deja de ver este servidor hasta que lo hagas.</string>
     <string name="hub_unreachable_headline">No se puede conectar con tu servidor</string>
     <string name="hub_unreachable_body">No respondió. Puede estar apagado o haber cambiado de dirección. Comprueba el servidor y reintenta.</string>
+    <string name="hub_local_network_headline">El acceso a la red local está desactivado</string>
+    <string name="hub_local_network_body">Android impide que esta aplicación llegue a tu servidor en tu red local. Permite el acceso a la red local y se volverá a conectar.</string>
     <string name="hub_unauthorized_headline">Hay que reconectar</string>
     <string name="hub_unauthorized_body">El servidor rechazó el inicio de sesión guardado. Inicia sesión de nuevo para continuar.</string>
     <string name="hub_sign_in_again">Iniciar sesión de nuevo</string>

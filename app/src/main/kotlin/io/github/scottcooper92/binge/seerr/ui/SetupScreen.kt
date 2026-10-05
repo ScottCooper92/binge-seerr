@@ -26,6 +26,8 @@ class SetupActions(
     val onRequestPasswordReset: () -> Unit,
     /** The opt-in to plain HTTP to a public host. Defaulted so a preview that never shows one need not wire it. */
     val onAllowCleartext: (Boolean) -> Unit = {},
+    /** The local-network permission may have changed; read it again. Defaulted like [onAllowCleartext]. */
+    val onLocalNetworkChanged: () -> Unit = {},
 )
 
 /**
@@ -51,6 +53,7 @@ fun SetupScreen(
                         actions.onEditAddress,
                         actions.onInspect,
                         actions.onAllowCleartext,
+                        actions.onLocalNetworkChanged,
                         inner,
                     )
                 is SetupUiState.SignIn -> {
@@ -70,6 +73,7 @@ internal fun SetupError.messageRes(): Int =
         SetupError.NotSeerr -> R.string.setup_error_not_seerr
         SetupError.Rejected -> R.string.setup_error_rejected
         SetupError.Unreachable -> R.string.setup_error_unreachable
+        SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
         SetupError.Unknown -> R.string.setup_error_unknown
         SetupError.LinkExpired -> R.string.setup_error_link_expired
     }

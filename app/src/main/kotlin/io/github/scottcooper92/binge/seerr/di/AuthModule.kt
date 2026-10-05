@@ -29,6 +29,8 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
+import io.github.scottcooper92.binge.seerr.seerr.AndroidLocalNetworkPermission
+import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
@@ -71,6 +73,12 @@ object AuthModule {
     fun bingeConnectionStore(
         @ApplicationContext context: Context,
     ): BingeConnectionStore = DataStoreBingeConnectionStore(context.bingeConnectionDataStore)
+
+    @Provides
+    @Singleton
+    fun localNetworkPermission(
+        @ApplicationContext context: Context,
+    ): LocalNetworkPermission = AndroidLocalNetworkPermission(context)
 
     @Provides
     @Singleton

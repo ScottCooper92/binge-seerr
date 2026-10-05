@@ -73,6 +73,8 @@ app:hub_disconnect_confirm_title  112cbf2ce097
 app:hub_download_untitled  f59ab8d1331b
 app:hub_downloading_now  1d3b711d58b7
 app:hub_health_connected  22965568d22a
+app:hub_local_network_body  67c59b023088
+app:hub_local_network_headline  63035dd30475
 app:hub_manage  5a23444828db
 app:hub_quota_movies  dff924b69f96
 app:hub_quota_period  aa399d5bc122
@@ -164,6 +166,9 @@ app:link_plex_title  1f1f3da9dea6
 app:link_quick_connect_body  62292e796c94
 app:link_quick_connect_title  307640520f9a
 app:link_waiting  209d60ad4a22
+app:local_network_allow  b97c4592cdf4
+app:local_network_allow_short  e87c3e4e4316
+app:local_network_open_settings  ca381c1e76e6
 app:media_clear_confirm_message  a64b36050151
 app:media_clear_confirm_title  9ff8d543b40a
 app:media_clear_data  a45086979c4a
@@ -676,6 +681,7 @@ app:setup_continue  31fbef162594
 app:setup_email  969ccbd3cf63
 app:setup_error_invalid_url  683de0c44578
 app:setup_error_link_expired  4699845e44ee
+app:setup_error_local_network_denied  8754c08cf120
 app:setup_error_not_seerr  1cfab49f33da
 app:setup_error_rejected  86d699b844de
 app:setup_error_unknown  f817de456585
@@ -683,6 +689,7 @@ app:setup_error_unreachable  9b1e57798eee
 app:setup_forgot_password  30c1d8d3e912
 app:setup_insecure_warning  6b61e71b49b9
 app:setup_intro  eea68d8997e4
+app:setup_local_network_explanation  3abb48eef323
 app:setup_mode_api_key  16f0ee47f993
 app:setup_mode_local  871e019bee76
 app:setup_mode_quick_connect  d15125b20094

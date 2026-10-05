@@ -54,6 +54,14 @@ class TvHubScreenshotTest {
         TvHubBoard(state = previewReady(health = ConnectionHealth.Unreachable), actions = previewTvHubActions())
     }
 
+    /** The local network is refused: the board's lead action is the permission, with Edit connection and Disconnect beside it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun LocalNetworkDenied() {
+        TvHubBoard(state = previewReady(health = ConnectionHealth.LocalNetworkDenied), actions = previewTvHubActions())
+    }
+
     /** A cold start the server never answered: no server to name, so the board keeps the app's title. */
     @PreviewTest
     @SeerrTvScreenPreviews

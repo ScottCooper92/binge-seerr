@@ -31,6 +31,7 @@ class SetupAddressImeTest {
                     onEditAddress = {},
                     onInspect = { inspected++ },
                     onAllowCleartext = {},
+                    onLocalNetworkChanged = {},
                     contentPadding = PaddingValues(),
                 )
             }

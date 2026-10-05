@@ -48,6 +48,28 @@ class SetupScreenshotTest {
             actions = NoSetupActions,
         )
 
+    /** A local address on a platform that gates the local network: the explanation and the ask, with Continue still on. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun addressNeedsLocalNetwork() =
+        SetupScreen(state = previewAddress(serverUrl = "http://192.168.1.20:5055", needsLocalNetwork = true), actions = NoSetupActions)
+
+    /** The read failed while the permission is refused: the permission is named, not the server. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun addressLocalNetworkDenied() =
+        SetupScreen(
+            state =
+                previewAddress(
+                    serverUrl = "http://192.168.1.20:5055",
+                    error = SetupError.LocalNetworkDenied,
+                    needsLocalNetwork = true,
+                ),
+            actions = NoSetupActions,
+        )
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
