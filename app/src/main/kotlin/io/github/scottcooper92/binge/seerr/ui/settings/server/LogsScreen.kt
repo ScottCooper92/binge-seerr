@@ -57,16 +57,13 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.binge.designsystem.component.BingeFilterChipPager
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
-import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.PagedPhase
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenListPadding
-import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.accent
@@ -102,43 +99,34 @@ fun LogsScreen(
     actions: LogsActions,
 ) {
     val focusManager = LocalFocusManager.current
-    BingeScreenScaffold(
-        bar = ScreenBar.Small,
+    FilteredListScreen(
         title = stringResource(R.string.server_settings_logs),
         onBack = actions.onBack,
-        // The pager's header draws the one opaque background over the bar, the search field and the chips together.
-        barScrim = false,
-    ) { padding ->
-        BingeFilterChipPager(
-            items = LogLevel.entries.map { FilterChipItem(label = stringResource(it.labelRes())) },
-            selectedIndex = state.level.ordinal,
-            onSelectedIndexChange = { actions.onLevelChange(LogLevel.entries[it]) },
-            modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()),
-            header = {
-                // The bar's height joins the header, so the lines reach the top of the window and pass under both.
-                // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
-                // through underneath it once it's pinned at the top.
-                Spacer(Modifier.height(padding.calculateTopPadding()))
-                BingeSearchField(
-                    query = state.search,
-                    onQueryChange = actions.onSearchChange,
-                    onClear = { actions.onSearchChange("") },
-                    placeholder = stringResource(R.string.server_settings_logs_search),
-                    // The list filters as it is typed, so Search has nothing left to run: it puts the keyboard away.
-                    onSubmit = { focusManager.clearFocus() },
-                    modifier = Modifier.padding(horizontal = resolvedContentInset()),
-                )
-            },
-        ) { pagePadding, page ->
-            LogsPage(
-                level = LogLevel.entries[page],
-                state = state,
-                entriesFor = entriesFor,
-                events = events,
-                actions = actions,
-                contentPadding = PaddingValues(top = pagePadding.calculateTopPadding(), bottom = padding.calculateBottomPadding()),
+        filters = LogLevel.entries.map { FilterChipItem(label = stringResource(it.labelRes())) },
+        selectedFilter = state.level.ordinal,
+        onFilterChange = { actions.onLevelChange(LogLevel.entries[it]) },
+        // As before: only the selected level's lines are read, not the levels either side of it.
+        beyondViewportPageCount = 0,
+        search = {
+            BingeSearchField(
+                query = state.search,
+                onQueryChange = actions.onSearchChange,
+                onClear = { actions.onSearchChange("") },
+                placeholder = stringResource(R.string.server_settings_logs_search),
+                // The list filters as it is typed, so Search has nothing left to run: it puts the keyboard away.
+                onSubmit = { focusManager.clearFocus() },
+                modifier = Modifier.padding(horizontal = resolvedContentInset()),
             )
-        }
+        },
+    ) { page, contentPadding ->
+        LogsPage(
+            level = LogLevel.entries[page],
+            state = state,
+            entriesFor = entriesFor,
+            events = events,
+            actions = actions,
+            contentPadding = contentPadding,
+        )
     }
 }
 

@@ -1,9 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapVert
@@ -19,11 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.binge.designsystem.component.BingeFilterChipPager
 import com.binge.designsystem.component.FilterChipItem
-import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.FilteredListScreen
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
@@ -52,12 +46,17 @@ fun IssuesScreen(
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssuesUiState.Ready
-    BingeScreenScaffold(
-        bar = ScreenBar.Small,
+    FilteredListScreen(
         title = stringResource(R.string.hub_section_issues),
         onBack = actions.onBack.takeIf { showBack },
-        // The pager's header draws the one opaque background over the bar and the chips together.
-        barScrim = ready == null,
+        filters =
+            ready
+                ?.let { loaded ->
+                    IssueFilter.entries.map { FilterChipItem(label = stringResource(it.labelRes()), count = loaded.counts?.countFor(it)) }
+                }.orEmpty(),
+        selectedFilter = ready?.filter?.ordinal ?: 0,
+        onFilterChange = { actions.onFilterChange(IssueFilter.entries[it]) },
+        ready = ready != null,
         actions = {
             if (ready != null) {
                 IconButton(onClick = { showSort = true }) {
@@ -65,39 +64,22 @@ fun IssuesScreen(
                 }
             }
         },
-    ) { padding ->
-        if (ready == null) {
-            LoadingScreen(Modifier.fillMaxSize().padding(padding))
-        } else {
-            BingeFilterChipPager(
-                items =
-                    IssueFilter.entries.map {
-                        FilterChipItem(label = stringResource(it.labelRes()), count = ready.counts?.countFor(it))
-                    },
-                selectedIndex = ready.filter.ordinal,
-                onSelectedIndexChange = { actions.onFilterChange(IssueFilter.entries[it]) },
-                modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()),
-                // The bar's height joins the pager's header, so the rows reach the top of the window and pass under both.
-                // Opaque header (the default), not transparent-with-a-scrim, so scrolled rows never show
-                // through underneath it once it's pinned at the top.
-                header = { Spacer(Modifier.height(padding.calculateTopPadding())) },
-                // The filters either side stay composed, so their rows are loading before the swipe reaches them.
-                beyondViewportPageCount = 1,
-            ) { pagePadding, page ->
-                // Its own filter, never the selected one: the pager composes a page while it is swiped into view,
-                // and keeps the pages either side of the selected one composed.
-                val filter = IssueFilter.entries[page]
-                IssuesBody(
-                    filter = filter,
-                    lazyItems = issuesFor(filter).collectAsLazyPagingItems(),
-                    lastRefresh = ready.refreshes[filter],
-                    onOpen = actions.onOpen,
-                    // A rejected session cannot be retried past: the hub owns reconnecting.
-                    onReconnect = actions.onBack,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = pagePadding.calculateTopPadding(), bottom = padding.calculateBottomPadding()),
-                )
-            }
+        notReady = { padding -> LoadingScreen(Modifier.fillMaxSize().padding(padding)) },
+    ) { page, contentPadding ->
+        // Its own filter, never the selected one: the pager composes a page while it is swiped into view,
+        // and keeps the pages either side of the selected one composed.
+        val filter = IssueFilter.entries[page]
+        ready?.let { loaded ->
+            IssuesBody(
+                filter = filter,
+                lazyItems = issuesFor(filter).collectAsLazyPagingItems(),
+                lastRefresh = loaded.refreshes[filter],
+                onOpen = actions.onOpen,
+                // A rejected session cannot be retried past: the hub owns reconnecting.
+                onReconnect = actions.onBack,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = contentPadding,
+            )
         }
     }
     if (showSort && ready != null) {

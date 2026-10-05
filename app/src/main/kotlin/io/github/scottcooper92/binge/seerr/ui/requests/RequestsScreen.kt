@@ -1,9 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapVert
@@ -23,13 +21,10 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.binge.designsystem.component.BingeFilterChipPager
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
-import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
-import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.template.FilteredListScreen
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -77,13 +72,18 @@ fun RequestsScreen(
     var sheetItem by remember { mutableStateOf<RequestItem?>(null) }
     val ready = state as? RequestsUiState.Ready
     val snackbarHostState = remember { SnackbarHostState() }
-    BingeScreenScaffold(
-        bar = ScreenBar.Small,
+    FilteredListScreen(
         title = stringResource(R.string.hub_section_requests),
         onBack = actions.onBack.takeIf { showBack },
+        filters =
+            ready
+                ?.let { loaded ->
+                    RequestFilter.entries.map { FilterChipItem(label = stringResource(it.labelRes()), count = loaded.counts?.countFor(it)) }
+                }.orEmpty(),
+        selectedFilter = ready?.filter?.ordinal ?: 0,
+        onFilterChange = { actions.onFilterChange(RequestFilter.entries[it]) },
+        ready = ready != null,
         snackbarHostState = snackbarHostState,
-        // The pager's header draws the one opaque background over the bar and the chips together.
-        barScrim = ready == null,
         actions = {
             if (ready != null) {
                 IconButton(onClick = { showSort = true }) {
@@ -91,44 +91,29 @@ fun RequestsScreen(
                 }
             }
         },
-    ) { padding ->
-        if (ready == null) {
+        notReady = { padding ->
             when (state) {
                 is RequestsUiState.Error ->
                     ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetryLoad)
                 else -> LoadingScreen(Modifier.fillMaxSize().padding(padding))
             }
-        } else {
-            BingeFilterChipPager(
-                items =
-                    RequestFilter.entries.map {
-                        FilterChipItem(label = stringResource(it.labelRes()), count = ready.counts?.countFor(it))
-                    },
-                selectedIndex = ready.filter.ordinal,
-                onSelectedIndexChange = { actions.onFilterChange(RequestFilter.entries[it]) },
-                modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()),
-                // The bar's height joins the pager's header, so the rows reach the top of the window and pass under both.
-                // Opaque header (the default), not transparent-with-a-scrim: matching Library's own
-                // chip-tabs-over-grid pattern, whose solid background never lets scrolled rows show
-                // through underneath it, rather than staying translucent once content scrolls under.
-                header = { Spacer(Modifier.height(padding.calculateTopPadding())) },
-                // The filters either side stay composed, so their rows are loading before the swipe reaches them.
-                beyondViewportPageCount = 1,
-            ) { pagePadding, page ->
-                RequestsPage(
-                    filter = RequestFilter.entries[page],
-                    state = ready,
-                    requestsFor = requestsFor,
-                    shouldRefresh = shouldRefresh,
-                    actions = actions,
-                    onManage = { item ->
-                        sheetId = item.id
-                        sheetItem = item
-                        sheetOpen = true
-                    },
-                    contentPadding = PaddingValues(top = pagePadding.calculateTopPadding(), bottom = padding.calculateBottomPadding()),
-                )
-            }
+        },
+    ) { page, contentPadding ->
+        // `ready` is non-null whenever a page composes: the template shows notReady until it is.
+        ready?.let { loaded ->
+            RequestsPage(
+                filter = RequestFilter.entries[page],
+                state = loaded,
+                requestsFor = requestsFor,
+                shouldRefresh = shouldRefresh,
+                actions = actions,
+                onManage = { item ->
+                    sheetId = item.id
+                    sheetItem = item
+                    sheetOpen = true
+                },
+                contentPadding = contentPadding,
+            )
         }
     }
     if (showSort && ready != null) {
