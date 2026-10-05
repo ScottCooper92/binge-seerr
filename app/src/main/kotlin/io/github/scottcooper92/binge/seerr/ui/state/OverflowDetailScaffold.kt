@@ -20,7 +20,7 @@ import com.binge.designsystem.template.screenOuterPadding
 /**
  * The frame [io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailScreen] and
  * [io.github.scottcooper92.binge.seerr.ui.users.UserDetailScreen] share: [BingeScreenScaffold]'s top bar
- * with an overflow button that opens a manage sheet, and the `outerPadding()`/`innerPadding()` split
+ * with an overflow button that opens a manage sheet, and the `screenOuterPadding()`/`screenInnerPadding()` split
  * every scrolling body under it uses.
  *
  * Deliberately does not own the `Loading`/`Error`/`Ready` dispatch or the overflow sheet itself: the
