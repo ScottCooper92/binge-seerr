@@ -17,7 +17,9 @@ import io.github.scottcooper92.binge.seerr.handoff.DataStoreHandOffAddressMemory
 import io.github.scottcooper92.binge.seerr.handoff.HandOffAddressMemory
 import io.github.scottcooper92.binge.seerr.handoff.LanAddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.OkHttpAddressSender
+import io.github.scottcooper92.binge.seerr.handoff.OkHttpTvSignInClient
 import io.github.scottcooper92.binge.seerr.handoff.ProfileApplicationUrlReader
+import io.github.scottcooper92.binge.seerr.handoff.TvSignInClient
 import javax.inject.Singleton
 
 private val Context.handOffDataStore: DataStore<Preferences> by preferencesDataStore(name = "tv_handoff")
@@ -34,6 +36,9 @@ internal abstract class HandOffModule {
 
     @Binds
     abstract fun sender(impl: OkHttpAddressSender): AddressSender
+
+    @Binds
+    abstract fun signIn(impl: OkHttpTvSignInClient): TvSignInClient
 
     @Binds
     abstract fun applicationUrl(impl: ProfileApplicationUrlReader): ApplicationUrlReader

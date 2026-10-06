@@ -57,6 +57,7 @@ internal enum class HttpStatus(
     BadRequest(400, "Bad Request"),
     NotFound(404, "Not Found"),
     PayloadTooLarge(413, "Payload Too Large"),
+    Conflict(409, "Conflict"),
     HeadersTooLarge(431, "Request Header Fields Too Large"),
 }
 
@@ -64,23 +65,25 @@ internal enum class HttpStatus(
 internal data class HandOffResponse(
     val status: HttpStatus,
     val html: String,
+    val contentType: String = "text/html; charset=utf-8",
 ) {
     /**
-     * The headers keep the page to itself: no caching, no referrer (the token is in the URL), no
-     * scripts or outside resources, and a form that can only post back here.
+     * The headers keep the page to itself: no caching, no referrer (the token is in the URL), no outside
+     * resources, no script but the one line that moves the key from the address bar into the app link (allowed by
+     * its hash, so nothing else the page could be made to carry will run), and a form that can only post back here.
      */
     fun bytes(): ByteArray {
         val body = html.toByteArray(StandardCharsets.UTF_8)
         val head =
             buildString {
                 append("HTTP/1.1 ${status.code} ${status.reason}\r\n")
-                append("Content-Type: text/html; charset=utf-8\r\n")
+                append("Content-Type: $contentType\r\n")
                 append("Content-Length: ${body.size}\r\n")
                 append("Cache-Control: no-store\r\n")
                 append("Referrer-Policy: no-referrer\r\n")
                 append("X-Content-Type-Options: nosniff\r\n")
                 append(
-                    "Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; " +
+                    "Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; script-src '$LINK_SCRIPT_HASH'; " +
                         "form-action 'self'; base-uri 'none'; frame-ancestors 'none'\r\n",
                 )
                 append("Connection: close\r\n")

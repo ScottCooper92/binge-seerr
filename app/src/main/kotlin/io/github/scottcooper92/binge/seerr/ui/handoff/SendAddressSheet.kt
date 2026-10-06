@@ -19,6 +19,7 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.SignInForm
 import com.binge.designsystem.R as DesR
 
 /** The confirmation as a sheet; dismissing it is closing it, and nothing is sent. */
@@ -36,6 +37,8 @@ internal fun SendAddressSheet(
 internal data class SendAddressActions(
     val onEdit: (String) -> Unit = {},
     val onSend: () -> Unit = {},
+    val onEditSignIn: ((SignInForm.() -> SignInForm) -> Unit) = {},
+    val onSendSignIn: () -> Unit = {},
     val onClose: () -> Unit = {},
 )
 
@@ -62,6 +65,7 @@ internal fun SendAddressSheetContent(
         when (state) {
             SendAddressUiState.Loading -> BingeLoadingIndicator()
             is SendAddressUiState.Ready -> ReadyContent(state, actions)
+            is SendAddressUiState.SigningIn -> SigningInContent(state, actions)
             is SendAddressUiState.Sent -> Outcome(stringResource(R.string.send_address_sent, state.tv), R.string.send_address_done, onClose)
             SendAddressUiState.NotConnected ->
                 Outcome(

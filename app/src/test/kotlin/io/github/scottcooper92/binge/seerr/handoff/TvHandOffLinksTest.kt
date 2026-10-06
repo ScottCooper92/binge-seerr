@@ -81,4 +81,29 @@ class TvHandOffLinksTest {
         assertTrue(Regex("[abcdefghjkmnpqrstuvwxyz23456789]{8}").matches(token))
         assertNotEquals(token, newHandOffToken())
     }
+
+    @Test
+    fun `a link carries the key when the code was scanned, and reads back with it`() {
+        val key = HandOffKey.generate()
+        val link = TvHandOffLinks.appLink(target.copy(key = key))
+
+        assertTrue(link.endsWith("&k=${key.encoded()}"))
+        val read = TvHandOffLinks.parse(link)
+        assertEquals(target.copy(key = read?.key), read)
+        assertEquals("ok", read?.key?.open(key.seal("ok".toByteArray(), TOKEN), TOKEN)?.decodeToString())
+    }
+
+    @Test
+    fun `a link without a key reads without one, and one with a malformed key is not read at all`() {
+        assertNull(TvHandOffLinks.parse(TvHandOffLinks.appLink(target))?.key)
+        assertNull(TvHandOffLinks.parse("seerr-companion://tv-handoff?to=192.168.1.2:80&token=$TOKEN&k=short"))
+        assertNull(TvHandOffLinks.parse("seerr-companion://tv-handoff?to=192.168.1.2:80&token=$TOKEN&k="))
+    }
+
+    @Test
+    fun `the status and credentials urls sit beside the address one, under the same token`() {
+        assertEquals("http://192.168.86.53:41234/a/$TOKEN", target.url)
+        assertEquals("http://192.168.86.53:41234/s/$TOKEN", target.statusUrl)
+        assertEquals("http://192.168.86.53:41234/c/$TOKEN", target.credentialsUrl)
+    }
 }

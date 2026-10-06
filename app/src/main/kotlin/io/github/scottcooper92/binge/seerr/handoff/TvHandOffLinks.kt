@@ -34,12 +34,20 @@ data class TvHandOffTarget(
     val host: String,
     val port: Int,
     val token: String,
+    /** What seals credentials for this TV, when the link carries it: only a code scanned from the screen does. */
+    val key: HandOffKey? = null,
 ) {
     /** `host:port`, as the link carries it and the confirmation names it. */
     val authority: String get() = "$host:$port"
 
     /** The one URL the TV answers on; the phone posts the address here. */
     val url: String get() = "http://$authority/a/$token"
+
+    /** Where the TV reports how far along it is, as data. */
+    val statusUrl: String get() = "http://$authority/s/$token"
+
+    /** Where a phone posts credentials sealed with [key]. */
+    val credentialsUrl: String get() = "http://$authority/c/$token"
 
     /**
      * Whether this names a television on the user's own network: an IPv4 literal in a private or
@@ -68,8 +76,11 @@ internal object TvHandOffLinks {
     const val HOST = "tv-handoff"
     private const val TO = "to"
     private const val TOKEN = "token"
+    private const val KEY = "k"
 
-    fun appLink(target: TvHandOffTarget): String = "${DeepLinks.SCHEME}://$HOST?$TO=${target.authority}&$TOKEN=${target.token}"
+    fun appLink(target: TvHandOffTarget): String =
+        "${DeepLinks.SCHEME}://$HOST?$TO=${target.authority}&$TOKEN=${target.token}" +
+            (target.key?.let { "&$KEY=${it.encoded()}" } ?: "")
 
     /**
      * The same link as an `intent:` URL, which is what a browser on the phone can follow into an app:
@@ -105,6 +116,9 @@ internal object TvHandOffLinks {
         val to = query[TO] ?: return null
         val host = to.substringBeforeLast(':', "").takeIf { it.isNotEmpty() && it.none { c -> c == '/' || c == '@' } } ?: return null
         val port = to.substringAfterLast(':').toIntOrNull()?.takeIf { it in 1..MAX_PORT } ?: return null
-        return TvHandOffTarget(host = host, port = port, token = token)
+        val key = query[KEY]?.let(HandOffKey::parse)
+        // A key that is present and malformed is a link someone altered, not one to read without it.
+        if (query.containsKey(KEY) && key == null) return null
+        return TvHandOffTarget(host = host, port = port, token = token, key = key)
     }
 }

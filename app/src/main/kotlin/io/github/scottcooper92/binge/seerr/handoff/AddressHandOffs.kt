@@ -55,7 +55,7 @@ internal class LanAddressHandOffs
                     copyFor = ::copyFor,
                     appLink = TvHandOffLinks.intentUrl(target, context.packageName, fallbackUrl = target.url),
                 )
-            return HandOffOpening.Opened(AddressHandOffListener(server, target.token, target.url, page))
+            return HandOffOpening.Opened(AddressHandOffListener(server, target.token, target.url, page, key = HandOffKey.generate()))
         }
 
         private fun lanAddress(): Inet4Address? {

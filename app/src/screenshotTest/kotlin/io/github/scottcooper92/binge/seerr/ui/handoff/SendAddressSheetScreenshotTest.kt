@@ -12,6 +12,8 @@ import io.github.scottcooper92.binge.seerr.handoff.AddressCandidate
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.ui.SignInForm
 
 private val SHEET_WIDTH = 411.dp
 
@@ -37,6 +39,48 @@ class SendAddressSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun sent() = Frame(SendAddressUiState.Sent(tv = "192.168.86.53"))
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInWaiting() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.Waiting))
+
+    /** The sign-in the code's key makes possible: the phone's own fields, with the note that says where they go. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInForm() =
+        Frame(
+            SendAddressUiState.SigningIn(
+                "192.168.86.53",
+                SignInStep.Form(
+                    "Living room",
+                    listOf(SeerrSignInMode.Jellyfin, SeerrSignInMode.Local),
+                    SignInForm(mode = SeerrSignInMode.Local, email = "ana@example.com", password = "secret"),
+                ),
+            ),
+        )
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInRejected() =
+        Frame(
+            SendAddressUiState.SigningIn(
+                "192.168.86.53",
+                SignInStep.Form(
+                    "Living room",
+                    listOf(SeerrSignInMode.Jellyfin),
+                    SignInForm(mode = SeerrSignInMode.Jellyfin, username = "ana"),
+                    rejected = true,
+                ),
+            ),
+        )
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInConnected() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.Connected))
 
     @PreviewTest
     @SeerrComponentPreviews

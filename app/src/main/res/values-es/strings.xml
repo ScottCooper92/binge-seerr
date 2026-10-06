@@ -932,6 +932,13 @@
     <string name="send_address_sending">Enviando…</string>
     <string name="send_address_failed">El televisor no recibió la dirección. Comprueba que sigue mostrando el código y que los dos están en la misma red wifi, e inténtalo de nuevo.</string>
     <string name="send_address_sent">Enviada. El televisor en %1$s tiene la dirección y está comprobando el servidor. Continúa allí.</string>
+    <string name="send_signin_waiting">El televisor en %1$s tiene la dirección y está comprobando el servidor…</string>
+    <string name="send_signin_form">El televisor encontró %1$s. Inicia sesión aquí y el televisor también la iniciará.</string>
+    <string name="send_signin_sealed">Lo que escribes aquí se cifra para que solo ese televisor pueda leerlo y se envía por tu Wi-Fi. No se guarda en este móvil.</string>
+    <string name="send_signin_rejected">El servidor no aceptó esos datos. Revísalos e inténtalo de nuevo.</string>
+    <string name="send_signin_on_tv">El televisor encontró %1$s. Termina de iniciar sesión con el mando del televisor.</string>
+    <string name="send_signin_connected">Sesión iniciada. El televisor en %1$s está listo.</string>
+    <string name="send_signin_lost">El televisor dejó de responder. Comprueba que está encendido y que sigue mostrando el código, y vuelve a escanearlo.</string>
     <string name="send_address_not_connected">Este móvil no está conectado a ningún servidor, así que no hay dirección que enviar. Escribe la dirección en la página que abrió el código.</string>
     <string name="send_address_refused">Este enlace no apunta a un televisor de tu red doméstica, así que no se ha enviado nada.</string>
     <string name="send_address_done">Hecho</string>

@@ -118,9 +118,13 @@ internal sealed interface PendingLink {
  * TV listens for an address, or why it cannot listen at all.
  */
 sealed interface AddressHandOff {
-    /** Listening; [url] is what the QR code carries and what the plate spells out under it. */
+    /**
+     * Listening. [url] is what the plate spells out under the code, for typing; [scanUrl] is what the code
+     * carries, which is [url] and the key that seals credentials, in a fragment a browser never sends.
+     */
     data class Listening(
         val url: String,
+        val scanUrl: String = url,
     ) : AddressHandOff
 
     data class Unavailable(

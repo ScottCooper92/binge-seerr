@@ -42,6 +42,8 @@ class SendAddressActivity : ComponentActivity() {
                         SendAddressActions(
                             onEdit = viewModel::editAddress,
                             onSend = viewModel::send,
+                            onEditSignIn = viewModel::editSignIn,
+                            onSendSignIn = viewModel::sendSignIn,
                             onClose = ::finish,
                         ),
                 )

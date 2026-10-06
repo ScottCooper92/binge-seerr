@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffSession
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
+import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffOpening
 import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
@@ -107,7 +108,7 @@ class SetupViewModelHandOffTest {
 
             vm.showHandOff(true)
 
-            assertEquals(AddressHandOff.Listening(session.url), vm.awaitAddress { it.handOff != null }.handOff)
+            assertEquals(AddressHandOff.Listening(session.url, session.scanUrl), vm.awaitAddress { it.handOff != null }.handOff)
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             session.address.complete(seerr.url("/"))
@@ -133,7 +134,9 @@ class SetupViewModelHandOffTest {
             // The plate going when the address arrived is the page moving on: it must not close the listener.
             vm.showHandOff(false)
             assertFalse(session.closed)
-            assertEquals(HandOffProgress.SignIn(signIn.server.title), session.progress())
+            val progress = session.progress() as HandOffProgress.SignIn
+            assertEquals(signIn.server.title, progress.server)
+            assertTrue("Local" in progress.modes)
 
             // Nobody signs in, so the virtual clock runs out the sign-in timeout and the listener is let go.
             withTimeout(HAND_OFF_SIGN_IN_TIMEOUT * 2) { while (!session.closed) delay(1_000) }
@@ -240,10 +243,64 @@ class SetupViewModelHandOffTest {
             assertTrue(session.closed)
         }
 
+    @Test
+    fun `credentials a phone sent sign the TV in as if typed, and the page hears how it went`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            session.address.complete(seerr.url("/"))
+            vm.uiState.first { it is SetupUiState.SignIn }
+            val progress = session.progress() as HandOffProgress.SignIn
+            assertEquals(listOf("Local"), progress.modes.filter { it == "Local" })
+
+            // A refused sign-in: the page is told, and the form is the phone's to fill again.
+            seerr.enqueue(FakeResponse(code = 401, headers = headersOf("Content-Type", "application/json"), body = """{"message":"no"}"""))
+            session.sendCredentials(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "wrong"))
+            val refused = vm.uiState.first { it is SetupUiState.SignIn && it.error != null } as SetupUiState.SignIn
+            assertEquals("ana@example.com", refused.form.email)
+            assertTrue((session.progress() as HandOffProgress.SignIn).failed)
+        }
+
+    @Test
+    fun `credentials for a mode the server does not offer, or before there is a server, are ignored`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+
+            session.sendCredentials(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "x"))
+            assertTrue(vm.uiState.value is SetupUiState.Address)
+
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            session.address.complete(seerr.url("/"))
+            val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
+            val untouched = signIn.form
+
+            session.sendCredentials(HandOffCredentials(mode = "Emby", username = "ana", password = "x"))
+            session.sendCredentials(HandOffCredentials(mode = "Plex"))
+            session.sendCredentials(HandOffCredentials(mode = "NotAMode"))
+
+            assertEquals(untouched, (vm.uiState.value as SetupUiState.SignIn).form)
+        }
+
     private class FakeSession(
         override val url: String = "http://192.168.1.20:41234/a/aaaaaaaa",
     ) : AddressHandOffSession {
+        override val scanUrl: String get() = "$url#k=${"A".repeat(43)}"
+
         val address = CompletableDeferred<String>()
+
+        /** Where a test hands the VM credentials, the way the listener would after opening them. */
+        @Volatile
+        var sendCredentials: (HandOffCredentials) -> Unit = {}
 
         /** What the VM told the page when it last asked, for a test to read. */
         @Volatile
@@ -255,8 +312,10 @@ class SetupViewModelHandOffTest {
         override suspend fun serve(
             progress: () -> HandOffProgress,
             onAddress: (String) -> Unit,
+            onCredentials: (HandOffCredentials) -> Unit,
         ) {
             this.progress = progress
+            sendCredentials = onCredentials
             onAddress(address.await())
             awaitCancellation()
         }

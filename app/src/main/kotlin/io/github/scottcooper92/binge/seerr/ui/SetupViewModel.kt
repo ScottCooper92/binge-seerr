@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
+import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
 import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
@@ -98,6 +99,17 @@ class SetupViewModel
                 onAddress = { address ->
                     draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
                     inspect()
+                },
+                // Credentials a phone app sealed for this TV, already opened by the listener. They go into the form and
+                // through connect() exactly as if typed, so a refusal or a failure reads the same on both screens. Taken
+                // only on the sign-in step, for a mode that has fields to fill, and never while another attempt runs.
+                onCredentials = { credentials ->
+                    val current = draft.value
+                    val form = current.server?.takeIf { !current.busy }?.let { credentials.toSignInForm(it.modes) }
+                    if (form != null) {
+                        draft.update { it.copy(form = form, error = null) }
+                        connect()
+                    }
                 },
                 progress = { uiState.value.toHandOffProgress(draft.value.received) },
             )
@@ -353,6 +365,16 @@ class SetupViewModel
         }
     }
 
+/** [this] as a form for one of the server's [offered] modes that has fields to fill; null for any other, or one that is not a mode. */
+private fun HandOffCredentials.toSignInForm(offered: List<SeerrSignInMode>): SignInForm? {
+    val mode =
+        runCatching { SeerrSignInMode.valueOf(mode) }.getOrNull()?.takeIf { it in offered && it in HandOffSignInModes } ?: return null
+    return SignInForm(mode = mode, apiKey = apiKey, username = username, email = email, password = password)
+}
+
+/** The sign-in modes a phone can send credentials for: the ones with fields to fill. Plex and Quick Connect finish with a code. */
+private val HandOffSignInModes = setOf(SeerrSignInMode.ApiKey, SeerrSignInMode.Local, SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby)
+
 /** Where the phone's page should say the TV has got to. [received] is whether the address came from a phone. */
 private fun SetupUiState.toHandOffProgress(received: Boolean): HandOffProgress =
     when (this) {
@@ -363,7 +385,12 @@ private fun SetupUiState.toHandOffProgress(received: Boolean): HandOffProgress =
                 received && error != null -> HandOffProgress.Failed
                 else -> HandOffProgress.Waiting
             }
-        is SetupUiState.SignIn -> HandOffProgress.SignIn(server.title)
+        is SetupUiState.SignIn ->
+            HandOffProgress.SignIn(
+                server = server.title,
+                modes = server.modes.filter { it in HandOffSignInModes }.map { it.name },
+                failed = error != null,
+            )
         is SetupUiState.Connected -> HandOffProgress.Connected
     }
 

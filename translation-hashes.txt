@@ -352,6 +352,13 @@ app:send_address_tag_sent_before  0ba607067400
 app:send_address_tag_server_url  22f5ebc3ad3f
 app:send_address_tag_this_phone  154bf57eb258
 app:send_address_title  88657b780582
+app:send_signin_connected  fa1da6d9b5d6
+app:send_signin_form  eed872434e62
+app:send_signin_lost  0b8b0899c90a
+app:send_signin_on_tv  b0724ebd3943
+app:send_signin_rejected  61c349dccc4a
+app:send_signin_sealed  f9b731a94053
+app:send_signin_waiting  11ff6a385209
 app:server_settings_about_behind  16813cfc29da
 app:server_settings_about_commit  82a9c46ffa47
 app:server_settings_about_data_directory  5e6050c24c42

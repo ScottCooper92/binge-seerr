@@ -8,14 +8,21 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.handoff.AddressSender
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
 import io.github.scottcooper92.binge.seerr.handoff.DataStoreHandOffAddressMemory
+import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
+import io.github.scottcooper92.binge.seerr.handoff.HandOffKey
+import io.github.scottcooper92.binge.seerr.handoff.HandOffStatus
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffTarget
+import io.github.scottcooper92.binge.seerr.handoff.TvSignInClient
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -65,6 +72,32 @@ class SendAddressViewModelTest {
 
     private val sender = RecordingSender()
 
+    /** Answers with [statuses] in turn, the last one for ever; records what it was asked to send. */
+    private class FakeTv : TvSignInClient {
+        var statuses: MutableList<HandOffStatus?> = mutableListOf(HandOffStatus(HandOffStatus.WAITING))
+        val sentCredentials = mutableListOf<HandOffCredentials>()
+        var accept = true
+
+        override suspend fun status(target: TvHandOffTarget): HandOffStatus? =
+            if (statuses.size >
+                1
+            ) {
+                statuses.removeAt(0)
+            } else {
+                statuses.first()
+            }
+
+        override suspend fun send(
+            target: TvHandOffTarget,
+            credentials: HandOffCredentials,
+        ): Boolean {
+            sentCredentials += credentials
+            return accept
+        }
+    }
+
+    private val tv = FakeTv()
+
     private val memory = DataStoreHandOffAddressMemory(InMemoryDataStore())
 
     private suspend fun TestScope.viewModel(
@@ -82,12 +115,21 @@ class SendAddressViewModelTest {
             SendAddressViewModel(
                 connection = SeerrConnection(store, SeerrApiFactory(logRequests = false)),
                 sender = sender,
+                tv = tv,
                 applicationUrl = { applicationUrl },
                 memory = memory,
                 dispatcher = mainDispatcherRule.dispatcher,
                 link = link,
             )
         viewModels.put(vm.hashCode().toString(), vm)
+        // Cleared when the test body ends, before the virtual clock is run out: a poll left running would turn it for ever.
+        backgroundScope.launch {
+            try {
+                awaitCancellation()
+            } finally {
+                viewModels.clear()
+            }
+        }
         return vm
     }
 
@@ -270,4 +312,142 @@ class SendAddressViewModelTest {
 
         override fun decrypt(ciphertext: String): String = ciphertext
     }
+
+    /** What a scanned code adds to the link: the key that seals credentials. */
+    private val scannedLink = "$LINK&k=${HandOffKey.generate().encoded()}"
+
+    @Test
+    fun `a typed address and a link without a key end at Sent, as before`() =
+        runTest {
+            val vm = viewModel(LINK, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+
+            vm.send()
+
+            assertEquals(SendAddressUiState.Sent("192.168.86.53"), vm.uiState.first { it is SendAddressUiState.Sent })
+        }
+
+    @Test
+    fun `a scanned code takes a phone with no server to the address field, empty`() =
+        runTest {
+            val ready = viewModel(scannedLink).settled() as SendAddressUiState.Ready
+
+            assertEquals("", ready.address)
+            assertFalse(ready.canSend)
+            assertTrue(ready.suggestions.isEmpty())
+        }
+
+    @Test
+    fun `after the address the sheet follows the TV to its sign-in form, and sends what is typed, sealed by the client`() =
+        runTest {
+            tv.statuses =
+                mutableListOf(
+                    HandOffStatus(HandOffStatus.CHECKING),
+                    HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local", "Jellyfin")),
+                )
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+
+            vm.send()
+            val form = vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
+            val step = (form as SendAddressUiState.SigningIn).step as SignInStep.Form
+            assertEquals(listOf(SeerrSignInMode.Local, SeerrSignInMode.Jellyfin), step.modes)
+            assertEquals("Living room", step.server)
+            assertFalse(step.canSend)
+
+            vm.editSignIn { copy(email = "ana@example.com", password = "correct horse") }
+            vm.sendSignIn()
+
+            assertEquals(
+                listOf(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "correct horse")),
+                tv.sentCredentials,
+            )
+        }
+
+    @Test
+    fun `the TV saying no brings the form back with its fields, and saying yes ends on Connected`() =
+        runTest {
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+            vm.send()
+            vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
+            vm.editSignIn { copy(username = "ana", password = "wrong") }
+
+            vm.sendSignIn()
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin"), failed = true))
+            val rejected = vm.uiState.first { it is SendAddressUiState.SigningIn && (it.step as? SignInStep.Form)?.rejected == true }
+            val step = (rejected as SendAddressUiState.SigningIn).step as SignInStep.Form
+            assertEquals("ana", step.form.username)
+            assertFalse(step.isSending)
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.CONNECTED))
+            assertEquals(
+                SignInStep.Connected,
+                (
+                    vm.uiState.first {
+                        (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Connected
+                    } as SendAddressUiState.SigningIn
+                ).step,
+            )
+        }
+
+    @Test
+    fun `a TV that could not use the address returns the sheet to the field, and one that goes quiet is lost`() =
+        runTest {
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.FAILED))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+            vm.send()
+            val back = vm.uiState.first { it is SendAddressUiState.Ready && it.failed } as SendAddressUiState.Ready
+            assertEquals("http://seerr.lan:5055/", back.address)
+
+            tv.statuses = mutableListOf(null)
+            vm.send()
+            assertEquals(
+                SignInStep.Lost,
+                (
+                    vm.uiState.first {
+                        (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Lost
+                    } as SendAddressUiState.SigningIn
+                ).step,
+            )
+        }
+
+    @Test
+    fun `a TV that offers only sign-ins finished on its own screen says so, and a refused send shows the form again`() =
+        runTest {
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Plex", "QuickConnect")))
+            val onTv = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            onTv.settled()
+            onTv.send()
+            assertEquals(
+                SignInStep.OnTv("Home"),
+                (
+                    onTv.uiState.first {
+                        (it as? SendAddressUiState.SigningIn)?.step is SignInStep.OnTv
+                    } as SendAddressUiState.SigningIn
+                ).step,
+            )
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Local")))
+            tv.accept = false
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+            vm.send()
+            vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
+            vm.editSignIn { copy(email = "a@b.c", password = "x") }
+            vm.sendSignIn()
+            assertTrue(
+                (
+                    (
+                        vm.uiState.first {
+                            (it as? SendAddressUiState.SigningIn)?.step.let { s ->
+                                s is SignInStep.Form && s.rejected
+                            }
+                        } as SendAddressUiState.SigningIn
+                    ).step as SignInStep.Form
+                ).rejected,
+            )
+        }
 }

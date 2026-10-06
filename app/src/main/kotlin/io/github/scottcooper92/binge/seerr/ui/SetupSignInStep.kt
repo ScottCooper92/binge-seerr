@@ -120,7 +120,7 @@ private fun ServerHeader(
 }
 
 @Composable
-private fun ModeChips(
+internal fun ModeChips(
     server: SetupServer,
     selected: SeerrSignInMode,
     onSelect: (SeerrSignInMode) -> Unit,
@@ -140,7 +140,7 @@ private fun ModeChips(
 }
 
 @Composable
-private fun ModeFields(
+internal fun ModeFields(
     state: SetupUiState.SignIn,
     onEdit: (SignInForm.() -> SignInForm) -> Unit,
     onRequestPasswordReset: () -> Unit,
