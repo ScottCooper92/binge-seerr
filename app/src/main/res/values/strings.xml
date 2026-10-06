@@ -919,8 +919,8 @@
     </plurals>
 
     <!-- The television surface: setup and the advanced picker, driven from a remote. -->
-    <string name="tv_setup_headline">Connect a server</string>
-    <string name="tv_setup_address_body">Type the address of your Seerr, Jellyseerr or Overseerr server, or read it from the phone app\'s Settings if you\'re already signed in there. Press the centre button on a field to bring up the keyboard.</string>
+    <string name="tv_setup_headline">Connect to your server</string>
+    <string name="tv_setup_address_body">Type your Seerr, Jellyseerr or Overseerr server\'s address with your remote, or copy it from the phone app\'s Settings if you\'re signed in there.</string>
     <string name="tv_setup_checking">Checking the server…</string>
     <string name="tv_setup_sign_in_body">Sign in with an API key, an account typed on the remote, Quick Connect, or a Plex code.</string>
     <string name="tv_setup_mode_title">Sign in with</string>
@@ -931,16 +931,13 @@
     <string name="tv_advanced_submitting">Sending the request…</string>
 
     <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
-    <string name="tv_setup_send_from_phone">Send the address from your phone</string>
-    <string name="tv_handoff_title">Send the address from your phone</string>
-    <string name="tv_handoff_body">Scan the code with your phone\'s camera. It opens a page where you can type the address on the phone\'s keyboard, or send it from the phone app if you\'re signed in there.</string>
-    <string name="tv_handoff_no_camera">No camera app? Open the address under the code in the phone\'s browser.</string>
-    <string name="tv_handoff_note">The code works once, for 5 minutes, from a phone on the same network as this TV.</string>
+    <string name="tv_setup_send_from_phone">Scan a QR</string>
+    <string name="tv_handoff_body">Scan the code with your phone\'s camera to enter your server\'s address on its keyboard, or send it from the phone app if you\'re signed in there.</string>
+    <string name="tv_handoff_note">Your second device needs to be on the same network as your TV.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
     <string name="tv_handoff_no_network">This TV isn\'t on a Wi-Fi or wired home network, so a phone can\'t reach it. Type the address instead.</string>
     <string name="tv_handoff_could_not_listen">This TV couldn\'t open a connection for your phone. Type the address instead.</string>
-    <string name="tv_handoff_type_instead">Type it instead</string>
-    <string name="setup_error_handoff_expired">The code expired before a phone sent an address. Try again.</string>
+    <string name="tv_handoff_type_instead">Type it</string>
     <string name="handoff_page_title">Send the server address to your TV</string>
     <string name="handoff_page_body">Type the address of your Seerr, Jellyseerr or Overseerr server. Your TV checks it, then asks you to sign in there.</string>
     <string name="handoff_page_field">Server address</string>

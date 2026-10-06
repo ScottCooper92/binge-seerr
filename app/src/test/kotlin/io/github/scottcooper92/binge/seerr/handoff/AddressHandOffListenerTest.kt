@@ -20,7 +20,7 @@ import java.net.Socket
 import java.nio.charset.StandardCharsets
 import kotlin.concurrent.thread
 
-private const val TOKEN = "abcdefghijklmnopqrstuv"
+private const val TOKEN = "k7m2pqx4"
 
 /**
  * The television's listener over real loopback sockets: what it answers, what it refuses, and that

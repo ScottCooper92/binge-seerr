@@ -8,7 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.URLDecoder
 
-private const val TOKEN = "AbC-_0123456789abcdefg"
+private const val TOKEN = "k7m2pqx4"
 
 /** The link from the TV's page to the phone app: built and read in one place, and refused unless it names a TV on the LAN. */
 class TvHandOffLinksTest {
@@ -75,10 +75,10 @@ class TvHandOffLinksTest {
     }
 
     @Test
-    fun `a token is 128 random bits, url-safe, and fresh each time`() {
+    fun `a token is short enough to type, free of look-alike characters, and fresh each time`() {
         val token = newHandOffToken()
 
-        assertTrue(Regex("[A-Za-z0-9_-]{22}").matches(token))
+        assertTrue(Regex("[abcdefghjkmnpqrstuvwxyz23456789]{8}").matches(token))
         assertNotEquals(token, newHandOffToken())
     }
 }

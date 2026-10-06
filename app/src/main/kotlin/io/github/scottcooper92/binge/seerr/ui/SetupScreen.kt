@@ -81,5 +81,4 @@ internal fun SetupError.messageRes(): Int =
         SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
         SetupError.Unknown -> R.string.setup_error_unknown
         SetupError.LinkExpired -> R.string.setup_error_link_expired
-        SetupError.HandOffExpired -> R.string.setup_error_handoff_expired
     }

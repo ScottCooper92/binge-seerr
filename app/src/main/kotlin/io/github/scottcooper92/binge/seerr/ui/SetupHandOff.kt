@@ -14,13 +14,14 @@ import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-/** How long a hand-off code stays good when no phone uses it. */
+/** How long a hand-off code stays good when no phone uses it; a fresh one then takes its place. */
 internal val HAND_OFF_TIMEOUT: Duration = 5.minutes
 
 /**
  * The television's "send the address from your phone" (#323): it opens a listener, shows its code
  * through [onState], and hands the one address a phone sends to [onAddress]. The listener is closed
- * on every way out — an address, [HAND_OFF_TIMEOUT] ([onExpired]), [cancel], or the scope ending.
+ * on every way out — an address, [cancel], or the scope ending; every [HAND_OFF_TIMEOUT] without one, it is replaced by a new
+ * listener and code.
  *
  * Nothing here is kept in `SavedStateHandle` the way [SetupLinks] keeps a pending sign-in. A listening
  * socket does not outlive its process, so a code restored after process death would point at
@@ -32,7 +33,6 @@ internal class SetupHandOff(
     private val handOffs: AddressHandOffs,
     private val onState: (AddressHandOff?) -> Unit,
     private val onAddress: (String) -> Unit,
-    private val onExpired: () -> Unit,
     private val timeout: Duration = HAND_OFF_TIMEOUT,
 ) {
     private var job: Job? = null
@@ -53,25 +53,30 @@ internal class SetupHandOff(
         session = null
     }
 
+    /**
+     * A code is good for [timeout], then a fresh one (new port, new token) takes its place until an address
+     * arrives or the plate goes: the page is a place to wait, not a form that times out.
+     */
     private suspend fun listen() {
-        val opening =
-            try {
-                handOffs.open()
-            } catch (_: IOException) {
-                return onState(AddressHandOff.Unavailable(AddressHandOff.Reason.CouldNotListen))
-            }
-        val opened =
-            opening as? HandOffOpening.Opened
-                ?: return onState(AddressHandOff.Unavailable(AddressHandOff.Reason.NoLocalNetwork))
-        val listening = opened.session
+        var renew = true
+        while (renew) renew = listenOnce()
+    }
+
+    /** One code's life. True when it lapsed unused and wants replacing; false when the hand-off is over. */
+    private suspend fun listenOnce(): Boolean {
+        val listening = openSession() ?: return false
+        var lapsed = false
         try {
             // open() is not cancellable: a cancel() that ran meanwhile must not bring the plate back.
             currentCoroutineContext().ensureActive()
             session = listening
             onState(AddressHandOff.Listening(listening.url))
             val address = withTimeoutOrNull(timeout) { listening.awaitAddress() }
-            onState(null)
-            if (address == null) onExpired() else onAddress(address)
+            lapsed = address == null
+            if (address != null) {
+                onState(null)
+                onAddress(address)
+            }
         } catch (_: IOException) {
             // Closing the socket is how cancel() stops a listener mid-accept; that is not a failure to show.
             currentCoroutineContext().ensureActive()
@@ -79,5 +84,18 @@ internal class SetupHandOff(
         } finally {
             listening.close()
         }
+        return lapsed
     }
+
+    /** The listener, or null after saying why there is none. */
+    private fun openSession(): AddressHandOffSession? =
+        try {
+            when (val opening = handOffs.open()) {
+                is HandOffOpening.Opened -> opening.session
+                HandOffOpening.NoLocalNetwork -> null.also { onState(AddressHandOff.Unavailable(AddressHandOff.Reason.NoLocalNetwork)) }
+            }
+        } catch (_: IOException) {
+            onState(AddressHandOff.Unavailable(AddressHandOff.Reason.CouldNotListen))
+            null
+        }
 }

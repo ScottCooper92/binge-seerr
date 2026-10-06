@@ -1,18 +1,32 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvIconButton
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
+import com.binge.designsystem.tv.focus.TvOverlayArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
@@ -26,6 +40,8 @@ import io.github.scottcooper92.binge.seerr.ui.label
 import io.github.scottcooper92.binge.seerr.ui.messageRes
 import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.submitLabelRes
+import kotlinx.coroutines.delay
+import com.binge.designsystem.R as DesR
 
 /** The control a preview seeds as focused; production passes null and the page lands where it lands. */
 internal enum class TvSetupFocus { Address, Continue, Credential, Connect }
@@ -42,15 +58,30 @@ internal fun TvSetupScreen(
     actions: SetupActions,
     modifier: Modifier = Modifier,
     initialFocus: TvSetupFocus? = null,
+    offerHandOff: Boolean = false,
 ) {
+    // The code is the first thing the address step shows: a remote is a poor keyboard, so typing is the way
+    // out of the plate, not the way in. Once, so backing out of it to type is not undone by the next recompose.
+    var offeredHandOff by rememberSaveable { mutableStateOf(false) }
+    // Until the first code is up the address step shows its page with an empty second pane, not the typed form
+    // for a frame: the field would take focus and flick the keyboard up.
+    var settled by rememberSaveable { mutableStateOf(!offerHandOff) }
+    val handOffUp = (state as? SetupUiState.Address)?.handOff != null
+    LaunchedEffect(state is SetupUiState.Address) {
+        if (offerHandOff && state is SetupUiState.Address && !offeredHandOff) {
+            offeredHandOff = true
+            if (state.handOff == null) actions.onStartHandOff()
+            // A start that never produces a code must not leave the pane empty.
+            delay(HAND_OFF_START_GRACE_MS)
+            settled = true
+        }
+    }
+    LaunchedEffect(handOffUp) { if (handOffUp) settled = true }
     when (state) {
         // The home swaps to the connected plate on the credentials landing; this is the frame in between.
         SetupUiState.Loading, is SetupUiState.Connected -> TvLoadingPlate(modifier = modifier)
-        // The hand-off from a phone takes the whole page too: a code to scan, and nothing to type.
-        is SetupUiState.Address ->
-            state.handOff
-                ?.let { handOff -> TvAddressHandOffPlate(handOff, actions.onCancelHandOff, modifier) }
-                ?: TvSetupAddressStep(state, actions, modifier, initialFocus)
+        // One page for the code and the form, so only its second pane changes between them.
+        is SetupUiState.Address -> TvSetupAddressPage(state, actions, modifier, initialFocus, awaitingCode = !settled)
         // A link flow takes the whole page: the code is the only thing to read, and the only thing to do
         // is wait or back out.
         is SetupUiState.SignIn ->
@@ -60,20 +91,69 @@ internal fun TvSetupScreen(
     }
 }
 
+private const val HAND_OFF_START_GRACE_MS = 3_000L
+
+/**
+ * The address step: one page whose left pane stays put while the right one swaps between the code for a phone
+ * and the typed form, so choosing between them changes only what there is to do.
+ */
 @Composable
-private fun TvSetupAddressStep(
+private fun TvSetupAddressPage(
     state: SetupUiState.Address,
     actions: SetupActions,
     modifier: Modifier,
     initialFocus: TvSetupFocus?,
+    awaitingCode: Boolean,
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
+    val handOff = state.handOff
+    val showingCode = handOff != null || awaitingCode
+    // The target moves from the field to the button, or back, as the pane swaps; offer focus again when it does.
+    TvOverlayArrivalFocusEffect(arrival.requester, key = showingCode to (handOff != null))
     TvFormPage(
         headline = stringResource(R.string.tv_setup_headline),
-        body = stringResource(R.string.tv_setup_address_body),
+        body = stringResource(if (showingCode) R.string.tv_handoff_body else R.string.tv_setup_address_body),
         icon = Icons.Filled.Dns,
         modifier = modifier,
+        actionScrolls = !showingCode,
+        note = if (showingCode) stringResource(R.string.tv_handoff_note) else null,
+        // The switch between the two panes is in the same place on both, and is the only thing pinned.
+        pinnedAction = {
+            if (showingCode) {
+                TvHandOffTypeInstead(onClick = actions.onCancelHandOff, arrival = arrival, enabled = handOff != null)
+            } else {
+                TvButton(
+                    label = stringResource(R.string.tv_setup_send_from_phone),
+                    onClick = actions.onStartHandOff,
+                    enabled = !state.isInspecting,
+                    modifier = Modifier.tvArrivalTarget(arrival),
+                )
+            }
+        },
+    ) {
+        when {
+            handOff != null -> {
+                TvHandOffLifecycle(actions.onCancelHandOff)
+                TvHandOffContent(handOff)
+            }
+            awaitingCode -> Unit
+            else -> TvSetupAddressFields(state, actions, initialFocus)
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.TvSetupAddressFields(
+    state: SetupUiState.Address,
+    actions: SetupActions,
+    initialFocus: TvSetupFocus?,
+) {
+    // The way on sits beside the field, as tall as it, so the address and what to do with it read as one row.
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        verticalAlignment = Alignment.Bottom,
     ) {
         TvTextField(
             value = state.serverUrl,
@@ -81,37 +161,39 @@ private fun TvSetupAddressStep(
             label = stringResource(R.string.setup_server_url),
             enabled = !state.isInspecting,
             keyboardType = KeyboardType.Uri,
+            fillWidth = true,
+            modifier = Modifier.weight(1f),
             placeholder = stringResource(R.string.placeholder_server_url),
             initiallyFocused = initialFocus == TvSetupFocus.Address,
-            arrival = arrival,
         )
-        if (state.insecure) {
-            TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
-            TvOptionRow(
-                label = stringResource(R.string.setup_allow_cleartext),
-                selected = state.cleartextAllowed,
-                onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
-                modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
-            )
-        }
-        state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
-        if (state.needsLocalNetwork) {
-            val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
-            TvFormNote(stringResource(R.string.setup_local_network_explanation))
-            TvButton(label = stringResource(allow.label), onClick = allow.run, style = TvButtonStyle.Secondary)
-        }
-        TvButton(
+        TvIconButton(
+            icon = Icons.AutoMirrored.Filled.ArrowForward,
             label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
             onClick = actions.onInspect,
             style = TvButtonStyle.Primary,
             enabled = state.canContinue,
             initiallyFocused = initialFocus == TvSetupFocus.Continue,
+            modifier =
+                Modifier
+                    .height(
+                        dimensionResource(R.dimen.tv_form_field_height),
+                    ).widthIn(min = dimensionResource(R.dimen.tv_form_field_height)),
         )
-        TvButton(
-            label = stringResource(R.string.tv_setup_send_from_phone),
-            onClick = actions.onStartHandOff,
-            enabled = !state.isInspecting,
+    }
+    if (state.insecure) {
+        TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
+        TvOptionRow(
+            label = stringResource(R.string.setup_allow_cleartext),
+            selected = state.cleartextAllowed,
+            onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
+            modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
         )
+    }
+    state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
+    if (state.needsLocalNetwork) {
+        val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
+        TvFormNote(stringResource(R.string.setup_local_network_explanation))
+        TvButton(label = stringResource(allow.label), onClick = allow.run, style = TvButtonStyle.Secondary)
     }
 }
 

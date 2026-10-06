@@ -30,7 +30,7 @@ internal fun TvSeerrShell(viewModel: TvHomeViewModel = hiltViewModel()) {
 @Composable
 private fun TvSetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    TvSetupScreen(state = state, actions = viewModel.tvActions())
+    TvSetupScreen(state = state, actions = viewModel.tvActions(), offerHandOff = true)
 }
 
 /** The hand-off's television shell: the same state and callbacks as the phone's picker, under the TV theme. */
