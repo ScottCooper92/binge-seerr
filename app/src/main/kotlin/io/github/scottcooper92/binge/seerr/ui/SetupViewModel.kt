@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
+import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
 import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
@@ -98,6 +99,7 @@ class SetupViewModel
                     draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
                     inspect()
                 },
+                progress = { uiState.value.toHandOffProgress(draft.value.received) },
             )
 
         init {
@@ -188,6 +190,9 @@ class SetupViewModel
          */
         fun showHandOff(showing: Boolean) {
             if (!showing) {
+                // Once an address is in, the plate going is the page moving on, not the user leaving: the listener
+                // stays up to tell the phone how the sign-in went, and ends on its own.
+                if (draft.value.received) return
                 handOff.cancel()
                 draft.update { it.copy(handOff = null) }
                 return
@@ -346,6 +351,20 @@ class SetupViewModel
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L
         }
+    }
+
+/** Where the phone's page should say the TV has got to. [received] is whether the address came from a phone. */
+private fun SetupUiState.toHandOffProgress(received: Boolean): HandOffProgress =
+    when (this) {
+        SetupUiState.Loading -> HandOffProgress.Checking
+        is SetupUiState.Address ->
+            when {
+                isInspecting -> HandOffProgress.Checking
+                received && error != null -> HandOffProgress.Failed
+                else -> HandOffProgress.Waiting
+            }
+        is SetupUiState.SignIn -> HandOffProgress.SignIn(server.title)
+        is SetupUiState.Connected -> HandOffProgress.Connected
     }
 
 private fun SeerrServerPreview.toSetupServer(): SetupServer {

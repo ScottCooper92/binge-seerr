@@ -19,11 +19,16 @@ interface AddressHandOffSession {
     val url: String
 
     /**
-     * Serves the page until a phone posts an address the TV can use, and returns it. Cancellable:
-     * the listener stops within [ACCEPT_POLL_MILLIS] of being cancelled, or once the connection
-     * it is answering at the time has finished.
+     * Serves the page until cancelled or closed. [progress] is read on every request, so the page follows the
+     * TV; [onAddress] gets each acceptable address a phone posts while [progress] still accepts one, which
+     * is the first, and any sent again after a server that could not be reached. Cancellable: the listener
+     * stops within [ACCEPT_POLL_MILLIS] of being cancelled, or once the connection it is answering at the
+     * time has finished.
      */
-    suspend fun awaitAddress(): String
+    suspend fun serve(
+        progress: () -> HandOffProgress,
+        onAddress: (String) -> Unit,
+    )
 
     /** Stops listening. Safe to call more than once and from any thread. */
     fun close()
@@ -68,11 +73,13 @@ internal class AddressHandOffListener(
 ) : AddressHandOffSession {
     private val path = "/a/$token".toByteArray(StandardCharsets.UTF_8)
 
-    override suspend fun awaitAddress(): String =
+    override suspend fun serve(
+        progress: () -> HandOffProgress,
+        onAddress: (String) -> Unit,
+    ) {
         withContext(dispatcher) {
             server.soTimeout = ACCEPT_POLL_MILLIS
-            var accepted: String? = null
-            while (accepted == null) {
+            while (true) {
                 ensureActive()
                 val client =
                     try {
@@ -80,15 +87,18 @@ internal class AddressHandOffListener(
                     } catch (_: SocketTimeoutException) {
                         null
                     }
-                accepted = client?.use(::serve)
+                client?.use { serve(it, progress) }?.let(onAddress)
             }
-            accepted
         }
+    }
 
     override fun close() = server.close()
 
     /** Answers one connection, and returns the address it carried if it was accepted. */
-    private fun serve(client: Socket): String? {
+    private fun serve(
+        client: Socket,
+        progress: () -> HandOffProgress,
+    ): String? {
         client.soTimeout = limits.readTimeoutMillis
         val outcome =
             try {
@@ -100,7 +110,7 @@ internal class AddressHandOffListener(
         val (response, address) =
             when (outcome) {
                 is ReadOutcome.Refused -> HandOffResponse(outcome.status, page.refused()) to null
-                is ReadOutcome.Parsed -> respond(outcome.request)
+                is ReadOutcome.Parsed -> respond(outcome.request, progress())
             }
         try {
             client.getOutputStream().apply {
@@ -140,21 +150,32 @@ internal class AddressHandOffListener(
     }
 
     /** The answer to one parsed request, and the address it accepted, if any. */
-    internal fun respond(request: HandOffRequest): Pair<HandOffResponse, String?> {
+    internal fun respond(
+        request: HandOffRequest,
+        progress: HandOffProgress = HandOffProgress.Waiting,
+    ): Pair<HandOffResponse, String?> {
         val target = request.target.substringBefore('?').toByteArray(StandardCharsets.UTF_8)
         if (!MessageDigest.isEqual(target, path)) return HandOffResponse(HttpStatus.NotFound, page.refused()) to null
         val language = request.header("accept-language")
         return when (request.method) {
-            "GET" -> HandOffResponse(HttpStatus.Ok, page.form(language, invalid = false)) to null
-            "POST" -> {
-                val address = request.body.formFields()["address"]?.trim()
-                if (address != null && address.isNotEmpty() && isAcceptable(address)) {
-                    HandOffResponse(HttpStatus.Ok, page.sent(language)) to address
-                } else {
-                    HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true)) to null
-                }
-            }
+            "GET" -> HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
+            "POST" -> post(request, progress, language)
             else -> HandOffResponse(HttpStatus.NotFound, page.refused()) to null
+        }
+    }
+
+    /** An address is read only while the TV is waiting for one; otherwise a post is answered with where things stand. */
+    private fun post(
+        request: HandOffRequest,
+        progress: HandOffProgress,
+        language: String?,
+    ): Pair<HandOffResponse, String?> {
+        if (!progress.acceptsAddress) return HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
+        val address = request.body.formFields()["address"]?.trim()
+        return if (address != null && address.isNotEmpty() && isAcceptable(address)) {
+            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking)) to address
+        } else {
+            HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true)) to null
         }
     }
 }

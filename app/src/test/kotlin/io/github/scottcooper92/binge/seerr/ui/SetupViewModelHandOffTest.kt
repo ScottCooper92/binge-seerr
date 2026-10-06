@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffSession
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.HandOffOpening
+import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.plexTvApi
@@ -19,10 +20,13 @@ import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -110,6 +114,29 @@ class SetupViewModelHandOffTest {
 
             val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
             assertEquals(seerr.url("/"), signIn.server.baseUrl)
+        }
+
+    @Test
+    fun `the listener outlives the address so the page can follow the sign-in, and goes when nobody finishes it`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+
+            session.address.complete(seerr.url("/"))
+            val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
+
+            // The plate going when the address arrived is the page moving on: it must not close the listener.
+            vm.showHandOff(false)
+            assertFalse(session.closed)
+            assertEquals(HandOffProgress.SignIn(signIn.server.title), session.progress())
+
+            // Nobody signs in, so the virtual clock runs out the sign-in timeout and the listener is let go.
+            withTimeout(HAND_OFF_SIGN_IN_TIMEOUT * 2) { while (!session.closed) delay(1_000) }
             assertTrue(session.closed)
         }
 
@@ -218,10 +245,21 @@ class SetupViewModelHandOffTest {
     ) : AddressHandOffSession {
         val address = CompletableDeferred<String>()
 
+        /** What the VM told the page when it last asked, for a test to read. */
+        @Volatile
+        var progress: () -> HandOffProgress = { HandOffProgress.Waiting }
+
         @Volatile
         var closed = false
 
-        override suspend fun awaitAddress(): String = address.await()
+        override suspend fun serve(
+            progress: () -> HandOffProgress,
+            onAddress: (String) -> Unit,
+        ) {
+            this.progress = progress
+            onAddress(address.await())
+            awaitCancellation()
+        }
 
         override fun close() {
             closed = true

@@ -99,6 +99,11 @@ internal class LanAddressHandOffs
                 storeName = resources.getString(R.string.handoff_page_store_name),
                 sentTitle = resources.getString(R.string.handoff_page_sent_title),
                 sentBody = resources.getString(R.string.handoff_page_sent_body),
+                failed = resources.getString(R.string.handoff_page_failed),
+                signInTitle = resources.getString(R.string.handoff_page_signin_title),
+                signInBody = { server -> resources.getString(R.string.handoff_page_signin_body, server) },
+                connectedTitle = resources.getString(R.string.handoff_page_connected_title),
+                connectedBody = resources.getString(R.string.handoff_page_connected_body),
             )
         }
     }

@@ -919,7 +919,12 @@
     <string name="handoff_page_install">Puedes instalar %1$s desde %2$s</string>
     <string name="handoff_page_store_name">Google Play Store</string>
     <string name="handoff_page_sent_title">Enviada</string>
-    <string name="handoff_page_sent_body">Tu televisor tiene la dirección y está comprobando el servidor. Ya puedes cerrar esta página.</string>
+    <string name="handoff_page_sent_body">Tu televisor tiene la dirección y está comprobando el servidor. Esta página lo sigue.</string>
+    <string name="handoff_page_failed">Tu televisor no pudo llegar a un servidor Seerr en esa dirección. Revísala y envíala de nuevo.</string>
+    <string name="handoff_page_signin_title">Termina en tu televisor</string>
+    <string name="handoff_page_signin_body">Tu televisor encontró %1$s. Inicia sesión allí con el mando.</string>
+    <string name="handoff_page_connected_title">Conectado</string>
+    <string name="handoff_page_connected_body">Tu televisor ha iniciado sesión. Ya puedes cerrar esta página.</string>
     <string name="send_address_title">Enviar la dirección a tu televisor</string>
     <string name="send_address_confirm">¿Enviar la dirección de este servidor al televisor en %1$s?</string>
     <string name="send_address_only_address">Solo se envía la dirección. Tu sesión se queda en este móvil, y en el televisor inicias sesión tú.</string>
