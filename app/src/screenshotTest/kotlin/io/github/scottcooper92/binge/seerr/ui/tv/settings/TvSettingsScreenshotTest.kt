@@ -3,6 +3,9 @@ package io.github.scottcooper92.binge.seerr.ui.tv.settings
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
+import io.github.scottcooper92.binge.seerr.ui.hub.previewAdminOverview
+import io.github.scottcooper92.binge.seerr.ui.hub.previewReady
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettings
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettingsAdmin
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettingsWithApp
@@ -45,6 +48,35 @@ class TvSettingsScreenshotTest {
             onDisconnect = {},
             initialFocusedKey = KEY_MEDIA_SERVER,
             initialFocusedOptionLabel = "Start library scan",
+        )
+    }
+
+    /** What the home board used to carry at its head: whether the server answers, and an update where there is one. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ServerStatus() {
+        TvSettingsBoard(
+            state = SampleSettings,
+            onEditConnection = {},
+            onDisconnect = {},
+            hub = previewReady(overview = previewAdminOverview()),
+            initialFocusedKey = KEY_ACTIVITY,
+        )
+    }
+
+    /** Binge missing: the row carries the one option, opening its Play Store listing. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ServerStatusBingeMissing() {
+        TvSettingsBoard(
+            state = SampleSettings,
+            onEditConnection = {},
+            onDisconnect = {},
+            hub = previewReady(overview = previewAdminOverview(), bingeStatus = BingeStatus.NotInstalled),
+            initialFocusedKey = KEY_BINGE,
+            initialFocusedOptionLabel = "Open the Play Store",
         )
     }
 
