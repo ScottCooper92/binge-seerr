@@ -21,6 +21,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.template.TvBoard
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
@@ -71,6 +72,8 @@ internal fun TvSettingsBoard(
     initialShowingBugReport: Boolean = false,
     onToggleShareUsageData: (Boolean) -> Unit = {},
     onToggleSendCrashReports: (Boolean) -> Unit = {},
+    hub: HubUiState? = null,
+    onOpenBingeListing: () -> Unit = {},
 ) {
     val ready = state as? SettingsUiState.Ready
     if (ready == null) {
@@ -98,6 +101,8 @@ internal fun TvSettingsBoard(
             disconnectFocus = disconnectFocus,
             onStartLibraryScan = onStartLibraryScan,
             scanNote = scanNote,
+            hub = hub,
+            onOpenBingeListing = onOpenBingeListing,
         ) +
             listOfNotNull(
                 ready.app?.let { app ->
@@ -150,6 +155,8 @@ private fun tvSettingGroups(
     disconnectFocus: FocusRequester,
     onStartLibraryScan: () -> Unit,
     scanNote: String?,
+    hub: HubUiState?,
+    onOpenBingeListing: () -> Unit,
 ): List<TvPaneGroup> {
     val config = state.config
     val readOnly = stringResource(R.string.tv_settings_read_only_note)
@@ -160,6 +167,7 @@ private fun tvSettingGroups(
                 connectionRows(state.connection, state.server, onEditConnection, onDisconnect, disconnectFocus),
             ),
         )
+        hub?.let { serverStatusGroup(it, onOpenBingeListing) }?.let(::add)
         config?.general?.let {
             add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it) {}, readOnly))
         }
