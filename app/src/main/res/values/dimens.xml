@@ -77,7 +77,6 @@
     <dimen name="tv_consent_band_spacing">30dp</dimen>
     <dimen name="tv_consent_heading_gap">10dp</dimen>
     <dimen name="tv_consent_copy_gap">18dp</dimen>
-    <dimen name="tv_consent_reassurance_gap">10dp</dimen>
     <dimen name="tv_consent_footer_gap">14dp</dimen>
     <dimen name="tv_consent_point_padding_h">26dp</dimen>
     <dimen name="tv_consent_point_padding_v">22dp</dimen>
