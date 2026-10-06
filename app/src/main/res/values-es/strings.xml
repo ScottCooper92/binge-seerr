@@ -892,8 +892,8 @@
         <item quantity="many">Quedan %1$d h aprox.</item>
         <item quantity="other">Quedan %1$d h aprox.</item>
     </plurals>
-    <string name="tv_setup_headline">Conectar un servidor</string>
-    <string name="tv_setup_address_body">Escribe la dirección de tu servidor Seerr, Jellyseerr u Overseerr, o léela en Ajustes de la app del móvil si ya has iniciado sesión allí. Pulsa el botón central sobre un campo para abrir el teclado.</string>
+    <string name="tv_setup_headline">Conectar con tu servidor</string>
+    <string name="tv_setup_address_body">Escribe la dirección de tu servidor Seerr, Jellyseerr u Overseerr con el mando, o cópiala de Ajustes en la app del móvil si ya has iniciado sesión allí.</string>
     <string name="tv_setup_checking">Comprobando el servidor…</string>
     <string name="tv_setup_sign_in_body">Inicia sesión con una clave de API, una cuenta escrita desde el mando, Quick Connect o un código de Plex.</string>
     <string name="tv_setup_mode_title">Iniciar sesión con</string>
@@ -902,16 +902,13 @@
     <string name="tv_setup_connecting">Conectando…</string>
     <string name="tv_loading">Cargando…</string>
     <string name="tv_advanced_submitting">Enviando la petición…</string>
-    <string name="tv_setup_send_from_phone">Enviar la dirección desde el móvil</string>
-    <string name="tv_handoff_title">Enviar la dirección desde el móvil</string>
-    <string name="tv_handoff_body">Escanea el código con la cámara del móvil. Abre una página donde puedes escribir la dirección con el teclado del móvil, o enviarla desde la app del móvil si ya has iniciado sesión allí.</string>
-    <string name="tv_handoff_no_camera">¿No tienes app de cámara? Abre en el navegador del móvil la dirección que aparece bajo el código.</string>
-    <string name="tv_handoff_note">El código sirve una vez, durante 5 minutos, desde un móvil en la misma red que este televisor.</string>
+    <string name="tv_setup_send_from_phone">Escanear un QR</string>
+    <string name="tv_handoff_body">Escanea el código con la cámara del móvil para escribir la dirección de tu servidor con su teclado, o envíala desde la app del móvil si ya has iniciado sesión allí.</string>
+    <string name="tv_handoff_note">Tu segundo dispositivo debe estar en la misma red que tu televisor.</string>
     <string name="tv_handoff_code_description">Código para escanear con el móvil</string>
     <string name="tv_handoff_no_network">Este televisor no está en una red doméstica wifi o por cable, así que un móvil no puede llegar a él. Escribe la dirección.</string>
     <string name="tv_handoff_could_not_listen">Este televisor no ha podido abrir una conexión para el móvil. Escribe la dirección.</string>
     <string name="tv_handoff_type_instead">Escribirla</string>
-    <string name="setup_error_handoff_expired">El código caducó antes de que un móvil enviara una dirección. Inténtalo de nuevo.</string>
     <string name="handoff_page_title">Envía la dirección del servidor a tu televisor</string>
     <string name="handoff_page_body">Escribe la dirección de tu servidor Seerr, Jellyseerr u Overseerr. El televisor la comprueba y después te pide iniciar sesión allí.</string>
     <string name="handoff_page_field">Dirección del servidor</string>

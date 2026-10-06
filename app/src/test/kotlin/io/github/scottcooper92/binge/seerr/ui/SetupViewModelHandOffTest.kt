@@ -133,19 +133,28 @@ class SetupViewModelHandOffTest {
         }
 
     @Test
-    fun `a code nobody uses expires, says so, and stops listening`() =
+    fun `a code nobody uses is replaced by a fresh one and the old listener closes`() =
         runTest {
-            val session = FakeSession()
-            val vm = viewModel { HandOffOpening.Opened(session) }
+            val sessions = mutableListOf<FakeSession>()
+            val vm =
+                viewModel {
+                    HandOffOpening.Opened(FakeSession(url = "http://192.168.1.20:41234/a/code${sessions.size}").also(sessions::add))
+                }
             vm.awaitAddress()
 
             vm.showHandOff(true)
 
-            // Nothing completes the address, so the virtual clock runs on to the timeout.
-            val expired = vm.awaitAddress { it.error != null }
-            assertEquals(SetupError.HandOffExpired, expired.error)
-            assertNull(expired.handOff)
-            assertTrue(session.closed)
+            // Nothing completes the address, so the virtual clock runs on to the timeout, and then to the next one.
+            val first = vm.awaitAddress { it.handOff != null }.handOff
+            val second = vm.awaitAddress { it.handOff != null && it.handOff != first }.handOff
+            assertTrue(sessions[0].closed)
+            assertFalse(sessions.last().closed)
+            assertTrue(second is AddressHandOff.Listening)
+            assertNull(vm.awaitAddress().error)
+
+            // Left running, a code that renews itself would keep the virtual clock turning for ever.
+            vm.showHandOff(false)
+            assertTrue(sessions.last().closed)
         }
 
     @Test
@@ -204,13 +213,13 @@ class SetupViewModelHandOffTest {
             assertTrue(session.closed)
         }
 
-    private class FakeSession : AddressHandOffSession {
+    private class FakeSession(
+        override val url: String = "http://192.168.1.20:41234/a/aaaaaaaa",
+    ) : AddressHandOffSession {
         val address = CompletableDeferred<String>()
 
         @Volatile
         var closed = false
-
-        override val url = "http://192.168.1.20:41234/a/AAAAAAAAAAAAAAAAAAAAAA"
 
         override suspend fun awaitAddress(): String = address.await()
 

@@ -6,12 +6,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -27,14 +27,14 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvButton
-import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
-import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
+import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.google.zxing.BarcodeFormat
@@ -48,97 +48,90 @@ import com.binge.designsystem.tv.R as TvR
 
 /** The four-module quiet zone the QR specification asks for around a code. */
 private const val QR_QUIET_ZONE = 4
+
+/** How much of the room the card leaves it the code takes: a little under all of it, so it sits in the card rather than against it. */
+private const val QR_FILL = 0.88f
 private const val QR_DARK = 0xFF000000.toInt()
 private const val QR_LIGHT = 0xFFFFFFFF.toInt()
 
 /**
- * The television's half of "send the address from your phone" (#323), in the style of
- * [TvSetupLinkPlate]: a code to scan, the same URL spelled out under it for a phone without a
- * camera app, and a way out.
+ * The television's half of "send the address from your phone" (#323), as the second pane of the address
+ * page: what the phone needs to scan or type, and its way out. Mounted only while a hand-off is up.
  *
  * The TV listens only while this is on screen, so leaving it — Cancel, Back, the app going to the
- * background, or the page changing under it — stops the listener.
+ * background, or the page changing under it — stops the listener. Held outside the Listening and
+ * Unavailable branches: a listener that fails while open swaps one for the other at one call site, and
+ * effects inside a branch would dispose then and cancel the plate away.
  */
 @Composable
-internal fun TvAddressHandOffPlate(
-    handOff: AddressHandOff,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val arrival = rememberTvArrivalFocus()
-    TvArrivalFocusEffect(arrival)
+internal fun TvHandOffLifecycle(onCancel: () -> Unit) {
     BackHandler(onBack = onCancel)
-    // Held above the `when`: a listener that fails while open swaps Listening for Unavailable at this
-    // call site, and effects inside the Listening branch would dispose then and cancel the plate away.
     val cancel by rememberUpdatedState(onCancel)
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { cancel() }
     DisposableEffect(Unit) { onDispose { cancel() } }
+}
+
+/** The pane's content: the code, or why there is none. */
+@Composable
+internal fun ColumnScope.TvHandOffContent(handOff: AddressHandOff) {
     when (handOff) {
-        is AddressHandOff.Listening -> {
-            TvFormPage(
-                headline = stringResource(R.string.tv_handoff_title),
-                body = stringResource(R.string.tv_handoff_body),
-                note = stringResource(R.string.tv_handoff_no_camera),
-                icon = Icons.Filled.QrCode2,
-                modifier = modifier,
-            ) {
-                TvHandOffCodeCard(handOff.url)
-                TvFormNote(stringResource(R.string.tv_handoff_note))
-                TvButton(
-                    label = stringResource(R.string.link_cancel),
-                    onClick = onCancel,
-                    style = TvButtonStyle.Primary,
-                    modifier = Modifier.tvArrivalTarget(arrival),
-                )
-            }
-        }
-        is AddressHandOff.Unavailable ->
-            TvFormPage(
-                headline = stringResource(R.string.tv_handoff_title),
-                body = stringResource(handOff.reason.messageRes()),
-                icon = Icons.Filled.QrCode2,
-                modifier = modifier,
-            ) {
-                TvButton(
-                    label = stringResource(R.string.tv_handoff_type_instead),
-                    onClick = onCancel,
-                    style = TvButtonStyle.Primary,
-                    modifier = Modifier.tvArrivalTarget(arrival),
-                )
-            }
+        is AddressHandOff.Listening -> TvHandOffCodeCard(handOff.url, Modifier.weight(1f))
+        is AddressHandOff.Unavailable -> TvFormNote(stringResource(handOff.reason.messageRes()), tone = TvFormNoteTone.Error)
     }
+}
+
+/** The way out of the code, to the form. */
+@Composable
+internal fun TvHandOffTypeInstead(
+    onClick: () -> Unit,
+    arrival: TvArrivalFocus,
+    enabled: Boolean,
+) {
+    TvButton(
+        label = stringResource(R.string.tv_handoff_type_instead),
+        onClick = onClick,
+        style = TvButtonStyle.Primary,
+        enabled = enabled,
+        modifier = Modifier.tvArrivalTarget(arrival),
+    )
 }
 
 /**
  * The code and its address together on one card, as Binge's TV sign-in sets its code: the address is the
- * fallback for a phone without a camera app, so it belongs with the code, legible from across a room. Shown
- * without `http://` — a phone's browser adds it — so it fits under the code; monospace because it is typed.
+ * fallback for a phone without a camera app, so it belongs with the code, legible from across a room. Spelled
+ * out in full, `http://` included, and monospace because it is typed. The card is the form column's width, so
+ * the button under it can end where it ends.
  */
 @Composable
-private fun TvHandOffCodeCard(url: String) {
+private fun TvHandOffCodeCard(
+    url: String,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
-            Modifier
+            modifier
+                .fillMaxWidth()
                 .clip(BingeShapes.AccountCard)
                 .background(MaterialTheme.colorScheme.surface)
                 .border(dimensionResource(TvR.dimen.tv_button_border_width), MaterialTheme.colorScheme.border, BingeShapes.AccountCard)
-                .padding(dimensionResource(DesR.dimen.padding_l)),
+                .padding(dimensionResource(DesR.dimen.padding_m)),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
-        TvQrCode(url)
+        // Square, so the code is as big as the shorter of what the card's height and width leave it.
+        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            TvQrCode(url, minOf(maxWidth, maxHeight) * QR_FILL)
+        }
         Text(
-            text = url.removePrefix(HTTP_PREFIX),
+            text = url,
             style = MaterialTheme.typography.bodyLarge,
             fontFamily = FontFamily.Monospace,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(max = dimensionResource(R.dimen.tv_handoff_qr_size) * 2),
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
-
-private const val HTTP_PREFIX = "http://"
 
 private fun AddressHandOff.Reason.messageRes(): Int =
     when (this) {
@@ -148,13 +141,16 @@ private fun AddressHandOff.Reason.messageRes(): Int =
 
 /** The code itself: dark on light whatever the theme, because that is what a phone's camera reads. */
 @Composable
-private fun TvQrCode(text: String) {
+private fun TvQrCode(
+    text: String,
+    size: Dp,
+) {
     val image = remember(text) { qrImage(text) }
     Image(
         bitmap = image,
         contentDescription = stringResource(R.string.tv_handoff_code_description),
         filterQuality = FilterQuality.None,
-        modifier = Modifier.size(dimensionResource(R.dimen.tv_handoff_qr_size)),
+        modifier = Modifier.size(size),
     )
 }
 

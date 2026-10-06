@@ -26,7 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-private const val TOKEN = "abcdefghijklmnopqrstuv"
+private const val TOKEN = "k7m2pqx4"
 private const val LINK = "seerr-companion://tv-handoff?to=192.168.86.53:41234&token=$TOKEN"
 
 /**

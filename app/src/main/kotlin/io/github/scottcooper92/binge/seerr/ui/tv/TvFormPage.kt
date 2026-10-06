@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,10 +32,14 @@ internal fun TvFormPage(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     note: String? = null,
+    pinnedAction: (@Composable RowScope.() -> Unit)? = null,
+    actionScrolls: Boolean = true,
     form: @Composable ColumnScope.() -> Unit,
 ) {
     TvTwoPanePage(
         modifier = modifier,
+        actionScrolls = actionScrolls,
+        pinnedAction = pinnedAction,
         split = TvTwoPaneSplit.FixedCopy(dimensionResource(TvR.dimen.tv_two_pane_fixed_pane_width)),
         hosting = TvPageHosting.PreShell,
         divider = false,

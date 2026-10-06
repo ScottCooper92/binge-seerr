@@ -7,21 +7,24 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
-import java.util.Base64
 
-private const val TOKEN_BYTES = 16
+private const val TOKEN_LENGTH = 8
+
+/** Lowercase and digits with the look-alikes left out (no 0/o, 1/l/i), because someone may have to type it. */
+private const val TOKEN_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
 private const val MAX_PORT = 65_535
 private const val MAX_OCTET = 255
 private const val IPV4_OCTETS = 4
 
-/** 22 URL-safe characters: 128 random bits in base64url without padding. */
-private val TOKEN_SHAPE = Regex("[A-Za-z0-9_-]{22}")
+/** [TOKEN_LENGTH] characters of [TOKEN_ALPHABET]. */
+private val TOKEN_SHAPE = Regex("[$TOKEN_ALPHABET]{$TOKEN_LENGTH}")
 
-/** A fresh one-time token for one hand-off: 128 bits from [SecureRandom], URL-safe. */
-internal fun newHandOffToken(random: SecureRandom = SecureRandom()): String {
-    val bytes = ByteArray(TOKEN_BYTES).also(random::nextBytes)
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
-}
+/**
+ * A fresh one-time token for one hand-off: about 40 bits from [SecureRandom]. Short enough to type from the
+ * address under the code; the listener is LAN-only, answers one connection at a time and lives five minutes.
+ */
+internal fun newHandOffToken(random: SecureRandom = SecureRandom()): String =
+    buildString(TOKEN_LENGTH) { repeat(TOKEN_LENGTH) { append(TOKEN_ALPHABET[random.nextInt(TOKEN_ALPHABET.length)]) } }
 
 /**
  * Where a phone sends the address: the TV's LAN IPv4 address, the port it is listening on, and the

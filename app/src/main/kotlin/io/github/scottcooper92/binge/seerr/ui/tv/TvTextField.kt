@@ -55,7 +55,8 @@ import com.binge.designsystem.R as DesR
  *
  * [initiallyFocused] seeds the ring for a preview and production passes false: a static frame runs no focus
  * search, so a focused frame is only renderable if focus is a parameter. [arrival] makes this the field
- * the page lands on. [autoCorrect] is off for a value the keyboard must not rewrite, such as a username.
+ * the page lands on. [fillWidth] takes the width its parent offers, for a field that shares a row, rather than
+ * the form's fixed one. [autoCorrect] is off for a value the keyboard must not rewrite, such as a username.
  * [placeholder] is an example of what to type, shown only while the field is empty. [contentType]
  * offers the field to an autofill service; the panel has no Credential Manager picker, so that is the
  * whole of the hand-off here.
@@ -74,12 +75,13 @@ internal fun TvTextField(
     contentType: ContentType? = null,
     initiallyFocused: Boolean = false,
     arrival: TvArrivalFocus? = null,
+    fillWidth: Boolean = false,
 ) {
     var focused by remember { mutableStateOf(initiallyFocused) }
     val focusManager = LocalFocusManager.current
     val shape = BingeShapes.TvListItem
     Column(
-        modifier = modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
+        modifier = if (fillWidth) modifier else modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
     ) {
         Text(

@@ -360,6 +360,6 @@ private fun TvEditConnectionOverlay(
     rememberEnteredEditingGuard(state, onDone)
     BackHandler(onBack = onDone)
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TvSetupScreen(state = state, actions = viewModel.tvActions())
+        TvSetupScreen(state = state, actions = viewModel.tvActions(), offerHandOff = true)
     }
 }

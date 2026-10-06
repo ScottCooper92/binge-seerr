@@ -1,14 +1,15 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.tv.component.TvButton
@@ -24,8 +25,8 @@ import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
 import io.github.scottcooper92.binge.seerr.ui.label
 import io.github.scottcooper92.binge.seerr.ui.messageRes
-import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.submitLabelRes
+import kotlinx.coroutines.delay
 
 /** The control a preview seeds as focused; production passes null and the page lands where it lands. */
 internal enum class TvSetupFocus { Address, Continue, Credential, Connect }
@@ -42,15 +43,33 @@ internal fun TvSetupScreen(
     actions: SetupActions,
     modifier: Modifier = Modifier,
     initialFocus: TvSetupFocus? = null,
+    offerHandOff: Boolean = false,
 ) {
+    // The code is the first thing the address step shows: a remote is a poor keyboard, so typing is the way
+    // out of the plate, not the way in. Once, so backing out of it to type is not undone by the next recompose.
+    var offeredHandOff by rememberSaveable { mutableStateOf(false) }
+    // Until the first code is up the address step shows its page with an empty second pane, not the typed form
+    // for a frame: the field would take focus and flick the keyboard up.
+    var settled by rememberSaveable { mutableStateOf(!offerHandOff) }
+    val handOffUp = (state as? SetupUiState.Address)?.handOff != null
+    LaunchedEffect(state is SetupUiState.Address) {
+        if (offerHandOff && state is SetupUiState.Address) {
+            // Already offered: the screen was recreated mid-wait, and the hand-off did not survive it. Settle anyway.
+            if (!offeredHandOff) {
+                offeredHandOff = true
+                if (state.handOff == null) actions.onStartHandOff()
+            }
+            // A start that never produces a code must not leave the pane empty.
+            delay(HAND_OFF_START_GRACE_MS)
+            settled = true
+        }
+    }
+    LaunchedEffect(handOffUp) { if (handOffUp) settled = true }
     when (state) {
         // The home swaps to the connected plate on the credentials landing; this is the frame in between.
         SetupUiState.Loading, is SetupUiState.Connected -> TvLoadingPlate(modifier = modifier)
-        // The hand-off from a phone takes the whole page too: a code to scan, and nothing to type.
-        is SetupUiState.Address ->
-            state.handOff
-                ?.let { handOff -> TvAddressHandOffPlate(handOff, actions.onCancelHandOff, modifier) }
-                ?: TvSetupAddressStep(state, actions, modifier, initialFocus)
+        // One page for the code and the form, so only its second pane changes between them.
+        is SetupUiState.Address -> TvSetupAddressPage(state, actions, modifier, initialFocus, awaitingCode = !settled)
         // A link flow takes the whole page: the code is the only thing to read, and the only thing to do
         // is wait or back out.
         is SetupUiState.SignIn ->
@@ -60,60 +79,7 @@ internal fun TvSetupScreen(
     }
 }
 
-@Composable
-private fun TvSetupAddressStep(
-    state: SetupUiState.Address,
-    actions: SetupActions,
-    modifier: Modifier,
-    initialFocus: TvSetupFocus?,
-) {
-    val arrival = rememberTvArrivalFocus()
-    TvArrivalFocusEffect(arrival)
-    TvFormPage(
-        headline = stringResource(R.string.tv_setup_headline),
-        body = stringResource(R.string.tv_setup_address_body),
-        icon = Icons.Filled.Dns,
-        modifier = modifier,
-    ) {
-        TvTextField(
-            value = state.serverUrl,
-            onValueChange = actions.onEditAddress,
-            label = stringResource(R.string.setup_server_url),
-            enabled = !state.isInspecting,
-            keyboardType = KeyboardType.Uri,
-            placeholder = stringResource(R.string.placeholder_server_url),
-            initiallyFocused = initialFocus == TvSetupFocus.Address,
-            arrival = arrival,
-        )
-        if (state.insecure) {
-            TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
-            TvOptionRow(
-                label = stringResource(R.string.setup_allow_cleartext),
-                selected = state.cleartextAllowed,
-                onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
-                modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
-            )
-        }
-        state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
-        if (state.needsLocalNetwork) {
-            val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
-            TvFormNote(stringResource(R.string.setup_local_network_explanation))
-            TvButton(label = stringResource(allow.label), onClick = allow.run, style = TvButtonStyle.Secondary)
-        }
-        TvButton(
-            label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
-            onClick = actions.onInspect,
-            style = TvButtonStyle.Primary,
-            enabled = state.canContinue,
-            initiallyFocused = initialFocus == TvSetupFocus.Continue,
-        )
-        TvButton(
-            label = stringResource(R.string.tv_setup_send_from_phone),
-            onClick = actions.onStartHandOff,
-            enabled = !state.isInspecting,
-        )
-    }
-}
+private const val HAND_OFF_START_GRACE_MS = 3_000L
 
 /**
  * The sign-ins a remote can finish — which, now, is all of them. A key or an account typed on

@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -17,6 +18,7 @@ import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupServer
@@ -51,6 +53,8 @@ class TvSetupFocusTest {
     private var connected = 0
     private var changedServer = 0
     private var cancelledLink = 0
+    private var startedHandOff = 0
+    private var cancelledHandOff = 0
 
     private val actions =
         SetupActions(
@@ -62,13 +66,35 @@ class TvSetupFocusTest {
             onPlexLaunched = {},
             onCancelLink = { cancelledLink++ },
             onRequestPasswordReset = {},
+            onStartHandOff = { startedHandOff++ },
+            onCancelHandOff = { cancelledHandOff++ },
         )
 
+    /** The field must not take the page: focus on it would bring the keyboard up before anyone asked for it. */
     @Test
-    fun theAddressStepLandsOnTheField() {
+    fun theAddressStepLandsOnTheSwitchNotTheField() {
         setScreen(address("http://seerr.lan:5055"))
 
-        addressField().assertIsFocused()
+        button(R.string.tv_setup_send_from_phone).assertIsFocused()
+        addressField().assertIsNotFocused()
+    }
+
+    @Test
+    fun theCodeIsOfferedFirstAndTheFieldWaitsForIt() {
+        setScreen(address(""), offerHandOff = true)
+
+        assertEquals(1, startedHandOff)
+        addressField().assertDoesNotExist()
+    }
+
+    @Test
+    fun theCodeLandsOnTheWayOutOfItAndOkTakesIt() {
+        setScreen(address("").copy(handOff = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")), offerHandOff = true)
+
+        button(R.string.tv_handoff_type_instead).assertIsFocused()
+        pressOk()
+
+        assertEquals(1, cancelledHandOff)
     }
 
     @Test
@@ -81,22 +107,32 @@ class TvSetupFocusTest {
     }
 
     @Test
-    fun downFromTheAddressReachesContinueAndOkInspects() {
+    fun upFromTheSwitchReachesContinueAndOkInspects() {
         setScreen(address("http://seerr.lan:5055"))
 
-        pressDown()
-        button(R.string.setup_continue).assertIsFocused()
+        pressUp()
+        continueButton().assertIsFocused()
         pressOk()
 
         assertEquals(1, inspected)
     }
 
     @Test
+    fun leftFromContinueReachesTheField() {
+        setScreen(address("http://seerr.lan:5055"))
+
+        pressUp()
+        pressLeft()
+
+        addressField().assertIsFocused()
+    }
+
+    @Test
     fun anEmptyAddressLeavesContinueDisabledButFocusable() {
         setScreen(address(""))
 
-        pressDown()
-        button(R.string.setup_continue).assertIsFocused()
+        pressUp()
+        continueButton().assertIsFocused()
         pressOk()
 
         assertEquals("a blank address must not be inspected", 0, inspected)
@@ -254,9 +290,12 @@ class TvSetupFocusTest {
         assertEquals(1, changedServer)
     }
 
-    private fun setScreen(state: SetupUiState) {
+    private fun setScreen(
+        state: SetupUiState,
+        offerHandOff: Boolean = false,
+    ) {
         composeTestRule.setContent {
-            BingeTvTheme { TvSetupScreen(state = state, actions = actions) }
+            BingeTvTheme { TvSetupScreen(state = state, actions = actions, offerHandOff = offerHandOff) }
         }
         composeTestRule.waitForIdle()
     }
@@ -273,6 +312,19 @@ class TvSetupFocusTest {
         )
 
     private fun modeRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
+
+    /** The way on is an icon button: its label is its description, never a text node while resting. */
+    private fun continueButton() = composeTestRule.onNode(hasContentDescription(string(R.string.setup_continue)) and isFocusable())
+
+    private fun pressUp() {
+        composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionUp) }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun pressLeft() {
+        composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionLeft) }
+        composeTestRule.waitForIdle()
+    }
 
     private fun pressDown() {
         composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionDown) }

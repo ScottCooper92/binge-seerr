@@ -98,7 +98,6 @@ class SetupViewModel
                     draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
                     inspect()
                 },
-                onExpired = { draft.update { it.copy(error = SetupError.HandOffExpired) } },
             )
 
         init {

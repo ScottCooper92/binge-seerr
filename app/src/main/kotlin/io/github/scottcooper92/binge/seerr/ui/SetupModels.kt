@@ -17,7 +17,6 @@ enum class SetupError {
     LocalNetworkDenied,
     Unknown,
     LinkExpired,
-    HandOffExpired,
 }
 
 /** Something that went right and wants saying: the only one so far is the reset email. */
