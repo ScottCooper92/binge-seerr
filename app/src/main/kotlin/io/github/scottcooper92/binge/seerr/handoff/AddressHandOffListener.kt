@@ -39,13 +39,16 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
  * The television's side of the hand-off (#323): a tiny HTTP/1.1 listener on the TV's own LAN
  * address that answers exactly one path and accepts exactly one address.
  *
- * - **One-time token.** It answers only `/a/<token>`, where the token is 128 random bits minted for
- *   this listener and shown only in the code on screen. Any other path, a wrong token included, is
- *   a bare 404 that says nothing about what is listening. The comparison is constant-time.
+ * - **One-time token.** It answers only `/a/<token>`, where the token is about 40 random bits, short
+ *   enough to type, minted for this listener and shown only in the code on screen. That is enough
+ *   because the listener is LAN-only, serves one connection at a time, and its port and token are
+ *   replaced every five minutes. Any other path, a wrong token included, is a bare 404 that says
+ *   nothing about what is listening. The comparison is constant-time.
  * - **LAN only.** The socket is bound to the TV's private IPv4 address on the active Wi-Fi or
  *   Ethernet network, never to every interface.
  * - **Short-lived.** It listens while the code is on screen, until a timeout, or until one address
- *   is accepted, whichever comes first; the owner closes it on each of those.
+ *   is accepted, whichever comes first; the owner closes it on each of those. When it lapses on a
+ *   timeout, the owner replaces it with a new listener, a new port and a new token, rather than ending.
  * - **Address only.** What it accepts is a server address, checked with [isValidBaseUrl], and
  *   nothing else. The TV then reads that server exactly as if the address had been typed, so the
  *   plain-HTTP opt-in and sign-in that follow are unchanged.
