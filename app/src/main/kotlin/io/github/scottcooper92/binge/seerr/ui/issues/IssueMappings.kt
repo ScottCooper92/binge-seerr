@@ -107,6 +107,9 @@ suspend fun SeerrIssueDto.toIssueItem(
                 ?.takeIf { it.isNotBlank() },
         problemSeason = problemSeason,
         problemEpisode = problemEpisode,
+        backdropUrl = details?.backdropUrl,
+        overview = details?.overview,
+        certification = details?.certification,
     )
 }
 
@@ -141,6 +144,9 @@ fun IssueItem.toEntity(
         problemSeason = problemSeason,
         problemEpisode = problemEpisode,
         orderIndex = orderIndex,
+        backdropUrl = backdropUrl,
+        overview = overview,
+        certification = certification,
     )
 
 fun IssueEntity.toIssueItem(): IssueItem =
@@ -161,4 +167,7 @@ fun IssueEntity.toIssueItem(): IssueItem =
         problem = problem,
         problemSeason = problemSeason,
         problemEpisode = problemEpisode,
+        backdropUrl = backdropUrl,
+        overview = overview,
+        certification = certification,
     )

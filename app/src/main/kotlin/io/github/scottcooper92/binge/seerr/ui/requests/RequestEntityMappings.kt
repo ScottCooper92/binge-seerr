@@ -39,6 +39,9 @@ fun RequestItem.toEntity(
         seasonNumbers = seasonNumbers.joinToString(","),
         is4k = is4k,
         orderIndex = orderIndex,
+        backdropUrl = backdropUrl,
+        overview = overview,
+        certification = certification,
     )
 
 fun RequestEntity.toRequestItem(): RequestItem =
@@ -57,4 +60,7 @@ fun RequestEntity.toRequestItem(): RequestItem =
         download = downloadFraction?.let { RequestDownload(fraction = it, etaMinutes = downloadEtaMinutes, downloading = downloading) },
         seasonNumbers = seasonNumbers.split(',').mapNotNull { it.toIntOrNull() },
         is4k = is4k,
+        backdropUrl = backdropUrl,
+        overview = overview,
+        certification = certification,
     )

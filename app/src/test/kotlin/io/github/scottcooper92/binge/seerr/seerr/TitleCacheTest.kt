@@ -77,4 +77,27 @@ class TitleCacheTest {
             cache.get(api(), SEERR_MEDIA_TYPE_MOVIE, 100)
             assertEquals(2, seerr.requestCount)
         }
+
+    @Test
+    fun `a persisted title keeps its backdrop, synopsis and age rating`() =
+        runTest {
+            seerr.dispatcher = {
+                FakeResponse(
+                    body =
+                        """
+                        {"title":"Heat","posterPath":"/heat.jpg","backdropPath":"/heat-wide.jpg","overview":"A crew, a cop.",
+                        "releaseDate":"1995-12-15","releases":{"results":[{"iso_3166_1":"US","release_dates":[{"certification":"R"}]}]}}
+                        """.trimIndent(),
+                )
+            }
+            val first = cache().get(api(), SEERR_MEDIA_TYPE_MOVIE, 100)
+            assertEquals("A crew, a cop.", first?.overview)
+            assertEquals("R", first?.certification)
+            assertTrue(first?.backdropUrl?.endsWith("/heat-wide.jpg") == true)
+
+            // A fresh cache reads the persisted row, so what survives is what the entity stored.
+            val restarted = cache().get(api(), SEERR_MEDIA_TYPE_MOVIE, 100)
+            assertEquals(first, restarted)
+            assertEquals(1, seerr.requestCount)
+        }
 }

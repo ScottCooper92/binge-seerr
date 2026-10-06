@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /**
  * One request as a page. The request itself, its title's lookup, and the destination's names are
@@ -292,7 +293,17 @@ private class DetailSources(
         get() = dto.media.mediaType != SEERR_MEDIA_TYPE_TV || profile.settings.partialRequestsEnabled
 
     suspend fun toDetail(): RequestDetail {
-        val hydrated = details?.let { HydratedTitle(it.displayTitle, it.posterPath?.toTmdbPosterUrl(), it.year) }
+        val hydrated =
+            details?.let {
+                HydratedTitle(
+                    it.displayTitle,
+                    it.posterPath?.toTmdbPosterUrl(),
+                    it.year,
+                    it.backdropPath?.toTmdbBackdropUrl(),
+                    it.overview,
+                    it.certification(Locale.getDefault().country),
+                )
+            }
         val item =
             checkNotNull(dto.toRequestItem(api, { _, _, _ -> hydrated }, System.currentTimeMillis())) {
                 "Unrenderable media type"
