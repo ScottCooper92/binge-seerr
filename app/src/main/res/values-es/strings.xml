@@ -133,7 +133,6 @@
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>
     <string name="request_tags">Etiquetas</string>
-    <string name="request_tags_line">Etiquetas: %1$s</string>
     <string name="request_seasons">Temporadas solicitadas</string>
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta solicitud puede diferir a continuación.</string>
@@ -1025,16 +1024,13 @@
     <string name="tv_detail_approve">Aprobar</string>
     <string name="tv_detail_decline">Rechazar</string>
     <string name="tv_detail_remove">Eliminar</string>
-    <string name="tv_detail_retry">Reintentar</string>
     <string name="tv_detail_block">Bloquear</string>
     <string name="request_title_blocked">Título bloqueado</string>
     <string name="request_block_failed">No se pudo bloquear el título</string>
     <string name="request_block_confirm_title">¿Bloquear este título?</string>
     <string name="request_block_confirm_message">El título no se podrá volver a solicitar. Esta solicitud se queda como está.</string>
-    <string name="tv_detail_info_requested_by">Solicitado por</string>
     <string name="tv_detail_info_requested">Solicitado</string>
     <string name="tv_detail_info_status">Estado</string>
     <string name="tv_detail_info_sent_to">Enviado a</string>
-    <string name="tv_detail_info_tags">Etiquetas</string>
     <string name="tv_detail_details">Detalles</string>
 </resources>

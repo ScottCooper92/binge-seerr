@@ -24,6 +24,7 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationScope
@@ -154,6 +155,35 @@ class TvRequestDetailFocusTest {
      * order to offer focus to, so it must fall back to the content column itself rather than leaving the
      * D-pad dead.
      */
+    @Test
+    fun aFailedLoadLandsOnRetry() {
+        var retries = 0
+        composeTestRule.setContent {
+            BingeTvTheme {
+                TvRequestDetailScreen(
+                    state = RequestDetailUiState.Error(SeerrError.Server),
+                    events = emptyFlow(),
+                    actions =
+                        TvRequestDetailActions(
+                            onBack = {},
+                            onRetry = { retries++ },
+                            onOpenInBinge = null,
+                            onApprove = {},
+                            onRetryRequest = {},
+                            onDecline = {},
+                            onRemove = {},
+                            onBlock = {},
+                        ),
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNode(hasText(string(R.string.hub_retry)) and isFocusable()).assertIsFocused()
+        pressOk()
+        assertEquals(1, retries)
+    }
+
     @Test
     fun arrivalFallsBackToTheContentColumnWhenNothingElseIsFocusable() {
         val item =

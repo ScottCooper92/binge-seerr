@@ -49,7 +49,7 @@ internal fun requestInfoCards(detail: RequestDetail): List<TvInfoCardItem> {
     val destination = detail.destination
     return listOfNotNull(
         TvInfoCardItem(
-            stringResource(R.string.tv_detail_info_requested_by),
+            stringResource(R.string.request_requested_by),
             item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
         ),
         formatRelativeOrAbsolute(item.requestedAtMillis)?.let { TvInfoCardItem(stringResource(R.string.tv_detail_info_requested), it) },
@@ -58,7 +58,7 @@ internal fun requestInfoCards(detail: RequestDetail): List<TvInfoCardItem> {
             ?.let { listOfNotNull(it.serverName, it.profileName, it.rootFolder).joinToString(separator) }
             ?.takeIf { it.isNotEmpty() }
             ?.let { TvInfoCardItem(stringResource(R.string.tv_detail_info_sent_to), it) },
-        destination?.tagsLabel?.let { TvInfoCardItem(stringResource(R.string.tv_detail_info_tags), it) },
+        destination?.tagsLabel?.let { TvInfoCardItem(stringResource(R.string.request_tags), it) },
     )
 }
 

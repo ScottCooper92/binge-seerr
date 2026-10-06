@@ -50,7 +50,6 @@
     <!-- The request detail page: a constrained reading column, its rows and section gaps. -->
     <dimen name="tv_detail_content_width">760dp</dimen>
     <dimen name="tv_detail_section_gap">16dp</dimen>
-    <dimen name="tv_detail_row_height">56dp</dimen>
     <!-- The users list root's skeleton row: an avatar-leading ListRow, so ListRowSkeleton's 128dp
          poster-row default reads twice as tall as the row it stands in for. list_row_padding × 2
          (top + bottom) plus a titleMedium line, padding_xs and a bodySmall line — which happens to

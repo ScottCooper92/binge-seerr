@@ -6,12 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,11 +35,12 @@ import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvDetailPage
 import com.binge.designsystem.tv.template.TvDetailPageScope
+import com.binge.designsystem.tv.template.TvMessagePage
+import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvPageHosting
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationEvent
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
@@ -56,7 +52,6 @@ import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadingPlate
@@ -103,7 +98,7 @@ internal fun TvRequestDetailScreen(
             RequestDetailUiState.Loading, is RequestDetailUiState.Seeded -> {
                 val failure = (state as? RequestDetailUiState.Seeded)?.error
                 if (failure == null) {
-                    TvLoadingPlate(modifier = Modifier.fillMaxSize())
+                    TvLoadingPlate(modifier = Modifier.fillMaxSize(), hosting = TvPageHosting.Overlay)
                 } else {
                     TvErrorPlate(failure, actions.onRetry)
                 }
@@ -119,11 +114,11 @@ private fun TvErrorPlate(
     error: SeerrError,
     onRetry: () -> Unit,
 ) {
-    TvBoardPlate(
+    TvMessagePage(
         body = stringResource(error.messageRes()),
+        hosting = TvPageHosting.Overlay,
         icon = Icons.Filled.Warning,
-        primary = stringResource(R.string.hub_retry) to onRetry,
-        modifier = Modifier.fillMaxSize(),
+        primary = TvPageAction(stringResource(R.string.hub_retry), onRetry),
     )
 }
 
@@ -194,53 +189,6 @@ private fun TvRequestDetailContent(
     }
     confirming?.let { step ->
         TvDetailConfirmSheet(step = step, actions = actions, removeCloser = removeCloser, blockCloser = blockCloser)
-    }
-}
-
-/** The action row: what this viewer may do to the request, in the order a manager reaches for them. */
-@Composable
-private fun requestDetailActions(
-    allowed: RequestActions,
-    actions: TvRequestDetailActions,
-    onConfirm: (DetailConfirm) -> Unit,
-    removeFocus: FocusRequester,
-    blockFocus: FocusRequester,
-): List<TvDetailAction> {
-    val retryLabel = stringResource(R.string.tv_detail_retry)
-    val approveLabel = stringResource(R.string.tv_detail_approve)
-    val declineLabel = stringResource(R.string.tv_detail_decline)
-    val removeLabel = stringResource(R.string.tv_detail_remove)
-    val blockLabel = stringResource(R.string.tv_detail_block)
-    val openLabel = stringResource(R.string.request_open_binge)
-    return buildList {
-        if (allowed.canRetry) add(TvDetailAction(retryLabel, Icons.Filled.Refresh, onClick = actions.onRetryRequest, isPrimary = true))
-        if (allowed.canApprove) add(TvDetailAction(approveLabel, Icons.Filled.Check, onClick = actions.onApprove, isPrimary = true))
-        if (allowed.canDecline) {
-            add(TvDetailAction(declineLabel, Icons.Filled.Close, onClick = { actions.onDecline(false) }, showLabel = true))
-        }
-        if (allowed.canRemove) {
-            add(
-                TvDetailAction(
-                    removeLabel,
-                    Icons.Filled.Delete,
-                    onClick = { onConfirm(DetailConfirm.Remove) },
-                    showLabel = true,
-                    focusRequester = removeFocus,
-                ),
-            )
-        }
-        if (allowed.canBlock) {
-            add(
-                TvDetailAction(
-                    blockLabel,
-                    Icons.Filled.Block,
-                    onClick = { onConfirm(DetailConfirm.Block) },
-                    showLabel = true,
-                    focusRequester = blockFocus,
-                ),
-            )
-        }
-        actions.onOpenInBinge?.let { add(TvDetailAction(openLabel, Icons.AutoMirrored.Filled.OpenInNew, onClick = it)) }
     }
 }
 
@@ -349,7 +297,7 @@ private fun TvDetailPageScope.requestSections(
     }
 }
 
-private enum class DetailConfirm { Remove, Block }
+internal enum class DetailConfirm { Remove, Block }
 
 /** The confirm for an action that cannot be taken back: removing the request, or blocking its title. */
 @Composable

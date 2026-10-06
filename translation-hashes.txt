@@ -307,7 +307,6 @@ app:request_state_queued  661ff40a07e0
 app:request_stats_title  b4a7365740ef
 app:request_summaries_title  638e58c202ba
 app:request_tags  1331275bc537
-app:request_tags_line  1ab73222b9be
 app:request_this_request_title  c97853df8527
 app:request_title_blocked  7b777b7bb251
 app:request_title_status_caption  4ae0d8f6b950
@@ -769,12 +768,9 @@ app:tv_detail_block  211d0bb8cf4f
 app:tv_detail_decline  a2d285b35287
 app:tv_detail_details  45989de49fb7
 app:tv_detail_info_requested  2d9e28289fac
-app:tv_detail_info_requested_by  9199a054972b
 app:tv_detail_info_sent_to  4e7201c7b898
 app:tv_detail_info_status  920e413c7d41
-app:tv_detail_info_tags  1331275bc537
 app:tv_detail_remove  c3812fc4acb8
-app:tv_detail_retry  942087cc2d41
 app:tv_download_percent  0edb69de9be1
 app:tv_filter_with_count  f7da0939cc40
 app:tv_handoff_body  ce76f2179a21
