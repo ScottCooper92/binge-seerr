@@ -62,7 +62,7 @@ internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {}, {}, {}, {})
 internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {})
-internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
     HubServer(
@@ -274,10 +274,9 @@ internal fun TvRequestsFailedPreview() {
 internal fun TvIssuesBoardPreview() {
     TvIssuesBoard(
         state = issuesReady(),
-        rows = rows(SampleIssues),
+        rowsFor = { rows(SampleIssues) },
         events = emptyFlow(),
         actions = NoIssuesActions,
-        initialFocusedRowId = 11,
     )
 }
 
@@ -286,7 +285,7 @@ internal fun TvIssuesBoardPreview() {
 internal fun TvIssuesSheetPreview() {
     TvIssuesBoard(
         state = issuesReady(actionItem = SampleIssues.first()),
-        rows = rows(SampleIssues),
+        rowsFor = { rows(SampleIssues) },
         events = emptyFlow(),
         actions = NoIssuesActions,
     )

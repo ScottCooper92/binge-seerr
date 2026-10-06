@@ -29,6 +29,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
 import io.github.scottcooper92.binge.seerr.ui.hub.openBingeOnPlayStore
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.openTitleInBinge
@@ -44,10 +45,12 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.IssueRowFilters
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGrid
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.RequestRowFilters
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
@@ -75,6 +78,7 @@ internal fun TvConnectedShell() {
     // A see-all grid (a filter's name), above the rail. Unlike the others it stays up under a detail page opened
     // from one of its cards, so the page above and the grid below can both be showing.
     var seeAllRequests by rememberSaveable { mutableStateOf<String?>(null) }
+    var seeAllIssues by rememberSaveable { mutableStateOf<String?>(null) }
     TvShellScaffold(
         selected = selected,
         onSelect = { selected = it },
@@ -84,7 +88,7 @@ internal fun TvConnectedShell() {
                     {
                         { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
                     }
-                openRequestId != null || seeAllRequests != null ->
+                openRequestId != null || openIssueId != null || seeAllRequests != null || seeAllIssues != null ->
                     {
                         {
                             seeAllRequests?.let { name ->
@@ -96,12 +100,18 @@ internal fun TvConnectedShell() {
                                     onReconnect = { editingConnection = true },
                                 )
                             }
+                            seeAllIssues?.let { name ->
+                                TvIssuesGridOverlay(
+                                    filter = IssueFilter.valueOf(name),
+                                    detailOpen = openIssueId != null,
+                                    onOpenIssue = { openIssueId = it },
+                                    onDone = { seeAllIssues = null },
+                                    onReconnect = { editingConnection = true },
+                                )
+                            }
                             openRequestId?.let { TvRequestDetailOverlay(requestId = it, onDone = { openRequestId = null }) }
+                            openIssueId?.let { TvIssueDetailOverlay(issueId = it, onDone = { openIssueId = null }) }
                         }
-                    }
-                openIssueId != null ->
-                    {
-                        { TvIssueDetailOverlay(issueId = requireNotNull(openIssueId), onDone = { openIssueId = null }) }
                     }
                 else -> null
             },
@@ -121,6 +131,8 @@ internal fun TvConnectedShell() {
                     onReconnect = { editingConnection = true },
                     openIssueId = openIssueId,
                     onOpenIssue = { openIssueId = it },
+                    seeAllOpen = seeAllIssues != null,
+                    onSeeAll = { seeAllIssues = it.name },
                 )
             TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true })
         }
@@ -299,6 +311,8 @@ private fun TvIssuesEntry(
     onReconnect: () -> Unit,
     openIssueId: Int?,
     onOpenIssue: (Int) -> Unit,
+    seeAllOpen: Boolean,
+    onSeeAll: (IssueFilter) -> Unit,
     viewModel: IssuesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -307,25 +321,53 @@ private fun TvIssuesEntry(
         onDispose { viewModel.setScreenVisible(false) }
     }
     val ready = state as? IssuesUiState.Ready
-    val lazyItems = ready?.let { viewModel.issues(it.filter).collectAsLazyPagingItems() }
+    // One pager per filter, each handed down as a count and an accessor, as Home does for the requests.
+    val pagers = IssueRowFilters.associateWith { viewModel.issues(it).collectAsLazyPagingItems() }
+    val rowsByFilter = IssueRowFilters.associateWith { pagers.getValue(it).toRows(ready?.refreshes?.get(it)) { item -> item.id } }
     TvIssuesBoard(
         state = state,
-        rows = lazyItems.toRows(ready?.refreshes?.get(ready.filter)) { it.id },
+        rowsFor = { rowsByFilter.getValue(it) },
         events = viewModel.events,
         openIssueId = openIssueId,
+        seeAllOpen = seeAllOpen,
         actions =
             TvIssuesActions(
-                onFilterChange = viewModel::setFilter,
-                onSortChange = viewModel::setSort,
                 onOpenActions = viewModel::openActions,
                 onDismissActions = viewModel::dismissActions,
                 onOpenDetail = { item -> onOpenIssue(item.id) },
                 onResolve = viewModel::resolve,
                 onReopen = viewModel::reopen,
                 onDelete = viewModel::delete,
-                onRetryLoad = { lazyItems?.retry() },
+                onSeeAll = onSeeAll,
+                onRetryLoad = { pagers.values.forEach { it.retry() } },
                 onReconnect = onReconnect,
             ),
+    )
+}
+
+/** Every issue behind one filter's row, as a paged grid above the rail, on the same ViewModel as the board. */
+@Composable
+private fun TvIssuesGridOverlay(
+    filter: IssueFilter,
+    detailOpen: Boolean,
+    onOpenIssue: (Int) -> Unit,
+    onDone: () -> Unit,
+    onReconnect: () -> Unit,
+    viewModel: IssuesViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val ready = state as? IssuesUiState.Ready
+    val lazyItems = viewModel.issues(filter).collectAsLazyPagingItems()
+    TvIssuesGrid(
+        filter = filter,
+        counts = ready?.counts,
+        rows = lazyItems.toRows(ready?.refreshes?.get(filter)) { it.id },
+        actingIds = ready?.actingIds.orEmpty(),
+        detailOpen = detailOpen,
+        onOpenDetail = { onOpenIssue(it.id) },
+        onRetryLoad = { lazyItems.retry() },
+        onReconnect = onReconnect,
+        onBack = onDone,
     )
 }
 
