@@ -9,11 +9,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -51,7 +55,7 @@ private const val HEAT = "Heat"
  * The board's row through to its read-only detail page and back, under a real Back key rather than a
  * directional dismiss: OK on the row reaches the page with the D-pad, and Back returns focus to the row
  * that opened it. The page's own primary action is covered here too, since it is what the row's moderation
- * moved onto — approving closes the sheet back onto the same button rather than the page itself.
+ * moved onto: Approve and Decline run at once from the action row, and Remove and Block ask first.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -60,15 +64,18 @@ class TvRequestDetailFocusTest {
     val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
     private val approved = mutableListOf<Int>()
+    private val declined = mutableListOf<Boolean>()
+    private val removed = mutableListOf<Boolean>()
+    private var blocked = 0
 
     @Test
-    fun okOnTheRowReachesThePageAndBackReturnsFocusToTheRow() {
+    fun okOnTheRowReachesThePageOnItsFirstActionAndBackReturnsFocusToTheRow() {
         setContent()
         row(HEAT).requestFocus()
         composeTestRule.waitForIdle()
 
         pressOk()
-        manageButton().assertIsFocused()
+        actionButton(R.string.tv_detail_approve).assertIsFocused()
 
         pressBack()
         settleFocusRestore()
@@ -77,20 +84,68 @@ class TvRequestDetailFocusTest {
     }
 
     @Test
-    fun thePagesPrimaryActionOpensTheSheetAndApprovingClosesBackToTheButton() {
+    fun approveRunsAtOnceAndKeepsFocusOnTheButton() {
         setContent()
         row(HEAT).requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
-        manageButton().assertIsFocused()
+        actionButton(R.string.tv_detail_approve).assertIsFocused()
 
-        pressOk()
-        sheetRow(R.string.request_approve).assertIsFocused()
         pressOk()
 
         assertEquals(listOf(1), approved)
+        actionButton(R.string.tv_detail_approve).assertIsFocused()
+    }
+
+    @Test
+    fun declineIsAStepRightOfApproveAndKeepsTheRequest() {
+        setContent()
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+
+        pressRight()
+        actionButton(R.string.tv_detail_decline).assertIsFocused()
+        pressOk()
+
+        assertEquals(listOf(false), declined)
+    }
+
+    @Test
+    fun removeAsksFirstAndCancelReturnsToTheButton() {
+        setContent(RequestActions(canRemove = true))
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        actionButton(R.string.tv_detail_remove).assertIsFocused()
+
+        pressOk()
+        composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertIsDisplayed()
+        assertEquals(emptyList<Boolean>(), removed)
+        pressBack()
         settleFocusRestore()
-        manageButton().assertIsFocused()
+
+        assertEquals(emptyList<Boolean>(), removed)
+        actionButton(R.string.tv_detail_remove).assertIsFocused()
+    }
+
+    @Test
+    fun blockingTheTitleAsksFirstThenBlocksOnConfirm() {
+        setContent(RequestActions(canBlock = true))
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        actionButton(R.string.tv_detail_block).assertIsFocused()
+
+        pressOk()
+        composeTestRule.onNodeWithText(string(R.string.request_block_confirm_title)).assertIsDisplayed()
+        assertEquals(0, blocked)
+        // The sheet's confirm row shares its label with the button beneath it; it is the later of the two.
+        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+
+        assertEquals(1, blocked)
     }
 
     /**
@@ -157,6 +212,7 @@ class TvRequestDetailFocusTest {
                                 onRetryRequest = {},
                                 onDecline = {},
                                 onRemove = {},
+                                onBlock = {},
                             ),
                     )
                 }
@@ -167,7 +223,7 @@ class TvRequestDetailFocusTest {
         composeTestRule.onNode(isFocused()).assertExists()
     }
 
-    private fun setContent() {
+    private fun setContent(allowed: RequestActions = RequestActions(canApprove = true, canDecline = true)) {
         val item =
             RequestItem(
                 id = 1,
@@ -188,7 +244,7 @@ class TvRequestDetailFocusTest {
         val detail =
             RequestDetail(
                 item = item,
-                actions = RequestActions(canApprove = true, canDecline = true),
+                actions = allowed,
                 canEdit = true,
                 canEditDestination = false,
                 backdropUrl = null,
@@ -256,8 +312,9 @@ class TvRequestDetailFocusTest {
                                     onOpenInBinge = null,
                                     onApprove = { approved += item.id },
                                     onRetryRequest = {},
-                                    onDecline = {},
-                                    onRemove = {},
+                                    onDecline = { declined += it },
+                                    onRemove = { removed += it },
+                                    onBlock = { blocked++ },
                                 ),
                         )
                     }
@@ -269,11 +326,16 @@ class TvRequestDetailFocusTest {
 
     private fun row(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
-    private fun manageButton() = composeTestRule.onNode(hasText(string(R.string.request_primary_review)) and isFocusable())
-
-    private fun sheetRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
+    /** A resting icon button names itself by description and a labelled one by text; either way the surface is the focusable node. */
+    private fun actionButton(label: Int) =
+        composeTestRule.onNode(
+            isFocusable() and
+                (hasContentDescription(string(label)) or hasText(string(label)) or hasAnyDescendant(hasText(string(label)))),
+        )
 
     private fun pressOk() = press(Key.DirectionCenter)
+
+    private fun pressRight() = press(Key.DirectionRight)
 
     private fun pressBack() {
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }

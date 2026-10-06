@@ -40,7 +40,7 @@ sealed interface ModerationEvent {
             when (this) {
                 Removed, RemovedAndBlocked, RemovedButBlockFailed, MediaCleared -> true
                 Approved, Retried, Edited, Declined, DeclinedAndBlocked, DeclinedButBlockFailed,
-                MediaStatusSet, MediaFilesDeleted, is Failed,
+                Blocked, BlockFailed, MediaStatusSet, MediaFilesDeleted, is Failed,
                 -> false
             }
 
@@ -62,6 +62,11 @@ sealed interface ModerationEvent {
 
     data object RemovedButBlockFailed : ModerationEvent
 
+    /** The title alone was blocked; the request is left as it was. */
+    data object Blocked : ModerationEvent
+
+    data object BlockFailed : ModerationEvent
+
     data object MediaStatusSet : ModerationEvent
 
     data object MediaCleared : ModerationEvent
@@ -75,8 +80,8 @@ sealed interface ModerationEvent {
 
 /**
  * The write side of a request: approve, decline, retry, remove, each optionally blocking the
- * title after a decline or removal. The server keeps a request when a title is blocked, which is
- * why blocking only rides another action. Owns the per-request acting set and the feedback
+ * title after a decline or removal, and [blockTitle] to block the title on its own. The server
+ * keeps a request when a title is blocked, so a block on its own leaves the request as it was. Owns the per-request acting set and the feedback
  * events; [onModerated] fires after a success so the owner can refresh what it shows.
  */
 class RequestModeration(
@@ -222,6 +227,20 @@ class RequestModeration(
         }
     }
 
+    /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */
+    fun blockTitle(item: RequestItem) {
+        if (item.id in acting.value) return
+        acting.update { it + item.id }
+        scope.launch(dispatcher) {
+            val blocked = block(item)
+            acting.update { it - item.id }
+            if (blocked) onModerated()
+            val event = if (blocked) ModerationEvent.Blocked else ModerationEvent.BlockFailed
+            analytics.event(AnalyticsEvents.REQUEST_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to event.actionLabel()))
+            eventFlow.emit(event)
+        }
+    }
+
     private suspend fun block(item: RequestItem): Boolean =
         runCatching {
             val mediaType = item.mediaType.seerrMediaType()
@@ -246,6 +265,8 @@ private fun ModerationEvent.actionLabel(): String =
         ModerationEvent.Removed -> "removed"
         ModerationEvent.RemovedAndBlocked -> "removed_and_blocked"
         ModerationEvent.RemovedButBlockFailed -> "removed_block_failed"
+        ModerationEvent.Blocked -> "blocked"
+        ModerationEvent.BlockFailed -> "block_failed"
         ModerationEvent.MediaStatusSet -> "media_status_set"
         ModerationEvent.MediaCleared -> "media_cleared"
         ModerationEvent.MediaFilesDeleted -> "media_files_deleted"

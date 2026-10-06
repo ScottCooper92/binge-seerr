@@ -89,4 +89,8 @@
     <dimen name="hub_quota_bar_width">72dp</dimen>
     <!-- The Settings screen's one plate where the admin groups will land while they are still answering. -->
     <dimen name="settings_pending_groups_height">240dp</dimen>
+    <dimen name="tv_detail_season_card_width">140dp</dimen>
+    <dimen name="tv_detail_download_card_width">260dp</dimen>
+    <dimen name="tv_detail_info_card_width">240dp</dimen>
+    <dimen name="tv_detail_card_height">112dp</dimen>
 </resources>
