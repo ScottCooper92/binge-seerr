@@ -25,6 +25,7 @@ import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.hub.openBingeOnPlayStore
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
@@ -176,8 +177,9 @@ private fun TvRequestsEntry(
 
 /**
  * A request's read-only page, above the rail exactly as the connection form is: the same
- * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds, and a fresh instance per request id since
- * [requestId] rides Hilt's `creationCallback`. Open in Binge checks whether Binge would answer the link once
+ * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds, and one instance per request id: the lookup is
+ * keyed by [requestId], because Hilt stores view models by class and key, so a lookup without a key would answer
+ * every later request with the first one opened. Open in Binge checks whether Binge would answer the link once
  * per detail load — this surface has no browser to fall back to, so the button is hidden rather than tried
  * and abandoned.
  */
@@ -186,9 +188,14 @@ private fun TvRequestDetailOverlay(
     requestId: Int,
     onDone: () -> Unit,
     viewModel: RequestDetailViewModel =
-        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
+        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(
+            key = "request-detail-$requestId",
+            creationCallback = { factory -> factory.create(requestId) },
+        ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // A page opened before keeps its loaded state, so reopening it refreshes rather than showing what it last saw.
+    LaunchedEffect(viewModel) { if (viewModel.uiState.value is RequestDetailUiState.Ready) viewModel.reload() }
     val context = LocalContext.current
     val detail = (state as? RequestDetailUiState.Ready)?.detail
     val onOpenInBinge =
@@ -251,17 +258,21 @@ private fun TvIssuesEntry(
 
 /**
  * An issue's read-only page, above the rail exactly as the connection form is: the same
- * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, and a fresh instance per issue id since
- * [issueId] rides Hilt's `creationCallback`.
+ * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, and one instance per issue id, keyed by
+ * [issueId] for the same reason as the request page.
  */
 @Composable
 private fun TvIssueDetailOverlay(
     issueId: Int,
     onDone: () -> Unit,
     viewModel: IssueDetailViewModel =
-        hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
+        hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(
+            key = "issue-detail-$issueId",
+            creationCallback = { factory -> factory.create(issueId) },
+        ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) { if (viewModel.uiState.value is IssueDetailUiState.Ready) viewModel.reload() }
     TvIssueDetailScreen(
         state = state,
         actions = TvIssueDetailActions(onBack = onDone, onRetry = viewModel::reload),
