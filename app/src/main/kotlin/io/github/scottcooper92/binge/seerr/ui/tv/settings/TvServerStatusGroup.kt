@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import io.github.scottcooper92.binge.seerr.R
@@ -59,7 +60,7 @@ internal fun serverStatusGroup(
                             health,
                             stringResource(R.string.hub_update_available).takeIf { ready.server.updateAvailable },
                         ).joinToString(separator),
-                    icon = Icons.Filled.CheckCircle,
+                    icon = if (ready.health == ConnectionHealth.Healthy) Icons.Filled.CheckCircle else Icons.Filled.Warning,
                 ),
                 TvPaneRow(
                     key = KEY_ACTIVITY,
@@ -77,7 +78,7 @@ internal fun serverStatusGroup(
                     label = stringResource(R.string.hub_section_users),
                     body = overview.userCount?.toString() ?: placeholder,
                     icon = Icons.Filled.Group,
-                ),
+                ).takeIf { overview.permissions.canManageUsers },
                 TvPaneRow(
                     key = KEY_OPEN_ISSUES,
                     label = stringResource(R.string.tv_hub_stat_open_issues),
