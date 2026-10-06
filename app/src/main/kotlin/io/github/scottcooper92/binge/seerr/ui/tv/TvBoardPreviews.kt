@@ -44,7 +44,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
-import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsRowsBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_DISCONNECT
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_MEDIA_SERVER
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
@@ -61,7 +61,7 @@ internal const val DAY_MILLIS = 24 * HOUR_MILLIS
 internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {}, {}, {}, {})
-internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {}, {})
+internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {})
 internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
@@ -250,26 +250,21 @@ internal fun TvHubLoadingPreview() {
 @TvPreviewsOnBlack
 @Composable
 internal fun TvRequestsBoardPreview() {
-    TvRequestsBoard(
-        state = requestsReady(),
-        rows = rows(SampleRequests),
-        actions = NoRequestsActions,
-        initialFocusedRowId = 1,
-    )
+    TvRequestsRowsBoard(state = requestsReady(), rowsFor = { rows(SampleRequests) }, actions = NoRequestsActions)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvRequestsEmptyPreview() {
-    TvRequestsBoard(state = requestsReady(), rows = rows(emptyList()), actions = NoRequestsActions)
+    TvRequestsRowsBoard(state = requestsReady(), rowsFor = { rows(emptyList()) }, actions = NoRequestsActions)
 }
 
 @TvPreviewsOnBlack
 @Composable
 internal fun TvRequestsFailedPreview() {
-    TvRequestsBoard(
+    TvRequestsRowsBoard(
         state = requestsReady(),
-        rows = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)),
+        rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)) },
         actions = NoRequestsActions,
     )
 }
