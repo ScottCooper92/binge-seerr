@@ -997,6 +997,10 @@
     <string name="tv_settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Open the Play Store</string>
     <string name="tv_see_all">See all</string>
+    <string name="tv_rail_account">Account</string>
+    <string name="tv_account_quota_of">of %1$d left</string>
+    <string name="tv_account_quota_unlimited_note">No limit</string>
+    <string name="tv_account_your_requests">Your requests</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
     <string name="field_secret_show">Show the value</string>
     <string name="field_secret_hide">Hide the value</string>
