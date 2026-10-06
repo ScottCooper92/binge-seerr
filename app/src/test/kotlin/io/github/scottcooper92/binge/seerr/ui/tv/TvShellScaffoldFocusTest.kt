@@ -70,7 +70,7 @@ class TvShellScaffoldFocusTest {
         railItemAt(1).assertIsFocused()
         composeTestRule.mainClock.advanceTimeBy(PAST_SETTLE_MILLIS)
         composeTestRule.waitForIdle()
-        content(TvDestination.Requests).assertExists()
+        content(TvDestination.Issues).assertExists()
     }
 
     @Test
@@ -89,7 +89,7 @@ class TvShellScaffoldFocusTest {
         pressDown()
         composeTestRule.mainClock.advanceTimeBy(PAST_SETTLE_MILLIS)
         composeTestRule.waitForIdle()
-        content(TvDestination.Requests).assertExists()
+        content(TvDestination.Issues).assertExists()
 
         pressBack()
         composeTestRule.mainClock.advanceTimeBy(PAST_SETTLE_MILLIS)

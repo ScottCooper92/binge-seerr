@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDownload
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestFilter
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.NoRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
@@ -16,18 +17,17 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requestsReady
 import io.github.scottcooper92.binge.seerr.ui.tv.rows
 
 /**
- * A fixed, far-in-the-past render instant for the rows below. `SampleRequests`' own dates are `id` hours
- * before whichever instant the suite runs at, which currently stays inside `formatRelativeOrAbsolute`'s
- * relative-date window regardless — but that's incidental, not by design, the same latent shape that made
- * `TvIssuesScreenshotTest`'s day-scale dates drift a baseline out of sync with the day CI happened to run
- * on (#362). Anchoring both the items and the render instant here keeps the rendered date text invariant
- * rather than merely lucky.
+ * A fixed, far-in-the-past render instant for the requests below. The sample requests' own dates are `id` hours
+ * before whichever instant the suite runs at; anchoring both the items and the render instant here keeps the
+ * rendered date text invariant rather than merely lucky.
  */
 private const val REQUESTS_NOW_MILLIS = 1_770_000_000_000L
 
+private const val SYNOPSIS = "A crew, a cop, and a city that does not remember either of them, until the pressure of the job moves on."
+
 private val FixedSampleRequests =
     listOf(
-        request(1, "Heat", SeerrRequestStatusCode.Pending, now = REQUESTS_NOW_MILLIS),
+        request(1, "Heat", SeerrRequestStatusCode.Pending, now = REQUESTS_NOW_MILLIS).copy(overview = SYNOPSIS, certification = "15"),
         request(
             2,
             "The Bear",
@@ -36,40 +36,31 @@ private val FixedSampleRequests =
             mediaStatus = SeerrMediaStatusCode.Processing,
             download = RequestDownload(0.4f, 12, true),
             now = REQUESTS_NOW_MILLIS,
-        ),
+        ).copy(overview = SYNOPSIS, certification = "18"),
         request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined, now = REQUESTS_NOW_MILLIS),
     )
 
 /**
- * The television requests board: the loaded list, the empty arm, the failed-load plate and the failed-scope plates. A row's own
- * moderation sheet is framed on `TvRequestDetailScreenshotTest` now, off the detail page that owns it.
- * Mirrors the states already sketched in `TvBoardPreviews.kt`.
+ * The television requests hub: the rows over the backdrop at rest, the empty arm, the loading and failed-load
+ * pages, and the failed-scope pages. A request's own moderation is framed on `TvRequestDetailScreenshotTest`.
+ * Mirrors the states sketched in `TvBoardPreviews.kt`.
  */
 class TvRequestsScreenshotTest {
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun Board() {
-        TvRequestsBoard(
+        TvRequestsRowsBoard(
             state = requestsReady(),
-            rows = rows(FixedSampleRequests),
+            rowsFor = { filter ->
+                when (filter) {
+                    RequestFilter.Pending -> rows(listOf(FixedSampleRequests[0]))
+                    RequestFilter.Approved -> rows(listOf(FixedSampleRequests[1]))
+                    RequestFilter.Failed -> rows(listOf(FixedSampleRequests[2]))
+                    else -> rows(emptyList())
+                }
+            },
             actions = NoRequestsActions,
-            initialFocusedRowId = 1,
-            now = REQUESTS_NOW_MILLIS,
-        )
-    }
-
-    /** A filter pill holding focus, filled amber: the band is where the remote lands above the list. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun FilterFocused() {
-        TvRequestsBoard(
-            state = requestsReady(),
-            rows = rows(FixedSampleRequests),
-            actions = NoRequestsActions,
-            initialFocusedFilterLabel = "Pending (1)",
-            now = REQUESTS_NOW_MILLIS,
         )
     }
 
@@ -77,33 +68,24 @@ class TvRequestsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun Empty() {
-        TvRequestsBoard(state = requestsReady(), rows = rows(emptyList()), actions = NoRequestsActions)
+        TvRequestsRowsBoard(state = requestsReady(), rowsFor = { rows(emptyList()) }, actions = NoRequestsActions)
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Loading() {
+        TvRequestsRowsBoard(state = RequestsUiState.Loading, rowsFor = { rows(emptyList()) }, actions = NoRequestsActions)
     }
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun Failed() {
-        TvRequestsBoard(
+        TvRequestsRowsBoard(
             state = requestsReady(),
-            rows = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)),
+            rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)) },
             actions = NoRequestsActions,
-        )
-    }
-
-    /** A refresh that failed behind cached rows: the rows stay, with a retry button above them. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun RefreshFailedBehindRows() {
-        TvRequestsBoard(
-            state = requestsReady(),
-            rows =
-                TvPagedRows(count = FixedSampleRequests.size, at = {
-                    FixedSampleRequests.getOrNull(it)
-                }, refresh = TvLoadPhase.Failed(rejected = false)),
-            actions = NoRequestsActions,
-            now = REQUESTS_NOW_MILLIS,
         )
     }
 
@@ -111,9 +93,9 @@ class TvRequestsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ScopeFailed() {
-        TvRequestsBoard(
+        TvRequestsRowsBoard(
             state = RequestsUiState.Error(SeerrError.Unreachable),
-            rows = rows(emptyList()),
+            rowsFor = { rows(emptyList()) },
             actions = NoRequestsActions,
         )
     }
@@ -122,9 +104,9 @@ class TvRequestsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ScopeRejected() {
-        TvRequestsBoard(
+        TvRequestsRowsBoard(
             state = RequestsUiState.Error(SeerrError.Unauthorized),
-            rows = rows(emptyList()),
+            rowsFor = { rows(emptyList()) },
             actions = NoRequestsActions,
         )
     }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
@@ -39,7 +38,6 @@ internal enum class TvDestination(
     val icon: ImageVector,
 ) {
     Hub("hub", R.string.tv_rail_hub, Icons.Filled.Home),
-    Requests("requests", R.string.hub_section_requests, Icons.Filled.Inbox),
     Issues("issues", R.string.hub_section_issues, Icons.Filled.ReportProblem),
     Settings("settings", R.string.hub_section_settings, Icons.Filled.Settings),
 }

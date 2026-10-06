@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isFocused
@@ -33,7 +34,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
-import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsRowsBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
@@ -214,7 +215,7 @@ class TvRequestDetailFocusTest {
                 ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 7, hasBlocklist = false)
             BingeTvTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    TvRequestsBoard(
+                    TvRequestsRowsBoard(
                         state =
                             RequestsUiState.Ready(
                                 filter = RequestFilter.All,
@@ -224,13 +225,20 @@ class TvRequestDetailFocusTest {
                                 actingIds = emptySet(),
                                 listVersion = 0,
                             ),
-                        rows = TvPagedRows(count = 1, at = { item }),
+                        rowsFor = { filter ->
+                            if (filter ==
+                                RequestFilter.Pending
+                            ) {
+                                TvPagedRows(count = 1, at = { item })
+                            } else {
+                                TvPagedRows(count = 0, at = { null })
+                            }
+                        },
                         openRequestId = openId,
                         actions =
                             TvRequestsActions(
-                                onFilterChange = {},
-                                onSortChange = {},
                                 onOpenDetail = { openId = it.id },
+                                onSeeAll = {},
                                 onRetryLoad = {},
                                 onRetryScope = {},
                                 onReconnect = {},
@@ -259,7 +267,7 @@ class TvRequestDetailFocusTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun row(title: String) = composeTestRule.onNode(hasText(title) and isFocusable())
+    private fun row(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
     private fun manageButton() = composeTestRule.onNode(hasText(string(R.string.request_primary_review)) and isFocusable())
 
