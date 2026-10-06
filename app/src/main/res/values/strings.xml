@@ -1073,7 +1073,6 @@
     <string name="consent_kicker">Privacy</string>
     <string name="tv_consent_point_change_title">Off with one press</string>
     <string name="tv_consent_reassurance">Nothing is collected unless you choose Share usage data.</string>
-    <string name="tv_consent_either_choice">Either choice carries on into the app.</string>
 
     <!-- Debug builds only: the hub's entry point into developer options. Read from every variant
          (the row's label/detail), so it stays here rather than in src/debug's strings.xml — its

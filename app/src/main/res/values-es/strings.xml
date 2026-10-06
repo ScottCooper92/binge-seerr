@@ -1017,5 +1017,4 @@
     <string name="consent_kicker">Privacidad</string>
     <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
     <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
-    <string name="tv_consent_either_choice">Con cualquiera de las dos opciones sigues a la aplicación.</string>
 </resources>

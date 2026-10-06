@@ -121,18 +121,11 @@ private fun TvConsentCopy(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_consent_reassurance_gap))) {
-            Text(
-                text = stringResource(R.string.tv_consent_reassurance),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(R.string.tv_consent_either_choice),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Text(
+            text = stringResource(R.string.tv_consent_reassurance),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
