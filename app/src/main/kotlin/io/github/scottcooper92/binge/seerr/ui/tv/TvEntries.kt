@@ -23,6 +23,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.LocalAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.screenName
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
+import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
@@ -154,7 +155,9 @@ private fun TvHomeEntry(
     hubViewModel: HubViewModel = hiltViewModel(),
 ) {
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
-    val answering = (hub as? HubUiState.Ready)?.let { !it.health.isProblem() } == true
+    // Kept across a re-probe: Checking is neither answer, and swapping Home for it would restart the retry backoff.
+    var answering by remember { mutableStateOf(false) }
+    answering = homeAnswering(hub, answering)
     if (answering) {
         TvRequestsEntry(
             onReconnect = onReconnect,
@@ -167,6 +170,20 @@ private fun TvHomeEntry(
         TvHubEntry(onReconnect = onReconnect, viewModel = hubViewModel)
     }
 }
+
+/**
+ * Whether Home shows the requests rather than the server's problem. A re-probe's [ConnectionHealth.Checking] is not
+ * an answer, so it keeps [previous]: the problem page stays composed through it and the auto-retry's backoff is not
+ * restarted by the visibility change a swap would cause.
+ */
+internal fun homeAnswering(
+    hub: HubUiState,
+    previous: Boolean,
+): Boolean =
+    when (hub) {
+        is HubUiState.Ready -> if (hub.health == ConnectionHealth.Checking) previous else !hub.health.isProblem()
+        is HubUiState.Error, HubUiState.Loading -> false
+    }
 
 @Composable
 private fun TvHubEntry(
