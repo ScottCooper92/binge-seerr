@@ -52,6 +52,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGrid
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGridManagement
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.RequestRowFilters
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
@@ -380,6 +381,16 @@ private fun TvIssuesGridOverlay(
         counts = ready?.counts,
         rows = lazyItems.toRows(ready?.refreshes?.get(filter)) { it.id },
         actingIds = ready?.actingIds.orEmpty(),
+        management =
+            TvIssuesGridManagement(
+                scope = ready?.scope,
+                actionItem = ready?.actionItem,
+                onOpenActions = viewModel::openActions,
+                onDismissActions = viewModel::dismissActions,
+                onResolve = viewModel::resolve,
+                onReopen = viewModel::reopen,
+                onDelete = viewModel::delete,
+            ),
         detailOpen = detailOpen,
         onOpenDetail = { onOpenIssue(it.id) },
         onRetryLoad = { lazyItems.retry() },

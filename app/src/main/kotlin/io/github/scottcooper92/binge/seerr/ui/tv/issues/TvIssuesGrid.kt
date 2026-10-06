@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueListScope
 import io.github.scottcooper92.binge.seerr.ui.issues.emptyMessageRes
 import io.github.scottcooper92.binge.seerr.ui.issues.labelRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
@@ -14,10 +15,21 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
+/** What the grid needs for a card's actions sheet: who is asking, which card it is open for, and the ViewModel's verbs. */
+internal class TvIssuesGridManagement(
+    val scope: IssueListScope?,
+    val actionItem: IssueItem?,
+    val onOpenActions: (IssueItem) -> Unit,
+    val onDismissActions: () -> Unit,
+    val onResolve: (IssueItem) -> Unit,
+    val onReopen: (IssueItem) -> Unit,
+    val onDelete: (IssueItem) -> Unit,
+)
+
 /**
- * Every issue behind one filter's row, as a paged grid. OK on a card does what it does on the row: the actions
- * sheet is the board's, so a card this viewer may act on opens its read-only page here too, where the
- * management lives.
+ * Every issue behind one filter's row, as a paged grid. OK on a card does what it does on the row: a card
+ * this viewer may act on opens the actions sheet over the grid, [management] holding the one it is for, and
+ * any other opens the read-only page. So an issue past a row's cap is as manageable as one on the row.
  */
 @Composable
 internal fun TvIssuesGrid(
@@ -25,6 +37,7 @@ internal fun TvIssuesGrid(
     counts: IssueCounts?,
     rows: TvPagedRows<IssueItem>,
     actingIds: Set<Int>,
+    management: TvIssuesGridManagement,
     detailOpen: Boolean,
     onOpenDetail: (IssueItem) -> Unit,
     onRetryLoad: () -> Unit,
@@ -51,8 +64,32 @@ internal fun TvIssuesGrid(
             isFocused = isFocused,
             onFocusChanged = onFocusChanged,
             enabled = item.id !in actingIds,
-            onClick = { onOpenDetail(item) },
+            onClick = {
+                if (management.scope?.let(item::canBeActedOn) == true) management.onOpenActions(item) else onOpenDetail(item)
+            },
             modifier = cellModifier,
+        )
+    }
+    management.actionItem?.let { item ->
+        TvIssueActionsSheet(
+            item = item,
+            onResolve = {
+                management.onResolve(item)
+                management.onDismissActions()
+            },
+            onReopen = {
+                management.onReopen(item)
+                management.onDismissActions()
+            },
+            onDelete = {
+                management.onDelete(item)
+                management.onDismissActions()
+            },
+            onOpenDetail = {
+                management.onDismissActions()
+                onOpenDetail(item)
+            },
+            onDismiss = management.onDismissActions,
         )
     }
 }
