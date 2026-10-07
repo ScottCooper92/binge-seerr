@@ -6,6 +6,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -21,7 +22,10 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.binge.designsystem.LocalIsSinglePaneNav
+import com.binge.designsystem.LocalPaneDepth
 import com.binge.designsystem.PaneContent
+import com.binge.designsystem.PaneEdge
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
@@ -59,28 +63,37 @@ fun SeerrNavHost(
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
     val showBack = { paneShowsBack(hubBeside.value, backStack.paneDepth()) }
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier,
-        onBack = { backStack.removeLastOrNull() },
-        sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack)),
-        entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-        // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
-        // long as the key is on the stack. A value captured here is the value from the frame the entry
-        // was built in. So what changes later is handed over as a provider and read inside the content,
-        // where reading the state is what recomposes it.
-        entryProvider =
-            entryProvider {
-                homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
-                sectionEntries(backStack, showBack = showBack)
-                detailEntries(backStack, showBack = showBack)
-                serverSettingsEntries(backStack)
-            },
-    )
+    // The design system's PaneContent only shares an edge while this is false, and it defaults to true. Read here
+    // from the same hubBeside as the back arrow, so the two agree about whether the hub is beside a section.
+    // Its paneBackOrNull reads the depth beside it, so that is provided from the same stack showBack reads:
+    // left at its default of 1, a stacked screen beside the hub would lose its Back arrow.
+    CompositionLocalProvider(
+        LocalIsSinglePaneNav provides !hubBeside.value,
+        LocalPaneDepth provides backStack.paneDepth(),
+    ) {
+        NavDisplay(
+            backStack = backStack,
+            modifier = modifier,
+            onBack = { backStack.removeLastOrNull() },
+            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack)),
+            entryDecorators =
+                listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+            // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
+            // long as the key is on the stack. A value captured here is the value from the frame the entry
+            // was built in. So what changes later is handed over as a provider and read inside the content,
+            // where reading the state is what recomposes it.
+            entryProvider =
+                entryProvider {
+                    homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
+                    sectionEntries(backStack, showBack = showBack)
+                    detailEntries(backStack, showBack = showBack)
+                    serverSettingsEntries(backStack)
+                },
+        )
+    }
 }
 
 /**
@@ -110,11 +123,11 @@ private fun EntryProviderScope<NavKey>.homeEntries(
         metadata =
             ListDetailSceneStrategy.listPane(
                 detailPlaceholder = {
-                    PaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
+                    DetailPaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
                 },
             ),
     ) {
-        PaneContent {
+        PaneContent(innerEdge = PaneEdge.End) {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.
             if (connected() == true) {
                 HubEntry(
@@ -137,13 +150,13 @@ private fun EntryProviderScope<NavKey>.sectionEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
 ) {
-    entry<RequestsRoute>(metadata = DetailPane) { PaneContent { SectionContent(HubSection.Requests, backStack, showBack()) } }
-    entry<IssuesRoute>(metadata = DetailPane) { PaneContent { SectionContent(HubSection.Issues, backStack, showBack()) } }
-    entry<BlocklistRoute>(metadata = DetailPane) { PaneContent { SectionContent(HubSection.Blocklist, backStack, showBack()) } }
-    entry<UsersRoute>(metadata = DetailPane) { PaneContent { SectionContent(HubSection.Users, backStack, showBack()) } }
-    entry<SettingsRoute>(metadata = DetailPane) { PaneContent { SectionContent(HubSection.Settings, backStack, showBack()) } }
+    entry<RequestsRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Requests, backStack, showBack()) } }
+    entry<IssuesRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Issues, backStack, showBack()) } }
+    entry<BlocklistRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Blocklist, backStack, showBack()) } }
+    entry<UsersRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Users, backStack, showBack()) } }
+    entry<SettingsRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, showBack()) } }
     entry<SectionRoute>(metadata = DetailPane) { route ->
-        PaneContent {
+        DetailPaneContent {
             EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
         }
     }
@@ -197,7 +210,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
 ) {
     debugDetailEntries(backStack, showBack)
     entry<RequestDetailRoute>(metadata = DetailPane) { route ->
-        PaneContent {
+        DetailPaneContent {
             // No showBack: the hero's DetailOverlayTopBar renders its back arrow unconditionally, which a
             // request page never notices in practice — it is only ever stacked above a section or above
             // UserDetailEntry, never pushed straight onto [HubRoute], so its pane depth is always > 1.
@@ -210,17 +223,17 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         }
     }
     entry<IssueDetailRoute>(metadata = DetailPane) { route ->
-        PaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }, showBack = showBack()) }
+        DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }, showBack = showBack()) }
     }
     entry<BlocklistDetailRoute>(metadata = DetailPane) { route ->
-        PaneContent {
+        DetailPaneContent {
             // No showBack: like RequestDetailRoute, this is only ever stacked above BlocklistRoute, so
             // its pane depth is always > 1 and the hero's DetailOverlayTopBar back arrow is never redundant.
             BlocklistDetailEntry(route.item, route.canManage, onBack = { backStack.removeLastOrNull() })
         }
     }
     entry<UserDetailRoute>(metadata = DetailPane) { route ->
-        PaneContent {
+        DetailPaneContent {
             UserDetailEntry(
                 route.userId,
                 onBack = { backStack.removeLastOrNull() },
@@ -231,7 +244,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         }
     }
     entry<UserSettingsRoute>(metadata = DetailPane) { route ->
-        PaneContent {
+        DetailPaneContent {
             UserSettingsEntry(
                 route.userId,
                 onBack = { backStack.removeLastOrNull() },
@@ -241,14 +254,14 @@ private fun EntryProviderScope<NavKey>.detailEntries(
         }
     }
     entry<UserSettingsPageRoute>(metadata = DetailPane) { route ->
-        PaneContent {
+        DetailPaneContent {
             // No showBack: every page here is stacked above UserSettingsRoute, which is itself never
             // pushed straight onto [HubRoute] (only from UserDetailEntry), so pane depth is always > 1.
             UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
         }
     }
     entry<EditConnectionRoute>(metadata = DetailPane) {
-        PaneContent { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }, showBack = showBack()) }
+        DetailPaneContent { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }, showBack = showBack()) }
     }
 }
 
@@ -260,7 +273,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
  */
 private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {
     entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
-        PaneContent {
+        DetailPaneContent {
             ServerSettingsPageEntry(
                 page = route.page,
                 onBack = { backStack.removeLastOrNull() },
@@ -273,16 +286,16 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
         }
     }
     entry<DiscoverSliderRoute>(metadata = DetailPane) { route ->
-        PaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
     }
     entry<NotificationAgentRoute>(metadata = DetailPane) { route ->
-        PaneContent { NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
     }
     entry<DvrInstanceRoute>(metadata = DetailPane) { route ->
-        PaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
     }
     entry<OverrideRuleRoute>(metadata = DetailPane) { route ->
-        PaneContent { OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
     }
 }
 

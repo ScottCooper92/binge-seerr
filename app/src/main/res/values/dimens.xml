@@ -9,8 +9,6 @@
     <!-- The hub's dashboard cards and the downloading strip. -->
     <dimen name="hub_card_section_spacing">14dp</dimen>
     <dimen name="hub_server_card_logo">40dp</dimen>
-    <dimen name="hub_quota_meter_spacing">10dp</dimen>
-    <dimen name="hub_quota_meter_line_spacing">5dp</dimen>
     <dimen name="hub_download_card_width">248dp</dimen>
     <dimen name="hub_download_card_poster_width">52dp</dimen>
     <dimen name="hub_download_card_text_spacing">5dp</dimen>
@@ -41,7 +39,6 @@
     <dimen name="tv_poster_chip_icon">18dp</dimen>
     <dimen name="tv_poster_chip_inset">6dp</dimen>
     <dimen name="tv_stat_tile_gap">12dp</dimen>
-    <dimen name="tv_quota_meter_width">340dp</dimen>
     <dimen name="tv_download_progress_height">6dp</dimen>
     <!-- The request detail page: a constrained reading column, its rows and section gaps. -->
     <dimen name="tv_detail_content_width">760dp</dimen>
