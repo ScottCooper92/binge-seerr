@@ -611,6 +611,22 @@ class HubViewModelTest {
             assertEquals(BingeStatus.NotConnected, vm.awaitReady { it.bingeStatus == BingeStatus.NotConnected }.bingeStatus)
         }
 
+    /** The TV's problem page and Account read the hub's health and account only, so they fetch nothing of the dashboard's (#827). */
+    @Test
+    fun `a screen that draws no dashboard leaves the install check and the counts alone`() =
+        runTest {
+            healthyServer()
+            val installCheck = FakeBingeInstallCheck(installed = false)
+            val vm = viewModel(installCheck = installCheck)
+            assertEquals(BingeStatus.NotInstalled, vm.awaitReady().bingeStatus)
+
+            installCheck.installed = true
+            vm.setScreenVisible(true, dashboard = false)
+            vm.setScreenVisible(false)
+
+            assertEquals(BingeStatus.NotInstalled, vm.uiState.value.let { it as HubUiState.Ready }.bingeStatus)
+        }
+
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
 
