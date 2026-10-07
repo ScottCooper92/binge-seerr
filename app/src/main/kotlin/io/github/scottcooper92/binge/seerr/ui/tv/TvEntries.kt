@@ -30,6 +30,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
 import io.github.scottcooper92.binge.seerr.ui.hub.openBingeOnPlayStore
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesViewModel
 import io.github.scottcooper92.binge.seerr.ui.openTitleInBinge
@@ -43,12 +44,16 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvAccountBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.IssueRowFilters
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGrid
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGridManagement
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.RequestRowFilters
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
@@ -57,13 +62,17 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsGrid
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsRowsBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 import io.github.scottcooper92.binge.seerr.ui.tvActions
+import io.github.scottcooper92.binge.seerr.ui.users.UserDetailViewModel
 
 /**
  * The connected television: the rail with a board per destination, each bound to the same ViewModel as
  * its phone screen, and the edit-connection form as a full-screen overlay above the rail.
  */
 @Composable
-internal fun TvConnectedShell() {
+internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
+    // The account's avatar on the rail's top item, from the same hub state the Account page reads.
+    val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
+    val account = (hub as? HubUiState.Ready)?.overview?.account
     var selected by rememberSaveable { mutableStateOf(TvDestination.Hub) }
     val analytics = LocalAnalytics.current
     LaunchedEffect(selected) { analytics.screen(selected.screenName()) }
@@ -76,16 +85,19 @@ internal fun TvConnectedShell() {
     // A see-all grid (a filter's name), above the rail. Unlike the others it stays up under a detail page opened
     // from one of its cards, so the page above and the grid below can both be showing.
     var seeAllRequests by rememberSaveable { mutableStateOf<String?>(null) }
+    var seeAllIssues by rememberSaveable { mutableStateOf<String?>(null) }
     TvShellScaffold(
         selected = selected,
         onSelect = { selected = it },
+        accountName = account?.name,
+        accountAvatarUrl = account?.avatarUrl,
         overlay =
             when {
                 editingConnection ->
                     {
                         { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
                     }
-                openRequestId != null || seeAllRequests != null ->
+                openRequestId != null || openIssueId != null || seeAllRequests != null || seeAllIssues != null ->
                     {
                         {
                             seeAllRequests?.let { name ->
@@ -97,17 +109,25 @@ internal fun TvConnectedShell() {
                                     onReconnect = { editingConnection = true },
                                 )
                             }
+                            seeAllIssues?.let { name ->
+                                TvIssuesGridOverlay(
+                                    filter = IssueFilter.valueOf(name),
+                                    detailOpen = openIssueId != null,
+                                    onOpenIssue = { openIssueId = it },
+                                    onDone = { seeAllIssues = null },
+                                    onReconnect = { editingConnection = true },
+                                )
+                            }
                             openRequestId?.let { TvRequestDetailOverlay(requestId = it, onDone = { openRequestId = null }) }
+                            openIssueId?.let { TvIssueDetailOverlay(issueId = it, onDone = { openIssueId = null }) }
                         }
-                    }
-                openIssueId != null ->
-                    {
-                        { TvIssueDetailOverlay(issueId = requireNotNull(openIssueId), onDone = { openIssueId = null }) }
                     }
                 else -> null
             },
     ) { destination ->
         when (destination) {
+            TvDestination.Account ->
+                TvAccountEntry(openRequestId = openRequestId, onOpenRequest = { openRequestId = it }, hubViewModel = hubViewModel)
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(
@@ -122,10 +142,64 @@ internal fun TvConnectedShell() {
                     onReconnect = { editingConnection = true },
                     openIssueId = openIssueId,
                     onOpenIssue = { openIssueId = it },
+                    seeAllOpen = seeAllIssues != null,
+                    onSeeAll = { seeAllIssues = it.name },
                 )
             TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true })
         }
     }
+}
+
+/** Who is signed in, and what they have requested: the page reads the same hub state the rail's avatar does. */
+@Composable
+private fun TvAccountEntry(
+    openRequestId: Int?,
+    onOpenRequest: (Int) -> Unit,
+    hubViewModel: HubViewModel,
+) {
+    val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
+    // The hub is `Lazily` and only auto-retries while it is visible, so this page says so, as Home and Settings do.
+    DisposableEffect(hubViewModel) {
+        hubViewModel.setScreenVisible(true)
+        onDispose { hubViewModel.setScreenVisible(false) }
+    }
+    val account = (hub as? HubUiState.Ready)?.overview?.account
+    if (account == null) {
+        // Still loading while the hub is, failed once it has answered without an account.
+        TvAccountBoard(
+            detail = null,
+            requests = TvPagedRows(count = 0, at = { null }),
+            onOpenRequest = {},
+            onRetry = hubViewModel::recheck,
+            overlayOpen = false,
+            accountFailed = hub !is HubUiState.Loading,
+        )
+        return
+    }
+    TvAccountContent(accountId = account.id, openRequestId = openRequestId, onOpenRequest = onOpenRequest)
+}
+
+/** The account's own page: the same [UserDetailViewModel] as the phone's user page, bound to the signed-in user. */
+@Composable
+private fun TvAccountContent(
+    accountId: Int,
+    openRequestId: Int?,
+    onOpenRequest: (Int) -> Unit,
+    viewModel: UserDetailViewModel =
+        hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(
+            key = "account-$accountId",
+            creationCallback = { factory -> factory.create(accountId) },
+        ),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val requests = viewModel.requests.collectAsLazyPagingItems()
+    TvAccountBoard(
+        detail = state,
+        requests = requests.toRows(null) { it.id },
+        onOpenRequest = { onOpenRequest(it.id) },
+        onRetry = viewModel::reload,
+        overlayOpen = openRequestId != null,
+    )
 }
 
 /**
@@ -307,6 +381,7 @@ private fun TvRequestDetailOverlay(
                 onRetryRequest = { viewModel.moderation.retry(requestId) },
                 onDecline = { block -> detail?.let { viewModel.moderation.decline(it.item, block) } },
                 onRemove = { block -> detail?.let { viewModel.moderation.remove(it.item, block) } },
+                onBlock = { detail?.let { viewModel.moderation.blockTitle(it.item) } },
             ),
     )
 }
@@ -316,6 +391,8 @@ private fun TvIssuesEntry(
     onReconnect: () -> Unit,
     openIssueId: Int?,
     onOpenIssue: (Int) -> Unit,
+    seeAllOpen: Boolean,
+    onSeeAll: (IssueFilter) -> Unit,
     viewModel: IssuesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -324,25 +401,63 @@ private fun TvIssuesEntry(
         onDispose { viewModel.setScreenVisible(false) }
     }
     val ready = state as? IssuesUiState.Ready
-    val lazyItems = ready?.let { viewModel.issues(it.filter).collectAsLazyPagingItems() }
+    // One pager per filter, each handed down as a count and an accessor, as Home does for the requests.
+    val pagers = IssueRowFilters.associateWith { viewModel.issues(it).collectAsLazyPagingItems() }
+    val rowsByFilter = IssueRowFilters.associateWith { pagers.getValue(it).toRows(ready?.refreshes?.get(it)) { item -> item.id } }
     TvIssuesBoard(
         state = state,
-        rows = lazyItems.toRows(ready?.refreshes?.get(ready.filter)) { it.id },
+        rowsFor = { rowsByFilter.getValue(it) },
         events = viewModel.events,
         openIssueId = openIssueId,
+        seeAllOpen = seeAllOpen,
         actions =
             TvIssuesActions(
-                onFilterChange = viewModel::setFilter,
-                onSortChange = viewModel::setSort,
                 onOpenActions = viewModel::openActions,
                 onDismissActions = viewModel::dismissActions,
                 onOpenDetail = { item -> onOpenIssue(item.id) },
                 onResolve = viewModel::resolve,
                 onReopen = viewModel::reopen,
                 onDelete = viewModel::delete,
-                onRetryLoad = { lazyItems?.retry() },
+                onSeeAll = onSeeAll,
+                onRetryLoad = { pagers.values.forEach { it.retry() } },
                 onReconnect = onReconnect,
             ),
+    )
+}
+
+/** Every issue behind one filter's row, as a paged grid above the rail, on the same ViewModel as the board. */
+@Composable
+private fun TvIssuesGridOverlay(
+    filter: IssueFilter,
+    detailOpen: Boolean,
+    onOpenIssue: (Int) -> Unit,
+    onDone: () -> Unit,
+    onReconnect: () -> Unit,
+    viewModel: IssuesViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val ready = state as? IssuesUiState.Ready
+    val lazyItems = viewModel.issues(filter).collectAsLazyPagingItems()
+    TvIssuesGrid(
+        filter = filter,
+        counts = ready?.counts,
+        rows = lazyItems.toRows(ready?.refreshes?.get(filter)) { it.id },
+        actingIds = ready?.actingIds.orEmpty(),
+        management =
+            TvIssuesGridManagement(
+                scope = ready?.scope,
+                actionItem = ready?.actionItem,
+                onOpenActions = viewModel::openActions,
+                onDismissActions = viewModel::dismissActions,
+                onResolve = viewModel::resolve,
+                onReopen = viewModel::reopen,
+                onDelete = viewModel::delete,
+            ),
+        detailOpen = detailOpen,
+        onOpenDetail = { onOpenIssue(it.id) },
+        onRetryLoad = { lazyItems.retry() },
+        onReconnect = onReconnect,
+        onBack = onDone,
     )
 }
 

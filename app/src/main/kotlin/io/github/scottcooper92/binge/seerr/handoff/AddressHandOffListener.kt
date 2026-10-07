@@ -50,19 +50,22 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
 
 /**
  * The television's side of the hand-off (#323): a tiny HTTP/1.1 listener on the TV's own LAN
- * address that answers exactly one path and accepts exactly one address.
+ * address that answers exactly one path and accepts an address only while the TV is waiting for one.
  *
  * - **One-time token.** It answers only `/a/<token>` (the page and the address), `/s/<token>` (the TV's status as JSON) and
  *   `/c/<token>` (sealed credentials), where the token is about 40 random bits, short
  *   enough to type, minted for this listener and shown only in the code on screen. That is enough
- *   because the listener is LAN-only, serves one connection at a time, and its port and token are
- *   replaced every five minutes. Any other path, a wrong token included, is a bare 404 that says
+ *   because the listener is LAN-only, serves one connection at a time, takes an address only while
+ *   the TV is waiting for one, and is bounded in time: before an address arrives its port and token are
+ *   replaced every five minutes, and after one it stays up for at most the sign-in timeout. Any other path, a wrong token included, is a bare 404 that says
  *   nothing about what is listening. The comparison is constant-time.
  * - **LAN only.** The socket is bound to the TV's private IPv4 address on the active Wi-Fi or
  *   Ethernet network, never to every interface.
- * - **Short-lived.** It listens while the code is on screen, until a timeout, or until one address
- *   is accepted, whichever comes first; the owner closes it on each of those. When it lapses on a
- *   timeout, the owner replaces it with a new listener, a new port and a new token, rather than ending.
+ * - **Short-lived.** It accepts an address while the TV is waiting for one: the first, and another
+ *   after one that named no server. Once an address is in, it only answers status pages, and its
+ *   owner keeps it up through the sign-in. It closes on cancel, when the TV reaches Connected (after a
+ *   short linger), or after the sign-in timeout. A code nobody uses lapses after a timeout, and the
+ *   owner replaces it with a new listener, a new port and a new token, rather than ending.
  * - **Address only.** What it accepts is a server address, checked with [isValidBaseUrl], and
  *   nothing else. The TV then reads that server exactly as if the address had been typed, so the
  *   plain-HTTP opt-in and sign-in that follow are unchanged.

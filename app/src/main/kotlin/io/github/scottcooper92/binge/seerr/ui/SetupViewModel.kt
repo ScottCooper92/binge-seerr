@@ -172,7 +172,12 @@ class SetupViewModel
         /** The permission prompt came back, or the user returned from Settings: read the permission again. */
         fun localNetworkResult() = draft.update { it.copy(permissionReads = it.permissionReads + 1, error = null) }
 
-        fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null, received = false) }
+        fun editAddress(value: String) {
+            // Typing takes over from the phone: the follow phase ends, so the phone cannot overwrite the field
+            // and a later request for the plate starts a fresh listener.
+            if (draft.value.received) handOff.cancel()
+            draft.update { it.copy(serverUrl = value, error = null, received = false) }
+        }
 
         /**
          * The user's explicit opt-in to plain HTTP to the public host the address names. It is held

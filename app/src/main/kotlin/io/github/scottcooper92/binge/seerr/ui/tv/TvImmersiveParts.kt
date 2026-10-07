@@ -3,9 +3,13 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Warning
@@ -15,20 +19,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.theme.BingeTheme
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
@@ -38,6 +47,7 @@ import com.binge.designsystem.tv.template.TvPageAction
 import io.github.scottcooper92.binge.seerr.R
 
 private const val POSTER_ASPECT_RATIO = 2f / 3f
+private const val CHIP_SCRIM_ALPHA = 0.7f
 
 /** A poster as a focusable card for an immersive hub or grid; the backdrop names it, so there is no caption. */
 @Composable
@@ -49,6 +59,7 @@ internal fun TvPosterCard(
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    badge: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     Box(
         modifier =
@@ -63,6 +74,36 @@ internal fun TvPosterCard(
         posterUrl?.let {
             AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         }
+        badge?.invoke(this)
+    }
+}
+
+/**
+ * A small round icon chip for the corner of a poster — a state in a glyph, over a scrim so it reads on any artwork.
+ * Place it in [TvPosterCard]'s `badge` slot.
+ */
+@Composable
+internal fun BoxScope.TvPosterIconChip(
+    icon: ImageVector,
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .align(Alignment.TopEnd)
+                .padding(dimensionResource(R.dimen.tv_poster_chip_inset))
+                .size(dimensionResource(R.dimen.tv_poster_chip_size))
+                .clip(CircleShape)
+                .background(BingeTheme.colors.scrim.copy(alpha = CHIP_SCRIM_ALPHA)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(dimensionResource(R.dimen.tv_poster_chip_icon)),
+        )
     }
 }
 

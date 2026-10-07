@@ -31,10 +31,14 @@ import org.robolectric.annotation.Config
 
 private const val PAST_SETTLE_MILLIS = CONTENT_SETTLE_MILLIS + 100L
 
+/** The account sits above Home at the top of the rail, so Home is its second item. */
+private const val HOME_RAIL_INDEX = 1
+
 /**
  * The rail beside the boards under a real D-pad: where focus starts, how it reaches the rail and comes
  * back, that a walk down the rail changes the content only once it settles, and the Back hierarchy.
- * Every destination is a full-bleed focusable box, the one property of a board the shell reacts to.
+ * Every destination is a full-bleed focusable box, the one property of a board the shell reacts to. The account is
+ * the rail's header, so a walk down from Home reaches Issues, and Settings is pinned below the walk.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
@@ -57,7 +61,7 @@ class TvShellScaffoldFocusTest {
 
         pressLeft()
 
-        railItemAt(0).assertIsFocused()
+        railItemAt(HOME_RAIL_INDEX).assertIsFocused()
     }
 
     @Test
@@ -67,7 +71,7 @@ class TvShellScaffoldFocusTest {
 
         pressDown()
 
-        railItemAt(1).assertIsFocused()
+        railItemAt(HOME_RAIL_INDEX + 1).assertIsFocused()
         composeTestRule.mainClock.advanceTimeBy(PAST_SETTLE_MILLIS)
         composeTestRule.waitForIdle()
         content(TvDestination.Issues).assertExists()
@@ -79,7 +83,7 @@ class TvShellScaffoldFocusTest {
 
         pressBack()
 
-        railItemAt(0).assertIsFocused()
+        railItemAt(HOME_RAIL_INDEX).assertIsFocused()
     }
 
     @Test

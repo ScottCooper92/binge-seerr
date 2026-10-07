@@ -152,7 +152,6 @@
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
     <string name="request_tags">Tags</string>
-    <string name="request_tags_line">Tags: %1$s</string>
     <string name="request_seasons">Seasons requested</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_title_status_caption">The title\'s overall status — this request\'s season may differ below.</string>
@@ -991,9 +990,6 @@
     <string name="tv_hub_quota_none_left">None left</string>
     <string name="tv_download_percent">%1$d%%</string>
     <string name="tv_list_load_failed">The list could not be loaded.</string>
-    <string name="tv_list_load_more_failed">Could not load more. Press OK to retry.</string>
-    <string name="tv_list_refresh_failed">Could not refresh. Showing the last known rows. Press OK to retry.</string>
-    <string name="tv_list_loading_more">Loading more…</string>
     <string name="tv_issue_resolve">Resolve issue</string>
     <string name="tv_issue_reopen">Reopen issue</string>
     <string name="tv_issue_deleted">Issue deleted</string>
@@ -1009,6 +1005,10 @@
     <string name="tv_settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Open the Play Store</string>
     <string name="tv_see_all">See all</string>
+    <string name="tv_rail_account">Account</string>
+    <string name="tv_account_quota_of">of %1$d left</string>
+    <string name="tv_account_quota_unlimited_note">No limit</string>
+    <string name="tv_account_your_requests">Your requests</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
     <string name="field_secret_show">Show the value</string>
     <string name="field_secret_hide">Hide the value</string>
@@ -1091,4 +1091,16 @@
          (the row's label/detail), so it stays here rather than in src/debug's strings.xml — its
          own UI prototypes strings live there instead, since that screen is debug-only code (#467). -->
     <string name="debug_group_developer" translatable="false">Developer</string>
+    <string name="tv_detail_approve">Approve</string>
+    <string name="tv_detail_decline">Decline</string>
+    <string name="tv_detail_remove">Remove</string>
+    <string name="tv_detail_block">Block</string>
+    <string name="request_title_blocked">Title blocked</string>
+    <string name="request_block_failed">The title could not be blocked</string>
+    <string name="request_block_confirm_title">Block this title?</string>
+    <string name="request_block_confirm_message">The title is blocked from being requested again. This request is left as it is.</string>
+    <string name="tv_detail_info_requested">Requested</string>
+    <string name="tv_detail_info_status">Status</string>
+    <string name="tv_detail_info_sent_to">Sent to</string>
+    <string name="tv_detail_details">Details</string>
 </resources>

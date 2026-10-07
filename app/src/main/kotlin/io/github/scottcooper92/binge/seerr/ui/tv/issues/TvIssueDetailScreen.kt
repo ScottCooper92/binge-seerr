@@ -54,7 +54,6 @@ import io.github.scottcooper92.binge.seerr.ui.issues.tone
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadingPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPoster
-import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvDetailSectionHeader
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR

@@ -159,6 +159,12 @@ jobs:
       - name: Unit tests and coverage
         run: ./gradlew :app:testDebugUnitTest :app:koverVerify --continue
 
+      # UncaughtExceptionsBeforeTest names the test that ran next, never the coroutine that leaked. This report names it,
+      # and the artifact below expires in a day, so a failed run says what leaked in its own log (#807).
+      - name: Print the coroutine leak report
+        if: ${{ failure() }}
+        run: cat app/build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
+
       - name: Upload reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

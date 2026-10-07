@@ -133,7 +133,6 @@
     <string name="request_profile">Perfil de calidad</string>
     <string name="request_root_folder">Carpeta raíz</string>
     <string name="request_tags">Etiquetas</string>
-    <string name="request_tags_line">Etiquetas: %1$s</string>
     <string name="request_seasons">Temporadas solicitadas</string>
     <string name="request_season_number">Temporada %1$d</string>
     <string name="request_title_status_caption">El estado general del título; la temporada de esta solicitud puede diferir a continuación.</string>
@@ -956,9 +955,6 @@
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
     <string name="tv_list_load_failed">No se pudo cargar la lista.</string>
-    <string name="tv_list_load_more_failed">No se pudo cargar más. Pulsa OK para reintentar.</string>
-    <string name="tv_list_refresh_failed">No se pudo actualizar. Mostrando las últimas filas conocidas. Pulsa OK para reintentar.</string>
-    <string name="tv_list_loading_more">Cargando más…</string>
     <string name="tv_issue_resolve">Resolver la incidencia</string>
     <string name="tv_issue_reopen">Reabrir la incidencia</string>
     <string name="tv_issue_deleted">Incidencia eliminada</string>
@@ -974,6 +970,10 @@
     <string name="tv_settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Abrir Play Store</string>
     <string name="tv_see_all">Ver todo</string>
+    <string name="tv_rail_account">Cuenta</string>
+    <string name="tv_account_quota_of">de %1$d restantes</string>
+    <string name="tv_account_quota_unlimited_note">Sin límite</string>
+    <string name="tv_account_your_requests">Tus solicitudes</string>
     <string name="field_secret_show">Mostrar el valor</string>
     <string name="field_secret_hide">Ocultar el valor</string>
     <string name="field_clear">Borrar el valor</string>
@@ -1030,4 +1030,16 @@
     <string name="consent_kicker">Privacidad</string>
     <string name="tv_consent_point_change_title">Se desactiva con una pulsación</string>
     <string name="tv_consent_reassurance">No se recoge nada a menos que elijas Compartir datos de uso.</string>
+    <string name="tv_detail_approve">Aprobar</string>
+    <string name="tv_detail_decline">Rechazar</string>
+    <string name="tv_detail_remove">Eliminar</string>
+    <string name="tv_detail_block">Bloquear</string>
+    <string name="request_title_blocked">Título bloqueado</string>
+    <string name="request_block_failed">No se pudo bloquear el título</string>
+    <string name="request_block_confirm_title">¿Bloquear este título?</string>
+    <string name="request_block_confirm_message">El título no se podrá volver a solicitar. Esta solicitud se queda como está.</string>
+    <string name="tv_detail_info_requested">Solicitado</string>
+    <string name="tv_detail_info_status">Estado</string>
+    <string name="tv_detail_info_sent_to">Enviado a</string>
+    <string name="tv_detail_details">Detalles</string>
 </resources>

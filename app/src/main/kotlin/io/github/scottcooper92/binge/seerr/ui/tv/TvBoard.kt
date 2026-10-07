@@ -1,21 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,17 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvMessagePlate
 import com.binge.designsystem.tv.focus.TvArrivalFocus
-import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.tvArrivalTarget
-import com.binge.designsystem.tv.focus.tvFocusGroup
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
@@ -47,7 +35,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
-import com.binge.designsystem.tv.R as TvR
 
 private const val TRANSIENT_MESSAGE_MILLIS = 4_000L
 
@@ -183,94 +170,4 @@ internal fun <T> rememberTvTransientEvent(events: Flow<T>): T? {
         }
     }
     return current
-}
-
-/**
- * A paged list's rows with the states the pager reports: the rows once there are any, with the next page's
- * state as a footer; the whole-content plates for the first load, its failure, and an empty result.
- */
-@Composable
-internal fun <T> TvPagedList(
-    rows: TvPagedRows<T>,
-    emptyMessage: String,
-    onRetryLoad: () -> Unit,
-    onReconnect: () -> Unit,
-    modifier: Modifier = Modifier,
-    row: @Composable (T) -> Unit,
-) {
-    val refresh = rows.refresh
-    when {
-        rows.count > 0 ->
-            // One group, so Up from the first row finds the retry before the search leaves the list: across the
-            // board a full-width row scores the band's centred pills nearer than a button at the start edge.
-            Column(modifier = modifier.focusGroup()) {
-                if (refresh is TvLoadPhase.Failed) TvRefreshFailedButton(refresh, onRetryLoad, onReconnect)
-                TvStableFocusScroll {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().tvFocusGroup(),
-                        contentPadding = PaddingValues(vertical = dimensionResource(TvR.dimen.tv_focus_ring_bleed)),
-                        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_list_row_gap)),
-                    ) {
-                        items(count = rows.count, key = rows.itemKey) { index -> rows.at(index)?.let { row(it) } }
-                        item { TvAppendFooter(rows.append, onRetryLoad, onReconnect) }
-                    }
-                }
-            }
-        refresh is TvLoadPhase.Loading -> TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = modifier)
-        refresh is TvLoadPhase.Failed ->
-            TvBoardPlate(
-                body = stringResource(if (refresh.rejected) R.string.requests_reconnect else R.string.tv_list_load_failed),
-                icon = Icons.Filled.Warning,
-                primary =
-                    if (refresh.rejected) {
-                        stringResource(R.string.tv_hub_reconnect) to onReconnect
-                    } else {
-                        stringResource(R.string.hub_retry) to onRetryLoad
-                    },
-                modifier = modifier,
-            )
-        else -> TvBoardPlate(body = emptyMessage, icon = Icons.Filled.Inbox, modifier = modifier)
-    }
-}
-
-/**
- * Above rows that are still showing, when the refresh behind them failed: the rows are the last known ones,
- * and a focusable button retries or, for a rejected session, reconnects. D-pad Up from the first row reaches it.
- */
-@Composable
-private fun TvRefreshFailedButton(
-    refresh: TvLoadPhase.Failed,
-    onRetryLoad: () -> Unit,
-    onReconnect: () -> Unit,
-) {
-    TvButton(
-        label = stringResource(if (refresh.rejected) R.string.tv_hub_reconnect else R.string.tv_list_refresh_failed),
-        onClick = if (refresh.rejected) onReconnect else onRetryLoad,
-        modifier = Modifier.padding(vertical = dimensionResource(DesR.dimen.padding_m)),
-    )
-}
-
-/** Under a list that is showing: a line while the next page loads, or a button to retry it. */
-@Composable
-private fun TvAppendFooter(
-    state: TvLoadPhase,
-    onRetryLoad: () -> Unit,
-    onReconnect: () -> Unit,
-) {
-    when (state) {
-        TvLoadPhase.Idle -> Unit
-        TvLoadPhase.Loading ->
-            Text(
-                text = stringResource(R.string.tv_list_loading_more),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = dimensionResource(DesR.dimen.padding_m)),
-            )
-        is TvLoadPhase.Failed ->
-            TvButton(
-                label = stringResource(if (state.rejected) R.string.tv_hub_reconnect else R.string.tv_list_load_more_failed),
-                onClick = if (state.rejected) onReconnect else onRetryLoad,
-                modifier = Modifier.padding(vertical = dimensionResource(DesR.dimen.padding_m)),
-            )
-    }
 }
