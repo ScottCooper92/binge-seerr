@@ -172,6 +172,32 @@ class SetupViewModelHandOffTest {
         }
 
     @Test
+    fun `asking again after typing over a phone-sent address that failed shows a new code`() =
+        runTest {
+            val sessions = mutableListOf<FakeSession>()
+            val vm =
+                viewModel {
+                    HandOffOpening.Opened(FakeSession(url = "http://192.168.1.20:41234/a/code${sessions.size}").also(sessions::add))
+                }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            sessions[0].address.complete("http://")
+            assertEquals(SetupError.InvalidUrl, vm.awaitAddress { it.error != null && it.handOff == null }.error)
+
+            // The user takes over at the TV: the phone's follow phase ends, and the button works again.
+            vm.editAddress("seerr")
+            assertTrue(sessions[0].closed)
+            vm.showHandOff(true)
+
+            assertTrue(vm.awaitAddress { it.handOff != null }.handOff is AddressHandOff.Listening)
+            assertFalse(sessions.last().closed)
+
+            vm.showHandOff(false)
+            assertTrue(sessions.last().closed)
+        }
+
+    @Test
     fun `a public http address from a phone still waits for the user's opt-in`() =
         runTest {
             val session = FakeSession()

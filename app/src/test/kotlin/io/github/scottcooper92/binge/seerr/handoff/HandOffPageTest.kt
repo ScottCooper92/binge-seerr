@@ -59,7 +59,7 @@ class HandOffPageTest {
     @Test
     fun `a refused address shows the error, and the sent page says so`() {
         assertTrue(page.form(null, invalid = true).contains("Invalid &amp; wrong"))
-        val sent = page.sent("en-GB")
+        val sent = page.status("en-GB", HandOffProgress.Checking)
         assertTrue(sent.contains("<html lang=\"en\">"))
         assertTrue(sent.contains("Sent body"))
         assertFalse(sent.contains("<form"))

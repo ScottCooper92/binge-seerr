@@ -265,8 +265,6 @@ class AddressHandOffListenerTest {
             invalid: Boolean,
         ) = "form:${pickLanguage(acceptLanguage)}:$invalid"
 
-        override fun sent(acceptLanguage: String?) = status(acceptLanguage, HandOffProgress.Checking)
-
         override fun status(
             acceptLanguage: String?,
             progress: HandOffProgress,

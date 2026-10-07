@@ -43,9 +43,6 @@ internal interface HandOffPage {
         invalid: Boolean,
     ): String
 
-    /** The answer to an accepted address. */
-    fun sent(acceptLanguage: String?): String
-
     /**
      * The page for wherever the TV has got to. Every state but the last asks the browser to read it again
      * in a moment, so the page follows the TV with no script in it.
@@ -128,8 +125,6 @@ internal class HandOffPageTemplate(
             copy.install.substring(0, at).escapeHtml() + link + copy.install.substring(at + copy.storeName.length).escapeHtml()
         }
     }
-
-    override fun sent(acceptLanguage: String?): String = status(acceptLanguage, HandOffProgress.Checking)
 
     override fun status(
         acceptLanguage: String?,
