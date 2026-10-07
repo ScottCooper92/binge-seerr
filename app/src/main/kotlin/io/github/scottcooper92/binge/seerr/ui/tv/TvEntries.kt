@@ -255,7 +255,6 @@ private fun TvHubEntry(
     onReconnect: () -> Unit,
     viewModel: HubViewModel,
 ) {
-    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // The downloading poll and the auto-retry run only while the hub is on screen.
     DisposableEffect(viewModel) {
@@ -265,14 +264,7 @@ private fun TvHubEntry(
     TvHubBoard(
         state = state,
         actions =
-            TvHubActions(
-                onOpenRequests = {},
-                onOpenIssues = {},
-                onRetry = viewModel::recheck,
-                onReconnect = onReconnect,
-                onDisconnect = viewModel::disconnect,
-                onOpenBingeListing = { context.openBingeOnPlayStore() },
-            ),
+            TvHubActions(onRetry = viewModel::recheck, onReconnect = onReconnect, onDisconnect = viewModel::disconnect),
     )
 }
 
