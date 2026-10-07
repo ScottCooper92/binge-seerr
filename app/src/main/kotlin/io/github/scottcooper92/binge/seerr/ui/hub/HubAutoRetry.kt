@@ -18,10 +18,14 @@ private const val MAX_AUTO_RETRIES = 5
 
 /**
  * Heals a transient failure in place: while the hub is on screen and its health is retryable
- * ([ConnectionHealth.Unreachable], [ConnectionHealth.LocalNetworkDenied] or [ConnectionHealth.CouldNotLoad]) it re-probes on a bounded
+ * ([ConnectionHealth.Unreachable], [ConnectionHealth.LocalNetworkDenied], [ConnectionHealth.CouldNotLoad] or
+ * [ConnectionHealth.Unauthorized]) it re-probes on a bounded
  * exponential backoff, so a network that comes up a moment after launch recovers by itself.
  * `collectLatest` restarts on every change, so leaving the retryable set or the screen cancels the
  * in-flight delay and a later relapse gets a fresh budget.
+ *
+ * Unauthorized is retried because the hub shows a loading page for it while the app decides (#810). A rejection the
+ * server confirms takes the app to sign-in; one it contradicts was a stray answer, and only a reload clears it.
  *
  * Runs on [dispatcher] rather than [scope]'s own, for the same reason `UserAdmission` does (#177/#370):
  * [backoffRetries]'s [retry] call would otherwise resume on `viewModelScope`'s `Dispatchers.Main.immediate`.
@@ -53,4 +57,7 @@ class HubAutoRetry(
 }
 
 private fun ConnectionHealth.isRetryable(): Boolean =
-    this == ConnectionHealth.Unreachable || this == ConnectionHealth.LocalNetworkDenied || this == ConnectionHealth.CouldNotLoad
+    this == ConnectionHealth.Unreachable ||
+        this == ConnectionHealth.LocalNetworkDenied ||
+        this == ConnectionHealth.CouldNotLoad ||
+        this == ConnectionHealth.Unauthorized

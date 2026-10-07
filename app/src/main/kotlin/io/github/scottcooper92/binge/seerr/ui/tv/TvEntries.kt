@@ -246,7 +246,13 @@ internal fun homeAnswering(
     previous: Boolean,
 ): Boolean =
     when (hub) {
-        is HubUiState.Ready -> if (hub.health == ConnectionHealth.Checking) previous else !hub.health.isProblem()
+        is HubUiState.Ready ->
+            when (hub.health) {
+                ConnectionHealth.Checking -> previous
+                // Not an answer either: the app goes to sign-in (#810), or the hub re-reads and finds the session fine.
+                ConnectionHealth.Unauthorized -> false
+                else -> !hub.health.isProblem()
+            }
         is HubUiState.Error, HubUiState.Loading -> false
     }
 

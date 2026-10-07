@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
@@ -19,7 +20,10 @@ import androidx.navigation3.scene.SceneStrategyScope
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.binge.designsystem.PaneBackNavigationBehavior
+import com.binge.designsystem.PaneContent
+import com.binge.designsystem.PaneEdge
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
+import com.binge.designsystem.R as DesR
 
 /**
  * The entry metadata that puts a screen in the detail pane beside the hub: a section, and everything
@@ -29,6 +33,14 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal val DetailPane: Map<String, Any> = ListDetailSceneStrategy.detailPane()
+
+/**
+ * The content of a [DetailPane] entry: a pane whose start edge is the one it shares with the hub, so that edge takes the
+ * design system's narrow inner inset and leaves the window's insets to the hub's side (#814). Every detail entry
+ * uses it, so a route added later cannot forget it. Alone in a narrow window it is a whole-window screen as before.
+ */
+@Composable
+internal fun DetailPaneContent(content: @Composable () -> Unit) = PaneContent(innerEdge = PaneEdge.Start, content = content)
 
 /**
  * The section a wide window shows beside the hub while none is open, so the detail pane is never
@@ -52,10 +64,12 @@ internal fun rememberSeerrPaneStrategy(
     directive: PaneScaffoldDirective,
     backStack: List<NavKey>,
 ): SceneStrategy<NavKey> {
+    // The design system's gap between the panes in place of Material adaptive's own 24dp (#814), as Binge's is.
+    val spaced = directive.copy(horizontalPartitionSpacerSize = dimensionResource(DesR.dimen.pane_spacer))
     val listDetail =
         rememberListDetailSceneStrategy<NavKey>(
             backNavigationBehavior = PaneBackNavigationBehavior,
-            directive = directive.copy(defaultPanePreferredWidth = equalPaneWidth(directive)),
+            directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced)),
         )
     return remember(listDetail, backStack) { SeerrPaneStrategy(listDetail, backStack) }
 }
