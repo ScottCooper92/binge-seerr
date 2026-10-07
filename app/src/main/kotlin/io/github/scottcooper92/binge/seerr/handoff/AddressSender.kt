@@ -44,9 +44,8 @@ internal class OkHttpAddressSender(
             .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .followRedirects(false)
             .followSslRedirects(false)
-            // Never replay the POST. The TV takes exactly one address and then stops listening, so a silent
-            // retry after a slow or dropped first response reaches a closed port and reports a failure for a
-            // send that worked.
+            // Never replay the POST. A silent retry after a slow or dropped first
+            // response would post the address twice, and could report a failure for a send that worked.
             .retryOnConnectionFailure(false)
             .build(),
         warn = logWarning(TAG),
