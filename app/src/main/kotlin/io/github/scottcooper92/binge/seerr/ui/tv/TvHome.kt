@@ -21,8 +21,8 @@ internal fun TvSeerrShell(viewModel: TvHomeViewModel = hiltViewModel()) {
             when (state) {
                 TvHomeUiState.Loading -> TvLoadingPlate()
                 // Each in its own view-model scope: a new connection gets new screens, not the last one's.
-                TvHomeUiState.Setup -> TvViewModelScope { TvSetupEntry() }
-                TvHomeUiState.Connected -> TvViewModelScope { TvConnectedShell() }
+                TvHomeUiState.Setup -> TvViewModelScope("setup") { TvSetupEntry() }
+                TvHomeUiState.Connected -> TvViewModelScope("connected") { TvConnectedShell() }
             }
         }
     }
