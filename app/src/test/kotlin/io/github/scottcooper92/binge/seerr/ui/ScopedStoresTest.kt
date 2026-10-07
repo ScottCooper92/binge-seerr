@@ -1,4 +1,4 @@
-package io.github.scottcooper92.binge.seerr.ui.tv
+package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.lifecycle.ViewModel
 import org.junit.Assert.assertFalse

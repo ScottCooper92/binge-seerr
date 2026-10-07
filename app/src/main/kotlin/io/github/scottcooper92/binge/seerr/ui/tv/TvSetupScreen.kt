@@ -28,6 +28,7 @@ import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
+import io.github.scottcooper92.binge.seerr.ui.SetupNotice
 import io.github.scottcooper92.binge.seerr.ui.SetupServer
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
@@ -165,7 +166,7 @@ private fun TvSetupSignInStep(
             )
             TvModeFields(state.form, state.server, actions.onEditForm, initialFocus == TvSetupFocus.Credential, onDone = actions.onConnect)
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
-            state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = TvFormNoteTone.Success) }
+            state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone) }
         }
     }
 }
@@ -281,3 +282,11 @@ private fun TvPasswordField(
         onDone = { if (form.canSubmit) onDone() },
     )
 }
+
+/** A reset email that went is good news; a session the server rejected is only the reason the form is up. */
+private val SetupNotice.tone: TvFormNoteTone
+    get() =
+        when (this) {
+            SetupNotice.ResetEmailSent -> TvFormNoteTone.Success
+            SetupNotice.SessionRejected -> TvFormNoteTone.Neutral
+        }

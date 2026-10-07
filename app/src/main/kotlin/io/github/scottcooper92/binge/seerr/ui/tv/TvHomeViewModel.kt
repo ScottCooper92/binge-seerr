@@ -6,15 +6,19 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** What the television home shows: nothing until the store has answered, then setup or the rail. */
+/** What the television home shows: nothing until the store has answered, then setup, the sign-in again, or the rail. */
 sealed interface TvHomeUiState {
     data object Loading : TvHomeUiState
 
     data object Setup : TvHomeUiState
+
+    /** A server is saved but has rejected the session (#810): the sign-in takes the screen, with no rail behind it. */
+    data object Reconnect : TvHomeUiState
 
     data object Connected : TvHomeUiState
 }
@@ -24,12 +28,21 @@ sealed interface TvHomeUiState {
 class TvHomeViewModel
     @Inject
     constructor(
-        connection: SeerrConnection,
+        private val connection: SeerrConnection,
     ) : ViewModel() {
         val uiState: StateFlow<TvHomeUiState> =
-            connection.credentials
-                .map { credentials -> if (credentials == null) TvHomeUiState.Setup else TvHomeUiState.Connected }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), TvHomeUiState.Loading)
+            combine(connection.credentials, connection.sessionRejected) { credentials, rejected ->
+                when {
+                    credentials == null -> TvHomeUiState.Setup
+                    rejected -> TvHomeUiState.Reconnect
+                    else -> TvHomeUiState.Connected
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), TvHomeUiState.Loading)
+
+        /** Leaves a server that rejected the session, for one that is gone or that the user no longer uses. */
+        fun disconnect() {
+            viewModelScope.launch { connection.disconnect() }
+        }
 
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L

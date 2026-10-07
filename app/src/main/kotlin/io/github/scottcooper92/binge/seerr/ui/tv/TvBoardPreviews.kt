@@ -237,12 +237,6 @@ internal fun TvHubUnreachablePreview() {
 
 @TvPreviewsOnBlack
 @Composable
-internal fun TvHubUnauthorizedPreview() {
-    Box(modifier = Modifier.fillMaxSize()) { TvHubBoard(state = hub(health = ConnectionHealth.Unauthorized), actions = NoHubActions) }
-}
-
-@TvPreviewsOnBlack
-@Composable
 internal fun TvHubLoadingPreview() {
     Box(modifier = Modifier.fillMaxSize()) { TvHubBoard(state = HubUiState.Loading, actions = NoHubActions) }
 }

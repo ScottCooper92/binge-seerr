@@ -105,11 +105,12 @@ class HubConnectionProblemTest {
         rule.onNode(hasText(text(R.string.local_network_allow))).assertDoesNotExist()
     }
 
+    /** The app goes to sign-in for a rejected session (#810), so the hub offers no way out of its own meanwhile. */
     @Test
-    fun `a rejected session keeps its single sign in again action`() {
+    fun `a rejected session offers nothing of its own while the app goes to sign-in`() {
         show(ConnectionHealth.Unauthorized)
 
-        rule.onNode(hasText(text(R.string.hub_sign_in_again))).assertExists()
+        rule.onNode(hasText(text(R.string.hub_retry))).assertDoesNotExist()
         rule.onNode(hasText(text(R.string.settings_edit_connection))).assertDoesNotExist()
     }
 }

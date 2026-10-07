@@ -78,14 +78,6 @@ class TvHubScreenshotTest {
         TvHubBoard(state = previewReady(health = ConnectionHealth.CouldNotLoad), actions = previewTvHubActions())
     }
 
-    /** The saved sign-in was rejected: Reconnect leads, since retrying cannot mend it. */
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun Unauthorized() {
-        TvHubBoard(state = previewReady(health = ConnectionHealth.Unauthorized), actions = previewTvHubActions())
-    }
-
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

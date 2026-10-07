@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -82,6 +81,8 @@ fun HubScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when {
+                // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
+                state is HubUiState.Error && state.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))
                 state is HubUiState.Error ->
                     ConnectionProblem(
                         state.health,
@@ -107,11 +108,14 @@ fun HubScreen(
     }
 }
 
+/**
+ * Whether the hub shows the server's problem in place of its dashboard. Not [ConnectionHealth.Unauthorized]: a rejection
+ * the server confirms takes the app to sign-in (#810), and one it doesn't was a stray answer, not a problem to show.
+ */
 internal fun ConnectionHealth.isProblem(): Boolean =
     this == ConnectionHealth.Unreachable ||
         this == ConnectionHealth.LocalNetworkDenied ||
-        this == ConnectionHealth.CouldNotLoad ||
-        this == ConnectionHealth.Unauthorized
+        this == ConnectionHealth.CouldNotLoad
 
 @Composable
 private fun Dashboard(
@@ -244,7 +248,10 @@ class DeveloperRow(
     val onClick: () -> Unit,
 )
 
-/** Server gone or the dashboard not loaded (retry, or edit the connection), or the session rejected (reconnect). */
+/**
+ * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches
+ * here, since the app goes to sign-in instead (#810).
+ */
 @Composable
 private fun ConnectionProblem(
     health: ConnectionHealth,
@@ -254,13 +261,11 @@ private fun ConnectionProblem(
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val retryable = health != ConnectionHealth.Unauthorized
     EmptyScreen(
         modifier = modifier,
         title =
             stringResource(
                 when (health) {
-                    ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_headline
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
                     else -> R.string.hub_unreachable_headline
@@ -269,7 +274,6 @@ private fun ConnectionProblem(
         message =
             stringResource(
                 when (health) {
-                    ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_body
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
                     else -> R.string.hub_unreachable_body
@@ -277,7 +281,6 @@ private fun ConnectionProblem(
             ),
         icon =
             when (health) {
-                ConnectionHealth.Unauthorized -> Icons.Filled.Lock
                 ConnectionHealth.CouldNotLoad -> Icons.Filled.HourglassEmpty
                 else -> Icons.Filled.CloudOff
             },
@@ -293,16 +296,10 @@ private fun ConnectionProblem(
                         onClick = onReconnect,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                } else if (retryable) {
+                } else {
                     BingeFilledButton(label = stringResource(R.string.hub_retry), onClick = onRetry, modifier = Modifier.fillMaxWidth())
                     BingeOutlinedButton(
                         label = stringResource(R.string.settings_edit_connection),
-                        onClick = onReconnect,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                } else {
-                    BingeFilledButton(
-                        label = stringResource(R.string.hub_sign_in_again),
                         onClick = onReconnect,
                         modifier = Modifier.fillMaxWidth(),
                     )

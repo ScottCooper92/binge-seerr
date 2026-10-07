@@ -22,6 +22,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.handoff.HandOffSignInModes
 import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
+import io.github.scottcooper92.binge.seerr.ui.SetupNotice
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.messageRes
 
@@ -57,7 +58,11 @@ internal fun TvSetupCodePage(
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
     TvFormPage(
-        headline = stringResource(R.string.tv_setup_code_headline),
+        // Put up by the app itself when the server rejected the session (#810): it says so, then the same code.
+        headline =
+            stringResource(
+                if (signIn?.notice == SetupNotice.SessionRejected) R.string.hub_unauthorized_headline else R.string.tv_setup_code_headline,
+            ),
         body = stringResource(R.string.tv_setup_code_body),
         icon = Icons.Filled.Tv,
         modifier = modifier,
@@ -76,7 +81,10 @@ internal fun TvSetupCodePage(
         },
         pinnedAction =
             signIn?.let {
-                { TvButton(label = stringResource(R.string.setup_change_server), onClick = actions.onChangeServer) }
+                {
+                    TvButton(label = stringResource(R.string.setup_change_server), onClick = actions.onChangeServer)
+                    actions.onDisconnect?.let { TvButton(label = stringResource(R.string.hub_disconnect), onClick = it) }
+                }
             },
     ) {
         when {

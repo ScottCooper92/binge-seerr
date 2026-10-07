@@ -34,6 +34,12 @@ class SetupActions(
     val onOfferSignInCode: () -> Unit = {},
     /** The local-network permission may have changed; read it again. Defaulted like [onAllowCleartext]. */
     val onLocalNetworkChanged: () -> Unit = {},
+    /**
+     * Leaving the saved server, offered beside the sign-in only when the app put the form up itself because the server
+     * rejected the session (#810), so a user whose server is gone is not stuck on it. On TV it sits on the code page,
+     * where that sign-in lands; the typed form's bar has no room for a third button. Null everywhere else.
+     */
+    val onDisconnect: (() -> Unit)? = null,
 )
 
 /**

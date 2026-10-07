@@ -107,12 +107,6 @@ class HubScreenshotTest {
     @Composable
     fun couldNotLoad() = HubScreen(state = previewReady(health = ConnectionHealth.CouldNotLoad), actions = previewActions())
 
-    /** The session rejected: the one problem that offers signing in again rather than retrying. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun unauthorized() = HubScreen(state = previewReady(health = ConnectionHealth.Unauthorized), actions = previewActions())
-
     /**
      * A cold start the server never answered: nothing remembered, so no server to name and the bar
      * keeps the app's own title. The way out is the same as [unreachable].

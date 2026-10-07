@@ -33,6 +33,7 @@
     <string name="setup_plex_hint">You will approve this app on plex.tv in your browser, then come back here.</string>
     <string name="setup_quick_connect_hint">You will get a code to approve in any Jellyfin app where you are already signed in.</string>
     <string name="setup_forgot_password">Forgot password?</string>
+    <string name="setup_session_rejected">The server rejected the saved sign-in.</string>
     <string name="setup_reset_email_sent">If that address belongs to an account, a reset link is on its way.</string>
     <string name="setup_error_invalid_url">That is not a server address.</string>
     <string name="setup_error_not_seerr">That address did not answer as a Seerr server.</string>
@@ -861,7 +862,6 @@
     <string name="hub_local_network_body">Android is blocking this app from reaching your server on your local network. Allow local network access and it will reconnect.</string>
     <string name="hub_unauthorized_headline">Reconnect needed</string>
     <string name="hub_unauthorized_body">The server rejected the saved sign-in. Sign in again to carry on.</string>
-    <string name="hub_sign_in_again">Sign in again</string>
     <string name="hub_couldnt_load_headline">Still connecting…</string>
     <string name="hub_couldnt_load_body">The server answered but the dashboard could not load yet. This can happen on first launch while the connection settles. Retrying automatically.</string>
 

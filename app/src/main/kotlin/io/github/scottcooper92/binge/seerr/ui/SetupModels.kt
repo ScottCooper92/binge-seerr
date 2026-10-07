@@ -22,8 +22,13 @@ enum class SetupError {
     HandOffSessionRejected,
 }
 
-/** Something that went right and wants saying: the only one so far is the reset email. */
-enum class SetupNotice { ResetEmailSent, }
+/** Something the form wants to say that is not an error in what was typed: the reset email went, or why the form is up. */
+enum class SetupNotice {
+    ResetEmailSent,
+
+    /** The server rejected the saved sign-in, so the app has come back to the form on its own (#810). */
+    SessionRejected,
+}
 
 /**
  * The server the address step found. The modes are the profile's, in the order the form offers

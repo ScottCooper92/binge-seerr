@@ -84,7 +84,8 @@ internal fun TvHubBoard(
     initialBingeTileFocused: Boolean = false,
 ) {
     // Loading is the same page as the rows' own, so Home's wait is one page and not a board's plate and then another.
-    if (state is HubUiState.Loading) {
+    // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
+    if (state is HubUiState.Loading || (state as? HubUiState.Error)?.health == ConnectionHealth.Unauthorized) {
         TvHubLoading(modifier)
         return
     }
@@ -102,7 +103,10 @@ internal fun TvHubBoard(
     }
 }
 
-/** Server gone or the dashboard not loaded (retry, or edit the connection), or the session rejected (reconnect). */
+/**
+ * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches
+ * here, since the app goes to sign-in instead (#810).
+ */
 @Composable
 private fun TvHubProblem(
     health: ConnectionHealth,
@@ -110,14 +114,12 @@ private fun TvHubProblem(
     allow: AllowLocalNetwork,
     modifier: Modifier = Modifier,
 ) {
-    val unauthorized = health == ConnectionHealth.Unauthorized
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
     TvBoardPlate(
         headline =
             stringResource(
                 when (health) {
-                    ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_headline
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
                     else -> R.string.hub_unreachable_headline
@@ -126,7 +128,6 @@ private fun TvHubProblem(
         body =
             stringResource(
                 when (health) {
-                    ConnectionHealth.Unauthorized -> R.string.hub_unauthorized_body
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
                     ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
                     else -> R.string.hub_unreachable_body
@@ -134,14 +135,12 @@ private fun TvHubProblem(
             ),
         icon = Icons.Filled.Warning,
         primary =
-            if (unauthorized) {
-                stringResource(R.string.tv_hub_reconnect) to actions.onReconnect
-            } else if (health == ConnectionHealth.LocalNetworkDenied) {
+            if (health == ConnectionHealth.LocalNetworkDenied) {
                 stringResource(allow.shortLabel) to allow.run
             } else {
                 stringResource(R.string.hub_retry) to actions.onRetry
             },
-        alternate = if (unauthorized) null else stringResource(R.string.settings_edit_connection) to actions.onReconnect,
+        alternate = stringResource(R.string.settings_edit_connection) to actions.onReconnect,
         secondary = stringResource(R.string.hub_disconnect) to actions.onDisconnect,
         modifier = modifier,
         arrival = arrival,

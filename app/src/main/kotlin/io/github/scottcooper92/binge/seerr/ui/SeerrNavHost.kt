@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
@@ -38,6 +39,12 @@ fun SeerrNavHost(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    val rejected by viewModel.sessionRejected.collectAsStateWithLifecycle()
+    if (rejected) {
+        // Nothing behind it: the screens would only fail one by one. A new sign-in brings them back on its own (#810).
+        ScopedViewModels("reconnect") { ReconnectEntry(onDisconnect = viewModel::disconnect, modifier = modifier) }
+        return
+    }
     val connectedState = viewModel.isConnected.collectAsStateWithLifecycle()
     val connected by connectedState
     // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
@@ -304,13 +311,28 @@ private fun EditConnectionEntry(
     )
 }
 
+/**
+ * The sign-in again, after the server rejected the session (#810): the setup form on the saved server, at its sign-in
+ * step, saying why, with a way to leave the server instead. Back has nothing to return to, so it leaves the app.
+ */
+@Composable
+private fun ReconnectEntry(
+    onDisconnect: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SetupViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) { viewModel.beginEdit(notice = SetupNotice.SessionRejected) }
+    Box(modifier) { SetupScreen(state = state, actions = viewModel.actions(onDisconnect)) }
+}
+
 @Composable
 private fun SetupEntry(viewModel: SetupViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SetupScreen(state = state, actions = viewModel.actions())
 }
 
-internal fun SetupViewModel.actions(): SetupActions =
+internal fun SetupViewModel.actions(onDisconnect: (() -> Unit)? = null): SetupActions =
     SetupActions(
         onEditAddress = ::editAddress,
         onInspect = ::inspect,
@@ -322,13 +344,14 @@ internal fun SetupViewModel.actions(): SetupActions =
         onRequestPasswordReset = ::requestPasswordReset,
         onAllowCleartext = ::allowCleartext,
         onLocalNetworkChanged = ::localNetworkResult,
+        onDisconnect = onDisconnect,
     )
 
 /**
  * The television screen's own wiring: Connect, whose Plex PIN is the plate's, not the browser's, and
  * the hand-off from a phone, which only a television offers.
  */
-internal fun SetupViewModel.tvActions(): SetupActions =
+internal fun SetupViewModel.tvActions(onDisconnect: (() -> Unit)? = null): SetupActions =
     SetupActions(
         onEditAddress = ::editAddress,
         onInspect = ::inspect,
@@ -343,4 +366,5 @@ internal fun SetupViewModel.tvActions(): SetupActions =
         onCancelHandOff = { showHandOff(false) },
         onOfferSignInCode = { showHandOff(true) },
         onLocalNetworkChanged = ::localNetworkResult,
+        onDisconnect = onDisconnect,
     )
