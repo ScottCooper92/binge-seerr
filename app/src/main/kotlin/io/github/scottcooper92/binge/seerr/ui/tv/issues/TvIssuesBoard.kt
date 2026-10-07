@@ -24,7 +24,6 @@ import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
-import com.binge.designsystem.tv.template.TvMessagePage
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
@@ -47,6 +46,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropCopy
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
+import io.github.scottcooper92.binge.seerr.ui.tv.TvHubLoading
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvRowsFallback
@@ -107,7 +107,7 @@ internal fun TvIssuesBoard(
     }
     Box(modifier = modifier.fillMaxSize()) {
         if (ready == null) {
-            TvMessagePage(body = stringResource(R.string.tv_loading), loading = true)
+            TvHubLoading()
         } else {
             TvIssuesRows(
                 ready = ready,

@@ -32,6 +32,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.statusChip
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropCopy
+import io.github.scottcooper92.binge.seerr.ui.tv.TvHubLoading
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvRowsFallback
@@ -149,7 +150,7 @@ private fun TvRequestsUnresolved(
     modifier: Modifier,
 ) {
     if (state !is RequestsUiState.Error) {
-        TvMessagePage(body = stringResource(R.string.tv_loading), modifier = modifier, loading = true)
+        TvHubLoading(modifier)
         return
     }
     val rejected = state.error == SeerrError.Unauthorized || state.error == SeerrError.NotConnected
