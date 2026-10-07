@@ -2,13 +2,11 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
@@ -98,21 +96,17 @@ internal fun TvIssuesGridOverlay(
 
 /**
  * An issue's read-only page, above the rail exactly as the connection form is: the same
- * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, and one instance per issue id, keyed by
- * [issueId] for the same reason as the request page.
+ * [IssueDetailViewModel] the phone's `IssueDetailEntry` binds, in a view-model scope of its own as the request
+ * page's is.
  */
 @Composable
 internal fun TvIssueDetailOverlay(
     issueId: Int,
     onDone: () -> Unit,
     viewModel: IssueDetailViewModel =
-        hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(
-            key = "issue-detail-$issueId",
-            creationCallback = { factory -> factory.create(issueId) },
-        ),
+        hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel) { if (viewModel.uiState.value is IssueDetailUiState.Ready) viewModel.reload() }
     TvIssueDetailScreen(
         state = state,
         actions = TvIssueDetailActions(onBack = onDone, onRetry = viewModel::reload),
