@@ -42,6 +42,7 @@ import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import com.binge.designsystem.tv.template.TvImmersiveGrid
+import com.binge.designsystem.tv.template.TvImmersiveHubSkeleton
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageAction
 import io.github.scottcooper92.binge.seerr.R
@@ -178,7 +179,7 @@ internal fun TvRowsFallback(
     val failed = rows.firstNotNullOfOrNull { it.refresh as? TvLoadPhase.Failed }
     val loading = rows.any { it.refresh is TvLoadPhase.Loading }
     when {
-        loading -> TvMessagePage(body = stringResource(R.string.tv_loading), modifier = modifier, loading = true)
+        loading -> TvHubLoading(modifier)
         failed != null ->
             TvMessagePage(
                 body = stringResource(if (failed.rejected) R.string.requests_reconnect else R.string.tv_list_load_failed),
@@ -245,4 +246,16 @@ internal fun <T : Any> TvPagedGridScreen(
             onReconnect = onReconnect,
         )
     }
+}
+
+/**
+ * What every hub-shaped destination shows while it loads: the design system's hub skeleton, where the rows will be.
+ * One page for Home's whole wait, from the first read of the server to the first row, instead of a board's plate
+ * and then a message page: each swap between those replaced the node that held focus, and the rail opened and
+ * closed under it. The skeleton has nothing focusable of its own, so the shell's one focus holder stays put
+ * until the rows arrive and claim focus.
+ */
+@Composable
+internal fun TvHubLoading(modifier: Modifier = Modifier) {
+    TvImmersiveHubSkeleton(modifier = modifier, description = stringResource(R.string.tv_loading))
 }
