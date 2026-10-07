@@ -29,7 +29,7 @@ class SectionPanesTest {
     @Test
     fun `opening a section from the hub pushes it`() {
         val stack = backStack(HubRoute)
-        stack.openSection(HubSection.Issues, defaultShowing = false)
+        stack.openSection(HubSection.Issues)
         assertEquals(listOf(HubRoute, IssuesRoute), stack.toList())
     }
 
@@ -37,33 +37,41 @@ class SectionPanesTest {
     @Test
     fun `opening a section replaces the open one and everything it stacked`() {
         val stack = backStack(HubRoute, RequestsRoute, RequestDetailRoute(7))
-        stack.openSection(HubSection.Users, defaultShowing = false)
+        stack.openSection(HubSection.Users)
         assertEquals(listOf(HubRoute, UsersRoute), stack.toList())
     }
 
-    /** On a narrow window the hub is alone on screen, so even the default section is a push. */
+    /** The stack records the choice even where the placeholder already shows it, so a narrower window keeps it (#815). */
     @Test
-    fun `the default section is pushed when nothing stands in for it`() {
+    fun `the default section is pushed like any other`() {
         val stack = backStack(HubRoute)
-        stack.openSection(DefaultSection, defaultShowing = false)
+        stack.openSection(DefaultSection)
+        assertEquals(listOf(HubRoute, DefaultSection.route()), stack.toList())
+
+        stack.openSection(DefaultSection)
         assertEquals(listOf(HubRoute, DefaultSection.route()), stack.toList())
     }
 
     @Test
-    fun `beside the hub, opening the default section clears the pane back to it`() {
+    fun `opening the default section still clears what the open one stacked`() {
         val stack = backStack(HubRoute, IssuesRoute, IssueDetailRoute(3))
-        stack.openSection(DefaultSection, defaultShowing = true)
-        assertEquals(listOf(HubRoute), stack.toList())
+        stack.openSection(DefaultSection)
+        assertEquals(listOf(HubRoute, DefaultSection.route()), stack.toList())
+    }
 
-        stack.openSection(DefaultSection, defaultShowing = true)
-        assertEquals(listOf(HubRoute), stack.toList())
+    /** Back and a narrower window return to the list the request was opened from, not to the hub (#815). */
+    @Test
+    fun `what the placeholder opens goes above the default section`() {
+        val stack = backStack(HubRoute)
+        stack.openAboveDefault(RequestDetailRoute(7))
+        assertEquals(listOf(HubRoute, DefaultSection.route(), RequestDetailRoute(7)), stack.toList())
     }
 
     @Test
-    fun `beside the hub, any other section is pushed`() {
-        val stack = backStack(HubRoute)
-        stack.openSection(HubSection.Settings, defaultShowing = true)
-        assertEquals(listOf(HubRoute, SettingsRoute), stack.toList())
+    fun `what the default section opens once it is on the stack is pushed above it once`() {
+        val stack = backStack(HubRoute, RequestsRoute)
+        stack.openAboveDefault(UserDetailRoute(2))
+        assertEquals(listOf(HubRoute, RequestsRoute, UserDetailRoute(2)), stack.toList())
     }
 
     @Test
@@ -77,6 +85,8 @@ class SectionPanesTest {
     fun `the default section is marked only while it stands in beside the hub`() {
         assertEquals(DefaultSection, backStack(HubRoute).selectedSection(defaultShowing = true))
         assertNull(backStack(HubRoute).selectedSection(defaultShowing = false))
+        // Chosen, it is marked from the stack, whichever window.
+        assertEquals(DefaultSection, backStack(HubRoute, RequestsRoute).selectedSection(defaultShowing = false))
         // The account card opens a user with no section under it: the pane shows that, not the default.
         assertNull(backStack(HubRoute, UserDetailRoute(1)).selectedSection(defaultShowing = true))
     }
