@@ -12,7 +12,6 @@ import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -63,7 +62,7 @@ class HandOffSignInEndToEndTest {
             assertEquals(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Jellyfin")), client.status(target))
 
             val credentials = HandOffCredentials(mode = "Jellyfin", username = "ana", password = "correct horse")
-            assertTrue(client.send(target, credentials))
+            assertEquals(1, client.send(target, credentials))
 
             assertEquals(credentials, withTimeout(5_000) { received.receive() })
         }
@@ -74,7 +73,7 @@ class HandOffSignInEndToEndTest {
             serve()
             progress = HandOffProgress.SignIn("Home", modes = listOf("Local"))
 
-            assertFalse(client.send(target, HandOffCredentials(mode = "Jellyfin", username = "ana", password = "x")))
+            assertNull(client.send(target, HandOffCredentials(mode = "Jellyfin", username = "ana", password = "x")))
             assertTrue(received.isEmpty)
             assertNull(client.status(target.copy(port = 1)))
         }
@@ -85,7 +84,7 @@ class HandOffSignInEndToEndTest {
             serve()
             progress = HandOffProgress.SignIn("Home", modes = listOf("Local"))
 
-            assertFalse(client.send(target.copy(key = null), HandOffCredentials(mode = "Local", email = "a@b.c", password = "x")))
+            assertNull(client.send(target.copy(key = null), HandOffCredentials(mode = "Local", email = "a@b.c", password = "x")))
             assertTrue(received.isEmpty)
         }
 }

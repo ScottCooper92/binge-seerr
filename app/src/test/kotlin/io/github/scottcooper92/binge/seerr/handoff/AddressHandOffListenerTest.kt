@@ -295,10 +295,11 @@ class AddressHandOffListenerTest {
             assertTrue(post("/c/$TOKEN", sealedFor(local)).startsWith("HTTP/1.1 400 "))
             assertTrue(credentials.isEmpty)
 
-            progress = HandOffProgress.SignIn("Home", modes = listOf("Local"))
+            progress = HandOffProgress.SignIn("Home", modes = listOf("Local"), attempt = 4)
             val answer = post("/c/$TOKEN", sealedFor(local))
 
             assertTrue(answer.startsWith("HTTP/1.1 200 OK\r\n"))
+            assertTrue(answer, answer.contains("\"attempt\":5"))
             assertEquals(local, withTimeout(5_000) { credentials.receive() })
             serving.cancelAndJoin()
         }

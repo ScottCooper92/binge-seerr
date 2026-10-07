@@ -24,6 +24,8 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -77,6 +79,7 @@ class SendAddressViewModelTest {
         var statuses: MutableList<HandOffStatus?> = mutableListOf(HandOffStatus(HandOffStatus.WAITING))
         val sentCredentials = mutableListOf<HandOffCredentials>()
         var accept = true
+        var attempt = 1
 
         override suspend fun status(target: TvHandOffTarget): HandOffStatus? =
             if (statuses.size >
@@ -90,9 +93,9 @@ class SendAddressViewModelTest {
         override suspend fun send(
             target: TvHandOffTarget,
             credentials: HandOffCredentials,
-        ): Boolean {
+        ): Int? {
             sentCredentials += credentials
-            return accept
+            return if (accept) attempt else null
         }
     }
 
@@ -375,7 +378,7 @@ class SendAddressViewModelTest {
             vm.editSignIn { copy(username = "ana", password = "wrong") }
 
             vm.sendSignIn()
-            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin"), failed = true))
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin"), failed = true, attempt = 1))
             val rejected = vm.uiState.first { it is SendAddressUiState.SigningIn && (it.step as? SignInStep.Form)?.rejected == true }
             val step = (rejected as SendAddressUiState.SigningIn).step as SignInStep.Form
             assertEquals("ana", step.form.username)
@@ -390,6 +393,34 @@ class SendAddressViewModelTest {
                     } as SendAddressUiState.SigningIn
                 ).step,
             )
+        }
+
+    @Test
+    fun `a failed left over from the last attempt is not the refusal of a retry until the TV has counted the retry`() =
+        runTest {
+            val stale = HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin"), failed = true, attempt = 1)
+            tv.statuses = mutableListOf(stale)
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+            vm.send()
+            vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
+            vm.editSignIn { copy(username = "ana", password = "wrong") }
+            vm.sendSignIn()
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.rejected == true }
+
+            // The retry is the TV's second attempt; its status still says `failed`, as of the first.
+            tv.attempt = 2
+            vm.editSignIn { copy(password = "right") }
+            vm.sendSignIn()
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting == 2 }
+            advanceTimeBy(5_000)
+            runCurrent()
+            val sending = (vm.uiState.value as SendAddressUiState.SigningIn).step as SignInStep.Form
+            assertTrue(sending.isSending)
+            assertFalse(sending.rejected)
+
+            tv.statuses = mutableListOf(stale.copy(attempt = 2))
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.rejected == true }
         }
 
     @Test

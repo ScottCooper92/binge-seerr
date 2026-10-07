@@ -21,11 +21,15 @@ interface TvSignInClient {
     /** Where the TV is, or null when it cannot be reached or answers with anything but its status. */
     suspend fun status(target: TvHandOffTarget): HandOffStatus?
 
-    /** Seals [credentials] for [target] and posts them; whether the TV took them. A TV that took them may still refuse the sign-in. */
+    /**
+     * Seals [credentials] for [target] and posts them; the number of the attempt the TV counted them as, or null if it
+     * did not take them. A TV that took them may still refuse the sign-in, which its status says once
+     * [HandOffStatus.attempt] has reached that number.
+     */
     suspend fun send(
         target: TvHandOffTarget,
         credentials: HandOffCredentials,
-    ): Boolean
+    ): Int?
 }
 
 /**
@@ -67,8 +71,8 @@ internal class OkHttpTvSignInClient(
     override suspend fun send(
         target: TvHandOffTarget,
         credentials: HandOffCredentials,
-    ): Boolean {
-        val key = target.key ?: return false
+    ): Int? {
+        val key = target.key ?: return null
         val sealed = key.seal(JSON.encodeToString(credentials).toByteArray(Charsets.UTF_8), context = target.token)
         return withContext(dispatcher) {
             val request =
@@ -80,12 +84,16 @@ internal class OkHttpTvSignInClient(
             try {
                 client.newCall(request).execute().use { response ->
                     // The status code only: the body says nothing a failure's reason would help with, and logging it is never worth the risk.
-                    if (response.code != HTTP_OK) warn("The TV answered ${response.code} to the credentials")
-                    response.code == HTTP_OK
+                    if (response.code != HTTP_OK) {
+                        warn("The TV answered ${response.code} to the credentials")
+                        null
+                    } else {
+                        runCatching { JSON.decodeFromString<HandOffTaken>(response.body.string()).attempt }.getOrNull()
+                    }
                 }
             } catch (e: IOException) {
                 warn("Sending the credentials failed: ${e.javaClass.simpleName}")
-                false
+                null
             }
         }
     }

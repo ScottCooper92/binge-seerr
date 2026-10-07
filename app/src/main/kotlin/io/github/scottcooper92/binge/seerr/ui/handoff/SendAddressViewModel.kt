@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.handoff.AddressSource
 import io.github.scottcooper92.binge.seerr.handoff.ApplicationUrlReader
 import io.github.scottcooper92.binge.seerr.handoff.HandOffAddressMemory
 import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
+import io.github.scottcooper92.binge.seerr.handoff.HandOffSignInModes
 import io.github.scottcooper92.binge.seerr.handoff.HandOffStatus
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffLinks
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffTarget
@@ -97,7 +98,8 @@ sealed interface SignInStep {
 
     /**
      * The TV is on its sign-in step for [server], offering [modes]. [isSending] runs from the tap until the TV has
-     * said how the attempt went; [rejected] is that it said no.
+     * said how the attempt went; [rejected] is that it said no. [awaiting] is the number the TV counted the attempt
+     * as, once it has taken it: the TV's `failed` is about this attempt only when its own count has reached it.
      */
     data class Form(
         val server: String,
@@ -105,6 +107,7 @@ sealed interface SignInStep {
         val form: SignInForm,
         val isSending: Boolean = false,
         val rejected: Boolean = false,
+        val awaiting: Int? = null,
     ) : SignInStep {
         val canSend: Boolean get() = !isSending && form.canSubmit
     }
@@ -214,10 +217,15 @@ class SendAddressViewModel
             val step = state.step as? SignInStep.Form ?: return
             if (!step.canSend) return
             val credentials = step.form.toCredentials()
-            updateForm { it.copy(isSending = true, rejected = false) }
+            updateForm { it.copy(isSending = true, rejected = false, awaiting = null) }
             viewModelScope.launch(dispatcher) {
                 // Not taken at all is its own failure; taken and refused arrives later, in the TV's status.
-                if (!tv.send(target, credentials)) updateForm { it.copy(isSending = false, rejected = true) }
+                val attempt = tv.send(target, credentials)
+                if (attempt == null) {
+                    updateForm { it.copy(isSending = false, rejected = true) }
+                } else {
+                    updateForm { it.copy(awaiting = attempt) }
+                }
             }
         }
 
@@ -264,20 +272,23 @@ class SendAddressViewModel
             val server = status.server.orEmpty()
             // Only modes with fields to fill: the TV does not offer the others, and a listener that did would not be believed.
             val modes =
-                status.modes.mapNotNull { name -> SeerrSignInMode.entries.firstOrNull { it.name == name } }.filter {
-                    it in
-                        CredentialModes
-                }
+                status.modes
+                    .mapNotNull { name -> SeerrSignInMode.entries.firstOrNull { it.name == name } }
+                    .filter { it in HandOffSignInModes }
             if (modes.isEmpty()) return showStep(SignInStep.OnTv(server))
             val current = (_uiState.value as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form
             showStep(
                 when {
                     current == null -> SignInStep.Form(server, modes, SignInForm(mode = modes.first()))
-                    current.isSending && status.failed -> current.copy(isSending = false, rejected = true)
+                    current.refusedBy(status) -> current.copy(isSending = false, rejected = true, awaiting = null)
                     else -> current
                 },
             )
         }
+
+        /** A `failed` counts only once the TV has reached the attempt this phone sent; before that it is the last attempt's. */
+        private fun SignInStep.Form.refusedBy(status: HandOffStatus): Boolean =
+            isSending && status.failed && awaiting?.let { status.attempt >= it } == true
 
         private fun showStep(step: SignInStep) = _uiState.update { (it as? SendAddressUiState.SigningIn)?.copy(step = step) ?: it }
 
@@ -296,7 +307,6 @@ class SendAddressViewModel
             _uiState.update { state -> (state as? SendAddressUiState.Ready)?.let(transform) ?: state }
 
         private companion object {
-            val CredentialModes = setOf(SeerrSignInMode.ApiKey, SeerrSignInMode.Local, SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby)
             const val POLL_MILLIS = 1_500L
             const val LOST_AFTER_SILENT_POLLS = 4
         }

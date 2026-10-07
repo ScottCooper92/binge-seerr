@@ -228,12 +228,13 @@ internal class AddressHandOffListener(
                 ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
                 ?.takeIf { it.mode in progress.modes }
                 ?: return HandOffResponse(HttpStatus.BadRequest, REFUSED_JSON, JSON_TYPE) to null
-        return HandOffResponse(HttpStatus.Ok, OK_JSON, JSON_TYPE) to HandOffAccepted.Credentials(credentials)
+        // The number the TV will count these as, so the phone knows which attempt a later `failed` is about.
+        val taken = STATUS_JSON.encodeToString(HandOffTaken(attempt = progress.attempt + 1))
+        return HandOffResponse(HttpStatus.Ok, taken, JSON_TYPE) to HandOffAccepted.Credentials(credentials)
     }
 
     private companion object {
         const val JSON_TYPE = "application/json; charset=utf-8"
-        const val OK_JSON = "{\"ok\":true}"
         const val REFUSED_JSON = "{\"ok\":false}"
         val STATUS_JSON = Json { ignoreUnknownKeys = true }
     }

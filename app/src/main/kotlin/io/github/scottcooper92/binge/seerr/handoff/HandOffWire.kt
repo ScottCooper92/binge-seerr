@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,10 +19,16 @@ data class HandOffCredentials(
     override fun toString(): String = "HandOffCredentials(mode=$mode)"
 }
 
+/** The sign-in modes a phone can send credentials for: the ones with fields to fill. Plex and Quick Connect finish with a code. */
+internal val HandOffSignInModes =
+    setOf(SeerrSignInMode.ApiKey, SeerrSignInMode.Local, SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby)
+
 /**
  * Where the TV is, for the phone app to read as data rather than as a page: the same facts [HandOffProgress] gives
  * the browser's page. [modes] are the TV's own sign-in modes by name, and [failed] is whether the last attempt was
- * refused, so the app can show its form again with a message.
+ * refused, so the app can show its form again with a message. [attempt] is how many sets of credentials the TV has
+ * taken: [failed] is about the attempt with that number, so a phone that sent attempt N reads it only once this has
+ * reached N.
  */
 @Serializable
 data class HandOffStatus(
@@ -29,6 +36,7 @@ data class HandOffStatus(
     val server: String? = null,
     val modes: List<String> = emptyList(),
     val failed: Boolean = false,
+    val attempt: Int = 0,
 ) {
     companion object {
         const val WAITING = "waiting"
@@ -39,13 +47,27 @@ data class HandOffStatus(
     }
 }
 
+/** The answer to credentials the TV took: the number of the attempt they became. */
+@Serializable
+internal data class HandOffTaken(
+    val ok: Boolean = true,
+    val attempt: Int,
+)
+
 /** [this] as the status a phone app reads. */
 internal fun HandOffProgress.toStatus(): HandOffStatus =
     when (this) {
         HandOffProgress.Waiting -> HandOffStatus(HandOffStatus.WAITING)
         HandOffProgress.Checking -> HandOffStatus(HandOffStatus.CHECKING)
         HandOffProgress.Failed -> HandOffStatus(HandOffStatus.FAILED)
-        is HandOffProgress.SignIn -> HandOffStatus(HandOffStatus.SIGN_IN, server = server, modes = modes, failed = failed)
+        is HandOffProgress.SignIn ->
+            HandOffStatus(
+                HandOffStatus.SIGN_IN,
+                server = server,
+                modes = modes,
+                failed = failed,
+                attempt = attempt,
+            )
         HandOffProgress.Connected -> HandOffStatus(HandOffStatus.CONNECTED)
     }
 
