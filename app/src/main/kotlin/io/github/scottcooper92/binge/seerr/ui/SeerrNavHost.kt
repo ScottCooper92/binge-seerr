@@ -22,6 +22,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.LocalIsSinglePaneNav
+import com.binge.designsystem.LocalPaneDepth
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import io.github.scottcooper92.binge.seerr.R
@@ -57,7 +58,12 @@ fun SeerrNavHost(
     val showBack = { paneShowsBack(hubBeside.value, backStack.paneDepth()) }
     // The design system's PaneContent only shares an edge while this is false, and it defaults to true. Read here
     // from the same hubBeside as the back arrow, so the two agree about whether the hub is beside a section.
-    CompositionLocalProvider(LocalIsSinglePaneNav provides !hubBeside.value) {
+    // Its paneBackOrNull reads the depth beside it, so that is provided from the same stack showBack reads:
+    // left at its default of 1, a stacked screen beside the hub would lose its Back arrow.
+    CompositionLocalProvider(
+        LocalIsSinglePaneNav provides !hubBeside.value,
+        LocalPaneDepth provides backStack.paneDepth(),
+    ) {
         NavDisplay(
             backStack = backStack,
             modifier = modifier,
