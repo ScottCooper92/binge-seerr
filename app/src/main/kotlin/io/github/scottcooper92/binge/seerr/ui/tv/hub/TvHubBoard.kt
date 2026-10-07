@@ -85,7 +85,7 @@ internal fun TvHubBoard(
 ) {
     // Loading is the same page as the rows' own, so Home's wait is one page and not a board's plate and then another.
     // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
-    if (state is HubUiState.Loading || (state as? HubUiState.Error)?.health == ConnectionHealth.Unauthorized) {
+    if (state is HubUiState.Loading || (state as? HubUiState.Ready)?.health == ConnectionHealth.Unauthorized) {
         TvHubLoading(modifier)
         return
     }
