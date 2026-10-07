@@ -262,6 +262,33 @@ class SeerrConnection(
         authToken: String,
     ): Result<SeerrCredentials> = logInForSession(rawBaseUrl) { api -> api.logInWithPlex(SeerrPlexLoginBody(authToken)) }
 
+    /**
+     * Keeps a session another device signed in with (#772): the phone's `connect.sid`, handed to a television. It is
+     * checked against `auth/me` on [rawBaseUrl] first, and kept only if the server answers as a user, so an expired
+     * or foreign cookie is discarded rather than saved. The user id is the server's answer, not the sender's.
+     */
+    suspend fun adoptSession(
+        rawBaseUrl: String,
+        cookie: String,
+    ): Result<SeerrCredentials> {
+        if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
+        val baseUrl = rawBaseUrl.normaliseBaseUrl()
+        return runCatching {
+            val user = apis.probe(baseUrl, SeerrAuth.Session(cookie = cookie, userId = 0)) { it.authenticatedUser() }
+            persist(baseUrl, SeerrAuth.Session(cookie = cookie, userId = user.id, shared = true))
+        }
+    }
+
+    /**
+     * Marks the saved session as shared with another device (#772), once this phone has sent it to a TV: from then on
+     * disconnecting here forgets it without ending it on the server, so the TV isn't signed out with it.
+     */
+    suspend fun markSessionShared() {
+        val saved = store.credentials.first() ?: return
+        val session = saved.auth as? SeerrAuth.Session ?: return
+        if (!session.shared) store.save(saved.copy(auth = session.copy(shared = true)))
+    }
+
     /** Starts a Quick Connect session on the server's Jellyfin; the code is for the user, the secret for [finishQuickConnect]. */
     suspend fun startQuickConnect(rawBaseUrl: String): Result<SeerrQuickConnect> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
@@ -324,11 +351,13 @@ class SeerrConnection(
 
     /**
      * Forgets the connection. A session sign-in is also ended on the server, best-effort: the local
-     * clear must not wait on a server that may be the reason the user is disconnecting.
+     * clear must not wait on a server that may be the reason the user is disconnecting. A session shared with
+     * another device is only forgotten here: ending it would sign that device out too.
      */
     suspend fun disconnect() {
         val saved = store.credentials.first()
-        if (saved?.auth is SeerrAuth.Session) runCatching { apis.cached(saved.baseUrl, saved.auth).logOut() }
+        val auth = saved?.auth
+        if (auth is SeerrAuth.Session && !auth.shared) runCatching { apis.cached(saved.baseUrl, auth).logOut() }
         userLock.withLock {
             cachedUser = null
             cachedProfile = null

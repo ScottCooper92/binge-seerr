@@ -35,6 +35,34 @@ class SendAddressSheetScreenshotTest {
     @Composable
     fun failed() = Frame(sampleReady().copy(failed = true))
 
+    /** The one-step sign-in (#772): the switch that sends the phone's session with the address, turned on. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun readyWithSignIn() = Frame(sampleReady().copy(signIn = SignInOffer(userName = "Ana"), signInChosen = true))
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInWithSession() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.Session(awaiting = 1)))
+
+    /** A TV already on its sign-in step: carrying on there is one tap, with the typed fields under it. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInFormWithSession() =
+        Frame(
+            SendAddressUiState.SigningIn(
+                "192.168.86.53",
+                SignInStep.Form(
+                    "Living room",
+                    listOf(SeerrSignInMode.Jellyfin, SeerrSignInMode.Local),
+                    SignInForm(mode = SeerrSignInMode.Jellyfin),
+                    sessionOffer = SignInOffer(userName = "Ana"),
+                ),
+            ),
+        )
+
     @PreviewTest
     @SeerrComponentPreviews
     @Composable

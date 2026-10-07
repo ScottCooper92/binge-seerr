@@ -34,7 +34,7 @@ interface AddressHandOffSession {
      */
     suspend fun serve(
         progress: () -> HandOffProgress,
-        onAddress: (String) -> Unit,
+        onAddress: (address: String, session: String?) -> Unit,
         onCredentials: (HandOffCredentials) -> Unit,
     )
 
@@ -93,7 +93,7 @@ internal class AddressHandOffListener(
 
     override suspend fun serve(
         progress: () -> HandOffProgress,
-        onAddress: (String) -> Unit,
+        onAddress: (address: String, session: String?) -> Unit,
         onCredentials: (HandOffCredentials) -> Unit,
     ) {
         withContext(dispatcher) {
@@ -107,7 +107,7 @@ internal class AddressHandOffListener(
                         null
                     }
                 when (val accepted = client?.use { serve(it, progress) }) {
-                    is HandOffAccepted.Address -> onAddress(accepted.address)
+                    is HandOffAccepted.Address -> onAddress(accepted.address, accepted.session)
                     is HandOffAccepted.Credentials -> onCredentials(accepted.credentials)
                     null -> Unit
                 }
@@ -206,13 +206,30 @@ internal class AddressHandOffListener(
         language: String?,
     ): Pair<HandOffResponse, HandOffAccepted?> {
         if (!progress.acceptsAddress) return HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
-        val address = request.body.formFields()["address"]?.trim()
-        return if (address != null && address.isNotEmpty() && isAcceptable(address)) {
-            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking)) to HandOffAccepted.Address(address)
+        val fields = request.body.formFields()
+        val address = fields["address"]?.trim()
+        // The phone's session can ride on the same post (#772), sealed like any credentials. One that doesn't open,
+        // or isn't a session, refuses the whole post rather than sending the TV on without it.
+        val sealed = fields["sealed"]
+        val session = sealed?.let(::openSession)
+        val addressOk = !address.isNullOrEmpty() && isAcceptable(address)
+        val sessionOk = sealed == null || session != null
+        return if (addressOk && sessionOk) {
+            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking)) to
+                HandOffAccepted.Address(checkNotNull(address), session)
         } else {
             HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true)) to null
         }
     }
+
+    /** The session [sealed] carries, if it opens under this listener's key for this token and is a session. */
+    private fun openSession(sealed: String): String? =
+        key
+            ?.open(sealed, token)
+            ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
+            ?.takeIf { it.mode == HAND_OFF_SESSION_MODE }
+            ?.session
+            ?.takeIf { it.isNotEmpty() }
 
     /**
      * Credentials a phone app sealed with the key in the code. Read only while the TV is on its sign-in step, and
@@ -229,7 +246,7 @@ internal class AddressHandOffListener(
                 .formFields()["sealed"]
                 ?.let { key?.open(it, token) }
                 ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
-                ?.takeIf { it.mode in progress.modes }
+                ?.takeIf { it.mode in progress.modes || (it.mode == HAND_OFF_SESSION_MODE && it.session.isNotEmpty()) }
                 ?: return HandOffResponse(HttpStatus.BadRequest, REFUSED_JSON, JSON_TYPE) to null
         // The number the TV will count these as, so the phone knows which attempt a later `failed` is about.
         val taken = STATUS_JSON.encodeToString(HandOffTaken(attempt = progress.attempt + 1))

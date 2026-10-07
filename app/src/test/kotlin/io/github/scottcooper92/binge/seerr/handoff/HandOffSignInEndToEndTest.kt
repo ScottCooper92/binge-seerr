@@ -50,7 +50,7 @@ class HandOffSignInEndToEndTest {
         listener.close()
     }
 
-    private fun serve() = scope.launch { listener.serve({ progress }, {}, { received.trySend(it) }) }
+    private fun serve() = scope.launch { listener.serve({ progress }, { _, _ -> }, { received.trySend(it) }) }
 
     @Test
     fun `the phone reads the TV's progress, and sealed credentials reach the TV as the form held them`() =

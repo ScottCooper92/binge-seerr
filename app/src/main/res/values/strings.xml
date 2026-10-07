@@ -45,6 +45,7 @@
     <string name="local_network_open_settings">Open settings</string>
     <string name="setup_error_unknown">The server answered with an error.</string>
     <string name="setup_error_link_expired">The code expired before it was approved. Try again.</string>
+    <string name="setup_error_handoff_session_rejected">The phone\'s sign-in didn\'t work on this TV. Sign in here instead.</string>
 
     <string name="link_plex_title">Approve on plex.tv</string>
     <string name="link_plex_body">The sign-in page opens in your browser. If it asks for a code, this is it.</string>
@@ -587,8 +588,10 @@
     <string name="settings_version_behind">%1$s · %2$d commits behind</string>
     <string name="settings_edit_connection">Edit connection</string>
     <string name="settings_edit_connection_caption">Change the server or sign in again</string>
-    <string name="settings_address_plate_title">Server address</string>
-    <string name="settings_address_plate_caption">Setting up on a television? Read this across the room instead of typing it from memory.</string>
+    <string name="hub_set_up_tv">Set up a TV</string>
+    <string name="hub_set_up_tv_detail">Scan the code on your TV to connect it and sign it in</string>
+    <string name="scan_tv_not_a_tv_code">That isn\'t a TV\'s setup code. Scan the code on your TV\'s setup screen.</string>
+    <string name="scan_tv_unavailable">The scanner couldn\'t open on this phone. Scan the TV\'s code with your camera instead.</string>
     <string name="settings_value_unknown">Unknown</string>
     <string name="settings_value_on">On</string>
     <string name="settings_value_off">Off</string>
@@ -919,9 +922,17 @@
 
     <!-- The television surface: setup and the advanced picker, driven from a remote. -->
     <string name="tv_setup_headline">Connect to your server</string>
-    <string name="tv_setup_address_body">Type your Seerr, Jellyseerr or Overseerr server\'s address with your remote, or copy it from the phone app\'s Settings if you\'re signed in there.</string>
     <string name="tv_setup_checking">Checking the server…</string>
-    <string name="tv_setup_sign_in_body">Sign in with an API key, an account typed on the remote, Quick Connect, or a Plex code.</string>
+    <string name="tv_setup_code_headline">Set up Seerr</string>
+    <string name="tv_setup_code_body">Scan the code with your phone\'s camera or the Seerr app. You\'ll choose your server and sign in there.</string>
+    <string name="tv_setup_enter_manually">Enter it with the remote</string>
+    <string name="tv_setup_status_preparing">Getting a code ready…</string>
+    <string name="tv_setup_status_waiting">Waiting for your phone…</string>
+    <string name="tv_setup_status_checking">Checking the server…</string>
+    <string name="tv_setup_status_found">Found %1$s. Sign in on your phone.</string>
+    <string name="tv_setup_status_found_on_tv">Found %1$s. Its sign-in finishes on this TV: choose Enter it with the remote.</string>
+    <string name="tv_setup_status_signing_in">Signing in to %1$s…</string>
+    <string name="tv_setup_sign_in_scan_body">Scan the code with the Seerr app on your phone to sign in with your existing details, or type them with the remote.</string>
     <string name="tv_setup_mode_title">Sign in with</string>
     <string name="tv_setup_no_modes_here">This server has no sign-in this television recognises. Connect it from the phone app.</string>
     <string name="tv_link_plex_body">On your phone or computer, go to plex.tv/link and enter this code.</string>
@@ -931,14 +942,12 @@
 
     <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
     <string name="tv_setup_send_from_phone">Scan a QR</string>
-    <string name="tv_handoff_body">Scan the code with your phone\'s camera to enter your server\'s address on its keyboard, or send it from the phone app if you\'re signed in there.</string>
-    <string name="tv_handoff_note">Your second device needs to be on the same network as your TV.</string>
+    <string name="tv_handoff_body">Use the QR or URL to connect using another device on the same network, or use the Seerr mobile app to sign in using your existing details.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
     <string name="tv_handoff_no_network">This TV isn\'t on a Wi-Fi or wired home network, so a phone can\'t reach it. Type the address instead.</string>
     <string name="tv_handoff_could_not_listen">This TV couldn\'t open a connection for your phone. Type the address instead.</string>
-    <string name="tv_handoff_type_instead">Type it</string>
     <string name="handoff_page_title">Send the server address to your TV</string>
-    <string name="handoff_page_body">Type the address of your Seerr, Jellyseerr or Overseerr server. Your TV checks it, then asks you to sign in there.</string>
+    <string name="handoff_page_body">Type the address of your Seerr, Jellyseerr or Overseerr server. Your TV checks it, then you sign in on this page.</string>
     <string name="handoff_page_field">Server address</string>
     <string name="handoff_page_placeholder" translatable="false">http://192.168.1.10:5055</string>
     <string name="handoff_page_send">Send to TV</string>
@@ -953,17 +962,29 @@
     <string name="handoff_page_failed">Your TV couldn\'t reach a Seerr server at that address. Check it and send it again.</string>
     <string name="handoff_page_signin_title">Finish on your TV</string>
     <string name="handoff_page_signin_body">Your TV found %1$s. Sign in there with your remote.</string>
+    <string name="handoff_page_signin_form_title">Sign in to %1$s</string>
+    <string name="handoff_page_signin_form_body">Your TV signs in with these too. They\'re encrypted for your TV before they leave this page.</string>
+    <string name="handoff_page_mode">Sign in with</string>
+    <string name="handoff_page_mode_local">Local account</string>
+    <string name="handoff_page_mode_api_key">API key</string>
+    <string name="handoff_page_username">Username</string>
+    <string name="handoff_page_email">Email</string>
+    <string name="handoff_page_password">Password</string>
+    <string name="handoff_page_sign_in">Sign in</string>
+    <string name="handoff_page_signing_in">Signing in…</string>
+    <string name="handoff_page_rejected">That didn\'t work. Check the details and try again.</string>
     <string name="handoff_page_connected_title">Connected</string>
     <string name="handoff_page_connected_body">Your TV is signed in. You can close this page.</string>
 
     <!-- The phone's side of the hand-off: the confirmation before it sends its server's address to a TV. -->
-    <string name="send_address_title">Send the address to your TV</string>
-    <string name="send_address_confirm">Send this server address to the TV at %1$s?</string>
-    <string name="send_address_only_address">Only the address is sent. Your sign-in stays on this phone, and you sign in on the TV yourself.</string>
+    <string name="send_address_title">Set up your TV</string>
     <string name="send_address_send">Send</string>
     <string name="send_address_sending">Sending…</string>
     <string name="send_address_failed">The TV didn\'t take the address. Check that it still shows the code and that both are on the same Wi-Fi, then try again.</string>
     <string name="send_address_sent">Sent. The TV at %1$s has the address and is checking the server. Carry on there.</string>
+    <string name="send_signin_continue_as">Continue as %1$s</string>
+    <string name="send_signin_continue_as_you">Continue as you</string>
+    <string name="send_signin_session">Signing in the TV at %1$s…</string>
     <string name="send_signin_waiting">The TV at %1$s has the address and is checking the server…</string>
     <string name="send_signin_form">The TV found %1$s. Sign in here, and the TV is signed in too.</string>
     <string name="send_signin_sealed">What you type here is sealed so only that TV can read it, then sent over your Wi-Fi. It is not kept on this phone.</string>
@@ -980,6 +1001,9 @@
     <string name="send_address_tag_sent_before">Sent before</string>
     <string name="send_address_tag_this_phone">This phone</string>
     <string name="send_address_clear">Clear address</string>
+    <string name="send_address_sign_in_as">Also sign in as %1$s</string>
+    <string name="send_address_sign_in_as_you">Also sign in as you</string>
+    <string name="send_address_sign_in_shared">The TV uses this phone\'s sign-in. Disconnecting either one leaves the other signed in.</string>
     <string name="setup_error_unreachable_not_local">The server could not be reached. That isn\'t a local address, so this TV may not be able to reach it. Try an address on your home network.</string>
 
     <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->

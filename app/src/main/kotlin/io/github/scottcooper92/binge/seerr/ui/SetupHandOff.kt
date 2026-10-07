@@ -50,9 +50,11 @@ internal class SetupHandOff(
     private val dispatcher: CoroutineDispatcher,
     private val handOffs: AddressHandOffs,
     private val onState: (AddressHandOff?) -> Unit,
-    private val onAddress: (String) -> Unit,
+    private val onAddress: (address: String, session: String?) -> Unit,
     private val onCredentials: (HandOffCredentials) -> Unit,
     private val progress: () -> HandOffProgress,
+    /** The code that is live right now, whichever step shows it; null once its listener has closed. */
+    private val onCode: (AddressHandOff.Listening?) -> Unit = {},
     private val timeout: Duration = HAND_OFF_TIMEOUT,
     private val signInTimeout: Duration = HAND_OFF_SIGN_IN_TIMEOUT,
     private val linger: Duration = HAND_OFF_LINGER,
@@ -92,7 +94,10 @@ internal class SetupHandOff(
             // open() is not cancellable: a cancel() that ran meanwhile must not bring the plate back.
             currentCoroutineContext().ensureActive()
             session = listening
-            onState(AddressHandOff.Listening(listening.url, listening.scanUrl))
+            val code = AddressHandOff.Listening(listening.url, listening.scanUrl)
+            // Started on the sign-in step there is no address plate to show: the code is that step's.
+            if (progress() !is HandOffProgress.SignIn) onState(code)
+            onCode(code)
             lapsed = serveUntilDone(listening)
         } catch (_: IOException) {
             // Closing the socket is how cancel() stops a listener mid-accept; that is not a failure to show.
@@ -100,6 +105,7 @@ internal class SetupHandOff(
             onState(AddressHandOff.Unavailable(AddressHandOff.Reason.CouldNotListen))
         } finally {
             listening.close()
+            onCode(null)
         }
         return lapsed
     }
@@ -108,13 +114,15 @@ internal class SetupHandOff(
     private suspend fun serveUntilDone(listening: AddressHandOffSession): Boolean =
         coroutineScope {
             val arrived = CompletableDeferred<Unit>()
+            // On the sign-in step the address is already in: the code is there for a phone to finish the sign-in.
+            if (progress() is HandOffProgress.SignIn) arrived.complete(Unit)
             val serving =
                 launch {
                     listening.serve(
                         progress = progress,
-                        onAddress = { address ->
+                        onAddress = { address, session ->
                             if (arrived.complete(Unit)) onState(null)
-                            onAddress(address)
+                            onAddress(address, session)
                         },
                         onCredentials = onCredentials,
                     )

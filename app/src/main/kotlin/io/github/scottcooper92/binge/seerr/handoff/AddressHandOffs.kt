@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.handoff
 import android.content.Context
 import android.content.res.Configuration
 import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.scottcooper92.binge.seerr.R
 import java.net.Inet4Address
@@ -36,9 +35,9 @@ fun interface AddressHandOffs {
 internal fun List<InetAddress>.lanIpv4(): Inet4Address? = filterIsInstance<Inet4Address>().firstOrNull { it.isSiteLocalAddress }
 
 /**
- * Opens [AddressHandOffListener]s on the TV's address on the active Wi-Fi or Ethernet network, on a
- * port the system picks. A VPN, a mobile network or no network at all reads as no local network: a
- * phone could not reach the TV through any of them.
+ * Opens [AddressHandOffListener]s on the TV's address on its Wi-Fi or Ethernet network, on a port the
+ * system picks. That is the network beneath any VPN ([localNetwork]): a TV running Tailscale is still
+ * on the room's Wi-Fi. A mobile network or no network at all reads as no local network.
  */
 internal class LanAddressHandOffs
     @Inject
@@ -49,23 +48,24 @@ internal class LanAddressHandOffs
             val address = lanAddress() ?: return HandOffOpening.NoLocalNetwork
             // A backlog of one: the listener answers one connection at a time, and a queue is no help.
             val server = ServerSocket(0, 1, address)
-            val target = TvHandOffTarget(host = checkNotNull(address.hostAddress), port = server.localPort, token = newHandOffToken())
+            val target =
+                TvHandOffTarget(
+                    host = checkNotNull(address.hostAddress),
+                    port = server.localPort,
+                    token = newHandOffToken(),
+                )
             val page =
                 HandOffPageTemplate(
                     copyFor = ::copyFor,
                     appLink = TvHandOffLinks.intentUrl(target, context.packageName, fallbackUrl = target.url),
+                    token = target.token,
                 )
             return HandOffOpening.Opened(AddressHandOffListener(server, target.token, target.url, page, key = HandOffKey.generate()))
         }
 
         private fun lanAddress(): Inet4Address? {
             val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return null
-            val network = connectivity.activeNetwork ?: return null
-            val capabilities = connectivity.getNetworkCapabilities(network) ?: return null
-            val local =
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-            if (!local) return null
+            val network = context.localNetwork() ?: return null
             return connectivity
                 .getLinkProperties(network)
                 ?.linkAddresses
@@ -104,6 +104,23 @@ internal class LanAddressHandOffs
                 signInBody = { server -> resources.getString(R.string.handoff_page_signin_body, server) },
                 connectedTitle = resources.getString(R.string.handoff_page_connected_title),
                 connectedBody = resources.getString(R.string.handoff_page_connected_body),
+                signInFormTitle = { server -> resources.getString(R.string.handoff_page_signin_form_title, server) },
+                signInFormBody = resources.getString(R.string.handoff_page_signin_form_body),
+                modeField = resources.getString(R.string.handoff_page_mode),
+                modeLabel = { mode ->
+                    when (mode) {
+                        "Local" -> resources.getString(R.string.handoff_page_mode_local)
+                        "ApiKey" -> resources.getString(R.string.handoff_page_mode_api_key)
+                        else -> mode
+                    }
+                },
+                username = resources.getString(R.string.handoff_page_username),
+                email = resources.getString(R.string.handoff_page_email),
+                password = resources.getString(R.string.handoff_page_password),
+                apiKey = resources.getString(R.string.handoff_page_mode_api_key),
+                signIn = resources.getString(R.string.handoff_page_sign_in),
+                signingIn = resources.getString(R.string.handoff_page_signing_in),
+                rejected = resources.getString(R.string.handoff_page_rejected),
             )
         }
     }

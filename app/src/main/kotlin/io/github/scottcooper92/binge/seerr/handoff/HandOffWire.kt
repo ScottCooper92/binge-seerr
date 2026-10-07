@@ -14,10 +14,19 @@ data class HandOffCredentials(
     val email: String = "",
     val username: String = "",
     val password: String = "",
+    /** With [HAND_OFF_SESSION_MODE]: the phone's own Seerr session, which the TV adopts instead of signing in afresh (#772). */
+    val session: String = "",
 ) {
     /** Never prints a secret: a credentials object in a log line or a failed assertion shows its mode and nothing else. */
     override fun toString(): String = "HandOffCredentials(mode=$mode)"
 }
+
+/**
+ * The mode for the phone's own session rather than a sign-in to repeat: the TV checks it against the server and keeps
+ * it if the server still answers to it. Not a [SeerrSignInMode], since the TV never offers it as a form; it works
+ * whichever modes the server has, Plex and Quick Connect included, because the phone has already signed in.
+ */
+const val HAND_OFF_SESSION_MODE = "Session"
 
 /** The sign-in modes a phone can send credentials for: the ones with fields to fill. Plex and Quick Connect finish with a code. */
 internal val HandOffSignInModes =
@@ -73,8 +82,10 @@ internal fun HandOffProgress.toStatus(): HandOffStatus =
 
 /** What the listener took from a connection: an address while the TV waits for one, or credentials while it waits to sign in. */
 internal sealed interface HandOffAccepted {
+    /** [session] is the phone's own session, opened from the same post, when the user chose to sign the TV in as them. */
     data class Address(
         val address: String,
+        val session: String? = null,
     ) : HandOffAccepted
 
     data class Credentials(

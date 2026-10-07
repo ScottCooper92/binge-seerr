@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.auth
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -56,6 +57,7 @@ class CredentialStore(
                 is SeerrAuth.Session -> {
                     prefs[Keys.AUTH_TYPE] = AUTH_TYPE_SESSION
                     prefs[Keys.SESSION_USER_ID] = auth.userId
+                    prefs[Keys.SESSION_SHARED] = auth.shared
                 }
             }
         }
@@ -75,7 +77,7 @@ class CredentialStore(
             AUTH_TYPE_SESSION -> {
                 val cookie = decryptSecret()
                 val userId = this[Keys.SESSION_USER_ID]
-                if (cookie != null && userId != null) SeerrAuth.Session(cookie, userId) else null
+                if (cookie != null && userId != null) SeerrAuth.Session(cookie, userId, this[Keys.SESSION_SHARED] ?: false) else null
             }
             else -> null
         }
@@ -87,6 +89,7 @@ class CredentialStore(
         val AUTH_TYPE = stringPreferencesKey("auth_type")
         val SECRET = stringPreferencesKey("secret")
         val SESSION_USER_ID = intPreferencesKey("session_user_id")
+        val SESSION_SHARED = booleanPreferencesKey("session_shared")
         val VARIANT = stringPreferencesKey("variant")
     }
 }

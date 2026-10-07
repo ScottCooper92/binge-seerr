@@ -57,6 +57,8 @@ internal fun TvShellScaffold(
     overlay: (@Composable BoxScope.() -> Unit)? = null,
     accountName: String? = null,
     accountAvatarUrl: String? = null,
+    /** Whether Issues is on the rail: only for an account the server lets list issues. */
+    showIssues: Boolean = true,
     content: @Composable (TvDestination) -> Unit,
 ) {
     var settled by rememberSaveable { mutableStateOf(selected) }
@@ -77,7 +79,11 @@ internal fun TvShellScaffold(
             // The account sits at the top of the rail, above Home, which is still where the app opens; its avatar is the
             // signed-in user's, or the person icon until they are known. Settings stays on the bottom edge.
             header = TvDestination.Account.toRailItem().copy(displayName = accountName, avatarUrl = accountAvatarUrl),
-            items = TvDestination.entries.filter { it != TvDestination.Settings && it != TvDestination.Account }.map { it.toRailItem() },
+            items =
+                TvDestination.entries
+                    .filter { it != TvDestination.Settings && it != TvDestination.Account }
+                    .filter { it != TvDestination.Issues || showIssues }
+                    .map { it.toRailItem() },
             footer = TvDestination.Settings.toRailItem(),
             pinFooter = true,
             selectedKey = selected.key,

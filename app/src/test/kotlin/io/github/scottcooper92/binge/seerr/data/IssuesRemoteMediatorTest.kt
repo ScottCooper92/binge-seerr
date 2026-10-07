@@ -144,12 +144,13 @@ class IssuesRemoteMediatorTest {
         }
 
     @Test
-    fun `a narrowed list sends the user, and a failing server is a retryable error, not a crash`() =
+    fun `a narrowed list leaves the narrowing to the server, and a failing server is a retryable error, not a crash`() =
         runTest {
             start()
             val store = FakeIssueStore()
             mediator(store, IssueListQuery("all", "modified", createdBy = 7)).load(LoadType.REFRESH, pagingState)
-            assertEquals("7", received.last { it.url.encodedPath == "/api/v1/issue" }.url.queryParameter("createdBy"))
+            // Seerr narrows a user without VIEW_ISSUES itself, and its validator refuses createdBy: it is never sent.
+            assertNull(received.last { it.url.encodedPath == "/api/v1/issue" }.url.queryParameter("createdBy"))
 
             pageBody = { MockResponse(code = 503) }
             val result = mediator(store).load(LoadType.REFRESH, pagingState)

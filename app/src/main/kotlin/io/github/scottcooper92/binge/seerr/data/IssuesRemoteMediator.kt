@@ -57,8 +57,8 @@ class IssuesRemoteMediator(
                     take = ISSUES_PAGE_SIZE,
                     skip = skip,
                     filter = query.filter,
+                    // query.createdBy only keys the cache by scope: the server narrows the list itself.
                     sort = query.sort,
-                    createdBy = query.createdBy,
                 )
             val rows =
                 coroutineScope {

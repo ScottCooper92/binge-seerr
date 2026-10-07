@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.runtime.Composable
@@ -31,6 +32,8 @@ internal fun TvSetupLinkPlate(
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
+    // Back abandons the code, as Cancel does, rather than leaving the app with the link still open.
+    BackHandler(onBack = onCancel)
     TvFormPage(
         headline = stringResource(link.titleRes()),
         body = stringResource(link.bodyRes()),

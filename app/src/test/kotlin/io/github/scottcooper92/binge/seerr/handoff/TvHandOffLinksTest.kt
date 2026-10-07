@@ -106,4 +106,27 @@ class TvHandOffLinksTest {
         assertEquals("http://192.168.86.53:41234/s/$TOKEN", target.statusUrl)
         assertEquals("http://192.168.86.53:41234/c/$TOKEN", target.credentialsUrl)
     }
+
+    @Test
+    fun `a code the app scans reads as the TV it names, with its key, and anything else is not a TV's code`() {
+        val key = HandOffKey.generate().encoded()
+
+        val target = TvHandOffLinks.parseCode("http://192.168.86.53:41234/a/$TOKEN#k=$key")!!
+        assertEquals("192.168.86.53", target.host)
+        assertEquals(41234, target.port)
+        assertEquals(TOKEN, target.token)
+        assertEquals(key, target.key?.encoded())
+        assertEquals(null, TvHandOffLinks.parseCode("http://192.168.86.53:41234/a/$TOKEN")?.key)
+
+        listOf(
+            null,
+            "https://example.com/",
+            "http://192.168.86.53:41234/a/$TOKEN#k=short",
+            "http://192.168.86.53:41234/a/$TOKEN?x=1#k=$key",
+            "http://user@192.168.86.53:41234/a/$TOKEN",
+            "http://192.168.86.53/a/$TOKEN",
+            "http://192.168.86.53:41234/b/$TOKEN",
+            "WIFI:S:home;T:WPA;P:secret;;",
+        ).forEach { assertNull(it, TvHandOffLinks.parseCode(it)) }
+    }
 }

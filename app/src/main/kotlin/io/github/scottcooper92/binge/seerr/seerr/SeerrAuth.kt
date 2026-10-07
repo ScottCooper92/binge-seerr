@@ -13,9 +13,14 @@ sealed interface SeerrAuth {
         val key: String,
     ) : SeerrAuth
 
+    /**
+     * [shared] is a session one device handed to another (#772): the phone that sent it and the TV that adopted it
+     * both mark it, and neither ends it on the server when it disconnects, since that would sign the other out too.
+     */
     data class Session(
         val cookie: String,
         val userId: Int,
+        val shared: Boolean = false,
     ) : SeerrAuth
 }
 

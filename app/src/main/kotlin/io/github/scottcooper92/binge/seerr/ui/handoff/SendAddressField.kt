@@ -2,10 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.handoff
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -14,8 +11,6 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NorthWest
 import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,14 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.handoff.AddressCandidate
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
@@ -42,7 +35,7 @@ import com.binge.designsystem.R as DesR
 /**
  * The address to send, always editable, with what it is told from what it holds: the TV form's
  * "not an address" as the field's error, or a neutral note that the address is not local. Under it,
- * the server's other known addresses as chips that fill the field.
+ * the server's other known addresses as rows that fill the field.
  */
 @Composable
 internal fun SendAddressField(
@@ -51,7 +44,7 @@ internal fun SendAddressField(
     onSend: () -> Unit,
 ) {
     // Its own tighter column, so the suggestions read as belonging to the field rather than as the sheet's next block.
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
         AddressField(state, onEdit, onSend)
         if (state.suggestions.isNotEmpty()) Suggestions(state.suggestions, enabled = !state.isSending, onPick = onEdit)
     }
@@ -101,55 +94,30 @@ private fun supportingText(state: SendAddressUiState.Ready): (@Composable () -> 
         else -> null
     }
 
-@OptIn(ExperimentalLayoutApi::class)
+/** The server's other known addresses as rows; a tap fills the field with one, it doesn't send it. */
 @Composable
 private fun Suggestions(
     suggestions: List<AddressCandidate>,
     enabled: Boolean,
     onPick: (String) -> Unit,
 ) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        suggestions.forEach { candidate ->
-            // One line: an icon for where the address came from, its tag, then the address itself without the
-            // scheme's noise — the field shows the full form once picked.
-            AssistChip(
-                onClick = { onPick(candidate.address) },
-                enabled = enabled,
-                leadingIcon = {
-                    Icon(
-                        candidate.source.icon(),
-                        contentDescription = null,
-                        modifier = Modifier.size(AssistChipDefaults.IconSize),
-                    )
-                },
-                // The fill-in arrow search suggestions use: tapping puts this address in the field, it doesn't send it.
-                trailingIcon = {
-                    Icon(
-                        Icons.Filled.NorthWest,
-                        contentDescription = null,
-                        modifier = Modifier.size(AssistChipDefaults.IconSize),
-                    )
-                },
-                label = {
-                    Text(
-                        buildAnnotatedString {
-                            append(stringResource(candidate.source.tagRes()))
-                            append("  ")
-                            withStyle(SpanStyle(fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-                                append(candidate.address.displayAddress())
-                            }
-                        },
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-            )
-        }
-    }
+    ItemGroup(
+        title = null,
+        rows =
+            suggestions.map { candidate ->
+                ListItem(
+                    icon = candidate.source.icon(),
+                    label = candidate.address.displayAddress(),
+                    detail = stringResource(candidate.source.tagRes()),
+                    disabled = !enabled,
+                    onClick = { onPick(candidate.address) },
+                    // The fill-in arrow search suggestions use, in place of a chevron that would promise a new screen.
+                    trailingContent = {
+                        Icon(Icons.Filled.NorthWest, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    },
+                )
+            },
+    )
 }
 
 private fun AddressSource.icon(): ImageVector =
