@@ -250,6 +250,9 @@ app:request_action_failed  608e2e521eac
 app:request_approve  9ed200aeb78c
 app:request_approved  b07efc4b3f44
 app:request_block_caption  4eb7e63b4423
+app:request_block_confirm_message  68a4a9d1b6d1
+app:request_block_confirm_title  96f4fc8962f2
+app:request_block_failed  a5fbe4b536c2
 app:request_block_title  958e9438ce1a
 app:request_card_info  d16675ee1cfc
 app:request_decline  72740f4a78a7
@@ -304,8 +307,8 @@ app:request_state_queued  661ff40a07e0
 app:request_stats_title  b4a7365740ef
 app:request_summaries_title  638e58c202ba
 app:request_tags  1331275bc537
-app:request_tags_line  1ab73222b9be
 app:request_this_request_title  c97853df8527
+app:request_title_blocked  7b777b7bb251
 app:request_title_status_caption  4ae0d8f6b950
 app:request_updated_at  3a5ecca188c0
 app:requests_empty_all  8e80748e202b
@@ -760,6 +763,14 @@ app:tv_account_your_requests  4c64a2a1c581
 app:tv_advanced_submitting  5d7513c4aa39
 app:tv_consent_point_change_title  4a8011b9ca93
 app:tv_consent_reassurance  0fbad9c02c52
+app:tv_detail_approve  6007acbe30b2
+app:tv_detail_block  211d0bb8cf4f
+app:tv_detail_decline  a2d285b35287
+app:tv_detail_details  45989de49fb7
+app:tv_detail_info_requested  2d9e28289fac
+app:tv_detail_info_sent_to  4e7201c7b898
+app:tv_detail_info_status  920e413c7d41
+app:tv_detail_remove  c3812fc4acb8
 app:tv_download_percent  0edb69de9be1
 app:tv_filter_with_count  f7da0939cc40
 app:tv_handoff_body  ce76f2179a21

@@ -118,6 +118,7 @@ private fun actions(onOpenInBinge: (() -> Unit)?) =
         onRetryRequest = {},
         onDecline = {},
         onRemove = {},
+        onBlock = {},
     )
 
 /**
@@ -132,6 +133,21 @@ class TvRequestDetailScreenshotTest {
     fun Series() {
         TvRequestDetailScreen(
             state = RequestDetailUiState.Ready(seriesDetail()),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+        )
+    }
+
+    /** A manager's page for a pending request: Approve, Decline, Remove and Block in one row. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Moderator() {
+        TvRequestDetailScreen(
+            state =
+                RequestDetailUiState.Ready(
+                    filmDetail().copy(actions = RequestActions(canApprove = true, canDecline = true, canRemove = true, canBlock = true)),
+                ),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
         )

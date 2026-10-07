@@ -173,6 +173,25 @@ class RequestModerationTest {
         }
 
     @Test
+    fun `blocking the title on its own posts to the blocklist and leaves the request, and a failure says so`() =
+        runTest {
+            val sut = moderation()
+
+            val blocked = awaitEvent(sut.events)
+            sut.blockTitle(item)
+
+            assertEquals(ModerationEvent.Blocked, blocked.await())
+            val posts = received.filter { it.method == "POST" }.map { it.url.encodedPath }
+            assertEquals(listOf("/api/v1/blacklist"), posts)
+            assertEquals(listOf("request_moderated" to mapOf("action" to "blocked")), analytics.events)
+
+            codes["/api/v1/blacklist"] = 500
+            val failed = awaitEvent(sut.events)
+            sut.blockTitle(item)
+            assertEquals(ModerationEvent.BlockFailed, failed.await())
+        }
+
+    @Test
     fun `a block that fails after the removal landed is its own outcome, and a rejected action carries its error`() =
         runTest {
             codes["/api/v1/blacklist"] = 500

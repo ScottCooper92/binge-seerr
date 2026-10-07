@@ -381,6 +381,7 @@ private fun TvRequestDetailOverlay(
                 onRetryRequest = { viewModel.moderation.retry(requestId) },
                 onDecline = { block -> detail?.let { viewModel.moderation.decline(it.item, block) } },
                 onRemove = { block -> detail?.let { viewModel.moderation.remove(it.item, block) } },
+                onBlock = { detail?.let { viewModel.moderation.blockTitle(it.item) } },
             ),
     )
 }

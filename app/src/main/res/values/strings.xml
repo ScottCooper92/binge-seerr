@@ -152,7 +152,6 @@
     <string name="request_profile">Quality profile</string>
     <string name="request_root_folder">Root folder</string>
     <string name="request_tags">Tags</string>
-    <string name="request_tags_line">Tags: %1$s</string>
     <string name="request_seasons">Seasons requested</string>
     <string name="request_season_number">Season %1$d</string>
     <string name="request_title_status_caption">The title\'s overall status — this request\'s season may differ below.</string>
@@ -1080,4 +1079,16 @@
          (the row's label/detail), so it stays here rather than in src/debug's strings.xml — its
          own UI prototypes strings live there instead, since that screen is debug-only code (#467). -->
     <string name="debug_group_developer" translatable="false">Developer</string>
+    <string name="tv_detail_approve">Approve</string>
+    <string name="tv_detail_decline">Decline</string>
+    <string name="tv_detail_remove">Remove</string>
+    <string name="tv_detail_block">Block</string>
+    <string name="request_title_blocked">Title blocked</string>
+    <string name="request_block_failed">The title could not be blocked</string>
+    <string name="request_block_confirm_title">Block this title?</string>
+    <string name="request_block_confirm_message">The title is blocked from being requested again. This request is left as it is.</string>
+    <string name="tv_detail_info_requested">Requested</string>
+    <string name="tv_detail_info_status">Status</string>
+    <string name="tv_detail_info_sent_to">Sent to</string>
+    <string name="tv_detail_details">Details</string>
 </resources>
