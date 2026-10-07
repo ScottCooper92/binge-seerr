@@ -88,6 +88,19 @@ annotation class SeerrScreenStatePreview
 annotation class SeerrListPanePreview
 
 /**
+ * The phone-landscape window alone, for a frame that lays out two panes side by side itself: the narrowest window
+ * that puts the hub beside a section, where the gap between the panes is easiest to get wrong (#814).
+ */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(
+    name = "phone-land",
+    device = "spec:width=411dp,height=891dp,orientation=landscape",
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+annotation class SeerrLandscapePanesPreview
+
+/**
  * A phone window at the two larger font scales, 1.5 and 2.0, for a row whose layout has to survive
  * a user's text size. The 1.0 cell is the screen's own frame.
  */

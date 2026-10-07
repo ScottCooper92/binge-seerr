@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.binge.designsystem.PaneContent
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.debug.BingeHintPrototypeScreen
 import io.github.scottcooper92.binge.seerr.ui.debug.ManageSheetPrototypeScreen
@@ -33,12 +32,12 @@ internal fun EntryProviderScope<NavKey>.debugDetailEntries(
     showBack: () -> Boolean,
 ) {
     entry<ManageSheetPrototypeRoute>(metadata = DetailPane) {
-        PaneContent { ManageSheetPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { ManageSheetPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
     }
     entry<BingeHintPrototypeRoute>(metadata = DetailPane) {
-        PaneContent { BingeHintPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { BingeHintPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
     }
     entry<RequestCardsPrototypeRoute>(metadata = DetailPane) {
-        PaneContent { RequestCardsPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
+        DetailPaneContent { RequestCardsPrototypeScreen(onBack = { backStack.removeLastOrNull() }) }
     }
 }
