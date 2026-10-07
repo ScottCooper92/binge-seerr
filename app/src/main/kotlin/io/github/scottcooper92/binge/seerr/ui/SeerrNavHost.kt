@@ -5,6 +5,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -20,6 +21,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.binge.designsystem.LocalIsSinglePaneNav
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
 import io.github.scottcooper92.binge.seerr.R
@@ -53,28 +55,32 @@ fun SeerrNavHost(
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
     val showBack = { paneShowsBack(hubBeside.value, backStack.paneDepth()) }
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier,
-        onBack = { backStack.removeLastOrNull() },
-        sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack)),
-        entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-        // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
-        // long as the key is on the stack. A value captured here is the value from the frame the entry
-        // was built in. So what changes later is handed over as a provider and read inside the content,
-        // where reading the state is what recomposes it.
-        entryProvider =
-            entryProvider {
-                homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
-                sectionEntries(backStack, showBack = showBack)
-                detailEntries(backStack, showBack = showBack)
-                serverSettingsEntries(backStack)
-            },
-    )
+    // The design system's PaneContent only shares an edge while this is false, and it defaults to true. Read here
+    // from the same hubBeside as the back arrow, so the two agree about whether the hub is beside a section.
+    CompositionLocalProvider(LocalIsSinglePaneNav provides !hubBeside.value) {
+        NavDisplay(
+            backStack = backStack,
+            modifier = modifier,
+            onBack = { backStack.removeLastOrNull() },
+            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack)),
+            entryDecorators =
+                listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+            // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
+            // long as the key is on the stack. A value captured here is the value from the frame the entry
+            // was built in. So what changes later is handed over as a provider and read inside the content,
+            // where reading the state is what recomposes it.
+            entryProvider =
+                entryProvider {
+                    homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
+                    sectionEntries(backStack, showBack = showBack)
+                    detailEntries(backStack, showBack = showBack)
+                    serverSettingsEntries(backStack)
+                },
+        )
+    }
 }
 
 /**
