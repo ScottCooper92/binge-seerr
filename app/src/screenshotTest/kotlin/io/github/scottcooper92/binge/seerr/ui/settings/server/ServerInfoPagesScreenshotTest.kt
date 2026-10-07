@@ -52,7 +52,7 @@ class CacheScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun readyLayout() = CacheFrame(CacheUiState.Ready(apiCaches(), imageCaches(), dnsCache()))
+    fun readyLayout() = CacheFrame(CacheUiState.Ready(apiCaches(), imageCaches(), dnsCache()), jobs = JobsUiState.Ready(cacheJobs()))
 
     /** Before Seerr 3 the server has no DNS cache, so the section is absent. */
     @PreviewTest
@@ -145,5 +145,19 @@ private fun dnsCache() =
 private fun AboutFrame(state: AboutUiState) = AboutScreen(state = state, onBack = {}, onRetry = {}, onOpenUrl = {})
 
 @Composable
-private fun CacheFrame(state: CacheUiState) =
-    CacheScreen(state = state, events = emptyFlow(), actions = CacheActions(onBack = {}, onRetry = {}, onFlush = {}, onFlushDnsEntry = {}))
+private fun CacheFrame(
+    state: CacheUiState,
+    jobs: JobsUiState = JobsUiState.Loading,
+) = CacheScreen(
+    state = state,
+    events = emptyFlow(),
+    actions = CacheActions(onBack = {}, onRetry = {}, onFlush = {}, onFlushDnsEntry = {}),
+    jobs = jobs,
+)
+
+/** The page's jobs, above its caches as the web client's Jobs & Cache page lists them. */
+private fun cacheJobs() =
+    listOf(
+        ServerJob(id = "download-sync", name = "Download sync", interval = JobInterval.Short, running = false, nextRunMillis = null),
+        ServerJob(id = "availability-sync", name = "Availability sync", interval = JobInterval.Long, running = true, nextRunMillis = null),
+    )

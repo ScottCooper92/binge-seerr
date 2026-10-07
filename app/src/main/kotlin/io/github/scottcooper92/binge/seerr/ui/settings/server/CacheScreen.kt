@@ -17,6 +17,10 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -40,19 +44,25 @@ class CacheActions(
     val onFlushDnsEntry: (String) -> Unit,
 )
 
-/** The cache page: the API caches with a flush each, the image caches by size, and the DNS cache with its entries where the server has one. */
+/**
+ * The web client's Jobs & Cache page, in its order: the scheduled jobs, each with run, cancel and its schedule; the API
+ * caches with a flush each; the DNS cache with its entries where the server has one; and the image caches by size.
+ * [jobs] is read on its own, so a jobs list that fails leaves the caches standing, and the other way round.
+ */
 @Composable
 fun CacheScreen(
     state: CacheUiState,
     events: Flow<EditorEvent>,
     actions: CacheActions,
+    jobs: JobsUiState = JobsUiState.Loading,
+    jobActions: JobsActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
 ) {
     ServerActionPage(title = stringResource(R.string.server_settings_cache), events = events, onBack = actions.onBack) { contentPadding ->
         when (state) {
             CacheUiState.Loading -> LoadingScreen(Modifier.padding(contentPadding))
             is CacheUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(contentPadding), onRetry = actions.onRetry)
-            is CacheUiState.Ready -> CacheContent(state, actions, contentPadding)
+            is CacheUiState.Ready -> CacheContent(state, actions, jobs, jobActions, contentPadding)
         }
     }
 }
@@ -61,24 +71,30 @@ fun CacheScreen(
 private fun CacheContent(
     state: CacheUiState.Ready,
     actions: CacheActions,
+    jobs: JobsUiState,
+    jobActions: JobsActions,
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
+    var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        (jobs as? JobsUiState.Ready)?.takeIf { it.jobs.isNotEmpty() }?.let { ready ->
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            ItemGroup(
+                title = stringResource(R.string.server_settings_jobs),
+                rows =
+                    ready.jobs.map { job ->
+                        jobRow(job, busy = job.id in ready.busyIds, outcome = ready.outcomes[job.id], jobActions) { scheduling = job.id }
+                    },
+                modifier = Modifier.padding(horizontal = inset),
+            )
+        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.server_settings_api_caches),
             rows = state.apiCaches.map { cache -> apiCacheRow(cache, busy = cache.id in state.busyIds, actions.onFlush) },
             modifier = Modifier.padding(horizontal = inset),
         )
-        if (state.imageCaches.isNotEmpty()) {
-            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            ItemGroup(
-                title = stringResource(R.string.server_settings_image_caches),
-                rows = state.imageCaches.map { imageCacheRow(it) },
-                modifier = Modifier.padding(horizontal = inset),
-            )
-        }
         state.dns?.let { dns ->
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
             ItemGroup(
@@ -91,7 +107,25 @@ private fun CacheContent(
                 modifier = Modifier.padding(horizontal = inset),
             )
         }
+        if (state.imageCaches.isNotEmpty()) {
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            ItemGroup(
+                title = stringResource(R.string.server_settings_image_caches),
+                rows = state.imageCaches.map { imageCacheRow(it) },
+                modifier = Modifier.padding(horizontal = inset),
+            )
+        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+    }
+    (jobs as? JobsUiState.Ready)?.jobs?.firstOrNull { it.id == scheduling }?.let { job ->
+        ScheduleDialog(
+            job = job,
+            onConfirm = { cron ->
+                scheduling = null
+                jobActions.onSchedule(job.id, cron)
+            },
+            onDismiss = { scheduling = null },
+        )
     }
 }
 

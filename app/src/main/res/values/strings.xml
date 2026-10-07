@@ -711,8 +711,9 @@
     <string name="server_settings_job_cron">Cron expression</string>
     <string name="server_settings_job_cron_hint">Six fields, seconds first: 0 */15 * * * *</string>
     <string name="server_settings_job_scheduled">Schedule saved</string>
-    <string name="server_settings_cache">Caches</string>
-    <string name="server_settings_cache_caption">API and image caches, and what to flush</string>
+    <string name="server_settings_cache">Jobs &amp; cache</string>
+    <string name="server_settings_cache_caption">Scheduled jobs and the server\'s caches</string>
+    <string name="server_settings_jobs">Jobs</string>
     <string name="server_settings_api_caches">API caches</string>
     <string name="server_settings_image_caches">Image caches</string>
     <string name="server_settings_cache_stats">%1$d hits · %2$d misses · %3$d keys</string>
