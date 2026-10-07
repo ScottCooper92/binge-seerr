@@ -6,8 +6,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.hasTextExactly
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -101,9 +101,9 @@ class TvIssuesBoardFocusTest {
         settleFocusRestore()
         row(SEVERANCE).assertIsFocused()
 
-        // The reporter isn't a manager of the other user's issue, so its row has nothing to offer but
+        // The reporter isn't a manager of the other user's issue, so its card has nothing to offer but
         // the read page — no sheet, no confirm step, straight to the page.
-        pressDown()
+        pressRight()
         row(HORSES).assertIsFocused()
         pressOk()
         assertEquals(1, dismissed)
@@ -134,12 +134,18 @@ class TvIssuesBoardFocusTest {
             BingeTvTheme {
                 TvIssuesBoard(
                     state = state,
-                    rows = TvPagedRows(count = items.size, at = { items.getOrNull(it) }),
+                    rowsFor = { filter ->
+                        if (filter ==
+                            IssueFilter.Open
+                        ) {
+                            TvPagedRows(count = items.size, at = { items.getOrNull(it) })
+                        } else {
+                            TvPagedRows(count = 0, at = { null })
+                        }
+                    },
                     events = emptyFlow(),
                     actions =
                         TvIssuesActions(
-                            onSortChange = {},
-                            onFilterChange = {},
                             onOpenActions = { state = state.copy(actionItem = it) },
                             onDismissActions = {
                                 dismissed++
@@ -149,6 +155,7 @@ class TvIssuesBoardFocusTest {
                             onResolve = { resolved += it.id },
                             onReopen = {},
                             onDelete = { deleted += it.id },
+                            onSeeAll = {},
                             onRetryLoad = {},
                             onReconnect = {},
                         ),
@@ -159,19 +166,20 @@ class TvIssuesBoardFocusTest {
     }
 
     private fun focusFirstRow() {
-        composeTestRule.onNode(hasTextExactly(string(R.string.issues_filter_open)) and isFocusable()).requestFocus()
+        row(SEVERANCE).requestFocus()
         composeTestRule.waitForIdle()
-        pressDown()
         row(SEVERANCE).assertIsFocused()
     }
 
-    private fun row(title: String) = composeTestRule.onNode(hasText(title) and isFocusable())
+    private fun row(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
     private fun sheetRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
 
     private fun pressDown() = press(Key.DirectionDown)
 
     private fun pressUp() = press(Key.DirectionUp)
+
+    private fun pressRight() = press(Key.DirectionRight)
 
     private fun pressLeft() = press(Key.DirectionLeft)
 

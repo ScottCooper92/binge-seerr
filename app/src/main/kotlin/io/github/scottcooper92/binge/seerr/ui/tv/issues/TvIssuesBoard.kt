@@ -1,7 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.tv.issues
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,50 +11,60 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
-import com.binge.designsystem.tv.template.TvBoard
+import com.binge.designsystem.tv.nav.tvContentGutterStart
+import com.binge.designsystem.tv.template.TvHubRow
+import com.binge.designsystem.tv.template.TvImmersiveHub
+import com.binge.designsystem.tv.template.TvMessagePage
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueListEvent
-import io.github.scottcooper92.binge.seerr.ui.issues.IssueSort
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.emptyMessageRes
+import io.github.scottcooper92.binge.seerr.ui.issues.issueAffectedLabel
 import io.github.scottcooper92.binge.seerr.ui.issues.labelRes
+import io.github.scottcooper92.binge.seerr.ui.issues.tone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetBody
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetRow
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetStepFocus
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetTitle
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardBands
-import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
+import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
+import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropCopy
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedList
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
+import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
+import io.github.scottcooper92.binge.seerr.ui.tv.TvRowsFallback
 import io.github.scottcooper92.binge.seerr.ui.tv.rememberTvTransientEvent
+import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
 import kotlinx.coroutines.flow.Flow
+import com.binge.designsystem.tv.R as TvR
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 /** Everything the issues board can ask of its ViewModel, in one place so the entry stays a wiring. */
 internal class TvIssuesActions(
-    val onFilterChange: (IssueFilter) -> Unit,
-    val onSortChange: (IssueSort) -> Unit,
     val onOpenActions: (IssueItem) -> Unit,
     val onDismissActions: () -> Unit,
     val onOpenDetail: (IssueItem) -> Unit,
     val onResolve: (IssueItem) -> Unit,
     val onReopen: (IssueItem) -> Unit,
     val onDelete: (IssueItem) -> Unit,
+    val onSeeAll: (IssueFilter) -> Unit,
     val onRetryLoad: () -> Unit,
     val onReconnect: () -> Unit,
 )
@@ -71,12 +83,12 @@ internal class TvIssuesActions(
 @Composable
 internal fun TvIssuesBoard(
     state: IssuesUiState,
-    rows: TvPagedRows<IssueItem>,
+    rowsFor: (IssueFilter) -> TvPagedRows<IssueItem>,
     events: Flow<IssueListEvent>,
     actions: TvIssuesActions,
     modifier: Modifier = Modifier,
     openIssueId: Int? = null,
-    initialFocusedRowId: Int? = null,
+    seeAllOpen: Boolean = false,
     now: Long = System.currentTimeMillis(),
 ) {
     val ready = state as? IssuesUiState.Ready
@@ -87,50 +99,48 @@ internal fun TvIssuesBoard(
     // must still be attached somewhere.
     var restoreRowId by rememberSaveable { mutableStateOf<Int?>(null) }
     val closer = rememberTvOverlayCloser(restoreTo = restoreFocus, onClose = actions.onDismissActions)
-    LaunchedEffect(openIssueId) {
-        if (openIssueId == null && restoreRowId != null) restoreTvOverlayFocus(restoreFocus)
+    // The row whose see-all tile opened the grid, so focus returns to that tile when the grid closes.
+    var restoreSeeAllKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val overlayOpen = openIssueId != null || seeAllOpen
+    LaunchedEffect(overlayOpen) {
+        if (!overlayOpen && (restoreRowId != null || restoreSeeAllKey != null)) restoreTvOverlayFocus(restoreFocus)
     }
     Box(modifier = modifier.fillMaxSize()) {
-        TvBoard(title = stringResource(R.string.hub_section_issues)) {
-            if (ready == null) {
-                TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
-                return@TvBoard
-            }
-            TvBoardBands(
-                filters = IssueFilter.entries.map { filter -> filter to filterLabel(filter, ready.counts) },
-                selectedFilter = ready.filter,
-                onFilterChange = actions.onFilterChange,
-                sorts = IssueSort.entries.map { sort -> sort to stringResource(sort.labelRes()) },
-                selectedSort = ready.sort,
-                onSortChange = actions.onSortChange,
+        if (ready == null) {
+            TvMessagePage(body = stringResource(R.string.tv_loading), loading = true)
+        } else {
+            TvIssuesRows(
+                ready = ready,
+                rowsFor = rowsFor,
+                actions = actions,
+                restoreRowId = restoreRowId,
+                restoreSeeAllKey = restoreSeeAllKey,
+                restoreFocus = restoreFocus,
+                onSeeAll = { filter ->
+                    restoreSeeAllKey = filter.name
+                    restoreRowId = null
+                    actions.onSeeAll(filter)
+                },
+                onSelect = { item ->
+                    restoreRowId = item.id
+                    restoreSeeAllKey = null
+                    if (item.canBeActedOn(ready.scope)) actions.onOpenActions(item) else actions.onOpenDetail(item)
+                },
+                now = now,
             )
-            TvPagedList(
-                rows = rows,
-                emptyMessage = stringResource(ready.filter.emptyMessageRes()),
-                onRetryLoad = actions.onRetryLoad,
-                onReconnect = actions.onReconnect,
-                modifier = Modifier.weight(1f),
-            ) { item ->
-                TvIssueRow(
-                    item = item,
-                    onSelect = {
-                        restoreRowId = item.id
-                        if (item.canBeActedOn(ready.scope)) actions.onOpenActions(item) else actions.onOpenDetail(item)
-                    },
-                    isActing = item.id in ready.actingIds,
-                    initiallyFocused = item.id == initialFocusedRowId,
-                    now = now,
-                    modifier = if (item.id == restoreRowId) Modifier.focusRequester(restoreFocus) else Modifier,
-                )
-            }
-            event?.let {
-                TvFormNote(
-                    text = stringResource(it.messageRes()),
-                    tone = if (it is IssueListEvent.Failed) TvFormNoteTone.Error else TvFormNoteTone.Success,
-                )
-            }
         }
-        ready?.actionItem?.let { item ->
+        event?.let {
+            TvFormNote(
+                text = stringResource(it.messageRes()),
+                tone = if (it is IssueListEvent.Failed) TvFormNoteTone.Error else TvFormNoteTone.Success,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = tvContentGutterStart(), bottom = dimensionResource(TvR.dimen.tv_overscan_vertical)),
+            )
+        }
+        // While the grid is open it renders the sheet itself, on this same ViewModel; one sheet, not two.
+        ready?.actionItem?.takeUnless { seeAllOpen }?.let { item ->
             TvIssueActionsSheet(
                 item = item,
                 onResolve = {
@@ -157,6 +167,94 @@ internal fun TvIssuesBoard(
             )
         }
     }
+}
+
+/** The filters that get a row; "All" would only repeat the others. */
+internal val IssueRowFilters = IssueFilter.entries.filter { it != IssueFilter.All }
+private const val ROW_ITEM_CAP = 20
+
+/** The issues as the design system's immersive hub: a row of posters per filter over a backdrop describing the focused issue. */
+@Composable
+private fun TvIssuesRows(
+    ready: IssuesUiState.Ready,
+    rowsFor: (IssueFilter) -> TvPagedRows<IssueItem>,
+    actions: TvIssuesActions,
+    restoreRowId: Int?,
+    restoreSeeAllKey: String?,
+    restoreFocus: FocusRequester,
+    onSeeAll: (IssueFilter) -> Unit,
+    onSelect: (IssueItem) -> Unit,
+    now: Long,
+) {
+    val perFilter = IssueRowFilters.map { it to rowsFor(it) }
+    if (perFilter.none { (_, rows) -> rows.count > 0 }) {
+        TvRowsFallback(
+            rows = perFilter.map { it.second },
+            emptyBody = stringResource(IssueFilter.All.emptyMessageRes()),
+            onRetryLoad = actions.onRetryLoad,
+            onReconnect = actions.onReconnect,
+        )
+        return
+    }
+    val hubRows =
+        perFilter.map { (filter, rows) ->
+            TvHubRow(
+                key = filter.name,
+                title = filterLabel(filter, ready.counts),
+                items = (0 until minOf(rows.count, ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
+                onSeeAll = { onSeeAll(filter) }.takeIf { (ready.counts?.countFor(filter) ?: rows.count) > ROW_ITEM_CAP },
+            )
+        }
+    TvImmersiveHub(
+        rows = hubRows,
+        itemId = { it.id },
+        cardWidth = dimensionResource(TvR.dimen.tv_immersive_card_width),
+        onItemClick = onSelect,
+        seeAllLabel = stringResource(R.string.tv_see_all),
+        seeAllModifier = { key -> if (key == restoreSeeAllKey) Modifier.focusRequester(restoreFocus) else Modifier },
+        artwork = { item -> TvBackdropArtwork(item.backdropUrl, item.posterUrl) },
+        copy = { item -> TvIssueCopy(item, now) },
+    ) { item, isFocused, onFocusChanged, onClick, cellModifier ->
+        TvPosterCard(
+            title = item.title ?: stringResource(item.mediaType.mediaTypeLabelRes()),
+            posterUrl = item.posterUrl,
+            isFocused = isFocused,
+            onFocusChanged = onFocusChanged,
+            enabled = item.id !in ready.actingIds,
+            onClick = onClick,
+            modifier = if (item.id == restoreRowId) cellModifier.focusRequester(restoreFocus) else cellModifier,
+        )
+    }
+}
+
+/** What the backdrop says about the focused issue: the title, what is wrong and where, who filed it, and the opening line. */
+@Composable
+internal fun ColumnScope.TvIssueCopy(
+    item: IssueItem,
+    now: Long,
+) {
+    val separator = stringResource(R.string.hub_meta_separator)
+    TvBackdropCopy(
+        meta =
+            listOfNotNull(
+                stringResource(item.mediaType.mediaTypeLabelRes()),
+                item.year,
+                item.certification,
+            ).joinToString(separator),
+        title = item.title ?: stringResource(item.mediaType.mediaTypeLabelRes()),
+        status =
+            listOfNotNull(
+                stringResource(item.status.labelRes()),
+                stringResource(item.type.labelRes()),
+                issueAffectedLabel(item),
+                item.reportedBy ?: stringResource(R.string.requests_requester_unknown),
+                item.commentCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.issue_comments, it, it) },
+                formatRelativeOrAbsolute(item.createdAtMillis, now),
+            ).joinToString(separator),
+        statusColor = item.status.tone().tvColor(),
+        // What the reporter wrote is the point of an issue; the title's synopsis only fills in when there is none.
+        synopsis = item.problem ?: item.overview,
+    )
 }
 
 /** The actions that take a second step before they land. */

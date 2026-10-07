@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.onRoot
@@ -70,19 +71,26 @@ class TvIssueDetailFocusTest {
                     TvIssuesBoard(
                         state =
                             IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = null, scope = scope),
-                        rows = TvPagedRows(count = 1, at = { item }),
+                        rowsFor = { filter ->
+                            if (filter ==
+                                IssueFilter.Open
+                            ) {
+                                TvPagedRows(count = 1, at = { item })
+                            } else {
+                                TvPagedRows(count = 0, at = { null })
+                            }
+                        },
                         events = emptyFlow(),
                         openIssueId = openId,
                         actions =
                             TvIssuesActions(
-                                onFilterChange = {},
-                                onSortChange = {},
                                 onOpenActions = {},
                                 onDismissActions = {},
                                 onOpenDetail = { openId = it.id },
                                 onResolve = {},
                                 onReopen = {},
                                 onDelete = {},
+                                onSeeAll = {},
                                 onRetryLoad = {},
                                 onReconnect = {},
                             ),
@@ -204,7 +212,7 @@ class TvIssueDetailFocusTest {
         currentUserName = "ana",
     )
 
-    private fun row(title: String) = composeTestRule.onNode(hasText(title) and isFocusable())
+    private fun row(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
 
     private fun pressOk() = press(Key.DirectionCenter)
 

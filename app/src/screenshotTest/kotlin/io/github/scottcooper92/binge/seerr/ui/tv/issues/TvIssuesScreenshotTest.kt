@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.issues
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
 import io.github.scottcooper92.binge.seerr.ui.tv.NoIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
@@ -28,8 +29,9 @@ private val FixedSampleIssues =
     )
 
 /**
- * The television issues board: the loaded list and the actions sheet open on a row. Mirrors the states
- * already sketched in `TvBoardPreviews.kt`.
+ * The television issues board as the design system's immersive hub: the open and resolved issues as rows over the
+ * backdrop, the actions sheet open on a card, the empty arm and the failed-load page. Mirrors the states sketched
+ * in `TvBoardPreviews.kt`.
  */
 class TvIssuesScreenshotTest {
     @PreviewTest
@@ -38,10 +40,15 @@ class TvIssuesScreenshotTest {
     fun Board() {
         TvIssuesBoard(
             state = issuesReady(),
-            rows = rows(FixedSampleIssues),
+            rowsFor = { filter ->
+                when (filter) {
+                    IssueFilter.Open -> rows(listOf(FixedSampleIssues[0]))
+                    IssueFilter.Resolved -> rows(listOf(FixedSampleIssues[1]))
+                    else -> rows(emptyList())
+                }
+            },
             events = emptyFlow(),
             actions = NoIssuesActions,
-            initialFocusedRowId = 11,
             now = ISSUES_NOW_MILLIS,
         )
     }
@@ -52,29 +59,30 @@ class TvIssuesScreenshotTest {
     fun Sheet() {
         TvIssuesBoard(
             state = issuesReady(actionItem = FixedSampleIssues.first()),
-            rows = rows(FixedSampleIssues),
+            rowsFor = { filter -> if (filter == IssueFilter.Open) rows(listOf(FixedSampleIssues[0])) else rows(emptyList()) },
             events = emptyFlow(),
             actions = NoIssuesActions,
             now = ISSUES_NOW_MILLIS,
         )
     }
 
-    /** A refresh the server rejected behind cached rows: the rows stay, with the way back to reconnect above them. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun RejectedRefreshBehindRows() {
+    fun Empty() {
+        TvIssuesBoard(state = issuesReady(), rowsFor = { rows(emptyList()) }, events = emptyFlow(), actions = NoIssuesActions)
+    }
+
+    /** A load the server rejected: the page says to reconnect, with the way to do it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RejectedLoad() {
         TvIssuesBoard(
             state = issuesReady(),
-            rows =
-                TvPagedRows(
-                    count = FixedSampleIssues.size,
-                    at = { FixedSampleIssues.getOrNull(it) },
-                    refresh = TvLoadPhase.Failed(rejected = true),
-                ),
+            rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = true)) },
             events = emptyFlow(),
             actions = NoIssuesActions,
-            now = ISSUES_NOW_MILLIS,
         )
     }
 }
