@@ -112,6 +112,7 @@ class SendAddressViewModelTest {
         link: String?,
         saved: SeerrCredentials? = null,
         applicationUrl: String? = null,
+        scanned: Boolean = false,
     ): SendAddressViewModel {
         val store =
             CredentialStore(
@@ -128,6 +129,7 @@ class SendAddressViewModelTest {
                 memory = memory,
                 dispatcher = mainDispatcherRule.dispatcher,
                 link = link,
+                scanned = scanned,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         // Cleared when the test body ends, before the virtual clock is run out: a poll left running would turn it for ever.
@@ -378,7 +380,12 @@ class SendAddressViewModelTest {
             val key = HandOffKey.generate()
             // Waiting when the sheet opens; checking once the address is in.
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CHECKING))
-            val vm = viewModel("$LINK&k=${key.encoded()}", SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+            val vm =
+                viewModel(
+                    "$LINK&k=${key.encoded()}",
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                    scanned = true,
+                )
             val ready = vm.settled() as SendAddressUiState.Ready
             assertTrue("the offer is there for a user session", ready.signIn != null)
             assertFalse("and off until the user turns it on", ready.signInChosen)
@@ -397,11 +404,29 @@ class SendAddressViewModelTest {
         }
 
     @Test
+    fun `a link a web page could have fired never offers the session, however it is dressed`() =
+        runTest {
+            val saved = SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4))
+            val ready = viewModel(scannedLink, saved).settled() as SendAddressUiState.Ready
+            assertEquals(null, ready.signIn)
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local")))
+            val carried = viewModel(scannedLink, saved)
+            val form =
+                carried.uiState.first {
+                    it is SendAddressUiState.SigningIn && it.step is SignInStep.Form
+                } as SendAddressUiState.SigningIn
+            assertEquals(null, (form.step as SignInStep.Form).sessionOffer)
+            carried.sendSession()
+            assertTrue("and sendSession is a no-op", tv.sentCredentials.isEmpty())
+        }
+
+    @Test
     fun `with the switch off, or an API key connection, nothing of the session is sent or offered`() =
         runTest {
             val key = HandOffKey.generate()
             val link = "$LINK&k=${key.encoded()}"
-            val off = viewModel(link, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+            val off = viewModel(link, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)), scanned = true)
             off.settled()
             off.send()
             off.uiState.first { it is SendAddressUiState.SigningIn }
@@ -411,6 +436,7 @@ class SendAddressViewModelTest {
                 viewModel(
                     link,
                     SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")),
+                    scanned = true,
                 ).settled() as SendAddressUiState.Ready
             assertEquals(null, keyed.signIn)
         }
@@ -419,7 +445,7 @@ class SendAddressViewModelTest {
     fun `a TV already on its sign-in step skips the address and offers the session as one tap`() =
         runTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local")))
-            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)), scanned = true)
 
             val form = vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form } as SendAddressUiState.SigningIn
             assertTrue((form.step as SignInStep.Form).sessionOffer != null)

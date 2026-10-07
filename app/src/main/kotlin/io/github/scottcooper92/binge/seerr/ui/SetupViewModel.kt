@@ -205,7 +205,9 @@ class SetupViewModel
             val insecureHost = url.insecurePublicHostOrNull()
             // Plain HTTP to a public host is refused until the user opts in for that host.
             if (insecureHost != null && insecureHost != draft.value.cleartextHost) return
-            draft.update { it.copy(busy = true, error = null) }
+            // A handed session is an attempt the phone has been told the TV will count, so it is counted before the
+            // server is read: a failed read then reports against the right number instead of leaving the phone waiting.
+            draft.update { it.copy(busy = true, error = null, attempts = if (it.handedSession != null) it.attempts + 1 else it.attempts) }
             viewModelScope.launch(dispatcher) {
                 insecureHost?.let { connection.allowCleartextTo(it) }
                 connection
@@ -219,7 +221,7 @@ class SetupViewModel
                         } else {
                             // The server decides: a session it doesn't answer to is dropped, never kept, and the sign-in step
                             // comes up with a line saying why, which the phone reads as a refused attempt.
-                            draft.update { it.copy(handedSession = null, attempts = it.attempts + 1) }
+                            draft.update { it.copy(handedSession = null) }
                             val adopted = connection.adoptHandedSession(server.baseUrl, session, analytics, crashBreadcrumbs)
                             draft.update {
                                 if (adopted) {

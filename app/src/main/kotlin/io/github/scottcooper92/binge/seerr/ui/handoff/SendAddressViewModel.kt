@@ -8,8 +8,6 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
-import io.github.scottcooper92.binge.seerr.handoff.AddressCandidate
-import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
 import io.github.scottcooper92.binge.seerr.handoff.AddressSender
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
 import io.github.scottcooper92.binge.seerr.handoff.ApplicationUrlReader
@@ -22,7 +20,6 @@ import io.github.scottcooper92.binge.seerr.handoff.TvHandOffLinks
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffTarget
 import io.github.scottcooper92.binge.seerr.handoff.TvSignInClient
 import io.github.scottcooper92.binge.seerr.handoff.addressCandidates
-import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.handoff.normaliseServerAddress
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
@@ -39,107 +36,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-
-/** The phone's confirmation before it sends a server address to a television (#323). */
-sealed interface SendAddressUiState {
-    data object Loading : SendAddressUiState
-
-    /** The link is not one a television on this network wrote, so nothing is sent anywhere. */
-    data object Refused : SendAddressUiState
-
-    /** This phone has no server to send. */
-    data object NotConnected : SendAddressUiState
-
-    /**
-     * The address field, filled with the best of [candidates] until the user edits it, and [tv], where
-     * it goes. Everything else is read from [address] as it stands, so the note under the field always
-     * describes what Send would send.
-     */
-    data class Ready(
-        val tv: String,
-        val candidates: List<AddressCandidate>,
-        val address: String,
-        val isSending: Boolean,
-        val failed: Boolean,
-        /** The offer to sign the TV in as this phone's user (#772): null with no key to seal it or no user session to share. */
-        val signIn: SignInOffer? = null,
-        /** The user's switch for [signIn]. Off every time the sheet opens; nothing remembers it. */
-        val signInChosen: Boolean = false,
-    ) : SendAddressUiState {
-        /** The field as it would be sent, or null when the TV's own form would refuse it. */
-        val normalised: String? get() = normaliseServerAddress(address)
-
-        /** Whether the field holds something to complain about: an entry that is not an address. Blank is not an error, only unsendable. */
-        val isInvalid: Boolean get() = address.isNotBlank() && normalised == null
-
-        val isNotLocal: Boolean get() = normalised?.let(::addressLocality) == AddressLocality.NotLocal
-
-        val canSend: Boolean get() = !isSending && normalised != null
-
-        /** The other addresses to offer as one-tap fills: none when there is only one, and never the one already in the field. */
-        val suggestions: List<AddressCandidate>
-            get() = if (candidates.size < 2) emptyList() else candidates.filter { it.address != normalised }
-    }
-
-    data class Sent(
-        val tv: String,
-    ) : SendAddressUiState
-
-    /**
-     * After the address, when the code was scanned and so carries a key: the TV's progress, and on its sign-in step
-     * a form whose credentials are sealed for that TV alone.
-     */
-    data class SigningIn(
-        val tv: String,
-        val step: SignInStep,
-    ) : SendAddressUiState
-}
-
-/** Who the TV would be signed in as: [userName] is null when the server didn't say, and the copy says "you" instead. */
-data class SignInOffer(
-    val userName: String?,
-)
-
-/** Where the TV is, as the phone's sign-in sheet shows it. */
-sealed interface SignInStep {
-    /** The TV has the address and is asking that server who it is. */
-    data object Waiting : SignInStep
-
-    /** The TV reached [server] but offers only sign-ins that finish with a code on the TV, so there is nothing to type here. */
-    data class OnTv(
-        val server: String,
-    ) : SignInStep
-
-    /**
-     * The TV is on its sign-in step for [server], offering [modes]. [isSending] runs from the tap until the TV has
-     * said how the attempt went; [rejected] is that it said no. [awaiting] is the number the TV counted the attempt
-     * as, once it has taken it: the TV's `failed` is about this attempt only when its own count has reached it.
-     */
-    data class Form(
-        val server: String,
-        val modes: List<SeerrSignInMode>,
-        val form: SignInForm,
-        val isSending: Boolean = false,
-        val rejected: Boolean = false,
-        val awaiting: Int? = null,
-        /** One-tap sign-in as this phone's user (#772), until the TV has turned that session down. */
-        val sessionOffer: SignInOffer? = null,
-        /** Whether the attempt in flight is the session rather than the typed form. */
-        val sendingSession: Boolean = false,
-    ) : SignInStep {
-        val canSend: Boolean get() = !isSending && form.canSubmit
-    }
-
-    /** The phone's own session went with the address, and the TV is signing in with it; [awaiting] is the attempt it is. */
-    data class Session(
-        val awaiting: Int,
-    ) : SignInStep
-
-    data object Connected : SignInStep
-
-    /** The TV stopped answering: it was switched off, left the page, or is no longer on this network. */
-    data object Lost : SignInStep
-}
 
 /**
  * Reads a hand-off link, fills an editable address field with the best address this phone knows for
@@ -163,6 +59,7 @@ class SendAddressViewModel
         private val memory: HandOffAddressMemory,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted link: String?,
+        @Assisted private val scanned: Boolean = false,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<SendAddressUiState>(SendAddressUiState.Loading)
         val uiState: StateFlow<SendAddressUiState> = _uiState.asStateFlow()
@@ -195,7 +92,9 @@ class SendAddressViewModel
             // is the point, so it does not need this phone to be signed in anywhere.
             if (connected == null && target.key == null) return _uiState.update { SendAddressUiState.NotConnected }
             server = connected
-            offer = if (connected != null) signInOffer(target) else null
+            // Only for a code this app scanned: a link a web page can fire carries a key of its own choosing, and the
+            // session must not go to whoever wrote it.
+            offer = if (connected != null && scanned) signInOffer(target) else null
             // A TV past its address (a phone carrying on where it left off, or a code from the sign-in step) needs no
             // address from this one: go straight to where the TV is.
             if (target.key != null) {
@@ -399,7 +298,10 @@ class SendAddressViewModel
 
         @AssistedFactory
         interface Factory {
-            fun create(link: String?): SendAddressViewModel
+            fun create(
+                link: String?,
+                scanned: Boolean,
+            ): SendAddressViewModel
         }
     }
 

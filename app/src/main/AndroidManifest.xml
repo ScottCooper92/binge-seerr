@@ -164,6 +164,17 @@
         </activity>
 
         <!--
+            The in-app scan's own copy of the sheet. Not exported, so no link or other app can start it, which is
+            what lets it, and only it, offer the phone's session to the TV.
+        -->
+        <activity
+            android:name=".ScannedSendAddressActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@style/Theme.SeerrSendAddress" />
+
+        <!--
             exported="true" is the integration surface: the host reaches this Service with
             bindService, and what guards it is the caller policy in SeerrCompanionService, not the
             manifest. android:process is deliberately absent so the Service runs under this app's

@@ -3,6 +3,8 @@ package io.github.scottcooper92.binge.seerr
 import android.content.ComponentName
 import android.content.pm.ActivityInfo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -22,5 +24,17 @@ class SendAddressActivityTest {
         val info = context.packageManager.getActivityInfo(ComponentName(context, SendAddressActivity::class.java), 0)
 
         assertEquals(ActivityInfo.LAUNCH_MULTIPLE, info.launchMode)
+    }
+
+    @Test
+    fun `only the link sheet is exported, so only the scan's copy may offer the session`() {
+        val context = RuntimeEnvironment.getApplication()
+
+        val link = context.packageManager.getActivityInfo(ComponentName(context, SendAddressActivity::class.java), 0)
+        val scanned = context.packageManager.getActivityInfo(ComponentName(context, ScannedSendAddressActivity::class.java), 0)
+
+        assertTrue(link.exported)
+        assertFalse(scanned.exported)
+        assertEquals(ActivityInfo.LAUNCH_MULTIPLE, scanned.launchMode)
     }
 }

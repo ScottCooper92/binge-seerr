@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffSession
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
+import io.github.scottcooper92.binge.seerr.handoff.HAND_OFF_SESSION_MODE
 import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffOpening
 import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
@@ -362,6 +363,31 @@ class SetupViewModelHandOffTest {
             val refused = vm.uiState.first { it is SetupUiState.SignIn && it.error != null } as SetupUiState.SignIn
 
             assertEquals(SetupError.HandOffSessionRejected, refused.error)
+            val progress = session.progress() as HandOffProgress.SignIn
+            assertTrue(progress.failed)
+            assertEquals(1, progress.attempt)
+        }
+
+    @Test
+    fun `a session sent from the sign-in step is counted even when the server cannot be read`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            session.address.complete(seerr.url("/"))
+            vm.uiState.first { it is SetupUiState.SignIn }
+
+            // The server goes quiet: the phone told the TV would count this as attempt 1, and it must.
+            seerr.enqueue(
+                FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = """{"message":"down"}"""),
+            )
+            session.sendCredentials(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "ph0n3"))
+            vm.uiState.first { it is SetupUiState.SignIn && it.error != null }
+
             val progress = session.progress() as HandOffProgress.SignIn
             assertTrue(progress.failed)
             assertEquals(1, progress.attempt)

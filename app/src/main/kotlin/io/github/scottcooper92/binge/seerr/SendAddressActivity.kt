@@ -26,14 +26,17 @@ import io.github.scottcooper92.binge.seerr.ui.handoff.SendAddressViewModel
  * Exported, and reachable from any browser page, so it trusts nothing in the link: the ViewModel
  * refuses a target that is not a private address on this network, and sends nothing without the
  * user's tap. Its own Activity rather than a route in [MainActivity], so the one link a web page can
- * open is this one, and the notification links stay unexported. The in-app scan (#773) opens it too,
- * with the same link, so both routes go through the same checks.
+ * open is this one, and the notification links stay unexported. The in-app scan (#773) opens
+ * [ScannedSendAddressActivity] instead, which no link can reach and which alone may offer the phone's session.
  */
 @AndroidEntryPoint
-class SendAddressActivity : ComponentActivity() {
+open class SendAddressActivity : ComponentActivity() {
+    /** Whether the sheet was opened by this app's own scan, the only route that may offer the phone's session. */
+    protected open val scanned: Boolean = false
+
     private val viewModel: SendAddressViewModel by viewModels(
         extrasProducer = {
-            defaultViewModelCreationExtras.withCreationCallback<SendAddressViewModel.Factory> { it.create(intent?.dataString) }
+            defaultViewModelCreationExtras.withCreationCallback<SendAddressViewModel.Factory> { it.create(intent?.dataString, scanned) }
         },
     )
 
@@ -60,13 +63,22 @@ class SendAddressActivity : ComponentActivity() {
     }
 
     companion object {
-        /** This sheet for a code the app scanned itself: the same link a TV's page opens, key included. */
+        /** The unexported [ScannedSendAddressActivity] for a code the app scanned itself, the link a TV's page opens, key included. */
         fun intent(
             context: Context,
             target: TvHandOffTarget,
         ): Intent =
-            Intent(context, SendAddressActivity::class.java)
+            Intent(context, ScannedSendAddressActivity::class.java)
                 .setAction(Intent.ACTION_VIEW)
                 .setData(Uri.parse(TvHandOffLinks.appLink(target)))
     }
+}
+
+/**
+ * The send sheet for a code this app scanned (#773). Unexported, so only this app can start it: it is what lets the
+ * sheet offer the phone's session, which a link from a web page must never get sent to a key it chose.
+ */
+@AndroidEntryPoint
+class ScannedSendAddressActivity : SendAddressActivity() {
+    override val scanned: Boolean = true
 }
