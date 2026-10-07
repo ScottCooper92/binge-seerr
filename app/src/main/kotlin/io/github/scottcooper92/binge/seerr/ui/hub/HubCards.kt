@@ -137,14 +137,16 @@ private fun ServerStatStrip(overview: HubOverview) {
     val placeholder = stringResource(R.string.hub_stat_placeholder)
     DetailStatRow(
         stats =
-            listOf(
+            listOfNotNull(
                 DetailStat(
                     Icons.Filled.Movie,
                     overview.movieRequestCount?.toString() ?: placeholder,
                     stringResource(R.string.hub_quota_movies),
                 ),
                 DetailStat(Icons.Filled.Tv, overview.tvRequestCount?.toString() ?: placeholder, stringResource(R.string.hub_quota_tv)),
-                DetailStat(Icons.Filled.People, overview.userCount?.toString() ?: placeholder, stringResource(R.string.hub_section_users)),
+                // Only a viewer who manages users is told the count, so nobody else gets a stat that never fills in.
+                DetailStat(Icons.Filled.People, overview.userCount?.toString() ?: placeholder, stringResource(R.string.hub_section_users))
+                    .takeIf { overview.permissions.canManageUsers },
                 DetailStat(
                     Icons.Filled.HourglassEmpty,
                     overview.pendingRequestCount?.toString() ?: placeholder,

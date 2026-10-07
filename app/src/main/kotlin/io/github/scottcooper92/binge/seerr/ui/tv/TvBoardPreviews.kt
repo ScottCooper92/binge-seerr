@@ -78,7 +78,7 @@ private val SampleOverview =
     HubOverview(
         loaded = true,
         userLoad = HubUserLoad.Loaded,
-        permissions = SeerrPermissions(canManageRequests = true, canManageIssues = true),
+        permissions = SeerrPermissions(canManageRequests = true, canManageIssues = true, canManageUsers = true),
         movieRequestCount = 128,
         tvRequestCount = 41,
         pendingRequestCount = 6,

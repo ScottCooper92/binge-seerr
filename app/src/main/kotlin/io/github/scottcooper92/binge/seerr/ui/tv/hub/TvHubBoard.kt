@@ -189,8 +189,11 @@ private fun ColumnScope.TvHubDashboard(
             TvStatTile(value = overview.movieRequestCount?.toString() ?: placeholder, label = stringResource(R.string.hub_quota_movies))
         }
         item { TvStatTile(value = overview.tvRequestCount?.toString() ?: placeholder, label = stringResource(R.string.hub_quota_tv)) }
-        item {
-            TvStatTile(value = overview.userCount?.toString() ?: placeholder, label = stringResource(R.string.hub_section_users))
+        // Only a viewer who manages users is told the count, so nobody else gets a tile that never fills in.
+        if (overview.permissions.canManageUsers) {
+            item {
+                TvStatTile(value = overview.userCount?.toString() ?: placeholder, label = stringResource(R.string.hub_section_users))
+            }
         }
         if (overview.hasIssues && overview.permissions.canSeeIssues) {
             item {
