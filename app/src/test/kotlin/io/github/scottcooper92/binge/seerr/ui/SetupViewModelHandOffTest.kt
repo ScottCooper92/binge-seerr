@@ -165,6 +165,10 @@ class SetupViewModelHandOffTest {
             assertTrue(second is AddressHandOff.Listening)
             assertTrue(sessions[0].closed)
             assertFalse(sessions.last().closed)
+
+            // A code nobody uses is replaced for ever, and runTest drains the virtual clock on the way out.
+            vm.showHandOff(false)
+            assertTrue(sessions.last().closed)
         }
 
     @Test
