@@ -259,11 +259,6 @@ private fun TvHubEntry(
         viewModel.setScreenVisible(true)
         onDispose { viewModel.setScreenVisible(false) }
     }
-    // Loading is the same page as the rows' own, so Home's wait is one page and not a board's plate and then another.
-    if (state is HubUiState.Loading) {
-        TvHubLoading()
-        return
-    }
     TvHubBoard(
         state = state,
         actions =

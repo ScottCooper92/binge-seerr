@@ -48,6 +48,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
 import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
+import io.github.scottcooper92.binge.seerr.ui.tv.TvHubLoading
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPoster
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
@@ -82,6 +83,11 @@ internal fun TvHubBoard(
     initialFocusedTile: String? = null,
     initialBingeTileFocused: Boolean = false,
 ) {
+    // Loading is the same page as the rows' own, so Home's wait is one page and not a board's plate and then another.
+    if (state is HubUiState.Loading) {
+        TvHubLoading(modifier)
+        return
+    }
     val ready = state as? HubUiState.Ready
     // Held here, above the health branches: a re-probe passes through Checking and would drop it from the problem panel.
     val health = if (state is HubUiState.Error) state.health else ready?.health
@@ -89,7 +95,7 @@ internal fun TvHubBoard(
     TvBoard(title = ready?.server?.title ?: stringResource(R.string.companion_name), modifier = modifier) {
         when {
             state is HubUiState.Error -> TvHubProblem(state.health, actions, allow, modifier = Modifier.weight(1f))
-            ready == null -> TvBoardPlate(body = stringResource(R.string.tv_loading), modifier = Modifier.weight(1f))
+            ready == null -> Unit
             ready.health.isProblem() -> TvHubProblem(ready.health, actions, allow, modifier = Modifier.weight(1f))
             else -> TvHubDashboard(ready, actions, initialFocusedTile, initialBingeTileFocused)
         }
