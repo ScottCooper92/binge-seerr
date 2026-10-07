@@ -162,25 +162,19 @@ internal fun TvRequestsGridOverlay(
 
 /**
  * A request's read-only page, above the rail exactly as the connection form is: the same
- * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds, and one instance per request id: the lookup is
- * keyed by [requestId], because Hilt stores view models by class and key, so a lookup without a key would answer
- * every later request with the first one opened. Open in Binge checks whether Binge would answer the link once
- * per detail load — this surface has no browser to fall back to, so the button is hidden rather than tried
- * and abandoned.
+ * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds. The shell gives each opening its own view-model
+ * scope, so the view model is this request's and is gone when the page closes. Open in Binge checks whether Binge
+ * would answer the link once per detail load — this surface has no browser to fall back to, so the button is hidden
+ * rather than tried and abandoned.
  */
 @Composable
 internal fun TvRequestDetailOverlay(
     requestId: Int,
     onDone: () -> Unit,
     viewModel: RequestDetailViewModel =
-        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(
-            key = "request-detail-$requestId",
-            creationCallback = { factory -> factory.create(requestId) },
-        ),
+        hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    // A page opened before keeps its loaded state, so reopening it refreshes rather than showing what it last saw.
-    LaunchedEffect(viewModel) { if (viewModel.uiState.value is RequestDetailUiState.Ready) viewModel.reload() }
     val context = LocalContext.current
     val detail = (state as? RequestDetailUiState.Ready)?.detail
     val onOpenInBinge =

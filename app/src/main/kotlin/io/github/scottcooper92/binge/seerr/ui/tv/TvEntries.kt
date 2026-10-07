@@ -10,6 +10,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.telemetry.LocalAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.screenName
+import io.github.scottcooper92.binge.seerr.ui.ScopedViewModels
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
@@ -72,8 +73,19 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                                     onReconnect = { editingConnection = true },
                                 )
                             }
-                            openRequestId?.let { TvRequestDetailOverlay(requestId = it, onDone = { openRequestId = null }) }
-                            openIssueId?.let { TvIssueDetailOverlay(issueId = it, onDone = { openIssueId = null }) }
+                            // Each page its own view models, cleared when it closes: a reopened page starts fresh, and nothing
+                            // piles up in the activity's store or outlives a change of server (#789).
+                            openRequestId?.let { id ->
+                                ScopedViewModels("request-detail-$id") {
+                                    TvRequestDetailOverlay(requestId = id, onDone = {
+                                        openRequestId =
+                                            null
+                                    })
+                                }
+                            }
+                            openIssueId?.let { id ->
+                                ScopedViewModels("issue-detail-$id") { TvIssueDetailOverlay(issueId = id, onDone = { openIssueId = null }) }
+                            }
                         }
                     }
                 else -> null
