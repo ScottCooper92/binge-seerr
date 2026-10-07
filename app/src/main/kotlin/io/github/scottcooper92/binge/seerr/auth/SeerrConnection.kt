@@ -286,7 +286,10 @@ class SeerrConnection(
     suspend fun markSessionShared() {
         val saved = store.credentials.first() ?: return
         val session = saved.auth as? SeerrAuth.Session ?: return
-        if (!session.shared) store.save(saved.copy(auth = session.copy(shared = true)))
+        if (session.shared) return
+        val shared = saved.copy(auth = session.copy(shared = true))
+        // The carried copy too, or a device restored from it would end the session on disconnect (#811).
+        if (store.save(shared)) carrier.put(cleartext.carriedFor(shared))
     }
 
     /** Starts a Quick Connect session on the server's Jellyfin; the code is for the user, the secret for [finishQuickConnect]. */

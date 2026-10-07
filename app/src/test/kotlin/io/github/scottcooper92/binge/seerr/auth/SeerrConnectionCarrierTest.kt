@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
@@ -82,6 +83,21 @@ class SeerrConnectionCarrierTest {
 
             assertEquals(CarriedCredentials(saved, cleartext = false), carried.single())
             assertFalse(cleartext.allows(server.hostName))
+        }
+
+    @Test
+    fun `marking the session shared carries the mark too`() =
+        runTest {
+            val signedIn = headersOf("Content-Type", "application/json", "Set-Cookie", "connect.sid=s3ss10n; Path=/")
+            server.enqueue(MockResponse(code = 200, headers = signedIn, body = """{"id":42}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            val sut = connection()
+            sut.logIn(server.url("/").toString(), SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+
+            sut.markSessionShared()
+
+            assertEquals(false, (carried.first().credentials.auth as SeerrAuth.Session).shared)
+            assertEquals(true, (carried.last().credentials.auth as SeerrAuth.Session).shared)
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

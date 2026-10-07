@@ -31,6 +31,22 @@ class ConnectionCarrierTest {
     }
 
     @Test
+    fun `a session shared with another device stays shared, so a restored device won't end it on disconnect`() {
+        val credentials = SeerrCredentials("https://seerr.example/", SeerrAuth.Session("connect.sid=abc", 7, shared = true))
+
+        assertEquals(credentials, roundTrip(credentials))
+    }
+
+    @Test
+    fun `a session written before sharing was carried restores as unshared`() {
+        val written = """{"url":"https://a/","kind":"session","secret":"c","user":7,"variant":"Seerr"}"""
+
+        val decoded = decodeCarriedConnection(written.toByteArray())
+
+        assertEquals(SeerrAuth.Session("c", 7, shared = false), decoded?.credentials?.auth)
+    }
+
+    @Test
     fun `the payload is small enough for the carrier to take`() {
         val credentials = SeerrCredentials("https://seerr.example/", SeerrAuth.Session("connect.sid=${"a".repeat(512)}", 7))
 
