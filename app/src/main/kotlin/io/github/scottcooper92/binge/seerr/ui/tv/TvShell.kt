@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
@@ -37,6 +38,7 @@ internal enum class TvDestination(
     val labelRes: Int,
     val icon: ImageVector,
 ) {
+    Account("account", R.string.tv_rail_account, Icons.Filled.Person),
     Hub("hub", R.string.tv_rail_hub, Icons.Filled.Home),
     Issues("issues", R.string.hub_section_issues, Icons.Filled.ReportProblem),
     Settings("settings", R.string.hub_section_settings, Icons.Filled.Settings),
@@ -53,6 +55,8 @@ internal fun TvShellScaffold(
     onSelect: (TvDestination) -> Unit,
     modifier: Modifier = Modifier,
     overlay: (@Composable BoxScope.() -> Unit)? = null,
+    accountName: String? = null,
+    accountAvatarUrl: String? = null,
     content: @Composable (TvDestination) -> Unit,
 ) {
     var settled by rememberSaveable { mutableStateOf(selected) }
@@ -70,9 +74,12 @@ internal fun TvShellScaffold(
     }
     Box(modifier = modifier.fillMaxSize()) {
         BingeTvNavRail(
-            header = null,
-            items = TvDestination.entries.filter { it != TvDestination.Settings }.map { it.toRailItem() },
+            // The account sits at the top of the rail, above Home, which is still where the app opens; its avatar is the
+            // signed-in user's, or the person icon until they are known. Settings stays on the bottom edge.
+            header = TvDestination.Account.toRailItem().copy(displayName = accountName, avatarUrl = accountAvatarUrl),
+            items = TvDestination.entries.filter { it != TvDestination.Settings && it != TvDestination.Account }.map { it.toRailItem() },
             footer = TvDestination.Settings.toRailItem(),
+            pinFooter = true,
             selectedKey = selected.key,
             onSelect = { key -> TvDestination.entries.firstOrNull { it.key == key }?.let(onSelect) },
             railFocusRequester = railFocus,

@@ -44,6 +44,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
+import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvAccountBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.IssueRowFilters
@@ -61,13 +62,17 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsGrid
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsRowsBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 import io.github.scottcooper92.binge.seerr.ui.tvActions
+import io.github.scottcooper92.binge.seerr.ui.users.UserDetailViewModel
 
 /**
  * The connected television: the rail with a board per destination, each bound to the same ViewModel as
  * its phone screen, and the edit-connection form as a full-screen overlay above the rail.
  */
 @Composable
-internal fun TvConnectedShell() {
+internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
+    // The account's avatar on the rail's top item, from the same hub state the Account page reads.
+    val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
+    val account = (hub as? HubUiState.Ready)?.overview?.account
     var selected by rememberSaveable { mutableStateOf(TvDestination.Hub) }
     val analytics = LocalAnalytics.current
     LaunchedEffect(selected) { analytics.screen(selected.screenName()) }
@@ -84,6 +89,8 @@ internal fun TvConnectedShell() {
     TvShellScaffold(
         selected = selected,
         onSelect = { selected = it },
+        accountName = account?.name,
+        accountAvatarUrl = account?.avatarUrl,
         overlay =
             when {
                 editingConnection ->
@@ -119,6 +126,8 @@ internal fun TvConnectedShell() {
             },
     ) { destination ->
         when (destination) {
+            TvDestination.Account ->
+                TvAccountEntry(openRequestId = openRequestId, onOpenRequest = { openRequestId = it }, hubViewModel = hubViewModel)
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(
@@ -139,6 +148,58 @@ internal fun TvConnectedShell() {
             TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true })
         }
     }
+}
+
+/** Who is signed in, and what they have requested: the page reads the same hub state the rail's avatar does. */
+@Composable
+private fun TvAccountEntry(
+    openRequestId: Int?,
+    onOpenRequest: (Int) -> Unit,
+    hubViewModel: HubViewModel,
+) {
+    val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
+    // The hub is `Lazily` and only auto-retries while it is visible, so this page says so, as Home and Settings do.
+    DisposableEffect(hubViewModel) {
+        hubViewModel.setScreenVisible(true)
+        onDispose { hubViewModel.setScreenVisible(false) }
+    }
+    val account = (hub as? HubUiState.Ready)?.overview?.account
+    if (account == null) {
+        // Still loading while the hub is, failed once it has answered without an account.
+        TvAccountBoard(
+            detail = null,
+            requests = TvPagedRows(count = 0, at = { null }),
+            onOpenRequest = {},
+            onRetry = hubViewModel::recheck,
+            overlayOpen = false,
+            accountFailed = hub !is HubUiState.Loading,
+        )
+        return
+    }
+    TvAccountContent(accountId = account.id, openRequestId = openRequestId, onOpenRequest = onOpenRequest)
+}
+
+/** The account's own page: the same [UserDetailViewModel] as the phone's user page, bound to the signed-in user. */
+@Composable
+private fun TvAccountContent(
+    accountId: Int,
+    openRequestId: Int?,
+    onOpenRequest: (Int) -> Unit,
+    viewModel: UserDetailViewModel =
+        hiltViewModel<UserDetailViewModel, UserDetailViewModel.Factory>(
+            key = "account-$accountId",
+            creationCallback = { factory -> factory.create(accountId) },
+        ),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val requests = viewModel.requests.collectAsLazyPagingItems()
+    TvAccountBoard(
+        detail = state,
+        requests = requests.toRows(null) { it.id },
+        onOpenRequest = { onOpenRequest(it.id) },
+        onRetry = viewModel::reload,
+        overlayOpen = openRequestId != null,
+    )
 }
 
 /**

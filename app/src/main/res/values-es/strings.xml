@@ -959,6 +959,10 @@
     <string name="tv_settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Abrir Play Store</string>
     <string name="tv_see_all">Ver todo</string>
+    <string name="tv_rail_account">Cuenta</string>
+    <string name="tv_account_quota_of">de %1$d restantes</string>
+    <string name="tv_account_quota_unlimited_note">Sin límite</string>
+    <string name="tv_account_your_requests">Tus solicitudes</string>
     <string name="field_secret_show">Mostrar el valor</string>
     <string name="field_secret_hide">Ocultar el valor</string>
     <string name="field_clear">Borrar el valor</string>
