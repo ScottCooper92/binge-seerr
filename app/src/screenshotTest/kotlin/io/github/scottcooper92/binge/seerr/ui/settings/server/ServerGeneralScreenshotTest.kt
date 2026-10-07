@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -15,14 +17,17 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.ui.settings.DisplayLanguages
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ChoiceRows
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * Settings › General. A field the server's lineage lacks is absent, so the two lineages are two layouts;
- * the page is taller than a device cell, so the sections below the fold are framed on their own in
- * [ServerGeneralSectionsScreenshotTest].
+ * Settings › General. A row the server's lineage lacks is absent, so the two lineages are two layouts; the page is
+ * taller than a device cell, so the groups below the fold, and the sheets the rows open, are framed in
+ * [ServerGeneralPartsScreenshotTest].
  */
 class ServerGeneralScreenshotTest {
     /** Seerr and Jellyseerr: the split regions and the switches the lineage added. */
@@ -35,21 +40,7 @@ class ServerGeneralScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun overseerr() = GeneralFrame(generalReady(overseerrSettings()))
-
-    /** An application URL that is not a web address is marked with what it wants, and Application is held open. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun invalidUrl() =
-        GeneralFrame(generalReady(jellyseerrSettings(), draft = jellyseerrSettings().copy(applicationUrl = "requests.home.lan")))
-
-    /** A discover region of the wrong shape opens Discover, which starts closed, and shows its hint as the message. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun invalidRegionOpensDiscover() =
-        GeneralFrame(generalReady(jellyseerrSettings(), draft = jellyseerrSettings().copy(discoverRegion = "Britain")))
+    fun overseerr() = GeneralFrame(generalReady(overseerrSettings(), SeerrVariant.Overseerr))
 
     @PreviewTest
     @SeerrSpanishPreviews
@@ -83,64 +74,78 @@ class ServerGeneralScreenshotTest {
     fun failed() = GeneralFrame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
 }
 
-/** The general page's sections that start closed, framed open: the request and server switches, and the API key. */
-class ServerGeneralSectionsScreenshotTest {
+/** The general page's groups below the fold, and what its sheets hold. */
+class ServerGeneralPartsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun requestSwitches() =
-        SectionFrame {
-            RequestSwitches(jellyseerrSettings(), enabled = true, actions = noActions(), defaultExpanded = true)
+    fun requestsAndAdvancedJellyseerr() =
+        PartFrame {
+            RequestsGroup(jellyseerrSettings(), enabled = true, actions = noActions())
+            AdvancedGroup(jellyseerrSettings(), enabled = true, actions = noActions())
+        }
+
+    /** Overseerr has no special episodes or YouTube address, and keeps the proxy and CSRF switches in Advanced. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun requestsAndAdvancedOverseerr() =
+        PartFrame {
+            RequestsGroup(overseerrSettings(), enabled = true, actions = noActions())
+            AdvancedGroup(overseerrSettings(), enabled = true, actions = noActions())
         }
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun serverSwitchesJellyseerr() =
-        SectionFrame {
-            ServerSwitches(jellyseerrSettings(), enabled = true, actions = noActions(), defaultExpanded = true)
+    fun apiKeyMasked() = PartFrame { ApiKeyRows(ApiKeyState(key = API_KEY), noKeyActions(), onRegenerate = {}) }
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun apiKeyRevealed() = PartFrame { ApiKeyRows(ApiKeyState(key = API_KEY, revealed = true), noKeyActions(), onRegenerate = {}) }
+
+    /** The key is being replaced: Regenerate shows progress, and the old key is already dead. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun apiKeyRegenerating() = PartFrame { ApiKeyRows(ApiKeyState(key = API_KEY, regenerating = true), noKeyActions(), onRegenerate = {}) }
+
+    /** The display language sheet: each language in its own name, the current one checked. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun displayLanguageChoices() =
+        PartFrame {
+            ChoiceRows(Icons.Filled.Translate, DisplayLanguages.choices(SeerrVariant.Seerr, "en").take(CHOICES_SHOWN), "en") {}
         }
 
+    /** The discover language sheet: the chosen languages lead, checked, and a filter narrows the rest. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun serverSwitchesOverseerr() =
-        SectionFrame {
-            ServerSwitches(overseerrSettings(), enabled = true, actions = noActions(), defaultExpanded = true)
+    fun discoverLanguageChecklist() =
+        PartFrame {
+            LanguageChecklist(LANGUAGES, initial = listOf("ja", "ko"), picked = listOf("ja", "ko"), onPicked = {})
         }
-
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun apiKeyMasked() = SectionFrame { ApiKeySection(ApiKeyState(key = API_KEY), noKeyActions(), defaultExpanded = true) }
-
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun apiKeyRevealed() =
-        SectionFrame { ApiKeySection(ApiKeyState(key = API_KEY, revealed = true), noKeyActions(), defaultExpanded = true) }
-
-    /** The key is being replaced: its button shows progress, and the old key is already dead. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun apiKeyRegenerating() =
-        SectionFrame {
-            ApiKeySection(ApiKeyState(key = API_KEY, regenerating = true), noKeyActions(), defaultExpanded = true)
-        }
-
-    /** No key has been read, so Reveal and Copy are off. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun apiKeyUnread() = SectionFrame { ApiKeySection(ApiKeyState(), noKeyActions(), defaultExpanded = true) }
 }
+
+private const val CHOICES_SHOWN = 6
+
+private val LANGUAGES =
+    listOf(
+        ListEntry("en", "English"),
+        ListEntry("fr", "French"),
+        ListEntry("ja", "Japanese"),
+        ListEntry("ko", "Korean"),
+        ListEntry("es", "Spanish"),
+    )
 
 private const val API_KEY = "MTc1NzQ2MDk5MzEyNA1234abcd"
 
-private val SECTION_WIDTH = 411.dp
-private val SECTION_PADDING = 16.dp
-private val SECTION_SPACING = 12.dp
+private val PART_WIDTH = 411.dp
+private val PART_PADDING = 16.dp
+private val PART_SPACING = 12.dp
 
 private fun jellyseerrSettings() =
     ServerGeneralSettings(
@@ -175,18 +180,23 @@ private fun overseerrSettings() =
 
 private fun generalReady(
     saved: ServerGeneralSettings,
+    variant: SeerrVariant = SeerrVariant.Seerr,
     draft: ServerGeneralSettings = saved,
-) = ExtrasEditorUiState.Ready(draft = draft, saved = saved, extras = ServerGeneralExtras(apiKey = ApiKeyState(key = API_KEY)))
+) = ExtrasEditorUiState.Ready(
+    draft = draft,
+    saved = saved,
+    extras = ServerGeneralExtras(apiKey = ApiKeyState(key = API_KEY), variant = variant),
+)
 
 private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 
 private fun noKeyActions() = ApiKeyActions(onToggleReveal = {}, onCopy = {}, onRegenerate = {})
 
 @Composable
-private fun SectionFrame(content: @Composable ColumnScope.() -> Unit) {
+private fun PartFrame(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = Modifier.width(SECTION_WIDTH).padding(SECTION_PADDING),
-        verticalArrangement = Arrangement.spacedBy(SECTION_SPACING),
+        modifier = Modifier.width(PART_WIDTH).padding(PART_PADDING),
+        verticalArrangement = Arrangement.spacedBy(PART_SPACING),
         content = content,
     )
 }
@@ -198,5 +208,4 @@ private fun GeneralFrame(state: ExtrasEditorUiState<ServerGeneralSettings, Serve
         events = emptyFlow(),
         actions = noActions(),
         keyActions = noKeyActions(),
-        onOpenDefaultPermissions = {},
     )

@@ -1,13 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Link
@@ -22,48 +17,25 @@ import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeTag
-import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.users.labelRes
+import io.github.scottcooper92.binge.seerr.ui.settings.DisplayLanguages
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
-import io.github.scottcooper92.binge.seerr.ui.users.settings.imeActionIf
+import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
-
-/** The actions on the API key beside the form: show it, copy it, and replace it. */
-class ApiKeyActions(
-    val onToggleReveal: () -> Unit,
-    val onCopy: (String) -> Unit,
-    val onRegenerate: () -> Unit,
-)
 
 /**
- * The general page, as collapsible sections (#549): the main settings form — a field the lineage
- * lacks is simply absent — then the way into the default permissions and the API key behind a
- * reveal. Application starts open; the rest start closed, and a section holding a value of the wrong
- * shape opens itself.
+ * The server's General settings as the web client's General page lists them, in four groups of list rows: the
+ * application, what Discover shows, how series are requested, and what the web client marks advanced. A text value is
+ * edited in a sheet that checks it, and a pick from the server's lists in a picker sheet, so the page holds no field
+ * that can be wrong. [onLoadList] reads one of those lists the first time its picker opens.
  */
 @Composable
 fun ServerGeneralScreen(
@@ -71,245 +43,209 @@ fun ServerGeneralScreen(
     events: Flow<EditorEvent>,
     actions: EditorActions<ServerGeneralSettings>,
     keyActions: ApiKeyActions,
-    onOpenDefaultPermissions: () -> Unit,
+    onLoadList: (ServerList) -> Unit = {},
 ) {
-    val extras =
-        (state as? ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>)?.extras ?: ServerGeneralExtras()
-    val validation = remember { EditorValidation<ServerGeneralSettings>(SERVER_GENERAL_FORM_KEY) { it.issues() } }
+    val extras = (state as? ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>)?.extras ?: ServerGeneralExtras()
     EditorPage(
         title = stringResource(R.string.server_settings_general_title),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        validation = validation,
+        canSave = { it.valid },
     ) { draft, enabled ->
-        GeneralFields(draft, enabled, actions)
-        DiscoverFields(draft, enabled, actions)
-        RequestSwitches(draft, enabled, actions)
-        ServerSwitches(draft, enabled, actions)
-        EditorSection(ServerGeneralSections.NEW_USERS, stringResource(R.string.server_settings_section_users), defaultExpanded = false) {
-            if (extras.defaultPermissions.isNotEmpty()) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-                    verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-                ) {
-                    extras.defaultPermissions.forEach { permission -> BingeTag(label = stringResource(permission.labelRes())) }
-                }
-            }
-            BingeOutlinedButton(
-                label = stringResource(R.string.server_settings_default_permissions),
-                onClick = onOpenDefaultPermissions,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        ApiKeySection(extras.apiKey, keyActions)
+        ApplicationGroup(draft, extras, keyActions, enabled, actions)
+        DiscoverGroup(draft, extras, enabled, onLoadList, actions)
+        RequestsGroup(draft, enabled, actions)
+        AdvancedGroup(draft, enabled, actions)
     }
 }
 
 @Composable
-private fun GeneralFields(
+private fun ApplicationGroup(
+    draft: ServerGeneralSettings,
+    extras: ServerGeneralExtras,
+    keyActions: ApiKeyActions,
+    enabled: Boolean,
+    actions: EditorActions<ServerGeneralSettings>,
+) {
+    val urlError = stringResource(R.string.editor_error_web_url)
+    ItemGroup(
+        title = stringResource(R.string.server_settings_section_application),
+        rows =
+            listOf(
+                textSettingItem(
+                    icon = Icons.Filled.Title,
+                    label = stringResource(R.string.server_settings_application_title),
+                    value = draft.applicationTitle,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(applicationTitle = value) } },
+                ),
+                textSettingItem(
+                    icon = Icons.Filled.Link,
+                    label = stringResource(R.string.settings_application_url),
+                    value = draft.applicationUrl,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(applicationUrl = value) } },
+                    hint = stringResource(R.string.server_settings_application_url_hint),
+                    check = { value -> urlError.takeIf { !draft.copy(applicationUrl = value).urlValid } },
+                ),
+                choiceSettingItem(
+                    icon = Icons.Filled.Translate,
+                    title = stringResource(R.string.settings_display_language),
+                    choices = DisplayLanguages.choices(extras.variant, draft.locale),
+                    selected = draft.locale,
+                    enabled = enabled,
+                    onSelect = { code -> actions.onEdit { it.copy(locale = code) } },
+                ),
+                apiKeyItem(extras.apiKey, keyActions, enabled),
+            ),
+    )
+}
+
+@Composable
+private fun DiscoverGroup(
+    draft: ServerGeneralSettings,
+    extras: ServerGeneralExtras,
+    enabled: Boolean,
+    onLoadList: (ServerList) -> Unit,
+    actions: EditorActions<ServerGeneralSettings>,
+) {
+    ItemGroup(
+        title = stringResource(R.string.user_settings_section_discover),
+        rows =
+            listOfNotNull(
+                regionSettingItem(
+                    icon = Icons.Filled.Public,
+                    title = stringResource(R.string.server_settings_discover_region),
+                    value = draft.discoverRegion,
+                    choices = extras.lists[ServerList.DiscoverRegions],
+                    enabled = enabled,
+                    onOpen = { onLoadList(ServerList.DiscoverRegions) },
+                    onSelect = { code -> actions.onEdit { it.copy(discoverRegion = code) } },
+                ),
+                // Only the Jellyseerr lineage has a streaming region, and only it is asked for the list.
+                draft.streamingRegion?.let { region ->
+                    regionSettingItem(
+                        icon = Icons.Filled.LiveTv,
+                        title = stringResource(R.string.server_settings_streaming_region),
+                        value = region,
+                        choices = extras.lists[ServerList.StreamingRegions],
+                        enabled = enabled,
+                        onOpen = { onLoadList(ServerList.StreamingRegions) },
+                        onSelect = { code -> actions.onEdit { it.copy(streamingRegion = code) } },
+                    )
+                },
+                languageSettingItem(
+                    icon = Icons.Filled.Language,
+                    title = stringResource(R.string.server_settings_discover_language),
+                    value = draft.originalLanguage,
+                    choices = extras.lists[ServerList.Languages],
+                    enabled = enabled,
+                    onOpen = { onLoadList(ServerList.Languages) },
+                    onSelect = { codes -> actions.onEdit { it.copy(originalLanguage = codes) } },
+                ),
+                editorToggle(
+                    Icons.Filled.Visibility,
+                    stringResource(R.string.settings_hide_available),
+                    draft.hideAvailable,
+                    enabled,
+                    detail = stringResource(R.string.server_settings_hide_available_detail),
+                ) { on -> actions.onEdit { it.copy(hideAvailable = on) } },
+                draft.hideRequested?.let { hidden ->
+                    editorToggle(
+                        Icons.Filled.VisibilityOff,
+                        stringResource(R.string.server_settings_hide_requested),
+                        hidden,
+                        enabled,
+                        detail = stringResource(R.string.server_settings_hide_requested_detail),
+                    ) { on -> actions.onEdit { it.copy(hideRequested = on) } }
+                },
+            ),
+    )
+}
+
+@Composable
+internal fun RequestsGroup(
     draft: ServerGeneralSettings,
     enabled: Boolean,
     actions: EditorActions<ServerGeneralSettings>,
 ) {
-    EditorSection(ServerGeneralSections.APPLICATION, stringResource(R.string.server_settings_section_application)) {
-        EditorTextField(
-            draft.applicationTitle,
-            stringResource(R.string.server_settings_application_title),
-            icon = Icons.Filled.Title,
-            enabled = enabled,
-            prose = true,
-        ) { value ->
-            actions.onEdit { it.copy(applicationTitle = value) }
-        }
-        EditorTextField(
-            draft.applicationUrl,
-            stringResource(R.string.settings_application_url),
-            icon = Icons.Filled.Link,
-            enabled = enabled,
-            keyboardType = KeyboardType.Uri,
-            supporting = stringResource(R.string.server_settings_application_url_hint),
-            fieldId = ServerGeneralFields.APPLICATION_URL,
-        ) { value -> actions.onEdit { it.copy(applicationUrl = value) } }
-    }
+    ItemGroup(
+        title = stringResource(R.string.hub_section_requests),
+        rows =
+            listOfNotNull(
+                editorToggle(
+                    Icons.Filled.Layers,
+                    stringResource(R.string.server_settings_partial_requests),
+                    draft.partialRequests,
+                    enabled,
+                    detail = stringResource(R.string.server_settings_partial_requests_detail),
+                ) { on -> actions.onEdit { it.copy(partialRequests = on) } },
+                draft.specialEpisodes?.let { allowed ->
+                    editorToggle(
+                        Icons.Filled.Event,
+                        stringResource(R.string.server_settings_special_episodes),
+                        allowed,
+                        enabled,
+                        detail = stringResource(R.string.server_settings_special_episodes_detail),
+                    ) { on -> actions.onEdit { it.copy(specialEpisodes = on) } }
+                },
+            ),
+    )
 }
 
+/** What the web client badges advanced or experimental. Proxy and CSRF are here on Overseerr only; the forks moved them to Network. */
 @Composable
-private fun DiscoverFields(
+internal fun AdvancedGroup(
     draft: ServerGeneralSettings,
     enabled: Boolean,
     actions: EditorActions<ServerGeneralSettings>,
 ) {
-    EditorSection(ServerGeneralSections.DISCOVER, stringResource(R.string.user_settings_section_discover), defaultExpanded = false) {
-        EditorTextField(
-            draft.locale,
-            stringResource(R.string.settings_display_language),
-            icon = Icons.Filled.Translate,
-            enabled = enabled,
-            supporting = stringResource(R.string.server_settings_locale_hint),
-            fieldId = ServerGeneralFields.LOCALE,
-        ) { value -> actions.onEdit { it.copy(locale = value) } }
-        EditorTextField(
-            draft.discoverRegion,
-            stringResource(R.string.server_settings_discover_region),
-            icon = Icons.Filled.Public,
-            enabled = enabled,
-            supporting = stringResource(R.string.server_settings_region_hint),
-            fieldId = ServerGeneralFields.DISCOVER_REGION,
-        ) { value -> actions.onEdit { it.copy(discoverRegion = value) } }
-        draft.streamingRegion?.let { region ->
-            EditorTextField(
-                region,
-                stringResource(R.string.server_settings_streaming_region),
-                icon = Icons.Filled.LiveTv,
-                enabled = enabled,
-                supporting = stringResource(R.string.server_settings_region_hint),
-                fieldId = ServerGeneralFields.STREAMING_REGION,
-            ) { value -> actions.onEdit { it.copy(streamingRegion = value) } }
-        }
-        EditorTextField(
-            draft.originalLanguage,
-            stringResource(R.string.user_settings_original_language),
-            icon = Icons.Filled.Language,
-            enabled = enabled,
-            supporting = stringResource(R.string.server_settings_original_language_hint),
-            fieldId = ServerGeneralFields.ORIGINAL_LANGUAGE,
-            imeAction = imeActionIf(last = draft.youtubeUrl == null),
-        ) { value -> actions.onEdit { it.copy(originalLanguage = value) } }
-    }
-}
-
-/** [defaultExpanded] is off on the page; a frame of the section alone passes true to show its body. */
-@Composable
-internal fun RequestSwitches(
-    draft: ServerGeneralSettings,
-    enabled: Boolean,
-    actions: EditorActions<ServerGeneralSettings>,
-    defaultExpanded: Boolean = false,
-) {
-    EditorSection(ServerGeneralSections.REQUESTS, stringResource(R.string.settings_group_requests), defaultExpanded = defaultExpanded) {
-        listOfNotNull(
-            editorToggle(Icons.Filled.Visibility, stringResource(R.string.settings_hide_available), draft.hideAvailable, enabled) { value ->
-                actions.onEdit { it.copy(hideAvailable = value) }
-            },
-            draft.hideRequested?.let { on ->
-                editorToggle(Icons.Filled.VisibilityOff, stringResource(R.string.server_settings_hide_requested), on, enabled) { value ->
-                    actions.onEdit { it.copy(hideRequested = value) }
-                }
-            },
-            editorToggle(
-                Icons.Filled.Layers,
-                stringResource(R.string.server_settings_partial_requests),
-                draft.partialRequests,
-                enabled,
-            ) { value ->
-                actions.onEdit { it.copy(partialRequests = value) }
-            },
-            draft.specialEpisodes?.let { on ->
-                editorToggle(Icons.Filled.Event, stringResource(R.string.server_settings_special_episodes), on, enabled) { value ->
-                    actions.onEdit { it.copy(specialEpisodes = value) }
-                }
-            },
-        ).forEach { EditorToggleRow(it) }
-    }
-}
-
-/** [defaultExpanded] is off on the page; a frame of the section alone passes true to show its body. */
-@Composable
-internal fun ServerSwitches(
-    draft: ServerGeneralSettings,
-    enabled: Boolean,
-    actions: EditorActions<ServerGeneralSettings>,
-    defaultExpanded: Boolean = false,
-) {
-    EditorSection(ServerGeneralSections.SERVER, stringResource(R.string.settings_server), defaultExpanded = defaultExpanded) {
-        draft.versionCheck?.let { on ->
-            EditorToggleRow(
-                editorToggle(Icons.Filled.Update, stringResource(R.string.server_settings_version_check), on, enabled) { value ->
-                    actions.onEdit { it.copy(versionCheck = value) }
+    ItemGroup(
+        title = stringResource(R.string.server_settings_section_advanced),
+        rows =
+            listOfNotNull(
+                editorToggle(
+                    Icons.Filled.Image,
+                    stringResource(R.string.server_settings_cache_images),
+                    draft.cacheImages,
+                    enabled,
+                    detail = stringResource(R.string.server_settings_cache_images_detail),
+                ) { on -> actions.onEdit { it.copy(cacheImages = on) } },
+                draft.youtubeUrl?.let { url ->
+                    textSettingItem(
+                        icon = Icons.Filled.PlayCircle,
+                        label = stringResource(R.string.server_settings_youtube_url),
+                        value = url,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(youtubeUrl = value) } },
+                        emptyLabel = stringResource(R.string.server_settings_youtube_default),
+                        hint = stringResource(R.string.server_settings_youtube_url_hint),
+                    )
                 },
-            )
-        }
-        EditorToggleRow(
-            editorToggle(Icons.Filled.Image, stringResource(R.string.server_settings_cache_images), draft.cacheImages, enabled) { value ->
-                actions.onEdit { it.copy(cacheImages = value) }
-            },
-        )
-        draft.youtubeUrl?.let { url ->
-            EditorTextField(
-                url,
-                stringResource(R.string.server_settings_youtube_url),
-                icon = Icons.Filled.PlayCircle,
-                enabled = enabled,
-                keyboardType = KeyboardType.Uri,
-                supporting = stringResource(R.string.server_settings_youtube_url_hint),
-                imeAction = ImeAction.Done,
-            ) { value -> actions.onEdit { it.copy(youtubeUrl = value) } }
-        }
-        draft.trustProxy?.let { on ->
-            EditorToggleRow(
-                editorToggle(Icons.Filled.Shield, stringResource(R.string.server_settings_trust_proxy), on, enabled) { value ->
-                    actions.onEdit { it.copy(trustProxy = value) }
+                draft.versionCheck?.let { checking ->
+                    editorToggle(Icons.Filled.Update, stringResource(R.string.server_settings_version_check), checking, enabled) { on ->
+                        actions.onEdit { it.copy(versionCheck = on) }
+                    }
                 },
-            )
-        }
-        draft.csrfProtection?.let { on ->
-            EditorToggleRow(
-                editorToggle(Icons.Filled.Lock, stringResource(R.string.server_settings_csrf), on, enabled) { value ->
-                    actions.onEdit { it.copy(csrfProtection = value) }
+                draft.trustProxy?.let { trusted ->
+                    editorToggle(
+                        Icons.Filled.Shield,
+                        stringResource(R.string.server_settings_trust_proxy),
+                        trusted,
+                        enabled,
+                        detail = stringResource(R.string.server_settings_trust_proxy_detail),
+                    ) { on -> actions.onEdit { it.copy(trustProxy = on) } }
                 },
-            )
-        }
-    }
-}
-
-/**
- * Masked until revealed, and closed until asked for; regenerating asks first, since the old key stops
- * working at once. [defaultExpanded] is for a frame of the section alone.
- */
-@Composable
-internal fun ApiKeySection(
-    apiKey: ApiKeyState,
-    actions: ApiKeyActions,
-    defaultExpanded: Boolean = false,
-) {
-    var confirming by rememberSaveable { mutableStateOf(false) }
-    EditorSection(ServerGeneralSections.API_KEY, stringResource(R.string.server_settings_api_key), defaultExpanded = defaultExpanded) {
-        EditorTextField(
-            apiKey.key,
-            stringResource(R.string.server_settings_api_key),
-            icon = Icons.Filled.Key,
-            secret = true,
-            readOnly = true,
-            revealed = apiKey.revealed,
-            onToggleReveal = actions.onToggleReveal,
-        ) {}
-        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)), modifier = Modifier.fillMaxWidth()) {
-            BingeTextButton(
-                label = stringResource(R.string.server_settings_api_key_copy),
-                onClick = { actions.onCopy(apiKey.key) },
-                enabled = apiKey.key.isNotEmpty(),
-            )
-            BingeTextButton(
-                label = stringResource(R.string.server_settings_api_key_regenerate),
-                onClick = { confirming = true },
-                enabled = !apiKey.regenerating,
-                loading = apiKey.regenerating,
-                destructive = true,
-            )
-        }
-        if (confirming) {
-            BingeConfirmDialog(
-                title = stringResource(R.string.server_settings_api_key_regenerate_title),
-                message = stringResource(R.string.server_settings_api_key_regenerate_message),
-                confirmLabel = stringResource(R.string.server_settings_api_key_regenerate),
-                destructive = true,
-                onConfirm = {
-                    confirming = false
-                    actions.onRegenerate()
+                draft.csrfProtection?.let { protected ->
+                    editorToggle(
+                        Icons.Filled.Lock,
+                        stringResource(R.string.server_settings_csrf),
+                        protected,
+                        enabled,
+                        detail = stringResource(R.string.server_settings_csrf_detail),
+                    ) { on -> actions.onEdit { it.copy(csrfProtection = on) } }
                 },
-                onDismiss = { confirming = false },
-            )
-        }
-    }
+            ),
+    )
 }

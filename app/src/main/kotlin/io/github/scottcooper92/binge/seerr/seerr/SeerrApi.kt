@@ -76,6 +76,18 @@ interface SeerrApi {
     @GET("api/v1/status")
     suspend fun status(): SeerrStatusDto
 
+    /** The countries TMDB knows, for a discover region: the set the web client's region picker offers. */
+    @GET("api/v1/regions")
+    suspend fun regions(): List<SeerrRegionDto>
+
+    /** The countries TMDB has streaming providers for, for a streaming region (the Jellyseerr lineage). */
+    @GET("api/v1/watchproviders/regions")
+    suspend fun watchProviderRegions(): List<SeerrRegionDto>
+
+    /** The languages TMDB knows, for a discover language: the set the web client's language picker offers. */
+    @GET("api/v1/languages")
+    suspend fun languages(): List<SeerrLanguageDto>
+
     /** Unauthenticated: what the administrator turned on, as the sign-in page reads it. */
     @GET("api/v1/settings/public")
     suspend fun publicSettings(): SeerrPublicSettings

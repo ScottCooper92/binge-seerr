@@ -70,7 +70,7 @@ internal fun ServerSettingsPageEntry(
         ServerSettingsPage.DiscoverSliders -> DiscoverSlidersPage(onBack, onOpenSlider)
         ServerSettingsPage.NotificationAgents -> NotificationAgentsPage(onBack, onOpenAgent)
         ServerSettingsPage.Services -> ServicesPage(onBack, onOpenInstance, onOpenRule)
-        ServerSettingsPage.General -> GeneralPage(onBack, onOpenPage)
+        ServerSettingsPage.General -> GeneralPage(onBack)
         ServerSettingsPage.MediaServer -> MediaServerPage(onBack, onOpenPage)
         ServerSettingsPage.Tautulli -> TautulliPage(onBack)
         ServerSettingsPage.DefaultPermissions -> DefaultPermissionsPage(onBack)
@@ -221,19 +221,11 @@ private fun ServicesPage(
 
 /** The server's general settings, with the API key and the way into default permissions. */
 @Composable
-private fun GeneralPage(
-    onBack: () -> Unit,
-    onOpenPage: (ServerSettingsPage) -> Unit,
-) {
+private fun GeneralPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<ServerGeneralViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val keyLabel = stringResource(R.string.server_settings_api_key)
-    // The entry leaves composition while Default permissions is on top, so this runs again on return.
-    DisposableEffect(viewModel) {
-        viewModel.refreshDefaultPermissions()
-        onDispose { }
-    }
     ServerGeneralScreen(
         state = state,
         events = viewModel.events,
@@ -244,7 +236,7 @@ private fun GeneralPage(
                 onCopy = { key -> context.copyToClipboard(keyLabel, key, sensitive = true) },
                 onRegenerate = viewModel::regenerateApiKey,
             ),
-        onOpenDefaultPermissions = { onOpenPage(ServerSettingsPage.DefaultPermissions) },
+        onLoadList = viewModel::loadList,
     )
 }
 

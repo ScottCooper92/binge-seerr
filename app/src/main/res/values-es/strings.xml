@@ -416,10 +416,8 @@
     <string name="server_settings_general_title">Ajustes generales</string>
     <string name="server_settings_application_title">Título de la aplicación</string>
     <string name="server_settings_application_url_hint">Donde los usuarios llegan al servidor; los enlaces de las notificaciones la usan. En blanco para quitarla.</string>
-    <string name="server_settings_locale_hint">Un código de idioma como es o fr-FR; con el que empiezan los usuarios nuevos.</string>
     <string name="server_settings_discover_region">Región de Descubrir</string>
     <string name="server_settings_streaming_region">Región de streaming</string>
-    <string name="server_settings_region_hint">Un código de país como ES; en blanco para todo el mundo.</string>
     <string name="server_settings_original_language_hint">Códigos de idioma como es|fr; en blanco para cualquiera.</string>
     <string name="server_settings_hide_requested">Ocultar el contenido solicitado</string>
     <string name="server_settings_partial_requests">Permitir peticiones parciales de series</string>
@@ -430,7 +428,6 @@
     <string name="server_settings_youtube_url_hint">Donde se abren los tráileres; en blanco para youtube.com.</string>
     <string name="server_settings_trust_proxy">Confiar en las cabeceras del proxy</string>
     <string name="server_settings_csrf">Protección CSRF</string>
-    <string name="server_settings_section_users">Usuarios nuevos</string>
     <string name="server_settings_default_permissions">Permisos predeterminados</string>
     <string name="server_settings_default_permissions_lead">Con lo que empieza una cuenta nueva. Solo puedes conceder de forma predeterminada lo que tú tienes.</string>
     <string name="server_settings_api_key">Clave de API</string>
@@ -1087,4 +1084,29 @@
         <item quantity="many">%d tareas programadas y las cachés</item>
         <item quantity="other">%d tareas programadas y las cachés</item>
     </plurals>
+    <string name="settings_value_not_set">Sin definir</string>
+    <string name="editor_done">Hecho</string>
+    <string name="server_settings_section_advanced">Avanzado</string>
+    <string name="server_settings_discover_language">Idioma de descubrimiento</string>
+    <string name="server_settings_hide_available_detail">Deja fuera de Descubrir lo que ya está en tu biblioteca</string>
+    <string name="server_settings_hide_requested_detail">Deja fuera de Descubrir lo que alguien ya ha solicitado</string>
+    <string name="server_settings_partial_requests_detail">Permite solicitar algunas temporadas de una serie, no todas</string>
+    <string name="server_settings_special_episodes_detail">Permite solicitar también los especiales de una serie</string>
+    <string name="server_settings_cache_images_detail">Guarda los pósteres en el servidor; ocupa mucho disco</string>
+    <string name="server_settings_trust_proxy_detail">Actívalo si el servidor está detrás de un proxy inverso</string>
+    <string name="server_settings_csrf_detail">Deja la API en solo lectura para otros sitios; requiere HTTPS</string>
+    <string name="server_settings_youtube_default">YouTube</string>
+    <string name="server_settings_all_regions">Todas las regiones</string>
+    <string name="server_settings_all_languages">Todos los idiomas</string>
+    <string name="server_settings_region_code">Código de región</string>
+    <string name="server_settings_language_codes">Códigos de idioma</string>
+    <string name="server_settings_list_use">Usar</string>
+    <string name="server_settings_list_clear">Borrar</string>
+    <string name="server_settings_filter_languages">Filtrar idiomas</string>
+    <string name="server_settings_regions_unavailable">El servidor no ha enviado su lista de regiones. Vuelve a intentarlo o escribe un código de país de dos letras.</string>
+    <string name="server_settings_languages_unavailable">El servidor no ha enviado su lista de idiomas. Vuelve a intentarlo o escribe los códigos separados por |, como en|ja.</string>
+    <string name="server_settings_api_key_hidden">•••• %1$s</string>
+    <string name="server_settings_api_key_show">Mostrar clave</string>
+    <string name="server_settings_api_key_hide">Ocultar clave</string>
+    <string name="server_settings_api_key_regenerate_detail">La clave anterior deja de funcionar al momento</string>
 </resources>

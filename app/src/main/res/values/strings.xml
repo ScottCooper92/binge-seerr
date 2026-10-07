@@ -436,10 +436,8 @@
     <string name="server_settings_general_title">General settings</string>
     <string name="server_settings_application_title">Application title</string>
     <string name="server_settings_application_url_hint">Where users reach the server; links in notifications use it. Blank to unset.</string>
-    <string name="server_settings_locale_hint">A language code such as en or fr-FR; what new users start with.</string>
     <string name="server_settings_discover_region">Discover region</string>
     <string name="server_settings_streaming_region">Streaming region</string>
-    <string name="server_settings_region_hint">A country code such as GB; blank for everywhere.</string>
     <string name="server_settings_original_language_hint">Language codes such as en|fr; blank for any.</string>
     <string name="server_settings_hide_requested">Hide requested media</string>
     <string name="server_settings_partial_requests">Allow partial series requests</string>
@@ -450,7 +448,6 @@
     <string name="server_settings_youtube_url_hint">Where trailers open; blank for youtube.com.</string>
     <string name="server_settings_trust_proxy">Trust proxy headers</string>
     <string name="server_settings_csrf">CSRF protection</string>
-    <string name="server_settings_section_users">New users</string>
     <string name="server_settings_default_permissions">Default permissions</string>
     <string name="server_settings_default_permissions_lead">What a new account starts with. You can grant by default only what you hold.</string>
     <string name="server_settings_api_key">API key</string>
@@ -1146,4 +1143,29 @@
         <item quantity="one">%d scheduled job and the caches</item>
         <item quantity="other">%d scheduled jobs and the caches</item>
     </plurals>
+    <string name="settings_value_not_set">Not set</string>
+    <string name="editor_done">Done</string>
+    <string name="server_settings_section_advanced">Advanced</string>
+    <string name="server_settings_discover_language">Discover language</string>
+    <string name="server_settings_hide_available_detail">Leaves titles already in your library out of Discover</string>
+    <string name="server_settings_hide_requested_detail">Leaves titles someone has requested out of Discover</string>
+    <string name="server_settings_partial_requests_detail">Lets users request some seasons of a series, not all</string>
+    <string name="server_settings_special_episodes_detail">Lets a series\' specials be requested too</string>
+    <string name="server_settings_cache_images_detail">Keeps posters on the server; needs a lot of disk</string>
+    <string name="server_settings_trust_proxy_detail">Turn on if the server sits behind a reverse proxy</string>
+    <string name="server_settings_csrf_detail">Makes the API read-only to other sites; needs HTTPS</string>
+    <string name="server_settings_youtube_default">YouTube</string>
+    <string name="server_settings_all_regions">All regions</string>
+    <string name="server_settings_all_languages">All languages</string>
+    <string name="server_settings_region_code">Region code</string>
+    <string name="server_settings_language_codes">Language codes</string>
+    <string name="server_settings_list_use">Use</string>
+    <string name="server_settings_list_clear">Clear</string>
+    <string name="server_settings_filter_languages">Filter languages</string>
+    <string name="server_settings_regions_unavailable">The server didn\'t send its list of regions. Try again, or enter a two-letter country code.</string>
+    <string name="server_settings_languages_unavailable">The server didn\'t send its list of languages. Try again, or enter codes separated by |, like en|ja.</string>
+    <string name="server_settings_api_key_hidden">•••• %1$s</string>
+    <string name="server_settings_api_key_show">Show key</string>
+    <string name="server_settings_api_key_hide">Hide key</string>
+    <string name="server_settings_api_key_regenerate_detail">The old key stops working at once</string>
 </resources>

@@ -5,7 +5,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
-import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -17,16 +16,17 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * The server's general settings: the main form as an editor over `settings/main`, with the API key
- * and the default permissions loaded beside it. The server answers a write with the whole record, which
- * is what is adopted; the key lives in the extras rather than the draft because regenerating it is
- * not an edit to save.
+ * The server's general settings: the main form as an editor over `settings/main`, with the API key, the fork (for
+ * its display languages) and the server's region and language lists beside it, each list read only when its picker
+ * opens. The server answers a write with the whole record, which is what is adopted; the key lives in the extras
+ * rather than the draft because regenerating it is not an edit to save.
  */
 @HiltViewModel
 class ServerGeneralViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
+        private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
     ) : ExtrasEditorViewModel<ServerGeneralSettings, ServerGeneralExtras>(ServerGeneralExtras(), dispatcher) {
         init {
@@ -38,13 +38,14 @@ class ServerGeneralViewModel
                 val api = connection.api()
                 val profile = async { connection.profile() }
                 val main = api.mainSettings()
+                val variant = profile.await().variant
                 editExtras { current ->
                     current.copy(
                         apiKey = current.apiKey.copy(key = main.apiKey.orEmpty()),
-                        defaultPermissions = ManageablePermission.decode(main.defaultPermissions ?: 0),
+                        variant = variant,
                     )
                 }
-                main.toServerGeneral(profile.await().variant)
+                main.toServerGeneral(variant)
             }
 
         override suspend fun write(draft: ServerGeneralSettings): ServerGeneralSettings {
@@ -54,16 +55,14 @@ class ServerGeneralViewModel
 
         override fun canSave(draft: ServerGeneralSettings): Boolean = draft.valid
 
-        /**
-         * Re-reads only the default permissions, for when the page comes back from the editor that
-         * changes them. The draft is left alone: the form may hold edits that are not saved yet.
-         * A failed read keeps the tags already shown.
-         */
-        fun refreshDefaultPermissions() {
+        /** Reads [kind]'s list for its picker, once; a failed read can be asked for again. */
+        fun loadList(kind: ServerList) {
+            val held = currentExtras().lists[kind]
+            if (held is ListChoices.Ready || held == ListChoices.Loading) return
+            editExtras { it.copy(lists = it.lists + (kind to ListChoices.Loading)) }
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().mainSettings() }.onSuccess { main ->
-                    editExtras { it.copy(defaultPermissions = ManageablePermission.decode(main.defaultPermissions ?: 0)) }
-                }
+                val choices = runCatching { listCatalog.entries(kind) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed })
+                editExtras { it.copy(lists = it.lists + (kind to choices)) }
             }
         }
 

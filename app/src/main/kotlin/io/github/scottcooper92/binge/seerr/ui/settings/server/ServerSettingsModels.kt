@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
@@ -88,8 +87,10 @@ data class ApiKeyState(
 /** What the general page shows beside its form; both wait on the same load. */
 data class ServerGeneralExtras(
     val apiKey: ApiKeyState = ApiKeyState(),
-    /** What a new user starts with, off the same `settings/main` read as the form. */
-    val defaultPermissions: Set<ManageablePermission> = emptySet(),
+    /** Which fork this is, for the display languages it ships: Overseerr's are fewer than the Jellyseerr lineage's. */
+    val variant: SeerrVariant = SeerrVariant.Unknown,
+    /** The server's lists, each read only once its picker opens; absent until then. */
+    val lists: Map<ServerList, ListChoices> = emptyMap(),
 )
 
 internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): ServerGeneralSettings {
