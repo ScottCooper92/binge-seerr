@@ -69,6 +69,9 @@ class TvRequestDetailFocusTest {
     private val removed = mutableListOf<Boolean>()
     private var blocked = 0
 
+    /** What the page offers, which a successful moderation changes as the real page's reload does. */
+    private var offered by mutableStateOf(RequestActions())
+
     @Test
     fun okOnTheRowReachesThePageOnItsFirstActionAndBackReturnsFocusToTheRow() {
         setContent()
@@ -147,6 +150,93 @@ class TvRequestDetailFocusTest {
         pressOk()
 
         assertEquals(1, blocked)
+    }
+
+    /** A successful approve reloads the page without Approve; focus stays on the action row, not the root (#801). */
+    @Test
+    fun approvingRemovesApproveAndFocusStaysOnTheActionRow() {
+        setContent(afterApprove = RequestActions(canDecline = true))
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        actionButton(R.string.tv_detail_approve).assertIsFocused()
+
+        pressOk()
+        composeTestRule.waitForIdle()
+
+        actionButton(R.string.tv_detail_approve).assertDoesNotExist()
+        actionButton(R.string.tv_detail_decline).assertIsFocused()
+    }
+
+    /** A successful decline reloads the page without Approve or Decline; focus moves to what is left on the row (#801). */
+    @Test
+    fun decliningRemovesDeclineAndFocusStaysOnTheActionRow() {
+        setContent(
+            allowed = RequestActions(canApprove = true, canDecline = true, canRemove = true),
+            afterDecline = RequestActions(canRemove = true),
+        )
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        pressRight()
+        actionButton(R.string.tv_detail_decline).assertIsFocused()
+
+        pressOk()
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(false), declined)
+        actionButton(R.string.tv_detail_decline).assertDoesNotExist()
+        actionButton(R.string.tv_detail_remove).assertIsFocused()
+    }
+
+    /**
+     * A successful block reloads the page without Block, after the confirm sheet has handed focus back to it, as the
+     * real reload lands once the server answers; focus moves to what is left on the row (#801).
+     */
+    @Test
+    fun blockingRemovesBlockAndFocusStaysOnTheActionRow() {
+        setContent(RequestActions(canBlock = true, canRemove = true))
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        actionButton(R.string.tv_detail_remove).assertIsFocused()
+        pressRight()
+        actionButton(R.string.tv_detail_block).assertIsFocused()
+        pressOk()
+        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        settleFocusRestore()
+        assertEquals(1, blocked)
+        actionButton(R.string.tv_detail_block).assertIsFocused()
+
+        offered = RequestActions(canRemove = true)
+        composeTestRule.waitForIdle()
+
+        actionButton(R.string.tv_detail_block).assertDoesNotExist()
+        actionButton(R.string.tv_detail_remove).assertIsFocused()
+    }
+
+    /** A block that leaves no action behind hands focus to the synopsis rather than the root (#801). */
+    @Test
+    fun blockingTheLastActionLeavesFocusOnTheSynopsis() {
+        setContent(RequestActions(canBlock = true))
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        actionButton(R.string.tv_detail_block).assertIsFocused()
+        pressOk()
+        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        settleFocusRestore()
+        assertEquals(1, blocked)
+
+        offered = RequestActions()
+        composeTestRule.waitForIdle()
+
+        actionButton(R.string.tv_detail_block).assertDoesNotExist()
+        composeTestRule.onNode(isFocused()).assertExists()
     }
 
     /**
@@ -253,7 +343,12 @@ class TvRequestDetailFocusTest {
         composeTestRule.onNode(isFocused()).assertExists()
     }
 
-    private fun setContent(allowed: RequestActions = RequestActions(canApprove = true, canDecline = true)) {
+    private fun setContent(
+        allowed: RequestActions = RequestActions(canApprove = true, canDecline = true),
+        afterApprove: RequestActions? = null,
+        afterDecline: RequestActions? = null,
+    ) {
+        offered = allowed
         val item =
             RequestItem(
                 id = 1,
@@ -274,7 +369,7 @@ class TvRequestDetailFocusTest {
         val detail =
             RequestDetail(
                 item = item,
-                actions = allowed,
+                actions = RequestActions(),
                 canEdit = true,
                 canEditDestination = false,
                 backdropUrl = null,
@@ -333,16 +428,22 @@ class TvRequestDetailFocusTest {
                     // The overlay a real detail page would be, stacked on top exactly as the shell's overlay slot is.
                     if (openId != null) {
                         TvRequestDetailScreen(
-                            state = RequestDetailUiState.Ready(detail),
+                            state = RequestDetailUiState.Ready(detail.copy(actions = offered)),
                             events = emptyFlow(),
                             actions =
                                 TvRequestDetailActions(
                                     onBack = { openId = null },
                                     onRetry = {},
                                     onOpenInBinge = null,
-                                    onApprove = { approved += item.id },
+                                    onApprove = {
+                                        approved += item.id
+                                        afterApprove?.let { offered = it }
+                                    },
                                     onRetryRequest = {},
-                                    onDecline = { declined += it },
+                                    onDecline = {
+                                        declined += it
+                                        afterDecline?.let { next -> offered = next }
+                                    },
                                     onRemove = { removed += it },
                                     onBlock = { blocked++ },
                                 ),

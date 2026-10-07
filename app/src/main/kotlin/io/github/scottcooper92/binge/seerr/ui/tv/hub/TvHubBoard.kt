@@ -50,6 +50,7 @@ internal fun TvHubBoard(
     val allow = rememberAllowLocalNetwork { if (problem == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     if (problem == null) {
         // Loading is the same page as the rows' own, so Home's wait is one page and not a board's plate and then another.
+        // A rejected session is never a problem here: the app answers it by going to sign-in (#810).
         TvHubLoading(modifier)
         return
     }

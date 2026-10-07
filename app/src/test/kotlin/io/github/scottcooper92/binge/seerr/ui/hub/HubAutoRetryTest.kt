@@ -51,6 +51,18 @@ class HubAutoRetryTest {
             assertEquals(EXPECTED_AUTO_RETRIES, retries)
         }
 
+    /** A rejection the server contradicts leaves the hub on its loading page until something reloads it (#810). */
+    @Test
+    fun `a session flagged as rejected is re-read on the same bounded backoff`() =
+        runTest {
+            var retries = 0
+            autoRetry(MutableStateFlow(ConnectionHealth.Unauthorized)) { retries++ }
+            runCurrent()
+            advanceTimeBy(DRAIN_MS)
+            runCurrent()
+            assertEquals(EXPECTED_AUTO_RETRIES, retries)
+        }
+
     @Test
     fun `recovering, or leaving the screen, stops the loop at once`() =
         runTest {
