@@ -227,15 +227,10 @@ class SendAddressViewModel
                     return false
                 }
                 HandOffStatus.SIGN_IN -> showSignIn(status)
-                else ->
-                    if (_uiState.value.let {
-                            it is SendAddressUiState.SigningIn && it.step !is SignInStep.Waiting
-                        }
-                    ) {
-                        Unit
-                    } else {
-                        showStep(SignInStep.Waiting)
-                    }
+                // Waiting or checking: the TV is on its address step. A sheet on its sign-in step follows it back there, or a
+                // send would be refused for a step the TV has left (#804). A session that went with the address is the TV
+                // still working on that address, so it stays.
+                else -> if ((_uiState.value as? SendAddressUiState.SigningIn)?.step !is SignInStep.Session) showStep(SignInStep.Waiting)
             }
             return status.state != HandOffStatus.CONNECTED
         }

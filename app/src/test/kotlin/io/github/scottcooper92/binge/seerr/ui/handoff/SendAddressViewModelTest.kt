@@ -484,6 +484,25 @@ class SendAddressViewModelTest {
             )
         }
 
+    /** Back on the TV from its sign-in step: the form goes too, rather than send to a step the TV has left (#804). */
+    @Test
+    fun `the TV going back to its address step takes the sheet back to waiting, and its sign-in step brings the form again`() =
+        runTest {
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+            vm.send()
+            vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING))
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Waiting }
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.CHECKING), HandOffStatus(HandOffStatus.SIGN_IN, "Den", listOf("Local")))
+            val again = vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.server == "Den" }
+            assertEquals(listOf(SeerrSignInMode.Local), ((again as SendAddressUiState.SigningIn).step as SignInStep.Form).modes)
+            assertTrue(tv.sentCredentials.isEmpty())
+        }
+
     @Test
     fun `a failed left over from the last attempt is not the refusal of a retry until the TV has counted the retry`() =
         runTest {
