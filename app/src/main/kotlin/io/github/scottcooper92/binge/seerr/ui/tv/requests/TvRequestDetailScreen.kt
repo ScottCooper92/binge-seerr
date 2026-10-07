@@ -104,7 +104,7 @@ internal fun TvRequestDetailScreen(
                 }
             }
             is RequestDetailUiState.Error -> TvErrorPlate(state.error, actions.onRetry)
-            is RequestDetailUiState.Ready -> TvRequestDetailContent(detail = state.detail, events = events, actions = actions)
+            is RequestDetailUiState.Ready -> TvRequestDetailContent(detail = state.detail, events = events, given = actions)
         }
     }
 }
@@ -135,8 +135,13 @@ private fun TvErrorPlate(
 private fun TvRequestDetailContent(
     detail: RequestDetail,
     events: Flow<ModerationEvent>,
-    actions: TvRequestDetailActions,
+    given: TvRequestDetailActions,
 ) {
+    // An approve or a block that lands reloads the page without its own button, and the focus that button held would go
+    // with it to nowhere the D-pad can reach. Either one marks the row to be focused again when the page's actions change
+    // (#801).
+    var refocusRow by remember { mutableStateOf(false) }
+    val actions = remember(given) { given.markingRefocus { refocusRow = true } }
     // The two actions that cannot be undone take a confirm; the rest run at once, since a decline keeps the request.
     var confirming by rememberSaveable { mutableStateOf<DetailConfirm?>(null) }
     val event = rememberTvTransientEvent(events)
@@ -157,6 +162,12 @@ private fun TvRequestDetailContent(
             removeFocus = removeFocus,
             blockFocus = blockFocus,
         )
+    LaunchedEffect(allowed) {
+        if (refocusRow) {
+            refocusRow = false
+            if (actionList.isNotEmpty()) actionRowFocus.requestFocus()
+        }
+    }
     // Resolved here: the section builder below is not composable, so it cannot read resources itself.
     val infoCards = requestInfoCards(detail)
     Box(modifier = Modifier.fillMaxSize()) {
@@ -296,6 +307,25 @@ private fun TvDetailPageScope.requestSections(
         }
     }
 }
+
+/** These actions, with [mark] run first by the two whose success removes their own button: Approve and Block. */
+private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
+    TvRequestDetailActions(
+        onBack = onBack,
+        onRetry = onRetry,
+        onOpenInBinge = onOpenInBinge,
+        onApprove = {
+            mark()
+            onApprove()
+        },
+        onRetryRequest = onRetryRequest,
+        onDecline = onDecline,
+        onRemove = onRemove,
+        onBlock = {
+            mark()
+            onBlock()
+        },
+    )
 
 internal enum class DetailConfirm { Remove, Block }
 
