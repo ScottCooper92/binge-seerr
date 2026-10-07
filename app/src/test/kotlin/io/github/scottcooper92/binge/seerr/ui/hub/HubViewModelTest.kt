@@ -611,20 +611,40 @@ class HubViewModelTest {
             assertEquals(BingeStatus.NotConnected, vm.awaitReady { it.bingeStatus == BingeStatus.NotConnected }.bingeStatus)
         }
 
-    /** The TV's problem page and Account read the hub's health and account only, so they fetch nothing of the dashboard's (#827). */
+    /**
+     * The TV's problem page and Account read the hub's health and account only, so they fetch nothing of the dashboard's
+     * (#827): no downloads poll, no pending-count read, no install check. The dashboard's own arrival afterwards is the
+     * control, showing the same observation catches both reads when they do run.
+     */
     @Test
-    fun `a screen that draws no dashboard leaves the install check and the counts alone`() =
+    fun `a screen that draws no dashboard leaves the downloads, the pending count and the install check alone`() =
         runTest {
             healthyServer()
             val installCheck = FakeBingeInstallCheck(installed = false)
             val vm = viewModel(installCheck = installCheck)
             assertEquals(BingeStatus.NotInstalled, vm.awaitReady().bingeStatus)
+            seerr.awaitIdle()
+            fun reads(path: String) = seerr.requests.count { it.url.encodedPath == path }
+            val downloadReads = reads("/api/v1/request")
+            val countReads = reads("/api/v1/request/count")
 
             installCheck.installed = true
             vm.setScreenVisible(true, dashboard = false)
-            vm.setScreenVisible(false)
+            runCurrent()
+            seerr.awaitIdle()
 
-            assertEquals(BingeStatus.NotInstalled, vm.uiState.value.let { it as HubUiState.Ready }.bingeStatus)
+            assertEquals(downloadReads, reads("/api/v1/request"))
+            assertEquals(countReads, reads("/api/v1/request/count"))
+            val ready = vm.uiState.value as HubUiState.Ready
+            assertEquals(BingeStatus.NotInstalled, ready.bingeStatus)
+            assertTrue(ready.downloading.isEmpty())
+
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.downloading.isNotEmpty() && it.bingeStatus == BingeStatus.NotConnected }
+            seerr.awaitIdle()
+
+            assertEquals(downloadReads + 1, reads("/api/v1/request"))
+            assertEquals(countReads + 1, reads("/api/v1/request/count"))
         }
 
     private object PlainCipher : SecretCipher {
