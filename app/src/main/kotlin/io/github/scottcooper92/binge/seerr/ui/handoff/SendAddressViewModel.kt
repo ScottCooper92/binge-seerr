@@ -276,14 +276,19 @@ class SendAddressViewModel
                     .mapNotNull { name -> SeerrSignInMode.entries.firstOrNull { it.name == name } }
                     .filter { it in HandOffSignInModes }
             if (modes.isEmpty()) return showStep(SignInStep.OnTv(server))
-            val current = (_uiState.value as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form
-            showStep(
-                when {
-                    current == null -> SignInStep.Form(server, modes, SignInForm(mode = modes.first()))
-                    current.refusedBy(status) -> current.copy(isSending = false, rejected = true, awaiting = null)
-                    else -> current
-                },
-            )
+            // One update, so the form it keeps is the latest one: a send finishing on another thread is not overwritten.
+            _uiState.update { state ->
+                val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
+                val current = signingIn.step as? SignInStep.Form
+                signingIn.copy(
+                    step =
+                        when {
+                            current == null -> SignInStep.Form(server, modes, SignInForm(mode = modes.first()))
+                            current.refusedBy(status) -> current.copy(isSending = false, rejected = true, awaiting = null)
+                            else -> current
+                        },
+                )
+            }
         }
 
         /** A `failed` counts only once the TV has reached the attempt this phone sent; before that it is the last attempt's. */
