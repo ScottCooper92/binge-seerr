@@ -18,7 +18,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
@@ -140,7 +139,8 @@ internal fun TvIssuesBoard(
                         .padding(start = tvContentGutterStart(), bottom = dimensionResource(TvR.dimen.tv_overscan_vertical)),
             )
         }
-        ready?.actionItem?.let { item ->
+        // While the grid is open it renders the sheet itself, on this same ViewModel; one sheet, not two.
+        ready?.actionItem?.takeUnless { seeAllOpen }?.let { item ->
             TvIssueActionsSheet(
                 item = item,
                 onResolve = {
@@ -171,7 +171,6 @@ internal fun TvIssuesBoard(
 
 /** The filters that get a row; "All" would only repeat the others. */
 internal val IssueRowFilters = IssueFilter.entries.filter { it != IssueFilter.All }
-private val CARD_WIDTH = 120.dp
 private const val ROW_ITEM_CAP = 20
 
 /** The issues as the design system's immersive hub: a row of posters per filter over a backdrop describing the focused issue. */
@@ -191,7 +190,7 @@ private fun TvIssuesRows(
     if (perFilter.none { (_, rows) -> rows.count > 0 }) {
         TvRowsFallback(
             rows = perFilter.map { it.second },
-            emptyBody = stringResource(IssueFilter.Open.emptyMessageRes()),
+            emptyBody = stringResource(IssueFilter.All.emptyMessageRes()),
             onRetryLoad = actions.onRetryLoad,
             onReconnect = actions.onReconnect,
         )
@@ -209,7 +208,7 @@ private fun TvIssuesRows(
     TvImmersiveHub(
         rows = hubRows,
         itemId = { it.id },
-        cardWidth = CARD_WIDTH,
+        cardWidth = dimensionResource(TvR.dimen.tv_immersive_card_width),
         onItemClick = onSelect,
         seeAllLabel = stringResource(R.string.tv_see_all),
         seeAllModifier = { key -> if (key == restoreSeeAllKey) Modifier.focusRequester(restoreFocus) else Modifier },

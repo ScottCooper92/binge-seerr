@@ -978,9 +978,6 @@
     <string name="tv_hub_quota_none_left">None left</string>
     <string name="tv_download_percent">%1$d%%</string>
     <string name="tv_list_load_failed">The list could not be loaded.</string>
-    <string name="tv_list_load_more_failed">Could not load more. Press OK to retry.</string>
-    <string name="tv_list_refresh_failed">Could not refresh. Showing the last known rows. Press OK to retry.</string>
-    <string name="tv_list_loading_more">Loading more…</string>
     <string name="tv_issue_resolve">Resolve issue</string>
     <string name="tv_issue_reopen">Reopen issue</string>
     <string name="tv_issue_deleted">Issue deleted</string>

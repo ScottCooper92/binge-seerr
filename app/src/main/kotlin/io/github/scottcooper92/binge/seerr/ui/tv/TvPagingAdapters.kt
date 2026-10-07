@@ -31,7 +31,7 @@ internal fun <T : Any> LazyPagingItems<T>?.toRows(
 }
 
 /**
- * A [PagedPhase] as the boards' refresh. [TvPagedList] shows rows whenever there are any, so an idle refresh
+ * A [PagedPhase] as the boards' refresh. A board shows rows whenever there are any, so an idle refresh
  * with none is the empty plate and a loading one is the loading plate.
  */
 internal fun PagedPhase.tvRefresh(): TvLoadPhase =

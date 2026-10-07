@@ -23,6 +23,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.LocalAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.screenName
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
+import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
@@ -52,6 +53,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGrid
+import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGridManagement
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.RequestRowFilters
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
@@ -156,14 +158,21 @@ private fun TvAccountEntry(
     hubViewModel: HubViewModel,
 ) {
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
+    // The hub is `Lazily` and only auto-retries while it is visible, so this page says so, as Home and Settings do.
+    DisposableEffect(hubViewModel) {
+        hubViewModel.setScreenVisible(true)
+        onDispose { hubViewModel.setScreenVisible(false) }
+    }
     val account = (hub as? HubUiState.Ready)?.overview?.account
     if (account == null) {
+        // Still loading while the hub is, failed once it has answered without an account.
         TvAccountBoard(
             detail = null,
             requests = TvPagedRows(count = 0, at = { null }),
             onOpenRequest = {},
-            onRetry = {},
+            onRetry = hubViewModel::recheck,
             overlayOpen = false,
+            accountFailed = hub !is HubUiState.Loading,
         )
         return
     }
@@ -208,7 +217,9 @@ private fun TvHomeEntry(
     hubViewModel: HubViewModel = hiltViewModel(),
 ) {
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
-    val answering = (hub as? HubUiState.Ready)?.let { !it.health.isProblem() } == true
+    // Kept across a re-probe: Checking is neither answer, and swapping Home for it would restart the retry backoff.
+    var answering by remember { mutableStateOf(false) }
+    answering = homeAnswering(hub, answering)
     if (answering) {
         TvRequestsEntry(
             onReconnect = onReconnect,
@@ -221,6 +232,20 @@ private fun TvHomeEntry(
         TvHubEntry(onReconnect = onReconnect, viewModel = hubViewModel)
     }
 }
+
+/**
+ * Whether Home shows the requests rather than the server's problem. A re-probe's [ConnectionHealth.Checking] is not
+ * an answer, so it keeps [previous]: the problem page stays composed through it and the auto-retry's backoff is not
+ * restarted by the visibility change a swap would cause.
+ */
+internal fun homeAnswering(
+    hub: HubUiState,
+    previous: Boolean,
+): Boolean =
+    when (hub) {
+        is HubUiState.Ready -> if (hub.health == ConnectionHealth.Checking) previous else !hub.health.isProblem()
+        is HubUiState.Error, HubUiState.Loading -> false
+    }
 
 @Composable
 private fun TvHubEntry(
@@ -418,6 +443,16 @@ private fun TvIssuesGridOverlay(
         counts = ready?.counts,
         rows = lazyItems.toRows(ready?.refreshes?.get(filter)) { it.id },
         actingIds = ready?.actingIds.orEmpty(),
+        management =
+            TvIssuesGridManagement(
+                scope = ready?.scope,
+                actionItem = ready?.actionItem,
+                onOpenActions = viewModel::openActions,
+                onDismissActions = viewModel::dismissActions,
+                onResolve = viewModel::resolve,
+                onReopen = viewModel::reopen,
+                onDelete = viewModel::delete,
+            ),
         detailOpen = detailOpen,
         onOpenDetail = { onOpenIssue(it.id) },
         onRetryLoad = { lazyItems.retry() },
