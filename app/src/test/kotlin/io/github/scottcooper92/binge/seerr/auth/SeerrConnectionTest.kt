@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -234,6 +235,57 @@ class SeerrConnectionTest {
             sut.disconnect()
             assertEquals(SeerrConnectionHealth.NotConnected, sut.health.first())
         }
+
+    @Test
+    fun `a rejected session is believed once auth me agrees, and a new sign-in clears it`() =
+        runTest {
+            val sut = healthyConnection("rejected")
+            assertFalse(sut.sessionRejected.first())
+
+            server.enqueue(MockResponse(code = 401))
+            runCatching { sut.api().requests(take = 1) }
+            server.enqueue(MockResponse(code = 401))
+            assertTrue(sut.sessionRejected.first())
+
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            sut.connect(baseUrl, SeerrAuth.ApiKey("n3w")).getOrThrow()
+            assertFalse(sut.sessionRejected.first())
+        }
+
+    /** A proxy's stray 401 is not the server turning the session away: auth/me answering puts the user back (#810). */
+    @Test
+    fun `a rejection auth me contradicts is not believed`() =
+        runTest {
+            val sut = healthyConnection("stray")
+
+            server.enqueue(MockResponse(code = 401))
+            runCatching { sut.api().requests(take = 1) }
+            assertEquals(SeerrConnectionHealth.Unauthorized, sut.health.first())
+            server.enqueue(json("""{"id":1,"permissions":2}"""))
+
+            assertFalse(sut.sessionRejected.first())
+            assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())
+        }
+
+    /** A connection over a health monitor its calls report to, connected and healthy. */
+    private suspend fun TestScope.healthyConnection(name: String): SeerrConnection {
+        server.enqueue(json("""{"id":1,"permissions":2}"""))
+        server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+        val monitor = SeerrConnectionHealthMonitor()
+        val sut =
+            SeerrConnection(
+                store =
+                    CredentialStore(
+                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("$name.preferences_pb") },
+                        ReversingCipher,
+                    ),
+                apis = SeerrApiFactory(logRequests = false, health = monitor),
+                healthMonitor = monitor,
+            )
+        sut.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+        return sut
+    }
 
     @Test
     fun `a cold start over saved credentials is unchecked, not disconnected`() =

@@ -15,7 +15,8 @@ class DeepLinksTest {
         assertEquals(listOf(HomeRoute, IssuesRoute, IssueDetailRoute(3)), DeepLinks.backStackFor(DeepLinks.issue(3)))
         assertEquals(listOf(HomeRoute, UsersRoute, UserDetailRoute(9)), DeepLinks.backStackFor(DeepLinks.user(9)))
         assertEquals(listOf(HomeRoute, SettingsRoute), DeepLinks.backStackFor(DeepLinks.settings()))
-        assertEquals(listOf(HomeRoute, SettingsRoute, EditConnectionRoute), DeepLinks.backStackFor(DeepLinks.reconnect()))
+        // The home is the sign-in itself while the session stays rejected (#810).
+        assertEquals(listOf(HomeRoute), DeepLinks.backStackFor(DeepLinks.reconnect()))
     }
 
     @Test

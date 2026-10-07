@@ -20,13 +20,18 @@ import io.github.scottcooper92.binge.seerr.seerr.inspectProfile
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.readProfile
+import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
+import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
 import io.github.scottcooper92.binge.seerr.seerr.withDefaultSeerrPort
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -119,6 +124,21 @@ class SeerrConnection(
         combine(store.credentials, healthMonitor.health) { saved, reported ->
             if (saved == null) SeerrConnectionHealth.NotConnected else reported
         }.distinctUntilChanged()
+
+    /**
+     * Whether the server has rejected the saved session (#810), which moves the app off its connected screens and onto
+     * sign-in. [health] flips on any one rejected call and back on the next success, so a rejection is believed only
+     * once a fresh `auth/me` agrees: a stray 401 from a proxy does not throw a signed-in user out. An `auth/me` that
+     * cannot be read at all is no answer, so the user stays where they are.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val sessionRejected: Flow<Boolean> =
+        health
+            .map { it == SeerrConnectionHealth.Unauthorized }
+            .distinctUntilChanged()
+            .mapLatest { flagged ->
+                flagged && runCatching { refreshAuthenticatedUser() }.exceptionOrNull()?.toSeerrError()?.rejectsSession == true
+            }.distinctUntilChanged()
 
     private val userLock = Mutex()
     private var cachedUser: Pair<SeerrCredentials, SeerrUserDto>? = null

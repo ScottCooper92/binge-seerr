@@ -85,6 +85,7 @@ internal fun SetupSignInStep(
                 loading = state.isConnecting,
                 modifier = Modifier.fillMaxWidth(),
             )
+            actions.onDisconnect?.let { DisconnectButton(it) }
         }
     }
 }
@@ -253,4 +254,5 @@ internal fun SeerrSignInMode.submitLabelRes(): Int =
 internal fun SetupNotice.messageRes(): Int =
     when (this) {
         SetupNotice.ResetEmailSent -> R.string.setup_reset_email_sent
+        SetupNotice.SessionRejected -> R.string.setup_session_rejected
     }

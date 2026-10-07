@@ -33,7 +33,10 @@ object DeepLinks {
 
     fun settings(): String = link(SETTINGS)
 
-    /** Straight to the sign-in form on the saved server, for the notice that the server rejected the sign-in. */
+    /**
+     * The notice that the server rejected the sign-in. It opens the home, which is the sign-in form itself while the
+     * session stays rejected (#810), so it needs no route of its own.
+     */
     fun reconnect(): String = link(RECONNECT)
 
     /** The back stack [link] opens, hub first; null for anything that is not one of ours. */
@@ -48,7 +51,7 @@ object DeepLinks {
             segments.size == 2 && segments[0] == ISSUE && id != null -> listOf(HomeRoute, IssuesRoute, IssueDetailRoute(id))
             segments.size == 2 && segments[0] == USER && id != null -> listOf(HomeRoute, UsersRoute, UserDetailRoute(id))
             segments.size == 1 && segments[0] == SETTINGS -> listOf(HomeRoute, SettingsRoute)
-            segments.size == 1 && segments[0] == RECONNECT -> listOf(HomeRoute, SettingsRoute, EditConnectionRoute)
+            segments.size == 1 && segments[0] == RECONNECT -> listOf(HomeRoute)
             else -> null
         }
     }

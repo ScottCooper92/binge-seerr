@@ -169,15 +169,18 @@ class SetupViewModel
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
 
-        /** Settings' Edit connection: the form on the live server, prefilled and read, with that connection kept until a new one saves. */
-        fun beginEdit() {
+        /**
+         * Settings' Edit connection: the form on the live server, prefilled and read, with that connection kept until a new one
+         * saves. [notice] says why the form is up when the user didn't ask for it: a session the server rejected (#810).
+         */
+        fun beginEdit(notice: SetupNotice? = null) {
             if (draft.value.editing != null) return
             crashBreadcrumbs.log("editing server connection")
             viewModelScope.launch(dispatcher) {
                 val saved = runCatching { connection.current() }.getOrNull() ?: return@launch
                 // A connection already opted in to plain HTTP keeps its tick, or Edit would stall on it.
                 val consented = saved.baseUrl.insecurePublicHostOrNull()?.takeIf { connection.allowsCleartextTo(it) }
-                draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl, cleartextHost = consented) }
+                draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl, cleartextHost = consented, notice = notice) }
                 inspect()
             }
         }

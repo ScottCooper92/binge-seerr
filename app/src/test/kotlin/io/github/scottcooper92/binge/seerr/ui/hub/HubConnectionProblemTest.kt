@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
@@ -25,11 +26,12 @@ class HubConnectionProblemTest {
 
     private fun show(
         health: ConnectionHealth,
+        state: HubUiState = HubUiState.Error(health),
         onReconnect: () -> Unit = {},
     ) = rule.setContent {
         SeerrTheme {
             HubScreen(
-                state = HubUiState.Error(health),
+                state = state,
                 actions =
                     HubActions(
                         onOpenSection = {},
@@ -105,11 +107,22 @@ class HubConnectionProblemTest {
         rule.onNode(hasText(text(R.string.local_network_allow))).assertDoesNotExist()
     }
 
+    /** The app goes to sign-in for a rejected session (#810), so the hub offers no way out of its own meanwhile. */
     @Test
-    fun `a rejected session keeps its single sign in again action`() {
-        show(ConnectionHealth.Unauthorized)
+    fun `a rejected session offers nothing of its own while the app goes to sign-in`() {
+        show(
+            ConnectionHealth.Unauthorized,
+            state =
+                HubUiState.Ready(
+                    server = HubServer("https://seerr.test", "Seerr", SeerrVariant.Seerr, null, false, 0),
+                    health = ConnectionHealth.Unauthorized,
+                    overview = HubOverview(),
+                    downloading = emptyList(),
+                    bingeStatus = BingeStatus.NotInstalled,
+                ),
+        )
 
-        rule.onNode(hasText(text(R.string.hub_sign_in_again))).assertExists()
+        rule.onNode(hasText(text(R.string.hub_retry))).assertDoesNotExist()
         rule.onNode(hasText(text(R.string.settings_edit_connection))).assertDoesNotExist()
     }
 }

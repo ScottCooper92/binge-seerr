@@ -354,6 +354,26 @@ class SetupViewModelTest {
             assertEquals("http://seerr.example.com:8080/", vm.awaitSignIn().server.baseUrl)
         }
 
+    /** The app put the form up itself because the server rejected the session (#810), so the form says why. */
+    @Test
+    fun `a sign-in again for a rejected session lands on the saved server's sign-in, with the reason`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitAddress()
+            seerr.enqueue(json("""{"id":1,"permissions":2}"""))
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            connection.connect("http://seerr.lan:5055/", SeerrAuth.ApiKey("k3y")).getOrThrow()
+            vm.awaitConnected()
+            seerr.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+            seerr.enqueue(json("[]"))
+
+            vm.beginEdit(notice = SetupNotice.SessionRejected)
+
+            val signIn = vm.awaitSignIn()
+            assertEquals("http://seerr.lan:5055/", signIn.server.baseUrl)
+            assertEquals(SetupNotice.SessionRejected, signIn.notice)
+        }
+
     @Test
     fun `a key connect saves the connection and drops the key from the form`() =
         runTest {

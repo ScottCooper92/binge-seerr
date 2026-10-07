@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupError
+import io.github.scottcooper92.binge.seerr.ui.SetupNotice
 import io.github.scottcooper92.binge.seerr.ui.SetupServer
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
@@ -49,7 +50,8 @@ internal fun setupSignIn(
     server: SetupServer = SampleSetupServer,
     isConnecting: Boolean = false,
     error: SetupError? = null,
-) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = null, error = error, notice = null)
+    notice: SetupNotice? = null,
+) = SetupUiState.SignIn(server = server, form = form, isConnecting = isConnecting, link = null, error = error, notice = notice)
 
 internal fun advancedReady(
     isLoadingChoices: Boolean = false,

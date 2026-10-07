@@ -21,6 +21,7 @@
     <string name="setup_plex_hint">Aprobarás esta app en plex.tv desde tu navegador y después volverás aquí.</string>
     <string name="setup_quick_connect_hint">Recibirás un código para aprobarlo en cualquier app de Jellyfin en la que ya tengas la sesión iniciada.</string>
     <string name="setup_forgot_password">¿Has olvidado la contraseña?</string>
+    <string name="setup_session_rejected">El servidor rechazó el inicio de sesión guardado.</string>
     <string name="setup_reset_email_sent">Si esa dirección pertenece a una cuenta, ya va de camino un enlace para restablecerla.</string>
     <string name="setup_error_invalid_url">Eso no es una dirección de servidor.</string>
     <string name="setup_error_not_seerr">Esa dirección no respondió como un servidor Seerr.</string>
@@ -838,7 +839,6 @@
     <string name="hub_local_network_body">Android impide que esta aplicación llegue a tu servidor en tu red local. Permite el acceso a la red local y se volverá a conectar.</string>
     <string name="hub_unauthorized_headline">Hay que reconectar</string>
     <string name="hub_unauthorized_body">El servidor rechazó el inicio de sesión guardado. Inicia sesión de nuevo para continuar.</string>
-    <string name="hub_sign_in_again">Iniciar sesión de nuevo</string>
     <string name="hub_couldnt_load_headline">Todavía conectando…</string>
     <string name="hub_couldnt_load_body">El servidor respondió, pero el panel aún no se pudo cargar. Puede pasar en el primer arranque mientras la conexión se asienta. Reintentando automáticamente.</string>
     <string name="advanced_title">Pedir con opciones</string>

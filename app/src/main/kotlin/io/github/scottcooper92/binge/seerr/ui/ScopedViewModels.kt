@@ -1,4 +1,4 @@
-package io.github.scottcooper92.binge.seerr.ui.tv
+package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
@@ -20,14 +20,15 @@ import androidx.lifecycle.viewmodel.viewModelFactory
  * Gives the screens inside [content] their own view models, which last as long as [content] is shown rather than as
  * long as the activity. The TV shell wraps setup and the connected shell in one each, so disconnecting and signing in
  * again starts both afresh: without it, the hub's view models outlive the connection they were made for and hold the
- * failed state of the session that ended (#789).
+ * failed state of the session that ended (#789). The sign-in after a rejected session has one on both TV and phone,
+ * so each rejection starts its form afresh (#810).
  *
  * The store is held by a view model in the parent's store, under [key], so it outlives the composition. A
  * configuration change recreates the activity and disposes the composition without ending the scope, so it is kept
  * then and cleared only when the scope really leaves or the parent is cleared.
  */
 @Composable
-internal fun TvViewModelScope(
+internal fun ScopedViewModels(
     key: String,
     content: @Composable () -> Unit,
 ) {

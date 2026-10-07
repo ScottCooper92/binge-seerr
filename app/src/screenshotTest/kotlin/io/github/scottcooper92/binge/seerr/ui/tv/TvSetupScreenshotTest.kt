@@ -4,8 +4,10 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupError
+import io.github.scottcooper92.binge.seerr.ui.SetupNotice
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
 
@@ -102,4 +104,28 @@ class TvSetupScreenshotTest {
             state = setupSignIn(server = SampleSetupServer.copy(modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect))),
             actions = NoSetupActions,
         )
+
+    /**
+     * The server rejected the saved session (#810): the code page on the saved server, saying so, with Disconnect beside
+     * Change server for a server that is gone.
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun reconnectCode() =
+        TvSetupScreen(
+            state = setupSignIn(notice = SetupNotice.SessionRejected).copy(code = RECONNECT_CODE),
+            actions = ReconnectActions,
+            offerHandOff = true,
+        )
+
+    /** The same, typed with the remote: the reason under the fields. Disconnect stays on the code page. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun reconnectTyped() = TvSetupScreen(state = setupSignIn(notice = SetupNotice.SessionRejected), actions = ReconnectActions)
 }
+
+private val RECONNECT_CODE = AddressHandOff.Listening(url = "http://192.168.86.53:41234/a/k7m2pqx4")
+
+private val ReconnectActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {})

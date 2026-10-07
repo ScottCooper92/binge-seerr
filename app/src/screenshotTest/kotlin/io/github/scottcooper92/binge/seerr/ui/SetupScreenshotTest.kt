@@ -127,6 +127,16 @@ class SetupScreenshotTest {
             actions = NoSetupActions,
         )
 
+    /** The server rejected the saved session (#810): the reason under the fields, and a way to leave the server. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun reconnect() =
+        SetupScreen(
+            state = previewSignIn(notice = SetupNotice.SessionRejected),
+            actions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {}),
+        )
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
