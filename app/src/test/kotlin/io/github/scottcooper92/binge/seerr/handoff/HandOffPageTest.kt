@@ -52,7 +52,10 @@ class HandOffPageTest {
         assertTrue(html.contains("name=\"address\""))
         assertTrue(html.contains("href=\"intent://tv-handoff?to=1.2.3.4:5&amp;token=t#Intent;end\""))
         assertTrue(html.contains("Open &quot;app&quot;"))
-        assertFalse(html.contains("<script"))
+        // One script, the link rewrite, and nothing else that runs.
+        assertEquals(1, Regex("<script").findAll(html).count())
+        assertTrue(html.contains("<script>$LINK_SCRIPT</script>"))
+        assertTrue(html.contains("id=\"app\""))
         assertFalse(html.contains("Invalid"))
     }
 
@@ -63,6 +66,40 @@ class HandOffPageTest {
         assertTrue(sent.contains("<html lang=\"en\">"))
         assertTrue(sent.contains("Sent body"))
         assertFalse(sent.contains("<form"))
+    }
+
+    @Test
+    fun `the page's one script is the one its content-security-policy allows, and no other page carries a script`() {
+        val digest =
+            java.security.MessageDigest
+                .getInstance("SHA-256")
+                .digest(LINK_SCRIPT.toByteArray())
+        assertEquals(
+            "sha256-" +
+                java.util.Base64
+                    .getEncoder()
+                    .encodeToString(digest),
+            LINK_SCRIPT_HASH,
+        )
+
+        val headers = HandOffResponse(HttpStatus.Ok, "<p>").bytes().decodeToString()
+        assertTrue(headers.contains("script-src '$LINK_SCRIPT_HASH'"))
+        assertTrue(headers.contains("default-src 'none'"))
+
+        listOf(
+            HandOffProgress.Checking,
+            HandOffProgress.SignIn("Home"),
+            HandOffProgress.Connected,
+        ).forEach { assertFalse(page.status("en", it).contains("<script")) }
+    }
+
+    @Test
+    fun `the script only moves a well-formed key into the app link, and reads it from the fragment`() {
+        assertTrue(LINK_SCRIPT.contains("location.hash"))
+        assertTrue(LINK_SCRIPT.contains("{43}"))
+        assertFalse(LINK_SCRIPT.contains("fetch"))
+        assertFalse(LINK_SCRIPT.contains("XMLHttpRequest"))
+        assertFalse(LINK_SCRIPT.contains("document.cookie"))
     }
 
     @Test

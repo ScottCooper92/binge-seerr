@@ -1,5 +1,7 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import java.security.MessageDigest
+import java.util.Base64
 import java.util.Locale
 
 /**
@@ -7,6 +9,19 @@ import java.util.Locale
  * else gets the first.
  */
 internal val HAND_OFF_PAGE_LANGUAGES = listOf("en", "es")
+
+/**
+ * The one script on the page: when the code was scanned, its URL carries the key that seals credentials in a
+ * fragment, which the browser keeps to itself. This copies it into the app link, so it reaches the app without
+ * ever being sent to the TV or seen on the LAN. With no fragment it does nothing, and the link works as before.
+ */
+internal const val LINK_SCRIPT =
+    "(function(){var m=/^#k=([A-Za-z0-9_-]{43})\$/.exec(location.hash),a=document.getElementById(\"app\");" +
+        "if(m&&a){a.setAttribute(\"href\",a.getAttribute(\"href\").replace(\"#Intent;\",\"&k=\"+m[1]+\"#Intent;\"))}})()"
+
+/** [LINK_SCRIPT]'s content-security-policy source: the page may run this script and no other. */
+internal val LINK_SCRIPT_HASH: String =
+    "sha256-" + Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(LINK_SCRIPT.toByteArray(Charsets.UTF_8)))
 
 /** The release app's Play listing — the build a phone should get, whichever build the TV runs. */
 internal const val HAND_OFF_STORE_URL = "https://play.google.com/store/apps/details?id=io.github.scottcooper92.binge.seerr"
@@ -109,7 +124,8 @@ internal class HandOffPageTemplate(
             </form>
             <hr>
             <p>${copy.appBody.escapeHtml()}</p>
-            <a class="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
+            <a class="app" id="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
+            <script>$LINK_SCRIPT</script>
             <p class="note">${installLine(copy)}</p>
             """.trimIndent(),
         )

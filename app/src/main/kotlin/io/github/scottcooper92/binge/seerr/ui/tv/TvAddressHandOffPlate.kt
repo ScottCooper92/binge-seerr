@@ -75,7 +75,7 @@ internal fun TvHandOffLifecycle(onCancel: () -> Unit) {
 @Composable
 internal fun ColumnScope.TvHandOffContent(handOff: AddressHandOff) {
     when (handOff) {
-        is AddressHandOff.Listening -> TvHandOffCodeCard(handOff.url, Modifier.weight(1f))
+        is AddressHandOff.Listening -> TvHandOffCodeCard(url = handOff.url, scanUrl = handOff.scanUrl, modifier = Modifier.weight(1f))
         is AddressHandOff.Unavailable -> TvFormNote(stringResource(handOff.reason.messageRes()), tone = TvFormNoteTone.Error)
     }
 }
@@ -105,6 +105,7 @@ internal fun TvHandOffTypeInstead(
 @Composable
 private fun TvHandOffCodeCard(
     url: String,
+    scanUrl: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -120,7 +121,7 @@ private fun TvHandOffCodeCard(
     ) {
         // Square, so the code is as big as the shorter of what the card's height and width leave it.
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            TvQrCode(url, minOf(maxWidth, maxHeight) * QR_FILL)
+            TvQrCode(scanUrl, minOf(maxWidth, maxHeight) * QR_FILL)
         }
         Text(
             text = url,

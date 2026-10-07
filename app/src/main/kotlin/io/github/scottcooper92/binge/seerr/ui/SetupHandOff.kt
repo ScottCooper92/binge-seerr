@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffSession
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
+import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffOpening
 import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
 import kotlinx.coroutines.CompletableDeferred
@@ -50,6 +51,7 @@ internal class SetupHandOff(
     private val handOffs: AddressHandOffs,
     private val onState: (AddressHandOff?) -> Unit,
     private val onAddress: (String) -> Unit,
+    private val onCredentials: (HandOffCredentials) -> Unit,
     private val progress: () -> HandOffProgress,
     private val timeout: Duration = HAND_OFF_TIMEOUT,
     private val signInTimeout: Duration = HAND_OFF_SIGN_IN_TIMEOUT,
@@ -90,7 +92,7 @@ internal class SetupHandOff(
             // open() is not cancellable: a cancel() that ran meanwhile must not bring the plate back.
             currentCoroutineContext().ensureActive()
             session = listening
-            onState(AddressHandOff.Listening(listening.url))
+            onState(AddressHandOff.Listening(listening.url, listening.scanUrl))
             lapsed = serveUntilDone(listening)
         } catch (_: IOException) {
             // Closing the socket is how cancel() stops a listener mid-accept; that is not a failure to show.
@@ -108,10 +110,14 @@ internal class SetupHandOff(
             val arrived = CompletableDeferred<Unit>()
             val serving =
                 launch {
-                    listening.serve(progress) { address ->
-                        if (arrived.complete(Unit)) onState(null)
-                        onAddress(address)
-                    }
+                    listening.serve(
+                        progress = progress,
+                        onAddress = { address ->
+                            if (arrived.complete(Unit)) onState(null)
+                            onAddress(address)
+                        },
+                        onCredentials = onCredentials,
+                    )
                 }
             val lapsed = withTimeoutOrNull(timeout) { arrived.await() } == null
             if (!lapsed) followSignIn()

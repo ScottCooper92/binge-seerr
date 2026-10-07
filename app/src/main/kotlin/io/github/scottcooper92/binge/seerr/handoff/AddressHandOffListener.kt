@@ -5,6 +5,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
@@ -15,19 +18,24 @@ import java.util.concurrent.TimeUnit
 
 /** One open hand-off on the television: the URL its code carries, and the wait for an address. */
 interface AddressHandOffSession {
-    /** `http://<lan-ip>:<port>/a/<token>`, the URL the QR code holds. */
+    /** `http://<lan-ip>:<port>/a/<token>`, the URL a phone's browser opens and the plate spells out for typing. */
     val url: String
+
+    /** What the QR code holds: [url] and, in its fragment, the key a phone seals credentials with. */
+    val scanUrl: String
 
     /**
      * Serves the page until cancelled or closed. [progress] is read on every request, so the page follows the
      * TV; [onAddress] gets each acceptable address a phone posts while [progress] still accepts one, which
-     * is the first, and any sent again after a server that could not be reached. Cancellable: the listener
+     * is the first, and any sent again after a server that could not be reached. [onCredentials] gets sign-in
+     * credentials a phone app sealed with the key in the code, while the TV is on its sign-in step. Cancellable: the listener
      * stops within [ACCEPT_POLL_MILLIS] of being cancelled, or once the connection it is answering at the
      * time has finished.
      */
     suspend fun serve(
         progress: () -> HandOffProgress,
         onAddress: (String) -> Unit,
+        onCredentials: (HandOffCredentials) -> Unit,
     )
 
     /** Stops listening. Safe to call more than once and from any thread. */
@@ -44,7 +52,8 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
  * The television's side of the hand-off (#323): a tiny HTTP/1.1 listener on the TV's own LAN
  * address that answers exactly one path and accepts an address only while the TV is waiting for one.
  *
- * - **One-time token.** It answers only `/a/<token>`, where the token is about 40 random bits, short
+ * - **One-time token.** It answers only `/a/<token>` (the page and the address), `/s/<token>` (the TV's status as JSON) and
+ *   `/c/<token>` (sealed credentials), where the token is about 40 random bits, short
  *   enough to type, minted for this listener and shown only in the code on screen. That is enough
  *   because the listener is LAN-only, serves one connection at a time, takes an address only while
  *   the TV is waiting for one, and is bounded in time: before an address arrives its port and token are
@@ -70,15 +79,22 @@ internal class AddressHandOffListener(
     private val token: String,
     override val url: String,
     private val page: HandOffPage,
+    /** Seals credentials for this TV; null where a test, or a listener meant for addresses alone, has none. */
+    private val key: HandOffKey? = null,
     private val isAcceptable: (String) -> Boolean = String::isValidBaseUrl,
     private val limits: HandOffLimits = HandOffLimits(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : AddressHandOffSession {
     private val path = "/a/$token".toByteArray(StandardCharsets.UTF_8)
+    private val statusPath = "/s/$token".toByteArray(StandardCharsets.UTF_8)
+    private val credentialsPath = "/c/$token".toByteArray(StandardCharsets.UTF_8)
+
+    override val scanUrl: String get() = key?.let { "$url#k=${it.encoded()}" } ?: url
 
     override suspend fun serve(
         progress: () -> HandOffProgress,
         onAddress: (String) -> Unit,
+        onCredentials: (HandOffCredentials) -> Unit,
     ) {
         withContext(dispatcher) {
             server.soTimeout = ACCEPT_POLL_MILLIS
@@ -90,7 +106,11 @@ internal class AddressHandOffListener(
                     } catch (_: SocketTimeoutException) {
                         null
                     }
-                client?.use { serve(it, progress) }?.let(onAddress)
+                when (val accepted = client?.use { serve(it, progress) }) {
+                    is HandOffAccepted.Address -> onAddress(accepted.address)
+                    is HandOffAccepted.Credentials -> onCredentials(accepted.credentials)
+                    null -> Unit
+                }
             }
         }
     }
@@ -101,7 +121,7 @@ internal class AddressHandOffListener(
     private fun serve(
         client: Socket,
         progress: () -> HandOffProgress,
-    ): String? {
+    ): HandOffAccepted? {
         client.soTimeout = limits.readTimeoutMillis
         val outcome =
             try {
@@ -152,33 +172,73 @@ internal class AddressHandOffListener(
         }
     }
 
-    /** The answer to one parsed request, and the address it accepted, if any. */
+    /** The answer to one parsed request, and what it handed the TV, if anything. */
     internal fun respond(
         request: HandOffRequest,
         progress: HandOffProgress = HandOffProgress.Waiting,
-    ): Pair<HandOffResponse, String?> {
+    ): Pair<HandOffResponse, HandOffAccepted?> {
         val target = request.target.substringBefore('?').toByteArray(StandardCharsets.UTF_8)
-        if (!MessageDigest.isEqual(target, path)) return HandOffResponse(HttpStatus.NotFound, page.refused()) to null
         val language = request.header("accept-language")
-        return when (request.method) {
+        return when {
+            MessageDigest.isEqual(target, path) -> respondToPage(request, progress, language)
+            MessageDigest.isEqual(target, statusPath) && request.method == "GET" ->
+                HandOffResponse(HttpStatus.Ok, STATUS_JSON.encodeToString(progress.toStatus()), JSON_TYPE) to null
+            MessageDigest.isEqual(target, credentialsPath) && request.method == "POST" -> receiveCredentials(request, progress)
+            else -> HandOffResponse(HttpStatus.NotFound, page.refused()) to null
+        }
+    }
+
+    private fun respondToPage(
+        request: HandOffRequest,
+        progress: HandOffProgress,
+        language: String?,
+    ): Pair<HandOffResponse, HandOffAccepted?> =
+        when (request.method) {
             "GET" -> HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
             "POST" -> post(request, progress, language)
             else -> HandOffResponse(HttpStatus.NotFound, page.refused()) to null
         }
-    }
 
     /** An address is read only while the TV is waiting for one; otherwise a post is answered with where things stand. */
     private fun post(
         request: HandOffRequest,
         progress: HandOffProgress,
         language: String?,
-    ): Pair<HandOffResponse, String?> {
+    ): Pair<HandOffResponse, HandOffAccepted?> {
         if (!progress.acceptsAddress) return HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
         val address = request.body.formFields()["address"]?.trim()
         return if (address != null && address.isNotEmpty() && isAcceptable(address)) {
-            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking)) to address
+            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking)) to HandOffAccepted.Address(address)
         } else {
             HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true)) to null
         }
+    }
+
+    /**
+     * Credentials a phone app sealed with the key in the code. Read only while the TV is on its sign-in step, and
+     * only if they open under this listener's key for this token; anything else is refused without saying which
+     * part was wrong. Nothing here is ever logged or echoed.
+     */
+    private fun receiveCredentials(
+        request: HandOffRequest,
+        progress: HandOffProgress,
+    ): Pair<HandOffResponse, HandOffAccepted?> {
+        if (progress !is HandOffProgress.SignIn) return HandOffResponse(HttpStatus.Conflict, REFUSED_JSON, JSON_TYPE) to null
+        val credentials =
+            request.body
+                .formFields()["sealed"]
+                ?.let { key?.open(it, token) }
+                ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
+                ?.takeIf { it.mode in progress.modes }
+                ?: return HandOffResponse(HttpStatus.BadRequest, REFUSED_JSON, JSON_TYPE) to null
+        // The number the TV will count these as, so the phone knows which attempt a later `failed` is about.
+        val taken = STATUS_JSON.encodeToString(HandOffTaken(attempt = progress.attempt + 1))
+        return HandOffResponse(HttpStatus.Ok, taken, JSON_TYPE) to HandOffAccepted.Credentials(credentials)
+    }
+
+    private companion object {
+        const val JSON_TYPE = "application/json; charset=utf-8"
+        const val REFUSED_JSON = "{\"ok\":false}"
+        val STATUS_JSON = Json { ignoreUnknownKeys = true }
     }
 }

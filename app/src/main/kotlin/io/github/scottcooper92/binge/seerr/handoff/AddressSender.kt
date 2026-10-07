@@ -36,20 +36,7 @@ internal class OkHttpAddressSender(
     private val warn: (String) -> Unit = {},
 ) : AddressSender {
     @Inject
-    constructor() : this(
-        OkHttpClient
-            .Builder()
-            .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .followRedirects(false)
-            .followSslRedirects(false)
-            // Never replay the POST. A silent retry after a slow or dropped first
-            // response would post the address twice, and could report a failure for a send that worked.
-            .retryOnConnectionFailure(false)
-            .build(),
-        warn = logWarning(TAG),
-    )
+    constructor() : this(handOffHttpClient(), warn = logWarning(TAG))
 
     override suspend fun send(
         target: TvHandOffTarget,
@@ -76,8 +63,24 @@ internal class OkHttpAddressSender(
     private companion object {
         const val TAG = "AddressSender"
 
-        // Long enough for a phone whose LAN traffic goes through a VPN to hear back.
-        const val TIMEOUT_SECONDS = 15L
         const val HTTP_OK = 200
     }
 }
+
+private const val CLIENT_TIMEOUT_SECONDS = 15L
+
+/**
+ * The client both phone-side calls use: no redirects, because the TV never sends one and following one could carry a
+ * request off the LAN, and no silent retries, because a replayed POST reaches a listener that has already moved on
+ * and reports a failure for something that worked. Long timeouts, for a phone whose LAN traffic goes through a VPN.
+ */
+internal fun handOffHttpClient(): OkHttpClient =
+    OkHttpClient
+        .Builder()
+        .connectTimeout(CLIENT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(CLIENT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .writeTimeout(CLIENT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .followRedirects(false)
+        .followSslRedirects(false)
+        .retryOnConnectionFailure(false)
+        .build()

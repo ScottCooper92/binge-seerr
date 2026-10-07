@@ -964,6 +964,13 @@
     <string name="send_address_sending">Sending…</string>
     <string name="send_address_failed">The TV didn\'t take the address. Check that it still shows the code and that both are on the same Wi-Fi, then try again.</string>
     <string name="send_address_sent">Sent. The TV at %1$s has the address and is checking the server. Carry on there.</string>
+    <string name="send_signin_waiting">The TV at %1$s has the address and is checking the server…</string>
+    <string name="send_signin_form">The TV found %1$s. Sign in here, and the TV is signed in too.</string>
+    <string name="send_signin_sealed">What you type here is sealed so only that TV can read it, then sent over your Wi-Fi. It is not kept on this phone.</string>
+    <string name="send_signin_rejected">The server didn\'t accept those details. Check them and try again.</string>
+    <string name="send_signin_on_tv">The TV found %1$s. Finish signing in with the TV\'s remote.</string>
+    <string name="send_signin_connected">Signed in. The TV at %1$s is ready.</string>
+    <string name="send_signin_lost">The TV stopped answering. Check that it is on and still showing the code, then scan it again.</string>
     <string name="send_address_not_connected">This phone isn\'t connected to a server, so there\'s no address to send. Type the address on the page the code opened instead.</string>
     <string name="send_address_refused">This link doesn\'t point to a TV on your home network, so nothing was sent.</string>
     <string name="send_address_done">Done</string>

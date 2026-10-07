@@ -15,7 +15,9 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
+import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
+import io.github.scottcooper92.binge.seerr.handoff.HandOffSignInModes
 import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
@@ -99,7 +101,25 @@ class SetupViewModel
                     draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
                     inspect()
                 },
-                progress = { uiState.value.toHandOffProgress(draft.value.received) },
+                // Credentials a phone app sealed for this TV, already opened by the listener. They go into the form and
+                // through connect() exactly as if typed, so a refusal or a failure reads the same on both screens. Taken
+                // only on the sign-in step, for a mode that has fields to fill, and never while another attempt runs.
+                onCredentials = { credentials ->
+                    val current = draft.value
+                    val form = current.server?.takeIf { !current.busy }?.let { credentials.toSignInForm(it.modes) }
+                    if (form != null) {
+                        draft.update { it.copy(form = form, error = null, attempts = it.attempts + 1) }
+                        connect()
+                    } else {
+                        // Counted all the same: the phone was told 200, and waits for the TV to reach this number.
+                        draft.update { it.copy(attempts = it.attempts + 1) }
+                    }
+                },
+                // One read of the draft, so `failed` and the attempt it is about never come from different moments.
+                progress = {
+                    val snapshot = draft.value
+                    uiState.value.toHandOffProgress(snapshot.received, snapshot.error != null, snapshot.attempts)
+                },
             )
 
         init {
@@ -355,6 +375,8 @@ class SetupViewModel
             val handOff: AddressHandOff? = null,
             /** Whether [serverUrl] is the address a phone sent, untouched since. */
             val received: Boolean = false,
+            /** How many sets of credentials a phone has sent this TV, taken or not; the phone's way to tell which attempt an error is about. */
+            val attempts: Int = 0,
             /** Bumped when the local-network permission may have changed, so the state is built again from the live answer. */
             val permissionReads: Int = 0,
         )
@@ -364,17 +386,34 @@ class SetupViewModel
         }
     }
 
+/** [this] as a form for one of the server's [offered] modes that has fields to fill; null for any other, or one that is not a mode. */
+private fun HandOffCredentials.toSignInForm(offered: List<SeerrSignInMode>): SignInForm? {
+    val mode =
+        runCatching { SeerrSignInMode.valueOf(mode) }.getOrNull()?.takeIf { it in offered && it in HandOffSignInModes } ?: return null
+    return SignInForm(mode = mode, apiKey = apiKey, username = username, email = email, password = password)
+}
+
 /** Where the phone's page should say the TV has got to. [received] is whether the address came from a phone. */
-private fun SetupUiState.toHandOffProgress(received: Boolean): HandOffProgress =
+private fun SetupUiState.toHandOffProgress(
+    received: Boolean,
+    failed: Boolean,
+    attempts: Int,
+): HandOffProgress =
     when (this) {
         SetupUiState.Loading -> HandOffProgress.Checking
         is SetupUiState.Address ->
             when {
                 isInspecting -> HandOffProgress.Checking
-                received && error != null -> HandOffProgress.Failed
+                received && failed -> HandOffProgress.Failed
                 else -> HandOffProgress.Waiting
             }
-        is SetupUiState.SignIn -> HandOffProgress.SignIn(server.title)
+        is SetupUiState.SignIn ->
+            HandOffProgress.SignIn(
+                server = server.title,
+                modes = server.modes.filter { it in HandOffSignInModes }.map { it.name },
+                failed = failed,
+                attempt = attempts,
+            )
         is SetupUiState.Connected -> HandOffProgress.Connected
     }
 

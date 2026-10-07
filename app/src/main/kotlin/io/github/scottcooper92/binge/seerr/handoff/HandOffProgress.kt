@@ -14,9 +14,16 @@ sealed interface HandOffProgress {
     /** The address sent was no Seerr server the TV could reach; the page offers the form again. */
     data object Failed : HandOffProgress
 
-    /** The server answered and the TV is on its sign-in step, named [server]. */
+    /**
+     * The server answered and the TV is on its sign-in step, named [server], offering [modes] by name. [failed] is
+     * whether the last attempt was refused, and [attempt] is how many sets of credentials the TV has taken, so a phone
+     * can tell which attempt [failed] is about.
+     */
     data class SignIn(
         val server: String,
+        val modes: List<String> = emptyList(),
+        val failed: Boolean = false,
+        val attempt: Int = 0,
     ) : HandOffProgress
 
     /** Signed in: nothing left to do on the phone. */
