@@ -5,11 +5,19 @@ import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.scene.Scene
+import androidx.navigation3.scene.SceneStrategy
+import androidx.navigation3.scene.SceneStrategyScope
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.binge.designsystem.PaneBackNavigationBehavior
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 
@@ -34,14 +42,56 @@ internal val DefaultSection: HubSection = HubSection.Requests
  * [PaneBackNavigationBehavior] (design-system, shared with Binge): the library's own default pops
  * until the layout changes, and with the hub at the root of the stack there is no earlier layout to
  * change to, so Back beside the hub would pass every stacked screen and leave the app.
+ *
+ * [backStack] is read for the one case the library can't see: [DefaultSection] opened beside the hub, where
+ * popping it would land on its own placeholder and look like Back did nothing (#815).
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-internal fun rememberSeerrPaneStrategy(directive: PaneScaffoldDirective): ListDetailSceneStrategy<NavKey> =
-    rememberListDetailSceneStrategy(
-        backNavigationBehavior = PaneBackNavigationBehavior,
-        directive = directive.copy(defaultPanePreferredWidth = equalPaneWidth(directive)),
-    )
+internal fun rememberSeerrPaneStrategy(
+    directive: PaneScaffoldDirective,
+    backStack: List<NavKey>,
+): SceneStrategy<NavKey> {
+    val listDetail =
+        rememberListDetailSceneStrategy<NavKey>(
+            backNavigationBehavior = PaneBackNavigationBehavior,
+            directive = directive.copy(defaultPanePreferredWidth = equalPaneWidth(directive)),
+        )
+    return remember(listDetail, backStack) { SeerrPaneStrategy(listDetail, backStack) }
+}
+
+/**
+ * [listDetail]'s scenes, except that one showing the hub beside the default section that was opened on purpose
+ * claims no Back. The system takes it and leaves the app, as it does from the placeholder, which looks the same.
+ * Every scene is wrapped, so a scene's type never changes with the stack and the panes don't animate as if it had.
+ */
+private class SeerrPaneStrategy(
+    private val listDetail: SceneStrategy<NavKey>,
+    private val backStack: List<NavKey>,
+) : SceneStrategy<NavKey> {
+    override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
+        val scene = with(listDetail) { calculateScene(entries) } ?: return null
+        // toList(): a NavBackStack is a list by delegation, without a list's equality.
+        val defaultBesideHub = scene.entries.size > 1 && backStack.toList() == listOf(HubRoute, DefaultSection.route())
+        return SeerrPaneScene(scene, claimsBack = !defaultBesideHub)
+    }
+}
+
+/**
+ * Not claiming Back takes two things: NavDisplay claims it while a scene has [previousEntries], and the list-detail
+ * scene registers a handler of its own in its content, so that content runs under a dispatcher that is switched off.
+ */
+private class SeerrPaneScene(
+    scene: Scene<NavKey>,
+    claimsBack: Boolean,
+) : Scene<NavKey> by scene {
+    override val previousEntries: List<NavEntry<NavKey>> = if (claimsBack) scene.previousEntries else emptyList()
+
+    override val content: @Composable () -> Unit = {
+        val owner = rememberNavigationEventDispatcherOwner(enabled = claimsBack)
+        CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides owner) { scene.content() }
+    }
+}
 
 /** Half the window less half the gap between the panes, so the gap sits at the window's centre. */
 @Composable
@@ -82,16 +132,21 @@ internal fun NavKey.hubSection(): HubSection? =
  * everything it stacked above itself, so Back from the new section returns to the hub rather than
  * walking every screen visited on the way here.
  *
- * [defaultShowing] is true when the detail pane is beside the hub, where [DefaultSection] shows
- * whenever nothing is open. Opening that section then clears the pane back to it, rather than
- * pushing a second copy of what is already on screen.
+ * The section is pushed even when it is [DefaultSection] already showing as the placeholder beside the hub, so the
+ * stack records what the user chose and a narrower window keeps showing it (#815).
  */
-internal fun NavBackStack<NavKey>.openSection(
-    section: HubSection,
-    defaultShowing: Boolean,
-) {
+internal fun NavBackStack<NavKey>.openSection(section: HubSection) {
     while (size > 1) removeLastOrNull()
-    if (!(defaultShowing && section == DefaultSection)) add(section.route())
+    add(section.route())
+}
+
+/**
+ * Opens [route] from the [DefaultSection] standing in as the placeholder beside the hub. The section goes on the stack
+ * beneath it first, so Back, and a narrower window, return to the list it was opened from rather than to the hub (#815).
+ */
+internal fun NavBackStack<NavKey>.openAboveDefault(route: NavKey) {
+    if (lastOrNull() == HubRoute) add(DefaultSection.route())
+    add(route)
 }
 
 /**

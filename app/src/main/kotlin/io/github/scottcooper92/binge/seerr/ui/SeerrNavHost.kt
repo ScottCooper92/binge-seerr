@@ -56,7 +56,7 @@ fun SeerrNavHost(
         backStack = backStack,
         modifier = modifier,
         onBack = { backStack.removeLastOrNull() },
-        sceneStrategies = listOf(rememberSeerrPaneStrategy(directive)),
+        sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack)),
         entryDecorators =
             listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
@@ -97,11 +97,14 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     }
     // The placeholder is the default section itself, so a wide window never shows an empty pane. It
     // is not an entry on the stack, which is what lets Back from it leave the app, and a narrow window
-    // show the hub alone. A placeholder gets no entry scope, so its ViewModel belongs to the host.
+    // show the hub alone. What it opens puts the section on the stack first (openAboveDefault). A
+    // placeholder gets no entry scope, so its ViewModel belongs to the host.
     entry<HubRoute>(
         metadata =
             ListDetailSceneStrategy.listPane(
-                detailPlaceholder = { PaneContent { SectionContent(DefaultSection, backStack, showBack = false) } },
+                detailPlaceholder = {
+                    PaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
+                },
             ),
     ) {
         PaneContent {
@@ -109,7 +112,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
             if (connected() == true) {
                 HubEntry(
                     selectedSection = backStack.selectedSection(defaultShowing = hubBeside()),
-                    onOpenSection = { section -> backStack.openSection(section, defaultShowing = hubBeside()) },
+                    onOpenSection = { section -> backStack.openSection(section) },
                     onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
                     onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
                     onReconnect = { backStack.add(EditConnectionRoute) },
@@ -139,12 +142,16 @@ private fun EntryProviderScope<NavKey>.sectionEntries(
     }
 }
 
-/** One section's screen, whether it is on the stack or standing in as the default beside the hub. */
+/**
+ * One section's screen, whether it is on the stack or standing in as the default beside the hub. [open] pushes what
+ * its rows open.
+ */
 @Composable
 private fun SectionContent(
     section: HubSection,
     backStack: NavBackStack<NavKey>,
     showBack: Boolean,
+    open: (NavKey) -> Unit = backStack::add,
 ) {
     val onBack: () -> Unit = { backStack.removeLastOrNull() }
     when (section) {
@@ -152,19 +159,19 @@ private fun SectionContent(
             RequestsEntry(
                 onBack = onBack,
                 showBack = showBack,
-                onOpen = { id -> backStack.add(RequestDetailRoute(id)) },
-                onOpenUser = { id -> backStack.add(UserDetailRoute(id)) },
+                onOpen = { id -> open(RequestDetailRoute(id)) },
+                onOpenUser = { id -> open(UserDetailRoute(id)) },
             )
         HubSection.Issues ->
-            IssuesEntry(onBack = onBack, showBack = showBack, onOpen = { id -> backStack.add(IssueDetailRoute(id)) })
+            IssuesEntry(onBack = onBack, showBack = showBack, onOpen = { id -> open(IssueDetailRoute(id)) })
         HubSection.Blocklist ->
             BlocklistEntry(
                 onBack = onBack,
                 showBack = showBack,
-                onOpen = { item, canManage -> backStack.add(BlocklistDetailRoute(item, canManage)) },
+                onOpen = { item, canManage -> open(BlocklistDetailRoute(item, canManage)) },
             )
         HubSection.Users ->
-            UsersEntry(onBack = onBack, showBack = showBack, onOpen = { id -> backStack.add(UserDetailRoute(id)) })
+            UsersEntry(onBack = onBack, showBack = showBack, onOpen = { id -> open(UserDetailRoute(id)) })
         HubSection.Settings -> SettingsEntry(backStack, showBack = showBack)
     }
 }
