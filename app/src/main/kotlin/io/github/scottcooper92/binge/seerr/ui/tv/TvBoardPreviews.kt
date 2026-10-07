@@ -38,7 +38,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.ServerConfig
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SignInKind
-import io.github.scottcooper92.binge.seerr.ui.tv.hub.TILE_PENDING
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubActions
 import io.github.scottcooper92.binge.seerr.ui.tv.hub.TvHubBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
@@ -60,7 +59,7 @@ internal const val HOUR_MILLIS = 3_600_000L
 internal const val DAY_MILLIS = 24 * HOUR_MILLIS
 internal val NOW = System.currentTimeMillis()
 
-private val NoHubActions = TvHubActions({}, {}, {}, {}, {}, {})
+private val NoHubActions = TvHubActions({}, {}, {})
 internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {})
 internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
@@ -225,7 +224,7 @@ internal val SampleSettingsWithApp =
 @Composable
 internal fun TvShellHubPreview() {
     TvShellScaffold(selected = TvDestination.Hub, onSelect = {}) {
-        TvHubBoard(state = hub(), actions = NoHubActions, initialFocusedTile = TILE_PENDING)
+        TvHubBoard(state = hub(health = ConnectionHealth.Unreachable), actions = NoHubActions)
     }
 }
 
