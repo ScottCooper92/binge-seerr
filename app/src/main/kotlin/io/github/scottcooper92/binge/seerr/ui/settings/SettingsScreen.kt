@@ -108,7 +108,6 @@ private fun SettingsContent(
     contentPadding: PaddingValues,
 ) {
     val config = state.config
-    var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         ItemGroup(
             title = null,
@@ -123,42 +122,14 @@ private fun SettingsContent(
                 ),
             modifier = Modifier.padding(horizontal = resolvedContentInset()),
         )
+        if (state.pending) PendingGroups()
+        // PROTOTYPE: the server's settings as the web client's Settings menu lays them out, one row per section.
+        config?.let { Group("Server settings", serverSectionRows(it, state.server, jobs, actions.onOpenPage)) }
         Group(
             stringResource(R.string.settings_group_connection),
-            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage),
+            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage, showAbout = config == null),
         )
-        if (state.pending) PendingGroups()
-        config?.general?.let {
-            Group(
-                stringResource(R.string.settings_group_general),
-                generalRows(it, actions.onOpenPage),
-            )
-        }
-        if (config != null) {
-            Group(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server, actions.onOpenPage))
-        }
-        config?.services?.let {
-            Group(stringResource(R.string.settings_group_services), serviceRows(it, actions.onOpenPage, actions.onOpenInstance))
-        }
-        config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
         state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
-        config?.agents?.let {
-            Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenPage, actions.onOpenAgent))
-        }
-        if (config != null) {
-            // The Cache and Logs rows are static links, not a read of their own, so they show whether or
-            // not the jobs list came back: `system` is only the fallback for while the live `jobs` (below)
-            // is still loading, and its own fetch failing shouldn't take the unrelated rows down with it.
-            val rows =
-                if (jobs is JobsUiState.Ready) {
-                    jobs.jobs.map { job ->
-                        jobRow(job, busy = job.id in jobs.busyIds, outcome = jobs.outcomes[job.id], jobActions) { scheduling = job.id }
-                    } + systemLinkRows(actions.onOpenPage)
-                } else {
-                    config.system?.let { systemRows(it, actions.onOpenPage) } ?: systemLinkRows(actions.onOpenPage)
-                }
-            Group(stringResource(R.string.settings_group_system), rows)
-        }
         state.app?.let {
             Group(
                 stringResource(R.string.settings_group_app),
@@ -168,16 +139,6 @@ private fun SettingsContent(
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = resolvedContentInset()))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-    }
-    (jobs as? JobsUiState.Ready)?.jobs?.firstOrNull { it.id == scheduling }?.let { job ->
-        ScheduleDialog(
-            job = job,
-            onConfirm = { cron ->
-                scheduling = null
-                jobActions.onSchedule(job.id, cron)
-            },
-            onDismiss = { scheduling = null },
-        )
     }
 }
 

@@ -44,9 +44,10 @@ internal fun connectionRows(
     server: ServerSummary,
     onEditConnection: () -> Unit,
     onOpenPage: (ServerSettingsPage) -> Unit,
+    showAbout: Boolean = true,
 ): List<ListItem> {
     val context = LocalContext.current
-    return listOf(
+    return listOfNotNull(
         ListItem(
             icon = Icons.Filled.Link,
             iconTint = BingeSentiment.Info.fill(),
@@ -82,7 +83,7 @@ internal fun connectionRows(
             label = stringResource(R.string.settings_about),
             detail = stringResource(R.string.settings_about_caption),
             onClick = { onOpenPage(ServerSettingsPage.About) },
-        ),
+        ).takeIf { showAbout },
         ListItem(
             icon = Icons.Filled.Edit,
             iconTint = BingeSentiment.Info.fill(),

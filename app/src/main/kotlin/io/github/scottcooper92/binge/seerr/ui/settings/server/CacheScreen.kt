@@ -46,13 +46,15 @@ fun CacheScreen(
     state: CacheUiState,
     events: Flow<EditorEvent>,
     actions: CacheActions,
+    // PROTOTYPE: the web client's "Jobs & Cache" page, with the jobs above the caches.
+    jobs: List<ListItem> = emptyList(),
 ) {
-    ServerActionPage(title = stringResource(R.string.server_settings_cache), events = events, onBack = actions.onBack) { contentPadding ->
+    ServerActionPage(title = "Jobs & cache", events = events, onBack = actions.onBack) { contentPadding ->
         when (state) {
             CacheUiState.Loading -> LoadingScreen(Modifier.padding(contentPadding))
             is CacheUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(contentPadding), onRetry = actions.onRetry)
-            is CacheUiState.Ready -> CacheContent(state, actions, contentPadding)
+            is CacheUiState.Ready -> CacheContent(state, actions, jobs, contentPadding)
         }
     }
 }
@@ -61,10 +63,15 @@ fun CacheScreen(
 private fun CacheContent(
     state: CacheUiState.Ready,
     actions: CacheActions,
+    jobs: List<ListItem>,
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        if (jobs.isNotEmpty()) {
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+            ItemGroup(title = "Jobs", rows = jobs, modifier = Modifier.padding(horizontal = inset))
+        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.server_settings_api_caches),

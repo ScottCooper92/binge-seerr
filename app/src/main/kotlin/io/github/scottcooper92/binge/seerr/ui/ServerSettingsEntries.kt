@@ -1,6 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,7 +30,12 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MediaServerViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsUiState
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MetadataScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ScheduleDialog
+import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MetadataViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.NetworkScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.NetworkViewModel
@@ -109,7 +117,29 @@ private fun LogsPage(onBack: () -> Unit) {
 private fun CachePage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<CacheViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // PROTOTYPE: the jobs live here now, as on the web client's Jobs & Cache page.
+    val jobsViewModel = hiltViewModel<JobsViewModel>()
+    val jobs by jobsViewModel.uiState.collectAsStateWithLifecycle()
+    val jobActions = JobsActions(onRun = jobsViewModel::run, onCancel = jobsViewModel::cancel, onSchedule = jobsViewModel::schedule)
+    var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
+    val jobRows =
+        (jobs as? JobsUiState.Ready)?.let { ready ->
+            ready.jobs.map { job ->
+                jobRow(job, busy = job.id in ready.busyIds, outcome = ready.outcomes[job.id], jobActions) { scheduling = job.id }
+            }
+        }.orEmpty()
+    (jobs as? JobsUiState.Ready)?.jobs?.firstOrNull { it.id == scheduling }?.let { job ->
+        ScheduleDialog(
+            job = job,
+            onConfirm = { cron ->
+                scheduling = null
+                jobActions.onSchedule(job.id, cron)
+            },
+            onDismiss = { scheduling = null },
+        )
+    }
     CacheScreen(
+        jobs = jobRows,
         state = state,
         events = viewModel.events,
         actions =
