@@ -219,6 +219,12 @@ class SetupViewModel
             }
             val current = draft.value
             if (current.server != null || current.busy) return
+            // Past an address the listener is only following the sign-in for the phone's page. Asking for
+            // the plate again wants a new code, so that phase ends and a fresh listener replaces it.
+            if (current.received) {
+                handOff.cancel()
+                draft.update { it.copy(handOff = null, received = false) }
+            }
             draft.update { it.copy(error = null) }
             handOff.start()
         }

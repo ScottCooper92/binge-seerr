@@ -144,6 +144,37 @@ class SetupViewModelHandOffTest {
         }
 
     @Test
+    fun `asking again after a phone-sent address closes the old listener and shows a new code`() =
+        runTest {
+            val sessions = mutableListOf<FakeSession>()
+            val vm =
+                viewModel {
+                    HandOffOpening.Opened(FakeSession(url = "http://192.168.1.20:41234/a/code${sessions.size}").also(sessions::add))
+                }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            val first = vm.awaitAddress { it.handOff != null }.handOff
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            sessions[0].address.complete(seerr.url("/"))
+            vm.uiState.first { it is SetupUiState.SignIn && !it.isConnecting }
+
+            // Back from the sign-in: the follow loop is still up, and the button must still work.
+            vm.changeServer()
+            vm.awaitAddress()
+            vm.showHandOff(true)
+
+            val second = vm.awaitAddress { it.handOff != null && it.handOff != first }.handOff
+            assertTrue(second is AddressHandOff.Listening)
+            assertTrue(sessions[0].closed)
+            assertFalse(sessions.last().closed)
+
+            // A code nobody uses is replaced for ever, and runTest drains the virtual clock on the way out.
+            vm.showHandOff(false)
+            assertTrue(sessions.last().closed)
+        }
+
+    @Test
     fun `a public http address from a phone still waits for the user's opt-in`() =
         runTest {
             val session = FakeSession()
