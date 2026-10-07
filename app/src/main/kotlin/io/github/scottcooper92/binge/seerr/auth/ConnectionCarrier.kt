@@ -72,6 +72,8 @@ private data class CarriedConnection(
     @SerialName("variant") val variant: String? = null,
     /** Absent from what earlier builds wrote, which carried no opt-in. */
     @SerialName("cleartext") val cleartext: Boolean = false,
+    /** A session handed between devices (#772), which a disconnect must not end. Absent from what earlier builds wrote. */
+    @SerialName("shared") val shared: Boolean = false,
 )
 
 private val carrierJson = Json { ignoreUnknownKeys = true }
@@ -83,7 +85,14 @@ internal fun encodeCarriedConnection(carried: CarriedCredentials): ByteArray {
         when (val auth = credentials.auth) {
             is SeerrAuth.ApiKey -> CarriedConnection(credentials.baseUrl, KIND_API_KEY, auth.key, variant = credentials.variant.name)
             is SeerrAuth.Session ->
-                CarriedConnection(credentials.baseUrl, KIND_SESSION, auth.cookie, auth.userId, credentials.variant.name)
+                CarriedConnection(
+                    baseUrl = credentials.baseUrl,
+                    kind = KIND_SESSION,
+                    secret = auth.cookie,
+                    userId = auth.userId,
+                    variant = credentials.variant.name,
+                    shared = auth.shared,
+                )
         }
     return carrierJson.encodeToString(connection.copy(cleartext = carried.cleartext)).toByteArray(Charsets.UTF_8)
 }
@@ -101,7 +110,7 @@ internal fun decodeCarriedConnection(bytes: ByteArray): CarriedCredentials? {
     val auth =
         when (carried.kind) {
             KIND_API_KEY -> SeerrAuth.ApiKey(carried.secret)
-            KIND_SESSION -> carried.userId?.let { SeerrAuth.Session(carried.secret, it) }
+            KIND_SESSION -> carried.userId?.let { SeerrAuth.Session(carried.secret, it, shared = carried.shared) }
             else -> null
         } ?: return null
     val variant = carried.variant?.let { name -> runCatching { SeerrVariant.valueOf(name) }.getOrNull() } ?: SeerrVariant.Unknown
