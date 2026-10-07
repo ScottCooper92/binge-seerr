@@ -137,9 +137,9 @@ private fun TvRequestDetailContent(
     events: Flow<ModerationEvent>,
     given: TvRequestDetailActions,
 ) {
-    // An approve or a block that lands reloads the page without its own button, and the focus that button held would go
-    // with it to nowhere the D-pad can reach. Either one marks the row to be focused again when the page's actions change
-    // (#801).
+    // An approve, a decline, a retry or a block that lands reloads the page without its own button, and the focus that
+    // button held would go with it to nowhere the D-pad can reach. Each marks the row to be focused again when the page's
+    // actions change (#801).
     var refocusRow by remember { mutableStateOf(false) }
     val actions = remember(given) { given.markingRefocus { refocusRow = true } }
     // The two actions that cannot be undone take a confirm; the rest run at once, since a decline keeps the request.
@@ -308,7 +308,7 @@ private fun TvDetailPageScope.requestSections(
     }
 }
 
-/** These actions, with [mark] run first by the two whose success removes their own button: Approve and Block. */
+/** These actions, with [mark] run first by those whose success removes their own button: Approve, Decline, Retry and Block. */
 private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
     TvRequestDetailActions(
         onBack = onBack,
@@ -318,8 +318,14 @@ private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
             mark()
             onApprove()
         },
-        onRetryRequest = onRetryRequest,
-        onDecline = onDecline,
+        onRetryRequest = {
+            mark()
+            onRetryRequest()
+        },
+        onDecline = {
+            mark()
+            onDecline(it)
+        },
         onRemove = onRemove,
         onBlock = {
             mark()

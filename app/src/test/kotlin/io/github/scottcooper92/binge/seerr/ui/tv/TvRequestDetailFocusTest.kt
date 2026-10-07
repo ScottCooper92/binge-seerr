@@ -168,6 +168,27 @@ class TvRequestDetailFocusTest {
         actionButton(R.string.tv_detail_decline).assertIsFocused()
     }
 
+    /** A successful decline reloads the page without Approve or Decline; focus moves to what is left on the row (#801). */
+    @Test
+    fun decliningRemovesDeclineAndFocusStaysOnTheActionRow() {
+        setContent(
+            allowed = RequestActions(canApprove = true, canDecline = true, canRemove = true),
+            afterDecline = RequestActions(canRemove = true),
+        )
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        pressRight()
+        actionButton(R.string.tv_detail_decline).assertIsFocused()
+
+        pressOk()
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(false), declined)
+        actionButton(R.string.tv_detail_decline).assertDoesNotExist()
+        actionButton(R.string.tv_detail_remove).assertIsFocused()
+    }
+
     /**
      * A successful block reloads the page without Block, after the confirm sheet has handed focus back to it, as the
      * real reload lands once the server answers; focus moves to what is left on the row (#801).
@@ -303,6 +324,7 @@ class TvRequestDetailFocusTest {
     private fun setContent(
         allowed: RequestActions = RequestActions(canApprove = true, canDecline = true),
         afterApprove: RequestActions? = null,
+        afterDecline: RequestActions? = null,
     ) {
         offered = allowed
         val item =
@@ -396,7 +418,10 @@ class TvRequestDetailFocusTest {
                                         afterApprove?.let { offered = it }
                                     },
                                     onRetryRequest = {},
-                                    onDecline = { declined += it },
+                                    onDecline = {
+                                        declined += it
+                                        afterDecline?.let { next -> offered = next }
+                                    },
                                     onRemove = { removed += it },
                                     onBlock = { blocked++ },
                                 ),
