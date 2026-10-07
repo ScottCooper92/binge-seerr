@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -56,6 +57,11 @@ internal fun TvSetupScreen(
     val scanInstead = {
         manual = false
         actions.onStartHandOff()
+    }
+    // Back from the fallback goes back to the code, as "Scan a QR" does, rather than out of the app.
+    val typing = manual && offerHandOff && (state is SetupUiState.Address || state is SetupUiState.SignIn && state.link == null)
+    BackHandler(enabled = typing) {
+        if (state is SetupUiState.Address) scanInstead() else manual = false
     }
     when {
         // The home swaps to the connected plate on the credentials landing; this is the frame in between.

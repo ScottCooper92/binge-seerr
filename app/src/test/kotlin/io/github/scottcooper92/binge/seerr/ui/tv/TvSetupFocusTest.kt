@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -24,7 +25,7 @@ import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupServer
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
-import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -45,7 +46,7 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvSetupFocusTest {
     @get:Rule
-    val composeTestRule = createSeerrKeyboardComposeRule()
+    val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
 
     private val edits = mutableListOf<String>()
     private val formEdits = mutableListOf<SignInForm.() -> SignInForm>()
@@ -99,6 +100,34 @@ class TvSetupFocusTest {
 
         assertEquals(1, cancelledHandOff)
         addressField().assertIsFocused()
+    }
+
+    /** The typed form is a detour from the code, so Back returns to the code rather than leaving the app. */
+    @Test
+    fun backFromTheTypedAddressReturnsToTheCode() {
+        val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
+        setScreen(address("").copy(handOff = code, code = code), offerHandOff = true)
+        pressOk()
+        addressField().assertIsFocused()
+
+        pressBack()
+
+        assertEquals(1, startedHandOff)
+        addressField().assertDoesNotExist()
+        button(R.string.tv_setup_enter_manually).assertIsDisplayed()
+    }
+
+    @Test
+    fun backFromTheTypedSignInReturnsToTheCode() {
+        val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
+        setScreen(signIn(modes = listOf(SeerrSignInMode.Local)).copy(code = code), offerHandOff = true)
+        button(R.string.tv_setup_enter_manually).assertIsFocused()
+        pressOk()
+        button(R.string.tv_setup_enter_manually).assertDoesNotExist()
+
+        pressBack()
+
+        button(R.string.tv_setup_enter_manually).assertIsDisplayed()
     }
 
     @Test
@@ -209,6 +238,20 @@ class TvSetupFocusTest {
 
         button(R.string.link_cancel).assertIsFocused()
         pressOk()
+
+        assertEquals(1, cancelledLink)
+    }
+
+    @Test
+    fun backOnTheLinkPlateCancelsTheLink() {
+        setScreen(
+            signIn(
+                modes = listOf(SeerrSignInMode.QuickConnect),
+                link = LinkFlow.QuickConnect(code = "A1B2C3"),
+            ),
+        )
+
+        pressBack()
 
         assertEquals(1, cancelledLink)
     }
@@ -340,6 +383,11 @@ class TvSetupFocusTest {
 
     private fun pressDown() {
         composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionDown) }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun pressBack() {
+        composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.waitForIdle()
     }
 
