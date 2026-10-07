@@ -38,6 +38,12 @@ class HomeAnsweringTest {
     }
 
     @Test
+    fun `a rejected session is not an answer`() {
+        assertFalse(homeAnswering(ready(ConnectionHealth.Unauthorized), true))
+        assertFalse(homeAnswering(ready(ConnectionHealth.Unauthorized), false))
+    }
+
+    @Test
     fun `a server that stops answering returns Home to the problem`() {
         assertFalse(homeAnswering(ready(ConnectionHealth.Unreachable), true))
         assertFalse(homeAnswering(HubUiState.Error(ConnectionHealth.Unreachable), true))

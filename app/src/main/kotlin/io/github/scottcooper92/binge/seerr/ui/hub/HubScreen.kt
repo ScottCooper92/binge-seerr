@@ -82,7 +82,7 @@ fun HubScreen(
             val inner = padding.screenInnerPadding()
             when {
                 // A rejected session is the app's to answer, by going to sign-in (#810): nothing to offer here meanwhile.
-                state is HubUiState.Error && state.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))
+                ready?.health == ConnectionHealth.Unauthorized -> LoadingScreen(Modifier.padding(inner))
                 state is HubUiState.Error ->
                     ConnectionProblem(
                         state.health,
