@@ -949,7 +949,12 @@
     <string name="handoff_page_install">You can install %1$s from the %2$s</string>
     <string name="handoff_page_store_name">Google Play Store</string>
     <string name="handoff_page_sent_title">Sent</string>
-    <string name="handoff_page_sent_body">Your TV has the address and is checking the server. You can close this page.</string>
+    <string name="handoff_page_sent_body">Your TV has the address and is checking the server. This page keeps up with it.</string>
+    <string name="handoff_page_failed">Your TV couldn\'t reach a Seerr server at that address. Check it and send it again.</string>
+    <string name="handoff_page_signin_title">Finish on your TV</string>
+    <string name="handoff_page_signin_body">Your TV found %1$s. Sign in there with your remote.</string>
+    <string name="handoff_page_connected_title">Connected</string>
+    <string name="handoff_page_connected_body">Your TV is signed in. You can close this page.</string>
 
     <!-- The phone's side of the hand-off: the confirmation before it sends its server's address to a TV. -->
     <string name="send_address_title">Send the address to your TV</string>

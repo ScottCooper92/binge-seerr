@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
+import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
 import io.github.scottcooper92.binge.seerr.handoff.addressLocality
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
@@ -98,6 +99,7 @@ class SetupViewModel
                     draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
                     inspect()
                 },
+                progress = { uiState.value.toHandOffProgress(draft.value.received) },
             )
 
         init {
@@ -150,7 +152,12 @@ class SetupViewModel
         /** The permission prompt came back, or the user returned from Settings: read the permission again. */
         fun localNetworkResult() = draft.update { it.copy(permissionReads = it.permissionReads + 1, error = null) }
 
-        fun editAddress(value: String) = draft.update { it.copy(serverUrl = value, error = null, received = false) }
+        fun editAddress(value: String) {
+            // Typing takes over from the phone: the follow phase ends, so the phone cannot overwrite the field
+            // and a later request for the plate starts a fresh listener.
+            if (draft.value.received) handOff.cancel()
+            draft.update { it.copy(serverUrl = value, error = null, received = false) }
+        }
 
         /**
          * The user's explicit opt-in to plain HTTP to the public host the address names. It is held
@@ -188,12 +195,21 @@ class SetupViewModel
          */
         fun showHandOff(showing: Boolean) {
             if (!showing) {
+                // Once an address is in, the plate going is the page moving on, not the user leaving: the listener
+                // stays up to tell the phone how the sign-in went, and ends on its own.
+                if (draft.value.received) return
                 handOff.cancel()
                 draft.update { it.copy(handOff = null) }
                 return
             }
             val current = draft.value
             if (current.server != null || current.busy) return
+            // Past an address the listener is only following the sign-in for the phone's page. Asking for
+            // the plate again wants a new code, so that phase ends and a fresh listener replaces it.
+            if (current.received) {
+                handOff.cancel()
+                draft.update { it.copy(handOff = null, received = false) }
+            }
             draft.update { it.copy(error = null) }
             handOff.start()
         }
@@ -346,6 +362,20 @@ class SetupViewModel
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L
         }
+    }
+
+/** Where the phone's page should say the TV has got to. [received] is whether the address came from a phone. */
+private fun SetupUiState.toHandOffProgress(received: Boolean): HandOffProgress =
+    when (this) {
+        SetupUiState.Loading -> HandOffProgress.Checking
+        is SetupUiState.Address ->
+            when {
+                isInspecting -> HandOffProgress.Checking
+                received && error != null -> HandOffProgress.Failed
+                else -> HandOffProgress.Waiting
+            }
+        is SetupUiState.SignIn -> HandOffProgress.SignIn(server.title)
+        is SetupUiState.Connected -> HandOffProgress.Connected
     }
 
 private fun SeerrServerPreview.toSetupServer(): SetupServer {

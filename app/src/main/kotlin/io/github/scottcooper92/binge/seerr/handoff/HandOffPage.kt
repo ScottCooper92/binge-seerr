@@ -27,6 +27,12 @@ internal data class HandOffPageCopy(
     val storeName: String,
     val sentTitle: String,
     val sentBody: String,
+    val failed: String,
+    val signInTitle: String,
+    /** Names the server the TV found, in its own sentence. */
+    val signInBody: (server: String) -> String,
+    val connectedTitle: String,
+    val connectedBody: String,
 )
 
 /** The pages the TV serves to a phone's browser, in the language the browser asks for. */
@@ -37,8 +43,14 @@ internal interface HandOffPage {
         invalid: Boolean,
     ): String
 
-    /** The answer to an accepted address. */
-    fun sent(acceptLanguage: String?): String
+    /**
+     * The page for wherever the TV has got to. Every state but the last asks the browser to read it again
+     * in a moment, so the page follows the TV with no script in it.
+     */
+    fun status(
+        acceptLanguage: String?,
+        progress: HandOffProgress,
+    ): String
 
     /** The bare page for a refused request, which says nothing about what is listening. */
     fun refused(): String = "<!doctype html><title>-</title>"
@@ -73,9 +85,16 @@ internal class HandOffPageTemplate(
     override fun form(
         acceptLanguage: String?,
         invalid: Boolean,
+    ): String = form(acceptLanguage, invalid, problem = null)
+
+    private fun form(
+        acceptLanguage: String?,
+        invalid: Boolean,
+        problem: String?,
     ): String {
         val copy = copyFor(pickLanguage(acceptLanguage))
-        val error = if (invalid) """<p class="error" role="alert">${copy.invalid.escapeHtml()}</p>""" else ""
+        val message = problem ?: copy.invalid.takeIf { invalid }
+        val error = if (message != null) """<p class="error" role="alert">${message.escapeHtml()}</p>""" else ""
         return page(
             copy,
             """
@@ -107,14 +126,31 @@ internal class HandOffPageTemplate(
         }
     }
 
-    override fun sent(acceptLanguage: String?): String {
+    override fun status(
+        acceptLanguage: String?,
+        progress: HandOffProgress,
+    ): String {
         val copy = copyFor(pickLanguage(acceptLanguage))
-        return page(copy, "<h1>${copy.sentTitle.escapeHtml()}</h1>\n<p>${copy.sentBody.escapeHtml()}</p>")
+        return when (progress) {
+            HandOffProgress.Waiting -> form(acceptLanguage, invalid = false)
+            HandOffProgress.Failed -> form(acceptLanguage, invalid = false, problem = copy.failed)
+            HandOffProgress.Checking -> message(copy, copy.sentTitle, copy.sentBody, following = true)
+            is HandOffProgress.SignIn -> message(copy, copy.signInTitle, copy.signInBody(progress.server), following = true)
+            HandOffProgress.Connected -> message(copy, copy.connectedTitle, copy.connectedBody, following = false)
+        }
     }
+
+    private fun message(
+        copy: HandOffPageCopy,
+        title: String,
+        body: String,
+        following: Boolean,
+    ): String = page(copy, "<h1>${title.escapeHtml()}</h1>\n<p>${body.escapeHtml()}</p>", refresh = following)
 
     private fun page(
         copy: HandOffPageCopy,
         content: String,
+        refresh: Boolean = false,
     ): String =
         listOf(
             "<!doctype html>",
@@ -123,6 +159,7 @@ internal class HandOffPageTemplate(
             "<meta charset=\"utf-8\">",
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
             "<meta name=\"referrer\" content=\"no-referrer\">",
+            if (refresh) "<meta http-equiv=\"refresh\" content=\"$REFRESH_SECONDS\">" else "",
             "<title>${copy.title.escapeHtml()}</title>",
             "<style>$STYLE</style>",
             "</head>",
@@ -133,6 +170,9 @@ internal class HandOffPageTemplate(
         ).joinToString("\n")
 
     private companion object {
+        /** How often a page that follows the TV asks for itself again. */
+        const val REFRESH_SECONDS = 2
+
         /** The app's dark surface and indigo accent, close enough that the page reads as the app's own. */
         const val STYLE =
             "body{margin:0;background:#121218;color:#e6e1f0;font:16px/1.5 system-ui,sans-serif}" +

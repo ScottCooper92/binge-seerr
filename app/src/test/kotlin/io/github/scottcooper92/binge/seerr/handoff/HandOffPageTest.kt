@@ -24,6 +24,11 @@ class HandOffPageTest {
             storeName = "Store",
             sentTitle = "Sent",
             sentBody = "Sent body",
+            failed = "Not found <here>",
+            signInTitle = "Finish",
+            signInBody = { server -> "Sign in to $server" },
+            connectedTitle = "Done",
+            connectedBody = "Done body",
         )
 
     private val page = HandOffPageTemplate(copyFor = ::copy, appLink = "intent://tv-handoff?to=1.2.3.4:5&token=t#Intent;end")
@@ -54,10 +59,39 @@ class HandOffPageTest {
     @Test
     fun `a refused address shows the error, and the sent page says so`() {
         assertTrue(page.form(null, invalid = true).contains("Invalid &amp; wrong"))
-        val sent = page.sent("en-GB")
+        val sent = page.status("en-GB", HandOffProgress.Checking)
         assertTrue(sent.contains("<html lang=\"en\">"))
         assertTrue(sent.contains("Sent body"))
         assertFalse(sent.contains("<form"))
+    }
+
+    @Test
+    fun `the page follows the TV, asking the browser for itself again until the connection is made`() {
+        val waiting = page.status("en", HandOffProgress.Waiting)
+        assertTrue(waiting.contains("<form method=\"post\">"))
+        assertFalse(waiting.contains("http-equiv=\"refresh\""))
+
+        val checking = page.status("en", HandOffProgress.Checking)
+        assertTrue(checking.contains("Sent body"))
+        assertTrue(checking.contains("<meta http-equiv=\"refresh\" content=\"2\">"))
+
+        val signIn = page.status("en", HandOffProgress.SignIn("Living <room>"))
+        assertTrue(signIn.contains("Sign in to Living &lt;room&gt;"))
+        assertTrue(signIn.contains("http-equiv=\"refresh\""))
+
+        val connected = page.status("en", HandOffProgress.Connected)
+        assertTrue(connected.contains("Done body"))
+        assertFalse(connected.contains("http-equiv=\"refresh\""))
+        assertFalse(connected.contains("<script"))
+    }
+
+    @Test
+    fun `an address that found no server brings the form back with its own message`() {
+        val failed = page.status("en", HandOffProgress.Failed)
+
+        assertTrue(failed.contains("<form method=\"post\">"))
+        assertTrue(failed.contains("Not found &lt;here&gt;"))
+        assertFalse(failed.contains("Invalid"))
     }
 
     @Test

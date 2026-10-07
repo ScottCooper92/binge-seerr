@@ -19,11 +19,16 @@ interface AddressHandOffSession {
     val url: String
 
     /**
-     * Serves the page until a phone posts an address the TV can use, and returns it. Cancellable:
-     * the listener stops within [ACCEPT_POLL_MILLIS] of being cancelled, or once the connection
-     * it is answering at the time has finished.
+     * Serves the page until cancelled or closed. [progress] is read on every request, so the page follows the
+     * TV; [onAddress] gets each acceptable address a phone posts while [progress] still accepts one, which
+     * is the first, and any sent again after a server that could not be reached. Cancellable: the listener
+     * stops within [ACCEPT_POLL_MILLIS] of being cancelled, or once the connection it is answering at the
+     * time has finished.
      */
-    suspend fun awaitAddress(): String
+    suspend fun serve(
+        progress: () -> HandOffProgress,
+        onAddress: (String) -> Unit,
+    )
 
     /** Stops listening. Safe to call more than once and from any thread. */
     fun close()
@@ -37,18 +42,21 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
 
 /**
  * The television's side of the hand-off (#323): a tiny HTTP/1.1 listener on the TV's own LAN
- * address that answers exactly one path and accepts exactly one address.
+ * address that answers exactly one path and accepts an address only while the TV is waiting for one.
  *
  * - **One-time token.** It answers only `/a/<token>`, where the token is about 40 random bits, short
  *   enough to type, minted for this listener and shown only in the code on screen. That is enough
- *   because the listener is LAN-only, serves one connection at a time, and its port and token are
- *   replaced every five minutes. Any other path, a wrong token included, is a bare 404 that says
+ *   because the listener is LAN-only, serves one connection at a time, takes an address only while
+ *   the TV is waiting for one, and is bounded in time: before an address arrives its port and token are
+ *   replaced every five minutes, and after one it stays up for at most the sign-in timeout. Any other path, a wrong token included, is a bare 404 that says
  *   nothing about what is listening. The comparison is constant-time.
  * - **LAN only.** The socket is bound to the TV's private IPv4 address on the active Wi-Fi or
  *   Ethernet network, never to every interface.
- * - **Short-lived.** It listens while the code is on screen, until a timeout, or until one address
- *   is accepted, whichever comes first; the owner closes it on each of those. When it lapses on a
- *   timeout, the owner replaces it with a new listener, a new port and a new token, rather than ending.
+ * - **Short-lived.** It accepts an address while the TV is waiting for one: the first, and another
+ *   after one that named no server. Once an address is in, it only answers status pages, and its
+ *   owner keeps it up through the sign-in. It closes on cancel, when the TV reaches Connected (after a
+ *   short linger), or after the sign-in timeout. A code nobody uses lapses after a timeout, and the
+ *   owner replaces it with a new listener, a new port and a new token, rather than ending.
  * - **Address only.** What it accepts is a server address, checked with [isValidBaseUrl], and
  *   nothing else. The TV then reads that server exactly as if the address had been typed, so the
  *   plain-HTTP opt-in and sign-in that follow are unchanged.
@@ -68,11 +76,13 @@ internal class AddressHandOffListener(
 ) : AddressHandOffSession {
     private val path = "/a/$token".toByteArray(StandardCharsets.UTF_8)
 
-    override suspend fun awaitAddress(): String =
+    override suspend fun serve(
+        progress: () -> HandOffProgress,
+        onAddress: (String) -> Unit,
+    ) {
         withContext(dispatcher) {
             server.soTimeout = ACCEPT_POLL_MILLIS
-            var accepted: String? = null
-            while (accepted == null) {
+            while (true) {
                 ensureActive()
                 val client =
                     try {
@@ -80,15 +90,18 @@ internal class AddressHandOffListener(
                     } catch (_: SocketTimeoutException) {
                         null
                     }
-                accepted = client?.use(::serve)
+                client?.use { serve(it, progress) }?.let(onAddress)
             }
-            accepted
         }
+    }
 
     override fun close() = server.close()
 
     /** Answers one connection, and returns the address it carried if it was accepted. */
-    private fun serve(client: Socket): String? {
+    private fun serve(
+        client: Socket,
+        progress: () -> HandOffProgress,
+    ): String? {
         client.soTimeout = limits.readTimeoutMillis
         val outcome =
             try {
@@ -100,7 +113,7 @@ internal class AddressHandOffListener(
         val (response, address) =
             when (outcome) {
                 is ReadOutcome.Refused -> HandOffResponse(outcome.status, page.refused()) to null
-                is ReadOutcome.Parsed -> respond(outcome.request)
+                is ReadOutcome.Parsed -> respond(outcome.request, progress())
             }
         try {
             client.getOutputStream().apply {
@@ -140,21 +153,32 @@ internal class AddressHandOffListener(
     }
 
     /** The answer to one parsed request, and the address it accepted, if any. */
-    internal fun respond(request: HandOffRequest): Pair<HandOffResponse, String?> {
+    internal fun respond(
+        request: HandOffRequest,
+        progress: HandOffProgress = HandOffProgress.Waiting,
+    ): Pair<HandOffResponse, String?> {
         val target = request.target.substringBefore('?').toByteArray(StandardCharsets.UTF_8)
         if (!MessageDigest.isEqual(target, path)) return HandOffResponse(HttpStatus.NotFound, page.refused()) to null
         val language = request.header("accept-language")
         return when (request.method) {
-            "GET" -> HandOffResponse(HttpStatus.Ok, page.form(language, invalid = false)) to null
-            "POST" -> {
-                val address = request.body.formFields()["address"]?.trim()
-                if (address != null && address.isNotEmpty() && isAcceptable(address)) {
-                    HandOffResponse(HttpStatus.Ok, page.sent(language)) to address
-                } else {
-                    HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true)) to null
-                }
-            }
+            "GET" -> HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
+            "POST" -> post(request, progress, language)
             else -> HandOffResponse(HttpStatus.NotFound, page.refused()) to null
+        }
+    }
+
+    /** An address is read only while the TV is waiting for one; otherwise a post is answered with where things stand. */
+    private fun post(
+        request: HandOffRequest,
+        progress: HandOffProgress,
+        language: String?,
+    ): Pair<HandOffResponse, String?> {
+        if (!progress.acceptsAddress) return HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
+        val address = request.body.formFields()["address"]?.trim()
+        return if (address != null && address.isNotEmpty() && isAcceptable(address)) {
+            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking)) to address
+        } else {
+            HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true)) to null
         }
     }
 }
