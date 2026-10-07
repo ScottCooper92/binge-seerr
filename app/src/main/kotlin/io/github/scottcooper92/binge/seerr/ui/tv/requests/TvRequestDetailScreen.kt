@@ -165,7 +165,8 @@ private fun TvRequestDetailContent(
     LaunchedEffect(allowed) {
         if (refocusRow) {
             refocusRow = false
-            if (actionList.isNotEmpty()) actionRowFocus.requestFocus()
+            // An action that emptied the row leaves the synopsis, which the hero offers in its place.
+            if (actionList.isNotEmpty()) actionRowFocus.requestFocus() else synopsisFocus.requestFocus()
         }
     }
     // Resolved here: the section builder below is not composable, so it cannot read resources itself.

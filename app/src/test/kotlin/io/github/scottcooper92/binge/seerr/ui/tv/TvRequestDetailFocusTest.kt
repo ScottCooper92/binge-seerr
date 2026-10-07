@@ -217,6 +217,28 @@ class TvRequestDetailFocusTest {
         actionButton(R.string.tv_detail_remove).assertIsFocused()
     }
 
+    /** A block that leaves no action behind hands focus to the synopsis rather than the root (#801). */
+    @Test
+    fun blockingTheLastActionLeavesFocusOnTheSynopsis() {
+        setContent(RequestActions(canBlock = true))
+        row(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        actionButton(R.string.tv_detail_block).assertIsFocused()
+        pressOk()
+        composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+        settleFocusRestore()
+        assertEquals(1, blocked)
+
+        offered = RequestActions()
+        composeTestRule.waitForIdle()
+
+        actionButton(R.string.tv_detail_block).assertDoesNotExist()
+        composeTestRule.onNode(isFocused()).assertExists()
+    }
+
     /**
      * The read-only case the board's row doesn't reach: an already-available title with no active downloads,
      * no moderation this viewer can do, and no Open in Binge to hand off to. Arrival has nothing in reading
