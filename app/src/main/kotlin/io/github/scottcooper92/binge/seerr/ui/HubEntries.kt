@@ -74,8 +74,6 @@ internal fun SettingsEntry(
             onBack = onBack,
             onEditConnection = { backStack.add(EditConnectionRoute) },
             onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
-            onOpenInstance = { type, id -> backStack.add(DvrInstanceRoute(type, id)) },
-            onOpenAgent = { agent -> backStack.add(NotificationAgentRoute(agent)) },
             onToggleSignal = viewModel::setSignal,
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onToggleShakeToReport = viewModel::setShakeToReport,
