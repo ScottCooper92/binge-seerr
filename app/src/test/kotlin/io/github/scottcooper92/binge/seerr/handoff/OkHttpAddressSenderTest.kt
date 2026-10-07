@@ -32,7 +32,7 @@ class OkHttpAddressSenderTest {
         runTest {
             server.enqueue(MockResponse(code = 200))
 
-            assertTrue(sender.send(target, "http://seerr.lan:5055/"))
+            assertTrue(sender.send(target, "http://seerr.lan:5055/", sealed = null))
 
             val request = server.takeRequest(5, TimeUnit.SECONDS)!!
             assertEquals("POST", request.method)
@@ -47,13 +47,13 @@ class OkHttpAddressSenderTest {
     fun `anything but a 200 is a failure, and so is a TV that is not there`() =
         runTest {
             server.enqueue(MockResponse(code = 404))
-            assertFalse(sender.send(target, "http://seerr.lan:5055/"))
+            assertFalse(sender.send(target, "http://seerr.lan:5055/", sealed = null))
 
             server.enqueue(MockResponse(code = 302, headers = okhttp3.Headers.headersOf("Location", "http://example.com/")))
-            assertFalse(sender.send(target, "http://seerr.lan:5055/"))
+            assertFalse(sender.send(target, "http://seerr.lan:5055/", sealed = null))
 
             val gone = target
             server.close()
-            assertFalse(sender.send(gone, "http://seerr.lan:5055/"))
+            assertFalse(sender.send(gone, "http://seerr.lan:5055/", sealed = null))
         }
 }

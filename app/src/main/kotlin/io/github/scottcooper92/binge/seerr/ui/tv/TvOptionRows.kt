@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -123,5 +127,79 @@ internal fun TvOptionRow(
                 modifier = Modifier.size(dimensionResource(TvR.dimen.tv_button_icon)),
             )
         }
+    }
+}
+
+/**
+ * Mutually exclusive options as a row of tabs across the form's width, for a short set whose choice changes what is
+ * below it (the sign-in modes). Selection follows focus, as tabs do on a television: moving across them shows each
+ * one's fields, so there is nothing to press. [arrival] makes the selected tab the one the page lands on.
+ */
+@Composable
+internal fun <T> TvTabs(
+    choices: List<Pair<T, String>>,
+    selected: T?,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    arrival: TvArrivalFocus? = null,
+) {
+    if (choices.isEmpty()) return
+    Row(
+        modifier =
+            modifier
+                .width(dimensionResource(R.dimen.tv_form_field_width))
+                .clip(BingeShapes.Pill)
+                .background(MaterialTheme.colorScheme.surface, BingeShapes.Pill)
+                .padding(dimensionResource(R.dimen.tv_tabs_inset)),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_tabs_inset)),
+    ) {
+        choices.forEach { (key, label) ->
+            val isSelected = key == selected
+            TvTab(
+                label = label,
+                selected = isSelected,
+                onSelect = { if (!isSelected) onSelect(key) },
+                modifier = Modifier.weight(1f).then(if (isSelected && arrival != null) Modifier.tvArrivalTarget(arrival) else Modifier),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TvTab(
+    label: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var focused by remember { mutableStateOf(false) }
+    val resting = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+    val contentColor = tvFocusContentColor(isFocused = focused, resting = resting)
+    Box(
+        modifier =
+            modifier
+                .height(dimensionResource(R.dimen.tv_form_option_height))
+                .clip(BingeShapes.Pill)
+                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, BingeShapes.Pill)
+                .tvFocusFill(isFocused = focused, shape = BingeShapes.Pill)
+                .tvClickable(
+                    onFocusChanged = {
+                        focused = it
+                        if (it) onSelect()
+                    },
+                    onClick = onSelect,
+                ).semantics {
+                    this.selected = selected
+                    role = Role.Tab
+                },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            color = contentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

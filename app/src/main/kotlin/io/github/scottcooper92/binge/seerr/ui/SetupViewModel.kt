@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrServerPreview
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
+import io.github.scottcooper92.binge.seerr.handoff.HAND_OFF_SESSION_MODE
 import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffProgress
 import io.github.scottcooper92.binge.seerr.handoff.HandOffSignInModes
@@ -97,8 +98,11 @@ class SetupViewModel
                 // An address a phone sent, already checked as a base URL, goes exactly where a typed
                 // one does - into the field, then inspect() - so the plain-HTTP opt-in and the sign-in
                 // after it are the same as for an address entered on the remote.
-                onAddress = { address ->
-                    draft.update { it.copy(serverUrl = address, handOff = null, error = null, received = true) }
+                // A session sent with the address is held in memory only, for the one inspect() it rides on.
+                onAddress = { address, session ->
+                    draft.update {
+                        it.copy(serverUrl = address, handOff = null, error = null, received = true, handedSession = session)
+                    }
                     inspect()
                 },
                 // Credentials a phone app sealed for this TV, already opened by the listener. They go into the form and
@@ -106,8 +110,14 @@ class SetupViewModel
                 // only on the sign-in step, for a mode that has fields to fill, and never while another attempt runs.
                 onCredentials = { credentials ->
                     val current = draft.value
-                    val form = current.server?.takeIf { !current.busy }?.let { credentials.toSignInForm(it.modes) }
-                    if (form != null) {
+                    val server = current.server?.takeIf { !current.busy && current.link == null }
+                    val form = server?.let { credentials.toSignInForm(it.modes) }
+                    if (server != null && credentials.mode == HAND_OFF_SESSION_MODE && credentials.session.isNotEmpty()) {
+                        // A phone that scanned the sign-in step's code, carrying on with its own session: the same path as one
+                        // that came with the address, through a fresh read of the server.
+                        draft.update { it.copy(handedSession = credentials.session, error = null, notice = null) }
+                        inspect()
+                    } else if (form != null) {
                         draft.update { it.copy(form = form, error = null, attempts = it.attempts + 1) }
                         connect()
                     } else {
@@ -116,6 +126,7 @@ class SetupViewModel
                     }
                 },
                 // One read of the draft, so `failed` and the attempt it is about never come from different moments.
+                onCode = { code -> draft.update { it.copy(code = code) } },
                 progress = {
                     val snapshot = draft.value
                     uiState.value.toHandOffProgress(snapshot.received, snapshot.error != null, snapshot.attempts)
@@ -142,6 +153,7 @@ class SetupViewModel
                             error = draft.error,
                             handOff = draft.handOff,
                             needsLocalNetwork = draft.serverUrl.isBlockedByLocalNetwork(localNetwork),
+                            code = draft.code,
                         )
                     }
                     else ->
@@ -152,6 +164,7 @@ class SetupViewModel
                             link = draft.link,
                             error = draft.error,
                             notice = draft.notice,
+                            code = draft.code,
                         )
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SetupUiState.Loading)
@@ -176,7 +189,7 @@ class SetupViewModel
             // Typing takes over from the phone: the follow phase ends, so the phone cannot overwrite the field
             // and a later request for the plate starts a fresh listener.
             if (draft.value.received) handOff.cancel()
-            draft.update { it.copy(serverUrl = value, error = null, received = false) }
+            draft.update { it.copy(serverUrl = value, error = null, received = false, handedSession = null) }
         }
 
         /**
@@ -199,10 +212,33 @@ class SetupViewModel
                     .inspect(url)
                     .onSuccess { preview ->
                         val server = preview.toSetupServer()
-                        draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
+                        // With the phone's session, straight in: the sign-in form is shown only if the server turns it down.
+                        val session = draft.value.handedSession
+                        if (session == null) {
+                            draft.update { it.copy(server = server, form = SignInForm(mode = server.modes.first())) }
+                        } else {
+                            // The server decides: a session it doesn't answer to is dropped, never kept, and the sign-in step
+                            // comes up with a line saying why, which the phone reads as a refused attempt.
+                            draft.update { it.copy(handedSession = null, attempts = it.attempts + 1) }
+                            val adopted = connection.adoptHandedSession(server.baseUrl, session, analytics, crashBreadcrumbs)
+                            draft.update {
+                                if (adopted) {
+                                    it.copy(editing = null)
+                                } else {
+                                    it.copy(
+                                        server = server,
+                                        form = SignInForm(mode = server.modes.first()),
+                                        error = SetupError.HandOffSessionRejected,
+                                    )
+                                }
+                            }
+                        }
                     }.onFailure { failure ->
                         draft.update {
-                            it.copy(error = failure.toSetupError().orLocalNetworkDenied(url, localNetwork).forAddress(url, it.received))
+                            it.copy(
+                                error = failure.toSetupError().orLocalNetworkDenied(url, localNetwork).forAddress(url, it.received),
+                                handedSession = null,
+                            )
                         }
                     }
                 draft.update { it.copy(busy = false) }
@@ -214,29 +250,37 @@ class SetupViewModel
          * listener behind it, and taking the plate down stops listening at once.
          */
         fun showHandOff(showing: Boolean) {
-            if (!showing) {
+            val current = draft.value
+            when {
                 // Once an address is in, the plate going is the page moving on, not the user leaving: the listener
                 // stays up to tell the phone how the sign-in went, and ends on its own.
-                if (draft.value.received) return
-                handOff.cancel()
-                draft.update { it.copy(handOff = null) }
-                return
+                !showing ->
+                    if (!current.received) {
+                        handOff.cancel()
+                        draft.update { it.copy(handOff = null) }
+                    }
+                // The sign-in step offers a code too, so a phone can finish what the remote would type: the listener that
+                // brought the address is still up when there was one, and otherwise this opens one.
+                current.server != null -> if (current.code == null) handOff.start()
+                current.busy -> Unit
+                else -> {
+                    // Past an address the listener is only following the sign-in for the phone's page. Asking for
+                    // the plate again wants a new code, so that phase ends and a fresh listener replaces it.
+                    if (current.received) {
+                        handOff.cancel()
+                        draft.update { it.copy(handOff = null, received = false) }
+                    }
+                    draft.update { it.copy(error = null) }
+                    handOff.start()
+                }
             }
-            val current = draft.value
-            if (current.server != null || current.busy) return
-            // Past an address the listener is only following the sign-in for the phone's page. Asking for
-            // the plate again wants a new code, so that phase ends and a fresh listener replaces it.
-            if (current.received) {
-                handOff.cancel()
-                draft.update { it.copy(handOff = null, received = false) }
-            }
-            draft.update { it.copy(error = null) }
-            handOff.start()
         }
 
         fun changeServer() {
             cancelLink()
-            draft.update { it.copy(server = null, form = SignInForm(), error = null, notice = null) }
+            // Back to the address: the sign-in step's code goes with the step.
+            handOff.cancel()
+            draft.update { it.copy(server = null, form = SignInForm(), error = null, notice = null, code = null, received = false) }
         }
 
         fun editForm(transform: SignInForm.() -> SignInForm) =
@@ -375,6 +419,10 @@ class SetupViewModel
             val handOff: AddressHandOff? = null,
             /** Whether [serverUrl] is the address a phone sent, untouched since. */
             val received: Boolean = false,
+            /** The hand-off's live code, kept through the sign-in step so a phone can carry on there. */
+            val code: AddressHandOff.Listening? = null,
+            /** The session a phone sent with [serverUrl], until the server it names has been read and has judged it. */
+            val handedSession: String? = null,
             /** How many sets of credentials a phone has sent this TV, taken or not; the phone's way to tell which attempt an error is about. */
             val attempts: Int = 0,
             /** Bumped when the local-network permission may have changed, so the state is built again from the live answer. */
@@ -465,3 +513,19 @@ private fun SetupError.orLocalNetworkDenied(
     url: String,
     permission: LocalNetworkPermission,
 ): SetupError = if (this == SetupError.Unreachable && url.isBlockedByLocalNetwork(permission)) SetupError.LocalNetworkDenied else this
+
+/** [SeerrConnection.adoptSession], with the breadcrumb and the sign-in event it is owed. True when the TV is signed in. */
+private suspend fun SeerrConnection.adoptHandedSession(
+    baseUrl: String,
+    session: String,
+    analytics: Analytics,
+    crashBreadcrumbs: CrashBreadcrumbs,
+): Boolean {
+    crashBreadcrumbs.log("signing in with a phone's session")
+    val result = adoptSession(baseUrl, session)
+    analytics.event(
+        AnalyticsEvents.SIGN_IN,
+        mapOf(AnalyticsEvents.PARAM_METHOD to HAND_OFF_SESSION_MODE, AnalyticsEvents.PARAM_SUCCESS to result.isSuccess),
+    )
+    return result.isSuccess
+}

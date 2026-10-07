@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.screenName
 import io.github.scottcooper92.binge.seerr.ui.SetupViewModel
 import io.github.scottcooper92.binge.seerr.ui.bingeAnswersTitleLink
 import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
+import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.hub.HubViewModel
 import io.github.scottcooper92.binge.seerr.ui.hub.isProblem
@@ -91,6 +92,8 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
         onSelect = { selected = it },
         accountName = account?.name,
         accountAvatarUrl = account?.avatarUrl,
+        // The phone's rule for its Issues section: shown once the server is known to let this account list them.
+        showIssues = (hub as? HubUiState.Ready)?.overview?.let { HubSection.Issues.isVisible(it) } == true,
         overlay =
             when {
                 editingConnection ->

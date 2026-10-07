@@ -17,6 +17,9 @@ enum class SetupError {
     LocalNetworkDenied,
     Unknown,
     LinkExpired,
+
+    /** A phone sent its sign-in with the address, and the server didn't accept it here (#772); the TV signs in itself. */
+    HandOffSessionRejected,
 }
 
 /** Something that went right and wants saying: the only one so far is the reset email. */
@@ -159,6 +162,8 @@ sealed interface SetupUiState {
         val cleartextAllowed: Boolean = false,
         val handOff: AddressHandOff? = null,
         val needsLocalNetwork: Boolean = false,
+        /** The hand-off's live code, kept after an address arrives so a phone can send another if that one failed. */
+        val code: AddressHandOff.Listening? = null,
     ) : SetupUiState {
         val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)
     }
@@ -171,6 +176,8 @@ sealed interface SetupUiState {
         val link: LinkFlow?,
         val error: SetupError?,
         val notice: SetupNotice?,
+        /** The hand-off's code, while one is live: on a TV the step opens on it, so a phone can finish the sign-in. */
+        val code: AddressHandOff.Listening? = null,
     ) : SetupUiState
 
     /** The credentials landed; the home swaps to the hub on the next frame. */

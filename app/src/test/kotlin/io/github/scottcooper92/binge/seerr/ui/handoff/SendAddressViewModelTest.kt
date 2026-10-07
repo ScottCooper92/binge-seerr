@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.handoff.AddressSender
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
 import io.github.scottcooper92.binge.seerr.handoff.DataStoreHandOffAddressMemory
+import io.github.scottcooper92.binge.seerr.handoff.HAND_OFF_SESSION_MODE
 import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffKey
 import io.github.scottcooper92.binge.seerr.handoff.HandOffStatus
@@ -27,6 +28,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -61,13 +63,16 @@ class SendAddressViewModelTest {
     /** Every send, with what it carried; answers [accept] until a test changes it. */
     private class RecordingSender : AddressSender {
         val sent = mutableListOf<Pair<TvHandOffTarget, String>>()
+        val sealed = mutableListOf<String?>()
         var accept = CompletableDeferred(true)
 
         override suspend fun send(
             target: TvHandOffTarget,
             address: String,
+            sealed: String?,
         ): Boolean {
             sent += target to address
+            this.sealed += sealed
             return accept.await()
         }
     }
@@ -365,6 +370,64 @@ class SendAddressViewModelTest {
                 listOf(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "correct horse")),
                 tv.sentCredentials,
             )
+        }
+
+    @Test
+    fun `with the switch on, the phone's session goes with the address, sealed for this TV, and is marked shared`() =
+        runTest {
+            val key = HandOffKey.generate()
+            // Waiting when the sheet opens; checking once the address is in.
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CHECKING))
+            val vm = viewModel("$LINK&k=${key.encoded()}", SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+            val ready = vm.settled() as SendAddressUiState.Ready
+            assertTrue("the offer is there for a user session", ready.signIn != null)
+            assertFalse("and off until the user turns it on", ready.signInChosen)
+
+            vm.chooseSignIn(true)
+            vm.send()
+            val step = (vm.uiState.first { it is SendAddressUiState.SigningIn } as SendAddressUiState.SigningIn).step
+
+            assertEquals(SignInStep.Session(awaiting = 1), step)
+            val opened = key.open(checkNotNull(sender.sealed.single()), context = TOKEN)?.decodeToString()
+            assertEquals(
+                HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "s1d"),
+                Json.decodeFromString<HandOffCredentials>(opened!!),
+            )
+            assertEquals(null, key.open(sender.sealed.single()!!, context = "another1"))
+        }
+
+    @Test
+    fun `with the switch off, or an API key connection, nothing of the session is sent or offered`() =
+        runTest {
+            val key = HandOffKey.generate()
+            val link = "$LINK&k=${key.encoded()}"
+            val off = viewModel(link, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+            off.settled()
+            off.send()
+            off.uiState.first { it is SendAddressUiState.SigningIn }
+            assertEquals(listOf<String?>(null), sender.sealed)
+
+            val keyed =
+                viewModel(
+                    link,
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")),
+                ).settled() as SendAddressUiState.Ready
+            assertEquals(null, keyed.signIn)
+        }
+
+    @Test
+    fun `a TV already on its sign-in step skips the address and offers the session as one tap`() =
+        runTest {
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+
+            val form = vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form } as SendAddressUiState.SigningIn
+            assertTrue((form.step as SignInStep.Form).sessionOffer != null)
+            assertTrue("no address is sent to a TV past that step", sender.sent.isEmpty())
+
+            vm.sendSession()
+            vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting != null }
+            assertEquals(listOf(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "s1d")), tv.sentCredentials)
         }
 
     @Test

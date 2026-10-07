@@ -83,7 +83,8 @@ internal data class HandOffResponse(
                 append("Referrer-Policy: no-referrer\r\n")
                 append("X-Content-Type-Options: nosniff\r\n")
                 append(
-                    "Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; script-src '$LINK_SCRIPT_HASH'; " +
+                    "Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; " +
+                        "script-src '$PAGE_SCRIPT_HASH'; connect-src 'self'; " +
                         "form-action 'self'; base-uri 'none'; frame-ancestors 'none'\r\n",
                 )
                 append("Connection: close\r\n")

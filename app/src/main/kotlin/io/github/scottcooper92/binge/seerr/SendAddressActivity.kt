@@ -1,5 +1,8 @@
 package io.github.scottcooper92.binge.seerr
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +11,8 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
+import io.github.scottcooper92.binge.seerr.handoff.TvHandOffLinks
+import io.github.scottcooper92.binge.seerr.handoff.TvHandOffTarget
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.handoff.SendAddressActions
 import io.github.scottcooper92.binge.seerr.ui.handoff.SendAddressSheet
@@ -21,7 +26,8 @@ import io.github.scottcooper92.binge.seerr.ui.handoff.SendAddressViewModel
  * Exported, and reachable from any browser page, so it trusts nothing in the link: the ViewModel
  * refuses a target that is not a private address on this network, and sends nothing without the
  * user's tap. Its own Activity rather than a route in [MainActivity], so the one link a web page can
- * open is this one, and the notification links stay unexported.
+ * open is this one, and the notification links stay unexported. The in-app scan (#773) opens it too,
+ * with the same link, so both routes go through the same checks.
  */
 @AndroidEntryPoint
 class SendAddressActivity : ComponentActivity() {
@@ -41,13 +47,26 @@ class SendAddressActivity : ComponentActivity() {
                     actions =
                         SendAddressActions(
                             onEdit = viewModel::editAddress,
+                            onChooseSignIn = viewModel::chooseSignIn,
                             onSend = viewModel::send,
                             onEditSignIn = viewModel::editSignIn,
                             onSendSignIn = viewModel::sendSignIn,
+                            onSendSession = viewModel::sendSession,
                             onClose = ::finish,
                         ),
                 )
             }
         }
+    }
+
+    companion object {
+        /** This sheet for a code the app scanned itself: the same link a TV's page opens, key included. */
+        fun intent(
+            context: Context,
+            target: TvHandOffTarget,
+        ): Intent =
+            Intent(context, SendAddressActivity::class.java)
+                .setAction(Intent.ACTION_VIEW)
+                .setData(Uri.parse(TvHandOffLinks.appLink(target)))
     }
 }

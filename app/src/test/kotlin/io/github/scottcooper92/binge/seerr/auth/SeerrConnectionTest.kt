@@ -497,6 +497,49 @@ class SeerrConnectionTest {
         }
 
     @Test
+    fun `a handed session is kept only once the server answers to it, as the user it names, marked shared`() =
+        runTest {
+            server.enqueue(json("""{"id":7,"permissions":32}"""))
+            server.enqueueProfile(json("""{"version":"2.7.3"}"""), json("""{"initialized":true}"""))
+            val sut = connection(backgroundScope)
+
+            val saved = sut.adoptSession(baseUrl, "h4nd3d").getOrThrow()
+
+            assertEquals(SeerrAuth.Session(cookie = "h4nd3d", userId = 7, shared = true), saved.auth)
+            assertEquals(saved, sut.credentials.first())
+            val me = server.takeRequest()
+            assertEquals("/api/v1/auth/me", me.url.encodedPath)
+            assertEquals("connect.sid=h4nd3d", me.headers["Cookie"])
+        }
+
+    @Test
+    fun `a handed session the server refuses is not saved`() =
+        runTest {
+            server.enqueue(MockResponse(code = 403))
+            val sut = connection(backgroundScope)
+
+            assertTrue(sut.adoptSession(baseUrl, "st4l3").isFailure)
+            assertNull(sut.credentials.first())
+        }
+
+    @Test
+    fun `a shared session is forgotten on disconnect without being ended on the server`() =
+        runTest {
+            server.enqueue(json("""{"id":42}""", headersOf("Set-Cookie", "connect.sid=s3ss10n; Path=/")))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            val sut = connection(backgroundScope)
+            sut.logIn(baseUrl, SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+            val before = server.requestCount
+
+            sut.markSessionShared()
+            assertEquals(true, (sut.credentials.first()?.auth as SeerrAuth.Session).shared)
+            sut.disconnect()
+
+            assertNull(sut.credentials.first())
+            assertEquals("No logout: the other device is still using this session", before, server.requestCount)
+        }
+
+    @Test
     fun `disconnect forgets the connection and the cached user`() =
         runTest {
             server.enqueue(json("""{"id":1,"permissions":2}"""))

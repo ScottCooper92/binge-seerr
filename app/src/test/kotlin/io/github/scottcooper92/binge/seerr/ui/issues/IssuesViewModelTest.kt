@@ -144,7 +144,7 @@ class IssuesViewModelTest {
         }
 
     @Test
-    fun `a reporter without the view permission is narrowed to their own issues`() =
+    fun `a reporter without the view permission is scoped to their own issues, which the server narrows itself`() =
         runTest {
             server(CREATE_ISSUES)
             val vm = viewModel()
@@ -155,7 +155,7 @@ class IssuesViewModelTest {
             vm.issues(IssueFilter.All).asSnapshot()
 
             val listed = received.last { it.url.encodedPath == "/api/v1/issue" }.url
-            assertEquals("7", listed.queryParameter("createdBy"))
+            assertNull("Seerr's validator refuses createdBy", listed.queryParameter("createdBy"))
             assertEquals("all", listed.queryParameter("filter"))
         }
 

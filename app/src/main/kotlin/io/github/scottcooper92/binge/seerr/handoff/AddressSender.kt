@@ -13,10 +13,11 @@ import javax.inject.Inject
 
 /** Sends a server address to a television's hand-off listener. */
 fun interface AddressSender {
-    /** Whether the TV accepted [address]. */
+    /** Whether the TV accepted [address], and [sealed] with it: the phone's session, already sealed for this TV, or null. */
     suspend fun send(
         target: TvHandOffTarget,
         address: String,
+        sealed: String?,
     ): Boolean
 }
 
@@ -41,13 +42,16 @@ internal class OkHttpAddressSender(
     override suspend fun send(
         target: TvHandOffTarget,
         address: String,
+        sealed: String?,
     ): Boolean =
         withContext(dispatcher) {
+            val form = FormBody.Builder().add("address", address)
+            sealed?.let { form.add("sealed", it) }
             val request =
                 Request
                     .Builder()
                     .url(target.url)
-                    .post(FormBody.Builder().add("address", address).build())
+                    .post(form.build())
                     .build()
             try {
                 client.newCall(request).execute().use { response ->

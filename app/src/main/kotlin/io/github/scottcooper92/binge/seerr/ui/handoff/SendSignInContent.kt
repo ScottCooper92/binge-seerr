@@ -3,6 +3,8 @@ package io.github.scottcooper92.binge.seerr.ui.handoff
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.ModeChips
@@ -44,6 +48,10 @@ internal fun SigningInContent(
         }
         is SignInStep.OnTv -> Done(stringResource(R.string.send_signin_on_tv, step.server), R.string.send_address_close, actions.onClose)
         is SignInStep.Form -> SignInFormContent(step, actions)
+        is SignInStep.Session -> {
+            Body(stringResource(R.string.send_signin_session, state.tv))
+            BingeLoadingIndicator()
+        }
         SignInStep.Connected -> Done(stringResource(R.string.send_signin_connected, state.tv), R.string.send_address_done, actions.onClose)
         SignInStep.Lost -> Done(stringResource(R.string.send_signin_lost), R.string.send_address_close, actions.onClose)
     }
@@ -64,6 +72,24 @@ private fun SignInFormContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Body(stringResource(R.string.send_signin_form, step.server))
+        step.sessionOffer?.let { offer ->
+            ItemGroup(
+                title = null,
+                rows =
+                    listOf(
+                        ListItem(
+                            icon = Icons.AutoMirrored.Filled.Login,
+                            label =
+                                offer.userName?.let { stringResource(R.string.send_signin_continue_as, it) }
+                                    ?: stringResource(R.string.send_signin_continue_as_you),
+                            detail = stringResource(R.string.send_address_sign_in_shared),
+                            loading = step.isSending && step.sendingSession,
+                            disabled = step.isSending && !step.sendingSession,
+                            onClick = actions.onSendSession,
+                        ),
+                    ),
+            )
+        }
         if (step.modes.size > 1) ModeChips(server, step.form.mode) { mode -> actions.onEditSignIn { copy(mode = mode) } }
         ModeFields(signIn, actions.onEditSignIn, onRequestPasswordReset = {}, onConnect = actions.onSendSignIn)
         Text(
@@ -87,7 +113,6 @@ private fun SignInFormContent(
             loading = step.isSending,
             modifier = Modifier.fillMaxWidth(),
         )
-        BingeOutlinedButton(label = stringResource(R.string.link_cancel), onClick = actions.onClose, modifier = Modifier.fillMaxWidth())
     }
 }
 

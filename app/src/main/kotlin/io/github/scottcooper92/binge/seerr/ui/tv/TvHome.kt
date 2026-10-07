@@ -20,8 +20,9 @@ internal fun TvSeerrShell(viewModel: TvHomeViewModel = hiltViewModel()) {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             when (state) {
                 TvHomeUiState.Loading -> TvLoadingPlate()
-                TvHomeUiState.Setup -> TvSetupEntry()
-                TvHomeUiState.Connected -> TvConnectedShell()
+                // Each in its own view-model scope: a new connection gets new screens, not the last one's.
+                TvHomeUiState.Setup -> TvViewModelScope { TvSetupEntry() }
+                TvHomeUiState.Connected -> TvViewModelScope { TvConnectedShell() }
             }
         }
     }

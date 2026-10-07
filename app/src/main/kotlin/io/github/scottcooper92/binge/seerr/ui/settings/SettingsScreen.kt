@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +33,7 @@ import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
+import io.github.scottcooper92.binge.seerr.ui.handoff.rememberScanTvCode
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ScheduleDialog
@@ -107,8 +110,17 @@ private fun SettingsContent(
     val config = state.config
     var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        ServerAddressPlate(
-            baseUrl = state.connection.baseUrl,
+        ItemGroup(
+            title = null,
+            rows =
+                listOf(
+                    ListItem(
+                        icon = Icons.Filled.Tv,
+                        label = stringResource(R.string.hub_set_up_tv),
+                        detail = stringResource(R.string.hub_set_up_tv_detail),
+                        onClick = rememberScanTvCode(),
+                    ),
+                ),
             modifier = Modifier.padding(horizontal = resolvedContentInset()),
         )
         Group(

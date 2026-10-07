@@ -67,7 +67,7 @@ class AddressHandOffListenerTest {
         val addresses = Channel<String>(Channel.UNLIMITED)
         return addresses to
             serverScope.launch {
-                listener.serve({ progress }, { addresses.trySend(it) }, { credentials.trySend(it) })
+                listener.serve({ progress }, { address, _ -> addresses.trySend(address) }, { credentials.trySend(it) })
             }
     }
 

@@ -29,6 +29,17 @@ class HandOffPageTest {
             signInBody = { server -> "Sign in to $server" },
             connectedTitle = "Done",
             connectedBody = "Done body",
+            signInFormTitle = { server -> "Sign in to $server here" },
+            signInFormBody = "Sealed for your TV",
+            modeField = "Sign in with",
+            modeLabel = { it },
+            username = "Username",
+            email = "Email",
+            password = "Password",
+            apiKey = "API key",
+            signIn = "Sign in",
+            signingIn = "Signing in",
+            rejected = "Rejected",
         )
 
     private val page = HandOffPageTemplate(copyFor = ::copy, appLink = "intent://tv-handoff?to=1.2.3.4:5&token=t#Intent;end")
@@ -45,16 +56,16 @@ class HandOffPageTest {
         val html = page.form("es-ES,es;q=0.9", invalid = false)
 
         assertTrue(html.startsWith("<!doctype html>"))
-        assertTrue(html.contains("<html lang=\"es\">"))
+        assertTrue(html.contains("<html lang=\"es\""))
         assertTrue(html.contains("Title es"))
         assertTrue(html.contains("Body &lt;b&gt;"))
         assertTrue(html.contains("<form method=\"post\">"))
         assertTrue(html.contains("name=\"address\""))
         assertTrue(html.contains("href=\"intent://tv-handoff?to=1.2.3.4:5&amp;token=t#Intent;end\""))
         assertTrue(html.contains("Open &quot;app&quot;"))
-        // One script, the link rewrite, and nothing else that runs.
+        // One script, the page's own, and nothing else that runs.
         assertEquals(1, Regex("<script").findAll(html).count())
-        assertTrue(html.contains("<script>$LINK_SCRIPT</script>"))
+        assertTrue(html.contains("<script>$PAGE_SCRIPT</script>"))
         assertTrue(html.contains("id=\"app\""))
         assertFalse(html.contains("Invalid"))
     }
@@ -63,43 +74,50 @@ class HandOffPageTest {
     fun `a refused address shows the error, and the sent page says so`() {
         assertTrue(page.form(null, invalid = true).contains("Invalid &amp; wrong"))
         val sent = page.status("en-GB", HandOffProgress.Checking)
-        assertTrue(sent.contains("<html lang=\"en\">"))
+        assertTrue(sent.contains("<html lang=\"en\""))
         assertTrue(sent.contains("Sent body"))
         assertFalse(sent.contains("<form"))
     }
 
     @Test
-    fun `the page's one script is the one its content-security-policy allows, and no other page carries a script`() {
+    fun `the page's one script is the one its content-security-policy allows, and every page carries only that one`() {
         val digest =
             java.security.MessageDigest
                 .getInstance("SHA-256")
-                .digest(LINK_SCRIPT.toByteArray())
+                .digest(PAGE_SCRIPT.toByteArray())
         assertEquals(
             "sha256-" +
                 java.util.Base64
                     .getEncoder()
                     .encodeToString(digest),
-            LINK_SCRIPT_HASH,
+            PAGE_SCRIPT_HASH,
         )
 
         val headers = HandOffResponse(HttpStatus.Ok, "<p>").bytes().decodeToString()
-        assertTrue(headers.contains("script-src '$LINK_SCRIPT_HASH'"))
+        assertTrue(headers.contains("script-src '$PAGE_SCRIPT_HASH'"))
+        // The sign-in step's requests go back to the TV and nowhere else.
+        assertTrue(headers.contains("connect-src 'self'"))
         assertTrue(headers.contains("default-src 'none'"))
 
         listOf(
             HandOffProgress.Checking,
             HandOffProgress.SignIn("Home"),
             HandOffProgress.Connected,
-        ).forEach { assertFalse(page.status("en", it).contains("<script")) }
+        ).forEach { progress ->
+            val html = page.status("en", progress)
+            assertEquals(1, Regex("<script").findAll(html).count())
+            assertTrue(html.contains("<script>$PAGE_SCRIPT</script>"))
+        }
     }
 
     @Test
-    fun `the script only moves a well-formed key into the app link, and reads it from the fragment`() {
-        assertTrue(LINK_SCRIPT.contains("location.hash"))
-        assertTrue(LINK_SCRIPT.contains("{43}"))
-        assertFalse(LINK_SCRIPT.contains("fetch"))
-        assertFalse(LINK_SCRIPT.contains("XMLHttpRequest"))
-        assertFalse(LINK_SCRIPT.contains("document.cookie"))
+    fun `the script reads a well-formed key from the fragment and talks only to the TV's own paths`() {
+        assertTrue(PAGE_SCRIPT.contains("location.hash"))
+        assertTrue(PAGE_SCRIPT.contains("{43}"))
+        assertTrue(PAGE_SCRIPT.contains("history.replaceState"))
+        assertEquals(setOf("\"/s/\"", "\"/c/\""), Regex("fetch\\((\"/[a-z]/\")").findAll(PAGE_SCRIPT).map { it.groupValues[1] }.toSet())
+        assertFalse(PAGE_SCRIPT.contains("XMLHttpRequest"))
+        assertFalse(PAGE_SCRIPT.contains("document.cookie"))
     }
 
     @Test
@@ -119,7 +137,22 @@ class HandOffPageTest {
         val connected = page.status("en", HandOffProgress.Connected)
         assertTrue(connected.contains("Done body"))
         assertFalse(connected.contains("http-equiv=\"refresh\""))
-        assertFalse(connected.contains("<script"))
+    }
+
+    @Test
+    fun `the sign-in step offers the server's fields, and holds still so typing isn't lost`() {
+        val html = page.status("en", HandOffProgress.SignIn("Living <room>", modes = listOf("Jellyfin", "Local", "ApiKey", "Plex")))
+
+        assertTrue(html.contains("Sign in to Living &lt;room&gt; here"))
+        // Hidden until the script has the key; the "finish on your TV" message is what a page without it shows.
+        assertTrue(html.contains("<form id=\"signin\" hidden data-mode=\"Jellyfin\">"))
+        assertTrue(html.contains("<div id=\"ontv\">"))
+        // Only the modes with fields: Plex finishes with a code on the TV.
+        assertEquals(3, Regex("<option ").findAll(html).count())
+        assertFalse(html.contains("value=\"Plex\""))
+        // The script follows the TV; only a browser without it refreshes.
+        assertEquals(1, Regex("http-equiv=\"refresh\"").findAll(html).count())
+        assertTrue(html.contains("<noscript><meta http-equiv=\"refresh\""))
     }
 
     @Test

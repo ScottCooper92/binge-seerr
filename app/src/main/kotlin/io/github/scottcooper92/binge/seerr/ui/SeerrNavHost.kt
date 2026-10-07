@@ -334,5 +334,6 @@ internal fun SetupViewModel.tvActions(): SetupActions =
         onAllowCleartext = ::allowCleartext,
         onStartHandOff = { showHandOff(true) },
         onCancelHandOff = { showHandOff(false) },
+        onOfferSignInCode = { showHandOff(true) },
         onLocalNetworkChanged = ::localNetworkResult,
     )

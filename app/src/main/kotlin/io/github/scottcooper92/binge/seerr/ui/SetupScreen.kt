@@ -30,6 +30,8 @@ class SetupActions(
     /** The television's hand-off from a phone (#323). Defaulted for the same reason: the phone never offers it. */
     val onStartHandOff: () -> Unit = {},
     val onCancelHandOff: () -> Unit = {},
+    /** The TV's sign-in step asks for a code of its own when the address didn't come with one. */
+    val onOfferSignInCode: () -> Unit = {},
     /** The local-network permission may have changed; read it again. Defaulted like [onAllowCleartext]. */
     val onLocalNetworkChanged: () -> Unit = {},
 )
@@ -81,4 +83,5 @@ internal fun SetupError.messageRes(): Int =
         SetupError.LocalNetworkDenied -> R.string.setup_error_local_network_denied
         SetupError.Unknown -> R.string.setup_error_unknown
         SetupError.LinkExpired -> R.string.setup_error_link_expired
+        SetupError.HandOffSessionRejected -> R.string.setup_error_handoff_session_rejected
     }

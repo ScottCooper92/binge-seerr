@@ -121,4 +121,25 @@ internal object TvHandOffLinks {
         if (query.containsKey(KEY) && key == null) return null
         return TvHandOffTarget(host = host, port = port, token = token, key = key)
     }
+
+    /**
+     * The target a code scanned in the app names: `http://<ip:port>/a/<token>#k=<key>`, as the listener's scan URL
+     * writes it (#773). Null for any other text, so a code that isn't a TV's is ignored rather than followed.
+     */
+    fun parseCode(code: String?): TvHandOffTarget? {
+        val uri =
+            try {
+                URI(code?.trim() ?: return null)
+            } catch (_: URISyntaxException) {
+                return null
+            }
+        if (!uri.scheme.equals("http", ignoreCase = true) || uri.rawUserInfo != null || uri.rawQuery != null) return null
+        val host = uri.host ?: return null
+        val port = uri.port.takeIf { it in 1..MAX_PORT } ?: return null
+        val token = uri.rawPath?.removePrefix("/a/")?.takeIf { TOKEN_SHAPE.matches(it) } ?: return null
+        val fragment = uri.rawFragment
+        val key = fragment?.removePrefix("$KEY=")?.let(HandOffKey::parse)
+        if (fragment != null && key == null) return null
+        return TvHandOffTarget(host = host, port = port, token = token, key = key)
+    }
 }

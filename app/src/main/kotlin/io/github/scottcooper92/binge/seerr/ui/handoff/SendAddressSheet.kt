@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,7 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
-import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
 import com.binge.designsystem.R as DesR
@@ -33,12 +36,14 @@ internal fun SendAddressSheet(
     }
 }
 
-/** What the sheet can ask for. Only [onSend] sends anything; editing changes the field. */
+/** What the sheet can ask for. Only [onSend] sends anything; editing changes the field, and the tick only what Send includes. */
 internal data class SendAddressActions(
     val onEdit: (String) -> Unit = {},
+    val onChooseSignIn: (Boolean) -> Unit = {},
     val onSend: () -> Unit = {},
     val onEditSignIn: ((SignInForm.() -> SignInForm) -> Unit) = {},
     val onSendSignIn: () -> Unit = {},
+    val onSendSession: () -> Unit = {},
     val onClose: () -> Unit = {},
 )
 
@@ -83,14 +88,25 @@ private fun ReadyContent(
     state: SendAddressUiState.Ready,
     actions: SendAddressActions,
 ) {
-    Body(stringResource(R.string.send_address_confirm, state.tv))
     SendAddressField(state, actions.onEdit, actions.onSend)
-    Text(
-        stringResource(R.string.send_address_only_address),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-    )
+    state.signIn?.let { offer ->
+        ItemGroup(
+            title = null,
+            rows =
+                listOf(
+                    ListItem(
+                        icon = Icons.AutoMirrored.Filled.Login,
+                        label =
+                            offer.userName?.let { stringResource(R.string.send_address_sign_in_as, it) }
+                                ?: stringResource(R.string.send_address_sign_in_as_you),
+                        detail = stringResource(R.string.send_address_sign_in_shared),
+                        toggled = state.signInChosen,
+                        disabled = state.isSending,
+                        onClick = { actions.onChooseSignIn(!state.signInChosen) },
+                    ),
+                ),
+        )
+    }
     if (state.failed) {
         Text(
             stringResource(R.string.send_address_failed),
@@ -106,7 +122,6 @@ private fun ReadyContent(
         loading = state.isSending,
         modifier = Modifier.fillMaxWidth(),
     )
-    BingeOutlinedButton(label = stringResource(R.string.link_cancel), onClick = actions.onClose, modifier = Modifier.fillMaxWidth())
 }
 
 @Composable

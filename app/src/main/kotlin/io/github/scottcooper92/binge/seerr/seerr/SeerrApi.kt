@@ -142,8 +142,9 @@ interface SeerrApi {
     suspend fun issueCount(): SeerrIssueCountDto
 
     /**
-     * A page of issues; [filter] is `all`, `open` or `resolved`, [sort] `added` or `modified`.
-     * The issue list narrows by its reporter, `createdBy` — not the request list's `requestedBy`.
+     * A page of issues; [filter] is `all`, `open` or `resolved`, [sort] `added` or `modified`. There is no reporter
+     * filter to send: the server already narrows a user without `VIEW_ISSUES` or `MANAGE_ISSUES` to their own, and its
+     * request validator refuses `createdBy` outright, since the API spec declares only `requestedBy` (seerr-api.yml).
      */
     @GET("api/v1/issue")
     suspend fun issues(
@@ -151,7 +152,6 @@ interface SeerrApi {
         @Query("skip") skip: Int = 0,
         @Query("filter") filter: String = "all",
         @Query("sort") sort: String = "added",
-        @Query("createdBy") createdBy: Int? = null,
     ): SeerrIssuePageDto
 
     /** A user's own quota, or any user's with `MANAGE_USERS`. */

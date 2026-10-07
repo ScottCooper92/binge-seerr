@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,15 +14,17 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Constraints
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvIconButton
+import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
-import com.binge.designsystem.tv.focus.TvOverlayArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
-import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
@@ -29,10 +32,11 @@ import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.messageRes
 import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import com.binge.designsystem.R as DesR
+import com.binge.designsystem.tv.R as TvR
 
 /**
- * The address step: one page whose left pane stays put while the right one swaps between the code for a phone
- * and the typed form, so choosing between them changes only what there is to do.
+ * The address typed with the remote: the fallback from the code page ([TvSetupCodePage]) for a network where the
+ * phone can't reach the TV. Its left pane is the code page's, so stepping between them moves nothing there.
  */
 @Composable
 internal fun TvSetupAddressPage(
@@ -40,43 +44,26 @@ internal fun TvSetupAddressPage(
     actions: SetupActions,
     modifier: Modifier,
     initialFocus: TvSetupFocus?,
-    awaitingCode: Boolean,
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
-    val handOff = state.handOff
-    val showingCode = handOff != null || awaitingCode
-    // The target moves from the field to the button, or back, as the pane swaps; offer focus again when it does.
-    TvOverlayArrivalFocusEffect(arrival.requester, key = showingCode to (handOff != null))
     TvFormPage(
         headline = stringResource(R.string.tv_setup_headline),
-        body = stringResource(if (showingCode) R.string.tv_handoff_body else R.string.tv_setup_address_body),
+        // The code page's body, so leaving it for this form changes nothing on the left.
+        body = stringResource(R.string.tv_handoff_body),
         icon = Icons.Filled.Dns,
         modifier = modifier,
-        actionScrolls = !showingCode,
-        note = if (showingCode) stringResource(R.string.tv_handoff_note) else null,
-        // The switch between the two panes is in the same place on both, and is the only thing pinned.
-        pinnedAction = {
-            if (showingCode) {
-                TvHandOffTypeInstead(onClick = actions.onCancelHandOff, arrival = arrival, enabled = handOff != null)
-            } else {
-                TvButton(
-                    label = stringResource(R.string.tv_setup_send_from_phone),
-                    onClick = actions.onStartHandOff,
-                    enabled = !state.isInspecting,
-                    modifier = Modifier.tvArrivalTarget(arrival),
-                )
-            }
+        buttonBar = true,
+        // Back to the code, in the same place the way here was.
+        copyAction = {
+            TvButton(
+                label = stringResource(R.string.tv_setup_send_from_phone),
+                onClick = actions.onStartHandOff,
+                enabled = !state.isInspecting,
+            )
         },
     ) {
-        when {
-            handOff != null -> {
-                TvHandOffLifecycle(actions.onCancelHandOff)
-                TvHandOffContent(handOff)
-            }
-            awaitingCode -> Unit
-            else -> TvSetupAddressFields(state, actions, initialFocus)
-        }
+        TvSetupAddressFields(state, actions, initialFocus, arrival)
     }
 }
 
@@ -85,6 +72,7 @@ private fun ColumnScope.TvSetupAddressFields(
     state: SetupUiState.Address,
     actions: SetupActions,
     initialFocus: TvSetupFocus?,
+    arrival: TvArrivalFocus,
 ) {
     // The way on sits beside the field, as tall as it, so the address and what to do with it read as one row.
     Row(
@@ -102,6 +90,9 @@ private fun ColumnScope.TvSetupAddressFields(
             modifier = Modifier.weight(1f),
             placeholder = stringResource(R.string.placeholder_server_url),
             initiallyFocused = initialFocus == TvSetupFocus.Address,
+            // Where the page lands: the remote came here to type, and the keyboard waits for select.
+            arrival = arrival,
+            onDone = { if (state.canContinue) actions.onInspect() },
         )
         TvIconButton(
             icon = Icons.AutoMirrored.Filled.ArrowForward,
@@ -110,26 +101,41 @@ private fun ColumnScope.TvSetupAddressFields(
             style = TvButtonStyle.Primary,
             enabled = state.canContinue,
             initiallyFocused = initialFocus == TvSetupFocus.Continue,
+            // Disabled, it is not a stop: the remote skips it until there is an address to continue with.
             modifier =
                 Modifier
+                    .focusProperties { canFocus = state.canContinue }
                     .height(
                         dimensionResource(R.dimen.tv_form_field_height),
                     ).widthIn(min = dimensionResource(R.dimen.tv_form_field_height)),
         )
     }
-    if (state.insecure) {
-        TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
-        TvOptionRow(
-            label = stringResource(R.string.setup_allow_cleartext),
-            selected = state.cleartextAllowed,
-            onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
-            modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
-        )
-    }
-    state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
-    if (state.needsLocalNetwork) {
-        val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
-        TvFormNote(stringResource(R.string.setup_local_network_explanation))
-        TvButton(label = stringResource(allow.label), onClick = allow.run, style = TvButtonStyle.Secondary)
+    // What appears under the field takes no height in the pane, so the field stays where it is as a note comes and goes.
+    Column(
+        modifier = Modifier.fillMaxWidth().belowWithoutHeight(),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
+    ) {
+        if (state.insecure) {
+            TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
+            TvOptionRow(
+                label = stringResource(R.string.setup_allow_cleartext),
+                selected = state.cleartextAllowed,
+                onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
+                modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
+            )
+        }
+        state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
+        if (state.needsLocalNetwork) {
+            val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
+            TvFormNote(stringResource(R.string.setup_local_network_explanation))
+            TvButton(label = stringResource(allow.label), onClick = allow.run, style = TvButtonStyle.Secondary)
+        }
     }
 }
+
+/** Measures and draws the content as usual, but reports no height, so a centred column doesn't recentre around it. */
+private fun Modifier.belowWithoutHeight(): Modifier =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+        layout(placeable.width, 0) { placeable.place(0, 0) }
+    }

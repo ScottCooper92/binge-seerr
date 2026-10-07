@@ -70,13 +70,13 @@ class TvSetupFocusTest {
             onCancelHandOff = { cancelledHandOff++ },
         )
 
-    /** The field must not take the page: focus on it would bring the keyboard up before anyone asked for it. */
+    /** The remote came to type: the page lands on the field, and focus alone doesn't raise the keyboard. */
     @Test
-    fun theAddressStepLandsOnTheSwitchNotTheField() {
+    fun theTypedAddressLandsOnTheFieldWithoutEditingIt() {
         setScreen(address("http://seerr.lan:5055"))
 
-        button(R.string.tv_setup_send_from_phone).assertIsFocused()
-        addressField().assertIsNotFocused()
+        addressField().assertIsFocused()
+        textInput().assertIsNotFocused()
     }
 
     @Test
@@ -85,32 +85,38 @@ class TvSetupFocusTest {
 
         assertEquals(1, startedHandOff)
         addressField().assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_status_preparing)).assertIsDisplayed()
     }
 
     @Test
-    fun theCodeLandsOnTheWayOutOfItAndOkTakesIt() {
-        setScreen(address("").copy(handOff = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")), offerHandOff = true)
+    fun theCodePageLandsOnTheRemoteFallbackAndOkOpensTheForm() {
+        val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
+        setScreen(address("").copy(handOff = code, code = code), offerHandOff = true)
 
-        button(R.string.tv_handoff_type_instead).assertIsFocused()
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_status_waiting)).assertIsDisplayed()
+        button(R.string.tv_setup_enter_manually).assertIsFocused()
         pressOk()
 
         assertEquals(1, cancelledHandOff)
+        addressField().assertIsFocused()
     }
 
     @Test
-    fun typingIntoTheAddressReportsEachEdit() {
+    fun okOnTheFieldStartsEditingAndTypingReportsEachEdit() {
         setScreen(address(""))
 
-        addressField().performTextInput("h")
+        pressOk()
+        textInput().assertIsFocused()
+        textInput().performTextInput("h")
 
         assertEquals(listOf("h"), edits)
     }
 
     @Test
-    fun upFromTheSwitchReachesContinueAndOkInspects() {
+    fun rightFromTheFieldReachesContinueAndOkInspects() {
         setScreen(address("http://seerr.lan:5055"))
 
-        pressUp()
+        pressRight()
         continueButton().assertIsFocused()
         pressOk()
 
@@ -121,20 +127,19 @@ class TvSetupFocusTest {
     fun leftFromContinueReachesTheField() {
         setScreen(address("http://seerr.lan:5055"))
 
-        pressUp()
+        pressRight()
         pressLeft()
 
         addressField().assertIsFocused()
     }
 
+    /** A disabled Continue is not a stop: the remote passes it until there is an address to continue with. */
     @Test
-    fun anEmptyAddressLeavesContinueDisabledButFocusable() {
+    fun anEmptyAddressLeavesContinueOutOfReach() {
         setScreen(address(""))
 
-        pressUp()
-        continueButton().assertIsFocused()
-        pressOk()
-
+        pressRight()
+        continueButton().assertIsNotFocused()
         assertEquals("a blank address must not be inspected", 0, inspected)
     }
 
@@ -209,7 +214,7 @@ class TvSetupFocusTest {
     }
 
     @Test
-    fun theSignInStepWalksModesThenTheFieldThenConnect() {
+    fun theSignInStepLandsOnTheChosenTabThenWalksTheFieldThenConnect() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
@@ -217,8 +222,6 @@ class TvSetupFocusTest {
             ),
         )
 
-        modeRow(R.string.setup_mode_local).assertIsFocused()
-        pressDown()
         modeRow(R.string.setup_mode_api_key).assertIsFocused()
         pressDown()
         field(R.string.setup_api_key).assertIsFocused()
@@ -229,8 +232,9 @@ class TvSetupFocusTest {
         assertEquals(1, connected)
     }
 
+    /** Tabs select on focus, as they do on a television: moving onto one is choosing it. */
     @Test
-    fun okOnAModeRowChangesTheMode() {
+    fun movingAcrossTheTabsChangesTheMode() {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local, SeerrSignInMode.ApiKey),
@@ -238,8 +242,8 @@ class TvSetupFocusTest {
             ),
         )
 
-        modeRow(R.string.setup_mode_local).assertIsFocused()
-        pressOk()
+        modeRow(R.string.setup_mode_api_key).assertIsFocused()
+        pressLeft()
 
         val applied = formEdits.fold(SignInForm(mode = SeerrSignInMode.ApiKey)) { form, edit -> form.edit() }
         assertEquals(SeerrSignInMode.Local, applied.mode)
@@ -302,7 +306,10 @@ class TvSetupFocusTest {
 
     private fun addressField() = field(R.string.setup_server_url)
 
-    private fun field(label: Int) = composeTestRule.onNode(hasSetTextAction() and hasContentDescription(string(label)))
+    /** The field's frame, which the remote lands on and which names the field; the text input inside edits only on OK. */
+    private fun field(label: Int) = composeTestRule.onNode(hasContentDescription(string(label)) and isFocusable())
+
+    private fun textInput() = composeTestRule.onNode(hasSetTextAction())
 
     // A disabled button is a focusable surface over its own text node rather than one merged node, so the
     // label may sit a level below the node that carries focus.
@@ -318,6 +325,11 @@ class TvSetupFocusTest {
 
     private fun pressUp() {
         composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionUp) }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun pressRight() {
+        composeTestRule.onRoot().performKeyInput { pressKey(Key.DirectionRight) }
         composeTestRule.waitForIdle()
     }
 
