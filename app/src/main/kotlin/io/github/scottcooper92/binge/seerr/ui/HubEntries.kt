@@ -94,7 +94,7 @@ internal fun SettingsEntry(
         )
     // The jobs view model is only stood up once the System group it feeds can actually appear —
     // admin-only, the same gate the group itself reads — so a non-admin viewer never fires the
-    // `/settings/jobs` call the server would refuse. Mirrors ui/tv/TvEntries.kt's TvAdminSettingsEntry gate.
+    // `/settings/jobs` call the server would refuse. Mirrors ui/tv/TvSettingsEntries.kt's TvAdminSettingsEntry gate.
     if ((state as? SettingsUiState.Ready)?.config != null) {
         SettingsAdminEntry(state = state, showBack = showBack, actions = actions)
     } else {
