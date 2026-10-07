@@ -40,7 +40,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.concurrent.CopyOnWriteArrayList
 
-private const val TIMEOUT_MILLIS = 10_000L
+/**
+ * A hang guard, not a speed limit: it runs in wall-clock time under `runBlocking`, and the first test in the class also pays
+ * for Robolectric, Room, Paging and OkHttp starting cold, which a busy CI runner can stretch past 10 s (#806).
+ */
+private const val TIMEOUT_MILLIS = 60_000L
 
 private val rows = PagedPhase.Rows(refreshing = false, refreshError = null)
 private val refreshingRows = PagedPhase.Rows(refreshing = true, refreshError = null)
