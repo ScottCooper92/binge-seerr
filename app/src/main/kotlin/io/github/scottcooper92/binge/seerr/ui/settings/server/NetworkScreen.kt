@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
@@ -35,6 +36,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.joined
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import kotlinx.coroutines.flow.Flow
+import java.text.DecimalFormatSymbols
 
 /**
  * The network page in the web client's order, as groups of list rows: the switches every lineage has, then the DNS
@@ -99,31 +101,44 @@ private fun timeoutItem(
     actions: EditorActions<NetworkForm>,
 ): ListItem {
     val wrongShape = stringResource(R.string.server_settings_api_timeout_error)
+    val separator = decimalSeparator()
     return textSettingItem(
         icon = Icons.Filled.HourglassEmpty,
         label = stringResource(R.string.server_settings_api_timeout),
-        value = seconds,
+        // The draft keeps `.`; the sheet shows and takes the device's own separator.
+        value = seconds.withDecimalSeparator(separator),
         enabled = enabled,
-        onChange = { value -> actions.onEdit { it.copy(apiRequestTimeout = value) } },
+        onChange = { value -> actions.onEdit { it.copy(apiRequestTimeout = value.canonicalSeconds()) } },
         keyboard = DecimalKeyboard,
         hint = stringResource(R.string.server_settings_api_timeout_hint),
         placeholder = stringResource(R.string.placeholder_api_timeout),
         required = true,
         check = { value -> wrongShape.takeIf { !value.isTimeoutSeconds() } },
-        shown = timeoutShown(seconds),
+        shown = timeoutShown(seconds, separator),
     )
 }
 
+/** The device language's decimal separator: `.` in English, `,` in Spanish. */
+@Composable
+private fun decimalSeparator(): Char = DecimalFormatSymbols.getInstance(LocalConfiguration.current.locales[0]).decimalSeparator
+
 /** The entry as the row reads it: a plural for whole seconds, which a count can carry, and plain text for the rest. */
 @Composable
-private fun timeoutShown(seconds: String): String {
+private fun timeoutShown(
+    seconds: String,
+    separator: Char,
+): String {
     val parsed = seconds.toTimeoutSeconds() ?: return seconds
     val count = parsed.toInt()
     return when {
         parsed.signum() == 0 -> stringResource(R.string.server_settings_api_timeout_none)
         parsed.compareTo(count.toBigDecimal()) == 0 ->
             pluralStringResource(R.plurals.server_settings_api_timeout_value, count, count)
-        else -> stringResource(R.string.server_settings_api_timeout_fraction, parsed.stripTrailingZeros().toPlainString())
+        else ->
+            stringResource(
+                R.string.server_settings_api_timeout_fraction,
+                parsed.stripTrailingZeros().toPlainString().withDecimalSeparator(separator),
+            )
     }
 }
 
