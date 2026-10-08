@@ -52,10 +52,11 @@ class NotificationsViewModel
          * asked for only where the server has it and the viewer is one; a failure leaves the device's own sound.
          */
         private suspend fun pushoverSounds(token: String): List<PushoverSoundChoice> {
-            val listed = connection.profile().hasPushoverSounds && connection.authenticatedUser().toPermissions().isAdmin
-            if (!listed) return emptyList()
-            return runCatching { connection.api().pushoverSounds(token) }
-                .getOrDefault(emptyList())
+            if (!connection.profile().hasPushoverSounds) return emptyList()
+            return runCatching {
+                if (!connection.authenticatedUser().toPermissions().isAdmin) return emptyList()
+                connection.api().pushoverSounds(token)
+            }.getOrDefault(emptyList())
                 .map { PushoverSoundChoice(name = it.name, description = it.description ?: it.name) }
         }
 

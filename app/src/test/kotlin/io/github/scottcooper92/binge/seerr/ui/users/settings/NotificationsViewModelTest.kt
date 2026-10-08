@@ -224,4 +224,11 @@ class NotificationsViewModelTest {
             seerr.viewer(id = 1, permissions = ADMIN, version = "1.33.2", settings = "{}")
             assertFalse(viewModel().awaitReady().draft.telegramTopics)
         }
+
+    @Test
+    fun `Jellyseerr before 2_2 keeps no Telegram topic, so the page does not offer one`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "2.1.0", settings = "{}")
+            assertFalse(viewModel().awaitReady().draft.telegramTopics)
+        }
 }

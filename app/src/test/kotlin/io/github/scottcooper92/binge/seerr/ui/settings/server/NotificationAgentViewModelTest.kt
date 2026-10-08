@@ -340,6 +340,17 @@ class NotificationAgentViewModelTest {
         }
 
     @Test
+    fun `Jellyseerr before 2_2 has no Telegram topic on the agent either`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "2.1.0", settings = "{}")
+            val vm = viewModel(ServerAgent.Telegram)
+            assertTrue(
+                AgentOption.TelegramMessageThreadId in
+                    vm.awaitReady { AgentOption.TelegramMessageThreadId in it.extras.withheld }.extras.withheld,
+            )
+        }
+
+    @Test
     fun `Seerr's Telegram agent keeps its topic`() =
         runTest {
             val vm = viewModel(ServerAgent.Telegram)
