@@ -475,6 +475,12 @@ app:server_settings_api_key_regenerate_message  4cdf3dff16f8
 app:server_settings_api_key_regenerate_title  5d08dae30c8d
 app:server_settings_api_key_regenerated  3e15205c659f
 app:server_settings_api_key_show  9a663fdd41da
+app:server_settings_api_timeout  e34558f90c3c
+app:server_settings_api_timeout_error  22dc538220d5
+app:server_settings_api_timeout_fraction  a11bdf44831f
+app:server_settings_api_timeout_hint  ed1e11f2332d
+app:server_settings_api_timeout_none  b9e97145d603
+app:server_settings_api_timeout_value  738819075e06
 app:server_settings_application_title  f4fe57f03ac4
 app:server_settings_application_url_hint  5a74ac1e0707
 app:server_settings_blocklist  f8019af406d1

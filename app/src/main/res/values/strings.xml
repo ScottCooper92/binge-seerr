@@ -1219,4 +1219,14 @@
     <string name="server_settings_blocklist_limit">Titles per tag</string>
     <string name="server_settings_blocklist_limit_hint">How many pages the Process Blocklisted Tags job takes for each tag. More is a fuller blocklist and more space.</string>
     <string name="server_settings_blocklist_limit_error">Enter a whole number from 0 to %1$d.</string>
+    <string name="server_settings_api_timeout">API request timeout</string>
+    <string name="server_settings_api_timeout_hint">How long the server waits for Radarr, Sonarr and other services to answer. 0 waits for ever.</string>
+    <string name="server_settings_api_timeout_error">Enter a number of seconds, 0 or more.</string>
+    <plurals name="server_settings_api_timeout_value">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <string name="server_settings_api_timeout_fraction">%1$s seconds</string>
+    <string name="server_settings_api_timeout_none">No timeout</string>
+    <string name="placeholder_api_timeout" translatable="false">30</string>
 </resources>

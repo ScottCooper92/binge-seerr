@@ -649,6 +649,35 @@ class HubViewModelTest {
             assertEquals(countReads + 1, reads("/api/v1/request/count"))
         }
 
+    /**
+     * TV Settings reads the pending count and whether Binge is installed, but draws no downloads strip (#837): both
+     * re-reads run, and the downloads poll does not start.
+     */
+    @Test
+    fun `a screen that draws no downloads re-reads the count and the install state without polling the downloads`() =
+        runTest {
+            healthyServer()
+            val installCheck = FakeBingeInstallCheck(installed = false)
+            val vm = viewModel(installCheck = installCheck)
+            assertEquals(BingeStatus.NotInstalled, vm.awaitReady().bingeStatus)
+            seerr.awaitIdle()
+
+            fun reads(path: String) = seerr.requests.count { it.url.encodedPath == path }
+
+            val downloadReads = reads("/api/v1/request")
+            val countReads = reads("/api/v1/request/count")
+
+            installCheck.installed = true
+            vm.setScreenVisible(true, downloads = false)
+            vm.awaitReady { it.bingeStatus == BingeStatus.NotConnected }
+            runCurrent()
+            seerr.awaitIdle()
+
+            assertEquals(downloadReads, reads("/api/v1/request"))
+            assertEquals(countReads + 1, reads("/api/v1/request/count"))
+            assertTrue((vm.uiState.value as HubUiState.Ready).downloading.isEmpty())
+        }
+
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
 

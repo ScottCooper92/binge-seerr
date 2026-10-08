@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassFull
 import androidx.compose.material.icons.filled.Https
 import androidx.compose.material.icons.filled.Key
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -32,7 +34,7 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * The network page in the web client's order, as groups of list rows: the switches every lineage has, then the DNS
- * cache and the outbound proxy where the server sent them. Each of those two is a switch, and only while it is on do
+ * cache, the API request timeout and the outbound proxy where the server sent them. The DNS cache and the proxy is a switch, and only while it is on do
  * its settings hang beneath it, as the web client shows them. Every value is checked in the sheet that edits it.
  */
 @Composable
@@ -73,9 +75,47 @@ fun NetworkScreen(
         draft.dnsCache?.let { cache ->
             DnsCacheGroup(cache, enabled) { transform -> actions.onEdit { it.copy(dnsCache = it.dnsCache?.let(transform)) } }
         }
+        draft.apiRequestTimeout?.let { seconds ->
+            ItemGroup(title = null, rows = listOf(timeoutItem(seconds, enabled, actions)))
+        }
         draft.proxy?.let { proxy ->
             ProxyGroup(proxy, enabled) { transform -> actions.onEdit { it.copy(proxy = it.proxy?.let(transform)) } }
         }
+    }
+}
+
+/** How long the server waits on Radarr, Sonarr and the like, in seconds with decimals allowed; 0 waits for ever. */
+@Composable
+private fun timeoutItem(
+    seconds: String,
+    enabled: Boolean,
+    actions: EditorActions<NetworkForm>,
+): ListItem {
+    val wrongShape = stringResource(R.string.server_settings_api_timeout_error)
+    return textSettingItem(
+        icon = Icons.Filled.HourglassEmpty,
+        label = stringResource(R.string.server_settings_api_timeout),
+        value = seconds,
+        enabled = enabled,
+        onChange = { value -> actions.onEdit { it.copy(apiRequestTimeout = value) } },
+        hint = stringResource(R.string.server_settings_api_timeout_hint),
+        placeholder = stringResource(R.string.placeholder_api_timeout),
+        required = true,
+        check = { value -> wrongShape.takeIf { !value.isTimeoutSeconds() } },
+        shown = timeoutShown(seconds),
+    )
+}
+
+/** The entry as the row reads it: a plural for whole seconds, which a count can carry, and plain text for the rest. */
+@Composable
+private fun timeoutShown(seconds: String): String {
+    val parsed = seconds.toTimeoutSeconds() ?: return seconds
+    val count = parsed.toInt()
+    return when {
+        parsed.signum() == 0 -> stringResource(R.string.server_settings_api_timeout_none)
+        parsed.compareTo(count.toBigDecimal()) == 0 ->
+            pluralStringResource(R.plurals.server_settings_api_timeout_value, count, count)
+        else -> stringResource(R.string.server_settings_api_timeout_fraction, parsed.stripTrailingZeros().toPlainString())
     }
 }
 
