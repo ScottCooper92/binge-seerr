@@ -250,7 +250,7 @@ data class SeerrNetworkSettingsDto(
     @SerialName("proxy") val proxy: SeerrProxySettingsDto? = null,
     @SerialName("dnsCache") val dnsCache: SeerrDnsCacheSettingsDto? = null,
     /** How long the server waits on Radarr, Sonarr and the like, in milliseconds; 0 waits for ever. Seerr only. */
-    @SerialName("apiRequestTimeout") val apiRequestTimeout: Int? = null,
+    @SerialName("apiRequestTimeout") val apiRequestTimeout: Long? = null,
 )
 
 @OptIn(ExperimentalSerializationApi::class)

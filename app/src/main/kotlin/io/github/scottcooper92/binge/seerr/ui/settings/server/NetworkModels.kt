@@ -28,9 +28,10 @@ data class NetworkForm(
     val valid: Boolean get() = proxy?.valid != false && dnsCache?.valid != false && apiRequestTimeoutValid
 }
 
-internal fun String.isTimeoutSeconds(): Boolean = trim().toIntOrNull()?.let { it >= 0 } == true
+/** Whole seconds that still fit a [Long] once turned into milliseconds, so the sum on save cannot wrap. */
+internal fun String.isTimeoutSeconds(): Boolean = trim().toLongOrNull()?.let { it in 0..Long.MAX_VALUE / MILLIS_PER_SECOND } == true
 
-private const val MILLIS_PER_SECOND = 1000
+private const val MILLIS_PER_SECOND = 1000L
 
 /** The outbound proxy: reachable only while it has a host and a port in range, with its credentials as a pair, if it is on. */
 data class ProxyForm(
@@ -154,7 +155,7 @@ internal fun NetworkForm.toDto(): SeerrNetworkSettingsDto =
         csrfProtection = csrfProtection,
         trustProxy = trustProxy,
         forceIpv4First = forceIpv4First,
-        apiRequestTimeout = apiRequestTimeout?.trim()?.toIntOrNull()?.let { it * MILLIS_PER_SECOND },
+        apiRequestTimeout = apiRequestTimeout?.trim()?.toLongOrNull()?.let { it * MILLIS_PER_SECOND },
         proxy =
             proxy?.let {
                 SeerrProxySettingsDto(

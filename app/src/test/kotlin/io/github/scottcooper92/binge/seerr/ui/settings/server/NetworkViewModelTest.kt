@@ -159,4 +159,25 @@ class NetworkViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals("45000", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
         }
+
+    @Test
+    fun `an api request timeout past the int range loads and is refused or sent without wrapping`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK.replace("30000", "3000000000"))
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val vm = viewModel()
+            assertEquals("3000000", vm.awaitReady().draft.apiRequestTimeout)
+
+            vm.edit { it.copy(apiRequestTimeout = Long.MAX_VALUE.toString()) }
+            assertFalse(vm.awaitReady().draft.valid)
+            vm.edit { it.copy(apiRequestTimeout = "2147484") }
+            assertTrue(vm.awaitReady().draft.valid)
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
+            assertEquals("2147484000", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
+        }
 }
