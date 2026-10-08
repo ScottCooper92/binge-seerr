@@ -92,6 +92,9 @@ enum class AgentOption(
 
     val secret: Boolean get() = kind == OptionKind.Secret
 
+    /** A password, whose edge spaces are part of it: sent as typed, where a token or a key is trimmed. */
+    val password: Boolean get() = this == EmailAuthPass || this == EmailPgpPassword || this == NtfyPassword
+
     /** Off for a username another system matches exactly: a keyboard rewriting one fails the send with no visible cause. */
     val autoCorrect: Boolean get() = this != EmailAuthUser && this != NtfyUsername
 
@@ -274,7 +277,14 @@ internal fun AgentForm.toDto(): SeerrNotificationAgentDto =
                             when (option.kind) {
                                 OptionKind.Switch -> JsonPrimitive(value.toBoolean())
                                 OptionKind.Number -> value.trim().toIntOrNull()?.let(::JsonPrimitive) ?: JsonNull
-                                else -> JsonPrimitive(if (option == AgentOption.WebhookJsonPayload) value.encodePayload() else value.trim())
+                                else ->
+                                    JsonPrimitive(
+                                        when {
+                                            option == AgentOption.WebhookJsonPayload -> value.encodePayload()
+                                            option.password -> value
+                                            else -> value.trim()
+                                        },
+                                    )
                             }
                     },
             ),
