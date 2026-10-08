@@ -646,7 +646,6 @@
     <string name="server_settings_sliders">Filas de Descubrir</string>
     <string name="server_settings_network">Red</string>
     <string name="server_settings_logs">Registros</string>
-    <string name="server_settings_about_version">Versión</string>
     <string name="server_settings_about_update">Actualización disponible</string>
     <string name="server_settings_about_behind">%1$d commits por detrás</string>
     <string name="server_settings_about_up_to_date">Actualizado</string>
@@ -658,7 +657,7 @@
     <string name="server_settings_about_data_directory">Directorio de datos</string>
     <string name="server_settings_about_data_not_mounted">%1$s no es un volumen montado, así que la configuración se pierde al recrear el contenedor</string>
     <string name="server_settings_about_data_not_writable">El servidor no puede escribir en %1$s</string>
-    <string name="server_settings_about_support">Ayuda</string>
+    <string name="server_settings_about_support">Obtener ayuda</string>
     <string name="server_settings_about_docs">Documentación</string>
     <string name="server_settings_logs_caption">El registro del propio servidor, filtrado y con búsqueda</string>
     <string name="server_settings_logs_search">Buscar en el registro</string>
@@ -1147,4 +1146,8 @@
     <string name="server_settings_metadata_failed">No funciona</string>
     <string name="server_settings_agent_types_requests">Avisar de solicitudes</string>
     <string name="server_settings_agent_types_issues">Avisar de incidencias</string>
+    <string name="server_settings_about_title">Acerca de %1$s</string>
+    <string name="server_settings_about_discussions">Debates en GitHub</string>
+    <string name="server_settings_about_support_project">Apoya a %1$s</string>
+    <string name="server_settings_about_contribute">Hacer una aportación</string>
 </resources>
