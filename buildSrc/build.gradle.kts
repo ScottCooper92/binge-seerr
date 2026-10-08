@@ -4,7 +4,10 @@ plugins {
     `kotlin-dsl`
 }
 
+// Google's mirror of Central first, as in the root settings: buildSrc resolves its own dependencies, including the
+// Kotlin that kotlin-dsl brings, and a rate-limited Central would otherwise fail it before the app configures.
 repositories {
+    maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
     mavenCentral()
 }
 
