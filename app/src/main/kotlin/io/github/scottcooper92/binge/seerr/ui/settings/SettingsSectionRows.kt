@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
@@ -42,6 +43,14 @@ internal fun serverSectionRows(
     return listOfNotNull(
         general?.let {
             section(Icons.Filled.Tune, stringResource(R.string.settings_group_general), it.sectionSummary(), ServerSettingsPage.General)
+        },
+        general?.takeIf { it.discoverSliders }?.let {
+            section(
+                Icons.Filled.ViewCarousel,
+                stringResource(R.string.server_settings_sliders),
+                stringResource(R.string.server_settings_sliders_caption),
+                ServerSettingsPage.DiscoverSliders,
+            )
         },
         config.requestPolicy?.let { policy ->
             section(
@@ -128,7 +137,7 @@ private fun NotificationAgents.agentsSummary(): String {
     }
 }
 
-private fun SeerrMediaServer.labelRes(): Int =
+internal fun SeerrMediaServer.labelRes(): Int =
     when (this) {
         SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
         SeerrMediaServer.Emby -> R.string.user_origin_emby

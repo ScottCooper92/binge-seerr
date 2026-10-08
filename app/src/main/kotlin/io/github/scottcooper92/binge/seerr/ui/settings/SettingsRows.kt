@@ -24,7 +24,6 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
@@ -113,15 +112,7 @@ internal fun mediaServerRows(
         ListItem(
             icon = Icons.Filled.Storage,
             iconTint = BingeSentiment.Info.fill(),
-            label =
-                stringResource(
-                    when (server.mediaServer) {
-                        SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
-                        SeerrMediaServer.Emby -> R.string.user_origin_emby
-                        SeerrMediaServer.Plex -> R.string.user_origin_plex
-                        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> R.string.server_settings_media_server
-                    },
-                ),
+            label = stringResource(server.mediaServer.labelRes()),
             detail = stringResource(R.string.server_settings_media_server_caption),
             onClick = { onOpenPage(ServerSettingsPage.MediaServer) },
         ),
