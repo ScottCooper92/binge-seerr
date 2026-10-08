@@ -9,20 +9,20 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import com.binge.designsystem.template.FormSection
+import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
+import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import kotlinx.coroutines.flow.Flow
 
-/** The Tautulli page: where it is, how to reach it, and the key it answers to. */
+/**
+ * The Tautulli page in the web client's field order, as one group of list rows: where it is, how to reach it, the key
+ * it answers to, and the link users are sent to. Each value is checked in the sheet that edits it.
+ */
 @Composable
 fun TautulliScreen(
     state: EditorUiState<TautulliForm>,
@@ -36,59 +36,60 @@ fun TautulliScreen(
         actions = actions,
         canSave = { it.valid },
     ) { draft, enabled ->
-        FormSection(stringResource(R.string.settings_group_connection)) {
-            EditorTextField(
-                draft.host,
-                stringResource(R.string.server_settings_host),
-                icon = Icons.Filled.Dns,
-                enabled = enabled,
-                keyboardType = KeyboardType.Uri,
-                placeholder = stringResource(R.string.placeholder_host),
-            ) { value ->
-                actions.onEdit { it.copy(host = value) }
-            }
-            EditorTextField(
-                draft.port,
-                stringResource(R.string.server_settings_port),
-                icon = Icons.Filled.Tag,
-                enabled = enabled,
-                keyboardType = KeyboardType.Number,
-                placeholder = stringResource(R.string.placeholder_port_tautulli),
-                isError = draft.port.isNotBlank() && !portValid(draft.port),
-            ) { value -> actions.onEdit { it.copy(port = value) } }
-            EditorToggleRow(
-                editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
-                    actions.onEdit { it.copy(useSsl = value) }
-                },
-            )
-            EditorTextField(
-                draft.urlBase,
-                stringResource(R.string.server_settings_url_base),
-                icon = Icons.AutoMirrored.Filled.AltRoute,
-                enabled = enabled,
-                placeholder = stringResource(R.string.placeholder_url_base_tautulli),
-            ) { value ->
-                actions.onEdit { it.copy(urlBase = value) }
-            }
-            EditorTextField(
-                draft.apiKey,
-                stringResource(R.string.server_settings_api_key),
-                icon = Icons.Filled.Key,
-                enabled = enabled,
-                secret = true,
-            ) { value ->
-                actions.onEdit { it.copy(apiKey = value) }
-            }
-            EditorTextField(
-                draft.externalUrl,
-                stringResource(R.string.server_settings_external_url),
-                icon = Icons.Filled.Link,
-                enabled = enabled,
-                keyboardType = KeyboardType.Uri,
-                supporting = stringResource(R.string.server_settings_tautulli_external_hint),
-                imeAction = ImeAction.Done,
-                isError = !draft.externalUrlValid,
-            ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
-        }
+        val hostLabel = stringResource(R.string.server_settings_host)
+        val keyLabel = stringResource(R.string.server_settings_api_key)
+        val portError = stringResource(R.string.editor_error_port)
+        val urlError = stringResource(R.string.editor_error_web_url)
+        ItemGroup(
+            title = stringResource(R.string.settings_group_connection),
+            rows =
+                listOf(
+                    textSettingItem(
+                        icon = Icons.Filled.Dns,
+                        label = hostLabel,
+                        value = draft.host,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                        check = { value -> hostLabel.takeIf { value.isBlank() } },
+                    ),
+                    textSettingItem(
+                        icon = Icons.Filled.Tag,
+                        label = stringResource(R.string.server_settings_port),
+                        value = draft.port,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                        check = { value -> portError.takeIf { !portValid(value) } },
+                    ),
+                    editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { on ->
+                        actions.onEdit { it.copy(useSsl = on) }
+                    },
+                    textSettingItem(
+                        icon = Icons.AutoMirrored.Filled.AltRoute,
+                        label = stringResource(R.string.server_settings_url_base),
+                        value = draft.urlBase,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(urlBase = value) } },
+                    ),
+                    textSettingItem(
+                        icon = Icons.Filled.Key,
+                        label = keyLabel,
+                        value = draft.apiKey,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(apiKey = value) } },
+                        check = { value -> keyLabel.takeIf { value.isBlank() } },
+                        shown = draft.apiKey.maskedKey() ?: stringResource(R.string.settings_value_not_set),
+                        secret = true,
+                    ),
+                    textSettingItem(
+                        icon = Icons.Filled.Link,
+                        label = stringResource(R.string.server_settings_external_url),
+                        value = draft.externalUrl,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
+                        hint = stringResource(R.string.server_settings_tautulli_external_hint),
+                        check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
+                    ),
+                ),
+        )
     }
 }
