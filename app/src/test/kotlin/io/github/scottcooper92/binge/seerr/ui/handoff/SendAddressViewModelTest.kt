@@ -33,6 +33,8 @@ import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -509,6 +511,53 @@ class SendAddressViewModelTest {
 
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.CHECKING))
             vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Session(awaiting = 1) }
+        }
+
+    /** The TV can answer the confirm and refuse the session between two polls, so the sheet never sees `checking`. */
+    @Test
+    fun `a session the TV turns down straight after its confirm is not offered again`() =
+        runTest {
+            val key = HandOffKey.generate()
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CONFIRM))
+            val vm =
+                viewModel(
+                    "$LINK&k=${key.encoded()}",
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                    scanned = true,
+                )
+            vm.settled()
+            vm.chooseSignIn(true)
+            vm.send()
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.ConfirmOnTv }
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin"), failed = true, attempt = 1))
+            val state = vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.Form }
+            val form = (state as SendAddressUiState.SigningIn).step as SignInStep.Form
+            assertTrue(form.rejected)
+            assertNull(form.sessionOffer)
+        }
+
+    @Test
+    fun `a TV that goes from its confirm to its sign-in step with no refusal brings a fresh form with the session offer`() =
+        runTest {
+            val key = HandOffKey.generate()
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CONFIRM))
+            val vm =
+                viewModel(
+                    "$LINK&k=${key.encoded()}",
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                    scanned = true,
+                )
+            vm.settled()
+            vm.chooseSignIn(true)
+            vm.send()
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.ConfirmOnTv }
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin")))
+            val state = vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.Form }
+            val form = (state as SendAddressUiState.SigningIn).step as SignInStep.Form
+            assertFalse(form.rejected)
+            assertNotNull(form.sessionOffer)
         }
 
     @Test

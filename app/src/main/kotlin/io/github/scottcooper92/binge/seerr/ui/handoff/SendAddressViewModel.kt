@@ -292,12 +292,14 @@ class SendAddressViewModel
                 status.modes
                     .mapNotNull { name -> SeerrSignInMode.entries.firstOrNull { it.name == name } }
                     .filter { it in HandOffSignInModes }
-            val current = (_uiState.value as? SendAddressUiState.SigningIn)?.step
-            if (current is SignInStep.Session) {
-                // The TV turned the session down: what's left is typing, or finishing on the TV where it has no fields.
-                if (status.failed && status.attempt >= current.awaiting) _uiState.showStep(fallbackFrom(server, modes))
-                return
-            }
+            val step = (_uiState.value as? SendAddressUiState.SigningIn)?.step
+            // A session held through the TV's confirm is still the session in flight: the TV may answer it before a poll sees it.
+            val held = (step as? SignInStep.ConfirmOnTv)?.resume
+            val current = step as? SignInStep.Session ?: held
+            val turnedDown = current != null && status.failed && status.attempt >= current.awaiting
+            // The TV turned the session down: what's left is typing, or finishing on the TV where it has no fields.
+            if (turnedDown) return _uiState.showStep(fallbackFrom(server, modes))
+            if (step is SignInStep.Session) return
             if (modes.isEmpty()) return _uiState.showStep(SignInStep.OnTv(server))
             // One update, so the form it keeps is the latest one: a send finishing on another thread is not overwritten.
             _uiState.update { state ->
