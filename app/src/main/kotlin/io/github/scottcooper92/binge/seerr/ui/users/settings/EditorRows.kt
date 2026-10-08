@@ -1,6 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -8,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,7 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.TextEntrySurface
@@ -30,7 +38,9 @@ import com.binge.designsystem.R as DesR
  * A text setting as a list row for an `ItemGroup`: its name, and its value (or [emptyLabel] when blank) as the detail;
  * [shown] replaces that for a value the row shouldn't spell out, such as a key.
  * A tap edits it in the design system's text entry sheet; [check] names what is wrong with a value, which keeps Done
- * off. The sheet belongs to this call, so a page lists its rows and nothing else.
+ * off. A [secret] value is edited in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
+ * does, since the design system's text entry has no way to hide what it shows.
+ * The sheet belongs to this call, so a page lists its rows and nothing else.
  */
 @Composable
 internal fun textSettingItem(
@@ -43,6 +53,7 @@ internal fun textSettingItem(
     hint: String? = null,
     check: (String) -> String? = { null },
     shown: String = value.ifBlank { emptyLabel },
+    secret: Boolean = false,
 ): ListItem {
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
@@ -50,23 +61,37 @@ internal fun textSettingItem(
         var draft by rememberSaveable { mutableStateOf(value) }
         val problem = check(draft.trim())
         BingeBottomSheet(onDismissRequest = { open = false }) {
-            TextEntrySurface(
-                title = label,
-                value = draft,
-                onValueChange = { draft = it },
-                onSubmit = {
-                    onChange(draft.trim())
-                    open = false
-                },
-                onCancel = { open = false },
-                submitLabel = stringResource(R.string.editor_done),
-                hint = hint,
-                submitEnabled = problem == null,
-                error = problem.takeIf { draft.isNotEmpty() },
-                minLines = 1,
-                maxLines = 1,
-                modifier = Modifier.imePadding(),
-            )
+            if (secret) {
+                SecretEntry(
+                    title = label,
+                    value = draft,
+                    onValueChange = { draft = it },
+                    submitEnabled = problem == null,
+                    onSubmit = {
+                        onChange(draft.trim())
+                        open = false
+                    },
+                    onCancel = { open = false },
+                )
+            } else {
+                TextEntrySurface(
+                    title = label,
+                    value = draft,
+                    onValueChange = { draft = it },
+                    onSubmit = {
+                        onChange(draft.trim())
+                        open = false
+                    },
+                    onCancel = { open = false },
+                    submitLabel = stringResource(R.string.editor_done),
+                    hint = hint,
+                    submitEnabled = problem == null,
+                    error = problem.takeIf { draft.isNotEmpty() },
+                    minLines = 1,
+                    maxLines = 1,
+                    modifier = Modifier.imePadding(),
+                )
+            }
         }
     }
     return ListItem(
@@ -77,6 +102,42 @@ internal fun textSettingItem(
         disabled = !enabled,
         onClick = { open = true },
     )
+}
+
+/** [textSettingItem]'s sheet for a secret: the title, a masked [EditorTextField], and the same Cancel and Done pair. */
+@Composable
+private fun SecretEntry(
+    title: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    submitEnabled: Boolean,
+    onSubmit: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().imePadding().padding(dimensionResource(DesR.dimen.padding_m)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        Text(text = title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+        EditorTextField(
+            value = value,
+            label = title,
+            secret = true,
+            autoCorrect = false,
+            imeAction = ImeAction.Done,
+            onDone = { if (submitEnabled) onSubmit() },
+            onValueChange = onValueChange,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+            BingeOutlinedButton(label = stringResource(R.string.editor_cancel), onClick = onCancel, modifier = Modifier.weight(1f))
+            BingeFilledButton(
+                label = stringResource(R.string.editor_done),
+                onClick = onSubmit,
+                enabled = submitEnabled,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
 }
 
 /**
