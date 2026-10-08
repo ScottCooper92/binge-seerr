@@ -624,7 +624,9 @@ class HubViewModelTest {
             val vm = viewModel(installCheck = installCheck)
             assertEquals(BingeStatus.NotInstalled, vm.awaitReady().bingeStatus)
             seerr.awaitIdle()
+
             fun reads(path: String) = seerr.requests.count { it.url.encodedPath == path }
+
             val downloadReads = reads("/api/v1/request")
             val countReads = reads("/api/v1/request/count")
 
