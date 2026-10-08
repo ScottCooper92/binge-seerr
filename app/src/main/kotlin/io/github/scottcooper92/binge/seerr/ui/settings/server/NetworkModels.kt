@@ -39,6 +39,9 @@ internal fun String.toTimeoutSeconds(): BigDecimal? = canonicalSeconds().toBigDe
 /** The entry with `.` as its separator, the form the draft keeps and the server's number is read from. */
 internal fun String.canonicalSeconds(): String = trim().replace(',', '.')
 
+/** The separator [canonicalSeconds] reads back: `,` or `.`. A locale with another one (Arabic's `٫`) shows `.`. */
+internal fun Char.readableTimeoutSeparator(): Char = if (this == ',') ',' else '.'
+
 /** Canonical seconds as written where [separator] is the decimal separator. */
 internal fun String.withDecimalSeparator(separator: Char): String = replace('.', separator)
 

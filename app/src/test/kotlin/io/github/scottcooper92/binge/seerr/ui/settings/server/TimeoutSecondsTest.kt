@@ -22,6 +22,14 @@ class TimeoutSecondsTest {
     }
 
     @Test
+    fun `a displayed timeout parses back for every separator the screen can produce`() {
+        listOf('.', ',', '\u066B', '\u00B7').forEach { locale ->
+            val separator = locale.readableTimeoutSeparator()
+            assertEquals(1500L, "1.5".withDecimalSeparator(separator).toTimeoutMillis())
+        }
+    }
+
+    @Test
     fun `a grouped, doubled or negative number is not seconds`() {
         assertNull("1,000.5".toTimeoutMillis())
         assertNull("1.5.0".toTimeoutMillis())

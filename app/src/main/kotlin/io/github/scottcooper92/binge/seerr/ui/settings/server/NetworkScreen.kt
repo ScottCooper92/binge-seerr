@@ -118,9 +118,10 @@ private fun timeoutItem(
     )
 }
 
-/** The device language's decimal separator: `.` in English, `,` in Spanish. */
+/** The device language's decimal separator: `.` in English, `,` in Spanish, and `.` for any other the input cannot read back. */
 @Composable
-private fun decimalSeparator(): Char = DecimalFormatSymbols.getInstance(LocalConfiguration.current.locales[0]).decimalSeparator
+private fun decimalSeparator(): Char =
+    DecimalFormatSymbols.getInstance(LocalConfiguration.current.locales[0]).decimalSeparator.readableTimeoutSeparator()
 
 /** The entry as the row reads it: a plural for whole seconds, which a count can carry, and plain text for the rest. */
 @Composable
