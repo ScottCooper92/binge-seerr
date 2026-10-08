@@ -118,15 +118,16 @@ private fun ColumnScope.TvSetupAddressFields(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
     ) {
         if (state.insecure) {
-            TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
-            // A checkbox, not an action: Continue beside the field is what goes on once it is ticked (#915). An address a phone
-            // sent lands here, and ticking it goes on by itself, since the phone is already waiting (#907).
+            // A checkbox, not an action: Continue beside the field is what goes on once it is ticked (#915). It sits right
+            // under the field it qualifies, with the reason below it. An address a phone sent lands here, and ticking it goes
+            // on by itself, since the phone is already waiting (#907).
             TvCheckboxRow(
                 label = stringResource(R.string.setup_allow_cleartext),
                 checked = state.cleartextAllowed,
                 onCheckedChange = actions.onAllowCleartext,
                 modifier = if (state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier,
             )
+            TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
         }
         state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
         if (state.needsLocalNetwork) {
