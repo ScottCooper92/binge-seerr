@@ -1201,4 +1201,22 @@
     <string name="server_settings_about_discussions">GitHub Discussions</string>
     <string name="server_settings_about_support_project">Support %1$s</string>
     <string name="server_settings_about_contribute">Make a contribution</string>
+    <string name="server_settings_hide_blocklisted">Hide blocklisted titles</string>
+    <string name="server_settings_hide_blocklisted_detail">Leaves blocklisted titles out of Discover for those who manage the blocklist</string>
+    <string name="server_settings_blocklist">Blocklist</string>
+    <string name="server_settings_blocklist_region">Blocklist region</string>
+    <string name="server_settings_blocklist_language">Blocklist languages</string>
+    <string name="server_settings_blocklist_tags">Blocklisted tags</string>
+    <string name="server_settings_blocklist_tags_none">None</string>
+    <plurals name="server_settings_blocklist_tags_count">
+        <item quantity="one">%1$d tag</item>
+        <item quantity="other">%1$d tags</item>
+    </plurals>
+    <string name="server_settings_blocklist_tags_search">Search TMDB keywords</string>
+    <string name="server_settings_blocklist_tags_empty">No tags yet. Search for a keyword to blocklist what has it.</string>
+    <string name="server_settings_blocklist_tags_no_match">No keyword matches that.</string>
+    <string name="server_settings_blocklist_tags_failed">Couldn\'t search the keywords. Try again in a moment.</string>
+    <string name="server_settings_blocklist_limit">Titles per tag</string>
+    <string name="server_settings_blocklist_limit_hint">How many pages the Process Blocklisted Tags job takes for each tag. More is a fuller blocklist and more space.</string>
+    <string name="server_settings_blocklist_limit_error">Enter a whole number from 0 to %1$d.</string>
 </resources>

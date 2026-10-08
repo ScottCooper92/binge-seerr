@@ -534,6 +534,19 @@ interface SeerrApi {
         @Body body: SeerrMetadataSettingsDto,
     ): SeerrMetadataSettingsDto
 
+    /** TMDB's keywords matching [query], for the blocklisted tags picker. */
+    @GET("api/v1/search/keyword")
+    suspend fun searchKeywords(
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+    ): SeerrKeywordPageDto
+
+    /** One keyword by its TMDB id, to name a tag the server holds only as a number. */
+    @GET("api/v1/keyword/{keywordId}")
+    suspend fun keyword(
+        @Path("keywordId") keywordId: Int,
+    ): SeerrKeywordDto
+
     /** Reaches the chosen providers; each one's result comes back, under a 500 when one failed. */
     @POST("api/v1/settings/metadatas/test")
     suspend fun testMetadataProviders(

@@ -40,6 +40,12 @@ data class SeerrMainSettingsDto(
     /** The Jellyseerr lineage only; Overseerr has no switch for its media server sign-in. */
     @SerialName("mediaServerLogin") val mediaServerLogin: Boolean? = null,
     @SerialName("newPlexLogin") val newPlexLogin: Boolean? = null,
+    @SerialName("hideBlocklisted") val hideBlocklisted: Boolean? = null,
+    @SerialName("blocklistRegion") val blocklistRegion: String? = null,
+    @SerialName("blocklistLanguage") val blocklistLanguage: String? = null,
+    /** TMDB keyword ids, comma-separated, whose titles the "Process Blocklisted Tags" job blocklists. */
+    @SerialName("blocklistedTags") val blocklistedTags: String? = null,
+    @SerialName("blocklistedTagsLimit") val blocklistedTagsLimit: Int? = null,
 )
 
 /**
@@ -70,6 +76,12 @@ data class SeerrMainSettingsUpdateBody(
     @SerialName("localLogin") val localLogin: Boolean? = null,
     @SerialName("mediaServerLogin") val mediaServerLogin: Boolean? = null,
     @SerialName("newPlexLogin") val newPlexLogin: Boolean? = null,
+    @SerialName("hideBlocklisted") val hideBlocklisted: Boolean? = null,
+    @SerialName("blocklistRegion") val blocklistRegion: String? = null,
+    @SerialName("blocklistLanguage") val blocklistLanguage: String? = null,
+    /** TMDB keyword ids, comma-separated, whose titles the "Process Blocklisted Tags" job blocklists. */
+    @SerialName("blocklistedTags") val blocklistedTags: String? = null,
+    @SerialName("blocklistedTagsLimit") val blocklistedTagsLimit: Int? = null,
 )
 
 @Serializable
@@ -406,4 +418,17 @@ data class SeerrRegionDto(
 data class SeerrLanguageDto(
     @SerialName("iso_639_1") val code: String = "",
     @SerialName("english_name") val englishName: String? = null,
+)
+
+/** One TMDB keyword: what a blocklisted tag is. */
+@Serializable
+data class SeerrKeywordDto(
+    @SerialName("id") val id: Int = 0,
+    @SerialName("name") val name: String? = null,
+)
+
+/** A page of TMDB's keyword search, as the server passes it through. */
+@Serializable
+data class SeerrKeywordPageDto(
+    @SerialName("results") val results: List<SeerrKeywordDto> = emptyList(),
 )

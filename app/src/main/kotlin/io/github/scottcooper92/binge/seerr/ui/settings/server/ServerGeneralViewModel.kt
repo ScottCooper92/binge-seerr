@@ -10,8 +10,10 @@ import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -66,6 +68,47 @@ class ServerGeneralViewModel
             }
         }
 
+        private var keywordSearch: Job? = null
+
+        /** Names the blocklisted tags the draft holds, once each: the server keeps them as TMDB ids. */
+        fun loadKeywordNames(ids: List<Int>) {
+            val missing = ids.filter { it !in currentExtras().keywords.names }
+            if (missing.isEmpty()) return
+            viewModelScope.launch(dispatcher) {
+                val api = connection.api()
+                val named = missing.mapNotNull { id -> runCatching { api.keyword(id) }.getOrNull()?.name?.let { id to it } }.toMap()
+                editExtras { it.copy(keywords = it.keywords.copy(names = it.keywords.names + named)) }
+            }
+        }
+
+        /** Searches TMDB's keywords as the user types; a newer query cancels the one before, and blank clears the results. */
+        fun searchKeywords(query: String) {
+            keywordSearch?.cancel()
+            if (query.isBlank()) {
+                editExtras { it.copy(keywords = it.keywords.copy(results = null, searching = false, failed = false)) }
+                return
+            }
+            keywordSearch =
+                viewModelScope.launch(dispatcher) {
+                    delay(KEYWORD_SEARCH_DEBOUNCE_MILLIS)
+                    editExtras { it.copy(keywords = it.keywords.copy(searching = true, failed = false)) }
+                    val found = runCatching { connection.api().searchKeywords(query.trim()).results }
+                    val keywords = found.getOrNull()?.mapNotNull { dto -> dto.name?.let { Keyword(dto.id, it) } }
+                    editExtras {
+                        it.copy(
+                            keywords =
+                                it.keywords.copy(
+                                    // A keyword picked from the results is named for the row without another read.
+                                    names = it.keywords.names + keywords.orEmpty().associate { k -> k.id to k.name },
+                                    results = keywords ?: it.keywords.results,
+                                    searching = false,
+                                    failed = keywords == null,
+                                ),
+                        )
+                    }
+                }
+        }
+
         fun toggleReveal() = editExtras { it.copy(apiKey = it.apiKey.copy(revealed = !it.apiKey.revealed)) }
 
         /**
@@ -105,3 +148,6 @@ class ServerGeneralViewModel
             }
         }
     }
+
+/** How long the tags picker waits after the last keystroke before it searches. */
+internal const val KEYWORD_SEARCH_DEBOUNCE_MILLIS = 300L
