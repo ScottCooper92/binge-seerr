@@ -16,8 +16,10 @@ import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.data.UsersRemoteMediator
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.PermissionScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBulkUsersBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
+import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
@@ -42,7 +44,8 @@ import javax.inject.Inject
 
 /** What the browser needs once per connection: which toggles the server offers, and what the viewer may add. */
 private data class UsersScope(
-    val jellyseerrLineage: Boolean = false,
+    /** Until the profile is read, the blocklist toggles stay hidden: Overseerr has none. */
+    val permissions: PermissionScope = PermissionScope(blocklist = false),
     val canAdmit: Boolean = false,
     val importSource: UserOrigin? = null,
     val canGeneratePassword: Boolean = false,
@@ -93,7 +96,7 @@ class UsersViewModel
                         val settings = profile?.settings
                         emit(
                             UsersScope(
-                                jellyseerrLineage = profile?.hasBlocklist == true,
+                                permissions = profile?.permissionScope() ?: PermissionScope(blocklist = false),
                                 canAdmit = viewer.toPermissions().canManageUsers,
                                 importSource =
                                     when (profile?.mediaServer) {
@@ -141,7 +144,7 @@ class UsersViewModel
                     sort = sort,
                     selection = selection,
                     edit = edit,
-                    offered = ManageablePermission.offered(scope.jellyseerrLineage),
+                    offered = ManageablePermission.offered(scope.permissions),
                     canAdmit = scope.canAdmit,
                     importSource = scope.importSource,
                     canGeneratePassword = scope.canGeneratePassword,

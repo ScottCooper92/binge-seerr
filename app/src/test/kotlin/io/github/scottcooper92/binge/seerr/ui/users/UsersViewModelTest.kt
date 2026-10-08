@@ -34,12 +34,12 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private const val ADMIN = 2
 
-/** A real bit the editor does not manage (`PERMISSION_REQUEST_4K_MOVIE`), to prove a save preserves it. */
-private const val UNMANAGED_4K_MOVIE_BIT = 1 shl 11
+/** A real bit the editor does not manage (`VOTE`, which no editor offers), to prove a save preserves it. */
+private const val UNMANAGED_VOTE_BIT = 1 shl 6
 
 /** Ana's permissions as the server already has them: two managed bits plus one the editor never shows. */
 private val ANA_INITIAL =
-    ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit or UNMANAGED_4K_MOVIE_BIT
+    ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit or UNMANAGED_VOTE_BIT
 
 /** The browser over an in-memory connection into a path-scripted Seerr, paging through the fake cache. */
 class UsersViewModelTest {
@@ -182,7 +182,7 @@ class UsersViewModelTest {
         runTest {
             // Ida (10) and Jo (11) already agree on every *managed* bit the editor shows (Request,
             // ManageIssues), so seeding the sheet from their union introduces nothing extra to
-            // propagate. Jo alone has the unmanaged 4K-movie bit. A shared, OR-folded baseline would
+            // propagate. Jo alone has the unmanaged vote bit. A shared, OR-folded baseline would
             // leak that bit onto Ida's write even though Ida never had it and the editor never showed it.
             val sharedManaged = ManageablePermission.Request.bit or ManageablePermission.ManageIssues.bit
             seerr.dispatcher = { request ->
@@ -195,7 +195,7 @@ class UsersViewModelTest {
                         json(
                             """{"pageInfo":{"pages":1,"results":2},"results":[
                                {"id":10,"displayName":"Ida","permissions":$sharedManaged,"userType":3,"requestCount":0},
-                               {"id":11,"displayName":"Jo","permissions":${sharedManaged or UNMANAGED_4K_MOVIE_BIT},
+                               {"id":11,"displayName":"Jo","permissions":${sharedManaged or UNMANAGED_VOTE_BIT},
                                 "userType":3,"requestCount":0}]}""",
                         )
                     "PUT /api/v1/user" -> json("[]")
@@ -227,7 +227,7 @@ class UsersViewModelTest {
             assertEquals(2, puts.size)
 
             val idaExpected = sharedManaged or ManageablePermission.CreateIssues.bit
-            val joExpected = idaExpected or UNMANAGED_4K_MOVIE_BIT
+            val joExpected = idaExpected or UNMANAGED_VOTE_BIT
 
             val idaPut = puts.single { it.body.contains("\"ids\":[10]") }.body
             assertTrue(idaPut, idaPut.contains("\"permissions\":$idaExpected"))

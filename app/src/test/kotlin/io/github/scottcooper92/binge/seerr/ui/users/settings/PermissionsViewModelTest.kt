@@ -19,7 +19,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-private const val UNMANAGED_BIT = 1 shl 25
+/** `VOTE`, which the server defines and no editor offers. */
+private const val UNMANAGED_BIT = 1 shl 6
 
 class PermissionsViewModelTest {
     @get:Rule

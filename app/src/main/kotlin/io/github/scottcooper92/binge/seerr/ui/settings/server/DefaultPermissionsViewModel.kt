@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
+import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PermissionSettings
@@ -40,7 +41,7 @@ class DefaultPermissionsViewModel
                 PermissionSettings(
                     selected = ManageablePermission.decode(bits),
                     original = bits,
-                    offered = ManageablePermission.offered(profile.await().hasBlocklist),
+                    offered = ManageablePermission.offered(profile.await().permissionScope()),
                     locked = lockedFor(ManageablePermission.decode(viewerDto.permissions ?: 0), isOwner = viewerDto.id == OWNER_USER_ID),
                 )
             }

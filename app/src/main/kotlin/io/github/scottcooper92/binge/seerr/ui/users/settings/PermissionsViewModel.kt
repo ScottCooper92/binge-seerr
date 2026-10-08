@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserPermissionsBody
+import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -43,7 +44,7 @@ class PermissionsViewModel
                 PermissionSettings(
                     selected = ManageablePermission.decode(record.permissions),
                     original = record.permissions,
-                    offered = ManageablePermission.offered(profile.await().hasBlocklist),
+                    offered = ManageablePermission.offered(profile.await().permissionScope()),
                     locked = lockedFor(held, isOwner = viewerDto.id == OWNER_USER_ID),
                 )
             }
