@@ -293,6 +293,22 @@ data class SeerrMetadataTestBody(
     @EncodeDefault @SerialName("tvdb") val tvdb: Boolean = false,
 )
 
+/**
+ * `POST settings/metadatas/test`: each provider's result, "ok", "failed" or "not tested". The server answers 500 when
+ * one failed, with the same body, so the results are read from the error too.
+ */
+@Serializable
+data class SeerrMetadataTestResultDto(
+    @SerialName("success") val success: Boolean = false,
+    @SerialName("tests") val tests: SeerrMetadataTestsDto? = null,
+)
+
+@Serializable
+data class SeerrMetadataTestsDto(
+    @SerialName("tmdb") val tmdb: String? = null,
+    @SerialName("tvdb") val tvdb: String? = null,
+)
+
 @Serializable
 data class SeerrMessageDto(
     @SerialName("message") val message: String? = null,

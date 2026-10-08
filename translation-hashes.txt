@@ -592,6 +592,11 @@ app:server_settings_media_server_settings  2b54bbfa195d
 app:server_settings_metadata  168b5a8357d4
 app:server_settings_metadata_anime  3eac161518fc
 app:server_settings_metadata_caption  a221de527334
+app:server_settings_metadata_failed  8d20c4ce9ca2
+app:server_settings_metadata_not_tested  51e3a01219f2
+app:server_settings_metadata_operational  996bf57d15be
+app:server_settings_metadata_selection  996c32b35f21
+app:server_settings_metadata_status  231b7f031691
 app:server_settings_metadata_test  185339c6e6c3
 app:server_settings_metadata_tested  9f602f44858f
 app:server_settings_metadata_tv  a8295e08ff7a

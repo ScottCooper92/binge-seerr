@@ -1189,4 +1189,9 @@
     <string name="server_settings_rule_unchanged">Unchanged</string>
     <string name="server_settings_dns_ttl_default">The answer\'s own</string>
     <string name="server_settings_secret_set" translatable="false">••••••••</string>
+    <string name="server_settings_metadata_status">Provider status</string>
+    <string name="server_settings_metadata_selection">Providers</string>
+    <string name="server_settings_metadata_not_tested">Not tested</string>
+    <string name="server_settings_metadata_operational">Operational</string>
+    <string name="server_settings_metadata_failed">Does not work</string>
 </resources>

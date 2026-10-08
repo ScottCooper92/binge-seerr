@@ -534,11 +534,11 @@ interface SeerrApi {
         @Body body: SeerrMetadataSettingsDto,
     ): SeerrMetadataSettingsDto
 
-    /** Reaches the chosen providers; a failure is a status code, success a message. */
+    /** Reaches the chosen providers; each one's result comes back, under a 500 when one failed. */
     @POST("api/v1/settings/metadatas/test")
     suspend fun testMetadataProviders(
         @Body body: SeerrMetadataTestBody,
-    ): SeerrMessageDto
+    ): SeerrMetadataTestResultDto
 
     /** The discover sliders in the order the web client shows them, Overseerr 1.32 and the Jellyseerr lineage from 1.4. */
     @GET("api/v1/settings/discover")
