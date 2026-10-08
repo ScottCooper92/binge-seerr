@@ -114,7 +114,13 @@ data class TautulliForm(
 ) {
     val externalUrlValid: Boolean get() = externalUrl.isBlank() || externalUrl.trim().isWebUrl()
 
-    val valid: Boolean get() = hostAndPortValid(host, port) && apiKey.isNotBlank() && externalUrlValid
+    /**
+     * Whether Tautulli is in use at all. Host, port and key go together, as the web client's form has them: set one and
+     * all three are needed, or empty all three to stop using Tautulli.
+     */
+    val configured: Boolean get() = listOf(host, port, apiKey).any { it.isNotBlank() }
+
+    val valid: Boolean get() = externalUrlValid && (!configured || (hostAndPortValid(host, port) && apiKey.isNotBlank()))
 }
 
 /**
@@ -218,17 +224,21 @@ internal fun List<SeerrPlexDeviceDto>.toChoices(): List<PlexServerChoice> =
 internal fun SeerrTautulliSettingsDto.toForm(): TautulliForm =
     TautulliForm(
         host = hostname.orEmpty(),
-        port = port?.toString().orEmpty(),
+        port = port?.takeIf { it > 0 }?.toString().orEmpty(),
         useSsl = useSsl ?: false,
         urlBase = urlBase.orEmpty(),
         apiKey = apiKey.orEmpty(),
         externalUrl = externalUrl.orEmpty(),
     )
 
+/**
+ * A blank port is sent as 0, as the web client does: the server merges the body into its stored record, so an omitted
+ * port would keep the old one and a cleared Tautulli would come back configured. [toForm] reads 0 as blank.
+ */
 internal fun TautulliForm.toDto(): SeerrTautulliSettingsDto =
     SeerrTautulliSettingsDto(
         hostname = host.trim(),
-        port = port.trim().toInt(),
+        port = port.trim().toIntOrNull() ?: 0,
         useSsl = useSsl,
         urlBase = urlBase.trim(),
         apiKey = apiKey.trim(),

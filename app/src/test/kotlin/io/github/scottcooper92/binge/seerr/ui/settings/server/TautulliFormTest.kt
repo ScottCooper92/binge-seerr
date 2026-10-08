@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
@@ -30,16 +31,18 @@ class TautulliFormTest {
 
     private var saves = 0
 
-    private fun show(draft: TautulliForm) =
-        rule.setContent {
-            BingeExpressiveTheme(dynamicColor = false) {
-                TautulliScreen(
-                    state = EditorUiState.Ready(draft = draft, saved = TautulliForm()),
-                    events = emptyFlow(),
-                    actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
-                )
-            }
+    private fun show(
+        draft: TautulliForm,
+        saved: TautulliForm = TautulliForm(),
+    ) = rule.setContent {
+        BingeExpressiveTheme(dynamicColor = false) {
+            TautulliScreen(
+                state = EditorUiState.Ready(draft = draft, saved = saved),
+                events = emptyFlow(),
+                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
+            )
         }
+    }
 
     @Test
     fun `the api key shows only its last characters`() {
@@ -64,6 +67,23 @@ class TautulliFormTest {
     fun `a form without its port or key can't be saved`() {
         show(TautulliForm(host = "tautulli.lan"))
         rule.onNodeWithText("Save").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `a host without its port and key marks them required`() {
+        show(TautulliForm(host = "tautulli.lan"))
+
+        assertEquals(2, rule.onAllNodesWithText("Required").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun `an emptied form saves, which stops using tautulli`() {
+        show(TautulliForm(), saved = CONFIGURED)
+
+        rule.onNodeWithText("Required").assertDoesNotExist()
+        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
+
+        assertEquals(1, saves)
     }
 
     @Test
