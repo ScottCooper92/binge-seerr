@@ -2,8 +2,8 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
-import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
@@ -30,12 +30,11 @@ import org.junit.rules.TemporaryFolder
 private const val LINEAGE_MAIN =
     """{"apiKey":"old-key","applicationTitle":"Home","applicationUrl":"https://seerr.example","locale":"en",
        "discoverRegion":"GB","streamingRegion":"IE","originalLanguage":"","hideAvailable":true,"hideRequested":false,
-       "partialRequestsEnabled":true,"enableSpecialEpisodes":true,"cacheImages":false,"youtubeUrl":"https://yt.example",
-       "defaultPermissions":32}"""
+       "partialRequestsEnabled":true,"enableSpecialEpisodes":true,"cacheImages":false,"youtubeUrl":"https://yt.example"}"""
 
 private const val OVERSEERR_MAIN =
     """{"apiKey":"old-key","applicationTitle":"Home","region":"US","originalLanguage":"en","hideAvailable":false,
-       "partialRequestsEnabled":false,"cacheImages":true,"trustProxy":true,"csrfProtection":false,"defaultPermissions":32}"""
+       "partialRequestsEnabled":false,"cacheImages":true,"trustProxy":true,"csrfProtection":false}"""
 
 class ServerGeneralViewModelTest {
     @get:Rule
@@ -64,7 +63,7 @@ class ServerGeneralViewModelTest {
 
     private suspend fun TestScope.viewModel(): ServerGeneralViewModel {
         connection = seerr.connection(this)
-        val vm = ServerGeneralViewModel(connection, mainDispatcherRule.dispatcher)
+        val vm = ServerGeneralViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -78,28 +77,67 @@ class ServerGeneralViewModelTest {
         } as ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>
 
     @Test
-    fun `the default permissions are decoded into the extras`() =
+    fun `the server's variant is kept for the display languages it offers`() =
         runTest {
-            seerr.viewer(id = 1, permissions = ADMIN)
-            val vm = viewModel()
+            seerr.viewer(id = 1, permissions = ADMIN, version = "1.33.2", settings = "{}")
+            seerr.serve("GET /api/v1/settings/main", OVERSEERR_MAIN)
 
-            assertEquals(setOf(ManageablePermission.Request), vm.awaitReady().extras.defaultPermissions)
+            assertEquals(SeerrVariant.Overseerr, viewModel().awaitReady().extras.variant)
         }
 
     @Test
-    fun `refreshing the default permissions updates the tags and keeps the unsaved draft`() =
+    fun `a list is read when a picker asks, and only once`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/regions", """[{"iso_3166_1":"GB","english_name":"United Kingdom"},{"iso_3166_1":""}]""")
+            val vm = viewModel()
+            assertTrue(
+                vm
+                    .awaitReady()
+                    .extras.lists
+                    .isEmpty(),
+            )
+
+            vm.loadList(ServerList.DiscoverRegions)
+            val ready = vm.awaitReady { it.extras.lists[ServerList.DiscoverRegions] is ListChoices.Ready }
+            vm.loadList(ServerList.DiscoverRegions)
+
+            assertEquals(
+                ListChoices.Ready(listOf(ListEntry("GB", "United Kingdom"))),
+                ready.extras.lists[ServerList.DiscoverRegions],
+            )
+            assertEquals(1, seerr.count("GET", "/api/v1/regions"))
+        }
+
+    @Test
+    fun `a list that fails to load is tried again on the next ask`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/languages", code = 500)
             val vm = viewModel()
             vm.awaitReady()
-            vm.edit { it.copy(applicationTitle = "Edited") }
 
-            seerr.serve("GET /api/v1/settings/main", LINEAGE_MAIN.replace("\"defaultPermissions\":32", "\"defaultPermissions\":160"))
-            vm.refreshDefaultPermissions()
-            val ready =
-                vm.awaitReady { it.extras.defaultPermissions.size == 2 }
+            vm.loadList(ServerList.Languages)
+            vm.awaitReady { it.extras.lists[ServerList.Languages] == ListChoices.Failed }
+            seerr.serve("GET /api/v1/languages", """[{"iso_639_1":"fr","english_name":"French"}]""")
+            vm.loadList(ServerList.Languages)
+            val ready = vm.awaitReady { it.extras.lists[ServerList.Languages] is ListChoices.Ready }
 
-            assertEquals("Edited", ready.draft.applicationTitle)
+            assertEquals(ListChoices.Ready(listOf(ListEntry("fr", "French"))), ready.extras.lists[ServerList.Languages])
+        }
+
+    @Test
+    fun `streaming regions come from the watch provider list`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/watchproviders/regions", """[{"iso_3166_1":"IE","english_name":"Ireland"}]""")
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.loadList(ServerList.StreamingRegions)
+            val ready = vm.awaitReady { it.extras.lists[ServerList.StreamingRegions] is ListChoices.Ready }
+
+            assertEquals(ListChoices.Ready(listOf(ListEntry("IE", "Ireland"))), ready.extras.lists[ServerList.StreamingRegions])
         }
 
     @Test

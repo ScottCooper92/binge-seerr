@@ -1,18 +1,26 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
+import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
@@ -25,82 +33,99 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-private val SAVED = ServerGeneralSettings(applicationTitle = "Seerr", discoverRegion = "GB", cacheImages = true)
+private val SAVED =
+    ServerGeneralSettings(applicationTitle = "Seerr", locale = "en", discoverRegion = "GB", cacheImages = true)
 
+/** The page over a draft it edits itself, as the ViewModel would, reporting each save and list request. */
 @Composable
 private fun General(
-    draft: ServerGeneralSettings,
-    onSave: () -> Unit = {},
+    initial: ServerGeneralSettings,
+    onSave: (ServerGeneralSettings) -> Unit = {},
+    onLoadList: (ServerList) -> Unit = {},
 ) = BingeExpressiveTheme(dynamicColor = false) {
+    var draft by remember { mutableStateOf(initial) }
     ServerGeneralScreen(
-        state = ExtrasEditorUiState.Ready(draft = draft, saved = SAVED, extras = ServerGeneralExtras()),
+        state =
+            ExtrasEditorUiState.Ready(
+                draft = draft,
+                saved = SAVED,
+                extras = ServerGeneralExtras(variant = SeerrVariant.Seerr),
+            ),
         events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = onSave),
+        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = { onSave(draft) }),
         keyActions = ApiKeyActions(onToggleReveal = {}, onCopy = {}, onRegenerate = {}),
-        onOpenDefaultPermissions = {},
+        onLoadList = onLoadList,
     )
 }
 
-/** The server's General page: which sections start closed, and what a value of the wrong shape does to them. */
+/** The server's General page: every group open, values edited in sheets, and the lists read only when a picker opens. */
 @RunWith(RobolectricTestRunner::class)
 class ServerGeneralFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private var saves = 0
+    private val saves = mutableListOf<ServerGeneralSettings>()
+    private val lists = mutableListOf<ServerList>()
 
-    private fun show(draft: ServerGeneralSettings) = rule.setContent { General(draft) { saves++ } }
+    private fun show(draft: ServerGeneralSettings = SAVED) =
+        rule.setContent { General(draft, onSave = { saves += it }, onLoadList = { lists += it }) }
 
     @Test
-    fun `application starts open and the rest start closed`() {
-        show(SAVED)
+    fun `every group starts open, and no list is read before its picker opens`() {
+        show()
 
         rule.onNodeWithText("Application title").assertExists()
-        rule.onNodeWithText("Cache images").assertDoesNotExist()
-        rule.onNode(hasSetTextAction() and hasText("GB")).assertDoesNotExist()
+        rule.onNodeWithText("Cache images").performScrollTo().assertExists()
+        assertEquals(emptyList<ServerList>(), lists)
     }
 
     @Test
-    fun `a region of the wrong shape opens discover and save does not save`() {
-        show(SAVED.copy(discoverRegion = "Britain"))
+    fun `an address that is not a web address keeps done off`() {
+        show()
 
-        rule.onNode(hasSetTextAction() and hasText("Britain")).assertExists()
-        rule.onNodeWithText("1 field needs attention").assertExists()
-        rule.onNodeWithText("Save").performClick()
+        rule.onNode(hasText("Application URL") and hasClickAction()).performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("requests.lan")
 
-        assertEquals(0, saves)
+        rule.onNodeWithText("Enter a web address that starts with http:// or https://.").assertExists()
+        rule.onNodeWithText("Done").assertIsNotEnabled()
     }
 
     @Test
-    fun `a clean change saves`() {
-        show(SAVED.copy(applicationTitle = "Requests"))
+    fun `a display language picked from the sheet is what saves`() {
+        show()
 
+        rule.onNode(hasText("Display language") and hasClickAction()).performClick()
+        rule.onNodeWithText("Deutsch").performScrollTo().performClick()
         rule.onNodeWithText("Save").performClick()
 
-        assertEquals(1, saves)
+        assertEquals("de", saves.single().locale)
+    }
+
+    @Test
+    fun `opening the discover region picker asks for its list`() {
+        show()
+
+        rule.onNode(hasText("Discover region") and hasClickAction()).performScrollTo().performClick()
+
+        assertEquals(listOf(ServerList.DiscoverRegions), lists)
     }
 }
 
-/** The server's General page on a television: OK on a closed header opens it, and down enters its first field. */
+/** The server's General page on a television: OK on a row opens its sheet. */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class ServerGeneralTvFocusTest {
     @get:Rule
     val rule = createSeerrKeyboardComposeRule()
 
-    private fun press(key: Key) {
-        rule.onRoot().performKeyInput { pressKey(key) }
-        rule.waitForIdle()
-    }
-
     @Test
-    fun `ok on discover opens it and down enters its first field`() {
+    fun `ok on a text row opens its editor`() {
         rule.setContent { General(SAVED) }
-        rule.onNodeWithText("Discover").performSemanticsAction(SemanticsActions.RequestFocus)
+        rule.onNode(hasText("Application title") and hasClickAction()).performSemanticsAction(SemanticsActions.RequestFocus)
 
-        press(Key.DirectionCenter)
-        press(Key.DirectionDown)
+        rule.onRoot().performKeyInput { pressKey(Key.DirectionCenter) }
+        rule.waitForIdle()
 
-        rule.onNode(hasSetTextAction() and hasText("Display language", substring = true)).assertIsFocused()
+        rule.onNode(hasSetTextAction() and hasText("Seerr")).assertExists()
     }
 }

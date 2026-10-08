@@ -369,3 +369,17 @@ data class SeerrLogPageDto(
     @SerialName("pageInfo") val pageInfo: SeerrPageInfoDto = SeerrPageInfoDto(),
     @SerialName("results") val results: List<SeerrLogEntryDto> = emptyList(),
 )
+
+/** One country in TMDB's lists, by its ISO 3166-1 code. */
+@Serializable
+data class SeerrRegionDto(
+    @SerialName("iso_3166_1") val code: String = "",
+    @SerialName("english_name") val englishName: String? = null,
+)
+
+/** One language in TMDB's list, by its ISO 639-1 code. */
+@Serializable
+data class SeerrLanguageDto(
+    @SerialName("iso_639_1") val code: String = "",
+    @SerialName("english_name") val englishName: String? = null,
+)
