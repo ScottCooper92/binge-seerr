@@ -10,13 +10,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Warning
@@ -35,9 +37,10 @@ import com.binge.designsystem.template.screenOuterPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.contributeUrl
 import io.github.scottcooper92.binge.seerr.seerr.discordUrl
+import io.github.scottcooper92.binge.seerr.seerr.discussionsUrl
 import io.github.scottcooper92.binge.seerr.seerr.docsUrl
-import io.github.scottcooper92.binge.seerr.seerr.githubUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -73,23 +76,30 @@ private fun AboutContent(
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
-            title = stringResource(R.string.server_settings_about_version),
-            rows = versionRows(info, onOpenUrl),
+            title = stringResource(R.string.server_settings_about_title, info.variant.displayName),
+            rows = versionRows(info, onOpenUrl) + serverRows(info),
             modifier = Modifier.padding(horizontal = inset),
         )
-        val serverRows = serverRows(info)
-        if (serverRows.isNotEmpty()) {
-            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-            ItemGroup(
-                title = stringResource(R.string.settings_server),
-                rows = serverRows,
-                modifier = Modifier.padding(horizontal = inset),
-            )
-        }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.server_settings_about_support),
             rows = supportRows(info, onOpenUrl),
+            modifier = Modifier.padding(horizontal = inset),
+        )
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        ItemGroup(
+            title = stringResource(R.string.server_settings_about_support_project, info.variant.displayName),
+            rows =
+                listOf(
+                    ListItem(
+                        icon = Icons.Filled.Favorite,
+                        iconTint = BingeSentiment.Info.fill(),
+                        label = stringResource(R.string.server_settings_about_contribute),
+                        detail = info.variant.contributeUrl(),
+                        destination = ListItemDestination.External,
+                        onClick = { onOpenUrl(info.variant.contributeUrl()) },
+                    ),
+                ),
             modifier = Modifier.padding(horizontal = inset),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
@@ -138,15 +148,6 @@ private fun versionRows(
 @Composable
 private fun serverRows(info: AboutInfo): List<ListItem> =
     listOfNotNull(
-        info.totalRequests?.let { count ->
-            ListItem(
-                icon = Icons.Filled.RequestPage,
-                iconTint = BingeSentiment.Info.fill(),
-                label = stringResource(R.string.server_settings_about_total_requests),
-                detail = count.toString(),
-                clickable = false,
-            )
-        },
         info.totalMediaItems?.let { count ->
             ListItem(
                 icon = Icons.Filled.Movie,
@@ -156,12 +157,12 @@ private fun serverRows(info: AboutInfo): List<ListItem> =
                 clickable = false,
             )
         },
-        info.timezone?.let { zone ->
+        info.totalRequests?.let { count ->
             ListItem(
-                icon = Icons.Filled.Schedule,
-                iconTint = BingeSentiment.Neutral.fill(),
-                label = stringResource(R.string.server_settings_about_timezone),
-                detail = zone,
+                icon = Icons.Filled.RequestPage,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_about_total_requests),
+                detail = count.toString(),
                 clickable = false,
             )
         },
@@ -177,6 +178,15 @@ private fun serverRows(info: AboutInfo): List<ListItem> =
                         else -> path
                     },
                 detailColor = if (info.appDataWarning) BingeSentiment.Negative.fill() else null,
+                clickable = false,
+            )
+        },
+        info.timezone?.let { zone ->
+            ListItem(
+                icon = Icons.Filled.Schedule,
+                iconTint = BingeSentiment.Neutral.fill(),
+                label = stringResource(R.string.server_settings_about_timezone),
+                detail = zone,
                 clickable = false,
             )
         },
@@ -197,19 +207,19 @@ private fun supportRows(
             onClick = { onOpenUrl(info.variant.docsUrl()) },
         ),
         ListItem(
-            icon = Icons.Filled.Forum,
+            icon = Icons.Filled.QuestionAnswer,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_about_discussions),
+            detail = info.variant.discussionsUrl(),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.discussionsUrl()) },
+        ),
+        ListItem(
+            icon = Icons.AutoMirrored.Filled.Chat,
             iconTint = BingeSentiment.Info.fill(),
             label = stringResource(R.string.server_settings_about_discord),
             detail = info.variant.discordUrl(),
             destination = ListItemDestination.External,
             onClick = { onOpenUrl(info.variant.discordUrl()) },
-        ),
-        ListItem(
-            icon = Icons.Filled.Code,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.server_settings_about_github),
-            detail = info.variant.githubUrl(),
-            destination = ListItemDestination.External,
-            onClick = { onOpenUrl(info.variant.githubUrl()) },
         ),
     )

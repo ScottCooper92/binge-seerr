@@ -45,15 +45,25 @@ fun SeerrVariant.docsUrl(): String =
         SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://docs.seerr.dev"
     }
 
-/** Each fork's Discord invite; Seerr kept Jellyseerr's server. */
+/** Each fork's Discord invite; Seerr kept Jellyseerr's server, under its own name (`SettingsAbout` in each fork). */
 fun SeerrVariant.discordUrl(): String =
     when (this) {
         SeerrVariant.Overseerr -> "https://discord.gg/overseerr"
-        SeerrVariant.Jellyseerr, SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://discord.gg/ckbvBtDJgC"
+        SeerrVariant.Jellyseerr, SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://discord.gg/seerr"
     }
 
 /** Each fork's repository. */
 fun SeerrVariant.githubUrl(): String = releaseNotesUrl().removeSuffix("/releases")
+
+/** Where each fork takes questions on GitHub: its Discussions, as the web client's About page links. */
+fun SeerrVariant.discussionsUrl(): String = githubUrl() + "/discussions"
+
+/** Where each fork takes contributions: Seerr's Open Collective, or Overseerr's GitHub Sponsors. */
+fun SeerrVariant.contributeUrl(): String =
+    when (this) {
+        SeerrVariant.Overseerr -> "https://github.com/sponsors/sct"
+        SeerrVariant.Jellyseerr, SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://opencollective.com/seerr"
+    }
 
 /** Only an `http(s)` address is handed to a browser. */
 fun String.isWebUrl(): Boolean = startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)
