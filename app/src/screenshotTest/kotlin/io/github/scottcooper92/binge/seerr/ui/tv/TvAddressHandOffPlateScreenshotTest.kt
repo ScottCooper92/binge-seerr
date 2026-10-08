@@ -8,7 +8,7 @@ import io.github.scottcooper92.binge.seerr.ui.SetupActions
 
 private val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
 
-private val CODE = AddressHandOff.Listening(url = "http://192.168.86.53:41234/a/k7m2pqx4")
+private val CODE = AddressHandOff.Listening(url = "http://192.168.86.53:41234/a/k7m2pqx4", pin = "4821")
 
 /**
  * Setup on a television as one screen (#772): the code for a phone, with the line under it following the TV from

@@ -378,6 +378,9 @@ app:send_address_tag_sent_before  0ba607067400
 app:send_address_tag_server_url  22f5ebc3ad3f
 app:send_address_tag_this_phone  154bf57eb258
 app:send_address_title  962146889135
+app:send_pin_body  8f0be2072da3
+app:send_pin_label  b92942282245
+app:send_pin_wrong  0a80fb522a2e
 app:send_signin_connected  fa1da6d9b5d6
 app:send_signin_continue_as  8c3ac09ff743
 app:send_signin_continue_as_you  69d7ffc62e45
@@ -385,7 +388,7 @@ app:send_signin_form  eed872434e62
 app:send_signin_lost  0b8b0899c90a
 app:send_signin_on_tv  b0724ebd3943
 app:send_signin_rejected  61c349dccc4a
-app:send_signin_sealed  f9b731a94053
+app:send_signin_sealed  964904c25126
 app:send_signin_session  c0acb129d393
 app:send_signin_waiting  11ff6a385209
 app:server_settings_about_behind  16813cfc29da
@@ -899,6 +902,8 @@ app:tv_handoff_body  e5667a0cfbae
 app:tv_handoff_code_description  1d5d01b0c49b
 app:tv_handoff_could_not_listen  9b2ceb3a1d16
 app:tv_handoff_no_network  23bbba026c2f
+app:tv_handoff_pin  fc6a3027d709
+app:tv_handoff_pin_description  163786adb97a
 app:tv_hub_health_checking  86d5ab0a7412
 app:tv_hub_quota_none_left  7d0b2f243290
 app:tv_hub_stat_open_issues  28aa0023dce4

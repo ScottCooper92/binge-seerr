@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -51,7 +53,13 @@ private const val QR_LIGHT = 0xFFFFFFFF.toInt()
 @Composable
 internal fun ColumnScope.TvHandOffContent(handOff: AddressHandOff) {
     when (handOff) {
-        is AddressHandOff.Listening -> TvHandOffCodeCard(url = handOff.url, scanUrl = handOff.scanUrl, modifier = Modifier.weight(1f))
+        is AddressHandOff.Listening ->
+            TvHandOffCodeCard(
+                url = handOff.url,
+                scanUrl = handOff.scanUrl,
+                pin = handOff.pin,
+                modifier = Modifier.weight(1f),
+            )
         is AddressHandOff.Unavailable -> TvFormNote(stringResource(handOff.reason.messageRes()), tone = TvFormNoteTone.Error)
     }
 }
@@ -66,6 +74,7 @@ internal fun ColumnScope.TvHandOffContent(handOff: AddressHandOff) {
 private fun TvHandOffCodeCard(
     url: String,
     scanUrl: String,
+    pin: String?,
     modifier: Modifier = Modifier,
 ) {
     // The pane's room sizes the code; the card then wraps the code and the address and nothing more, as wide as the
@@ -84,6 +93,19 @@ private fun TvHandOffCodeCard(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
             TvQrCode(scanUrl, qrSize)
+            // The PIN the phone asks for before it does anything with the code (#803): read across the room, so large and
+            // spaced, and announced as the PIN rather than a number.
+            pin?.let { digits ->
+                val description = pinDescription(digits)
+                Text(
+                    text = stringResource(R.string.tv_handoff_pin, digits.toList().joinToString(" ")),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics { contentDescription = description },
+                )
+            }
             Text(
                 text = url,
                 style = MaterialTheme.typography.bodyLarge,
@@ -96,6 +118,9 @@ private fun TvHandOffCodeCard(
         }
     }
 }
+
+@Composable
+private fun pinDescription(digits: String): String = stringResource(R.string.tv_handoff_pin_description, digits.toList().joinToString(" "))
 
 private fun AddressHandOff.Reason.messageRes(): Int =
     when (this) {

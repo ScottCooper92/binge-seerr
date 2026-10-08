@@ -18,6 +18,16 @@ sealed interface SendAddressUiState {
     data object NotConnected : SendAddressUiState
 
     /**
+     * A code with a key, before anything else: the PIN the TV shows beside it (#803). [entered] is what the boxes hold,
+     * and [wrong] that the last complete PIN didn't match.
+     */
+    data class EnterPin(
+        val tv: String,
+        val entered: String = "",
+        val wrong: Boolean = false,
+    ) : SendAddressUiState
+
+    /**
      * The address field, filled with the best of [candidates] until the user edits it, and [tv], where
      * it goes. Everything else is read from [address] as it stands, so the note under the field always
      * describes what Send would send.

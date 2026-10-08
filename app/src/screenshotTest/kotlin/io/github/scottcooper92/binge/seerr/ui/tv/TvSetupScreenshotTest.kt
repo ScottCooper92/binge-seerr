@@ -126,6 +126,6 @@ class TvSetupScreenshotTest {
     fun reconnectTyped() = TvSetupScreen(state = setupSignIn(notice = SetupNotice.SessionRejected), actions = ReconnectActions)
 }
 
-private val RECONNECT_CODE = AddressHandOff.Listening(url = "http://192.168.86.53:41234/a/k7m2pqx4")
+private val RECONNECT_CODE = AddressHandOff.Listening(url = "http://192.168.86.53:41234/a/k7m2pqx4", pin = "4821")
 
 private val ReconnectActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {})

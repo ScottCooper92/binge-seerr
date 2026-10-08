@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeLoadingIndicator
+import com.binge.designsystem.component.BingePinField
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
@@ -38,6 +39,7 @@ internal fun SendAddressSheet(
 
 /** What the sheet can ask for. Only [onSend] sends anything; editing changes the field, and the tick only what Send includes. */
 internal data class SendAddressActions(
+    val onEnterPin: (String) -> Unit = {},
     val onEdit: (String) -> Unit = {},
     val onChooseSignIn: (Boolean) -> Unit = {},
     val onSend: () -> Unit = {},
@@ -69,6 +71,7 @@ internal fun SendAddressSheetContent(
         Text(stringResource(R.string.send_address_title), style = MaterialTheme.typography.titleLarge)
         when (state) {
             SendAddressUiState.Loading -> BingeLoadingIndicator()
+            is SendAddressUiState.EnterPin -> EnterPinContent(state, actions)
             is SendAddressUiState.Ready -> ReadyContent(state, actions)
             is SendAddressUiState.SigningIn -> SigningInContent(state, actions)
             is SendAddressUiState.Sent -> Outcome(stringResource(R.string.send_address_sent, state.tv), R.string.send_address_done, onClose)
@@ -122,6 +125,25 @@ private fun ReadyContent(
         loading = state.isSending,
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+/** The TV's PIN, typed before the sheet does anything with the code. */
+@Composable
+private fun EnterPinContent(
+    state: SendAddressUiState.EnterPin,
+    actions: SendAddressActions,
+) {
+    Body(stringResource(R.string.send_pin_body, state.tv))
+    val wrong = stringResource(R.string.send_pin_wrong)
+    BingePinField(
+        value = state.entered,
+        onValueChange = actions.onEnterPin,
+        label = stringResource(R.string.send_pin_label),
+        error = wrong.takeIf { state.wrong },
+    )
+    if (state.wrong) {
+        Text(wrong, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+    }
 }
 
 @Composable

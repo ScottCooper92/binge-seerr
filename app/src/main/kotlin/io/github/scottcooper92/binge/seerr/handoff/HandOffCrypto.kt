@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import java.nio.ByteBuffer
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.util.Base64
@@ -12,6 +13,10 @@ private const val KEY_BYTES = 32
 private const val NONCE_BYTES = 12
 private const val TAG_BITS = 128
 private const val HKDF_INFO = "seerr-tv-handoff-credentials-v1"
+private const val PIN_INFO = "seerr-tv-handoff-pin-v1"
+private const val PIN_DIGITS = 4
+private const val PIN_MODULUS = 10_000L
+private const val UINT_MASK = 0xFFFFFFFFL
 
 /** The key as it travels in a link: 32 bytes as 43 URL-safe characters, no padding. */
 internal val HAND_OFF_KEY_SHAPE = Regex("[A-Za-z0-9_-]{43}")
@@ -68,6 +73,20 @@ class HandOffKey(
         } catch (_: IllegalArgumentException) {
             null
         }
+
+    /**
+     * The four digits the television shows beside its code, and the phone asks for before it does anything with a link
+     * (#803). The digits come from this key, so the phone checks them itself: a link someone else wrote carries their key,
+     * whose PIN won't be the one on the user's screen. HMAC-SHA256 of a fixed label under the key, its first four bytes
+     * as an unsigned number, modulo 10,000. The small bias towards low PINs costs nothing here: guessing is only a
+     * 1-in-10,000 chance, and nobody but the person looking at the TV can see what to aim for.
+     */
+    fun pin(): String {
+        val mac = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(bytes, "HmacSHA256")) }
+        val digest = mac.doFinal(PIN_INFO.toByteArray(Charsets.UTF_8))
+        val number = ByteBuffer.wrap(digest, 0, Int.SIZE_BYTES).int.toLong() and UINT_MASK
+        return (number % PIN_MODULUS).toString().padStart(PIN_DIGITS, '0')
+    }
 
     /** HKDF-SHA256 with no salt, extracting then expanding one block: the key AES uses is never the one in the link. */
     private fun derived(): ByteArray {

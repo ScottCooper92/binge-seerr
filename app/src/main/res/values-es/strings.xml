@@ -908,6 +908,8 @@
     <string name="tv_setup_send_from_phone">Escanear un QR</string>
     <string name="tv_handoff_body">Usa el código QR o la URL para conectarte desde otro dispositivo de la misma red, o usa la app móvil de Seerr para iniciar sesión con tus datos actuales.</string>
     <string name="tv_handoff_code_description">Código para escanear con el móvil</string>
+    <string name="tv_handoff_pin">PIN  %1$s</string>
+    <string name="tv_handoff_pin_description">PIN de este televisor: %1$s</string>
     <string name="tv_handoff_no_network">Este televisor no está en una red doméstica wifi o por cable, así que un móvil no puede llegar a él. Escribe la dirección.</string>
     <string name="tv_handoff_could_not_listen">Este televisor no ha podido abrir una conexión para el móvil. Escribe la dirección.</string>
     <string name="handoff_page_title">Envía la dirección del servidor a tu televisor</string>
@@ -947,7 +949,10 @@
     <string name="send_signin_session">Iniciando sesión en el televisor en %1$s…</string>
     <string name="send_signin_waiting">El televisor en %1$s tiene la dirección y está comprobando el servidor…</string>
     <string name="send_signin_form">El televisor encontró %1$s. Inicia sesión aquí y el televisor también la iniciará.</string>
-    <string name="send_signin_sealed">Lo que escribes aquí se cifra para que solo ese televisor pueda leerlo y se envía por tu Wi-Fi. No se guarda en este móvil.</string>
+    <string name="send_signin_sealed">Lo que escribes aquí se cifra para el televisor que muestra ese PIN y se envía por tu Wi-Fi. No se guarda en este móvil.</string>
+    <string name="send_pin_body">Escribe el PIN que aparece bajo el código en el televisor de %1$s.</string>
+    <string name="send_pin_label">PIN que muestra el televisor</string>
+    <string name="send_pin_wrong">Ese no es el PIN del televisor. Revísalo y vuelve a intentarlo.</string>
     <string name="send_signin_rejected">El servidor no aceptó esos datos. Revísalos e inténtalo de nuevo.</string>
     <string name="send_signin_on_tv">El televisor encontró %1$s. Termina de iniciar sesión con el mando del televisor.</string>
     <string name="send_signin_connected">Sesión iniciada. El televisor en %1$s está listo.</string>
