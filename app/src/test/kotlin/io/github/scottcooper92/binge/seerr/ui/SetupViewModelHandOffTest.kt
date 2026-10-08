@@ -23,10 +23,10 @@ import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
@@ -274,6 +274,51 @@ class SetupViewModelHandOffTest {
         }
 
     @Test
+    fun `a code locked by wrong PINs is replaced at once, and the old listener closes`() =
+        runTest {
+            val sessions = mutableListOf<FakeSession>()
+            val vm =
+                viewModel {
+                    HandOffOpening.Opened(FakeSession(url = "http://192.168.1.20:41234/a/code${sessions.size}").also(sessions::add))
+                }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            val first = vm.awaitAddress { it.handOff != null }.handOff
+
+            sessions.single().lock.complete(Unit)
+
+            vm.awaitAddress { it.handOff != null && it.handOff != first }
+            assertEquals(2, sessions.size)
+            assertTrue(sessions[0].closed)
+            assertFalse("well before the five-minute rotation", testScheduler.currentTime >= HAND_OFF_TIMEOUT.inWholeMilliseconds)
+
+            vm.showHandOff(false)
+        }
+
+    @Test
+    fun `a code locked on the sign-in step is replaced with one for that step`() =
+        runTest {
+            val sessions = mutableListOf<FakeSession>()
+            val vm =
+                viewModel {
+                    HandOffOpening.Opened(FakeSession(url = "http://192.168.1.20:41234/a/code${sessions.size}").also(sessions::add))
+                }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            sessions.single().address.complete(seerr.url("/"))
+            vm.uiState.first { it is SetupUiState.SignIn && it.code?.url?.endsWith("code0") == true }
+
+            sessions.single().lock.complete(Unit)
+
+            vm.uiState.first { it is SetupUiState.SignIn && it.code?.url?.endsWith("code1") == true }
+            assertTrue(sessions[0].closed)
+            vm.showHandOff(false)
+        }
+
+    @Test
     fun `cancelling takes the plate down and closes the listener at once`() =
         runTest {
             val session = FakeSession()
@@ -454,6 +499,9 @@ class SetupViewModelHandOffTest {
 
         val address = CompletableDeferred<String>()
 
+        /** Completed where the real listener would have taken five wrong PINs: it returns from [serve] (#916). */
+        val lock = CompletableDeferred<Unit>()
+
         /** The session a phone sent with the address (#772), opened as the listener would. */
         @Volatile
         var handedSession: String? = null
@@ -476,8 +524,13 @@ class SetupViewModelHandOffTest {
         ) {
             this.progress = progress
             sendCredentials = onCredentials
-            onAddress(address.await(), handedSession)
-            awaitCancellation()
+            val sent =
+                select<String?> {
+                    address.onAwait { it }
+                    lock.onAwait { null }
+                } ?: return
+            onAddress(sent, handedSession)
+            lock.await()
         }
 
         override fun close() {
