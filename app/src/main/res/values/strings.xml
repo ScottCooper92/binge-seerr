@@ -431,8 +431,6 @@
     <string name="user_settings_type_media_auto_requested">Auto-requested from the watchlist</string>
     <string name="user_settings_permissions_lead">You can grant only what you hold; only the owner can grant Admin.</string>
     <string name="user_settings_linked_as">Linked as %1$s</string>
-    <string name="server_settings_edit">Edit general settings</string>
-    <string name="server_settings_edit_caption">Title, URL, regions, requests and the API key</string>
     <string name="server_settings_general_title">General settings</string>
     <string name="server_settings_application_title">Application title</string>
     <string name="server_settings_application_url_hint">Where users reach the server; links in notifications use it. Blank to unset.</string>
@@ -490,8 +488,6 @@
     <string name="server_settings_tautulli" translatable="false">Tautulli</string>
     <string name="server_settings_tautulli_open">Set up Tautulli</string>
     <string name="server_settings_external_url">External URL</string>
-    <string name="server_settings_services_manage">Manage services</string>
-    <string name="server_settings_services_manage_caption">Add an instance, and the override rules</string>
     <string name="server_settings_dvr_add">Add a %1$s instance</string>
     <string name="server_settings_dvr_new">New instance</string>
     <string name="server_settings_dvr_name">Name</string>
