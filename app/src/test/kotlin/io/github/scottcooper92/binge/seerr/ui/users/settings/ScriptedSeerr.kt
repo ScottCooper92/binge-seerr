@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.util.OkHttpDrain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
@@ -34,14 +35,17 @@ private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":
 
 /**
  * A path-scripted Seerr for the settings pages: each `METHOD path` answers with the body last
- * served for it, so a test can switch a record after a write. Main is set once per test and
- * never reset, as in every other ViewModel test here.
+ * served for it, so a test can switch a record after a write. The clients [connection] builds run
+ * on a [drain], and [close] waits for their calls before stopping the server. Tests call it from
+ * `@After`, which runs before `MainDispatcherRule` resets Main, so a call still in flight lands on
+ * a live Main and does not leak into the next test as `UncaughtExceptionsBeforeTest` (#807).
  */
 internal class ScriptedSeerr(
     private val folder: TemporaryFolder,
 ) {
     val server = MockWebServer()
     val received = CopyOnWriteArrayList<RecordedRequest>()
+    private val drain = OkHttpDrain()
     private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
     private var stores = 0
 
@@ -56,7 +60,10 @@ internal class ScriptedSeerr(
         server.start()
     }
 
-    fun close() = server.close()
+    fun close() {
+        drain.awaitIdle()
+        server.close()
+    }
 
     fun serve(
         key: String,
@@ -148,7 +155,7 @@ internal class ScriptedSeerr(
         scope: TestScope,
         quickConnectPollInterval: Duration = 10.milliseconds,
         onServerChanged: suspend () -> Unit = {},
-        apis: SeerrApiFactory = SeerrApiFactory(logRequests = false),
+        apis: SeerrApiFactory = SeerrApiFactory(logRequests = false, testDispatcher = drain::newDispatcher),
     ): SeerrConnection {
         val connection =
             SeerrConnection(
