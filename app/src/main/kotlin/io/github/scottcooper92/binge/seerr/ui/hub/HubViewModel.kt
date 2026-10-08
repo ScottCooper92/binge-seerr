@@ -11,8 +11,8 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -72,10 +72,7 @@ class HubViewModel
                     flow {
                         val remembered = cache.serverFor(credentials)
                         emit(remembered?.let { ServerRead.Loaded(it) } ?: ServerRead.Pending)
-                        val fresh =
-                            runCatching { loader.server() }
-                                .onFailure { if (it is CancellationException) throw it }
-                                .getOrNull()
+                        val fresh = attempt { loader.server() }.getOrNull()
                         fresh?.let { cache.remember(credentials, server = it) }
                         // A failed refresh keeps the remembered server rather than blanking the hub.
                         if (fresh != null) {

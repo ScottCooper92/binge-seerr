@@ -6,10 +6,10 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -80,8 +80,7 @@ class ServerGeneralViewModel
                 val named =
                     missing
                         .mapNotNull { id ->
-                            runCatching { api.keyword(id) }
-                                .onFailure(::rethrowCancellation)
+                            attempt { api.keyword(id) }
                                 .getOrNull()
                                 ?.name
                                 ?.let { id to it }
@@ -102,8 +101,7 @@ class ServerGeneralViewModel
                     delay(KEYWORD_SEARCH_DEBOUNCE_MILLIS)
                     editExtras { it.copy(keywords = it.keywords.copy(searching = true, failed = false)) }
                     val found =
-                        runCatching { connection.api().searchKeywords(query.trim()).results }
-                            .onFailure(::rethrowCancellation)
+                        attempt { connection.api().searchKeywords(query.trim()).results }
                     val keywords = found.getOrNull()?.mapNotNull { dto -> dto.name?.let { Keyword(dto.id, it) } }
                     editExtras {
                         it.copy(
@@ -162,8 +160,3 @@ class ServerGeneralViewModel
 
 /** How long the tags picker waits after the last keystroke before it searches. */
 internal const val KEYWORD_SEARCH_DEBOUNCE_MILLIS = 300L
-
-/** A cancelled coroutine is not a failed read: `runCatching` catches the cancellation, and this puts it back. */
-private fun rethrowCancellation(failure: Throwable) {
-    if (failure is CancellationException) throw failure
-}
