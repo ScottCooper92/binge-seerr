@@ -7,6 +7,10 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
+        // Google's mirror of Maven Central, asked first. Shared build hosts (CI runners, cloud agent
+        // sessions) are rate-limited by Central itself and get 429s mid-build; the mirror serves the
+        // same artifacts from Google's CDN. Anything it lacks falls through to mavenCentral() below.
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -22,6 +26,8 @@ dependencyResolutionManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
+        // The same mirror, ahead of Central, for the same reason as above.
+        maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
         mavenCentral()
     }
 
