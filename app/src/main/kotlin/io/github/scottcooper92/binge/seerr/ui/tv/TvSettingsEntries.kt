@@ -43,8 +43,9 @@ internal fun TvSettingsEntry(
     }
     // The hub view model is shared with Home and is `Lazily`, so it re-reads whether Binge is installed and the
     // pending count only when told it is visible; without this, installing Binge from the Binge row stays stale.
+    // Settings draws no downloads strip, so it leaves the downloads poll off (#837).
     DisposableEffect(hubViewModel) {
-        hubViewModel.setScreenVisible(true)
+        hubViewModel.setScreenVisible(true, downloads = false)
         onDispose { hubViewModel.setScreenVisible(false) }
     }
     // The jobs view model is only stood up once the row it feeds can actually appear — admin-only, same
