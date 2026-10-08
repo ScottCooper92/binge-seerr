@@ -3,8 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui.settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Movie
@@ -26,11 +24,9 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
-import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import java.util.Locale
 
@@ -44,9 +40,10 @@ internal fun connectionRows(
     server: ServerSummary,
     onEditConnection: () -> Unit,
     onOpenPage: (ServerSettingsPage) -> Unit,
+    showAbout: Boolean = true,
 ): List<ListItem> {
     val context = LocalContext.current
-    return listOf(
+    return listOfNotNull(
         ListItem(
             icon = Icons.Filled.Link,
             iconTint = BingeSentiment.Info.fill(),
@@ -82,7 +79,7 @@ internal fun connectionRows(
             label = stringResource(R.string.settings_about),
             detail = stringResource(R.string.settings_about_caption),
             onClick = { onOpenPage(ServerSettingsPage.About) },
-        ),
+        ).takeIf { showAbout },
         ListItem(
             icon = Icons.Filled.Edit,
             iconTint = BingeSentiment.Info.fill(),
@@ -115,15 +112,7 @@ internal fun mediaServerRows(
         ListItem(
             icon = Icons.Filled.Storage,
             iconTint = BingeSentiment.Info.fill(),
-            label =
-                stringResource(
-                    when (server.mediaServer) {
-                        SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
-                        SeerrMediaServer.Emby -> R.string.user_origin_emby
-                        SeerrMediaServer.Plex -> R.string.user_origin_plex
-                        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown -> R.string.server_settings_media_server
-                    },
-                ),
+            label = stringResource(server.mediaServer.labelRes()),
             detail = stringResource(R.string.server_settings_media_server_caption),
             onClick = { onOpenPage(ServerSettingsPage.MediaServer) },
         ),
@@ -298,44 +287,6 @@ private fun requestLimitDetail(
 private fun RequestLimit?.limitText(): String =
     this?.let { stringResource(R.string.settings_request_limit_value, it.count, it.days) }
         ?: stringResource(R.string.settings_request_limit_unlimited)
-
-@Composable
-internal fun agentRows(
-    agents: NotificationAgents,
-    onOpenPage: (ServerSettingsPage) -> Unit,
-    onOpenAgent: (ServerAgent) -> Unit,
-): List<ListItem> =
-    listOfNotNull(
-        ListItem(
-            icon = Icons.Filled.Tune,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.server_settings_agents_manage),
-            detail = stringResource(R.string.server_settings_agents_manage_caption),
-            onClick = { onOpenPage(ServerSettingsPage.NotificationAgents) },
-        ),
-        agents.emailEnabled?.let { on ->
-            agentRow(Icons.Filled.Email, stringResource(R.string.settings_agent_email), on) { onOpenAgent(ServerAgent.Email) }
-        },
-        agents.discordEnabled?.let { on ->
-            agentRow(Icons.Filled.Forum, stringResource(R.string.settings_agent_discord), on) { onOpenAgent(ServerAgent.Discord) }
-        },
-    )
-
-@Composable
-private fun agentRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    on: Boolean,
-    onClick: () -> Unit,
-): ListItem =
-    ListItem(
-        icon = icon,
-        iconTint = BingeSentiment.Info.fill(),
-        label = label,
-        detail = stringResource(onOffRes(on)),
-        detailColor = if (on) BingeSentiment.Positive.fill() else null,
-        onClick = onClick,
-    )
 
 internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off
 

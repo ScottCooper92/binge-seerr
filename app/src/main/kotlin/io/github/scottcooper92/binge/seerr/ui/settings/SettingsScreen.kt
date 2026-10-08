@@ -30,7 +30,6 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.handoff.rememberScanTvCode
-import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
@@ -45,8 +44,6 @@ class SettingsActions(
     val onBack: () -> Unit,
     val onEditConnection: () -> Unit,
     val onOpenPage: (ServerSettingsPage) -> Unit,
-    val onOpenInstance: (ServiceType, Int) -> Unit,
-    val onOpenAgent: (ServerAgent) -> Unit,
     val onToggleSignal: (NotificationSignal, Boolean) -> Unit,
     val onNotificationAccessChanged: () -> Unit,
     val onToggleShakeToReport: (Boolean) -> Unit,
@@ -103,30 +100,20 @@ private fun SettingsContent(
                 ),
             modifier = Modifier.padding(horizontal = resolvedContentInset()),
         )
-        Group(
-            stringResource(R.string.settings_group_connection),
-            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage),
-        )
         if (state.pending) PendingGroups()
-        config?.general?.let {
+        // The server's settings as the web client's Settings menu lists them, one row per section; then this app's own.
+        config?.let {
             Group(
-                stringResource(R.string.settings_group_general),
-                generalRows(it, actions.onOpenPage),
+                stringResource(R.string.settings_group_server_settings),
+                serverSectionRows(it, state.server, actions.onOpenPage),
             )
         }
-        if (config != null) {
-            Group(stringResource(R.string.server_settings_media_server), mediaServerRows(state.server, actions.onOpenPage))
-        }
-        config?.services?.let {
-            Group(stringResource(R.string.settings_group_services), serviceRows(it, actions.onOpenPage, actions.onOpenInstance))
-        }
-        config?.requestPolicy?.let { Group(stringResource(R.string.settings_group_requests), requestPolicyRows(it)) }
+        Group(
+            stringResource(R.string.settings_group_connection),
+            // About is a server section above when this viewer can read the server's settings, so it isn't said twice.
+            connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage, showAbout = config == null),
+        )
         state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
-        config?.agents?.let {
-            Group(stringResource(R.string.settings_group_notifications), agentRows(it, actions.onOpenPage, actions.onOpenAgent))
-        }
-        // The jobs live on their own page with the caches, as the web client's Jobs & Cache does; this group only links.
-        if (config != null) Group(stringResource(R.string.settings_group_system), systemLinkRows(actions.onOpenPage))
         state.app?.let {
             Group(
                 stringResource(R.string.settings_group_app),

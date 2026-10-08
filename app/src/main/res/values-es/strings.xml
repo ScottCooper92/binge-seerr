@@ -649,7 +649,6 @@
     <string name="settings_group_notifications">Agentes de notificación</string>
     <string name="settings_agent_email">Correo electrónico</string>
     <string name="settings_agent_webhook">Webhook</string>
-    <string name="server_settings_agents_manage">Gestionar los agentes</string>
     <string name="server_settings_sliders">Filas de Descubrir</string>
     <string name="server_settings_network">Red</string>
     <string name="server_settings_logs">Registros</string>
@@ -779,7 +778,6 @@
     <string name="server_settings_slider_search">Resultados de búsqueda</string>
     <string name="server_settings_slider_movie_streaming">Películas en un servicio de streaming</string>
     <string name="server_settings_slider_tv_streaming">Series en un servicio de streaming</string>
-    <string name="server_settings_agents_manage_caption">Todos los agentes por los que puede enviar este servidor</string>
     <string name="server_settings_agent_section_options">Ajustes</string>
     <string name="server_settings_agent_section_more">Más ajustes</string>
     <string name="server_settings_agent_test">Enviar una notificación de prueba</string>
@@ -1067,4 +1065,26 @@
     <string name="tv_detail_info_status">Estado</string>
     <string name="tv_detail_info_sent_to">Enviado a</string>
     <string name="tv_detail_details">Detalles</string>
+    <string name="settings_group_server_settings">Ajustes del servidor</string>
+    <string name="settings_section_general_detail">Título, dirección y descubrimiento</string>
+    <string name="settings_section_services">Servicios</string>
+    <string name="settings_section_services_none">Aún no hay Radarr ni Sonarr</string>
+    <string name="settings_section_notifications">Notificaciones</string>
+    <string name="settings_section_agents_detail">Dónde envía notificaciones este servidor</string>
+    <string name="settings_section_agents_on">Activados: %1$s</string>
+    <string name="settings_users_access_none">Los usuarios nuevos no pueden solicitar</string>
+    <string name="settings_users_access_request">Los usuarios nuevos solicitan con aprobación</string>
+    <string name="settings_users_access_auto">Las solicitudes de los usuarios nuevos se aprueban solas</string>
+    <string name="settings_users_summary_unlimited">%1$s · sin límites</string>
+    <string name="settings_users_summary_limited">%1$s · con límites</string>
+    <plurals name="settings_jobs_running">
+        <item quantity="one">%d tarea en curso</item>
+        <item quantity="many">%d tareas en curso</item>
+        <item quantity="other">%d tareas en curso</item>
+    </plurals>
+    <plurals name="settings_jobs_scheduled">
+        <item quantity="one">%d tarea programada y las cachés</item>
+        <item quantity="many">%d tareas programadas y las cachés</item>
+        <item quantity="other">%d tareas programadas y las cachés</item>
+    </plurals>
 </resources>

@@ -118,12 +118,12 @@ class SettingsGroupsScreenshotTest {
             requestPolicyRows(RequestPolicy(SeerrDefaultAccess.NoRequests, movieLimit = null, tvLimit = null)),
         )
 
-    /** One agent on, one off, one whose settings could not be read and so has no row. */
+    /** The server's settings as the web client's Settings menu lists them, each with what is set there now. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun agents() =
-        Group(R.string.settings_group_notifications, agentRows(NotificationAgents(emailEnabled = true, discordEnabled = null), {}, {}))
+    fun serverSections() =
+        Group(R.string.settings_group_server_settings, serverSectionRows(checkNotNull(adminState().config), server(), {}))
 
     @PreviewTest
     @SeerrComponentPreviews
@@ -274,8 +274,6 @@ private fun noActions() =
         onBack = {},
         onEditConnection = {},
         onOpenPage = {},
-        onOpenInstance = { _, _ -> },
-        onOpenAgent = {},
         onToggleSignal = { _, _ -> },
         onNotificationAccessChanged = {},
         onToggleShakeToReport = {},

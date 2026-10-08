@@ -671,7 +671,6 @@
     <string name="settings_agent_ntfy" translatable="false">ntfy</string>
     <string name="settings_agent_lunasea" translatable="false">LunaSea</string>
     <string name="settings_agent_webhook">Webhook</string>
-    <string name="server_settings_agents_manage">Manage agents</string>
     <string name="server_settings_sliders">Discover sliders</string>
     <string name="server_settings_network">Network</string>
     <string name="server_settings_logs">Logs</string>
@@ -802,7 +801,6 @@
     <string name="server_settings_slider_search">Search results</string>
     <string name="server_settings_slider_movie_streaming">Movies on a streaming service</string>
     <string name="server_settings_slider_tv_streaming">Series on a streaming service</string>
-    <string name="server_settings_agents_manage_caption">Every agent this server can send through</string>
     <string name="server_settings_agent_section_options">Settings</string>
     <string name="server_settings_agent_section_more">More settings</string>
     <string name="server_settings_agent_test">Send a test notification</string>
@@ -1128,4 +1126,24 @@
     <string name="tv_detail_info_status">Status</string>
     <string name="tv_detail_info_sent_to">Sent to</string>
     <string name="tv_detail_details">Details</string>
+    <string name="settings_group_server_settings">Server settings</string>
+    <string name="settings_section_general_detail">Title, address and discovery</string>
+    <string name="settings_section_services">Services</string>
+    <string name="settings_section_services_none">No Radarr or Sonarr yet</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_section_agents_detail">Where this server sends notifications</string>
+    <string name="settings_section_agents_on">%1$s on</string>
+    <string name="settings_users_access_none">New users can\'t request</string>
+    <string name="settings_users_access_request">New users request with approval</string>
+    <string name="settings_users_access_auto">New users\' requests are approved automatically</string>
+    <string name="settings_users_summary_unlimited">%1$s · no limits</string>
+    <string name="settings_users_summary_limited">%1$s · limits set</string>
+    <plurals name="settings_jobs_running">
+        <item quantity="one">%d job running</item>
+        <item quantity="other">%d jobs running</item>
+    </plurals>
+    <plurals name="settings_jobs_scheduled">
+        <item quantity="one">%d scheduled job and the caches</item>
+        <item quantity="other">%d scheduled jobs and the caches</item>
+    </plurals>
 </resources>
