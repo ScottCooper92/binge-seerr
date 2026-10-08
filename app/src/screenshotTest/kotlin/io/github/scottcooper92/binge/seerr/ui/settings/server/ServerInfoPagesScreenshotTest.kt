@@ -79,7 +79,13 @@ class CacheScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = CacheFrame(CacheUiState.Error(SeerrError.Server))
+    fun failed() = CacheFrame(CacheUiState.Error(SeerrError.Server), jobs = JobsUiState.Ready(cacheJobs()))
+
+    /** The jobs read failed and the caches did not: the caches stand, and the jobs group carries its own retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun jobsFailed() = CacheFrame(CacheUiState.Ready(apiCaches(), imageCaches(), dns = null), jobs = JobsUiState.Error(SeerrError.Server))
 }
 
 private fun aboutInfo(
@@ -151,8 +157,9 @@ private fun CacheFrame(
 ) = CacheScreen(
     state = state,
     events = emptyFlow(),
-    actions = CacheActions(onBack = {}, onRetry = {}, onFlush = {}, onFlushDnsEntry = {}),
+    actions = CacheActions(onBack = {}, onRetry = {}, onRetryJobs = {}, onFlush = {}, onFlushDnsEntry = {}),
     jobs = jobs,
+    jobActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
 )
 
 /** The page's jobs, above its caches as the web client's Jobs & Cache page lists them. */
