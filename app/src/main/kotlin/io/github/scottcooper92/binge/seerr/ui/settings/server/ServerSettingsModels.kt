@@ -68,6 +68,11 @@ data class ServerGeneralSettings(
     val csrfProtection: Boolean? = null,
     /** The automatic blocklist's settings; null on a server without them. */
     val blocklist: BlocklistSettings? = null,
+    /**
+     * The server keeps the hide switch and the blocklist settings under Jellyseerr 2.x's `blacklist` names, so they are
+     * written back under those. It stores whatever a save sends, so the other spelling would sit beside them unread.
+     */
+    val blacklistNames: Boolean = false,
 ) {
     /** A blank URL clears it; anything else has to be a web address the server can serve links from. */
     val urlValid: Boolean get() = applicationUrl.isBlank() || applicationUrl.trim().isWebUrl()
@@ -153,7 +158,7 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
         originalLanguage = originalLanguage.orEmpty(),
         hideAvailable = hideAvailable ?: false,
         hideRequested = (hideRequested ?: false).takeIf { lineage },
-        hideBlocklisted = hideBlocklisted,
+        hideBlocklisted = hideBlocklisted ?: hideBlacklisted,
         partialRequests = partialRequestsEnabled ?: true,
         specialEpisodes = (enableSpecialEpisodes ?: false).takeIf { lineage },
         versionCheck = versionCheck,
@@ -162,8 +167,15 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
         trustProxy = (trustProxy ?: false).takeIf { overseerr },
         csrfProtection = (csrfProtection ?: false).takeIf { overseerr },
         blocklist = toBlocklist(),
+        blacklistNames = usesBlacklistNames,
     )
 }
+
+/** Jellyseerr 2.6 to 2.x: the old names are there and none of Seerr 3.0's are. */
+private val SeerrMainSettingsDto.usesBlacklistNames: Boolean
+    get() =
+        listOf(hideBlocklisted, blocklistRegion, blocklistLanguage, blocklistedTags, blocklistedTagsLimit).all { it == null } &&
+            listOf(hideBlacklisted, blacklistedTags, blacklistedTagsLimit).any { it != null }
 
 /**
  * The server sends every main setting it has, so a server whose answer has none of these has no automatic blocklist.
@@ -172,16 +184,20 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
  * "the server sent the field" is an exact answer, and it needs no guess at the release that added it.
  */
 private fun SeerrMainSettingsDto.toBlocklist(): BlocklistSettings? =
-    if (listOf(blocklistRegion, blocklistLanguage, blocklistedTags, blocklistedTagsLimit).all { it == null }) {
+    if (listOf(blocklistRegion, blocklistLanguage, tags, tagsLimit).all { it == null }) {
         null
     } else {
         BlocklistSettings(
             region = blocklistRegion,
             languages = blocklistLanguage,
-            tags = blocklistedTags.orEmpty(),
-            tagsLimit = (blocklistedTagsLimit ?: DEFAULT_TAGS_LIMIT).toString(),
+            tags = tags.orEmpty(),
+            tagsLimit = (tagsLimit ?: DEFAULT_TAGS_LIMIT).toString(),
         )
     }
+
+/** The tags and their limit under whichever name the server keeps them. */
+private val SeerrMainSettingsDto.tags: String? get() = blocklistedTags ?: blacklistedTags
+private val SeerrMainSettingsDto.tagsLimit: Int? get() = blocklistedTagsLimit ?: blacklistedTagsLimit
 
 /**
  * Only what the form holds; a field the lineage lacks stays null and is left out. The region goes
@@ -198,11 +214,14 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         originalLanguage = originalLanguage.trim(),
         hideAvailable = hideAvailable,
         hideRequested = hideRequested,
-        hideBlocklisted = hideBlocklisted,
+        hideBlocklisted = hideBlocklisted.takeUnless { blacklistNames },
         blocklistRegion = blocklist?.region?.trim(),
         blocklistLanguage = blocklist?.languages?.trim(),
-        blocklistedTags = blocklist?.tagIds?.joinToString(","),
-        blocklistedTagsLimit = blocklist?.tagsLimit?.trim()?.toIntOrNull(),
+        blocklistedTags = blocklistTags.takeUnless { blacklistNames },
+        blocklistedTagsLimit = blocklistTagsLimit.takeUnless { blacklistNames },
+        hideBlacklisted = hideBlocklisted.takeIf { blacklistNames },
+        blacklistedTags = blocklistTags.takeIf { blacklistNames },
+        blacklistedTagsLimit = blocklistTagsLimit.takeIf { blacklistNames },
         partialRequestsEnabled = partialRequests,
         enableSpecialEpisodes = specialEpisodes,
         versionCheck = versionCheck,
@@ -211,3 +230,6 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         trustProxy = trustProxy,
         csrfProtection = csrfProtection,
     )
+
+private val ServerGeneralSettings.blocklistTags: String? get() = blocklist?.tagIds?.joinToString(",")
+private val ServerGeneralSettings.blocklistTagsLimit: Int? get() = blocklist?.tagsLimit?.trim()?.toIntOrNull()

@@ -56,6 +56,10 @@ data class SeerrMainSettingsDto(
     /** TMDB keyword ids, comma-separated, whose titles the "Process Blocklisted Tags" job blocklists. */
     @SerialName("blocklistedTags") val blocklistedTags: String? = null,
     @SerialName("blocklistedTagsLimit") val blocklistedTagsLimit: Int? = null,
+    /** Jellyseerr 2.6 to 2.x's names for the same three settings, before Seerr 3.0 renamed them. */
+    @SerialName("hideBlacklisted") val hideBlacklisted: Boolean? = null,
+    @SerialName("blacklistedTags") val blacklistedTags: String? = null,
+    @SerialName("blacklistedTagsLimit") val blacklistedTagsLimit: Int? = null,
 )
 
 /**
@@ -92,6 +96,10 @@ data class SeerrMainSettingsUpdateBody(
     /** TMDB keyword ids, comma-separated, whose titles the "Process Blocklisted Tags" job blocklists. */
     @SerialName("blocklistedTags") val blocklistedTags: String? = null,
     @SerialName("blocklistedTagsLimit") val blocklistedTagsLimit: Int? = null,
+    /** Jellyseerr 2.6 to 2.x's names for the same three settings, before Seerr 3.0 renamed them. */
+    @SerialName("hideBlacklisted") val hideBlacklisted: Boolean? = null,
+    @SerialName("blacklistedTags") val blacklistedTags: String? = null,
+    @SerialName("blacklistedTagsLimit") val blacklistedTagsLimit: Int? = null,
 )
 
 @Serializable

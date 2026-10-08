@@ -60,6 +60,7 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | Quick Connect sign-in | never | Seerr 3.4 |
 | Blocklist | never | Jellyseerr 2.0 as `/blacklist`; Seerr 3.0 as `/blocklist` |
 | Blocklist a whole collection | never | Seerr 3.2 |
+| Automatic blocklist settings (Settings › General) | never | Jellyseerr 2.6 under `blacklist` names; Seerr 3.0 under `blocklist` names |
 | Override rules (Settings › Services) | never | Jellyseerr 2.2 |
 | Network settings (proxy, DNS) | never | Jellyseerr 2.4 |
 | Linked Plex and Jellyfin accounts on a user | never | Jellyseerr 2.4 |
@@ -122,6 +123,13 @@ keeps `/blacklist` as an alias. The profile picks the path by version, and the R
 `CAPABILITY_BLOCK` is declared only when the lineage has a blocklist at all and the user holds
 `MANAGE_BLOCKLIST`. Declaring it against an Overseerr server would offer Binge an action the
 server answers with a `404`.
+
+The General page's automatic blocklist settings were renamed the same way. Jellyseerr 2.6 sends
+`hideBlacklisted`, `blacklistedTags` and `blacklistedTagsLimit`. Seerr 3.x sends `hideBlocklisted`,
+`blocklistedTags` and `blocklistedTagsLimit`, and later added `blocklistRegion` and
+`blocklistLanguage`. The page reads whichever names the server sent, shows only the settings that
+are there, and saves under the same names. The server stores whatever a save sends, so writing the
+other spelling would leave keys it never reads.
 
 ## Settings the administrator can turn off
 
