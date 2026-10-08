@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassFull
 import androidx.compose.material.icons.filled.Https
 import androidx.compose.material.icons.filled.Key
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -68,6 +70,7 @@ fun NetworkScreen(
                             actions.onEdit { it.copy(forceIpv4First = on) }
                         }
                     },
+                    draft.apiRequestTimeout?.let { seconds -> timeoutItem(seconds, enabled, actions) },
                 ),
         )
         draft.dnsCache?.let { cache ->
@@ -77,6 +80,33 @@ fun NetworkScreen(
             ProxyGroup(proxy, enabled) { transform -> actions.onEdit { it.copy(proxy = it.proxy?.let(transform)) } }
         }
     }
+}
+
+/** How long the server waits on Radarr, Sonarr and the like, in whole seconds; 0 waits for ever. */
+@Composable
+private fun timeoutItem(
+    seconds: String,
+    enabled: Boolean,
+    actions: EditorActions<NetworkForm>,
+): ListItem {
+    val wrongShape = stringResource(R.string.server_settings_api_timeout_error)
+    return textSettingItem(
+        icon = Icons.Filled.HourglassEmpty,
+        label = stringResource(R.string.server_settings_api_timeout),
+        value = seconds,
+        enabled = enabled,
+        onChange = { value -> actions.onEdit { it.copy(apiRequestTimeout = value) } },
+        hint = stringResource(R.string.server_settings_api_timeout_hint),
+        placeholder = stringResource(R.string.placeholder_api_timeout),
+        required = true,
+        check = { value -> wrongShape.takeIf { !value.isTimeoutSeconds() } },
+        shown =
+            when (val count = seconds.trim().toIntOrNull()) {
+                null -> seconds
+                0 -> stringResource(R.string.server_settings_api_timeout_none)
+                else -> pluralStringResource(R.plurals.server_settings_api_timeout_value, count, count)
+            },
+    )
 }
 
 @Composable

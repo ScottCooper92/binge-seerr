@@ -19,9 +19,18 @@ data class NetworkForm(
     val forceIpv4First: Boolean? = null,
     val proxy: ProxyForm? = null,
     val dnsCache: DnsCacheForm? = null,
+    /** Seconds the server waits on an external service, as the web client shows it; null where the server has no such setting. */
+    val apiRequestTimeout: String? = null,
 ) {
-    val valid: Boolean get() = proxy?.valid != false && dnsCache?.valid != false
+    /** A whole number of seconds, 0 or more: the web client's rule, and 0 means no timeout. */
+    val apiRequestTimeoutValid: Boolean get() = apiRequestTimeout == null || apiRequestTimeout.isTimeoutSeconds()
+
+    val valid: Boolean get() = proxy?.valid != false && dnsCache?.valid != false && apiRequestTimeoutValid
 }
+
+internal fun String.isTimeoutSeconds(): Boolean = trim().toIntOrNull()?.let { it >= 0 } == true
+
+private const val MILLIS_PER_SECOND = 1000
 
 /** The outbound proxy: reachable only while it has a host and a port in range, with its credentials as a pair, if it is on. */
 data class ProxyForm(
@@ -108,6 +117,7 @@ internal fun SeerrNetworkSettingsDto.toForm(): NetworkForm =
         csrfProtection = csrfProtection ?: false,
         trustProxy = trustProxy ?: false,
         forceIpv4First = forceIpv4First,
+        apiRequestTimeout = apiRequestTimeout?.let { (it / MILLIS_PER_SECOND).toString() },
         proxy =
             proxy?.let {
                 ProxyForm(
@@ -144,6 +154,7 @@ internal fun NetworkForm.toDto(): SeerrNetworkSettingsDto =
         csrfProtection = csrfProtection,
         trustProxy = trustProxy,
         forceIpv4First = forceIpv4First,
+        apiRequestTimeout = apiRequestTimeout?.trim()?.toIntOrNull()?.let { it * MILLIS_PER_SECOND },
         proxy =
             proxy?.let {
                 SeerrProxySettingsDto(

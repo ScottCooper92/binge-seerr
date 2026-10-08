@@ -157,6 +157,7 @@ private fun seerrNetwork() =
         csrfProtection = false,
         trustProxy = false,
         forceIpv4First = true,
+        apiRequestTimeout = "30",
         proxy = ProxyForm(enabled = true, host = "proxy.lan", port = "3128", bypassFilter = "*.lan"),
         dnsCache = DnsCacheForm(enabled = true, minTtl = "5", maxTtl = "60"),
     )

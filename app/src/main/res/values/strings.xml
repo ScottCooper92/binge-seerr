@@ -1205,4 +1205,13 @@
     <string name="server_settings_about_discussions">GitHub Discussions</string>
     <string name="server_settings_about_support_project">Support %1$s</string>
     <string name="server_settings_about_contribute">Make a contribution</string>
+    <string name="server_settings_api_timeout">API request timeout</string>
+    <string name="server_settings_api_timeout_hint">How long the server waits for Radarr, Sonarr and other services to answer. 0 waits for ever.</string>
+    <string name="server_settings_api_timeout_error">Enter a whole number of seconds, 0 or more.</string>
+    <plurals name="server_settings_api_timeout_value">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <string name="server_settings_api_timeout_none">No timeout</string>
+    <string name="placeholder_api_timeout" translatable="false">30</string>
 </resources>
