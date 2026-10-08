@@ -1162,7 +1162,7 @@
     <string name="server_settings_blocklist_tags_empty">Aún no hay etiquetas. Busca una palabra clave para bloquear lo que la tenga.</string>
     <string name="server_settings_blocklist_tags_no_match">Ninguna palabra clave coincide.</string>
     <string name="server_settings_blocklist_tags_failed">No se pudieron buscar las palabras clave. Vuelve a intentarlo en un momento.</string>
-    <string name="server_settings_blocklist_limit">Títulos por etiqueta</string>
+    <string name="server_settings_blocklist_limit">Páginas por etiqueta</string>
     <string name="server_settings_blocklist_limit_hint">Cuántas páginas toma por etiqueta la tarea de procesar etiquetas bloqueadas. Más es una lista más completa y ocupa más espacio.</string>
     <string name="server_settings_blocklist_limit_error">Introduce un número entero de 0 a %1$d.</string>
     <string name="server_settings_api_timeout">Tiempo de espera de las API</string>

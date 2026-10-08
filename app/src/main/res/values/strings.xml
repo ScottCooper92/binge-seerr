@@ -1216,7 +1216,7 @@
     <string name="server_settings_blocklist_tags_empty">No tags yet. Search for a keyword to blocklist what has it.</string>
     <string name="server_settings_blocklist_tags_no_match">No keyword matches that.</string>
     <string name="server_settings_blocklist_tags_failed">Couldn\'t search the keywords. Try again in a moment.</string>
-    <string name="server_settings_blocklist_limit">Titles per tag</string>
+    <string name="server_settings_blocklist_limit">Pages per tag</string>
     <string name="server_settings_blocklist_limit_hint">How many pages the Process Blocklisted Tags job takes for each tag. More is a fuller blocklist and more space.</string>
     <string name="server_settings_blocklist_limit_error">Enter a whole number from 0 to %1$d.</string>
     <string name="server_settings_api_timeout">API request timeout</string>

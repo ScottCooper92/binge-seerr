@@ -83,13 +83,15 @@ data class ServerGeneralSettings(
 }
 
 /**
- * What the "Process Blocklisted Tags" job reads: the region and languages it scans, apart from Discover's, the TMDB
+ * What the "Process Blocklisted Tags" job reads: the region and languages it scans (each null on a server that lacks
+ * it), apart from Discover's, the TMDB
  * keywords whose titles it blocklists (ids, comma-separated, as the server keeps them), and how many pages it takes per
  * tag, which the web client holds to 0 through 250.
  */
 data class BlocklistSettings(
-    val region: String = "",
-    val languages: String = "",
+    /** Null where the server has no such setting: Seerr added the region and languages after the tags. */
+    val region: String? = null,
+    val languages: String? = null,
     val tags: String = "",
     val tagsLimit: String = DEFAULT_TAGS_LIMIT.toString(),
 ) {
@@ -174,8 +176,8 @@ private fun SeerrMainSettingsDto.toBlocklist(): BlocklistSettings? =
         null
     } else {
         BlocklistSettings(
-            region = blocklistRegion.orEmpty(),
-            languages = blocklistLanguage.orEmpty(),
+            region = blocklistRegion,
+            languages = blocklistLanguage,
             tags = blocklistedTags.orEmpty(),
             tagsLimit = (blocklistedTagsLimit ?: DEFAULT_TAGS_LIMIT).toString(),
         )

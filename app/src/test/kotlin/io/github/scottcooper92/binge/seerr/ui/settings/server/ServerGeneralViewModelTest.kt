@@ -266,6 +266,30 @@ class ServerGeneralViewModelTest {
         }
 
     @Test
+    fun `a server that predates the blocklist region and languages has neither, and is sent neither`() =
+        runTest {
+            val seerr30Main =
+                """{"apiKey":"old-key","applicationTitle":"Home","discoverRegion":"GB","streamingRegion":"IE",
+                   "hideBlocklisted":false,"blocklistedTags":"9951","blocklistedTagsLimit":50}"""
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/main", seerr30Main)
+            seerr.serve("POST /api/v1/settings/main", seerr30Main)
+            val vm = viewModel()
+            val draft = vm.awaitReady().draft
+            assertEquals(BlocklistSettings(region = null, languages = null, tags = "9951", tagsLimit = "50"), draft.blocklist)
+
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
+            assertEquals("9951", sent.getValue("blocklistedTags").jsonPrimitive.content)
+            assertNull(sent["blocklistRegion"])
+            assertNull(sent["blocklistLanguage"])
+        }
+
+    @Test
     fun `a server without a blocklist has no blocklist settings and is sent none`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN, version = "1.33.2", settings = "{}")
