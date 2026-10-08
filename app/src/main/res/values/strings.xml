@@ -973,7 +973,7 @@
     <string name="handoff_page_pin_field">PIN</string>
     <string name="handoff_page_pin_submit">Continue</string>
     <string name="handoff_page_pin_wrong">That isn\'t the PIN on your TV. Check it and try again.</string>
-    <string name="handoff_page_pin_locked">Too many wrong PINs. On the TV, go back and open a new code, then scan that one.</string>
+    <string name="handoff_page_pin_locked">Too many wrong PINs. The TV is showing a new code now: scan that one.</string>
     <string name="handoff_page_failed">Your TV couldn\'t reach a Seerr server at that address. Check it and send it again.</string>
     <string name="handoff_page_signin_title">Finish on your TV</string>
     <string name="handoff_page_signin_body">Your TV found %1$s. Sign in there with your remote.</string>

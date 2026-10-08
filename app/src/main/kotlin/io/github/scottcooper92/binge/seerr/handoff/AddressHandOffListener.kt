@@ -33,7 +33,8 @@ interface AddressHandOffSession {
      * is the first, and any sent again after a server that could not be reached. [onCredentials] gets sign-in
      * credentials a phone app sealed with the key in the code, while the TV is on its sign-in step. Cancellable: the listener
      * stops within [ACCEPT_POLL_MILLIS] of being cancelled, or once the connection it is answering at the
-     * time has finished.
+     * time has finished. Returns once wrong PINs have locked the code, which then takes nothing more, so its
+     * owner can show a new one (#916).
      */
     suspend fun serve(
         progress: () -> HandOffProgress,
@@ -66,7 +67,7 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
  *   credentials. A client proves it by posting the PIN, and the match is bound to that client: the listener
  *   answers it with a random cookie (see `HandOffClients`) and trusts later requests that carry it. A match
  *   does not open the code to anyone else. The app keeps no cookies and sends the PIN with every post. Five
- *   wrong PINs lock the code.
+ *   wrong PINs lock the code, and [serve] returns so the owner replaces it.
  * - **LAN only.** The socket is bound to the TV's private IPv4 address on the active Wi-Fi or
  *   Ethernet network, never to every interface.
  * - **Short-lived.** It accepts an address while the TV is waiting for one: the first, and another
@@ -166,6 +167,8 @@ internal class AddressHandOffListener(
                     is HandOffAccepted.Credentials -> onCredentials(accepted.credentials)
                     null -> Unit
                 }
+                // The client that locked it has had its answer; the code is done with.
+                if (locked) return@withContext
             }
         }
     }

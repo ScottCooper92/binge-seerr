@@ -163,18 +163,18 @@ class AddressHandOffListenerTest {
             serving.cancelAndJoin()
         }
 
+    /** #916: the lock ends the code, so its owner can put a new one on the TV rather than leave a dead one up. */
     @Test
-    fun `after five wrong PINs the code takes nothing, not even the right one`() =
+    fun `the fifth wrong PIN is told the code is locked, and the listener stops serving`() =
         runBlocking {
             val (addresses, serving) = serving()
             val wrong = if (key.pin() == "0000") "0001" else "0000"
 
-            repeat(5) { post("/a/$TOKEN", "pin=$wrong", pin = null) }
+            repeat(4) { post("/a/$TOKEN", "pin=$wrong", pin = null).let { assertTrue(it, it.contains("locked=false")) } }
+            post("/a/$TOKEN", "pin=$wrong", pin = null).let { assertTrue(it, it.contains("locked=true")) }
 
-            post("/a/$TOKEN", "address=seerr.lan").let { assertTrue(it, it.contains("locked=true")) }
-            assertTrue(get("/a/$TOKEN").contains("locked=true"))
+            withTimeout(5_000) { serving.join() }
             assertTrue(addresses.isEmpty)
-            serving.cancelAndJoin()
         }
 
     @Test
