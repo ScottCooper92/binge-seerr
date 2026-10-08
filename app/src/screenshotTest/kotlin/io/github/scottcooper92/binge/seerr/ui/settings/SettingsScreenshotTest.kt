@@ -12,13 +12,15 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobInterval
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobOutcome
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerJob
 import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.generalRows
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.serviceRows
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.systemRows
 
 /**
  * The Settings root. Every group is one screen tall together, so the page frames carry the layout and
@@ -73,36 +75,19 @@ class SettingsGroupsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun generalFull() = Group(R.string.settings_group_general, generalRows(general(), {}))
+    fun generalFull() = Group(R.string.settings_group_general, generalRows(general()))
 
-    /** Overseerr 1.x: no sliders, no network page, no metadata page, and the hide-available state unread. */
+    /** The TV's read-out with no address and the hide-available state unread: the display language alone. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun generalMinimal() =
-        Group(
-            R.string.settings_group_general,
-            generalRows(
-                general().copy(discoverSliders = false, network = false, metadata = false, hideAvailable = null, applicationUrl = null),
-                {},
-            ),
-        )
+    fun generalMinimal() = Group(R.string.settings_group_general, generalRows(general().copy(hideAvailable = null, applicationUrl = null)))
 
+    /** Each instance as the TV reads it out: its markers, then where it sends a request or its address. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun mediaServerJellyfin() =
-        Group(
-            R.string.server_settings_media_server,
-            mediaServerRows(server().copy(mediaServer = SeerrMediaServer.Jellyfin), {
-            }),
-        )
-
-    /** An instance with an id opens in the app; one with only an address leaves it; one with neither is inert. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun serviceInstances() = Group(R.string.settings_group_services, serviceRows(services(), {}, { _, _ -> }))
+    fun serviceInstances() = Group(R.string.settings_group_services, serviceRows(services()))
 
     @PreviewTest
     @SeerrComponentPreviews
@@ -128,7 +113,7 @@ class SettingsGroupsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun system() = Group(R.string.settings_group_system, systemRows(systemInfo(), {}))
+    fun system() = Group(R.string.settings_group_system, systemRows(systemInfo()))
 
     /** Each job state at once: running, idle, a run that finished, a run that failed, and a run in flight. */
     @PreviewTest

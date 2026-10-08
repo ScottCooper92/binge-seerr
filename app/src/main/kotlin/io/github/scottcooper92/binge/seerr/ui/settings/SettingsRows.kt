@@ -3,18 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material.icons.filled.ViewCarousel
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,7 +21,6 @@ import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
-import java.util.Locale
 
 /**
  * The Connection group: the server (opens in the browser), who is signed in, the version, the way
@@ -102,149 +94,6 @@ private fun ServerSummary.versionDetail(): String {
     }
 }
 
-/** The media server the admin connected, and the way into its page: address, libraries and scans. */
-@Composable
-internal fun mediaServerRows(
-    server: ServerSummary,
-    onOpenPage: (ServerSettingsPage) -> Unit,
-): List<ListItem> =
-    listOf(
-        ListItem(
-            icon = Icons.Filled.Storage,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(server.mediaServer.labelRes()),
-            detail = stringResource(R.string.server_settings_media_server_caption),
-            onClick = { onOpenPage(ServerSettingsPage.MediaServer) },
-        ),
-    )
-
-/** The general settings as read, and first the way into editing them: the page owns every field, these rows only summarise. */
-@Composable
-internal fun generalRows(
-    general: GeneralSettings,
-    onOpenPage: (ServerSettingsPage) -> Unit,
-): List<ListItem> {
-    val context = LocalContext.current
-    return listOfNotNull(
-        ListItem(
-            icon = Icons.Filled.Tune,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.server_settings_edit),
-            detail = stringResource(R.string.server_settings_edit_caption),
-            onClick = { onOpenPage(ServerSettingsPage.General) },
-        ),
-        general.applicationUrl?.takeIf { it.isWebUrl() }?.let { url ->
-            ListItem(
-                icon = Icons.Filled.Link,
-                iconTint = BingeSentiment.Info.fill(),
-                label = stringResource(R.string.settings_application_url),
-                detail = url,
-                destination = ListItemDestination.External,
-                onClick = { context.openInBrowser(url) },
-            )
-        },
-        ListItem(
-            icon = Icons.Filled.Language,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.settings_display_language),
-            detail = general.displayLanguage?.let { displayLanguageName(it) } ?: stringResource(R.string.settings_value_unknown),
-            clickable = false,
-        ),
-        general.hideAvailable?.let { hidden ->
-            ListItem(
-                icon = Icons.Filled.VisibilityOff,
-                iconTint = BingeSentiment.Info.fill(),
-                label = stringResource(R.string.settings_hide_available),
-                detail = stringResource(onOffRes(hidden)),
-                clickable = false,
-            )
-        },
-        if (general.discoverSliders) {
-            ListItem(
-                icon = Icons.Filled.ViewCarousel,
-                iconTint = BingeSentiment.Info.fill(),
-                label = stringResource(R.string.server_settings_sliders),
-                detail = stringResource(R.string.server_settings_sliders_caption),
-                onClick = { onOpenPage(ServerSettingsPage.DiscoverSliders) },
-            )
-        } else {
-            null
-        },
-        if (general.network) {
-            ListItem(
-                icon = Icons.Filled.Dns,
-                iconTint = BingeSentiment.Info.fill(),
-                label = stringResource(R.string.server_settings_network),
-                detail = stringResource(R.string.server_settings_network_caption),
-                onClick = { onOpenPage(ServerSettingsPage.Network) },
-            )
-        } else {
-            null
-        },
-        if (general.metadata) {
-            ListItem(
-                icon = Icons.Filled.Storage,
-                iconTint = BingeSentiment.Info.fill(),
-                label = stringResource(R.string.server_settings_metadata),
-                detail = stringResource(R.string.server_settings_metadata_caption),
-                onClick = { onOpenPage(ServerSettingsPage.Metadata) },
-            )
-        } else {
-            null
-        },
-    )
-}
-
-/** Each instance opens its own editor; first, the way to the services page, where one is added and the rules live. */
-@Composable
-internal fun serviceRows(
-    services: List<ServerService>,
-    onOpenPage: (ServerSettingsPage) -> Unit,
-    onOpenInstance: (ServiceType, Int) -> Unit,
-): List<ListItem> {
-    val context = LocalContext.current
-    val manage =
-        ListItem(
-            icon = Icons.Filled.Tune,
-            iconTint = BingeSentiment.Info.fill(),
-            label = stringResource(R.string.server_settings_services_manage),
-            detail = stringResource(R.string.server_settings_services_manage_caption),
-            onClick = { onOpenPage(ServerSettingsPage.Services) },
-        )
-    return listOf(manage) +
-        services.map { service ->
-            val url = service.url?.takeIf { it.isWebUrl() }
-            val id = service.id
-            ListItem(
-                icon = if (service.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv,
-                iconTint = BingeSentiment.Info.fill(),
-                label = service.label(),
-                detail = service.detail(),
-                clickable = id != null || url != null,
-                // In-app when the instance is known; otherwise this falls back to the service's own
-                // URL, which leaves the app - the row's icon has to say which before it's tapped.
-                destination = if (id != null) ListItemDestination.InApp else ListItemDestination.External,
-                onClick = { if (id != null) onOpenInstance(service.type, id) else url?.let { context.openInBrowser(it) } },
-            )
-        }
-}
-
-@Composable
-private fun ServerService.label(): String {
-    val markers =
-        listOfNotNull(
-            if (is4k) stringResource(R.string.settings_service_4k) else null,
-            if (isDefault) stringResource(R.string.settings_service_default) else null,
-        )
-    return (listOf(name) + markers).joinToString(stringResource(R.string.hub_meta_separator))
-}
-
-@Composable
-private fun ServerService.detail(): String =
-    listOfNotNull(qualityProfile, rootFolder).takeIf { it.isNotEmpty() }?.joinToString(stringResource(R.string.hub_meta_separator))
-        ?: url?.takeIf { it.isWebUrl() }
-        ?: stringResource(R.string.settings_value_unknown)
-
 @Composable
 internal fun requestPolicyRows(policy: RequestPolicy): List<ListItem> =
     listOf(
@@ -289,7 +138,3 @@ private fun RequestLimit?.limitText(): String =
         ?: stringResource(R.string.settings_request_limit_unlimited)
 
 internal fun onOffRes(on: Boolean): Int = if (on) R.string.settings_value_on else R.string.settings_value_off
-
-/** The locale tag's own name in the device's language; the raw tag when the JVM cannot resolve it. */
-private fun displayLanguageName(tag: String): String =
-    Locale.forLanguageTag(tag).getDisplayName(Locale.getDefault()).takeIf { it.isNotBlank() } ?: tag
