@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * The network page in the web client's order, as groups of list rows: the switches every lineage has, then the DNS
- * cache and the outbound proxy where the server sent them. Each of those two is a switch, and only while it is on do
+ * cache, the API request timeout and the outbound proxy where the server sent them. The DNS cache and the proxy is a switch, and only while it is on do
  * its settings hang beneath it, as the web client shows them. Every value is checked in the sheet that edits it.
  */
 @Composable
@@ -70,11 +70,13 @@ fun NetworkScreen(
                             actions.onEdit { it.copy(forceIpv4First = on) }
                         }
                     },
-                    draft.apiRequestTimeout?.let { seconds -> timeoutItem(seconds, enabled, actions) },
                 ),
         )
         draft.dnsCache?.let { cache ->
             DnsCacheGroup(cache, enabled) { transform -> actions.onEdit { it.copy(dnsCache = it.dnsCache?.let(transform)) } }
+        }
+        draft.apiRequestTimeout?.let { seconds ->
+            ItemGroup(title = null, rows = listOf(timeoutItem(seconds, enabled, actions)))
         }
         draft.proxy?.let { proxy ->
             ProxyGroup(proxy, enabled) { transform -> actions.onEdit { it.copy(proxy = it.proxy?.let(transform)) } }
@@ -82,7 +84,7 @@ fun NetworkScreen(
     }
 }
 
-/** How long the server waits on Radarr, Sonarr and the like, in whole seconds; 0 waits for ever. */
+/** How long the server waits on Radarr, Sonarr and the like, in seconds with decimals allowed; 0 waits for ever. */
 @Composable
 private fun timeoutItem(
     seconds: String,
@@ -100,13 +102,21 @@ private fun timeoutItem(
         placeholder = stringResource(R.string.placeholder_api_timeout),
         required = true,
         check = { value -> wrongShape.takeIf { !value.isTimeoutSeconds() } },
-        shown =
-            when (val count = seconds.trim().toIntOrNull()) {
-                null -> seconds
-                0 -> stringResource(R.string.server_settings_api_timeout_none)
-                else -> pluralStringResource(R.plurals.server_settings_api_timeout_value, count, count)
-            },
+        shown = timeoutShown(seconds),
     )
+}
+
+/** The entry as the row reads it: a plural for whole seconds, which a count can carry, and plain text for the rest. */
+@Composable
+private fun timeoutShown(seconds: String): String {
+    val parsed = seconds.toTimeoutSeconds() ?: return seconds
+    val count = parsed.toInt()
+    return when {
+        parsed.signum() == 0 -> stringResource(R.string.server_settings_api_timeout_none)
+        parsed.compareTo(count.toBigDecimal()) == 0 ->
+            pluralStringResource(R.plurals.server_settings_api_timeout_value, count, count)
+        else -> stringResource(R.string.server_settings_api_timeout_fraction, parsed.stripTrailingZeros().toPlainString())
+    }
 }
 
 @Composable

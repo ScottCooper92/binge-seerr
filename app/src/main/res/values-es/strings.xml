@@ -1152,11 +1152,12 @@
     <string name="server_settings_about_contribute">Hacer una aportación</string>
     <string name="server_settings_api_timeout">Tiempo de espera de las API</string>
     <string name="server_settings_api_timeout_hint">Cuánto espera el servidor a que respondan Radarr, Sonarr y otros servicios. 0 espera indefinidamente.</string>
-    <string name="server_settings_api_timeout_error">Introduce un número entero de segundos, 0 o más.</string>
+    <string name="server_settings_api_timeout_error">Introduce un número de segundos, 0 o más.</string>
     <plurals name="server_settings_api_timeout_value">
         <item quantity="one">%1$d segundo</item>
         <item quantity="many">%1$d segundos</item>
         <item quantity="other">%1$d segundos</item>
     </plurals>
+    <string name="server_settings_api_timeout_fraction">%1$s segundos</string>
     <string name="server_settings_api_timeout_none">Sin límite</string>
 </resources>

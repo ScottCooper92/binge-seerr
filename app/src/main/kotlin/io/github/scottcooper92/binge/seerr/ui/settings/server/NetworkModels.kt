@@ -5,6 +5,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataTestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNetworkSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrProxySettingsDto
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 private const val NO_TTL = -1
 
@@ -22,16 +24,37 @@ data class NetworkForm(
     /** Seconds the server waits on an external service, as the web client shows it; null where the server has no such setting. */
     val apiRequestTimeout: String? = null,
 ) {
-    /** A whole number of seconds, 0 or more: the web client's rule, and 0 means no timeout. */
+    /** A number of seconds, 0 or more, decimals allowed: the web client's rule, and 0 means no timeout. */
     val apiRequestTimeoutValid: Boolean get() = apiRequestTimeout == null || apiRequestTimeout.isTimeoutSeconds()
 
     val valid: Boolean get() = proxy?.valid != false && dnsCache?.valid != false && apiRequestTimeoutValid
 }
 
-/** Whole seconds that still fit a [Long] once turned into milliseconds, so the sum on save cannot wrap. */
-internal fun String.isTimeoutSeconds(): Boolean = trim().toLongOrNull()?.let { it in 0..Long.MAX_VALUE / MILLIS_PER_SECOND } == true
+/** The entry as a number of seconds, or null where it is not one. */
+internal fun String.toTimeoutSeconds(): BigDecimal? = trim().toBigDecimalOrNull()?.takeIf { it.signum() >= 0 }
 
-private const val MILLIS_PER_SECOND = 1000L
+/** The seconds as the whole milliseconds the server stores, or null where they are not a number or would not fit a [Long]. */
+internal fun String.toTimeoutMillis(): Long? =
+    toTimeoutSeconds()?.let { seconds ->
+        seconds
+            .multiply(MILLIS_PER_SECOND)
+            .setScale(0, RoundingMode.HALF_UP)
+            .takeIf { it <= BigDecimal.valueOf(Long.MAX_VALUE) }
+            ?.toLong()
+    }
+
+internal fun String.isTimeoutSeconds(): Boolean = toTimeoutMillis() != null
+
+/** Milliseconds as the seconds the web client shows: 1500 reads as `1.5`, 30000 as `30`. */
+internal fun Long.toTimeoutSeconds(): String =
+    BigDecimal
+        .valueOf(this)
+        .movePointLeft(MILLIS_SCALE)
+        .stripTrailingZeros()
+        .toPlainString()
+
+private const val MILLIS_SCALE = 3
+private val MILLIS_PER_SECOND = BigDecimal(1000)
 
 /** The outbound proxy: reachable only while it has a host and a port in range, with its credentials as a pair, if it is on. */
 data class ProxyForm(
@@ -118,7 +141,7 @@ internal fun SeerrNetworkSettingsDto.toForm(): NetworkForm =
         csrfProtection = csrfProtection ?: false,
         trustProxy = trustProxy ?: false,
         forceIpv4First = forceIpv4First,
-        apiRequestTimeout = apiRequestTimeout?.let { (it / MILLIS_PER_SECOND).toString() },
+        apiRequestTimeout = apiRequestTimeout?.toTimeoutSeconds(),
         proxy =
             proxy?.let {
                 ProxyForm(
@@ -155,7 +178,7 @@ internal fun NetworkForm.toDto(): SeerrNetworkSettingsDto =
         csrfProtection = csrfProtection,
         trustProxy = trustProxy,
         forceIpv4First = forceIpv4First,
-        apiRequestTimeout = apiRequestTimeout?.trim()?.toLongOrNull()?.let { it * MILLIS_PER_SECOND },
+        apiRequestTimeout = apiRequestTimeout?.toTimeoutMillis(),
         proxy =
             proxy?.let {
                 SeerrProxySettingsDto(

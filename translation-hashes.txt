@@ -476,7 +476,8 @@ app:server_settings_api_key_regenerate_title  5d08dae30c8d
 app:server_settings_api_key_regenerated  3e15205c659f
 app:server_settings_api_key_show  9a663fdd41da
 app:server_settings_api_timeout  e34558f90c3c
-app:server_settings_api_timeout_error  005802d7b810
+app:server_settings_api_timeout_error  22dc538220d5
+app:server_settings_api_timeout_fraction  a11bdf44831f
 app:server_settings_api_timeout_hint  ed1e11f2332d
 app:server_settings_api_timeout_none  b9e97145d603
 app:server_settings_api_timeout_value  738819075e06
