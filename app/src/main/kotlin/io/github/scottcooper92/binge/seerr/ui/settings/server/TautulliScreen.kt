@@ -11,10 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.users.settings.AddressKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import kotlinx.coroutines.flow.Flow
@@ -50,6 +52,7 @@ fun TautulliScreen(
                         value = draft.host,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                        keyboard = AddressKeyboard,
                         required = draft.configured,
                     ),
                     textSettingItem(
@@ -58,6 +61,7 @@ fun TautulliScreen(
                         value = draft.port,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                        keyboard = NumberKeyboard,
                         required = draft.configured,
                         check = { value -> portError.takeIf { value.isNotBlank() && !portValid(value) } },
                     ),
@@ -70,6 +74,7 @@ fun TautulliScreen(
                         value = draft.urlBase,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(urlBase = value) } },
+                        keyboard = AddressKeyboard,
                     ),
                     textSettingItem(
                         icon = Icons.Filled.Key,
@@ -87,6 +92,7 @@ fun TautulliScreen(
                         value = draft.externalUrl,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
+                        keyboard = AddressKeyboard,
                         hint = stringResource(R.string.server_settings_tautulli_external_hint),
                         check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
                     ),

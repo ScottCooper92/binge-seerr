@@ -33,10 +33,12 @@ import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
+import io.github.scottcooper92.binge.seerr.ui.users.settings.AddressKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
@@ -113,6 +115,7 @@ private fun ServerGroup(
                     value = draft.host,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                    keyboard = AddressKeyboard,
                     required = true,
                     placeholder = stringResource(R.string.placeholder_host),
                     check = { value -> hostLabel.takeIf { value.isBlank() } },
@@ -123,6 +126,7 @@ private fun ServerGroup(
                     value = draft.port,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                    keyboard = NumberKeyboard,
                     required = true,
                     check = { value -> portError.takeIf { !portValid(value) } },
                 ),
@@ -145,6 +149,7 @@ private fun ServerGroup(
                     value = draft.baseUrl,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(baseUrl = value) } },
+                    keyboard = AddressKeyboard,
                     placeholder = stringResource(draft.type.urlBasePlaceholderRes()),
                 ),
                 ListItem(
@@ -199,6 +204,7 @@ internal fun OptionsGroup(
                     value = draft.externalUrl,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
+                    keyboard = AddressKeyboard,
                     hint = stringResource(R.string.server_settings_dvr_external_hint),
                     check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
                 ),

@@ -18,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
+import io.github.scottcooper92.binge.seerr.ui.users.settings.VerbatimKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.multiChoiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
@@ -112,6 +113,7 @@ internal fun RuleConditions(
                     value = draft.genres,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(genres = value) } },
+                    keyboard = VerbatimKeyboard,
                     emptyLabel = any,
                     hint = stringResource(R.string.server_settings_rule_genres_hint),
                 ),
@@ -121,6 +123,7 @@ internal fun RuleConditions(
                     value = draft.languages,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(languages = value) } },
+                    keyboard = VerbatimKeyboard,
                     emptyLabel = any,
                     hint = stringResource(R.string.server_settings_rule_languages_hint),
                 ),
@@ -130,6 +133,7 @@ internal fun RuleConditions(
                     value = draft.keywords,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(keywords = value) } },
+                    keyboard = VerbatimKeyboard,
                     emptyLabel = any,
                     hint = stringResource(R.string.server_settings_rule_keywords_hint),
                 ),

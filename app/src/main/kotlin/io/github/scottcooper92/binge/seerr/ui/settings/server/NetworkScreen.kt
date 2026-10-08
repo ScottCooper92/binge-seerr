@@ -23,11 +23,14 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.users.settings.AddressKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
+import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
+import io.github.scottcooper92.binge.seerr.ui.users.settings.VerbatimKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import kotlinx.coroutines.flow.Flow
@@ -136,6 +139,7 @@ private fun DnsCacheGroup(
                 value = cache.minTtl,
                 enabled = enabled,
                 onChange = { value -> onEdit { it.copy(minTtl = value) } },
+                keyboard = NumberKeyboard,
                 emptyLabel = own,
                 hint = ttlError,
                 check = { value ->
@@ -152,6 +156,7 @@ private fun DnsCacheGroup(
                 value = cache.maxTtl,
                 enabled = enabled,
                 onChange = { value -> onEdit { it.copy(maxTtl = value) } },
+                keyboard = NumberKeyboard,
                 emptyLabel = own,
                 hint = ttlError,
                 check = { value ->
@@ -226,6 +231,7 @@ private fun proxySettingRows(
             value = proxy.host,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(host = value) } },
+            keyboard = AddressKeyboard,
             required = true,
             placeholder = stringResource(R.string.placeholder_proxy_host),
             check = { value -> requiredError.takeIf { value.isBlank() } },
@@ -236,6 +242,7 @@ private fun proxySettingRows(
             value = proxy.port,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(port = value) } },
+            keyboard = NumberKeyboard,
             required = true,
             placeholder = stringResource(R.string.placeholder_port_proxy),
             check = { value -> portError.takeIf { !portValid(value) } },
@@ -249,6 +256,7 @@ private fun proxySettingRows(
             value = proxy.user,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(user = value) } },
+            keyboard = VerbatimKeyboard,
         ),
         textSettingItem(
             icon = Icons.Filled.Key,
@@ -268,6 +276,7 @@ private fun proxySettingRows(
             value = proxy.bypassFilter,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(bypassFilter = value) } },
+            keyboard = AddressKeyboard,
             hint = stringResource(R.string.server_settings_proxy_bypass_hint),
         ),
         editorToggle(
