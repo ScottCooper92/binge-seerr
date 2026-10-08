@@ -224,7 +224,10 @@ private fun EditorEvent?.tvNoteOrNull(): String? =
         EditorEvent.Saved, EditorEvent.Deleted -> null
     }
 
-/** The phone's rows as read-outs: the label and its detail, and where to change it. */
+/**
+ * The phone's rows as read-outs: the label and its detail, and where to change it. Each row is keyed by place, not label:
+ * Seerr doesn't make instance names unique, and two rows sharing a key share focus (#865).
+ */
 private fun readOnlyGroup(
     title: String,
     rows: List<ListItem>,
@@ -233,8 +236,8 @@ private fun readOnlyGroup(
     TvPaneGroup(
         title = title,
         rows =
-            rows.map { row ->
-                TvPaneRow(key = "$title/${row.label}", label = row.label, body = row.detail.orEmpty(), note = note, icon = row.icon)
+            rows.mapIndexed { index, row ->
+                TvPaneRow(key = "$title/$index", label = row.label, body = row.detail.orEmpty(), note = note, icon = row.icon)
             },
     )
 
