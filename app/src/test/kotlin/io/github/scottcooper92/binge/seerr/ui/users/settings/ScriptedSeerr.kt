@@ -46,6 +46,10 @@ internal class ScriptedSeerr(
     val server = MockWebServer()
     val received = CopyOnWriteArrayList<RecordedRequest>()
     private val drain = OkHttpDrain()
+
+    /** A fresh client dispatcher on this server's drain, for a test that builds its own `SeerrApiFactory`. */
+    fun newDispatcher(): okhttp3.Dispatcher = drain.newDispatcher()
+
     private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
     private var stores = 0
 

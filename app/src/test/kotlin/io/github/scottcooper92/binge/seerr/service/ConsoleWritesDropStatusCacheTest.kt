@@ -6,12 +6,12 @@ import com.binge.companion.contracts.request.v1.GetStatusRequest
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
-import io.github.scottcooper92.binge.seerr.auth.CleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
-import io.github.scottcooper92.binge.seerr.di.AuthModule
+import io.github.scottcooper92.binge.seerr.di.dropStatusesOnWrite
+import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailEvent
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailViewModel
@@ -82,11 +82,20 @@ class ConsoleWritesDropStatusCacheTest {
         seerr.close()
     }
 
-    /** The connection over `AuthModule`'s own factory, so its write hook is the one under test. */
+    /**
+     * The connection over `AuthModule`'s own write hook, so that is what is under test. The factory is built here rather
+     * than by `AuthModule.apiFactory` only so its clients run on the server's drain, which `close()` waits for (#903).
+     */
     private suspend fun TestScope.connection(): SeerrConnection =
         seerr.connection(
             this,
-            apis = AuthModule.apiFactory(SeerrConnectionHealthMonitor(), statuses, CleartextConsent.None, backgroundScope),
+            apis =
+                SeerrApiFactory(
+                    logRequests = false,
+                    health = SeerrConnectionHealthMonitor(),
+                    onWrite = dropStatusesOnWrite(statuses, backgroundScope),
+                    testDispatcher = seerr::newDispatcher,
+                ),
         )
 
     private fun blocklisted() {
