@@ -84,6 +84,12 @@ class SendAddressSheetScreenshotTest {
     @Composable
     fun signingInWaiting() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.Waiting))
 
+    /** A public plain-HTTP address: the TV asks its own user, and the sheet says to answer there (#912). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInConfirmOnTv() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.ConfirmOnTv()))
+
     /** The sign-in the code's key makes possible: the phone's own fields, with the note that says where they go. */
     @PreviewTest
     @SeerrComponentPreviews
