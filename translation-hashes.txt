@@ -499,7 +499,6 @@ app:server_settings_dns_ttl_hint  8357d79eb688
 app:server_settings_dns_ttl_order  eb88962348f7
 app:server_settings_dvr_4k  b9eca1fa10bc
 app:server_settings_dvr_add  28bbd103dc99
-app:server_settings_dvr_advanced  9f088dbebd6c
 app:server_settings_dvr_anime  3eac161518fc
 app:server_settings_dvr_anime_language_profile  d067aef1d659
 app:server_settings_dvr_availability_announced  07dfab861df1
@@ -511,6 +510,9 @@ app:server_settings_dvr_destination  293d404a500f
 app:server_settings_dvr_external_hint  f06ddb75d42a
 app:server_settings_dvr_language_profile  659caa449949
 app:server_settings_dvr_minimum_availability  8b56d91557f7
+app:server_settings_dvr_monitor_all  a52ace420f21
+app:server_settings_dvr_monitor_new  035860b2c14e
+app:server_settings_dvr_monitor_none  dc937b598926
 app:server_settings_dvr_name  dcd1d5223f73
 app:server_settings_dvr_new  1d123a28cba8
 app:server_settings_dvr_prevent_search  b9761289f847
@@ -521,7 +523,9 @@ app:server_settings_dvr_series_standard  ef6691545d2c
 app:server_settings_dvr_series_type  fd580bcfb829
 app:server_settings_dvr_sync  c68de2017083
 app:server_settings_dvr_tag_requests  595c102fb56d
+app:server_settings_dvr_tags_none  147e6bba4382
 app:server_settings_dvr_test  a7d3d3579ab6
+app:server_settings_dvr_test_first  c005de291087
 app:server_settings_dvr_tested  05c202912090
 app:server_settings_dvr_untested  b2031cea94cd
 app:server_settings_edit  d995d57646bb
@@ -619,6 +623,7 @@ app:server_settings_region_code  fdbf9c89e6db
 app:server_settings_regions_unavailable  c24d3d507379
 app:server_settings_request_limits  717a3792b894
 app:server_settings_rule_add  bed79361ea53
+app:server_settings_rule_any  2b505597daa7
 app:server_settings_rule_applies_to  6687458beee5
 app:server_settings_rule_conditions  2ff17c09dfc9
 app:server_settings_rule_conditions_title  86f95469c678
@@ -633,6 +638,7 @@ app:server_settings_rule_needs_override  92d5ae2d9921
 app:server_settings_rule_overrides_title  911a1ee3254f
 app:server_settings_rule_pick_instance  4b69f0c0b386
 app:server_settings_rule_title  29f30b14dfba
+app:server_settings_rule_unchanged  88b6f7429ce7
 app:server_settings_rule_users  9199a054972b
 app:server_settings_rules  0db10e9dcff2
 app:server_settings_scan  97592940a170

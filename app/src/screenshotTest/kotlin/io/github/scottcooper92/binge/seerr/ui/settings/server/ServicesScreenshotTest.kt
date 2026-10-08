@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
-import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
@@ -22,16 +20,13 @@ import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
-import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorIssues
-import io.github.scottcooper92.binge.seerr.ui.users.settings.invalid
-import io.github.scottcooper92.binge.seerr.ui.users.settings.missing
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * Settings › Services: the list of Radarr and Sonarr instances, then the instance form and the
  * override rule form it opens. Each takes its layout across the device matrix once and its other
- * arms on the phone cell alone. The instance form is taller than any device cell, so its destination
- * and behaviour sections are framed as components in [DvrInstanceSectionsScreenshotTest].
+ * arms on the phone cell alone. The instance form is taller than any device cell, so its lower groups
+ * are framed as components in [DvrInstancePartsScreenshotTest].
  */
 class ServicesScreenshotTest {
     /** Both kinds with an instance each, flagged 4K and default, and the override rules Jellyseerr 2.2 and later have. */
@@ -87,25 +82,11 @@ class DvrInstanceScreenshotTest {
     @Composable
     fun testing() = DvrFrame(dvrReady(radarrForm(), extras = DvrExtras(testing = true)))
 
-    /** A port that is not a number marks the field and keeps Test and Save off. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun invalidPort() = DvrFrame(dvrReady(radarrForm().copy(port = "78x8")))
-
-    /** A bad external URL sits in Advanced, which starts closed: the section opens itself and counts it. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun invalidExternalUrlOpensAdvanced() =
-        DvrFrame(dvrReady(radarrForm().copy(externalUrl = "ftp://nope"), extras = DvrExtras(choices = choices(languages = false))))
-
     /** The same page in Spanish, whose headers and messages run longer. */
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun testedRadarrSpanish() =
-        DvrFrame(dvrReady(radarrForm().copy(port = "78x8"), extras = DvrExtras(choices = choices(languages = false))))
+    fun testedRadarrSpanish() = DvrFrame(dvrReady(radarrForm(), extras = DvrExtras(choices = choices(languages = false))))
 
     /** The page at 1.5x and 2x text, where the pinned Cancel and Save bar must still fit. */
     @PreviewTest
@@ -124,41 +105,36 @@ class DvrInstanceScreenshotTest {
     fun failed() = DvrFrame(ExtrasEditorUiState.Error(SeerrError.Server))
 }
 
-/** The instance form's lower sections, which a static frame of the whole page never reaches. */
-class DvrInstanceSectionsScreenshotTest {
-    /** Radarr's destination: minimum availability, profile, folder and tags. */
+/** The instance form's lower groups, which a static frame of the whole page never reaches. */
+class DvrInstancePartsScreenshotTest {
+    /** Radarr's destination: profile, folder, minimum availability and tags. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun radarrDestination() =
-        SectionFrame {
-            DestinationFields(radarrForm(), choices(languages = false), enabled = true, actions = noActions())
-        }
+        PartFrame { DestinationGroup(radarrForm(), choices(languages = false), enabled = true, actions = noActions()) }
 
-    /** Sonarr's destination: a language profile, the series type and season folders, then the anime destination. */
+    /** Before a test: the rows the instance fills name what is saved, and can't be opened yet. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun untestedDestination() = PartFrame { DestinationGroup(radarrForm(), choices = null, enabled = true, actions = noActions()) }
+
+    /** Sonarr's destination with its series type and language profile, then the anime destination. */
     @PreviewTest
     @SeerrTallComponentPreviews
     @Composable
     fun sonarrDestination() =
-        SectionFrame { DestinationFields(sonarrForm(), choices(languages = true), enabled = true, actions = noActions()) }
+        PartFrame {
+            DestinationGroup(sonarrForm(), choices(languages = true), enabled = true, actions = noActions())
+            AnimeGroup(sonarrForm(), choices(languages = true), enabled = true, actions = noActions())
+        }
 
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun behaviour() = SectionFrame { FlagSwitches(sonarrForm().copy(syncEnabled = true), enabled = true, actions = noActions()) }
-
-    /** Advanced is closed until asked for, so its own frame is the one place its fields and flags are seen open. */
+    /** Sonarr's options: season folders and new seasons, the link out, and the behaviour switches. */
     @PreviewTest
     @SeerrTallComponentPreviews
     @Composable
-    fun advancedOpen() =
-        SectionFrame {
-            CompositionLocalProvider(
-                LocalEditorIssues provides listOf(invalid(DvrSections.ADVANCED, DvrFields.EXTERNAL_URL, R.string.editor_error_web_url)),
-            ) {
-                AdvancedFields(sonarrForm().copy(externalUrl = "ftp://nope"), enabled = true, actions = noActions())
-            }
-        }
+    fun sonarrOptions() = PartFrame { OptionsGroup(sonarrForm().copy(syncEnabled = true), enabled = true, actions = noActions()) }
 }
 
 class OverrideRuleScreenshotTest {
@@ -239,14 +215,14 @@ class OverrideRuleScreenshotTest {
     fun failed() = RuleFrame(ExtrasEditorUiState.Error(SeerrError.Unauthorized))
 }
 
-/** The rule form's sections that a static frame of the whole page never reaches, or never shows flagged. */
-class OverrideRuleSectionsScreenshotTest {
+/** The rule form's groups that a static frame of the whole page never reaches. */
+class OverrideRulePartsScreenshotTest {
     /** What a matching request is sent with: the instance's profile, folder and tags. */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun overrides() =
-        SectionFrame {
+        PartFrame {
             RuleOverrides(
                 OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)),
                 savedRule().copy(tagIds = setOf(1)),
@@ -256,37 +232,22 @@ class OverrideRuleSectionsScreenshotTest {
             )
         }
 
-    /** A Save without an instance: the section is held open, counts the issue and says it is required. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun missingInstance() =
-        SectionFrame {
-            CompositionLocalProvider(
-                LocalEditorIssues provides listOf(missing(OverrideRuleSections.INSTANCE, OverrideRuleFields.INSTANCE)),
-            ) {
-                RuleInstance(OverrideRuleExtras(instances = instances()), OverrideRuleForm(), enabled = true, onSelectInstance = {})
-            }
-        }
-
-    /** A Save on a rule with no condition and no override: both sections are held open and say what they need (#733). */
+    /** A rule with no condition and no override: each group says what it still needs (#733). */
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun missingConditionAndOverride() =
-        SectionFrame {
+        PartFrame {
             val draft = OverrideRuleForm(serviceType = ServiceType.Radarr, serviceId = 1)
             val extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false))
-            CompositionLocalProvider(LocalEditorIssues provides draft.issues()) {
-                RuleConditions(extras, draft, enabled = true, actions = noActions(), onToggleUser = {})
-                RuleOverrides(extras, draft, enabled = true, actions = noActions(), onToggleTag = {})
-            }
+            RuleConditions(extras, draft, enabled = true, actions = noActions(), onToggleUser = {})
+            RuleOverrides(extras, draft, enabled = true, actions = noActions(), onToggleTag = {})
         }
 }
 
-private val SECTION_WIDTH = 411.dp
-private val SECTION_PADDING = 16.dp
-private val SECTION_SPACING = 12.dp
+private val PART_WIDTH = 411.dp
+private val PART_PADDING = 16.dp
+private val PART_SPACING = 12.dp
 
 private fun instances() =
     listOf(
@@ -364,10 +325,10 @@ private fun ruleReady(
 private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 
 @Composable
-private fun SectionFrame(content: @Composable ColumnScope.() -> Unit) {
+private fun PartFrame(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = Modifier.width(SECTION_WIDTH).padding(SECTION_PADDING),
-        verticalArrangement = Arrangement.spacedBy(SECTION_SPACING),
+        modifier = Modifier.width(PART_WIDTH).padding(PART_PADDING),
+        verticalArrangement = Arrangement.spacedBy(PART_SPACING),
         content = content,
     )
 }

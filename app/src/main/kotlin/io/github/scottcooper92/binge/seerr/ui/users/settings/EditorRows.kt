@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.ImeAction
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.TextEntrySurface
@@ -167,7 +168,9 @@ internal fun <T> choiceSettingItem(
     return ListItem(
         icon = icon,
         label = title,
-        detail = choices.firstOrNull { it.first == selected }?.second ?: stringResource(R.string.settings_value_unknown),
+        detail =
+            choices.firstOrNull { it.first == selected }?.second
+                ?: stringResource(if (selected == null) R.string.settings_value_not_set else R.string.settings_value_unknown),
         clickable = enabled,
         disabled = !enabled,
         onClick = { open = true },
@@ -202,4 +205,43 @@ internal fun <T> ChoiceRows(
             },
     )
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
+}
+
+/**
+ * A pick of any number from a list, as a list row: the setting's name, and the picks named (or [emptyLabel]). A tap
+ * opens a peeking checklist; each tick applies at once through [onToggle], so closing the sheet is all that's left.
+ */
+@Composable
+internal fun <T> multiChoiceSettingItem(
+    icon: ImageVector,
+    title: String,
+    choices: List<Pair<T, String>>,
+    selected: Set<T>,
+    enabled: Boolean,
+    emptyLabel: String,
+    onToggle: (T) -> Unit,
+): ListItem {
+    var open by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(enabled) { if (!enabled) open = false }
+    if (open) {
+        PeekingListSheet(title = title, onDismiss = { open = false }) {
+            choices.forEachIndexed { index, (choice, label) ->
+                CheckboxRow(
+                    label = label,
+                    checked = choice in selected,
+                    onToggle = { onToggle(choice) },
+                    showDivider = index < choices.lastIndex,
+                )
+            }
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
+        }
+    }
+    return ListItem(
+        icon = icon,
+        label = title,
+        detail = choices.filter { it.first in selected }.joinToString(", ") { it.second }.ifEmpty { emptyLabel },
+        clickable = enabled,
+        disabled = !enabled,
+        onClick = { open = true },
+    )
 }

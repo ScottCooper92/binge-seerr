@@ -1,37 +1,47 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 internal val TESTED = DvrChoices(listOf(Choice(4, "HD")), listOf("/movies"), emptyList(), null)
 
 internal fun completeRadarr() =
-    DvrForm.blank(ServiceType.Radarr).copy(name = "Radarr", host = "radarr.lan", apiKey = "key", profileId = 4, rootFolder = "/movies")
+    DvrForm.blank(ServiceType.Radarr).copy(name = "Radarr", host = "radarr.lan", apiKey = "key-1234", profileId = 4, rootFolder = "/movies")
 
-/** The instance form's page behaviour: what Save does with issues, and where it takes the user. */
+/** The instance form: Save follows the draft's validity, the destination waits on a test, and values are checked in their sheets. */
 @RunWith(RobolectricTestRunner::class)
 class DvrInstanceFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
     private var saves = 0
-    private var backs = 0
+    private var tests = 0
 
     private fun show(
         draft: DvrForm,
@@ -46,99 +56,101 @@ class DvrInstanceFormTest {
                         extras = DvrExtras(choices = choices),
                     ),
                 events = emptyFlow(),
-                actions = EditorActions(onBack = { backs++ }, onRetry = {}, onEdit = {}, onSave = { saves++ }),
-                onTest = {},
+                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
+                onTest = { tests++ },
                 onDelete = {},
             )
         }
     }
 
-    @Test
-    fun `save with a missing required field does not save and says what is missing`() {
-        show(completeRadarr().copy(name = "", host = ""))
-
-        rule.onNodeWithText("Save").performClick()
-
-        assertEquals(0, saves)
-        rule.onNodeWithText("2 fields need attention").assertIsDisplayed()
-        assertEquals(2, rule.onAllNodesWithText("Required").fetchSemanticsNodes().size)
-    }
+    private fun save() = rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
 
     @Test
-    fun `required fields are not flagged before save is tried`() {
-        show(completeRadarr().copy(name = ""))
-
-        assertEquals(0, rule.onAllNodesWithText("Required").fetchSemanticsNodes().size)
-    }
-
-    @Test
-    fun `a failed save puts focus in the first invalid field`() {
-        show(completeRadarr().copy(name = "", host = ""))
-
-        rule.onNodeWithText("Save").performClick()
-        rule.waitForIdle()
-
-        rule.onAllNodes(hasSetTextAction())[0].assertIsFocused()
-    }
-
-    @Test
-    fun `a wrong value shows its message as soon as it is typed`() {
-        show(completeRadarr().copy(port = "78x8"))
-
-        rule.onNodeWithText("Enter a port between 1 and 65535.").assertIsDisplayed()
-    }
-
-    @Test
-    fun `a failed save opens a collapsed section and scrolls its field into view`() {
-        show(completeRadarr().copy(externalUrl = "ftp://x"))
-
-        rule.onNodeWithText("Save").performClick()
-        rule.waitForIdle()
-
-        rule.onNodeWithText("Enter a web address that starts with http:// or https://.").assertIsDisplayed()
-    }
-
-    @Test
-    fun `a bad value in a closed section opens it before save is tried`() {
-        show(completeRadarr().copy(externalUrl = "ftp://x"))
-
-        rule.onNodeWithText("1 field needs attention").assertExists()
-        rule.onNodeWithText("External URL").assertExists()
-    }
-
-    @Test
-    fun `save with nothing to fix saves`() {
+    fun `a complete instance saves`() {
         show(completeRadarr())
 
-        rule.onNodeWithText("Save").performClick()
+        save()
 
         assertEquals(1, saves)
     }
 
     @Test
-    fun `cancel and save stay on screen however long the form`() {
-        show(completeRadarr())
+    fun `an instance missing its name can't be saved`() {
+        show(completeRadarr().copy(name = ""))
 
-        rule.onNodeWithText("Cancel").assertIsDisplayed()
-        rule.onNodeWithText("Save").assertIsDisplayed()
+        rule.onNodeWithText("Save").assertIsNotEnabled()
     }
 
     @Test
-    fun `cancel leaves`() {
-        show(completeRadarr())
+    fun `before a test the destination shows what is saved and can't be opened`() {
+        show(completeRadarr().copy(profileName = "HD-1080p"), choices = null)
 
-        rule.onNodeWithText("Cancel").performClick()
-
-        assertEquals(1, backs)
+        rule.onNodeWithText("HD-1080p").performScrollTo().assertExists()
+        rule.onNode(hasText("Quality profile") and hasClickAction()).assertIsNotEnabled()
     }
 
     @Test
-    fun `an untested instance names the step that is missing`() {
-        show(DvrForm.blank(ServiceType.Radarr).copy(name = "R", host = "h", apiKey = "k"), choices = null)
+    fun `the test row runs the test`() {
+        show(completeRadarr(), choices = null)
 
-        rule.onNodeWithText("Save").performClick()
+        rule.onNode(hasText("Test the connection") and hasClickAction()).performScrollTo().performClick()
 
-        assertEquals(0, saves)
-        rule.onNodeWithText("1 field needs attention").assertIsDisplayed()
+        assertEquals(1, tests)
+    }
+
+    @Test
+    fun `a port out of range keeps done off`() {
+        show(completeRadarr())
+
+        rule.onNode(hasText("Port") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("78x8")
+
+        rule.onNodeWithText("Enter a port between 1 and 65535.").assertExists()
+        rule.onNodeWithText("Done").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `the api key row shows only its last characters`() {
+        show(completeRadarr())
+
+        rule.onNodeWithText("•••• 1234").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun `a sonarr has its anime destination and new-season monitoring`() {
+        show(DvrForm.blank(ServiceType.Sonarr).copy(name = "Sonarr", host = "s.lan", apiKey = "k"))
+
+        rule.onNodeWithText("Anime", ignoreCase = true).performScrollTo().assertExists()
+        rule.onNodeWithText("Monitor new seasons").performScrollTo().assertExists()
+    }
+}
+
+/** The instance form on a television: OK on a text row opens its editor. */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
+class DvrInstanceTvFocusTest {
+    @get:Rule
+    val rule = createSeerrKeyboardComposeRule()
+
+    @Test
+    fun `ok on the name row opens its editor`() {
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                val draft = completeRadarr()
+                DvrInstanceScreen(
+                    state = ExtrasEditorUiState.Ready(draft = draft, saved = draft, extras = DvrExtras(choices = TESTED)),
+                    events = emptyFlow(),
+                    actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
+                    onTest = {},
+                    onDelete = {},
+                )
+            }
+        }
+        rule.onNode(hasText("Name") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
+
+        rule.onRoot().performKeyInput { pressKey(Key.DirectionCenter) }
+        rule.waitForIdle()
+
+        rule.onNode(hasSetTextAction() and hasText("Radarr")).assertExists()
     }
 }

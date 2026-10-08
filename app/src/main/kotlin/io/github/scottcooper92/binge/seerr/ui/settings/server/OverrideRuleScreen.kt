@@ -1,30 +1,33 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
+import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorFieldIssueText
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
-import io.github.scottcooper92.binge.seerr.ui.users.settings.editorField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.editorFieldIssue
+import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
+import io.github.scottcooper92.binge.seerr.ui.users.settings.multiChoiceSettingItem
+import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
+import com.binge.designsystem.R as DesR
 
 class OverrideRuleActions(
     val onSelectInstance: (DvrSummary) -> Unit,
@@ -34,9 +37,9 @@ class OverrideRuleActions(
 )
 
 /**
- * One override rule, as three collapsible sections (#549): the instance it applies to, the conditions a
- * request must meet, and the overrides it gets. All three are required, as in Seerr's web client
- * (#733), so a Save without one opens the first section that is short and says what it needs.
+ * One override rule as the web client lays it out, in groups of list rows: the instance it applies to, the conditions
+ * a request must meet, and what it gets instead. All three are required, as in Seerr's web client (#733), so a group
+ * that is still short says what it needs and Save stays off until none is.
  */
 @Composable
 fun OverrideRuleScreen(
@@ -46,49 +49,43 @@ fun OverrideRuleScreen(
     ruleActions: OverrideRuleActions,
 ) {
     val extras = (state as? ExtrasEditorUiState.Ready<OverrideRuleForm, OverrideRuleExtras>)?.extras ?: OverrideRuleExtras()
-    val validation = remember { EditorValidation<OverrideRuleForm>(OVERRIDE_RULE_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(R.string.server_settings_rule_title),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        validation = validation,
+        canSave = { it.valid },
     ) { draft, enabled ->
         RuleInstance(extras, draft, enabled, ruleActions.onSelectInstance)
         RuleConditions(extras, draft, enabled, actions, ruleActions.onToggleUser)
         RuleOverrides(extras, draft, enabled, actions, ruleActions.onToggleTag)
-        if (draft.id != null) DeleteButton(ruleActions.onDelete)
+        if (draft.id != null) DeleteGroup(ruleActions.onDelete)
     }
 }
 
-/** Which DVR instance the rule applies to; the overrides below cannot be picked until this is. */
+/** Which DVR instance the rule applies to; the overrides below can't be picked until this is. */
 @Composable
 internal fun RuleInstance(
     extras: OverrideRuleExtras,
     draft: OverrideRuleForm,
     enabled: Boolean,
     onSelectInstance: (DvrSummary) -> Unit,
-) = EditorSection(OverrideRuleSections.INSTANCE, stringResource(R.string.server_settings_rule_applies_to)) {
+) {
     val separator = stringResource(R.string.hub_meta_separator)
-    Column(modifier = Modifier.editorField(OverrideRuleFields.INSTANCE, takesFocus = false)) {
-        ChoiceRow(
-            title = stringResource(R.string.editor_field_required_label, stringResource(R.string.advanced_server)),
-            choices = extras.instances.map { it to "${it.type.name}$separator${it.name}" },
-            selected = extras.instances.firstOrNull { it.type == draft.serviceType && it.id == draft.serviceId },
-            onSelect = onSelectInstance,
-            enabled = enabled,
-        )
-        EditorFieldIssueText(OverrideRuleFields.INSTANCE)
-    }
-}
-
-/** A section-wide issue, tagged so a failed Save scrolls to it rather than to one field in the section. */
-@Composable
-private fun SectionIssue(fieldId: String) {
-    if (editorFieldIssue(fieldId) == null) return
-    Column(modifier = Modifier.editorField(fieldId, takesFocus = false)) {
-        EditorFieldIssueText(fieldId)
-    }
+    ItemGroup(
+        title = stringResource(R.string.server_settings_rule_applies_to),
+        rows =
+            listOf(
+                choiceSettingItem(
+                    icon = Icons.Filled.Storage,
+                    title = stringResource(R.string.advanced_server),
+                    choices = extras.instances.map { it to "${it.type.name}$separator${it.name}" },
+                    selected = extras.instances.firstOrNull { it.type == draft.serviceType && it.id == draft.serviceId },
+                    enabled = enabled,
+                    onSelect = onSelectInstance,
+                ),
+            ),
+    )
 }
 
 /** What a request must match for the rule to fire: who asked, and what the title is. At least one is needed. */
@@ -99,44 +96,56 @@ internal fun RuleConditions(
     enabled: Boolean,
     actions: EditorActions<OverrideRuleForm>,
     onToggleUser: (Int) -> Unit,
-) = EditorSection(OverrideRuleSections.CONDITIONS, stringResource(R.string.server_settings_rule_conditions_title)) {
-    SectionIssue(OverrideRuleFields.CONDITIONS)
-    if (extras.users.isNotEmpty()) {
-        Text(stringResource(R.string.server_settings_rule_users), style = MaterialTheme.typography.titleSmall)
-        extras.users.forEach { user ->
-            FilterChip(
-                selected = user.id in draft.userIds,
-                onClick = { onToggleUser(user.id) },
-                enabled = enabled,
-                label = { Text(user.label) },
-            )
-        }
-    }
-    EditorTextField(
-        draft.genres,
-        stringResource(R.string.server_settings_rule_genres),
-        enabled = enabled,
-        supporting = stringResource(R.string.server_settings_rule_genres_hint),
-    ) { value -> actions.onEdit { it.copy(genres = value) } }
-    EditorTextField(
-        draft.languages,
-        stringResource(R.string.server_settings_rule_languages),
-        enabled = enabled,
-        supporting = stringResource(R.string.server_settings_rule_languages_hint),
-    ) { value -> actions.onEdit { it.copy(languages = value) } }
-    EditorTextField(
-        draft.keywords,
-        stringResource(R.string.server_settings_rule_keywords),
-        enabled = enabled,
-        supporting = stringResource(R.string.server_settings_rule_keywords_hint),
-        imeAction = ImeAction.Done,
-    ) { value -> actions.onEdit { it.copy(keywords = value) } }
+) {
+    val any = stringResource(R.string.server_settings_rule_any)
+    ItemGroup(
+        title = stringResource(R.string.server_settings_rule_conditions_title),
+        rows =
+            listOf(
+                multiChoiceSettingItem(
+                    icon = Icons.Filled.Group,
+                    title = stringResource(R.string.server_settings_rule_users),
+                    choices = extras.users.map { it.id to it.label },
+                    selected = draft.userIds,
+                    enabled = enabled,
+                    emptyLabel = any,
+                    onToggle = onToggleUser,
+                ),
+                textSettingItem(
+                    icon = Icons.Filled.Category,
+                    label = stringResource(R.string.server_settings_rule_genres),
+                    value = draft.genres,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(genres = value) } },
+                    emptyLabel = any,
+                    hint = stringResource(R.string.server_settings_rule_genres_hint),
+                ),
+                textSettingItem(
+                    icon = Icons.Filled.Translate,
+                    label = stringResource(R.string.server_settings_rule_languages),
+                    value = draft.languages,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(languages = value) } },
+                    emptyLabel = any,
+                    hint = stringResource(R.string.server_settings_rule_languages_hint),
+                ),
+                textSettingItem(
+                    icon = Icons.Filled.Key,
+                    label = stringResource(R.string.server_settings_rule_keywords),
+                    value = draft.keywords,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(keywords = value) } },
+                    emptyLabel = any,
+                    hint = stringResource(R.string.server_settings_rule_keywords_hint),
+                ),
+            ),
+        belowRows = if (draft.hasCondition) null else ({ Needs(stringResource(R.string.server_settings_rule_needs_condition)) }),
+    )
 }
 
 /**
- * What a matching request gets instead; at least one is needed. The choices are the instance's own,
- * so until one is picked and tested there is nothing to offer and the line below says which of the
- * two is missing.
+ * What a matching request gets instead; at least one is needed. The choices are the instance's own, so until one is
+ * picked and has answered, the rows say which of the two is still missing.
  */
 @Composable
 internal fun RuleOverrides(
@@ -145,33 +154,73 @@ internal fun RuleOverrides(
     enabled: Boolean,
     actions: EditorActions<OverrideRuleForm>,
     onToggleTag: (Int) -> Unit,
-) = EditorSection(OverrideRuleSections.OVERRIDES, stringResource(R.string.server_settings_rule_overrides_title)) {
-    SectionIssue(OverrideRuleFields.OVERRIDES)
-    if (extras.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
+) {
     val choices = extras.choices
-    if (choices == null) {
-        val reason =
-            if (draft.serviceId == null) R.string.server_settings_rule_pick_instance else R.string.server_settings_dvr_untested
-        Text(
-            stringResource(reason),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        return@EditorSection
-    }
-    ChoiceRow(
-        title = stringResource(R.string.advanced_profile),
-        choices = choices.profiles.map { it.id to it.label },
-        selected = draft.profileId,
-        onSelect = { id -> actions.onEdit { it.copy(profileId = if (it.profileId == id) null else id) } },
-        enabled = enabled,
+    val profileTitle = stringResource(R.string.advanced_profile)
+    val folderTitle = stringResource(R.string.advanced_root_folder)
+    val tagsTitle = stringResource(R.string.request_tags)
+    val rows =
+        if (choices == null) {
+            val waiting =
+                stringResource(
+                    if (draft.serviceId ==
+                        null
+                    ) {
+                        R.string.server_settings_rule_pick_instance
+                    } else {
+                        R.string.server_settings_dvr_test_first
+                    },
+                )
+            listOf(
+                untestedItem(Icons.Filled.HighQuality, profileTitle, waitingFor = waiting),
+                untestedItem(Icons.Filled.Folder, folderTitle, waitingFor = waiting),
+                untestedItem(Icons.AutoMirrored.Filled.Label, tagsTitle, waitingFor = waiting),
+            ).map { it.copy(loading = extras.loadingChoices) }
+        } else {
+            val unchanged = stringResource(R.string.server_settings_rule_unchanged)
+            listOf(
+                choiceSettingItem(
+                    icon = Icons.Filled.HighQuality,
+                    title = profileTitle,
+                    choices = listOf<Pair<Int?, String>>(null to unchanged) + choices.profiles.map { it.id to it.label },
+                    selected = draft.profileId,
+                    enabled = enabled,
+                ) { id -> actions.onEdit { it.copy(profileId = id) } },
+                choiceSettingItem(
+                    icon = Icons.Filled.Folder,
+                    title = folderTitle,
+                    choices = listOf<Pair<String?, String>>(null to unchanged) + choices.rootFolders.map { it to it },
+                    selected = draft.rootFolder,
+                    enabled = enabled,
+                ) { path -> actions.onEdit { it.copy(rootFolder = path) } },
+                multiChoiceSettingItem(
+                    icon = Icons.AutoMirrored.Filled.Label,
+                    title = tagsTitle,
+                    choices = choices.tags.map { it.id to it.label },
+                    selected = draft.tagIds,
+                    enabled = enabled,
+                    emptyLabel = unchanged,
+                    onToggle = onToggleTag,
+                ),
+            )
+        }
+    ItemGroup(
+        title = stringResource(R.string.server_settings_rule_overrides_title),
+        rows = rows,
+        belowRows = if (draft.hasOverride) null else ({ Needs(stringResource(R.string.server_settings_rule_needs_override)) }),
     )
-    ChoiceRow(
-        title = stringResource(R.string.advanced_root_folder),
-        choices = choices.rootFolders.map { it to it },
-        selected = draft.rootFolder,
-        onSelect = { path -> actions.onEdit { it.copy(rootFolder = if (it.rootFolder == path) null else path) } },
-        enabled = enabled,
-    )
-    TagChips(choices.tags, draft.tagIds, enabled, onToggleTag)
 }
+
+/** What a group still needs before the rule can be saved. */
+@Composable
+private fun Needs(text: String) =
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier =
+            Modifier.padding(
+                horizontal = dimensionResource(DesR.dimen.padding_m),
+                vertical = dimensionResource(DesR.dimen.padding_s),
+            ),
+    )
