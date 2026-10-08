@@ -57,6 +57,8 @@ data class ServerGeneralSettings(
     val originalLanguage: String = "",
     val hideAvailable: Boolean = false,
     val hideRequested: Boolean? = null,
+    /** Null where the server has no blocklist; it hides blocklisted titles for viewers who manage the blocklist. */
+    val hideBlocklisted: Boolean? = null,
     val partialRequests: Boolean = true,
     val specialEpisodes: Boolean? = null,
     val versionCheck: Boolean? = null,
@@ -64,6 +66,8 @@ data class ServerGeneralSettings(
     val youtubeUrl: String? = null,
     val trustProxy: Boolean? = null,
     val csrfProtection: Boolean? = null,
+    /** The automatic blocklist's settings; null on a server without them. */
+    val blocklist: BlocklistSettings? = null,
 ) {
     /** A blank URL clears it; anything else has to be a web address the server can serve links from. */
     val urlValid: Boolean get() = applicationUrl.isBlank() || applicationUrl.trim().isWebUrl()
@@ -75,8 +79,32 @@ data class ServerGeneralSettings(
     val originalLanguageValid: Boolean get() = originalLanguage.isBlank() || LanguageCodeShapes.isOriginalLanguage(originalLanguage)
 
     val valid: Boolean
-        get() = urlValid && localeValid && discoverRegionValid && streamingRegionValid && originalLanguageValid
+        get() = urlValid && localeValid && discoverRegionValid && streamingRegionValid && originalLanguageValid && blocklist?.valid != false
 }
+
+/**
+ * What the "Process Blocklisted Tags" job reads: the region and languages it scans (each null on a server that lacks
+ * it), apart from Discover's, the TMDB
+ * keywords whose titles it blocklists (ids, comma-separated, as the server keeps them), and how many pages it takes per
+ * tag, which the web client holds to 0 through 250.
+ */
+data class BlocklistSettings(
+    /** Null where the server has no such setting: Seerr added the region and languages after the tags. */
+    val region: String? = null,
+    val languages: String? = null,
+    val tags: String = "",
+    val tagsLimit: String = DEFAULT_TAGS_LIMIT.toString(),
+) {
+    val tagIds: List<Int> get() = tags.split(',').mapNotNull { it.trim().toIntOrNull() }
+
+    val tagsLimitValid: Boolean get() = tagsLimit.trim().toIntOrNull()?.let { it in 0..MAX_TAGS_LIMIT } == true
+
+    val valid: Boolean get() = tagsLimitValid
+}
+
+/** The web client's starting tag limit, and its ceiling. */
+internal const val DEFAULT_TAGS_LIMIT = 50
+internal const val MAX_TAGS_LIMIT = 250
 
 /** The server's API key beside the form: shown only on request, and replaceable. */
 data class ApiKeyState(
@@ -92,6 +120,25 @@ data class ServerGeneralExtras(
     val variant: SeerrVariant = SeerrVariant.Unknown,
     /** The server's lists, each read only once its picker opens; absent until then. */
     val lists: Map<ServerList, ListChoices> = emptyMap(),
+    /** The blocklisted tags' names and the keyword search, read only while the tags picker is open. */
+    val keywords: KeywordSearch = KeywordSearch(),
+)
+
+/** One TMDB keyword, as the tags picker lists it. */
+data class Keyword(
+    val id: Int,
+    val name: String,
+)
+
+/**
+ * The tags picker's keywords: [names] for the ids the server holds, read once the picker opens, and [results] for the
+ * last search, null before one. [failed] is a search that could not be read.
+ */
+data class KeywordSearch(
+    val names: Map<Int, String> = emptyMap(),
+    val results: List<Keyword>? = null,
+    val searching: Boolean = false,
+    val failed: Boolean = false,
 )
 
 internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): ServerGeneralSettings {
@@ -106,6 +153,7 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
         originalLanguage = originalLanguage.orEmpty(),
         hideAvailable = hideAvailable ?: false,
         hideRequested = (hideRequested ?: false).takeIf { lineage },
+        hideBlocklisted = hideBlocklisted,
         partialRequests = partialRequestsEnabled ?: true,
         specialEpisodes = (enableSpecialEpisodes ?: false).takeIf { lineage },
         versionCheck = versionCheck,
@@ -113,8 +161,27 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
         youtubeUrl = youtubeUrl.orEmpty().takeIf { lineage },
         trustProxy = (trustProxy ?: false).takeIf { overseerr },
         csrfProtection = (csrfProtection ?: false).takeIf { overseerr },
+        blocklist = toBlocklist(),
     )
 }
+
+/**
+ * The server sends every main setting it has, so a server whose answer has none of these has no automatic blocklist.
+ *
+ * This form gates on the fields being present rather than on `SeerrServerProfile`: for a settings form,
+ * "the server sent the field" is an exact answer, and it needs no guess at the release that added it.
+ */
+private fun SeerrMainSettingsDto.toBlocklist(): BlocklistSettings? =
+    if (listOf(blocklistRegion, blocklistLanguage, blocklistedTags, blocklistedTagsLimit).all { it == null }) {
+        null
+    } else {
+        BlocklistSettings(
+            region = blocklistRegion,
+            languages = blocklistLanguage,
+            tags = blocklistedTags.orEmpty(),
+            tagsLimit = (blocklistedTagsLimit ?: DEFAULT_TAGS_LIMIT).toString(),
+        )
+    }
 
 /**
  * Only what the form holds; a field the lineage lacks stays null and is left out. The region goes
@@ -131,6 +198,11 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         originalLanguage = originalLanguage.trim(),
         hideAvailable = hideAvailable,
         hideRequested = hideRequested,
+        hideBlocklisted = hideBlocklisted,
+        blocklistRegion = blocklist?.region?.trim(),
+        blocklistLanguage = blocklist?.languages?.trim(),
+        blocklistedTags = blocklist?.tagIds?.joinToString(","),
+        blocklistedTagsLimit = blocklist?.tagsLimit?.trim()?.toIntOrNull(),
         partialRequestsEnabled = partialRequests,
         enableSpecialEpisodes = specialEpisodes,
         versionCheck = versionCheck,

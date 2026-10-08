@@ -111,6 +111,22 @@ class ServerGeneralPartsScreenshotTest {
     @Composable
     fun apiKeyRegenerating() = PartFrame { ApiKeyRows(ApiKeyState(key = API_KEY, regenerating = true), noKeyActions(), onRegenerate = {}) }
 
+    /** A server's automatic blocklist: its own region and languages, two tags named, and the pages taken per tag. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun blocklist() =
+        PartFrame {
+            BlocklistGroup(
+                BlocklistSettings(region = "GB", languages = "ja", tags = "9951,210024", tagsLimit = "50"),
+                ServerGeneralExtras(keywords = KeywordSearch(names = mapOf(9951 to "kaiju", 210024 to "anime"))),
+                enabled = true,
+                onLoadList = {},
+                keywordActions = KeywordActions(onLoadNames = {}, onSearch = {}),
+                actions = noActions(),
+            )
+        }
+
     /** The display language sheet: each language in its own name, the current one checked. */
     @PreviewTest
     @SeerrComponentPreviews

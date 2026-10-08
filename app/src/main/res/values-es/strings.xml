@@ -1146,6 +1146,25 @@
     <string name="server_settings_about_discussions">Debates en GitHub</string>
     <string name="server_settings_about_support_project">Apoya a %1$s</string>
     <string name="server_settings_about_contribute">Hacer una aportación</string>
+    <string name="server_settings_hide_blocklisted">Ocultar títulos bloqueados</string>
+    <string name="server_settings_hide_blocklisted_detail">Deja fuera de Descubrir los títulos bloqueados para quien gestiona la lista de bloqueo</string>
+    <string name="server_settings_blocklist">Lista de bloqueo</string>
+    <string name="server_settings_blocklist_region">Región de bloqueo</string>
+    <string name="server_settings_blocklist_language">Idiomas de bloqueo</string>
+    <string name="server_settings_blocklist_tags">Etiquetas bloqueadas</string>
+    <string name="server_settings_blocklist_tags_none">Ninguna</string>
+    <plurals name="server_settings_blocklist_tags_count">
+        <item quantity="one">%1$d etiqueta</item>
+        <item quantity="many">%1$d etiquetas</item>
+        <item quantity="other">%1$d etiquetas</item>
+    </plurals>
+    <string name="server_settings_blocklist_tags_search">Buscar palabras clave de TMDB</string>
+    <string name="server_settings_blocklist_tags_empty">Aún no hay etiquetas. Busca una palabra clave para bloquear lo que la tenga.</string>
+    <string name="server_settings_blocklist_tags_no_match">Ninguna palabra clave coincide.</string>
+    <string name="server_settings_blocklist_tags_failed">No se pudieron buscar las palabras clave. Vuelve a intentarlo en un momento.</string>
+    <string name="server_settings_blocklist_limit">Páginas por etiqueta</string>
+    <string name="server_settings_blocklist_limit_hint">Cuántas páginas toma por etiqueta la tarea de procesar etiquetas bloqueadas. Más es una lista más completa y ocupa más espacio.</string>
+    <string name="server_settings_blocklist_limit_error">Introduce un número entero de 0 a %1$d.</string>
     <string name="server_settings_api_timeout">Tiempo de espera de las API</string>
     <string name="server_settings_api_timeout_hint">Cuánto espera el servidor a que respondan Radarr, Sonarr y otros servicios. 0 espera indefinidamente.</string>
     <string name="server_settings_api_timeout_error">Introduce un número de segundos, 0 o más.</string>

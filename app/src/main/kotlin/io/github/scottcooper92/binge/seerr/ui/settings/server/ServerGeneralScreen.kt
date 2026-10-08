@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Language
@@ -36,7 +37,8 @@ import kotlinx.coroutines.flow.Flow
  * The server's General settings as the web client's General page lists them, in four groups of list rows: the
  * application, what Discover shows, how series are requested, and what the web client marks advanced. A text value is
  * edited in a sheet that checks it, and a pick from the server's lists in a picker sheet, so the page holds no field
- * that can be wrong. [onLoadList] reads one of those lists the first time its picker opens.
+ * that can be wrong. [onLoadList] reads one of those lists the first time its picker opens. On a server with an automatic
+ * blocklist, a Blocklist group follows Discover; [keywordActions] names its tags and searches TMDB's keywords.
  */
 @Composable
 fun ServerGeneralScreen(
@@ -45,6 +47,7 @@ fun ServerGeneralScreen(
     actions: EditorActions<ServerGeneralSettings>,
     keyActions: ApiKeyActions,
     onLoadList: (ServerList) -> Unit = {},
+    keywordActions: KeywordActions = KeywordActions(onLoadNames = {}, onSearch = {}),
 ) {
     val extras = (state as? ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>)?.extras ?: ServerGeneralExtras()
     EditorPage(
@@ -56,6 +59,7 @@ fun ServerGeneralScreen(
     ) { draft, enabled ->
         ApplicationGroup(draft, extras, keyActions, enabled, actions)
         DiscoverGroup(draft, extras, enabled, onLoadList, actions)
+        draft.blocklist?.let { blocklist -> BlocklistGroup(blocklist, extras, enabled, onLoadList, keywordActions, actions) }
         RequestsGroup(draft, enabled, actions)
         AdvancedGroup(draft, enabled, actions)
     }
@@ -153,6 +157,15 @@ private fun DiscoverGroup(
                     enabled,
                     detail = stringResource(R.string.server_settings_hide_available_detail),
                 ) { on -> actions.onEdit { it.copy(hideAvailable = on) } },
+                draft.hideBlocklisted?.let { hidden ->
+                    editorToggle(
+                        Icons.Filled.Block,
+                        stringResource(R.string.server_settings_hide_blocklisted),
+                        hidden,
+                        enabled,
+                        detail = stringResource(R.string.server_settings_hide_blocklisted_detail),
+                    ) { on -> actions.onEdit { it.copy(hideBlocklisted = on) } }
+                },
                 draft.hideRequested?.let { hidden ->
                     editorToggle(
                         Icons.Filled.VisibilityOff,

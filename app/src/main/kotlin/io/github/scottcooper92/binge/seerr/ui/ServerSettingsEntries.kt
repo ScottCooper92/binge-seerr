@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersScr
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.KeywordActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsViewModel
@@ -236,6 +237,7 @@ private fun GeneralPage(onBack: () -> Unit) {
                 onRegenerate = viewModel::regenerateApiKey,
             ),
         onLoadList = viewModel::loadList,
+        keywordActions = KeywordActions(onLoadNames = viewModel::loadKeywordNames, onSearch = viewModel::searchKeywords),
     )
 }
 
