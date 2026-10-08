@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +30,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.MessageScreen
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
@@ -39,7 +38,6 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.AllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
-import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
 
@@ -261,9 +259,10 @@ private fun ConnectionProblem(
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    EmptyScreen(
+    // Three ways out, one destructive, so the design system's stacked actions rather than its two-button row (#777).
+    MessageScreen(
         modifier = modifier,
-        title =
+        headline =
             stringResource(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
@@ -271,7 +270,7 @@ private fun ConnectionProblem(
                     else -> R.string.hub_unreachable_headline
                 },
             ),
-        message =
+        body =
             stringResource(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
@@ -284,29 +283,18 @@ private fun ConnectionProblem(
                 ConnectionHealth.CouldNotLoad -> Icons.Filled.HourglassEmpty
                 else -> Icons.Filled.CloudOff
             },
-        action = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            ) {
-                if (health == ConnectionHealth.LocalNetworkDenied) {
-                    BingeFilledButton(label = stringResource(allow.label), onClick = allow.run, modifier = Modifier.fillMaxWidth())
-                    BingeOutlinedButton(
-                        label = stringResource(R.string.settings_edit_connection),
-                        onClick = onReconnect,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                } else {
-                    BingeFilledButton(label = stringResource(R.string.hub_retry), onClick = onRetry, modifier = Modifier.fillMaxWidth())
-                    BingeOutlinedButton(
-                        label = stringResource(R.string.settings_edit_connection),
-                        onClick = onReconnect,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                DisconnectButton(onDisconnect)
-                Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        actions = {
+            if (health == ConnectionHealth.LocalNetworkDenied) {
+                BingeFilledButton(label = stringResource(allow.label), onClick = allow.run, modifier = Modifier.fillMaxWidth())
+            } else {
+                BingeFilledButton(label = stringResource(R.string.hub_retry), onClick = onRetry, modifier = Modifier.fillMaxWidth())
             }
+            BingeOutlinedButton(
+                label = stringResource(R.string.settings_edit_connection),
+                onClick = onReconnect,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            DisconnectButton(onDisconnect)
         },
     )
 }
