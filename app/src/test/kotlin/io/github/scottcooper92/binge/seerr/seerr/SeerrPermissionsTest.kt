@@ -52,8 +52,12 @@ class SeerrPermissionsTest {
 
     @Test
     fun `a media type's own request bit lets the user request`() {
-        assertTrue(SeerrPermissions.fromBits(PERMISSION_REQUEST_MOVIE).canRequest)
-        assertTrue(SeerrPermissions.fromBits(PERMISSION_REQUEST_TV).canRequest)
+        val movies = SeerrPermissions.fromBits(PERMISSION_REQUEST_MOVIE)
+        assertTrue(movies.canRequest && movies.canRequestMovie && !movies.canRequestSeries)
+        val series = SeerrPermissions.fromBits(PERMISSION_REQUEST_TV)
+        assertTrue(series.canRequest && series.canRequestSeries && !series.canRequestMovie)
+        val both = SeerrPermissions.fromBits(PERMISSION_REQUEST)
+        assertTrue(both.canRequestMovie && both.canRequestSeries)
         assertEquals(SeerrDefaultAccess.RequestWithApproval, SeerrDefaultAccess.fromBits(PERMISSION_REQUEST_TV))
     }
 }

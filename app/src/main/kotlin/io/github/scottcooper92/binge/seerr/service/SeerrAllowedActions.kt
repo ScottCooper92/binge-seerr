@@ -32,11 +32,10 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
             add(Capability.CAPABILITY_ADVANCED_REQUEST_OPTIONS)
         }
         if (canManageRequests) addAll(listOf(Capability.CAPABILITY_APPROVE, Capability.CAPABILITY_DECLINE, Capability.CAPABILITY_RETRY))
-        // A requester may cancel or reshape their own pending request, and a moderator anyone's.
-        if (canRequest || canManageRequests) {
-            add(Capability.CAPABILITY_CANCEL)
-            if (settings.partialRequestsEnabled) add(Capability.CAPABILITY_EDIT_SEASONS)
-        }
+        // A requester may cancel their own pending request, and a moderator anyone's. Seasons belong only to a
+        // series, so the edit is offered only to a user who may request one.
+        if (canRequest || canManageRequests) add(Capability.CAPABILITY_CANCEL)
+        if ((canRequestSeries || canManageRequests) && settings.partialRequestsEnabled) add(Capability.CAPABILITY_EDIT_SEASONS)
         // Seerr's request list is open to any signed-in user and narrows itself to their own requests,
         // and a batch of statuses is the core GetStatus many times over, so neither needs a permission.
         add(Capability.CAPABILITY_LIST_REQUESTS)

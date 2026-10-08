@@ -47,7 +47,7 @@ class HubUsersStatTest {
 
     @Test
     fun `a viewer who cannot manage users sees no Users stat`() {
-        show(SeerrPermissions(canRequest = true))
+        show(SeerrPermissions(canRequestMovie = true, canRequestSeries = true))
 
         rule.onAllNodes(hasText("$USER_COUNT")).assertCountEquals(0)
     }
