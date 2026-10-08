@@ -67,6 +67,8 @@ internal data class HandOffResponse(
     val status: HttpStatus,
     val html: String,
     val contentType: String = "text/html; charset=utf-8",
+    /** The client the PIN just matched for, which the browser keeps and sends back (#909); null on every other answer. */
+    val clientCookie: String? = null,
 ) {
     /**
      * The headers keep the page to itself: no caching, no referrer (the token is in the URL), no outside
@@ -88,6 +90,7 @@ internal data class HandOffResponse(
                         "script-src '$PAGE_SCRIPT_HASH'; connect-src 'self'; " +
                         "form-action 'self'; base-uri 'none'; frame-ancestors 'none'\r\n",
                 )
+                clientCookie?.let { append("Set-Cookie: $it\r\n") }
                 append("Connection: close\r\n")
                 append("\r\n")
             }

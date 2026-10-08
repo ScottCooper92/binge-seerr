@@ -183,9 +183,11 @@ internal class HandOffPageTemplate(
             <h1>${copy.pinTitle.escapeHtml()}</h1>
             <p>${copy.pinBody.escapeHtml()}</p>
             $form
+            <div id="openapp">
             <hr>
             <p>${copy.appBody.escapeHtml()}</p>
             <a class="app" id="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
+            </div>
             <p class="note">${installLine(copy)}</p>
             """.trimIndent(),
         )

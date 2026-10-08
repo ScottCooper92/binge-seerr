@@ -80,20 +80,34 @@ class AddressHandOffListenerTest {
             socket.getInputStream().readBytes().toString(StandardCharsets.UTF_8)
         }
 
-    private fun get(path: String) = exchange("GET $path HTTP/1.1\r\nHost: tv\r\nAccept-Language: es-MX,en;q=0.5\r\n\r\n")
+    private fun get(
+        path: String,
+        cookie: String? = null,
+    ) = exchange(
+        "GET $path HTTP/1.1\r\nHost: tv\r\nAccept-Language: es-MX,en;q=0.5\r\n" + (cookie?.let { "Cookie: $it\r\n" } ?: "") + "\r\n",
+    )
+
+    /** The `name=value` a browser would send back for the cookie [answer] set. */
+    private fun cookieOf(answer: String): String =
+        Regex("Set-Cookie: ([^;\r\n]+)").find(answer)?.groupValues?.get(1) ?: error("no cookie in $answer")
 
     /** Posts [body], with the TV's PIN added unless [pin] says otherwise: most tests are about what comes after it (#909). */
     private fun post(
         path: String,
         body: String,
         pin: String? = key.pin(),
+        cookie: String? = null,
     ): String {
         val sent = if (pin == null) body else "$body&pin=$pin"
         return exchange(
             "POST $path HTTP/1.1\r\nHost: tv\r\nContent-Type: application/x-www-form-urlencoded\r\n" +
+                (cookie?.let { "Cookie: $it\r\n" } ?: "") +
                 "Content-Length: ${sent.toByteArray().size}\r\n\r\n$sent",
         )
     }
+
+    /** Matches the PIN as a browser would, and returns the cookie it keeps. */
+    private fun matchPin(): String = cookieOf(post("/a/$TOKEN", "pin=${key.pin()}", pin = null))
 
     @Test
     fun `the token's path asks for the PIN first, in the browser's language, with headers that keep it to itself`() =
@@ -122,11 +136,30 @@ class AddressHandOffListenerTest {
             }
             assertTrue(addresses.isEmpty)
 
-            post("/a/$TOKEN", "pin=${key.pin()}", pin = null).let { assertTrue(it, it.contains("form:en:false")) }
-            // Matched once, the page and its posts need it no more.
-            assertTrue(get("/a/$TOKEN").contains("form:es:false"))
-            post("/a/$TOKEN", "address=seerr.lan", pin = null)
+            val matched = post("/a/$TOKEN", "pin=${key.pin()}", pin = null)
+            assertTrue(matched, matched.contains("form:en:false"))
+            val cookie = cookieOf(matched)
+            // Matched once, that client's page and posts need it no more.
+            assertTrue(get("/a/$TOKEN", cookie).contains("form:es:false"))
+            post("/a/$TOKEN", "address=seerr.lan", pin = null, cookie = cookie)
             assertEquals("seerr.lan", withTimeout(5_000) { addresses.receive() })
+            serving.cancelAndJoin()
+        }
+
+    @Test
+    fun `one client's match does not open the code to another client`() =
+        runBlocking {
+            val (addresses, serving) = serving()
+            val cookie = cookieOf(post("/a/$TOKEN", "pin=${key.pin()}", pin = null))
+
+            // Someone else with the token, and no cookie, still meets the PIN.
+            assertTrue(get("/a/$TOKEN").contains("pin:es"))
+            assertTrue(post("/a/$TOKEN", "address=theirs.lan", pin = null).startsWith("HTTP/1.1 403 "))
+            assertTrue(post("/a/$TOKEN", "address=theirs.lan", pin = null, cookie = "handoff-$TOKEN=guess").startsWith("HTTP/1.1 403 "))
+            assertTrue(addresses.isEmpty)
+
+            post("/a/$TOKEN", "address=mine.lan", pin = null, cookie = cookie)
+            assertEquals("mine.lan", withTimeout(5_000) { addresses.receive() })
             serving.cancelAndJoin()
         }
 
@@ -178,16 +211,17 @@ class AddressHandOffListenerTest {
     fun `a page follows the TV, and an address posted while the TV is past that step is not taken`() =
         runBlocking {
             val (addresses, serving) = serving()
+            val cookie = matchPin()
             post("/a/$TOKEN", "address=seerr.lan")
             assertEquals("seerr.lan", withTimeout(5_000) { addresses.receive() })
 
             progress = HandOffProgress.SignIn("Living room")
-            get("/a/$TOKEN").let { assertTrue(it, it.contains("status:es:SignIn(Living room)")) }
+            get("/a/$TOKEN", cookie).let { assertTrue(it, it.contains("status:es:SignIn(Living room)")) }
             post("/a/$TOKEN", "address=other.lan").let { assertTrue(it, it.contains("status:en:SignIn(Living room)")) }
             assertTrue(addresses.isEmpty)
 
             progress = HandOffProgress.Connected
-            get("/a/$TOKEN").let { assertTrue(it, it.contains("status:es:Connected")) }
+            get("/a/$TOKEN", cookie).let { assertTrue(it, it.contains("status:es:Connected")) }
             serving.cancelAndJoin()
         }
 
@@ -195,11 +229,12 @@ class AddressHandOffListenerTest {
     fun `an address that named no server is taken again, from the form the page goes back to`() =
         runBlocking {
             val (addresses, serving) = serving()
+            val cookie = matchPin()
             post("/a/$TOKEN", "address=nope.lan")
             assertEquals("nope.lan", withTimeout(5_000) { addresses.receive() })
 
             progress = HandOffProgress.Failed
-            assertTrue(get("/a/$TOKEN").contains("status:es:Failed"))
+            assertTrue(get("/a/$TOKEN", cookie).contains("status:es:Failed"))
             post("/a/$TOKEN", "address=seerr.lan")
 
             assertEquals("seerr.lan", withTimeout(5_000) { addresses.receive() })
@@ -210,15 +245,17 @@ class AddressHandOffListenerTest {
     fun `an address the TV cannot use gets the form back with an error, and the listener keeps going`() =
         runBlocking {
             val (addresses, serving) = serving()
+            val cookie = matchPin()
 
             assertTrue(post("/a/$TOKEN", "address=http%3A%2F%2F").startsWith("HTTP/1.1 400 "))
             assertTrue(post("/a/$TOKEN", "address=").contains("form:en:true"))
             assertTrue(post("/a/$TOKEN", "nothing=here").contains("form:en:true"))
-            assertTrue(post("/a/$TOKEN", "address=%zz").contains("form:en:true"))
+            assertTrue(post("/a/$TOKEN", "address=%zz", pin = null, cookie = cookie).contains("form:en:true"))
             assertTrue(addresses.isEmpty)
 
             post("/a/$TOKEN", "address=seerr.lan")
             assertEquals("seerr.lan", withTimeout(5_000) { addresses.receive() })
+            serving.cancelAndJoin()
         }
 
     @Test

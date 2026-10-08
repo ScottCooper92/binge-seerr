@@ -232,7 +232,9 @@ class HandOffPageTest {
         val locked = page.pin(acceptLanguage = null, wrong = true, locked = true)
         assertTrue(locked.contains("Pin locked"))
         assertFalse(locked.contains("name=\"pin\""))
-        // The app is still offered: it asks for the PIN itself, against a code the user opens afresh.
+        // The app is still offered, in a block the script hides where the page has no key to hand it: a typed URL.
         assertTrue(locked.contains("intent://tv-handoff"))
+        assertTrue(locked.contains("id=\"openapp\""))
+        assertTrue(PAGE_SCRIPT.contains("if(o&&!K){o.hidden=true;}"))
     }
 }
