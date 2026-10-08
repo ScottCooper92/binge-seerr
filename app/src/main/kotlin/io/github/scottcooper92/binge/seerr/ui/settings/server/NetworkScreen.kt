@@ -24,6 +24,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.AddressKeyboard
+import io.github.scottcooper92.binge.seerr.ui.users.settings.DecimalKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -104,6 +105,7 @@ private fun timeoutItem(
         value = seconds,
         enabled = enabled,
         onChange = { value -> actions.onEdit { it.copy(apiRequestTimeout = value) } },
+        keyboard = DecimalKeyboard,
         hint = stringResource(R.string.server_settings_api_timeout_hint),
         placeholder = stringResource(R.string.placeholder_api_timeout),
         required = true,
