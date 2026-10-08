@@ -26,6 +26,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
+import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
@@ -125,23 +126,7 @@ private fun SignInGroup(
                     detail = stringResource(R.string.server_settings_new_media_server_login_detail, server),
                 ) { on -> actions.onEdit { it.copy(newMediaServerLogin = on) } },
             ),
-        belowRows =
-            if (draft.valid) {
-                null
-            } else {
-                {
-                    Text(
-                        required,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier =
-                            Modifier.padding(
-                                horizontal = dimensionResource(DesR.dimen.padding_m),
-                                vertical = dimensionResource(DesR.dimen.padding_s),
-                            ),
-                    )
-                }
-            },
+        belowRows = if (draft.valid) null else ({ GroupMessage(required, error = true) }),
     )
 }
 

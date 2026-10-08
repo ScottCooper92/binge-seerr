@@ -14,6 +14,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -108,6 +109,7 @@ class NetworkFormTest {
         show(ALL_OFF.copy(proxy = ProxyForm(enabled = true)))
 
         rule.onNodeWithText("Save").assertIsNotEnabled()
+        assertEquals(2, rule.onAllNodesWithText("Required").fetchSemanticsNodes().size)
     }
 
     @Test
@@ -166,6 +168,14 @@ class NetworkFormTest {
 
         assertEquals(" hunter2 ", latest.proxy?.password)
         assertEquals("proxy.lan", latest.proxy?.host)
+    }
+
+    @Test
+    fun `a dns cache the server sent with crossed bounds says so in its rows`() {
+        show(ALL_OFF.copy(dnsCache = DnsCacheForm(enabled = true, minTtl = "60", maxTtl = "5")))
+
+        assertEquals(2, rule.onAllNodesWithText("The maximum must not be below the minimum").fetchSemanticsNodes().size)
+        rule.onNodeWithText("Save").assertIsNotEnabled()
     }
 
     @Test

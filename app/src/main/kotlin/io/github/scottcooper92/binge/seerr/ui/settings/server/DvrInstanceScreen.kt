@@ -107,6 +107,7 @@ private fun ServerGroup(
                     value = draft.name,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(name = value) } },
+                    required = true,
                     check = { value -> nameLabel.takeIf { value.isBlank() } },
                 ),
                 textSettingItem(
@@ -115,6 +116,7 @@ private fun ServerGroup(
                     value = draft.host,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                    required = true,
                     placeholder = stringResource(R.string.placeholder_host),
                     check = { value -> hostLabel.takeIf { value.isBlank() } },
                 ),
@@ -124,6 +126,7 @@ private fun ServerGroup(
                     value = draft.port,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                    required = true,
                     check = { value -> portError.takeIf { !portValid(value) } },
                 ),
                 editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { on ->
@@ -135,6 +138,7 @@ private fun ServerGroup(
                     value = draft.apiKey,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(apiKey = value) } },
+                    required = true,
                     check = { value -> keyLabel.takeIf { value.isBlank() } },
                     shown = draft.apiKey.maskedKey() ?: stringResource(R.string.settings_value_not_set),
                 ),

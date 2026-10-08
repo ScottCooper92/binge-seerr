@@ -21,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
+import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.multiChoiceSettingItem
@@ -139,7 +140,12 @@ internal fun RuleConditions(
                     hint = stringResource(R.string.server_settings_rule_keywords_hint),
                 ),
             ),
-        belowRows = if (draft.hasCondition) null else ({ Needs(stringResource(R.string.server_settings_rule_needs_condition)) }),
+        belowRows =
+            if (draft.hasCondition) {
+                null
+            } else {
+                { GroupMessage(stringResource(R.string.server_settings_rule_needs_condition), error = false) }
+            },
     )
 }
 
@@ -207,20 +213,11 @@ internal fun RuleOverrides(
     ItemGroup(
         title = stringResource(R.string.server_settings_rule_overrides_title),
         rows = rows,
-        belowRows = if (draft.hasOverride) null else ({ Needs(stringResource(R.string.server_settings_rule_needs_override)) }),
+        belowRows =
+            if (draft.hasOverride) {
+                null
+            } else {
+                { GroupMessage(stringResource(R.string.server_settings_rule_needs_override), error = false) }
+            },
     )
 }
-
-/** What a group still needs before the rule can be saved. */
-@Composable
-private fun Needs(text: String) =
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier =
-            Modifier.padding(
-                horizontal = dimensionResource(DesR.dimen.padding_m),
-                vertical = dimensionResource(DesR.dimen.padding_s),
-            ),
-    )

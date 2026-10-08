@@ -29,6 +29,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
+import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
@@ -171,21 +172,7 @@ private fun ProxyGroup(
                     onEdit { it.copy(enabled = on) }
                 },
             ) + if (proxy.enabled) settings.joined() else emptyList(),
-        belowRows =
-            credentials?.let { message ->
-                {
-                    Text(
-                        stringResource(message),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier =
-                            Modifier.padding(
-                                horizontal = dimensionResource(DesR.dimen.padding_m),
-                                vertical = dimensionResource(DesR.dimen.padding_s),
-                            ),
-                    )
-                }
-            },
+        belowRows = credentials?.let { message -> { GroupMessage(stringResource(message), error = true) } },
     )
 }
 
@@ -205,6 +192,7 @@ private fun proxySettingRows(
             value = proxy.host,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(host = value) } },
+            required = true,
             placeholder = stringResource(R.string.placeholder_proxy_host),
             check = { value -> requiredError.takeIf { value.isBlank() } },
         ),
@@ -214,6 +202,7 @@ private fun proxySettingRows(
             value = proxy.port,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(port = value) } },
+            required = true,
             placeholder = stringResource(R.string.placeholder_port_proxy),
             check = { value -> portError.takeIf { !portValid(value) } },
         ),

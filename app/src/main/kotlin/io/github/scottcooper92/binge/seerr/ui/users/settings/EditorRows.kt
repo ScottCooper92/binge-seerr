@@ -45,7 +45,8 @@ private const val MULTILINE_MAX = 8
  * A tap edits it in the design system's text entry sheet; [check] names what is wrong with a value, which keeps Done
  * off. A [secret] value is edited in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
  * does, since the design system's text entry has no way to hide what it shows. A [hint] explains the value and stays
- * in view while it is edited; a [placeholder] is an example of one, shown only while the field is empty.
+ * in view while it is edited; a [placeholder] is an example of one, shown only while the field is empty. A [required]
+ * row left blank, or a value [check] refuses, says so in its detail, in the error colour.
  * The sheet belongs to this call, so a page lists its rows and nothing else.
  */
 @Composable
@@ -58,6 +59,7 @@ internal fun textSettingItem(
     emptyLabel: String = stringResource(R.string.settings_value_not_set),
     hint: String? = null,
     placeholder: String? = null,
+    required: Boolean = false,
     check: (String) -> String? = { null },
     shown: String = value.ifBlank { emptyLabel },
     secret: Boolean = false,
@@ -108,15 +110,43 @@ internal fun textSettingItem(
             }
         }
     }
+    // Save follows the form's validity, so a row that holds it back says why where the user will look: a required
+    // value left blank, or one the server sent that its own check refuses.
+    val rowProblem =
+        when {
+            required && value.isBlank() -> stringResource(R.string.editor_field_required)
+            value.isNotBlank() -> check(if (secret) value else value.trim())
+            else -> null
+        }
     return ListItem(
         icon = icon,
         label = label,
-        detail = shown,
+        detail = rowProblem ?: shown,
+        detailColor = if (rowProblem != null) MaterialTheme.colorScheme.error else null,
         clickable = enabled,
         disabled = !enabled,
         onClick = { open = true },
     )
 }
+
+/**
+ * A line under an `ItemGroup`'s rows, through its `belowRows`: what the group still needs before Save. [error] marks
+ * something wrong in what was entered; a step not yet taken, such as a new rule's first condition, is not an error.
+ */
+@Composable
+internal fun GroupMessage(
+    text: String,
+    error: Boolean,
+) = Text(
+    text,
+    style = MaterialTheme.typography.bodyMedium,
+    color = if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    modifier =
+        Modifier.padding(
+            horizontal = dimensionResource(DesR.dimen.padding_m),
+            vertical = dimensionResource(DesR.dimen.padding_s),
+        ),
+)
 
 /** [textSettingItem]'s sheet for a secret: the title, a masked [EditorTextField], and the same Cancel and Done pair. */
 @Composable
