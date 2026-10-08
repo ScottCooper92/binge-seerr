@@ -44,7 +44,8 @@ private const val MULTILINE_MAX = 8
  * [shown] replaces that for a value the row shouldn't spell out, such as a key.
  * A tap edits it in the design system's text entry sheet; [check] names what is wrong with a value, which keeps Done
  * off. A [secret] value is edited in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
- * does, since the design system's text entry has no way to hide what it shows.
+ * does, since the design system's text entry has no way to hide what it shows. A [hint] explains the value and stays
+ * in view while it is edited; a [placeholder] is an example of one, shown only while the field is empty.
  * The sheet belongs to this call, so a page lists its rows and nothing else.
  */
 @Composable
@@ -56,6 +57,7 @@ internal fun textSettingItem(
     onChange: (String) -> Unit,
     emptyLabel: String = stringResource(R.string.settings_value_not_set),
     hint: String? = null,
+    placeholder: String? = null,
     check: (String) -> String? = { null },
     shown: String = value.ifBlank { emptyLabel },
     secret: Boolean = false,
@@ -93,7 +95,10 @@ internal fun textSettingItem(
                     },
                     onCancel = { open = false },
                     submitLabel = stringResource(R.string.editor_done),
-                    hint = hint,
+                    // The surface's own hint is a placeholder, gone once the field holds a value; an explanation
+                    // has to stay readable while the value is edited, so it sits under the title instead.
+                    hint = placeholder,
+                    header = { hint?.let { SheetHint(it) } },
                     submitEnabled = problem == null,
                     error = problem.takeIf { draft.isNotEmpty() },
                     minLines = if (multiline) MULTILINE_MIN else 1,
@@ -150,6 +155,11 @@ private fun SecretEntry(
         }
     }
 }
+
+/** An explanation under a text sheet's title, readable while the field holds a value. */
+@Composable
+private fun SheetHint(text: String) =
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
 /**
  * A pick from a fixed list as a list row: the setting's name, and what it is set to now. A tap opens a peeking sheet

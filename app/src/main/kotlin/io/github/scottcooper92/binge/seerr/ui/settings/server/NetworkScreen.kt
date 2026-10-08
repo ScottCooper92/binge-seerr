@@ -205,6 +205,7 @@ private fun proxySettingRows(
             value = proxy.host,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(host = value) } },
+            placeholder = stringResource(R.string.placeholder_proxy_host),
             check = { value -> requiredError.takeIf { value.isBlank() } },
         ),
         textSettingItem(
@@ -213,6 +214,7 @@ private fun proxySettingRows(
             value = proxy.port,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(port = value) } },
+            placeholder = stringResource(R.string.placeholder_port_proxy),
             check = { value -> portError.takeIf { !portValid(value) } },
         ),
         editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), proxy.useSsl, enabled) { on ->
