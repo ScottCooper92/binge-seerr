@@ -17,10 +17,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobInterval
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobOutcome
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
-import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerJob
 import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
-import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * The Settings root. Every group is one screen tall together, so the page frames carry the layout and
@@ -287,21 +285,14 @@ private fun noActions() =
     )
 
 @Composable
-private fun SettingsFrame(state: SettingsUiState) =
-    SettingsScreen(
-        state = state,
-        actions = noActions(),
-        jobs = JobsUiState.Loading,
-        jobEvents = emptyFlow(),
-        jobActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
-    )
+private fun SettingsFrame(state: SettingsUiState) = SettingsScreen(state = state, actions = noActions())
 
 @Composable
 private fun JobStatesGroup() {
     val actions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> })
     val jobs = serverJobs()
     Group(
-        R.string.settings_group_system,
+        R.string.server_settings_jobs,
         listOf(
             jobRow(jobs[0], busy = false, outcome = null, actions) {},
             jobRow(jobs[1], busy = false, outcome = null, actions) {},

@@ -687,8 +687,9 @@
     <string name="server_settings_job_cron">Expresión cron</string>
     <string name="server_settings_job_cron_hint">Seis campos, los segundos primero: 0 */15 * * * *</string>
     <string name="server_settings_job_scheduled">Programación guardada</string>
-    <string name="server_settings_cache">Cachés</string>
-    <string name="server_settings_cache_caption">Cachés de la API y de imágenes, y qué vaciar</string>
+    <string name="server_settings_cache">Tareas y caché</string>
+    <string name="server_settings_cache_caption">Tareas programadas y cachés del servidor</string>
+    <string name="server_settings_jobs">Tareas</string>
     <string name="server_settings_api_caches">Cachés de la API</string>
     <string name="server_settings_image_caches">Cachés de imágenes</string>
     <string name="server_settings_cache_stats">%1$d aciertos · %2$d fallos · %3$d claves</string>

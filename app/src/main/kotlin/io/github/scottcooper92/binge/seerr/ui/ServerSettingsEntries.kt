@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -21,6 +22,8 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DefaultPermissionsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.DiscoverSlidersViewModel
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.LogsViewModel
@@ -45,6 +48,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.TautulliViewModel
 import io.github.scottcooper92.binge.seerr.ui.users.settings.PermissionsSettingsScreen
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorActions
+import kotlinx.coroutines.flow.merge
 
 /** The server-settings entries of [SeerrNavHost]: one screen per page, each over its own editor. */
 @Composable
@@ -104,18 +108,24 @@ private fun LogsPage(onBack: () -> Unit) {
     )
 }
 
-/** The server's caches and what flushing one does. */
+/** The server's jobs and caches, each read on its own and retried on its own. */
 @Composable
 private fun CachePage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<CacheViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val jobsViewModel = hiltViewModel<JobsViewModel>()
+    val jobs by jobsViewModel.uiState.collectAsStateWithLifecycle()
+    val events = remember(viewModel, jobsViewModel) { merge(viewModel.events, jobsViewModel.events) }
     CacheScreen(
+        jobs = jobs,
+        jobActions = JobsActions(onRun = jobsViewModel::run, onCancel = jobsViewModel::cancel, onSchedule = jobsViewModel::schedule),
         state = state,
-        events = viewModel.events,
+        events = events,
         actions =
             CacheActions(
                 onBack = onBack,
                 onRetry = viewModel::reload,
+                onRetryJobs = jobsViewModel::reload,
                 onFlush = viewModel::flush,
                 onFlushDnsEntry = viewModel::flushDnsEntry,
             ),

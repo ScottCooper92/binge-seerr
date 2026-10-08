@@ -52,7 +52,7 @@ class CacheScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun readyLayout() = CacheFrame(CacheUiState.Ready(apiCaches(), imageCaches(), dnsCache()))
+    fun readyLayout() = CacheFrame(CacheUiState.Ready(apiCaches(), imageCaches(), dnsCache()), jobs = JobsUiState.Ready(cacheJobs()))
 
     /** Before Seerr 3 the server has no DNS cache, so the section is absent. */
     @PreviewTest
@@ -79,7 +79,13 @@ class CacheScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = CacheFrame(CacheUiState.Error(SeerrError.Server))
+    fun failed() = CacheFrame(CacheUiState.Error(SeerrError.Server), jobs = JobsUiState.Ready(cacheJobs()))
+
+    /** The jobs read failed and the caches did not: the caches stand, and the jobs group carries its own retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun jobsFailed() = CacheFrame(CacheUiState.Ready(apiCaches(), imageCaches(), dns = null), jobs = JobsUiState.Error(SeerrError.Server))
 }
 
 private fun aboutInfo(
@@ -145,5 +151,20 @@ private fun dnsCache() =
 private fun AboutFrame(state: AboutUiState) = AboutScreen(state = state, onBack = {}, onRetry = {}, onOpenUrl = {})
 
 @Composable
-private fun CacheFrame(state: CacheUiState) =
-    CacheScreen(state = state, events = emptyFlow(), actions = CacheActions(onBack = {}, onRetry = {}, onFlush = {}, onFlushDnsEntry = {}))
+private fun CacheFrame(
+    state: CacheUiState,
+    jobs: JobsUiState = JobsUiState.Loading,
+) = CacheScreen(
+    state = state,
+    events = emptyFlow(),
+    actions = CacheActions(onBack = {}, onRetry = {}, onRetryJobs = {}, onFlush = {}, onFlushDnsEntry = {}),
+    jobs = jobs,
+    jobActions = JobsActions(onRun = {}, onCancel = {}, onSchedule = { _, _ -> }),
+)
+
+/** The page's jobs, above its caches as the web client's Jobs & Cache page lists them. */
+private fun cacheJobs() =
+    listOf(
+        ServerJob(id = "download-sync", name = "Download sync", interval = JobInterval.Short, running = false, nextRunMillis = null),
+        ServerJob(id = "availability-sync", name = "Availability sync", interval = JobInterval.Long, running = true, nextRunMillis = null),
+    )
