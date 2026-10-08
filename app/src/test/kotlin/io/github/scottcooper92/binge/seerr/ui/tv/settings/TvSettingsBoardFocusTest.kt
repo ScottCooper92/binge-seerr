@@ -14,7 +14,9 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerConfig
+import io.github.scottcooper92.binge.seerr.ui.settings.ServerService
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
+import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SignInKind
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -74,6 +76,20 @@ class TvSettingsBoardFocusTest {
 
         assertEquals(1, scans)
         composeTestRule.onNodeWithText(string(R.string.tv_settings_scan_started)).assertExists()
+    }
+
+    /** Seerr doesn't make instance names unique, so two "Sonarr" rows must still describe their own instance (#865). */
+    @Test
+    fun twoServicesWithOneNameEachDescribeTheirOwnInstance() {
+        val services =
+            listOf(
+                ServerService(1, "Sonarr", ServiceType.Sonarr, null, "HD-1080p", "/tv", is4k = false, isDefault = false),
+                ServerService(2, "Sonarr", ServiceType.Sonarr, null, "SD", "/tv-sd", is4k = false, isDefault = false),
+            )
+        setBoard(config = ServerConfig(services = services), initialFocusedKey = "${string(R.string.settings_group_services)}/1")
+
+        composeTestRule.onNodeWithText("SD · /tv-sd", substring = true).assertExists()
+        composeTestRule.onNodeWithText("HD-1080p · /tv", substring = true).assertDoesNotExist()
     }
 
     private fun setBoard(
