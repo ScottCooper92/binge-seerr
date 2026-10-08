@@ -1,44 +1,54 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performKeyInput
-import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.performScrollTo
 import com.binge.designsystem.theme.BingeExpressiveTheme
+import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
-import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 private val MANAGED =
-    GeneralSettings(displayName = "Ann", email = "ann@home.lan", region = "GB", canEditQuotas = true, canEditEmail = true)
+    GeneralSettings(
+        accountType = UserOrigin.Local,
+        role = UserRole.Owner,
+        displayName = "Ann",
+        email = "ann@home.lan",
+        loadedEmail = "ann@home.lan",
+        emailRequired = true,
+        region = "",
+        defaultMovieQuota = QuotaDefault(limit = 10, days = 7),
+        canEditQuotas = true,
+        canEditEmail = true,
+    )
 
+private val EXTRAS = UserGeneralExtras(serverDefaults = ServerDiscoverDefaults(region = "FR"))
+
+/** The page over a draft it edits itself, as the ViewModel would, counting saves. */
 @Composable
 private fun General(
-    draft: GeneralSettings,
+    initial: GeneralSettings,
     onSave: () -> Unit = {},
 ) = BingeExpressiveTheme(dynamicColor = false) {
+    var draft by remember { mutableStateOf(initial) }
     GeneralSettingsScreen(
-        state = EditorUiState.Ready(draft = draft, saved = MANAGED),
+        state = ExtrasEditorUiState.Ready(draft = draft, saved = MANAGED, extras = EXTRAS),
         events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = onSave),
+        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = onSave),
     )
 }
 
-/** The general page's sections: which start closed, and what a value of the wrong shape does to them. */
+/** The general page's rows: what it shows and does not edit, the server's defaults, and the quota overrides. */
 @RunWith(RobolectricTestRunner::class)
 class GeneralSettingsFormTest {
     @get:Rule
@@ -49,27 +59,36 @@ class GeneralSettingsFormTest {
     private fun show(draft: GeneralSettings) = rule.setContent { General(draft) { saves++ } }
 
     @Test
-    fun `discover and the quotas start closed`() {
+    fun `the account type and role read out`() {
         show(MANAGED)
 
-        rule.onNodeWithText("Display name").assertExists()
-        rule.onNodeWithText("Region", substring = true).assertDoesNotExist()
-        rule.onNodeWithText("Limit").assertDoesNotExist()
+        rule.onNodeWithText("Local account").assertExists()
+        rule.onNodeWithText("Owner").assertExists()
     }
 
     @Test
-    fun `a region of the wrong shape opens discover and says what it wants`() {
-        show(MANAGED.copy(region = "Britain"))
+    fun `a blank region reads as the server's`() {
+        show(MANAGED)
 
-        rule.onNodeWithText("1 field needs attention").assertExists()
-        rule.onNode(hasSetTextAction() and hasText("Britain")).assertExists()
+        rule.onNodeWithText("Default (France)").assertExists()
     }
 
     @Test
-    fun `a quota of the wrong shape opens the quotas and save does not save`() {
-        show(MANAGED.copy(movieQuotaLimit = "five"))
+    fun `a quota left to the server says what that is, and its override brings the limit out`() {
+        show(MANAGED)
 
-        rule.onNodeWithText("Enter a whole number, or leave it blank.").assertExists()
+        rule.onNodeWithText("Server default: 10 per 7 days").performScrollTo().assertExists()
+        rule.onNodeWithText("Movie requests").assertDoesNotExist()
+
+        rule.onNodeWithText("Override the movie limit").performScrollTo().performClick()
+
+        rule.onNodeWithText("Movie requests").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun `a required email cleared does not save`() {
+        show(MANAGED.copy(email = ""))
+
         rule.onNodeWithText("Save").performClick()
 
         assertEquals(0, saves)
@@ -82,29 +101,5 @@ class GeneralSettingsFormTest {
         rule.onNodeWithText("Save").performClick()
 
         assertEquals(1, saves)
-    }
-}
-
-/** The general page on a television: OK on a closed header opens it, and down enters its first field. */
-@RunWith(RobolectricTestRunner::class)
-@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
-class GeneralSettingsTvFocusTest {
-    @get:Rule
-    val rule = createSeerrKeyboardComposeRule()
-
-    private fun press(key: Key) {
-        rule.onRoot().performKeyInput { pressKey(key) }
-        rule.waitForIdle()
-    }
-
-    @Test
-    fun `ok on discover opens it and down enters its first field`() {
-        rule.setContent { General(MANAGED) }
-        rule.onNodeWithText("Discover").performSemanticsAction(SemanticsActions.RequestFocus)
-
-        press(Key.DirectionCenter)
-        press(Key.DirectionDown)
-
-        rule.onNode(hasSetTextAction() and hasText("Display language", substring = true)).assertIsFocused()
     }
 }

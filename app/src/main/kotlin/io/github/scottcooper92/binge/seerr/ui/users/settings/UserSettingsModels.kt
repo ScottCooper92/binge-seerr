@@ -2,8 +2,11 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.LanguageCodeShapes
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ListChoices
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerList
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.isEmailShape
 
@@ -34,27 +37,40 @@ data class QuotaDefault(
     val days: Int,
 )
 
+/** What the web client shows as a user's role: the server's first account, an admin, or anyone else. */
+enum class UserRole { Owner, Admin, User }
+
 /**
- * The general page. Quota fields are text so a cleared field reads as "use the server default";
- * the `default*` values say what that default is. [canEditQuotas] is a manager's.
+ * The general page. A quota is the server's default until its override is on; the `default*` values say what that
+ * default is. [canEditQuotas] is a manager's. The region and language fields hold the server's encoding for a user:
+ * blank is "the server's", and `all` is no filter.
  */
 data class GeneralSettings(
+    /** How the account signs in, and its role, which the page shows and does not edit. */
+    val accountType: UserOrigin? = null,
+    val role: UserRole = UserRole.User,
     val displayName: String = "",
     /** What the server falls back to when the display name is blank: the media-server username, or the email. */
     val fallbackName: String = "",
     val email: String = "",
     /** The email as the server sent it. Seerr stores a media-server username there for users with no address. */
     val loadedEmail: String = "",
+    /** The web client requires an email of everyone but a Jellyfin or Emby user who is not the owner. */
+    val emailRequired: Boolean = false,
+    /** Edited on the notifications page, as the web client does; carried so a save here does not clear it. */
     val discordId: String = "",
     val locale: String = "",
     val region: String = "",
-    /** Jellyseerr's second region, which this page does not edit; carried so a save does not clear it. */
-    val streamingRegion: String = "",
+    /** Null where the lineage has no streaming region: Overseerr. */
+    val streamingRegion: String? = null,
     val originalLanguage: String = "",
-    val movieQuotaLimit: String = "",
-    val movieQuotaDays: String = "",
-    val tvQuotaLimit: String = "",
-    val tvQuotaDays: String = "",
+    /** While an override is off its limit and window are the server's default, which turning it on starts from. */
+    val movieQuotaOverride: Boolean = false,
+    val movieQuotaLimit: Int = 0,
+    val movieQuotaDays: Int = DEFAULT_QUOTA_DAYS,
+    val tvQuotaOverride: Boolean = false,
+    val tvQuotaLimit: Int = 0,
+    val tvQuotaDays: Int = DEFAULT_QUOTA_DAYS,
     val watchlistSyncMovies: Boolean? = null,
     val watchlistSyncTv: Boolean? = null,
     val defaultMovieQuota: QuotaDefault? = null,
@@ -62,23 +78,51 @@ data class GeneralSettings(
     val canEditQuotas: Boolean = false,
     val canEditEmail: Boolean = false,
 ) {
-    /** Blank clears the address and the value the server sent is kept as it was; a changed one has to look like an address. */
-    val emailValid: Boolean get() = email.isBlank() || email.trim() == loadedEmail.trim() || email.isEmailShape()
+    /**
+     * Blank clears the address where that is allowed, and the value the server sent is kept as it was; a changed one has
+     * to look like an address.
+     */
+    val emailValid: Boolean
+        get() =
+            if (email.isBlank()) {
+                !emailRequired || !canEditEmail
+            } else {
+                email.trim() == loadedEmail.trim() || email.isEmailShape()
+            }
 
-    /** Blank is "use the server's"; anything else has to have the shape of its code. */
+    /** Blank is "use the server's" and `all` is no filter; anything else has to have the shape of its code. */
     val localeValid: Boolean get() = locale.isBlank() || LanguageCodeShapes.isLocale(locale)
-    val regionValid: Boolean get() = region.isBlank() || LanguageCodeShapes.isRegion(region)
-    val originalLanguageValid: Boolean get() = originalLanguage.isBlank() || LanguageCodeShapes.isOriginalLanguage(originalLanguage)
+    val regionValid: Boolean get() = region.isUserRegion()
+    val streamingRegionValid: Boolean get() = streamingRegion?.isUserRegion() != false
+    val originalLanguageValid: Boolean
+        get() = originalLanguage.trim().let { it.isEmpty() || it == "all" || it == "server" || LanguageCodeShapes.isOriginalLanguage(it) }
 
-    /** Blank clears the ID; anything else has to be digits only. */
-    val discordIdValid: Boolean get() = discordId.isBlank() || discordId.isDiscordIdShape()
-
-    val valid: Boolean get() = quotasValid && emailValid && localeValid && regionValid && originalLanguageValid && discordIdValid
-
-    /** A quota field is a whole number or blank; anything else is not a change the server would take. */
-    val quotasValid: Boolean
-        get() = listOf(movieQuotaLimit, movieQuotaDays, tvQuotaLimit, tvQuotaDays).all(::quotaValueValid)
+    val valid: Boolean
+        get() = emailValid && localeValid && regionValid && streamingRegionValid && originalLanguageValid
 }
+
+private fun String.isUserRegion(): Boolean = trim().let { it.isEmpty() || it == "all" || LanguageCodeShapes.isRegion(it) }
+
+/** The web client's window for a quota no one has set: a week. */
+internal const val DEFAULT_QUOTA_DAYS = 7
+
+/**
+ * What the general page shows beside its form: the fork, for its display languages; the server's own Discover
+ * settings, which a user's blank ones fall back to; and the server's lists, each read once its picker opens.
+ */
+data class UserGeneralExtras(
+    val variant: SeerrVariant = SeerrVariant.Unknown,
+    val serverDefaults: ServerDiscoverDefaults = ServerDiscoverDefaults(),
+    val lists: Map<ServerList, ListChoices> = emptyMap(),
+)
+
+/** The server's display language and Discover filters, from its public settings. */
+data class ServerDiscoverDefaults(
+    val locale: String = "",
+    val region: String = "",
+    val streamingRegion: String = "",
+    val originalLanguage: String = "",
+)
 
 /** The password page: whether the account has one, whether the caller must give it, and the two new entries. */
 data class PasswordSettings(

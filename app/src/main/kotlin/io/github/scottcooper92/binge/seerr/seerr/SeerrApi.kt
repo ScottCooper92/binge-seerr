@@ -917,6 +917,11 @@ data class SeerrPublicSettings(
     @SerialName("newPlexLogin") val newPlexLogin: Boolean = true,
     @SerialName("versionCheck") val versionCheck: Boolean = true,
     @SerialName("locale") val locale: String? = null,
+    /** The server's Discover filters, which a user's blank one falls back to. Overseerr has the one `region`. */
+    @SerialName("region") val region: String? = null,
+    @SerialName("discoverRegion") val discoverRegion: String? = null,
+    @SerialName("streamingRegion") val streamingRegion: String? = null,
+    @SerialName("originalLanguage") val originalLanguage: String? = null,
 )
 
 /**

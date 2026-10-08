@@ -53,7 +53,12 @@ internal fun UserSettingsPageEntry(
                     factory.create(userId)
                 })
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-            GeneralSettingsScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
+            GeneralSettingsScreen(
+                state = state,
+                events = viewModel.events,
+                actions = viewModel.editorActions(onBack),
+                onLoadList = viewModel::loadList,
+            )
         }
         UserSettingsPage.Password -> {
             val viewModel =

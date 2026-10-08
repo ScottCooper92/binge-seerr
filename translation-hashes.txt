@@ -630,7 +630,6 @@ app:server_settings_network  1744b96470b5
 app:server_settings_network_caption  ec2deb850b97
 app:server_settings_new_media_server_login  1f699e850b7e
 app:server_settings_new_media_server_login_detail  9633b4543fd4
-app:server_settings_original_language_hint  d8c9d1fc5146
 app:server_settings_partial_requests  c615998fdcff
 app:server_settings_partial_requests_detail  f1138ae66f55
 app:server_settings_permissions_none  dc937b598926
@@ -809,6 +808,7 @@ app:settings_signal_pending  3b7c001f1686
 app:settings_signal_pending_caption  e6c36bbdc47e
 app:settings_signed_in_api_key  a95db85d05a7
 app:settings_signed_in_as  abc50e334be4
+app:settings_use_server_default  a769cedc7992
 app:settings_users_access_auto  900f3153233b
 app:settings_users_access_none  ec6d62fe1e2f
 app:settings_users_access_request  a2fe6dc4dd6a
@@ -817,6 +817,7 @@ app:settings_users_summary_unlimited  1b6e50cabad4
 app:settings_value_not_set  4895f73177ab
 app:settings_value_off  ca7981b46ecf
 app:settings_value_on  130011756125
+app:settings_value_server_default  e4a90c80a6ec
 app:settings_value_unknown  b764cdc0eab7
 app:settings_version  dd167905de0d
 app:settings_version_behind  eebfe437fd4d
@@ -958,6 +959,8 @@ app:user_origin_local  871e019bee76
 app:user_permissions_title  abccc78cc93c
 app:user_plays  725b66fb9f52
 app:user_recently_watched  eb33c3964529
+app:user_role_owner  4b1b8aa3608a
+app:user_settings_account_type  dac7998fba76
 app:user_settings_agent_enabled  92c1cdfdf4cb
 app:user_settings_agent_enabled_hint  9fcb02497263
 app:user_settings_agent_webpush  d4f13b8b53e3
@@ -980,10 +983,8 @@ app:user_settings_link_sheet_title  b99a8363093d
 app:user_settings_linked  bfda026e6c59
 app:user_settings_linked_as  cd83f10c1bf3
 app:user_settings_linked_done  6e24333d3e30
-app:user_settings_locale_hint  d074a2109fec
 app:user_settings_none  01ac63f01dd2
 app:user_settings_not_linked  1e31d9596d67
-app:user_settings_original_language  c5c60a2af071
 app:user_settings_page_general  c910d474dcd7
 app:user_settings_page_general_desc  a555713b9edd
 app:user_settings_page_linked  feda46a46abb
@@ -1000,12 +1001,11 @@ app:user_settings_password_mismatch  f694aaa8da2c
 app:user_settings_password_new  3dd9df4441fb
 app:user_settings_password_none  d2e03582d927
 app:user_settings_permissions_lead  bda3e5aa61ea
-app:user_settings_quota_days  e08c0aa8f558
 app:user_settings_quota_default  4667a465c644
-app:user_settings_quota_limit  674b0ed54bf7
+app:user_settings_quota_override_movie  0057420202a4
+app:user_settings_quota_override_tv  f6c084ed73b8
 app:user_settings_quotas  87ace8b25d08
-app:user_settings_region  d3a008ef1335
-app:user_settings_region_hint  c33edd99bdfd
+app:user_settings_role  14736a2eb9f4
 app:user_settings_save  1509f561f241
 app:user_settings_saved  b5c120b316c2
 app:user_settings_section_discover  d4a33d5b78bc

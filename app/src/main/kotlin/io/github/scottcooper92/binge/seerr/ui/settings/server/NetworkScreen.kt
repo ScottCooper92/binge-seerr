@@ -21,7 +21,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.component.ListItemConnector
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.AddressKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.DecimalKeyboard
@@ -33,6 +32,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.VerbatimKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
+import io.github.scottcooper92.binge.seerr.ui.users.settings.joined
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import kotlinx.coroutines.flow.Flow
 
@@ -294,7 +294,3 @@ private fun proxySettingRows(
         },
     )
 }
-
-/** Rows that hang beneath the switch above them, joined to it by the design system's connector. */
-private fun List<ListItem>.joined(): List<ListItem> =
-    mapIndexed { index, row -> row.copy(connector = if (index == lastIndex) ListItemConnector.End else ListItemConnector.Continue) }

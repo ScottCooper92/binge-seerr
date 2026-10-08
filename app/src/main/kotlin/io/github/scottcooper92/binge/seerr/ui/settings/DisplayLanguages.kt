@@ -80,12 +80,14 @@ internal object DisplayLanguages {
 internal object Regions {
     /**
      * [codes] as choices, with "All regions" (blank, the server's "no filter") first. A [current] value the list lacks
-     * stays, under its code, so opening the picker never changes it.
+     * stays, under its code, so opening the picker never changes it. A user's region passes [defaultLabel]: there, blank
+     * is "the server's region" and [ALL] is no filter, so both lead.
      */
     fun choices(
         codes: List<String>,
         current: String,
         allLabel: String,
+        defaultLabel: String? = null,
     ): List<Pair<String, String>> {
         val known =
             codes
@@ -93,9 +95,13 @@ internal object Regions {
                 .distinct()
                 .map { it to name(it) }
                 .sortedBy { it.second.lowercase() }
-        val kept = current.trim().takeIf { it.isNotEmpty() && known.none { (code) -> code == it } }
-        return listOf("" to allLabel) + listOfNotNull(kept?.let { it to it }) + known
+        val kept = current.trim().takeIf { it.isNotEmpty() && it != ALL && known.none { (code) -> code == it } }
+        val lead = if (defaultLabel == null) listOf("" to allLabel) else listOf("" to defaultLabel, ALL to allLabel)
+        return lead + listOfNotNull(kept?.let { it to it }) + known
     }
+
+    /** A user's "no filter", which both lineages keep as `all` because a blank user region means the server's. */
+    const val ALL = "all"
 
     fun name(code: String): String =
         runCatching {

@@ -49,11 +49,11 @@ class UserSettingsIndexScreenshotTest {
 }
 
 class UserGeneralSettingsScreenshotTest {
-    /** A manager editing a user: email editable, both watchlist syncs, and the quotas with the server's defaults beneath. */
+    /** A manager editing a user: who they are, their own filters, one quota overridden and one left to the server. */
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun managerLayout() = GeneralFrame(settled(managerGeneral()))
+    fun managerLayout() = GeneralFrame(settledGeneral(managerGeneral()))
 
     /** A user editing themselves: no quotas, the email locked, and nothing offered for the watchlist. */
     @PreviewTest
@@ -61,48 +61,61 @@ class UserGeneralSettingsScreenshotTest {
     @Composable
     fun ownSettings() =
         GeneralFrame(
-            settled(managerGeneral().copy(canEditQuotas = false, canEditEmail = false, watchlistSyncMovies = null, watchlistSyncTv = null)),
+            settledGeneral(
+                managerGeneral().copy(
+                    role = UserRole.User,
+                    canEditQuotas = false,
+                    canEditEmail = false,
+                    watchlistSyncMovies = null,
+                    watchlistSyncTv = null,
+                ),
+            ),
         )
 
-    /** A quota that is not a whole number opens the quotas, which start closed, and says what it wants. */
+    /** Left on the server's: each blank choice names the server's own setting, and the quotas say what applies. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun invalidQuota() =
-        GeneralFrame(EditorUiState.Ready(draft = managerGeneral().copy(movieQuotaLimit = "five"), saved = managerGeneral()))
-
-    /** A region of the wrong shape opens Discover and shows its hint as the message. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun invalidRegionOpensDiscover() =
-        GeneralFrame(EditorUiState.Ready(draft = managerGeneral().copy(region = "Britain"), saved = managerGeneral()))
+    fun serverDefaults() =
+        GeneralFrame(
+            settledGeneral(
+                managerGeneral().copy(
+                    locale = "",
+                    region = "",
+                    streamingRegion = "",
+                    originalLanguage = "",
+                    movieQuotaOverride = false,
+                ),
+            ),
+            extras = UserGeneralExtras(serverDefaults = ServerDiscoverDefaults(locale = "fr", region = "FR", originalLanguage = "fr|en")),
+        )
 
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun spanish() = GeneralFrame(settled(managerGeneral()))
+    fun spanish() = GeneralFrame(settledGeneral(managerGeneral()))
 
     /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
-    fun largeText() = GeneralFrame(settled(managerGeneral()))
+    fun largeText() = GeneralFrame(settledGeneral(managerGeneral()))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun saving() = GeneralFrame(EditorUiState.Ready(draft = managerGeneral(), saved = managerGeneral(), saving = true))
+    fun saving() =
+        GeneralFrame(ExtrasEditorUiState.Ready(draft = managerGeneral(), saved = managerGeneral(), extras = GENERAL_EXTRAS, saving = true))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = GeneralFrame(EditorUiState.Loading)
+    fun loading() = GeneralFrame(ExtrasEditorUiState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = GeneralFrame(EditorUiState.Error(SeerrError.Server))
+    fun failed() = GeneralFrame(ExtrasEditorUiState.Error(SeerrError.Server))
 }
 
 class UserPasswordScreenshotTest {
@@ -326,17 +339,19 @@ private fun <T> settled(form: T) = EditorUiState.Ready(draft = form, saved = for
 
 private fun managerGeneral() =
     GeneralSettings(
+        accountType = UserOrigin.Plex,
+        role = UserRole.Admin,
         displayName = "Scott",
         fallbackName = "scott.cooper",
         email = "scott@home.lan",
         discordId = "123456789012345678",
         locale = "en",
         region = "GB",
+        streamingRegion = "IE",
         originalLanguage = "ja|ko",
-        movieQuotaLimit = "5",
-        movieQuotaDays = "7",
-        tvQuotaLimit = "",
-        tvQuotaDays = "",
+        movieQuotaOverride = true,
+        movieQuotaLimit = 5,
+        movieQuotaDays = 7,
         watchlistSyncMovies = true,
         watchlistSyncTv = false,
         defaultMovieQuota = QuotaDefault(limit = 10, days = 7),
@@ -381,9 +396,19 @@ private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit
 private fun IndexFrame(state: UserSettingsUiState) =
     UserSettingsScreen(state = state, actions = UserSettingsActions(onBack = {}, onRetry = {}, onOpenPage = {}))
 
+private val GENERAL_EXTRAS = UserGeneralExtras(serverDefaults = ServerDiscoverDefaults(region = "GB"))
+
+private fun settledGeneral(form: GeneralSettings) = ExtrasEditorUiState.Ready(draft = form, saved = form, extras = GENERAL_EXTRAS)
+
 @Composable
-private fun GeneralFrame(state: EditorUiState<GeneralSettings>) =
-    GeneralSettingsScreen(state = state, events = emptyFlow(), actions = noActions())
+private fun GeneralFrame(
+    state: ExtrasEditorUiState<GeneralSettings, UserGeneralExtras>,
+    extras: UserGeneralExtras? = null,
+) = GeneralSettingsScreen(
+    state = if (extras != null && state is ExtrasEditorUiState.Ready) state.copy(extras = extras) else state,
+    events = emptyFlow(),
+    actions = noActions(),
+)
 
 @Composable
 private fun PasswordFrame(state: EditorUiState<PasswordSettings>) =

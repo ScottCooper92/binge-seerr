@@ -57,6 +57,7 @@ class LanguageCodeShapesTest {
         assertFalse(GeneralSettings(locale = "en_GB").valid)
         assertFalse(GeneralSettings(region = "France").valid)
         assertFalse(GeneralSettings(originalLanguage = "en|").valid)
-        assertFalse(GeneralSettings(movieQuotaLimit = "x").valid)
+        // A user's "no filter" is `all`, since their blank means the server's.
+        assertTrue(GeneralSettings(region = "all", streamingRegion = "all", originalLanguage = "all").valid)
     }
 }
