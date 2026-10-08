@@ -1,7 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.contributeUrl
 import io.github.scottcooper92.binge.seerr.seerr.discordUrl
+import io.github.scottcooper92.binge.seerr.seerr.discussionsUrl
 import io.github.scottcooper92.binge.seerr.seerr.docsUrl
 import io.github.scottcooper92.binge.seerr.seerr.githubUrl
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
@@ -65,6 +67,9 @@ class AboutViewModelTest {
             assertEquals(false, info.appDataMounted)
             assertTrue(info.appDataWarning)
             assertEquals("https://github.com/seerr-team/seerr", info.variant.githubUrl())
+            assertEquals("https://github.com/seerr-team/seerr/discussions", info.variant.discussionsUrl())
+            assertEquals("https://discord.gg/seerr", info.variant.discordUrl())
+            assertEquals("https://opencollective.com/seerr", info.variant.contributeUrl())
         }
 
     @Test
@@ -82,5 +87,6 @@ class AboutViewModelTest {
             assertEquals("https://docs.overseerr.dev", info.variant.docsUrl())
             assertEquals("https://discord.gg/overseerr", info.variant.discordUrl())
             assertEquals("https://github.com/sct/overseerr", info.variant.githubUrl())
+            assertEquals("https://github.com/sponsors/sct", info.variant.contributeUrl())
         }
 }
