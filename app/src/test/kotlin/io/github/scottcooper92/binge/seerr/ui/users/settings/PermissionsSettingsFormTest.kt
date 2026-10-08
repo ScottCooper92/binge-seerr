@@ -2,24 +2,24 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
-import io.github.scottcooper92.binge.seerr.seerr.PermissionGroup
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,33 +28,14 @@ import org.robolectric.annotation.Config
 
 private val REQUESTER = PermissionSettings(selected = setOf(ManageablePermission.Request))
 
-class PermissionGroupStartsOpenTest {
-    @Test
-    fun `administration starts closed when it grants nothing`() {
-        assertFalse(permissionGroupStartsOpen(PermissionGroup.Administration, setOf(ManageablePermission.Request)))
-    }
-
-    @Test
-    fun `administration starts open when it already grants something`() {
-        assertTrue(permissionGroupStartsOpen(PermissionGroup.Administration, setOf(ManageablePermission.ManageUsers)))
-    }
-
-    @Test
-    fun `every other group starts open`() {
-        PermissionGroup.entries.filter { it != PermissionGroup.Administration }.forEach { group ->
-            assertTrue("$group", permissionGroupStartsOpen(group, emptySet()))
-        }
-    }
-}
-
-/** The permissions page's sections and its pinned bar. */
+/** The permissions page: every group open, Manage settings hidden, and a parent covering its children. */
 @RunWith(RobolectricTestRunner::class)
 class PermissionsSettingsFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
     private var saves = 0
-    private var backs = 0
+    private val toggled = mutableListOf<ManageablePermission>()
 
     private fun show(
         draft: PermissionSettings,
@@ -64,49 +45,58 @@ class PermissionsSettingsFormTest {
             PermissionsSettingsScreen(
                 state = EditorUiState.Ready(draft = draft, saved = saved),
                 events = emptyFlow(),
-                actions = EditorActions(onBack = { backs++ }, onRetry = {}, onEdit = {}, onSave = { saves++ }),
-                onToggle = {},
+                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
+                onToggle = { toggled += it },
             )
         }
     }
 
     @Test
-    fun `administration is closed and the request toggles are open for a plain requester`() {
+    fun `every group is open and manage settings is hidden from someone without it`() {
         show(REQUESTER)
 
-        rule.onNodeWithText("Manage settings").assertDoesNotExist()
+        rule.onNodeWithText("Manage users").assertExists()
         rule.onNodeWithText("Request").assertExists()
+        rule.onNodeWithText("Manage settings").assertDoesNotExist()
     }
 
     @Test
-    fun `administration opens when its header is activated`() {
-        show(REQUESTER)
-
-        rule.onNodeWithText("Administration").performClick()
+    fun `manage settings shows for someone who already has it, so it can be taken off`() {
+        show(PermissionSettings(selected = setOf(ManageablePermission.ManageSettings)))
 
         rule.onNodeWithText("Manage settings").assertExists()
     }
 
     @Test
-    fun `a changed draft saves from the pinned bar`() {
-        show(REQUESTER.copy(selected = setOf(ManageablePermission.Request4k)), saved = REQUESTER)
+    fun `a parent covers its children, which read on and can't be flipped`() {
+        show(PermissionSettings(selected = setOf(ManageablePermission.ManageRequests)))
 
-        rule.onNodeWithText("Save").assertIsDisplayed().performClick()
+        rule
+            .onNode(hasText("View requests") and hasClickAction())
+            .performScrollTo()
+            .assertIsOn()
+            .performClick()
 
-        assertEquals(1, saves)
+        assertEquals(emptyList<ManageablePermission>(), toggled)
     }
 
     @Test
-    fun `cancel leaves`() {
-        show(REQUESTER)
+    fun `a row flips its permission and a changed draft saves`() {
+        show(REQUESTER.copy(selected = setOf(ManageablePermission.Request4k)), saved = REQUESTER)
 
-        rule.onNodeWithText("Cancel").performClick()
+        rule
+            .onNode(hasText("Request") and hasClickAction())
+            .performScrollTo()
+            .assertIsOff()
+            .performClick()
+        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
 
-        assertEquals(1, backs)
+        assertEquals(listOf(ManageablePermission.Request), toggled)
+        assertEquals(1, saves)
     }
 }
 
-/** The permissions page on a television: a closed header is one stop, and down moves on to the next one. */
+/** The permissions page on a television: down moves from one permission to the next. */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class PermissionsSettingsTvFocusTest {
@@ -114,7 +104,7 @@ class PermissionsSettingsTvFocusTest {
     val rule = createSeerrKeyboardComposeRule()
 
     @Test
-    fun `down from the closed administration header lands on the requests header`() {
+    fun `down from admin lands on manage users`() {
         rule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 PermissionsSettingsScreen(
@@ -125,12 +115,11 @@ class PermissionsSettingsTvFocusTest {
                 )
             }
         }
-        rule.onNodeWithText("Administration").performSemanticsAction(SemanticsActions.RequestFocus)
+        rule.onNode(hasText("Admin") and hasClickAction()).performSemanticsAction(SemanticsActions.RequestFocus)
 
         rule.onRoot().performKeyInput { pressKey(Key.DirectionDown) }
         rule.waitForIdle()
 
-        rule.onNodeWithText("Administration").assertIsNotFocused()
-        rule.onNodeWithText("Requests").assertIsFocused()
+        rule.onNode(hasText("Manage users") and hasClickAction()).assertIsFocused()
     }
 }

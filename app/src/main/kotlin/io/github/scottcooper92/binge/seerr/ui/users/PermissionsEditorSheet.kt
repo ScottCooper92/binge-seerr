@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,11 +15,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeBottomSheet
-import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
-import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import com.binge.designsystem.R as DesR
 
 /**
@@ -80,10 +76,10 @@ internal fun PermissionsEditorContent(
                         .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
                         .padding(bottom = dimensionResource(DesR.dimen.padding_s)),
             )
-            offered.groupBy { it.group }.forEach { (group, permissions) ->
+            permissionTree(offered, selected).forEach { (group, nodes) ->
                 EditorToggleGroup(
                     stringResource(group.labelRes()),
-                    permissionToggles(permissions, selected, saving, locked, onToggle),
+                    permissionRows(nodes, selected, saving, locked, onToggle),
                     modifier =
                         Modifier
                             .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
@@ -103,25 +99,3 @@ internal fun PermissionsEditorContent(
         )
     }
 }
-
-/**
- * One group's toggles, with the umbrella rule: a permission another selected one already covers
- * reads on and locked. Shared by the bulk sheet and the full-screen permissions page.
- */
-@Composable
-internal fun permissionToggles(
-    permissions: List<ManageablePermission>,
-    selected: Set<ManageablePermission>,
-    saving: Boolean,
-    locked: Set<ManageablePermission>,
-    onToggle: (ManageablePermission) -> Unit,
-): List<ListItem> =
-    permissions.map { permission ->
-        val implied = permission !in selected && ManageablePermission.isGranted(permission, selected)
-        editorToggle(
-            Icons.Filled.Security,
-            stringResource(permission.labelRes()),
-            permission in selected || implied,
-            !saving && !implied && permission !in locked,
-        ) { onToggle(permission) }
-    }

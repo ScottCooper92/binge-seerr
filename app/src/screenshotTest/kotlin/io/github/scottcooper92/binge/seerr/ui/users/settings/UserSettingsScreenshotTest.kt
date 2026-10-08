@@ -174,12 +174,12 @@ class UserPermissionsScreenshotTest {
     @Composable
     fun lockedLayout() = PermissionsFrame(settled(permissions()))
 
-    /** An admin's grant opens Administration, which otherwise starts closed. */
+    /** Manage requests granted: the permissions it covers, joined beneath it, read on and can't be flipped. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun administrationOpen() =
-        PermissionsFrame(settled(permissions().copy(selected = setOf(ManageablePermission.ManageUsers), locked = emptySet())))
+    fun parentCoversChildren() =
+        PermissionsFrame(settled(permissions().copy(selected = setOf(ManageablePermission.ManageRequests), locked = emptySet())))
 
     @PreviewTest
     @SeerrSpanishPreviews
