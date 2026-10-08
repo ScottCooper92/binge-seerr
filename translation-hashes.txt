@@ -582,9 +582,8 @@ app:server_settings_logs_expand  1af77ee273cb
 app:server_settings_logs_search  e8895952bdcd
 app:server_settings_media_server  b44e32763b07
 app:server_settings_media_server_caption  0e4c085f345d
-app:server_settings_media_server_lead  87b00c8acd78
-app:server_settings_media_server_links  73fd88d46261
 app:server_settings_media_server_login  c4ce9a90ad4c
+app:server_settings_media_server_settings  2b54bbfa195d
 app:server_settings_metadata  168b5a8357d4
 app:server_settings_metadata_anime  3eac161518fc
 app:server_settings_metadata_caption  a221de527334
@@ -605,6 +604,7 @@ app:server_settings_plex_none  0b1d3fda4d65
 app:server_settings_plex_pick  555be9c528dc
 app:server_settings_plex_reachable  f94b5f3d3840
 app:server_settings_plex_remote  ffa98e02f7ce
+app:server_settings_plex_server  aef7de28d529
 app:server_settings_plex_unreachable  abaa46adb4e1
 app:server_settings_plex_web_url  658ca0511573
 app:server_settings_port  72e9a59f5a1d

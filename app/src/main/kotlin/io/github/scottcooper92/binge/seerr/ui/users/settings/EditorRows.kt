@@ -27,7 +27,8 @@ import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
 import com.binge.designsystem.R as DesR
 
 /**
- * A text setting as a list row for an `ItemGroup`: its name, and its value (or [emptyLabel] when blank) as the detail.
+ * A text setting as a list row for an `ItemGroup`: its name, and its value (or [emptyLabel] when blank) as the detail;
+ * [shown] replaces that for a value the row shouldn't spell out, such as a key.
  * A tap edits it in the design system's text entry sheet; [check] names what is wrong with a value, which keeps Done
  * off. The sheet belongs to this call, so a page lists its rows and nothing else.
  */
@@ -41,6 +42,7 @@ internal fun textSettingItem(
     emptyLabel: String = stringResource(R.string.settings_value_not_set),
     hint: String? = null,
     check: (String) -> String? = { null },
+    shown: String = value.ifBlank { emptyLabel },
 ): ListItem {
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
@@ -70,7 +72,7 @@ internal fun textSettingItem(
     return ListItem(
         icon = icon,
         label = label,
-        detail = value.ifBlank { emptyLabel },
+        detail = shown,
         clickable = enabled,
         disabled = !enabled,
         onClick = { open = true },

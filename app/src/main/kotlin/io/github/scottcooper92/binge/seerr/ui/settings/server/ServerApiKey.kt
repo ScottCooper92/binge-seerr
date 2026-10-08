@@ -127,5 +127,9 @@ internal fun ApiKeyRows(
 
 /** "•••• abcd": enough of the key to tell two apart, or null before one has been read. */
 @Composable
-private fun ApiKeyState.hidden(): String? =
-    key.takeLast(KEY_TAIL).takeIf { it.isNotEmpty() }?.let { stringResource(R.string.server_settings_api_key_hidden, it) }
+private fun ApiKeyState.hidden(): String? = key.maskedKey()
+
+/** Any key as only its last characters, "•••• abcd"; null when there is none. */
+@Composable
+internal fun String.maskedKey(): String? =
+    takeLast(KEY_TAIL).takeIf { it.isNotEmpty() }?.let { stringResource(R.string.server_settings_api_key_hidden, it) }
