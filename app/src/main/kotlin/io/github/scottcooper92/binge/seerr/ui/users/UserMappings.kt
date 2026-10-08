@@ -58,6 +58,19 @@ internal fun ManageablePermission.labelRes(): Int =
         ManageablePermission.CreateIssues -> R.string.permission_create_issues
         ManageablePermission.ManageBlocklist -> R.string.permission_manage_blocklist
         ManageablePermission.ViewBlocklist -> R.string.permission_view_blocklist
+        ManageablePermission.ViewRecent -> R.string.permission_view_recent
+        ManageablePermission.ViewWatchlists -> R.string.permission_view_watchlists
+        ManageablePermission.RequestMovies -> R.string.permission_request_movies
+        ManageablePermission.RequestSeries -> R.string.permission_request_series
+        ManageablePermission.AutoApproveMovies -> R.string.permission_auto_approve_movies
+        ManageablePermission.AutoApproveSeries -> R.string.permission_auto_approve_series
+        ManageablePermission.AutoRequest -> R.string.permission_auto_request
+        ManageablePermission.AutoRequestMovies -> R.string.permission_auto_request_movies
+        ManageablePermission.AutoRequestSeries -> R.string.permission_auto_request_series
+        ManageablePermission.Request4kMovies -> R.string.permission_request_4k_movies
+        ManageablePermission.Request4kSeries -> R.string.permission_request_4k_series
+        ManageablePermission.AutoApprove4kMovies -> R.string.permission_auto_approve_4k_movies
+        ManageablePermission.AutoApprove4kSeries -> R.string.permission_auto_approve_4k_series
     }
 
 /** An unknown `userType` reads as local, the only kind without a server behind it. */

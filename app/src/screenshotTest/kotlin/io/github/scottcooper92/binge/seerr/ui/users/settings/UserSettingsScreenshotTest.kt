@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.PermissionScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import kotlinx.coroutines.flow.emptyFlow
@@ -357,7 +358,7 @@ private fun permissions() =
     PermissionSettings(
         selected = setOf(ManageablePermission.Request, ManageablePermission.ViewRequests, ManageablePermission.CreateIssues),
         original = 0,
-        offered = ManageablePermission.offered(jellyseerrLineage = true),
+        offered = ManageablePermission.offered(PermissionScope()),
         locked = setOf(ManageablePermission.Admin, ManageablePermission.ManageSettings, ManageablePermission.ManageUsers),
     )
 

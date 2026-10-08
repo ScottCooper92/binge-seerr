@@ -24,6 +24,21 @@ class SettingsMappingsTest {
     }
 
     @Test
+    fun `default access reads per-type auto-approve as approving only when every requestable type has it`() {
+        val requestMovie = 1 shl 18
+        val requestTv = 1 shl 19
+        val approveMovie = 1 shl 8
+        val approveTv = 1 shl 9
+        assertEquals(
+            SeerrDefaultAccess.AutoApprove,
+            SeerrDefaultAccess.fromBits(requestMovie or requestTv or approveMovie or approveTv),
+        )
+        assertEquals(SeerrDefaultAccess.AutoApprove, SeerrDefaultAccess.fromBits(requestMovie or approveMovie))
+        assertEquals(SeerrDefaultAccess.RequestWithApproval, SeerrDefaultAccess.fromBits(requestMovie or requestTv or approveMovie))
+        assertEquals(SeerrDefaultAccess.RequestWithApproval, SeerrDefaultAccess.fromBits(REQUEST or approveMovie))
+    }
+
+    @Test
     fun `a global limit needs a count, and a missing window is a day`() {
         val policy =
             SeerrMainSettingsDto(

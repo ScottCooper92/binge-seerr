@@ -49,4 +49,11 @@ class SeerrPermissionsTest {
         assertEquals(SeerrPermissions(), SeerrPermissions.fromBits(null))
         assertEquals(SeerrPermissions(), (null as SeerrUserDto?).toPermissions())
     }
+
+    @Test
+    fun `a media type's own request bit lets the user request`() {
+        assertTrue(SeerrPermissions.fromBits(PERMISSION_REQUEST_MOVIE).canRequest)
+        assertTrue(SeerrPermissions.fromBits(PERMISSION_REQUEST_TV).canRequest)
+        assertEquals(SeerrDefaultAccess.RequestWithApproval, SeerrDefaultAccess.fromBits(PERMISSION_REQUEST_TV))
+    }
 }

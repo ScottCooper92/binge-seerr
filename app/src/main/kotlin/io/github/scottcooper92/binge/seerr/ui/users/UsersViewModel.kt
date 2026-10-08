@@ -16,8 +16,10 @@ import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.data.UsersRemoteMediator
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.PermissionScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBulkUsersBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
+import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
@@ -42,7 +44,8 @@ import javax.inject.Inject
 
 /** What the browser needs once per connection: which toggles the server offers, and what the viewer may add. */
 private data class UsersScope(
-    val jellyseerrLineage: Boolean = false,
+    /** Until the profile is read, the blocklist toggles stay hidden: Overseerr has none. */
+    val permissions: PermissionScope = PermissionScope(blocklist = false),
     val canAdmit: Boolean = false,
     val importSource: UserOrigin? = null,
     val canGeneratePassword: Boolean = false,
@@ -93,7 +96,7 @@ class UsersViewModel
                         val settings = profile?.settings
                         emit(
                             UsersScope(
-                                jellyseerrLineage = profile?.hasBlocklist == true,
+                                permissions = profile?.permissionScope() ?: PermissionScope(blocklist = false),
                                 canAdmit = viewer.toPermissions().canManageUsers,
                                 importSource =
                                     when (profile?.mediaServer) {
@@ -141,7 +144,7 @@ class UsersViewModel
                     sort = sort,
                     selection = selection,
                     edit = edit,
-                    offered = ManageablePermission.offered(scope.jellyseerrLineage),
+                    offered = ManageablePermission.offered(scope.permissions),
                     canAdmit = scope.canAdmit,
                     importSource = scope.importSource,
                     canGeneratePassword = scope.canGeneratePassword,
@@ -175,16 +178,18 @@ class UsersViewModel
         /**
          * Opens the editor seeded from what the selection already has — the union of every selected
          * user's decoded permissions — so a save that re-ticks nothing still preserves them, rather
-         * than opening blank and writing an empty set over whatever they had.
+         * than opening blank and writing an empty set over whatever they had. Only the bits the server
+         * offers are seeded: a managed bit the editor hides can't be unticked, so it isn't pooled.
          */
         fun startBulkEdit() {
             val ids = selection.value.toList()
             if (ids.isEmpty() || edit.value != null) return
             edit.value = BulkEdit(saving = true)
+            val offered = offeredNow().also { offeredAtStart = it }
             viewModelScope.launch(dispatcher) {
                 val selected =
                     store.permissionsFor(ids).values.fold(emptySet<ManageablePermission>()) { acc, bitmask ->
-                        acc + ManageablePermission.decode(bitmask)
+                        acc + ManageablePermission.decode(bitmask).filter { it in offered }
                     }
                 edit.value = BulkEdit(selected = selected)
             }
@@ -207,6 +212,16 @@ class UsersViewModel
                     ?: current
             }
 
+        /**
+         * What the editor offered when it opened. The seed and the save both filter against this one
+         * snapshot, so a scope that changes while the sheet is open can't make the save clear a bit the
+         * seed left out.
+         */
+        private var offeredAtStart: Set<ManageablePermission> = emptySet()
+
+        /** What the editor offers right now; before the profile is read this is the default scope's rows, not none. */
+        private fun offeredNow(): Set<ManageablePermission> = (uiState.value as? UsersUiState.Ready)?.offered?.toSet().orEmpty()
+
         fun cancelBulkEdit() {
             if (edit.value?.saving != true) edit.value = null
         }
@@ -216,13 +231,20 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
+            val offered = offeredAtStart
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     // Each id's own cached bitmask is the baseline for that id alone, so an unmanaged
-                    // bit only some of the selection holds is never carried onto the rest. Ids whose
+                    // bit only some of the selection holds is never carried onto the rest. The same goes
+                    // for a managed bit the editor doesn't offer: it keeps each user's own value. Ids whose
                     // resulting bitmask agrees are still written together in one PUT.
                     val baselines = store.permissionsFor(ids)
-                    val idsByResult = ids.groupBy { id -> ManageablePermission.apply(baselines[id] ?: 0, current.selected) }
+                    val idsByResult =
+                        ids.groupBy { id ->
+                            val baseline = baselines[id] ?: 0
+                            val hidden = ManageablePermission.decode(baseline).filterNot { it in offered }
+                            ManageablePermission.apply(baseline, current.selected.filter { it in offered }.toSet() + hidden)
+                        }
                     idsByResult.forEach { (permissions, groupIds) ->
                         connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = groupIds, permissions = permissions))
                         store.updatePermissions(groupIds, permissions)

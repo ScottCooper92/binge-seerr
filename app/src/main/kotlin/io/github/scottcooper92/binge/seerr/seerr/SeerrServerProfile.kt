@@ -127,6 +127,9 @@ data class SeerrServerProfile(
     /** Tautulli watch data: Overseerr 1.29, and the Jellyseerr lineage from 1.1. */
     val hasWatchData: Boolean get() = if (jellyseerrLineage) atLeast(1, 1) else atLeast(1, 29)
 
+    /** Auto-Request, View Recently Added and View Watchlists: Jellyseerr 1.2 and Overseerr 1.30 added the three together. */
+    val hasWatchlistPermissions: Boolean get() = if (jellyseerrLineage) atLeast(1, 2) else atLeast(1, 30)
+
     /** Overseerr has no such field and is always Plex; on any other lineage a missing type is unknown. */
     val mediaServer: SeerrMediaServer
         get() =
