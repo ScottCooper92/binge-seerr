@@ -141,10 +141,13 @@ class SetupViewModel
 
         /**
          * The user's explicit opt-in to plain HTTP to the public host the address names. It is held
-         * against that host, so editing the address to another one asks again.
+         * against that host, so editing the address to another one asks again. For an address a phone sent, agreeing is the
+         * go-ahead the TV was waiting on, so it reads the server at once and the phone's page follows (#907).
          */
-        fun allowCleartext(allowed: Boolean) =
+        fun allowCleartext(allowed: Boolean) {
             draft.update { it.copy(cleartextHost = if (allowed) it.serverUrl.insecurePublicHostOrNull() else null) }
+            if (allowed && draft.value.received) inspect()
+        }
 
         fun inspect() {
             val url = draft.value.serverUrl

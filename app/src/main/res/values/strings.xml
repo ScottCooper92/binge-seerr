@@ -951,6 +951,8 @@
     <string name="handoff_page_store_name">Google Play Store</string>
     <string name="handoff_page_sent_title">Sent</string>
     <string name="handoff_page_sent_body">Your TV has the address and is checking the server. This page keeps up with it.</string>
+    <string name="handoff_page_confirm_title">Confirm on your TV</string>
+    <string name="handoff_page_confirm_body">That address uses plain HTTP over the internet, so your TV is asking whether to connect anyway. Answer on the TV.</string>
     <string name="handoff_page_failed">Your TV couldn\'t reach a Seerr server at that address. Check it and send it again.</string>
     <string name="handoff_page_signin_title">Finish on your TV</string>
     <string name="handoff_page_signin_body">Your TV found %1$s. Sign in there with your remote.</string>

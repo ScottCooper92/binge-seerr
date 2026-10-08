@@ -102,6 +102,16 @@ class TvSetupFocusTest {
         addressField().assertIsFocused()
     }
 
+    /** #907: a phone's plain-HTTP public address waits on the opt-in, so the TV leaves its code page for it. */
+    @Test
+    fun anAddressFromAPhoneThatNeedsTheOptInLandsOnTheOptIn() {
+        val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
+        setScreen(address("http://example.com:5055").copy(insecure = true, received = true, code = code), offerHandOff = true)
+
+        composeTestRule.onNodeWithText(string(R.string.setup_allow_cleartext)).assertIsFocused()
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_status_waiting)).assertDoesNotExist()
+    }
+
     /** The typed form is a detour from the code, so Back returns to the code rather than leaving the app. */
     @Test
     fun backFromTheTypedAddressReturnsToTheCode() {

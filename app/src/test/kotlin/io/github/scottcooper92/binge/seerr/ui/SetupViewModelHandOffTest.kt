@@ -119,6 +119,30 @@ class SetupViewModelHandOffTest {
             assertEquals(seerr.url("/"), signIn.server.baseUrl)
         }
 
+    /** #907: a phone's plain-HTTP public address waits for the opt-in on the TV, and agreeing goes straight on to read it. */
+    @Test
+    fun `a public plain-HTTP address from a phone waits for the opt-in, and agreeing reads the server`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+
+            session.address.complete("http://seerr.example.com:5055")
+
+            val waiting = vm.awaitAddress { it.serverUrl == "http://seerr.example.com:5055" }
+            assertTrue(waiting.awaitingCleartextConsent)
+            assertEquals(0, seerr.requestCount)
+
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.allowCleartext(true)
+
+            val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
+            assertEquals("http://seerr.example.com:5055/", signIn.server.baseUrl)
+        }
+
     @Test
     fun `the listener outlives the address so the page can follow the sign-in, and goes when nobody finishes it`() =
         runTest {

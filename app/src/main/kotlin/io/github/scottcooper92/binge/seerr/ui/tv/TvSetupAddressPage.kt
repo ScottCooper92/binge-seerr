@@ -25,6 +25,7 @@ import com.binge.designsystem.tv.component.TvIconButton
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
+import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
@@ -90,8 +91,9 @@ private fun ColumnScope.TvSetupAddressFields(
             modifier = Modifier.weight(1f),
             placeholder = stringResource(R.string.placeholder_server_url),
             initiallyFocused = initialFocus == TvSetupFocus.Address,
-            // Where the page lands: the remote came here to type, and the keyboard waits for select.
-            arrival = arrival,
+            // Where the page lands: the remote came here to type, and the keyboard waits for select. An address a phone sent
+            // that waits on the opt-in lands on the opt-in instead (#907).
+            arrival = arrival.takeUnless { state.awaitingCleartextConsent },
             onDone = { if (state.canContinue) actions.onInspect() },
         )
         TvIconButton(
@@ -121,7 +123,10 @@ private fun ColumnScope.TvSetupAddressFields(
                 label = stringResource(R.string.setup_allow_cleartext),
                 selected = state.cleartextAllowed,
                 onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
-                modifier = Modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
+                modifier =
+                    Modifier
+                        .width(dimensionResource(R.dimen.tv_form_field_width))
+                        .then(if (state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier),
             )
         }
         state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
