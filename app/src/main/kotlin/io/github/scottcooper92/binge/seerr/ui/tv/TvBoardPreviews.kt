@@ -60,8 +60,8 @@ internal const val DAY_MILLIS = 24 * HOUR_MILLIS
 internal val NOW = System.currentTimeMillis()
 
 private val NoHubActions = TvHubActions({}, {}, {})
-internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {}, {})
-internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+internal val NoRequestsActions = TvRequestsActions({}, {}, {}, {})
+internal val NoIssuesActions = TvIssuesActions({}, {}, {}, {}, {}, {}, {}, {})
 
 private val SampleServer =
     HubServer(
@@ -257,7 +257,7 @@ internal fun TvRequestsEmptyPreview() {
 internal fun TvRequestsFailedPreview() {
     TvRequestsRowsBoard(
         state = requestsReady(),
-        rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)) },
+        rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed) },
         actions = NoRequestsActions,
     )
 }

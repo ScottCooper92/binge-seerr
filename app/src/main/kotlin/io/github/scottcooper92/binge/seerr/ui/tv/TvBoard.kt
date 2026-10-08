@@ -104,9 +104,8 @@ internal sealed interface TvLoadPhase {
 
     data object Loading : TvLoadPhase
 
-    data class Failed(
-        val rejected: Boolean,
-    ) : TvLoadPhase
+    /** Any failure, a rejected session included: the app-wide gate, not the list, moves a rejected session to sign-in. */
+    data object Failed : TvLoadPhase
 }
 
 /**

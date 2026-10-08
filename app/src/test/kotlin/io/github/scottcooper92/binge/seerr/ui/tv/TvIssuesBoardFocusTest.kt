@@ -157,7 +157,6 @@ class TvIssuesBoardFocusTest {
                             onDelete = { deleted += it.id },
                             onSeeAll = {},
                             onRetryLoad = {},
-                            onReconnect = {},
                         ),
                 )
             }

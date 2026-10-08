@@ -21,7 +21,6 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesGridManagement
 
 @Composable
 internal fun TvIssuesEntry(
-    onReconnect: () -> Unit,
     openIssueId: Int?,
     onOpenIssue: (Int) -> Unit,
     seeAllOpen: Boolean,
@@ -53,7 +52,6 @@ internal fun TvIssuesEntry(
                 onDelete = viewModel::delete,
                 onSeeAll = onSeeAll,
                 onRetryLoad = { pagers.values.forEach { it.retry() } },
-                onReconnect = onReconnect,
             ),
     )
 }
@@ -65,7 +63,6 @@ internal fun TvIssuesGridOverlay(
     detailOpen: Boolean,
     onOpenIssue: (Int) -> Unit,
     onDone: () -> Unit,
-    onReconnect: () -> Unit,
     viewModel: IssuesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,7 +86,6 @@ internal fun TvIssuesGridOverlay(
         detailOpen = detailOpen,
         onOpenDetail = { onOpenIssue(it.id) },
         onRetryLoad = { lazyItems.retry() },
-        onReconnect = onReconnect,
         onBack = onDone,
     )
 }

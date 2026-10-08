@@ -73,14 +73,14 @@ class TvIssuesScreenshotTest {
         TvIssuesBoard(state = issuesReady(), rowsFor = { rows(emptyList()) }, events = emptyFlow(), actions = NoIssuesActions)
     }
 
-    /** A load the server rejected: the page says to reconnect, with the way to do it. */
+    /** A load that failed, a rejected one included: the page says so, with a retry. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
-    fun RejectedLoad() {
+    fun FailedLoad() {
         TvIssuesBoard(
             state = issuesReady(),
-            rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = true)) },
+            rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed) },
             events = emptyFlow(),
             actions = NoIssuesActions,
         )

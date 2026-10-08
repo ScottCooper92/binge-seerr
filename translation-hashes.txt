@@ -352,7 +352,6 @@ app:requests_filter_pending  331551b0de41
 app:requests_filter_processing  37b345555d7e
 app:requests_filter_unavailable  ca1844969742
 app:requests_load_more_failed  ea41cca861da
-app:requests_reconnect  7d346d22e897
 app:requests_refresh_failed  1a02d2e4782c
 app:requests_requester_unknown  864c855e3d64
 app:requests_seasons  bd03814e7d73
@@ -902,7 +901,6 @@ app:tv_handoff_could_not_listen  9b2ceb3a1d16
 app:tv_handoff_no_network  23bbba026c2f
 app:tv_hub_health_checking  86d5ab0a7412
 app:tv_hub_quota_none_left  7d0b2f243290
-app:tv_hub_reconnect  bf8a9eab9e7e
 app:tv_hub_stat_open_issues  28aa0023dce4
 app:tv_issue_action_failed  bf50ec855e19
 app:tv_issue_deleted  0187e4800963

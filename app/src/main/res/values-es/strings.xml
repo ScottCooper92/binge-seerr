@@ -118,7 +118,6 @@
     <string name="requests_sort_modified">Actualizadas recientemente</string>
     <string name="requests_sort_cd">Cambiar el orden</string>
     <string name="requests_requester_unknown">Alguien</string>
-    <string name="requests_reconnect">El servidor rechazó el inicio de sesión guardado. Vuelve atrás para reconectar.</string>
     <string name="requests_load_more_failed">No se pudo cargar más. Toca para reintentar.</string>
     <string name="request_state_queued">En cola</string>
     <string name="media_type_movie">Película</string>
@@ -969,7 +968,6 @@
     <string name="tv_rail_hub">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
     <string name="tv_hub_stat_open_issues">Incidencias abiertas</string>
-    <string name="tv_hub_reconnect">Reconectar</string>
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
     <string name="tv_list_load_failed">No se pudo cargar la lista.</string>

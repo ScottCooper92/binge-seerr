@@ -23,7 +23,6 @@ internal fun TvRequestsGrid(
     detailOpen: Boolean,
     onOpenDetail: (RequestItem) -> Unit,
     onRetryLoad: () -> Unit,
-    onReconnect: () -> Unit,
     onBack: () -> Unit,
     now: Long = System.currentTimeMillis(),
 ) {
@@ -34,7 +33,6 @@ internal fun TvRequestsGrid(
         rows = rows,
         emptyBody = stringResource(filter.emptyMessageRes()),
         onRetryLoad = onRetryLoad,
-        onReconnect = onReconnect,
         onBack = onBack,
         detailOpen = detailOpen,
         artwork = { item -> TvBackdropArtwork(item.backdropUrl, item.posterUrl) },

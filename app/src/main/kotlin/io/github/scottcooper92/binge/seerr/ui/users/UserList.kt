@@ -51,7 +51,6 @@ internal fun UsersBody(
     selection: Set<Int>,
     onOpen: (UserItem) -> Unit,
     onToggleSelected: (UserItem) -> Unit,
-    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -61,10 +60,10 @@ internal fun UsersBody(
                 // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
                 Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
-                    UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding.belowPinnedLine())
+                    UserList(lazyItems, selection, onOpen, onToggleSelected, contentPadding.belowPinnedLine())
                 }
             } else {
-                UserList(lazyItems, selection, onOpen, onToggleSelected, onReconnect, contentPadding)
+                UserList(lazyItems, selection, onOpen, onToggleSelected, contentPadding)
             }
         PagedPhase.Skeleton ->
             ListRowSkeletonColumn(
@@ -76,7 +75,6 @@ internal fun UsersBody(
             PagedRefreshError(
                 phase.error,
                 onRetry = lazyItems::retry,
-                onReconnect = onReconnect,
                 modifier = modifier.padding(contentPadding),
             )
         PagedPhase.Empty ->
@@ -94,7 +92,6 @@ private fun UserList(
     selection: Set<Int>,
     onOpen: (UserItem) -> Unit,
     onToggleSelected: (UserItem) -> Unit,
-    onReconnect: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     LazyColumn(
@@ -115,7 +112,7 @@ private fun UserList(
         }
         item {
             val append = lazyItems.loadState.mediator?.append ?: lazyItems.loadState.append
-            PagedAppendState(append, onRetry = lazyItems::retry, onReconnect = onReconnect)
+            PagedAppendState(append, onRetry = lazyItems::retry)
         }
     }
 }

@@ -422,7 +422,6 @@ class TvRequestDetailFocusTest {
                                 onSeeAll = {},
                                 onRetryLoad = {},
                                 onRetryScope = {},
-                                onReconnect = {},
                             ),
                     )
                     // The overlay a real detail page would be, stacked on top exactly as the shell's overlay slot is.

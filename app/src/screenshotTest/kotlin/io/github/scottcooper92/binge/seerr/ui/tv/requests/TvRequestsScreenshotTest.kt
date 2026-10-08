@@ -84,7 +84,7 @@ class TvRequestsScreenshotTest {
     fun Failed() {
         TvRequestsRowsBoard(
             state = requestsReady(),
-            rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed(rejected = false)) },
+            rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed) },
             actions = NoRequestsActions,
         )
     }
@@ -95,17 +95,6 @@ class TvRequestsScreenshotTest {
     fun ScopeFailed() {
         TvRequestsRowsBoard(
             state = RequestsUiState.Error(SeerrError.Unreachable),
-            rowsFor = { rows(emptyList()) },
-            actions = NoRequestsActions,
-        )
-    }
-
-    @PreviewTest
-    @SeerrTvScreenPreviews
-    @Composable
-    fun ScopeRejected() {
-        TvRequestsRowsBoard(
-            state = RequestsUiState.Error(SeerrError.Unauthorized),
             rowsFor = { rows(emptyList()) },
             actions = NoRequestsActions,
         )

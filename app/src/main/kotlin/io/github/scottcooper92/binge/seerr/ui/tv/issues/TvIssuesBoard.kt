@@ -66,7 +66,6 @@ internal class TvIssuesActions(
     val onDelete: (IssueItem) -> Unit,
     val onSeeAll: (IssueFilter) -> Unit,
     val onRetryLoad: () -> Unit,
-    val onReconnect: () -> Unit,
 )
 
 /**
@@ -192,7 +191,6 @@ private fun TvIssuesRows(
             rows = perFilter.map { it.second },
             emptyBody = stringResource(IssueFilter.All.emptyMessageRes()),
             onRetryLoad = actions.onRetryLoad,
-            onReconnect = actions.onReconnect,
         )
         return
     }
