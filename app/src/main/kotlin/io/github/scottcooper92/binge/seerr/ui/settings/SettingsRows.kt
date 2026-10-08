@@ -3,18 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material.icons.filled.ViewCarousel
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,7 +21,6 @@ import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.seerr.releaseNotesUrl
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
-import java.util.Locale
 
 /**
  * The Connection group: the server (opens in the browser), who is signed in, the version, the way

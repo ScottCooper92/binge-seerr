@@ -7,21 +7,20 @@ import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
-import io.github.scottcooper92.binge.seerr.ui.tv.settings.generalRows
-import io.github.scottcooper92.binge.seerr.ui.tv.settings.serviceRows
-import io.github.scottcooper92.binge.seerr.ui.tv.settings.systemRows
 import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultAccess
-import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobInterval
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobOutcome
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerJob
 import io.github.scottcooper92.binge.seerr.ui.settings.server.jobRow
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.generalRows
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.serviceRows
+import io.github.scottcooper92.binge.seerr.ui.tv.settings.systemRows
 
 /**
  * The Settings root. Every group is one screen tall together, so the page frames carry the layout and
@@ -82,8 +81,7 @@ class SettingsGroupsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun generalMinimal() =
-        Group(R.string.settings_group_general, generalRows(general().copy(hideAvailable = null, applicationUrl = null)))
+    fun generalMinimal() = Group(R.string.settings_group_general, generalRows(general().copy(hideAvailable = null, applicationUrl = null)))
 
     /** Each instance as the TV reads it out: its markers, then where it sends a request or its address. */
     @PreviewTest

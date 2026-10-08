@@ -411,8 +411,6 @@
     <string name="user_settings_type_media_auto_requested">Solicitado automáticamente desde la lista de seguimiento</string>
     <string name="user_settings_permissions_lead">Solo puedes conceder lo que tú tienes; solo el propietario puede conceder Administrador.</string>
     <string name="user_settings_linked_as">Vinculada como %1$s</string>
-    <string name="server_settings_edit">Editar los ajustes generales</string>
-    <string name="server_settings_edit_caption">Título, URL, regiones, peticiones y la clave de API</string>
     <string name="server_settings_general_title">Ajustes generales</string>
     <string name="server_settings_application_title">Título de la aplicación</string>
     <string name="server_settings_application_url_hint">Donde los usuarios llegan al servidor; los enlaces de las notificaciones la usan. En blanco para quitarla.</string>
@@ -468,8 +466,6 @@
     <string name="server_settings_scan_running_library">Escaneando… %1$d de %2$d, en %3$s</string>
     <string name="server_settings_tautulli_open">Configurar Tautulli</string>
     <string name="server_settings_external_url">URL externa</string>
-    <string name="server_settings_services_manage">Gestionar los servicios</string>
-    <string name="server_settings_services_manage_caption">Añadir una instancia y las reglas de anulación</string>
     <string name="server_settings_dvr_add">Añadir una instancia de %1$s</string>
     <string name="server_settings_dvr_new">Nueva instancia</string>
     <string name="server_settings_dvr_name">Nombre</string>

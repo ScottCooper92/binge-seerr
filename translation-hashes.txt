@@ -534,8 +534,6 @@ app:server_settings_dvr_test  a7d3d3579ab6
 app:server_settings_dvr_test_first  c005de291087
 app:server_settings_dvr_tested  05c202912090
 app:server_settings_dvr_untested  b2031cea94cd
-app:server_settings_edit  d995d57646bb
-app:server_settings_edit_caption  3826afe2cb95
 app:server_settings_every_days  46c413dbbb13
 app:server_settings_every_hours  12e0c0483f41
 app:server_settings_every_minutes  be9c5f31487c
@@ -660,8 +658,6 @@ app:server_settings_scan_running_library  ade192a839b9
 app:server_settings_scan_start  b1fbac894dbc
 app:server_settings_section_advanced  9f088dbebd6c
 app:server_settings_section_application  e7ad522ea327
-app:server_settings_services_manage  8542eab86011
-app:server_settings_services_manage_caption  4cafc24b6e98
 app:server_settings_sign_in  5bbbe53187ad
 app:server_settings_sign_in_required  faca130c76c0
 app:server_settings_slider_add  f8dba7cae448

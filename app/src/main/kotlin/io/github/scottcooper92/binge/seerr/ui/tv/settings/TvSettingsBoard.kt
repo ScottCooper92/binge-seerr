@@ -195,8 +195,8 @@ private fun mediaServerGroup(
     server: ServerSummary,
     onStartLibraryScan: () -> Unit,
     note: String,
-): TvPaneGroup {
-    return TvPaneGroup(
+): TvPaneGroup =
+    TvPaneGroup(
         title = stringResource(R.string.server_settings_media_server),
         rows =
             listOf(
@@ -213,7 +213,6 @@ private fun mediaServerGroup(
                 ),
             ),
     )
-}
 
 /** The line to show for a job outcome; null for an event this row never emits (a save or a delete). */
 @Composable
