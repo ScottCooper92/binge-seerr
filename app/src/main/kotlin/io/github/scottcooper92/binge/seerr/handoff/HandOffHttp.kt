@@ -55,6 +55,7 @@ internal enum class HttpStatus(
 ) {
     Ok(200, "OK"),
     BadRequest(400, "Bad Request"),
+    Forbidden(403, "Forbidden"),
     NotFound(404, "Not Found"),
     PayloadTooLarge(413, "Payload Too Large"),
     Conflict(409, "Conflict"),

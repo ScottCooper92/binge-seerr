@@ -33,6 +33,13 @@ internal data class HandOffPageCopy(
     val storeName: String,
     val sentTitle: String,
     val sentBody: String,
+    /** The PIN step (#909): what it asks, the field, the button, a miss, and the code locked after too many. */
+    val pinTitle: String,
+    val pinBody: String,
+    val pinField: String,
+    val pinSubmit: String,
+    val pinWrong: String,
+    val pinLocked: String,
     val failed: String,
     val signInTitle: String,
     /** Names the server the TV found, in its own sentence. */
@@ -56,6 +63,16 @@ internal data class HandOffPageCopy(
 
 /** The pages the TV serves to a phone's browser, in the language the browser asks for. */
 internal interface HandOffPage {
+    /**
+     * The PIN the TV shows beside its code, asked for before anything else (#909). [wrong] after a PIN that didn't match,
+     * and [locked] once too many have missed, when the page offers no form and says to use the new code instead.
+     */
+    fun pin(
+        acceptLanguage: String?,
+        wrong: Boolean,
+        locked: Boolean,
+    ): String
+
     /** The form; [invalid] when the address just posted was not one the TV can use. */
     fun form(
         acceptLanguage: String?,
@@ -128,6 +145,41 @@ internal class HandOffPageTemplate(
             $error
             <button type="submit">${copy.send.escapeHtml()}</button>
             </form>
+            <hr>
+            <p>${copy.appBody.escapeHtml()}</p>
+            <a class="app" id="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
+            <p class="note">${installLine(copy)}</p>
+            """.trimIndent(),
+        )
+    }
+
+    override fun pin(
+        acceptLanguage: String?,
+        wrong: Boolean,
+        locked: Boolean,
+    ): String {
+        val copy = copyFor(pickLanguage(acceptLanguage))
+        val form =
+            if (locked) {
+                """<p class="error" role="alert">${copy.pinLocked.escapeHtml()}</p>"""
+            } else {
+                val error = if (wrong) """<p class="error" role="alert">${copy.pinWrong.escapeHtml()}</p>""" else ""
+                """
+                <form method="post">
+                <label for="pin">${copy.pinField.escapeHtml()}</label>
+                <input id="pin" name="pin" class="pin" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+                 autocomplete="one-time-code" required autofocus>
+                $error
+                <button type="submit">${copy.pinSubmit.escapeHtml()}</button>
+                </form>
+                """.trimIndent()
+            }
+        return page(
+            copy,
+            """
+            <h1>${copy.pinTitle.escapeHtml()}</h1>
+            <p>${copy.pinBody.escapeHtml()}</p>
+            $form
             <hr>
             <p>${copy.appBody.escapeHtml()}</p>
             <a class="app" id="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
@@ -255,6 +307,7 @@ internal class HandOffPageTemplate(
                 "a.app{border:1px solid #8f8a9e;color:#bcc2ff}" +
                 "hr{border:0;border-top:1px solid #2b2a33;margin:1.5rem 0}" +
                 ".error{color:#ffb4ab}" +
+                "input.pin{font-size:1.5rem;letter-spacing:.5em;text-align:center}" +
                 ".note{margin:.75rem 0 0;color:#a6a1b4;font-size:.875rem;text-align:center}" +
                 ".note a{color:#bcc2ff}" +
                 "select{box-sizing:border-box;width:100%;padding:.75rem;font:inherit;border:1px solid #8f8a9e;" +

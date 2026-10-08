@@ -24,6 +24,12 @@ class HandOffPageTest {
             storeName = "Store",
             sentTitle = "Sent",
             sentBody = "Sent body",
+            pinTitle = "Pin title",
+            pinBody = "Pin body",
+            pinField = "Pin field",
+            pinSubmit = "Pin submit",
+            pinWrong = "Pin wrong",
+            pinLocked = "Pin locked",
             failed = "Not found <here>",
             signInTitle = "Finish",
             signInBody = { server -> "Sign in to $server" },
@@ -208,5 +214,23 @@ class HandOffPageTest {
         assertTrue(text.contains("Content-Security-Policy: default-src 'none'"))
         assertTrue(text.contains("form-action 'self'"))
         assertTrue(text.endsWith("\r\n\r\né"))
+    }
+
+    @Test
+    fun `the PIN step posts a 4-digit PIN back to itself, says when one missed, and offers no form once locked`() {
+        val html = page.pin(acceptLanguage = null, wrong = false, locked = false)
+        assertTrue(html.contains("<form method=\"post\">"))
+        assertTrue(html.contains("name=\"pin\""))
+        assertTrue(html.contains("pattern=\"[0-9]{4}\""))
+        assertTrue(html.contains("Pin title"))
+        assertFalse(html.contains("Pin wrong"))
+
+        assertTrue(page.pin(acceptLanguage = null, wrong = true, locked = false).contains("Pin wrong"))
+
+        val locked = page.pin(acceptLanguage = null, wrong = true, locked = true)
+        assertTrue(locked.contains("Pin locked"))
+        assertFalse(locked.contains("name=\"pin\""))
+        // The app is still offered: it asks for the PIN itself, against a code the user opens afresh.
+        assertTrue(locked.contains("intent://tv-handoff"))
     }
 }

@@ -82,26 +82,64 @@ class AddressHandOffListenerTest {
 
     private fun get(path: String) = exchange("GET $path HTTP/1.1\r\nHost: tv\r\nAccept-Language: es-MX,en;q=0.5\r\n\r\n")
 
+    /** Posts [body], with the TV's PIN added unless [pin] says otherwise: most tests are about what comes after it (#909). */
     private fun post(
         path: String,
         body: String,
-    ) = exchange(
-        "POST $path HTTP/1.1\r\nHost: tv\r\nContent-Type: application/x-www-form-urlencoded\r\n" +
-            "Content-Length: ${body.toByteArray().size}\r\n\r\n$body",
-    )
+        pin: String? = key.pin(),
+    ): String {
+        val sent = if (pin == null) body else "$body&pin=$pin"
+        return exchange(
+            "POST $path HTTP/1.1\r\nHost: tv\r\nContent-Type: application/x-www-form-urlencoded\r\n" +
+                "Content-Length: ${sent.toByteArray().size}\r\n\r\n$sent",
+        )
+    }
 
     @Test
-    fun `the token's path serves the form, in the browser's language, with headers that keep it to itself`() =
+    fun `the token's path asks for the PIN first, in the browser's language, with headers that keep it to itself`() =
         runBlocking {
             val (addresses, serving) = serving()
 
             val answer = get("/a/$TOKEN")
 
             assertTrue(answer.startsWith("HTTP/1.1 200 OK\r\n"))
-            assertTrue(answer.contains("form:es:false"))
+            assertTrue(answer.contains("pin:es:wrong=false:locked=false"))
             assertTrue(answer.contains("Cache-Control: no-store"))
             assertTrue(answer.contains("Referrer-Policy: no-referrer"))
             assertTrue(answer.contains("Connection: close"))
+            assertTrue(addresses.isEmpty)
+            serving.cancelAndJoin()
+        }
+
+    @Test
+    fun `nothing is taken without the PIN, a wrong one says so, and the right one opens the form`() =
+        runBlocking {
+            val (addresses, serving) = serving()
+
+            assertTrue(post("/a/$TOKEN", "address=seerr.lan", pin = null).startsWith("HTTP/1.1 403 "))
+            post("/a/$TOKEN", "pin=0000".takeIf { key.pin() != "0000" } ?: "pin=0001", pin = null).let {
+                assertTrue(it, it.startsWith("HTTP/1.1 403 ") && it.contains("pin:en:wrong=true:locked=false"))
+            }
+            assertTrue(addresses.isEmpty)
+
+            post("/a/$TOKEN", "pin=${key.pin()}", pin = null).let { assertTrue(it, it.contains("form:en:false")) }
+            // Matched once, the page and its posts need it no more.
+            assertTrue(get("/a/$TOKEN").contains("form:es:false"))
+            post("/a/$TOKEN", "address=seerr.lan", pin = null)
+            assertEquals("seerr.lan", withTimeout(5_000) { addresses.receive() })
+            serving.cancelAndJoin()
+        }
+
+    @Test
+    fun `after five wrong PINs the code takes nothing, not even the right one`() =
+        runBlocking {
+            val (addresses, serving) = serving()
+            val wrong = if (key.pin() == "0000") "0001" else "0000"
+
+            repeat(5) { post("/a/$TOKEN", "pin=$wrong", pin = null) }
+
+            post("/a/$TOKEN", "address=seerr.lan").let { assertTrue(it, it.contains("locked=true")) }
+            assertTrue(get("/a/$TOKEN").contains("locked=true"))
             assertTrue(addresses.isEmpty)
             serving.cancelAndJoin()
         }
@@ -339,6 +377,12 @@ class AddressHandOffListenerTest {
 
     /** Names what it was asked for, so a test can see which page was served and in which language. */
     private object FakePage : HandOffPage {
+        override fun pin(
+            acceptLanguage: String?,
+            wrong: Boolean,
+            locked: Boolean,
+        ) = "pin:${pickLanguage(acceptLanguage)}:wrong=$wrong:locked=$locked"
+
         override fun form(
             acceptLanguage: String?,
             invalid: Boolean,
