@@ -11,8 +11,10 @@ pluginManagement {
         // sessions) are rate-limited by Central itself and get 429s mid-build; the mirror serves the
         // same artifacts from Google's CDN. Anything it lacks falls through to mavenCentral() below.
         maven("https://maven-central.storage-download.googleapis.com/maven2/") { name = "MavenCentralMirror" }
-        mavenCentral()
+        // The portal before Central: some plugins (ktlint's, for one) are published only there, and a 429 from
+        // Central would fail the build before the portal was asked.
         gradlePluginPortal()
+        mavenCentral()
     }
 }
 
