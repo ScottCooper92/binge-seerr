@@ -11,6 +11,12 @@ sealed interface HandOffProgress {
     /** An address arrived and the TV is asking that server who it is. */
     data object Checking : HandOffProgress
 
+    /**
+     * The address sent uses plain HTTP to a public host, which the TV only connects to once the user agrees on its screen
+     * (#907). The page says so and follows the TV, which moves on to [Checking] once they do.
+     */
+    data object ConfirmOnTv : HandOffProgress
+
     /** The address sent was no Seerr server the TV could reach; the page offers the form again. */
     data object Failed : HandOffProgress
 

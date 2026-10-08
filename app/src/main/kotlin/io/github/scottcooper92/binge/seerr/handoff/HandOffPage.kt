@@ -33,6 +33,9 @@ internal data class HandOffPageCopy(
     val storeName: String,
     val sentTitle: String,
     val sentBody: String,
+    /** The TV is asking, on its own screen, whether to connect over plain HTTP to the address sent (#907). */
+    val confirmTitle: String,
+    val confirmBody: String,
     val failed: String,
     val signInTitle: String,
     /** Names the server the TV found, in its own sentence. */
@@ -156,6 +159,7 @@ internal class HandOffPageTemplate(
             HandOffProgress.Waiting -> form(acceptLanguage, invalid = false)
             HandOffProgress.Failed -> form(acceptLanguage, invalid = false, problem = copy.failed)
             HandOffProgress.Checking -> message(copy, copy.sentTitle, copy.sentBody, following = true)
+            HandOffProgress.ConfirmOnTv -> message(copy, copy.confirmTitle, copy.confirmBody, following = true)
             is HandOffProgress.SignIn -> signIn(copy, progress)
             HandOffProgress.Connected -> message(copy, copy.connectedTitle, copy.connectedBody, following = false)
         }

@@ -62,6 +62,8 @@ app:field_secret_hide  ad5caeb74e49
 app:field_secret_show  ff5a856d1a08
 app:handoff_page_app_body  0b96fefd29b5
 app:handoff_page_body  b851c25a5cc6
+app:handoff_page_confirm_body  a63e49bbcc9f
+app:handoff_page_confirm_title  b50ef0d4a141
 app:handoff_page_connected_body  a9be49286e72
 app:handoff_page_connected_title  22965568d22a
 app:handoff_page_email  969ccbd3cf63

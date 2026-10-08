@@ -24,6 +24,8 @@ class HandOffPageTest {
             storeName = "Store",
             sentTitle = "Sent",
             sentBody = "Sent body",
+            confirmTitle = "Confirm title",
+            confirmBody = "Confirm body",
             failed = "Not found <here>",
             signInTitle = "Finish",
             signInBody = { server -> "Sign in to $server" },

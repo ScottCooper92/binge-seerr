@@ -57,6 +57,7 @@ internal fun SetupDraft.toUiState(
                 handOff = handOff,
                 needsLocalNetwork = serverUrl.isBlockedByLocalNetwork(localNetwork),
                 code = code,
+                received = received,
             )
         }
         else ->

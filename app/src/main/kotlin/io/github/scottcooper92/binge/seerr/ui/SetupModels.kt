@@ -171,8 +171,16 @@ sealed interface SetupUiState {
         val needsLocalNetwork: Boolean = false,
         /** The hand-off's live code, kept after an address arrives so a phone can send another if that one failed. */
         val code: AddressHandOff.Listening? = null,
+        /** Whether [serverUrl] came from a phone rather than the remote. */
+        val received: Boolean = false,
     ) : SetupUiState {
         val canContinue: Boolean get() = serverUrl.isNotBlank() && !isInspecting && (!insecure || cleartextAllowed)
+
+        /**
+         * A phone sent an address that uses plain HTTP to a public host, and the TV is waiting for the user to agree to it on
+         * screen (#907). Until they do, nothing is read, so the TV shows the opt-in rather than its code.
+         */
+        val awaitingCleartextConsent: Boolean get() = received && insecure && !cleartextAllowed && !isInspecting
     }
 
     /** Step two: this server's own sign-in modes. */

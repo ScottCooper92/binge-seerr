@@ -50,6 +50,7 @@ data class HandOffStatus(
     companion object {
         const val WAITING = "waiting"
         const val CHECKING = "checking"
+        const val CONFIRM = "confirm"
         const val FAILED = "failed"
         const val SIGN_IN = "signin"
         const val CONNECTED = "connected"
@@ -68,6 +69,7 @@ internal fun HandOffProgress.toStatus(): HandOffStatus =
     when (this) {
         HandOffProgress.Waiting -> HandOffStatus(HandOffStatus.WAITING)
         HandOffProgress.Checking -> HandOffStatus(HandOffStatus.CHECKING)
+        HandOffProgress.ConfirmOnTv -> HandOffStatus(HandOffStatus.CONFIRM)
         HandOffProgress.Failed -> HandOffStatus(HandOffStatus.FAILED)
         is HandOffProgress.SignIn ->
             HandOffStatus(

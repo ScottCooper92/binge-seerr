@@ -171,3 +171,13 @@ annotation class SeerrTvPreviews
     locale = DEFAULT_LOCALE,
 )
 annotation class SeerrTvScreenPreviews
+
+/** [SeerrTvScreenPreviews] in Spanish, whose notes run longer than English, for a screen that must fit them without moving. */
+@PreviewWrapper(SeerrTvScreenshotThemeOnBlackWrapper::class)
+@Preview(
+    name = "tv-es",
+    device = "spec:width=${TV_PREVIEW_WIDTH_DP}dp,height=${TV_PREVIEW_HEIGHT_DP}dp,orientation=landscape",
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = "es",
+)
+annotation class SeerrTvSpanishScreenPreviews

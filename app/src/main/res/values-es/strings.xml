@@ -936,6 +936,8 @@
     <string name="handoff_page_store_name">Google Play Store</string>
     <string name="handoff_page_sent_title">Enviada</string>
     <string name="handoff_page_sent_body">Tu televisor tiene la dirección y está comprobando el servidor. Esta página lo sigue.</string>
+    <string name="handoff_page_confirm_title">Confirma en el televisor</string>
+    <string name="handoff_page_confirm_body">Esa dirección usa HTTP sin cifrar por internet, así que tu televisor pregunta si conectarse de todos modos. Responde en el televisor.</string>
     <string name="handoff_page_failed">Tu televisor no pudo llegar a un servidor Seerr en esa dirección. Revísala y envíala de nuevo.</string>
     <string name="handoff_page_signin_title">Termina en tu televisor</string>
     <string name="handoff_page_signin_body">Tu televisor encontró %1$s. Inicia sesión allí con el mando.</string>
