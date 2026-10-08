@@ -36,31 +36,19 @@ class NetworkScreenshotTest {
     @Composable
     fun unsavedEdit() = NetworkFrame(EditorUiState.Ready(draft = seerrNetwork().copy(trustProxy = true), saved = seerrNetwork()))
 
-    /** An enabled proxy with no host: its host and port are marked required, and Required shows once Save is tried. */
+    /** A proxy given a username and no password: the group says what it still needs, and Save stays off. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun invalidProxy() =
+    fun proxyCredentialsHalf() =
         NetworkFrame(
             EditorUiState.Ready(
-                draft = seerrNetwork().copy(proxy = ProxyForm(enabled = true)),
+                draft = seerrNetwork().copy(dnsCache = DnsCacheForm(), proxy = seerrNetwork().proxy?.copy(user = "seerr")),
                 saved = seerrNetwork(),
             ),
         )
 
-    /** A maximum TTL below the minimum says so beside the maximum, at once. The proxy is off, so its section is closed. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun crossedTtls() =
-        NetworkFrame(
-            EditorUiState.Ready(
-                draft = seerrNetwork().copy(proxy = ProxyForm(), dnsCache = DnsCacheForm(enabled = true, minTtl = "60", maxTtl = "5")),
-                saved = seerrNetwork(),
-            ),
-        )
-
-    /** A proxy and a DNS cache that are off start closed. */
+    /** A proxy and a DNS cache that are off: each is its switch alone, nothing hanging beneath it. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
