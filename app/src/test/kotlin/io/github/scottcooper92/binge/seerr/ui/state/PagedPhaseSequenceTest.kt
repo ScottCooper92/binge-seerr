@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -34,6 +34,7 @@ import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -125,34 +126,61 @@ class PagedPhaseSequenceTest {
                 }
             val collecting = launch { pager.flow.collectLatest { presenter.collectFrom(it) } }
             val settled = PagedPhaseTracker()
-            withTimeout(TIMEOUT_MILLIS) {
-                presenter.loadStateFlow.filterNotNull().first { states ->
-                    val refresh = refreshes.latest.value[Unit]
-                    refresh != null &&
-                        states.mediator?.refresh !is LoadState.Loading &&
-                        settled.phase(states, presenter.size, refresh.toPagedRefresh()) == last
+            val finished =
+                withTimeoutOrNull(TIMEOUT_MILLIS) {
+                    presenter.loadStateFlow.filterNotNull().first { states ->
+                        val refresh = refreshes.latest.value[Unit]
+                        refresh != null &&
+                            states.mediator?.refresh !is LoadState.Loading &&
+                            settled.phase(states, presenter.size, refresh.toPagedRefresh()) == last
+                    }
                 }
-            }
             collecting.cancelAndJoin()
             recording.cancelAndJoin()
             val tracker = PagedPhaseTracker()
-            frames.map { tracker.phase(it.states, it.count, it.refresh?.toPagedRefresh()) }.fold(emptyList()) { seen, phase ->
-                if (seen.lastOrNull() == phase) seen else seen + phase
+            val phases =
+                frames
+                    .map {
+                        tracker.phase(
+                            it.states,
+                            it.count,
+                            it.refresh?.toPagedRefresh(),
+                        )
+                    }.fold(emptyList<PagedPhase>()) { seen, phase ->
+                        if (seen.lastOrNull() == phase) seen else seen + phase
+                    }
+            // A hang says where it stopped, rather than only that the clock ran out.
+            checkNotNull(finished) {
+                "Never settled on $last in ${TIMEOUT_MILLIS}ms. Phases so far: $phases; last load states: ${frames.lastOrNull()?.states}"
             }
+            phases
         }
+
+    /**
+     * A cold open with rows: the skeleton first, the settled rows last, and never an empty list. The rows may also
+     * show once with `refreshing = true` on the way. The refresh writes the first page to the cache, and Room can hand
+     * those rows over before the mediator reports the refresh finished. That is a real frame and a correct one: the
+     * rows are fresh, and the indicator clears on the next (#870).
+     */
+    private fun assertColdOpenWithRows(phases: List<PagedPhase>) {
+        assertEquals(PagedPhase.Skeleton, phases.first())
+        assertEquals(rows, phases.last())
+        val between = phases.drop(1).dropLast(1)
+        assertTrue("only rows may come between, but saw $phases", between.all { it == refreshingRows })
+    }
 
     @Test
     fun `a cold open of a list with one page goes from the skeleton to the rows and never shows empty`() {
         serve(listOf(1, 2, 3))
 
-        assertEquals(listOf(PagedPhase.Skeleton, rows), phasesUntil(last = rows))
+        assertColdOpenWithRows(phasesUntil(last = rows))
     }
 
     @Test
     fun `a cold open of a list with more pages goes from the skeleton to the rows`() {
         serve(listOf(1, 2, 3), pages = 2)
 
-        assertEquals(listOf(PagedPhase.Skeleton, rows), phasesUntil(last = rows))
+        assertColdOpenWithRows(phasesUntil(last = rows))
     }
 
     @Test
