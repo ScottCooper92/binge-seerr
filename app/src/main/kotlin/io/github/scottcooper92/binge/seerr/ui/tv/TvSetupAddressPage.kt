@@ -55,6 +55,24 @@ internal fun TvSetupAddressPage(
         icon = Icons.Filled.Dns,
         modifier = modifier,
         buttonBar = true,
+        // Plain HTTP to a public host is the one thing standing between this address and the server, so agreeing to it is
+        // the page's action, in the bar, and it connects as it agrees. An address a phone sent lands here (#907).
+        pinnedAction =
+            if (state.insecure && !state.cleartextAllowed) {
+                {
+                    TvButton(
+                        label = stringResource(R.string.setup_allow_cleartext),
+                        onClick = {
+                            actions.onAllowCleartext(true)
+                            actions.onInspect()
+                        },
+                        enabled = !state.isInspecting,
+                        modifier = if (state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier,
+                    )
+                }
+            } else {
+                null
+            },
         // Back to the code, in the same place the way here was.
         copyAction = {
             TvButton(
@@ -117,18 +135,8 @@ private fun ColumnScope.TvSetupAddressFields(
         modifier = Modifier.fillMaxWidth().belowWithoutHeight(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
     ) {
-        if (state.insecure) {
-            TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
-            TvOptionRow(
-                label = stringResource(R.string.setup_allow_cleartext),
-                selected = state.cleartextAllowed,
-                onSelect = { actions.onAllowCleartext(!state.cleartextAllowed) },
-                modifier =
-                    Modifier
-                        .width(dimensionResource(R.dimen.tv_form_field_width))
-                        .then(if (state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier),
-            )
-        }
+        // The warning stays while the address does; agreeing to it is the bar's button.
+        if (state.insecure) TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
         state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
         if (state.needsLocalNetwork) {
             val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
