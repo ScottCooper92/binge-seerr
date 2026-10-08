@@ -1126,4 +1126,11 @@
         <item quantity="other">%1$d solicitudes</item>
     </plurals>
     <string name="server_settings_permissions_none">Ninguno</string>
+    <string name="permission_admin_detail">Todos los permisos, incluidos los ajustes del servidor</string>
+    <string name="permission_manage_requests_detail">Aprobar, rechazar y editar las solicitudes de cualquiera</string>
+    <string name="permission_request_advanced_detail">Elegir el servidor, la calidad y la carpeta al solicitar</string>
+    <string name="permission_view_requests_detail">Ver las solicitudes de todos, no solo las suyas</string>
+    <string name="permission_auto_approve_detail">Sus solicitudes no necesitan aprobación</string>
+    <string name="permission_auto_approve_4k_detail">Sus solicitudes en 4K no necesitan aprobación</string>
+    <string name="permission_view_issues_detail">Ver las incidencias de todos, no solo las suyas</string>
 </resources>
