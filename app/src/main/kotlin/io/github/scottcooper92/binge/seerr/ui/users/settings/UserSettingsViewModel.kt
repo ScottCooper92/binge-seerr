@@ -64,10 +64,10 @@ class UserSettingsViewModel
     }
 
 /**
- * The web client's own menu rules. Everything needs the viewer to be the user or a manager. The
- * password page goes when local sign-in is off and the viewer cannot manage settings, or when the
- * target is an admin the viewer is not. Permissions are a manager's, and never one's own unless
- * the viewer is the owner. Linked accounts are the user's alone, on a server that has them.
+ * The web client's own menu rules, in its order. Everything needs the viewer to be the user or a manager. The
+ * password page goes when local sign-in is off and the viewer cannot manage settings, or when the server would refuse
+ * the change: an admin's password is set only by that admin or by the owner. Linked accounts are the user's alone, on a
+ * server that has them. Permissions are a manager's, and never one's own unless the viewer is the owner.
  */
 internal fun settingsPagesFor(
     target: UserItem,
@@ -80,10 +80,10 @@ internal fun settingsPagesFor(
     return buildList {
         add(UserSettingsPage.General)
         val localSignIn = profile.settings.localLogin || permissions.canManageSettings
-        val ownerOfThisPassword = isSelf || !target.isAdmin || permissions.isAdmin
-        if (localSignIn && ownerOfThisPassword) add(UserSettingsPage.Password)
+        val mayChangePassword = isSelf || viewer.id == OWNER_USER_ID || !target.isAdmin
+        if (localSignIn && mayChangePassword) add(UserSettingsPage.Password)
+        if (isSelf && profile.hasLinkedAccounts) add(UserSettingsPage.LinkedAccounts)
         add(UserSettingsPage.Notifications)
         if (permissions.canManageUsers && (!isSelf || viewer.id == OWNER_USER_ID)) add(UserSettingsPage.Permissions)
-        if (isSelf && profile.hasLinkedAccounts) add(UserSettingsPage.LinkedAccounts)
     }
 }

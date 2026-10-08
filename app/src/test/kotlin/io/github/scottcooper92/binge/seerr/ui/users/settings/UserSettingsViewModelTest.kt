@@ -63,8 +63,8 @@ class UserSettingsViewModelTest {
                 listOf(
                     UserSettingsPage.General,
                     UserSettingsPage.Password,
-                    UserSettingsPage.Notifications,
                     UserSettingsPage.LinkedAccounts,
+                    UserSettingsPage.Notifications,
                 ),
                 pages(),
             )
@@ -82,5 +82,29 @@ class UserSettingsViewModelTest {
 
             seerr.viewer(id = 3, permissions = REQUEST)
             assertEquals(emptyList<UserSettingsPage>(), pages())
+        }
+
+    @Test
+    fun `an admin who is not the owner is not offered another admin's password, which the server would refuse`() =
+        runTest {
+            seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","permissions":$ADMIN,"userType":3}""")
+            seerr.viewer(id = 2, permissions = ADMIN)
+            assertEquals(listOf(UserSettingsPage.General, UserSettingsPage.Notifications, UserSettingsPage.Permissions), pages())
+
+            seerr.viewer(id = 1, permissions = ADMIN)
+            assertEquals(
+                listOf(UserSettingsPage.General, UserSettingsPage.Password, UserSettingsPage.Notifications, UserSettingsPage.Permissions),
+                pages(),
+            )
+        }
+
+    @Test
+    fun `an admin who is not the owner may set a plain user's password`() =
+        runTest {
+            seerr.viewer(id = 2, permissions = ADMIN)
+            assertEquals(
+                listOf(UserSettingsPage.General, UserSettingsPage.Password, UserSettingsPage.Notifications, UserSettingsPage.Permissions),
+                pages(),
+            )
         }
 }

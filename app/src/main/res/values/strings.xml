@@ -376,10 +376,7 @@
     <string name="user_settings_page_general">General</string>
     <string name="user_settings_page_general_desc">Name, contact and quotas</string>
     <string name="user_settings_page_password">Password</string>
-    <string name="user_settings_page_password_desc">Change the sign-in password</string>
     <string name="user_settings_page_notifications">Notifications</string>
-    <string name="user_settings_page_notifications_desc">Agents and the events they send</string>
-    <string name="user_settings_page_permissions_desc">What this user may do</string>
     <string name="user_settings_page_linked">Linked accounts</string>
     <string name="user_settings_page_linked_desc">Plex and media server sign-ins</string>
     <string name="user_settings_display_name">Display name</string>
@@ -396,6 +393,9 @@
     <string name="user_role_owner">Owner</string>
     <string name="user_settings_quota_override_movie">Override the movie limit</string>
     <string name="user_settings_quota_override_tv">Override the series limit</string>
+    <string name="user_settings_password_description">This password is for the server\'s own sign-in form. It is separate from the media server\'s password.</string>
+    <string name="user_settings_linked_group">External accounts</string>
+    <string name="user_settings_linked_hint">These external accounts are linked to this account.</string>
     <string name="user_settings_password_none">This account has no password yet. Setting one lets it sign in locally.</string>
     <string name="user_settings_password_current">Current password</string>
     <string name="user_settings_password_new">New password</string>

@@ -1,8 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.annotation.StringRes
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
@@ -33,7 +31,7 @@ fun PermissionsSettingsScreen(
         events = events,
         actions = actions,
     ) { draft, enabled ->
-        Text(stringResource(leadRes), style = MaterialTheme.typography.titleMedium)
+        GroupMessage(stringResource(leadRes), error = false)
         permissionTree(draft.offered, draft.selected).forEach { (group, nodes) ->
             ItemGroup(
                 title = stringResource(group.labelRes()),

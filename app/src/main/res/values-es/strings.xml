@@ -359,10 +359,7 @@
     <string name="user_settings_page_general">General</string>
     <string name="user_settings_page_general_desc">Nombre, contacto y cuotas</string>
     <string name="user_settings_page_password">Contraseña</string>
-    <string name="user_settings_page_password_desc">Cambiar la contraseña de inicio de sesión</string>
     <string name="user_settings_page_notifications">Notificaciones</string>
-    <string name="user_settings_page_notifications_desc">Agentes y los eventos que envían</string>
-    <string name="user_settings_page_permissions_desc">Lo que este usuario puede hacer</string>
     <string name="user_settings_page_linked">Cuentas vinculadas</string>
     <string name="user_settings_page_linked_desc">Inicios de sesión de Plex y del servidor multimedia</string>
     <string name="user_settings_display_name">Nombre visible</string>
@@ -379,6 +376,9 @@
     <string name="user_role_owner">Propietario</string>
     <string name="user_settings_quota_override_movie">Anular el límite de películas</string>
     <string name="user_settings_quota_override_tv">Anular el límite de series</string>
+    <string name="user_settings_password_description">Esta contraseña es para el formulario de inicio de sesión propio del servidor. Es distinta de la contraseña del servidor multimedia.</string>
+    <string name="user_settings_linked_group">Cuentas externas</string>
+    <string name="user_settings_linked_hint">Estas cuentas externas están vinculadas a esta cuenta.</string>
     <string name="user_settings_password_none">Esta cuenta aún no tiene contraseña. Ponerle una le permite iniciar sesión localmente.</string>
     <string name="user_settings_password_current">Contraseña actual</string>
     <string name="user_settings_password_new">Contraseña nueva</string>
