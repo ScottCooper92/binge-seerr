@@ -111,18 +111,13 @@ private fun LogsPage(onBack: () -> Unit) {
     )
 }
 
-/** The server's caches and what flushing one does. */
+/** The server's jobs and caches, each read on its own and retried on its own. */
 @Composable
 private fun CachePage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<CacheViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val jobsViewModel = hiltViewModel<JobsViewModel>()
     val jobs by jobsViewModel.uiState.collectAsStateWithLifecycle()
-    // Both read again on every arrival, so a job's next run and a cache's hits are current after a trip away.
-    DisposableEffect(viewModel, jobsViewModel) {
-        jobsViewModel.reload()
-        onDispose {}
-    }
     val events = remember(viewModel, jobsViewModel) { merge(viewModel.events, jobsViewModel.events) }
     CacheScreen(
         jobs = jobs,
@@ -133,6 +128,7 @@ private fun CachePage(onBack: () -> Unit) {
             CacheActions(
                 onBack = onBack,
                 onRetry = viewModel::reload,
+                onRetryJobs = jobsViewModel::reload,
                 onFlush = viewModel::flush,
                 onFlushDnsEntry = viewModel::flushDnsEntry,
             ),

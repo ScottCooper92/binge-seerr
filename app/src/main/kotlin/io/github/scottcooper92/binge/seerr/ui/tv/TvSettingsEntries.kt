@@ -87,7 +87,7 @@ private fun TvAdminSettingsEntry(
         onDisconnect = viewModel::disconnect,
         onToggleShareUsageData = viewModel::setShareUsageData,
         onToggleSendCrashReports = viewModel::setSendCrashReports,
-        // The Settings System group's job-row run action, reused rather than a second call to the same endpoint:
+        // The Jobs & cache page's job-row run action, reused rather than a second call to the same endpoint:
         // this board has no jobs list of its own, so the notice is what tells the admin it started.
         // `runWhenReady`, not `run`: this view model's own load races the row becoming visible, so an
         // early tap has to wait it out (and retry once from a failed one) rather than being dropped.

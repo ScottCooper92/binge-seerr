@@ -36,7 +36,6 @@ import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
  * entry its own store, so a screen's ViewModel lives and dies with its place on the stack rather
  * than with the Activity.
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SeerrNavHost(
     backStack: NavBackStack<NavKey>,
@@ -51,14 +50,39 @@ fun SeerrNavHost(
     }
     val connectedState = viewModel.isConnected.collectAsStateWithLifecycle()
     val connected by connectedState
-    // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
-    // about whether the hub is on screen beside a section.
-    val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
-    val hubBeside = rememberUpdatedState(connected == true && directive.maxHorizontalPartitions > 1)
     // Keyed on the root as well as the connection: a notification's link replaces the stack with one
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
     LaunchedEffect(connected, root) { backStack.settleHome(connected) }
+    SeerrPaneHost(backStack, connected, modifier) { hubBeside, showBack ->
+        homeEntries(backStack, connected = { connectedState.value }, hubBeside = hubBeside)
+        sectionEntries(backStack, showBack = showBack)
+        detailEntries(backStack, showBack = showBack)
+        serverSettingsEntries(backStack)
+    }
+}
+
+/**
+ * The [NavDisplay] and the pane locals around it, apart from the entries that fill it. [SeerrNavHost] passes the real
+ * entries; [entries] is a parameter so a test can host this with stand-ins, because the real screens take Hilt
+ * ViewModels.
+ *
+ * [entries] is handed two providers rather than values. Navigation 3 builds an entry once for its key and keeps it,
+ * content and metadata both, for as long as the key is on the stack. A value captured when it is built is the value
+ * from that frame. So what changes later is read inside the content, where reading the state is what recomposes it.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+internal fun SeerrPaneHost(
+    backStack: NavBackStack<NavKey>,
+    connected: Boolean?,
+    modifier: Modifier = Modifier,
+    entries: EntryProviderScope<NavKey>.(hubBeside: () -> Boolean, showBack: () -> Boolean) -> Unit,
+) {
+    // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
+    // about whether the hub is on screen beside a section.
+    val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
+    val hubBeside = rememberUpdatedState(connected == true && directive.maxHorizontalPartitions > 1)
     // The one back-arrow rule (paneShowsBack), fed the stack's own shape (paneDepth) alongside
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
@@ -81,17 +105,7 @@ fun SeerrNavHost(
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
-            // Navigation 3 builds an entry once for its key and keeps it, content and metadata both, for as
-            // long as the key is on the stack. A value captured here is the value from the frame the entry
-            // was built in. So what changes later is handed over as a provider and read inside the content,
-            // where reading the state is what recomposes it.
-            entryProvider =
-                entryProvider {
-                    homeEntries(backStack, connected = { connectedState.value }, hubBeside = { hubBeside.value })
-                    sectionEntries(backStack, showBack = showBack)
-                    detailEntries(backStack, showBack = showBack)
-                    serverSettingsEntries(backStack)
-                },
+            entryProvider = entryProvider { entries({ hubBeside.value }, showBack) },
         )
     }
 }
