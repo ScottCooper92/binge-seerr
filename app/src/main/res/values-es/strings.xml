@@ -1140,4 +1140,9 @@
     <string name="server_settings_rule_any">Cualquiera</string>
     <string name="server_settings_rule_unchanged">Sin cambios</string>
     <string name="server_settings_dns_ttl_default">El de la respuesta</string>
+    <string name="server_settings_metadata_status">Estado de los proveedores</string>
+    <string name="server_settings_metadata_selection">Proveedores</string>
+    <string name="server_settings_metadata_not_tested">Sin probar</string>
+    <string name="server_settings_metadata_operational">Funciona</string>
+    <string name="server_settings_metadata_failed">No funciona</string>
 </resources>

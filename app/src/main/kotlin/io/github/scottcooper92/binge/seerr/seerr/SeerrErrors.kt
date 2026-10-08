@@ -106,7 +106,7 @@ private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection
  * one. This runs inside [toStatusException] itself, so a raw [IOException] here would escape
  * [statusCatching] uncaught rather than become the [Status] the contract expects.
  */
-private fun HttpException.peekedBody(): String =
+internal fun HttpException.peekedBody(): String =
     runCatching {
         response()
             ?.errorBody()

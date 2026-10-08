@@ -42,7 +42,7 @@ class MetadataViewModelTest {
             "PUT /api/v1/settings/metadatas",
             """{"success":true,"tv":"tvdb","anime":"tvdb","tests":{"tvdb":"ok","tmdb":"not tested"}}""",
         )
-        seerr.serve("POST /api/v1/settings/metadatas/test", """{"message":"Successfully connected to TVDB"}""")
+        seerr.serve("POST /api/v1/settings/metadatas/test", """{"success":true,"tests":{"tmdb":"not tested","tvdb":"ok"}}""")
     }
 
     @After
@@ -96,5 +96,28 @@ class MetadataViewModelTest {
             val failed = awaitEvent(vm.events)
             vm.test()
             assertTrue(failed.await() is EditorEvent.Failed)
+        }
+
+    @Test
+    fun `each provider's result is kept, from a pass and from a failure's body alike`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+            val passed = awaitEvent(vm.events)
+            vm.test()
+            passed.await()
+            assertEquals(ProviderCheck.Operational, vm.awaitReady().extras.tvdb)
+            assertEquals(ProviderCheck.NotTested, vm.awaitReady().extras.tmdb)
+
+            seerr.serve(
+                "POST /api/v1/settings/metadatas/test",
+                """{"success":false,"tests":{"tmdb":"ok","tvdb":"failed"}}""",
+                code = 500,
+            )
+            val failed = awaitEvent(vm.events)
+            vm.test()
+            failed.await()
+            assertEquals(ProviderCheck.Failed, vm.awaitReady().extras.tvdb)
+            assertEquals(ProviderCheck.Operational, vm.awaitReady().extras.tmdb)
         }
 }

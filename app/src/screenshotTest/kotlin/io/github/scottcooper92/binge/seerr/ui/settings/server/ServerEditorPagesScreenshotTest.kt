@@ -99,6 +99,18 @@ class MetadataScreenshotTest {
     @Composable
     fun testing() = MetadataFrame(metadataReady(MetadataForm(), extras = MetadataExtras(testing = true)))
 
+    /** After a test: one provider works and the other does not, each tinted as the web client tints its badge. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun tested() =
+        MetadataFrame(
+            metadataReady(
+                MetadataForm(tv = MetadataProvider.Tvdb),
+                extras = MetadataExtras(tmdb = ProviderCheck.Operational, tvdb = ProviderCheck.Failed),
+            ),
+        )
+
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

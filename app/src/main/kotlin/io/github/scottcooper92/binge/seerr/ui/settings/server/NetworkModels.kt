@@ -87,9 +87,21 @@ data class MetadataForm(
         )
 }
 
+/** What a provider's last test said, as the web client shows it: untested until a test reaches it. */
+enum class ProviderCheck { NotTested, Operational, Failed }
+
 data class MetadataExtras(
     val testing: Boolean = false,
+    val tmdb: ProviderCheck = ProviderCheck.NotTested,
+    val tvdb: ProviderCheck = ProviderCheck.NotTested,
 )
+
+internal fun String?.toProviderCheck(): ProviderCheck =
+    when (this) {
+        "ok" -> ProviderCheck.Operational
+        "failed" -> ProviderCheck.Failed
+        else -> ProviderCheck.NotTested
+    }
 
 internal fun SeerrNetworkSettingsDto.toForm(): NetworkForm =
     NetworkForm(
