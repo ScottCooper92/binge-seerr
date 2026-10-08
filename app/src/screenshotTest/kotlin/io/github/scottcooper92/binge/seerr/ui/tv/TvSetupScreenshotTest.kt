@@ -65,6 +65,16 @@ class TvSetupScreenshotTest {
             offerHandOff = true,
         )
 
+    /** The opt-in ticked: Continue beside the field is what goes on now. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressInsecureAllowed() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true).copy(cleartextAllowed = true),
+            actions = NoSetupActions,
+        )
+
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

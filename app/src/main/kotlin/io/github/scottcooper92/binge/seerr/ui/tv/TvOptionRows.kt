@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,11 +27,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.tv.component.TvSelectedTick
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.focus.tvClickable
@@ -194,6 +198,55 @@ private fun TvTab(
                 },
         contentAlignment = Alignment.Center,
     ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            color = contentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * One yes-or-no setting as a row the remote can reach: a box that fills and takes a tick when [checked], and its
+ * [label]. OK flips it. For a single agreement under a field, where the page's own button then goes on, so ticking
+ * it commits nothing by itself.
+ */
+@Composable
+internal fun TvCheckboxRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var focused by remember { mutableStateOf(false) }
+    val contentColor = tvFocusContentColor(isFocused = focused, resting = MaterialTheme.colorScheme.onSurface)
+    Row(
+        modifier =
+            modifier
+                .height(dimensionResource(R.dimen.tv_form_option_height))
+                .clip(BingeShapes.Pill)
+                .tvFocusFill(isFocused = focused, shape = BingeShapes.Pill)
+                .tvClickable(onFocusChanged = { focused = it }, onClick = { onCheckedChange(!checked) })
+                .padding(horizontal = dimensionResource(R.dimen.tv_form_option_padding_horizontal))
+                .semantics {
+                    role = Role.Checkbox
+                    toggleableState = ToggleableState(checked)
+                },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_form_option_gap)),
+    ) {
+        // An outline and a tick in the row's own content colour, so both read on the focus fill and off it.
+        Box(
+            modifier =
+                Modifier
+                    .size(dimensionResource(R.dimen.tv_checkbox_size))
+                    .border(dimensionResource(R.dimen.tv_checkbox_border), contentColor, BingeShapes.ElementExtraSmall),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) TvSelectedTick(tint = contentColor)
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium,
