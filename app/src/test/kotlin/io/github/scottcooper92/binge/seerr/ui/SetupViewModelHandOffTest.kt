@@ -110,7 +110,10 @@ class SetupViewModelHandOffTest {
 
             vm.showHandOff(true)
 
-            assertEquals(AddressHandOff.Listening(session.url, session.scanUrl), vm.awaitAddress { it.handOff != null }.handOff)
+            assertEquals(
+                AddressHandOff.Listening(session.url, session.scanUrl, session.pin),
+                vm.awaitAddress { it.handOff != null }.handOff,
+            )
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             session.address.complete(seerr.url("/"))
@@ -422,6 +425,8 @@ class SetupViewModelHandOffTest {
         override val url: String = "http://192.168.1.20:41234/a/aaaaaaaa",
     ) : AddressHandOffSession {
         override val scanUrl: String get() = "$url#k=${"A".repeat(43)}"
+
+        override val pin: String = "4821"
 
         val address = CompletableDeferred<String>()
 

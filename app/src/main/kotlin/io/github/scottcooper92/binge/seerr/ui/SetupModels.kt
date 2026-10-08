@@ -128,11 +128,13 @@ internal sealed interface PendingLink {
 sealed interface AddressHandOff {
     /**
      * Listening. [url] is what the plate spells out under the code, for typing; [scanUrl] is what the code
-     * carries, which is [url] and the key that seals credentials, in a fragment a browser never sends.
+     * carries, which is [url] and the key that seals credentials, in a fragment a browser never sends. [pin] is what
+     * the plate shows beside the code for the phone to ask for (#803); null for a code with no key.
      */
     data class Listening(
         val url: String,
         val scanUrl: String = url,
+        val pin: String? = null,
     ) : AddressHandOff
 
     data class Unavailable(

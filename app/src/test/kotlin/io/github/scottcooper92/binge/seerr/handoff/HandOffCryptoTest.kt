@@ -83,4 +83,15 @@ class HandOffCryptoTest {
 
         assertEquals("HandOffCredentials(mode=Local)", credentials.toString())
     }
+
+    @Test
+    fun `the PIN is four digits, the same for one key every time, and spread across keys`() {
+        val key = HandOffKey.generate()
+        assertTrue(key.pin().matches(Regex("[0-9]{4}")))
+        assertEquals(key.pin(), HandOffKey.parse(key.encoded())?.pin())
+
+        val pins = List(200) { HandOffKey.generate().pin() }.toSet()
+        // 200 keys over 10,000 PINs: a handful of collisions at most, never a few PINs repeated throughout.
+        assertTrue("got ${pins.size} distinct PINs", pins.size > 180)
+    }
 }

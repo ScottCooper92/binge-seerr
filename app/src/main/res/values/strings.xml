@@ -936,6 +936,8 @@
     <string name="tv_setup_send_from_phone">Scan a QR</string>
     <string name="tv_handoff_body">Use the QR or URL to connect using another device on the same network, or use the Seerr mobile app to sign in using your existing details.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
+    <string name="tv_handoff_pin">PIN  %1$s</string>
+    <string name="tv_handoff_pin_description">PIN on this TV: %1$s</string>
     <string name="tv_handoff_no_network">This TV isn\'t on a Wi-Fi or wired home network, so a phone can\'t reach it. Type the address instead.</string>
     <string name="tv_handoff_could_not_listen">This TV couldn\'t open a connection for your phone. Type the address instead.</string>
     <string name="handoff_page_title">Send the server address to your TV</string>
@@ -979,7 +981,10 @@
     <string name="send_signin_session">Signing in the TV at %1$s…</string>
     <string name="send_signin_waiting">The TV at %1$s has the address and is checking the server…</string>
     <string name="send_signin_form">The TV found %1$s. Sign in here, and the TV is signed in too.</string>
-    <string name="send_signin_sealed">What you type here is sealed so only that TV can read it, then sent over your Wi-Fi. It is not kept on this phone.</string>
+    <string name="send_signin_sealed">What you type here is encrypted for the TV showing that PIN, then sent over your Wi-Fi. It is not kept on this phone.</string>
+    <string name="send_pin_body">Type the PIN shown under the code on the TV at %1$s.</string>
+    <string name="send_pin_label">PIN shown on the TV</string>
+    <string name="send_pin_wrong">That isn\'t the PIN on the TV. Check it and try again.</string>
     <string name="send_signin_rejected">The server didn\'t accept those details. Check them and try again.</string>
     <string name="send_signin_on_tv">The TV found %1$s. Finish signing in with the TV\'s remote.</string>
     <string name="send_signin_connected">Signed in. The TV at %1$s is ready.</string>

@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.handoff.HAND_OFF_SESSION_MODE
 import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
 import io.github.scottcooper92.binge.seerr.handoff.HandOffKey
 import io.github.scottcooper92.binge.seerr.handoff.HandOffStatus
+import io.github.scottcooper92.binge.seerr.handoff.TvHandOffLinks
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffTarget
 import io.github.scottcooper92.binge.seerr.handoff.TvSignInClient
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
@@ -113,6 +114,8 @@ class SendAddressViewModelTest {
         saved: SeerrCredentials? = null,
         applicationUrl: String? = null,
         scanned: Boolean = false,
+        // A keyed link asks for the TV's PIN first; most tests are about what comes after, so they get past it here.
+        enterPin: Boolean = true,
     ): SendAddressViewModel {
         val store =
             CredentialStore(
@@ -132,6 +135,7 @@ class SendAddressViewModelTest {
                 scanned = scanned,
             )
         viewModels.put(vm.hashCode().toString(), vm)
+        if (enterPin) TvHandOffLinks.parse(link)?.key?.let { vm.enterPin(it.pin()) }
         // Cleared when the test body ends, before the virtual clock is run out: a poll left running would turn it for ever.
         backgroundScope.launch {
             try {
@@ -588,5 +592,33 @@ class SendAddressViewModelTest {
                     ).step as SignInStep.Form
                 ).rejected,
             )
+        }
+
+    @Test
+    fun `a keyed link asks for the TV's PIN before anything, and sends nothing until it matches`() =
+        runTest {
+            val key = HandOffKey.generate()
+            val vm =
+                viewModel("$LINK&k=${key.encoded()}", SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), enterPin = false)
+            assertEquals(SendAddressUiState.EnterPin(tv = "192.168.86.53"), vm.uiState.value)
+
+            vm.enterPin("12")
+            assertEquals("12", (vm.uiState.value as SendAddressUiState.EnterPin).entered)
+            val wrongPin = if (key.pin() == "0000") "0001" else "0000"
+            vm.enterPin(wrongPin)
+            assertEquals(SendAddressUiState.EnterPin(tv = "192.168.86.53", entered = "", wrong = true), vm.uiState.value)
+            vm.enterPin("4")
+            assertEquals(SendAddressUiState.EnterPin(tv = "192.168.86.53", entered = "4", wrong = false), vm.uiState.value)
+            assertTrue("nothing reaches the TV before the PIN", tv.sentCredentials.isEmpty())
+
+            vm.enterPin(key.pin())
+            assertTrue(vm.settled() is SendAddressUiState.Ready)
+        }
+
+    @Test
+    fun `a link without a key has no PIN to ask for`() =
+        runTest {
+            val vm = viewModel(LINK, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), enterPin = false)
+            assertTrue(vm.settled() is SendAddressUiState.Ready)
         }
 }

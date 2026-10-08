@@ -49,6 +49,7 @@ open class SendAddressActivity : ComponentActivity() {
                     state = state,
                     actions =
                         SendAddressActions(
+                            onEnterPin = viewModel::enterPin,
                             onEdit = viewModel::editAddress,
                             onChooseSignIn = viewModel::chooseSignIn,
                             onSend = viewModel::send,

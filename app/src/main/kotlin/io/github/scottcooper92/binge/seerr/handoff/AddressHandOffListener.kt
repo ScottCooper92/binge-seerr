@@ -24,6 +24,9 @@ interface AddressHandOffSession {
     /** What the QR code holds: [url] and, in its fragment, the key a phone seals credentials with. */
     val scanUrl: String
 
+    /** The PIN the TV shows beside the code, which the phone asks for before it trusts the link (#803); null without a key. */
+    val pin: String?
+
     /**
      * Serves the page until cancelled or closed. [progress] is read on every request, so the page follows the
      * TV; [onAddress] gets each acceptable address a phone posts while [progress] still accepts one, which
@@ -90,6 +93,8 @@ internal class AddressHandOffListener(
     private val credentialsPath = "/c/$token".toByteArray(StandardCharsets.UTF_8)
 
     override val scanUrl: String get() = key?.let { "$url#k=${it.encoded()}" } ?: url
+
+    override val pin: String? = key?.pin()
 
     override suspend fun serve(
         progress: () -> HandOffProgress,

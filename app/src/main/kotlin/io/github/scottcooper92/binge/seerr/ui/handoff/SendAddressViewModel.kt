@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.security.MessageDigest
 
 /**
  * Reads a hand-off link, fills an editable address field with the best address this phone knows for
@@ -78,7 +79,33 @@ class SendAddressViewModel
         private var server: String? = null
 
         init {
-            viewModelScope.launch(dispatcher) { load() }
+            // A code with a key asks for the TV's PIN before anything else (#803): it proves the person holding the
+            // phone can see the TV whose key it is, which a link from a web page or a message cannot.
+            if (target?.key != null) {
+                _uiState.value = SendAddressUiState.EnterPin(tv = target.host)
+            } else {
+                viewModelScope.launch(dispatcher) { load() }
+            }
+        }
+
+        /**
+         * The PIN boxes changed. A fresh digit after a wrong PIN clears the error, and the last digit checks the PIN here on
+         * the phone: a listener that checked it would accept whatever an attacker's listener liked. A match goes on to
+         * what the code is for; a miss clears the boxes.
+         */
+        fun enterPin(value: String) {
+            val pinning = _uiState.value as? SendAddressUiState.EnterPin ?: return
+            val expected = target?.key?.pin() ?: return
+            when {
+                value.length < expected.length -> _uiState.value = pinning.copy(entered = value, wrong = false)
+                !MessageDigest.isEqual(value.toByteArray(), expected.toByteArray()) ->
+                    _uiState.value =
+                        pinning.copy(entered = "", wrong = true)
+                else -> {
+                    _uiState.value = SendAddressUiState.Loading
+                    viewModelScope.launch(dispatcher) { load() }
+                }
+            }
         }
 
         private suspend fun load() {
@@ -127,10 +154,19 @@ class SendAddressViewModel
         private suspend fun sharedSession(): String? =
             (runCatching { connection.current() }.getOrNull()?.auth as? SeerrAuth.Session)?.cookie
 
-        fun chooseSignIn(chosen: Boolean) = updateReady { if (it.isSending || it.signIn == null) it else it.copy(signInChosen = chosen) }
+        fun chooseSignIn(chosen: Boolean) =
+            _uiState.updateReady {
+                if (it.isSending ||
+                    it.signIn == null
+                ) {
+                    it
+                } else {
+                    it.copy(signInChosen = chosen)
+                }
+            }
 
         /** The field changed, by typing or by a suggestion; the note under it follows. */
-        fun editAddress(value: String) = updateReady { if (it.isSending) it else it.copy(address = value, failed = false) }
+        fun editAddress(value: String) = _uiState.updateReady { if (it.isSending) it else it.copy(address = value, failed = false) }
 
         /** Sends what is in the field. Nothing reaches the TV any other way: this runs only from the Send button. */
         fun send() {
@@ -162,7 +198,7 @@ class SendAddressViewModel
 
         /** The sign-in form changed; nothing leaves the phone until [sendSignIn]. */
         fun editSignIn(transform: SignInForm.() -> SignInForm) =
-            updateForm { if (it.isSending) it else it.copy(form = it.form.transform(), rejected = false) }
+            _uiState.updateForm { if (it.isSending) it else it.copy(form = it.form.transform(), rejected = false) }
 
         /** Seals what the form holds for this TV and sends it. The only place credentials leave the phone, and only on the tap. */
         fun sendSignIn() {
@@ -171,14 +207,14 @@ class SendAddressViewModel
             val step = state.step as? SignInStep.Form ?: return
             if (!step.canSend) return
             val credentials = step.form.toCredentials()
-            updateForm { it.copy(isSending = true, rejected = false, awaiting = null) }
+            _uiState.updateForm { it.copy(isSending = true, rejected = false, awaiting = null) }
             viewModelScope.launch(dispatcher) {
                 // Not taken at all is its own failure; taken and refused arrives later, in the TV's status.
                 val attempt = tv.send(target, credentials)
                 if (attempt == null) {
-                    updateForm { it.copy(isSending = false, rejected = true) }
+                    _uiState.updateForm { it.copy(isSending = false, rejected = true) }
                 } else {
-                    updateForm { it.copy(awaiting = attempt) }
+                    _uiState.updateForm { it.copy(awaiting = attempt) }
                 }
             }
         }
@@ -189,14 +225,14 @@ class SendAddressViewModel
             val state = _uiState.value as? SendAddressUiState.SigningIn ?: return
             val step = state.step as? SignInStep.Form ?: return
             if (step.isSending || step.sessionOffer == null) return
-            updateForm { it.copy(isSending = true, sendingSession = true, rejected = false, awaiting = null) }
+            _uiState.updateForm { it.copy(isSending = true, sendingSession = true, rejected = false, awaiting = null) }
             viewModelScope.launch(dispatcher) {
                 val attempt = sharedSession()?.let { tv.send(target, HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = it)) }
                 if (attempt == null) {
-                    updateForm { it.copy(isSending = false, sendingSession = false, rejected = true, sessionOffer = null) }
+                    _uiState.updateForm { it.copy(isSending = false, sendingSession = false, rejected = true, sessionOffer = null) }
                 } else {
                     connection.markSessionShared()
-                    updateForm { it.copy(awaiting = attempt) }
+                    _uiState.updateForm { it.copy(awaiting = attempt) }
                 }
             }
         }
@@ -210,7 +246,7 @@ class SendAddressViewModel
                     while (true) {
                         val status = tv.status(target)
                         silent = if (status == null) silent + 1 else 0
-                        if (silent >= LOST_AFTER_SILENT_POLLS) return@launch showStep(SignInStep.Lost)
+                        if (silent >= LOST_AFTER_SILENT_POLLS) return@launch _uiState.showStep(SignInStep.Lost)
                         if (status != null && !apply(status)) return@launch
                         delay(POLL_MILLIS)
                     }
@@ -220,7 +256,7 @@ class SendAddressViewModel
         /** Applies [status]; false once there is nothing more to follow. */
         private fun apply(status: HandOffStatus): Boolean {
             when (status.state) {
-                HandOffStatus.CONNECTED -> showStep(SignInStep.Connected)
+                HandOffStatus.CONNECTED -> _uiState.showStep(SignInStep.Connected)
                 HandOffStatus.FAILED -> {
                     // The address named no Seerr server the TV could reach: back to the field, to try another.
                     lastReady?.let { _uiState.value = it.copy(failed = true) }
@@ -230,7 +266,12 @@ class SendAddressViewModel
                 // Waiting or checking: the TV is on its address step. A sheet on its sign-in step follows it back there, or a
                 // send would be refused for a step the TV has left (#804). A session that went with the address is the TV
                 // still working on that address, so it stays.
-                else -> if ((_uiState.value as? SendAddressUiState.SigningIn)?.step !is SignInStep.Session) showStep(SignInStep.Waiting)
+                else ->
+                    if ((_uiState.value as? SendAddressUiState.SigningIn)?.step !is SignInStep.Session) {
+                        _uiState.showStep(
+                            SignInStep.Waiting,
+                        )
+                    }
             }
             return status.state != HandOffStatus.CONNECTED
         }
@@ -245,10 +286,10 @@ class SendAddressViewModel
             val current = (_uiState.value as? SendAddressUiState.SigningIn)?.step
             if (current is SignInStep.Session) {
                 // The TV turned the session down: what's left is typing, or finishing on the TV where it has no fields.
-                if (status.failed && status.attempt >= current.awaiting) showStep(fallbackFrom(server, modes))
+                if (status.failed && status.attempt >= current.awaiting) _uiState.showStep(fallbackFrom(server, modes))
                 return
             }
-            if (modes.isEmpty()) return showStep(SignInStep.OnTv(server))
+            if (modes.isEmpty()) return _uiState.showStep(SignInStep.OnTv(server))
             // One update, so the form it keeps is the latest one: a send finishing on another thread is not overwritten.
             _uiState.update { state ->
                 val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
@@ -271,18 +312,6 @@ class SendAddressViewModel
                 )
             }
         }
-
-        private fun showStep(step: SignInStep) = _uiState.update { (it as? SendAddressUiState.SigningIn)?.copy(step = step) ?: it }
-
-        private fun updateForm(transform: (SignInStep.Form) -> SignInStep.Form) =
-            _uiState.update { state ->
-                val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
-                val form = signingIn.step as? SignInStep.Form ?: return@update state
-                signingIn.copy(step = transform(form))
-            }
-
-        private fun updateReady(transform: (SendAddressUiState.Ready) -> SendAddressUiState.Ready) =
-            _uiState.update { state -> (state as? SendAddressUiState.Ready)?.let(transform) ?: state }
 
         private companion object {
             /** States a TV can be in that mean the address is done with: a scan then carries on rather than starting over. */
@@ -329,3 +358,19 @@ private fun TvHandOffTarget.sealSession(session: String): String? =
 /** Anything but the server's own addresses, which are found again without being kept. */
 private fun SendAddressUiState.Ready.isWorthRemembering(address: String): Boolean =
     candidates.none { it.address == address && it.source != AddressSource.Remembered }
+
+/** Moves a sign-in in progress to [step]; any other state is left as it is. */
+private fun MutableStateFlow<SendAddressUiState>.showStep(step: SignInStep) =
+    update { (it as? SendAddressUiState.SigningIn)?.copy(step = step) ?: it }
+
+/** Changes the sign-in form, while there is one on screen. */
+private fun MutableStateFlow<SendAddressUiState>.updateForm(transform: (SignInStep.Form) -> SignInStep.Form) =
+    update { state ->
+        val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
+        val form = signingIn.step as? SignInStep.Form ?: return@update state
+        signingIn.copy(step = transform(form))
+    }
+
+/** Changes the address field, while it is on screen. */
+private fun MutableStateFlow<SendAddressUiState>.updateReady(transform: (SendAddressUiState.Ready) -> SendAddressUiState.Ready) =
+    update { state -> (state as? SendAddressUiState.Ready)?.let(transform) ?: state }

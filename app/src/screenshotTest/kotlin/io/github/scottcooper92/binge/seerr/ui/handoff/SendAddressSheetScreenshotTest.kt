@@ -25,6 +25,17 @@ private val SHEET_WIDTH = 411.dp
  * phone's width, as `MediaStatusSheetScreenshotTest` does.
  */
 class SendAddressSheetScreenshotTest {
+    /** A scanned code asks for the TV's PIN first (#803): two digits typed, the third box next. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun enterPin() = Frame(SendAddressUiState.EnterPin(tv = "192.168.86.53", entered = "48"))
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun wrongPin() = Frame(SendAddressUiState.EnterPin(tv = "192.168.86.53", wrong = true))
+
     @PreviewTest
     @SeerrComponentPreviews
     @Composable

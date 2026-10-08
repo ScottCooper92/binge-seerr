@@ -94,7 +94,7 @@ internal class SetupHandOff(
             // open() is not cancellable: a cancel() that ran meanwhile must not bring the plate back.
             currentCoroutineContext().ensureActive()
             session = listening
-            val code = AddressHandOff.Listening(listening.url, listening.scanUrl)
+            val code = AddressHandOff.Listening(listening.url, listening.scanUrl, listening.pin)
             // Started on the sign-in step there is no address plate to show: the code is that step's.
             if (progress() !is HandOffProgress.SignIn) onState(code)
             onCode(code)
