@@ -189,6 +189,8 @@ enum class NotificationType(
     val bit: Int,
     /** Only a moderator is told about these; the toggle is hidden for a user without `MANAGE_REQUESTS`. */
     val moderatorOnly: Boolean = false,
+    /** An issue's event rather than a request's, which is the group the web client lists it in. */
+    val issue: Boolean = false,
 ) {
     MediaPending(1 shl 1, moderatorOnly = true),
     MediaApproved(1 shl 2),
@@ -196,10 +198,10 @@ enum class NotificationType(
     MediaFailed(1 shl 4, moderatorOnly = true),
     MediaDeclined(1 shl 6),
     MediaAutoApproved(1 shl 7, moderatorOnly = true),
-    IssueCreated(1 shl 8, moderatorOnly = true),
-    IssueComment(1 shl 9),
-    IssueResolved(1 shl 10),
-    IssueReopened(1 shl 11),
+    IssueCreated(1 shl 8, moderatorOnly = true, issue = true),
+    IssueComment(1 shl 9, issue = true),
+    IssueResolved(1 shl 10, issue = true),
+    IssueReopened(1 shl 11, issue = true),
     MediaAutoRequested(1 shl 12),
 }
 
@@ -214,6 +216,8 @@ data class NotificationSettings(
     val discordIds: List<String> = emptyList(),
     /** Whether the server keeps a list of Discord user IDs, which is whether a second one can be added. */
     val multipleDiscordIds: Boolean = false,
+    /** Whether the server keeps a Telegram topic per user, which is whether its row is offered. */
+    val telegramTopics: Boolean = false,
     /** The sounds the saved Pushover application offers; empty where the server would not list them. */
     val pushoverSounds: List<PushoverSoundChoice> = emptyList(),
     /** Whether the user is told about moderation events at all: those toggles are hidden otherwise. */
@@ -241,7 +245,7 @@ data class NotificationSettings(
                 (!needsValues(NotificationAgent.Discord) || discordIds.any { it.isNotBlank() })
 
     /** Whether [field]'s value, as typed, is one the server would take; a blank one is the required rule's business. */
-    fun fieldValid(field: AgentField): Boolean = field(field).trim().let { it.isEmpty() || field.accepts(it) }
+    fun fieldValid(field: AgentField): Boolean = field.accepts(field(field).trim())
 
     /** Whether [field] has to be filled in for this draft to save. */
     fun required(field: AgentField): Boolean = field in REQUIRED && needsValues(field.agent)
@@ -271,15 +275,19 @@ data class PushoverSoundChoice(
     val description: String,
 )
 
-/** The web client's shape for each value: Pushover's 30-character keys, Telegram's IDs and an armoured PGP key. */
+/**
+ * The web client's shape for each value: Pushover's 30-character keys, Telegram's IDs and an armoured PGP key. A blank
+ * value is accepted, since clearing one is how it is removed; whether it may be blank is the required rule's business.
+ */
 internal fun AgentField.accepts(value: String): Boolean =
-    when (this) {
-        AgentField.PgpKey -> PGP_KEY.containsMatchIn(value)
-        AgentField.PushoverAppToken, AgentField.PushoverUserKey -> PUSHOVER_KEY.matches(value)
-        AgentField.TelegramChatId -> TELEGRAM_CHAT_ID.matches(value)
-        AgentField.TelegramThreadId -> value.all { it in '0'..'9' }
-        AgentField.PushbulletToken, AgentField.PushoverSound -> true
-    }
+    value.isEmpty() ||
+        when (this) {
+            AgentField.PgpKey -> PGP_KEY.containsMatchIn(value)
+            AgentField.PushoverAppToken, AgentField.PushoverUserKey -> PUSHOVER_KEY.matches(value)
+            AgentField.TelegramChatId -> TELEGRAM_CHAT_ID.matches(value)
+            AgentField.TelegramThreadId -> value.all { it in '0'..'9' }
+            AgentField.PushbulletToken, AgentField.PushoverSound -> true
+        }
 
 private val PGP_KEY = Regex("-----BEGIN PGP PUBLIC KEY BLOCK-----.+-----END PGP PUBLIC KEY BLOCK-----", RegexOption.DOT_MATCHES_ALL)
 private val PUSHOVER_KEY = Regex("[a-zA-Z0-9]{30}")

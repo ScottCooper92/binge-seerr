@@ -84,6 +84,7 @@ class NotificationsViewModelTest {
             assertFalse(draft.isOn(NotificationAgent.Discord))
             assertEquals("seerr_bot", draft.telegramBotUsername)
             assertEquals(listOf("1234"), draft.discordIds)
+            assertTrue(draft.telegramTopics)
             assertFalse(draft.multipleDiscordIds)
             assertFalse(draft.isModerator)
         }
@@ -196,5 +197,24 @@ class NotificationsViewModelTest {
                     .draft.pushoverSounds
                     .isEmpty(),
             )
+        }
+
+    @Test
+    fun `the sounds are not asked for by a viewer who is not an admin`() =
+        runTest {
+            seerr.viewer(id = 8, permissions = REQUEST)
+            seerr.serve(
+                "GET /api/v1/user/8/settings/notifications",
+                """{"pushoverApplicationToken":"azGDORePK8gMaC0QOYAMyEEuzJnyUi","notificationTypes":{}}""",
+            )
+            seerr.serve("GET /api/v1/settings/notifications/pushover/sounds", """[{"name":"bike"}]""")
+
+            assertTrue(
+                viewModel()
+                    .awaitReady()
+                    .draft.pushoverSounds
+                    .isEmpty(),
+            )
+            assertEquals(0, seerr.count("GET", "/api/v1/settings/notifications/pushover/sounds"))
         }
 }

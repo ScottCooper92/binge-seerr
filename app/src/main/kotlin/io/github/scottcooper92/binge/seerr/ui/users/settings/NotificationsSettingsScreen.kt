@@ -62,7 +62,11 @@ private fun AgentGroup(
                     soundItem(draft, enabled, onEdit),
                 )
             NotificationAgent.Telegram ->
-                AgentField.entries.filter { it.agent == agent }.map { fieldItem(it, draft, enabled, onEdit) } +
+                listOfNotNull(
+                    fieldItem(AgentField.TelegramChatId, draft, enabled, onEdit),
+                    // Overseerr never stored a topic, so a row it would drop is not offered there.
+                    if (draft.telegramTopics) fieldItem(AgentField.TelegramThreadId, draft, enabled, onEdit) else null,
+                ) +
                     // Only how a message is delivered, so it follows the agent. The IDs above do not: they are filled in
                     // before the server turns the agent on.
                     editorToggle(
@@ -173,7 +177,7 @@ private fun fieldItem(
         onChange = { typed -> onEdit { it.set(field, typed) } },
         hint = field.hintRes()?.let { stringResource(it) },
         required = draft.required(field),
-        check = { typed -> problem.takeIf { typed.isNotEmpty() && !field.accepts(typed) } },
+        check = { typed -> problem.takeIf { !field.accepts(typed) } },
         // Whether a hidden value is there is all its row needs to say.
         shown =
             if (field.hidden && value.isNotBlank()) {
@@ -222,7 +226,7 @@ private fun TypeGroups(
         ItemGroup(
             title = null,
             rows =
-                offered.filter { it.isIssue == issues }.map { type ->
+                offered.filter { it.issue == issues }.map { type ->
                     editorToggle(Icons.Filled.Notifications, stringResource(type.labelRes()), types and type.bit != 0, enabled) {
                         onEdit { it.update(agent) { settings -> settings.copy(types = settings.types xor type.bit) } }
                     }
@@ -230,8 +234,6 @@ private fun TypeGroups(
         )
     }
 }
-
-private val NotificationType.isIssue: Boolean get() = name.startsWith("Issue")
 
 /** A value the row does not spell out: a secret, or a PGP key's many lines. */
 private val AgentField.hidden: Boolean get() = secret || this == AgentField.PgpKey

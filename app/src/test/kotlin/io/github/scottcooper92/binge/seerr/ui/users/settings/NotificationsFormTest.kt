@@ -111,6 +111,18 @@ class NotificationsFormTest {
     }
 
     @Test
+    fun `the telegram topic is offered only where the server keeps one`() {
+        show(EMAIL_ONLY)
+        rule.onNodeWithText("Thread or topic ID").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the telegram topic row is there on a server that keeps one`() {
+        show(EMAIL_ONLY.copy(telegramTopics = true))
+        rule.onNodeWithText("Thread or topic ID").performScrollTo()
+    }
+
+    @Test
     fun `a pushover sound is picked from the application's sounds, the device's own first`() {
         show(
             EMAIL_ONLY

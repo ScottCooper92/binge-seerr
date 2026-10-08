@@ -56,4 +56,9 @@ class NotificationsRulesTest {
     fun `the sound alone does not turn pushover on`() {
         assertFalse(NotificationSettings().set(AgentField.PushoverSound, "bike").isOn(NotificationAgent.Pushover))
     }
+
+    @Test
+    fun `every field takes a blank value, which is how a value is removed`() {
+        AgentField.entries.forEach { assertTrue(it.name, it.accepts("")) }
+    }
 }
