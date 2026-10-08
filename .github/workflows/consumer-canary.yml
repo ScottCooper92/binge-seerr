@@ -47,6 +47,12 @@ jobs:
       - name: Build, test and lint
         run: ./gradlew build --continue
 
+      # As in ci.yml: UncaughtExceptionsBeforeTest names the test that ran next, never the coroutine that leaked, and this
+      # report does. Printing it keeps the answer in the log rather than only in the artifact (#807).
+      - name: Print the coroutine leak report
+        if: ${{ failure() }}
+        run: cat app/build/reports/tests/testDebugUnitTest/coroutine-leaks.txt 2>/dev/null || echo "No coroutine leak was reported."
+
       - name: Upload reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

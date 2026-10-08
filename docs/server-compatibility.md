@@ -73,7 +73,8 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | LunaSea notification agent | always | never |
 | Discover sliders, watch providers, keyword and company search | 1.32 | always |
 | Combined RT and IMDb ratings | 1.34 | Jellyseerr 1.7 |
-| Pushover sounds | 1.34 | Jellyseerr 1.8 |
+| Pushover sounds, read by an admin only (`/settings` needs `ADMIN` on both) | 1.34 | Jellyseerr 1.8 |
+| Telegram topic, `messageThreadId`, on a user and on the Telegram agent | never | Jellyseerr 2.2 |
 | Issues, comments | 1.28 | always |
 | Issue and request counts | 1.30 | always |
 

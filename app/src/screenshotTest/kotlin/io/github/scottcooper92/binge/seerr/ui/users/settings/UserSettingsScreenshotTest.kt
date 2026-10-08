@@ -223,7 +223,7 @@ class UserPermissionsScreenshotTest {
 }
 
 class UserNotificationsScreenshotTest {
-    /** A moderator's page: every agent, the ones with a key on, and the moderation events among the chips. */
+    /** A moderator's page: every agent in the web client's order, and the events of the ones that are on, moderation ones too. */
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
@@ -235,7 +235,7 @@ class UserNotificationsScreenshotTest {
     @Composable
     fun plainUser() = NotificationsFrame(settled(notifications(moderator = false)))
 
-    /** A pasted username in the Discord ID: the field is flagged with what it wants, and its section is held open. */
+    /** A pasted username in a Discord ID: its row says what it wants instead. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -243,19 +243,12 @@ class UserNotificationsScreenshotTest {
         NotificationsFrame(
             EditorUiState.Ready(
                 draft =
-                    notifications(moderator = false).update(NotificationAgent.Discord) {
-                        it.copy(
-                            fields =
-                                mapOf(
-                                    AgentField.DiscordId to "scott#1234",
-                                ),
-                        )
-                    },
+                    notifications(moderator = false).copy(discordIds = listOf("123456789012345678", "scott#1234")),
                 saved = notifications(moderator = false),
             ),
         )
 
-    /** Nothing configured: every agent is off, so every section starts closed. */
+    /** Nothing configured: every agent is off, so none lists its events, and the server's switches say so. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -375,11 +368,19 @@ private fun notifications(moderator: Boolean) =
             mapOf(
                 NotificationAgent.Email to
                     AgentSettings(enabled = true, types = NotificationType.MediaApproved.bit or NotificationType.MediaAvailable.bit),
-                NotificationAgent.Discord to AgentSettings(enabled = true, fields = mapOf(AgentField.DiscordId to "123456789012345678")),
+                NotificationAgent.Discord to AgentSettings(enabled = true, types = NotificationType.MediaAvailable.bit),
                 NotificationAgent.Telegram to AgentSettings(enabled = false, fields = mapOf(AgentField.TelegramChatId to "-1001234")),
                 NotificationAgent.Pushover to
-                    AgentSettings(fields = mapOf(AgentField.PushoverUserKey to "uQiRzpo4DXghDmr9QzzfQu27cmVRsG")),
+                    AgentSettings(
+                        fields =
+                            mapOf(
+                                AgentField.PushoverAppToken to "azGDORePK8gMaC0QOYAMyEEuzJnyUi",
+                                AgentField.PushoverUserKey to "uQiRzpo4DXghDmr9QzzfQu27cmVRsG",
+                            ),
+                    ),
             ),
+        discordIds = listOf("123456789012345678"),
+        multipleDiscordIds = true,
         telegramBotUsername = "binge_requests_bot",
         isModerator = moderator,
     )

@@ -118,7 +118,6 @@
     <string name="requests_sort_modified">Actualizadas recientemente</string>
     <string name="requests_sort_cd">Cambiar el orden</string>
     <string name="requests_requester_unknown">Alguien</string>
-    <string name="requests_reconnect">El servidor rechazó el inicio de sesión guardado. Vuelve atrás para reconectar.</string>
     <string name="requests_load_more_failed">No se pudo cargar más. Toca para reintentar.</string>
     <string name="request_state_queued">En cola</string>
     <string name="media_type_movie">Película</string>
@@ -372,10 +371,7 @@
     <string name="user_settings_page_general">General</string>
     <string name="user_settings_page_general_desc">Nombre, contacto y cuotas</string>
     <string name="user_settings_page_password">Contraseña</string>
-    <string name="user_settings_page_password_desc">Cambiar la contraseña de inicio de sesión</string>
     <string name="user_settings_page_notifications">Notificaciones</string>
-    <string name="user_settings_page_notifications_desc">Agentes y los eventos que envían</string>
-    <string name="user_settings_page_permissions_desc">Lo que este usuario puede hacer</string>
     <string name="user_settings_page_linked">Cuentas vinculadas</string>
     <string name="user_settings_page_linked_desc">Inicios de sesión de Plex y del servidor multimedia</string>
     <string name="user_settings_display_name">Nombre visible</string>
@@ -392,6 +388,9 @@
     <string name="user_role_owner">Propietario</string>
     <string name="user_settings_quota_override_movie">Anular el límite de películas</string>
     <string name="user_settings_quota_override_tv">Anular el límite de series</string>
+    <string name="user_settings_password_description">Esta contraseña es para el formulario de inicio de sesión propio del servidor. Es distinta de la contraseña del servidor multimedia.</string>
+    <string name="user_settings_linked_group">Cuentas externas</string>
+    <string name="user_settings_linked_hint">Estas cuentas externas están vinculadas a esta cuenta.</string>
     <string name="user_settings_password_none">Esta cuenta aún no tiene contraseña. Ponerle una le permite iniciar sesión localmente.</string>
     <string name="user_settings_password_current">Contraseña actual</string>
     <string name="user_settings_password_new">Contraseña nueva</string>
@@ -400,7 +399,6 @@
     <string name="user_settings_password_mismatch">Las contraseñas no coinciden.</string>
     <string name="user_settings_agent_webpush">Notificaciones push web</string>
     <string name="user_settings_agent_enabled">Activado</string>
-    <string name="user_settings_agent_enabled_hint">Lo configura el servidor para todos; no es por usuario</string>
     <string name="user_settings_field_pgp">Clave pública PGP</string>
     <string name="user_settings_field_telegram_chat">ID del chat</string>
     <string name="user_settings_field_pushbullet_token">Token de acceso</string>
@@ -408,8 +406,17 @@
     <string name="user_settings_field_pushover_token">Token de la aplicación</string>
     <string name="user_settings_field_pushover_sound">Sonido de la notificación</string>
     <string name="user_settings_telegram_bot">Escribe a %1$s en Telegram y envía /start para obtener tu ID de chat.</string>
+    <string name="user_settings_agent_off">El servidor tiene desactivadas las notificaciones de %1$s. Lo que configures aquí se usará cuando las active.</string>
+    <string name="user_settings_discord_add">Añadir ID de usuario</string>
+    <string name="user_settings_discord_ids_hint">Añade un ID por cada cuenta de Discord de tu hogar. Borra uno para quitarlo.</string>
+    <string name="user_settings_discord_id_error">Escribe el ID numérico, no un nombre de usuario.</string>
+    <string name="user_settings_field_telegram_thread">ID de hilo o tema</string>
+    <string name="user_settings_field_telegram_thread_hint">Si tu chat de grupo tiene temas, el ID del tema donde publicar.</string>
+    <string name="user_settings_telegram_chat_id_error">Escribe solo dígitos, con un signo menos delante para un grupo.</string>
+    <string name="user_settings_pushover_key_error">Escribe las 30 letras y dígitos que te da Pushover.</string>
+    <string name="user_settings_pgp_error">Pega la clave pública entera, de la línea BEGIN a la línea END.</string>
+    <string name="user_settings_pushover_sound_default">Predeterminado del dispositivo</string>
     <string name="user_settings_telegram_silent">Enviar en silencio</string>
-    <string name="user_settings_types_title">Avisar de</string>
     <string name="user_settings_type_media_pending">Petición pendiente de aprobación</string>
     <string name="user_settings_type_media_approved">Petición aprobada</string>
     <string name="user_settings_type_media_available">Petición disponible</string>
@@ -974,7 +981,6 @@
     <string name="tv_rail_hub">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
     <string name="tv_hub_stat_open_issues">Incidencias abiertas</string>
-    <string name="tv_hub_reconnect">Reconectar</string>
     <string name="tv_hub_quota_none_left">No queda ninguna</string>
     <string name="tv_download_percent">%1$d %%</string>
     <string name="tv_list_load_failed">No se pudo cargar la lista.</string>
@@ -1009,7 +1015,6 @@
     <string name="issue_message_placeholder">Describe con el mayor detalle posible qué ocurre con este título.</string>
     <string name="server_settings_slider_title_hint">El encabezado con el que aparece esta fila en Descubrir.</string>
     <string name="user_settings_field_pgp_hint">Opcional. Los correos que recibas se cifran con esta clave.</string>
-    <string name="user_settings_field_pushover_sound_hint">En blanco, usa el sonido configurado en tu dispositivo Pushover.</string>
     <string name="server_settings_agent_telegram_bot_username_hint">Permite que los usuarios inicien su propio chat con el bot y elijan sus notificaciones.</string>
     <string name="server_settings_agent_chat_id_hint">Inicia un chat con tu bot, después escribe a @get_id_bot y envía /my_id.</string>
     <string name="server_settings_agent_smtp_port_hint">TLS implícito suele usar el 465, y STARTTLS el 587.</string>

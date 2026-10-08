@@ -115,6 +115,9 @@ data class SeerrServerProfile(
     /** Gotify: Overseerr 1.29, and the Jellyseerr lineage from 1.1. */
     val hasGotify: Boolean get() = if (jellyseerrLineage) atLeast(1, 1) else atLeast(1, 29)
 
+    /** A Telegram topic, per user and on the server's agent: Jellyseerr 2.2 added one, and Overseerr never had it. */
+    val hasTelegramTopics: Boolean get() = jellyseerrLineage && atLeast(2, 2)
+
     /** Pushover's sound list: Overseerr 1.34, and the Jellyseerr lineage from 1.8. */
     val hasPushoverSounds: Boolean get() = if (jellyseerrLineage) atLeast(1, 8) else atLeast(1, 34)
 

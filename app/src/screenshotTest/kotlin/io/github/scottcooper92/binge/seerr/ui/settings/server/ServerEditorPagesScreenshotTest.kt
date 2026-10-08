@@ -54,10 +54,11 @@ class NetworkScreenshotTest {
     @Composable
     fun proxyAndCacheOff() = NetworkFrame(settled(seerrNetwork().copy(proxy = ProxyForm(), dnsCache = DnsCacheForm())))
 
+    /** A fractional timeout reads with Spanish's decimal comma: "1,5 segundos". */
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable
-    fun spanish() = NetworkFrame(settled(seerrNetwork()))
+    fun spanish() = NetworkFrame(settled(seerrNetwork().copy(apiRequestTimeout = "1.5")))
 
     /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
     @PreviewTest

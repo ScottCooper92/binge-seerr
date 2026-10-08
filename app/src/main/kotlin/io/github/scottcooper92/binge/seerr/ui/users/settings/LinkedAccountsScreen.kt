@@ -127,7 +127,12 @@ private fun LinkedAccountsContent(
             },
         )
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        ItemGroup(title = null, rows = rows, modifier = Modifier.padding(resolvedContentInset()))
+        ItemGroup(
+            title = stringResource(R.string.user_settings_linked_group),
+            rows = rows,
+            modifier = Modifier.padding(resolvedContentInset()),
+            belowRows = { GroupMessage(stringResource(R.string.user_settings_linked_hint), error = false) },
+        )
     }
     unlinking?.let { origin ->
         BingeConfirmDialog(
@@ -227,7 +232,8 @@ private fun MediaServerLinkSheet(
                         username = login.id
                         password = login.password
                     },
-                autoCorrect = false,
+                keyboardType = VerbatimKeyboard.keyboardType,
+                autoCorrect = VerbatimKeyboard.autoCorrectEnabled ?: true,
                 placeholder = stringResource(R.string.setup_username_placeholder, stringResource(origin.labelRes())),
                 contentType = ContentType.Username,
             ) { username = it }

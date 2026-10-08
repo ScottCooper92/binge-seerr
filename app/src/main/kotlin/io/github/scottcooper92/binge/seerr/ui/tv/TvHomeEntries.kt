@@ -51,7 +51,6 @@ internal fun TvHomeEntry(
     answering = homeAnswering(hub, answering)
     if (answering) {
         TvRequestsEntry(
-            onReconnect = onReconnect,
             openRequestId = openRequestId,
             onOpenRequest = onOpenRequest,
             seeAllOpen = seeAllOpen,
@@ -102,7 +101,6 @@ private fun TvHubEntry(
 
 @Composable
 private fun TvRequestsEntry(
-    onReconnect: () -> Unit,
     openRequestId: Int?,
     onOpenRequest: (Int) -> Unit,
     seeAllOpen: Boolean,
@@ -135,7 +133,6 @@ private fun TvRequestsEntry(
                 onSeeAll = onSeeAll,
                 onRetryLoad = { pagers.values.forEach { it.retry() } },
                 onRetryScope = viewModel::retry,
-                onReconnect = onReconnect,
             ),
     )
 }
@@ -147,7 +144,6 @@ internal fun TvRequestsGridOverlay(
     detailOpen: Boolean,
     onOpenRequest: (Int) -> Unit,
     onDone: () -> Unit,
-    onReconnect: () -> Unit,
     viewModel: RequestsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -161,7 +157,6 @@ internal fun TvRequestsGridOverlay(
         detailOpen = detailOpen,
         onOpenDetail = { onOpenRequest(it.id) },
         onRetryLoad = { lazyItems.retry() },
-        onReconnect = onReconnect,
         onBack = onDone,
     )
 }

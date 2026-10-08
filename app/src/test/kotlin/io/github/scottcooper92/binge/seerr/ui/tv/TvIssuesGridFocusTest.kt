@@ -99,7 +99,6 @@ class TvIssuesGridFocusTest {
                     detailOpen = false,
                     onOpenDetail = { opened += it.id },
                     onRetryLoad = {},
-                    onReconnect = {},
                     onBack = {},
                 )
             }

@@ -137,7 +137,6 @@
     <string name="requests_sort_modified">Recently updated</string>
     <string name="requests_sort_cd">Change sort order</string>
     <string name="requests_requester_unknown">Someone</string>
-    <string name="requests_reconnect">The server rejected the saved sign-in. Go back to reconnect.</string>
     <string name="requests_load_more_failed">Could not load more. Tap to retry.</string>
     <string name="request_state_queued">Queued</string>
     <string name="media_type_movie">Movie</string>
@@ -389,10 +388,7 @@
     <string name="user_settings_page_general">General</string>
     <string name="user_settings_page_general_desc">Name, contact and quotas</string>
     <string name="user_settings_page_password">Password</string>
-    <string name="user_settings_page_password_desc">Change the sign-in password</string>
     <string name="user_settings_page_notifications">Notifications</string>
-    <string name="user_settings_page_notifications_desc">Agents and the events they send</string>
-    <string name="user_settings_page_permissions_desc">What this user may do</string>
     <string name="user_settings_page_linked">Linked accounts</string>
     <string name="user_settings_page_linked_desc">Plex and media server sign-ins</string>
     <string name="user_settings_display_name">Display name</string>
@@ -409,6 +405,9 @@
     <string name="user_role_owner">Owner</string>
     <string name="user_settings_quota_override_movie">Override the movie limit</string>
     <string name="user_settings_quota_override_tv">Override the series limit</string>
+    <string name="user_settings_password_description">This password is for the server\'s own sign-in form. It is separate from the media server\'s password.</string>
+    <string name="user_settings_linked_group">External accounts</string>
+    <string name="user_settings_linked_hint">These external accounts are linked to this account.</string>
     <string name="user_settings_password_none">This account has no password yet. Setting one lets it sign in locally.</string>
     <string name="user_settings_password_current">Current password</string>
     <string name="user_settings_password_new">New password</string>
@@ -420,7 +419,6 @@
     <string name="user_settings_agent_pushover" translatable="false">Pushover</string>
     <string name="user_settings_agent_webpush">Web push</string>
     <string name="user_settings_agent_enabled">Enabled</string>
-    <string name="user_settings_agent_enabled_hint">Set by the server for everyone; not per-user</string>
     <string name="user_settings_field_pgp">PGP public key</string>
     <string name="user_settings_field_telegram_chat">Chat ID</string>
     <string name="user_settings_field_pushbullet_token">Access token</string>
@@ -428,8 +426,17 @@
     <string name="user_settings_field_pushover_token">Application token</string>
     <string name="user_settings_field_pushover_sound">Notification sound</string>
     <string name="user_settings_telegram_bot">Message %1$s on Telegram and send /start to get your chat ID.</string>
+    <string name="user_settings_agent_off">The server has %1$s notifications turned off. What you set here is used once it turns them on.</string>
+    <string name="user_settings_discord_add">Add user ID</string>
+    <string name="user_settings_discord_ids_hint">Add an ID for each Discord account in your household. Clear one to remove it.</string>
+    <string name="user_settings_discord_id_error">Enter the numeric ID, not a username.</string>
+    <string name="user_settings_field_telegram_thread">Thread or topic ID</string>
+    <string name="user_settings_field_telegram_thread_hint">If your group chat has topics, the ID of the one to post in.</string>
+    <string name="user_settings_telegram_chat_id_error">Enter digits only, with a minus sign in front for a group.</string>
+    <string name="user_settings_pushover_key_error">Enter the 30 letters and digits Pushover gives you.</string>
+    <string name="user_settings_pgp_error">Paste the whole public key, from its BEGIN line to its END line.</string>
+    <string name="user_settings_pushover_sound_default">Device default</string>
     <string name="user_settings_telegram_silent">Send silently</string>
-    <string name="user_settings_types_title">Notify about</string>
     <string name="user_settings_type_media_pending">Request pending approval</string>
     <string name="user_settings_type_media_approved">Request approved</string>
     <string name="user_settings_type_media_available">Request available</string>
@@ -1008,7 +1015,6 @@
     <string name="tv_rail_hub">Home</string>
     <string name="tv_hub_health_checking">Checking the server…</string>
     <string name="tv_hub_stat_open_issues">Open issues</string>
-    <string name="tv_hub_reconnect">Reconnect</string>
     <string name="tv_hub_quota_none_left">None left</string>
     <string name="tv_download_percent">%1$d%%</string>
     <string name="tv_list_load_failed">The list could not be loaded.</string>
@@ -1061,7 +1067,6 @@
     <string name="issue_message_placeholder">Describe what is wrong with this title in as much detail as you can.</string>
     <string name="server_settings_slider_title_hint">The heading this row appears under on Discover.</string>
     <string name="user_settings_field_pgp_hint">Optional. The emails you are sent are encrypted with this key.</string>
-    <string name="user_settings_field_pushover_sound_hint">Blank uses the sound your Pushover device is set to.</string>
     <string name="server_settings_agent_telegram_bot_username_hint">Lets users start their own chat with the bot and choose their own notifications.</string>
     <string name="server_settings_agent_chat_id_hint">Start a chat with your bot, then message @get_id_bot and send /my_id.</string>
     <string name="server_settings_agent_smtp_port_hint">Implicit TLS is usually 465, and STARTTLS 587.</string>

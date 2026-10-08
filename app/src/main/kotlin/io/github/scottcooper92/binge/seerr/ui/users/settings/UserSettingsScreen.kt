@@ -75,7 +75,7 @@ private fun PageList(
             ListItem(
                 icon = page.icon(),
                 label = stringResource(page.titleRes()),
-                detail = stringResource(page.descriptionRes()),
+                detail = page.descriptionRes()?.let { stringResource(it) },
                 onClick = { onOpenPage(page) },
             )
         }

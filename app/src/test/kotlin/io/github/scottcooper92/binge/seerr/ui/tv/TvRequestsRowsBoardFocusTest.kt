@@ -53,7 +53,6 @@ class TvRequestsRowsBoardFocusTest {
     private var openRequestId: Int? by mutableStateOf(null)
     private var seeAllOpen by mutableStateOf(false)
     private var retries = 0
-    private var reconnects = 0
 
     @Test
     fun downFromARowLandsOnTheNextRow() {
@@ -131,16 +130,9 @@ class TvRequestsRowsBoardFocusTest {
 
     @Test
     fun aFailedLoadOffersARetry() {
-        setBoard(refresh = TvLoadPhase.Failed(rejected = false), empty = true)
+        setBoard(refresh = TvLoadPhase.Failed, empty = true)
 
         composeTestRule.onNode(hasTextExactly(string(R.string.hub_retry)) and isFocusable()).assertExists()
-    }
-
-    @Test
-    fun aRejectedLoadOffersTheWayBackToReconnect() {
-        setBoard(refresh = TvLoadPhase.Failed(rejected = true), empty = true)
-
-        composeTestRule.onNode(hasTextExactly(string(R.string.tv_hub_reconnect)) and isFocusable()).assertExists()
     }
 
     private fun setBoard(
@@ -192,7 +184,6 @@ class TvRequestsRowsBoardFocusTest {
                             },
                             onRetryLoad = { retries++ },
                             onRetryScope = {},
-                            onReconnect = { reconnects++ },
                         ),
                 )
             }

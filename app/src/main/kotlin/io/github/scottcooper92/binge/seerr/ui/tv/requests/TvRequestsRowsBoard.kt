@@ -24,7 +24,6 @@ import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageAction
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestFilter
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
@@ -45,7 +44,6 @@ internal class TvRequestsActions(
     val onSeeAll: (RequestFilter) -> Unit,
     val onRetryLoad: () -> Unit,
     val onRetryScope: () -> Unit,
-    val onReconnect: () -> Unit,
 )
 
 /** The filters that get a row; "All" would only repeat the others, so the rows are the tabs. */
@@ -92,7 +90,6 @@ internal fun TvRequestsRowsBoard(
             rows = perFilter.map { it.second },
             emptyBody = stringResource(R.string.requests_empty_all),
             onRetryLoad = actions.onRetryLoad,
-            onReconnect = actions.onReconnect,
             modifier = modifier,
         )
         return
@@ -142,7 +139,7 @@ internal fun TvRequestsRowsBoard(
     }
 }
 
-/** What the board shows before the requests are known: the loading page, or why they could not be read, with the way out. */
+/** What the board shows before the requests are known: the loading page, or that they could not be read, with a retry. */
 @Composable
 private fun TvRequestsUnresolved(
     state: RequestsUiState,
@@ -153,17 +150,11 @@ private fun TvRequestsUnresolved(
         TvHubLoading(modifier)
         return
     }
-    val rejected = state.error == SeerrError.Unauthorized || state.error == SeerrError.NotConnected
     TvMessagePage(
-        body = stringResource(if (rejected) R.string.requests_reconnect else R.string.tv_list_load_failed),
+        body = stringResource(R.string.tv_list_load_failed),
         modifier = modifier,
         icon = Icons.Filled.Warning,
-        primary =
-            if (rejected) {
-                TvPageAction(stringResource(R.string.tv_hub_reconnect), actions.onReconnect)
-            } else {
-                TvPageAction(stringResource(R.string.hub_retry), actions.onRetryScope)
-            },
+        primary = TvPageAction(stringResource(R.string.hub_retry), actions.onRetryScope),
     )
 }
 

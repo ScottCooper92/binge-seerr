@@ -46,7 +46,7 @@ class HubActions(
     val onOpenAccount: (userId: Int) -> Unit,
     val onOpenRequest: (requestId: Int) -> Unit,
     val onRetry: () -> Unit,
-    /** The sign-in form on the saved server: for a session the server rejected, and to correct an address that no longer answers. */
+    /** The sign-in form on the saved server, to correct an address that no longer answers. */
     val onReconnect: () -> Unit,
     val onDisconnect: () -> Unit,
     val onDismissBingeHint: () -> Unit,

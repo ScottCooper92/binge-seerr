@@ -41,6 +41,8 @@ private const val NTFY =
 
 private const val PUSHOVER = """{"enabled":false,"types":0,"options":{"accessToken":"","userToken":"","sound":""}}"""
 
+private const val TELEGRAM = """{"enabled":true,"types":0,"options":{"botAPI":"t","chatId":"1","messageThreadId":""}}"""
+
 private const val SOUNDS = """[{"name":"pushover","description":"Pushover (default)"},{"name":"bike","description":"Bike"}]"""
 
 class NotificationAgentViewModelTest {
@@ -65,6 +67,7 @@ class NotificationAgentViewModelTest {
         seerr.serve("POST /api/v1/settings/notifications/ntfy", NTFY)
         seerr.serve("GET /api/v1/settings/notifications/pushover", PUSHOVER)
         seerr.serve("GET /api/v1/settings/notifications/pushover/sounds", SOUNDS)
+        seerr.serve("GET /api/v1/settings/notifications/telegram", TELEGRAM)
     }
 
     @After
@@ -323,5 +326,39 @@ class NotificationAgentViewModelTest {
                     .getValue("jsonPayload")
                     .jsonPrimitive.content
             assertEquals("\"{\\\"event\\\": \\\"{{event}}\\\"}\"", String(Base64.getDecoder().decode(payload)))
+        }
+
+    @Test
+    fun `Overseerr's Telegram agent has no topic, so the page does not offer one`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "1.33.2", settings = "{}")
+            val vm = viewModel(ServerAgent.Telegram)
+            assertTrue(
+                AgentOption.TelegramMessageThreadId in
+                    vm.awaitReady { AgentOption.TelegramMessageThreadId in it.extras.withheld }.extras.withheld,
+            )
+        }
+
+    @Test
+    fun `Jellyseerr before 2_2 has no Telegram topic on the agent either`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "2.1.0", settings = "{}")
+            val vm = viewModel(ServerAgent.Telegram)
+            assertTrue(
+                AgentOption.TelegramMessageThreadId in
+                    vm.awaitReady { AgentOption.TelegramMessageThreadId in it.extras.withheld }.extras.withheld,
+            )
+        }
+
+    @Test
+    fun `Seerr's Telegram agent keeps its topic`() =
+        runTest {
+            val vm = viewModel(ServerAgent.Telegram)
+            assertTrue(
+                vm
+                    .awaitReady()
+                    .extras.withheld
+                    .isEmpty(),
+            )
         }
 }

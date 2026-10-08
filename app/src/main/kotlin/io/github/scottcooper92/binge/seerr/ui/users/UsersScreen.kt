@@ -99,8 +99,6 @@ fun UsersScreen(
                     selection = ready.selection,
                     onOpen = actions.onOpen,
                     onToggleSelected = actions.onToggleSelected,
-                    // A rejected session cannot be retried past: the hub owns reconnecting.
-                    onReconnect = actions.onBack,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = padding.screenInnerPadding(),
                 )

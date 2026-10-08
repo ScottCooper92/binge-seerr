@@ -30,8 +30,20 @@ data class NetworkForm(
     val valid: Boolean get() = proxy?.valid != false && dnsCache?.valid != false && apiRequestTimeoutValid
 }
 
-/** The entry as a number of seconds, or null where it is not one. */
-internal fun String.toTimeoutSeconds(): BigDecimal? = trim().toBigDecimalOrNull()?.takeIf { it.signum() >= 0 }
+/**
+ * The entry as a number of seconds, or null where it is not one. Either `.` or `,` is the decimal separator: the app
+ * ships in English and Spanish, which write `1.5` and `1,5`, and a decimal pad may offer either (#890).
+ */
+internal fun String.toTimeoutSeconds(): BigDecimal? = canonicalSeconds().toBigDecimalOrNull()?.takeIf { it.signum() >= 0 }
+
+/** The entry with `.` as its separator, the form the draft keeps and the server's number is read from. */
+internal fun String.canonicalSeconds(): String = trim().replace(',', '.')
+
+/** The separator [canonicalSeconds] reads back: `,` or `.`. A locale with another one (Arabic's `٫`) shows `.`. */
+internal fun Char.readableTimeoutSeparator(): Char = if (this == ',') ',' else '.'
+
+/** Canonical seconds as written where [separator] is the decimal separator. */
+internal fun String.withDecimalSeparator(separator: Char): String = replace('.', separator)
 
 /** The seconds as the whole milliseconds the server stores, or null where they are not a number or would not fit a [Long]. */
 internal fun String.toTimeoutMillis(): Long? =
