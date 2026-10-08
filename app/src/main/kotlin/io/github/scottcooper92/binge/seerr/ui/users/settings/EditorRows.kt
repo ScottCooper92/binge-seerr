@@ -110,14 +110,7 @@ internal fun textSettingItem(
             }
         }
     }
-    // Save follows the form's validity, so a row that holds it back says why where the user will look: a required
-    // value left blank, or one the server sent that its own check refuses.
-    val rowProblem =
-        when {
-            required && value.isBlank() -> stringResource(R.string.editor_field_required)
-            value.isNotBlank() -> check(if (secret) value else value.trim())
-            else -> null
-        }
+    val rowProblem = rowProblem(value, required, secret, check)
     return ListItem(
         icon = icon,
         label = label,
@@ -128,6 +121,23 @@ internal fun textSettingItem(
         onClick = { open = true },
     )
 }
+
+/**
+ * What a text row says in place of its value when it holds Save back: a required value left blank, or one the server
+ * sent that the row's own check refuses. Save follows the form's validity, so this is where the user looks for why.
+ */
+@Composable
+private fun rowProblem(
+    value: String,
+    required: Boolean,
+    secret: Boolean,
+    check: (String) -> String?,
+): String? =
+    when {
+        required && value.isBlank() -> stringResource(R.string.editor_field_required)
+        value.isNotBlank() -> check(if (secret) value else value.trim())
+        else -> null
+    }
 
 /**
  * A line under an `ItemGroup`'s rows, through its `belowRows`: what the group still needs before Save. [error] marks
