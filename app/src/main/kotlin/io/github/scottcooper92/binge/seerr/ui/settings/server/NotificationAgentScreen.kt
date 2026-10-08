@@ -188,7 +188,7 @@ private fun TypeGroups(
                     if (issues) R.string.server_settings_agent_types_issues else R.string.server_settings_agent_types_requests,
                 ),
             rows =
-                NotificationType.entries.filter { it.isIssue == issues }.map { type ->
+                NotificationType.entries.filter { it.issue == issues }.map { type ->
                     editorToggle(Icons.Filled.Notifications, stringResource(type.labelRes()), draft.types and type.bit != 0, enabled) {
                         onToggle(type.bit)
                     }
@@ -196,8 +196,6 @@ private fun TypeGroups(
         )
     }
 }
-
-private val NotificationType.isIssue: Boolean get() = name.startsWith("Issue")
 
 /** The keyboard an option's sheet asks for, from its kind; an option the server matches exactly is not autocorrected. */
 internal fun AgentOption.keyboard(): KeyboardOptions =
