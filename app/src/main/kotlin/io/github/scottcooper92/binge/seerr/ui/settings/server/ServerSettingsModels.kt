@@ -163,7 +163,12 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
     )
 }
 
-/** The server sends every main setting it has, so a server whose answer has none of these has no automatic blocklist. */
+/**
+ * The server sends every main setting it has, so a server whose answer has none of these has no automatic blocklist.
+ *
+ * This form gates on the fields being present rather than on `SeerrServerProfile`: for a settings form,
+ * "the server sent the field" is an exact answer, and it needs no guess at the release that added it.
+ */
 private fun SeerrMainSettingsDto.toBlocklist(): BlocklistSettings? =
     if (listOf(blocklistRegion, blocklistLanguage, blocklistedTags, blocklistedTagsLimit).all { it == null }) {
         null

@@ -13,6 +13,8 @@ import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -311,5 +313,29 @@ class ServerGeneralViewModelTest {
                     .awaitReady { it.extras.keywords.results == null }
                     .extras.keywords.results,
             )
+        }
+
+    @Test
+    fun `a search cancelled by a newer query does not report a failure`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serveFrom("GET /api/v1/search/keyword", delayMillis = 200) { """{"results":[{"id":4344,"name":"musical"}]}""" }
+            val vm = viewModel()
+            vm.awaitReady()
+            val failures = mutableListOf<Boolean>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                vm.uiState.collect { state ->
+                    if (state is ExtrasEditorUiState.Ready) failures += state.extras.keywords.failed
+                }
+            }
+
+            vm.searchKeywords("mu")
+            advanceTimeBy(KEYWORD_SEARCH_DEBOUNCE_MILLIS + 1)
+            vm.awaitReady { it.extras.keywords.searching }
+            vm.searchKeywords("mus")
+            val found = vm.awaitReady { it.extras.keywords.results != null }
+
+            assertEquals(listOf(Keyword(4344, "musical")), found.extras.keywords.results)
+            assertFalse(failures.any { it })
         }
 }
