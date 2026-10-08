@@ -11,8 +11,15 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -69,10 +76,23 @@ internal fun SendAddressSheetContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringResource(R.string.send_address_title), style = MaterialTheme.typography.titleLarge)
+        // The PIN's field holds focus until its last digit; when it goes, focus would fall to the sheet's drag handle,
+        // the first thing left that takes it, and a keyboard user would see the handle highlighted (#914). It goes to
+        // Send instead, which is what the next key should press.
+        val send = remember { FocusRequester() }
+        var pinned by remember { mutableStateOf(false) }
+        LaunchedEffect(state is SendAddressUiState.EnterPin, state is SendAddressUiState.Ready) {
+            if (state is SendAddressUiState.EnterPin) pinned = true
+            if (state is SendAddressUiState.Ready && pinned) {
+                pinned = false
+                // A Send that can't be pressed can't take focus either; the field is then where the user goes next anyway.
+                if (state.canSend) send.requestFocus()
+            }
+        }
         when (state) {
             SendAddressUiState.Loading -> BingeLoadingIndicator()
             is SendAddressUiState.EnterPin -> EnterPinContent(state, actions)
-            is SendAddressUiState.Ready -> ReadyContent(state, actions)
+            is SendAddressUiState.Ready -> ReadyContent(state, actions, send)
             is SendAddressUiState.SigningIn -> SigningInContent(state, actions)
             is SendAddressUiState.Sent -> Outcome(stringResource(R.string.send_address_sent, state.tv), R.string.send_address_done, onClose)
             SendAddressUiState.NotConnected ->
@@ -90,6 +110,7 @@ internal fun SendAddressSheetContent(
 private fun ReadyContent(
     state: SendAddressUiState.Ready,
     actions: SendAddressActions,
+    send: FocusRequester,
 ) {
     SendAddressField(state, actions.onEdit, actions.onSend)
     state.signIn?.let { offer ->
@@ -123,7 +144,7 @@ private fun ReadyContent(
         onClick = actions.onSend,
         enabled = state.canSend,
         loading = state.isSending,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().focusRequester(send),
     )
 }
 
