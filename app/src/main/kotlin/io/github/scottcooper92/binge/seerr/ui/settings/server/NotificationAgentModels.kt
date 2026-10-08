@@ -29,8 +29,12 @@ enum class ServerAgent(
     WebPush("webpush"),
 }
 
-/** How an option is typed and sent: text and its masked, address and multi-line forms, a number, or a switch. */
-enum class OptionKind { Text, Secret, Uri, Number, Switch, Multiline }
+/**
+ * How an option is typed and sent: text and its masked, address and multi-line forms, a number, or a switch. [Host] is
+ * a bare host name and [Email] an email address: text to the server, but each asks for its own keyboard and is never
+ * autocorrected.
+ */
+enum class OptionKind { Text, Secret, Uri, Host, Email, Number, Switch, Multiline }
 
 /**
  * Every agent's own options, keyed by the name the server stores them under, so one form renders
@@ -43,9 +47,9 @@ enum class AgentOption(
     val kind: OptionKind = OptionKind.Text,
     val required: Boolean = false,
 ) {
-    EmailFrom(ServerAgent.Email, "emailFrom", required = true),
+    EmailFrom(ServerAgent.Email, "emailFrom", OptionKind.Email, required = true),
     EmailSenderName(ServerAgent.Email, "senderName"),
-    EmailSmtpHost(ServerAgent.Email, "smtpHost", required = true),
+    EmailSmtpHost(ServerAgent.Email, "smtpHost", OptionKind.Host, required = true),
     EmailSmtpPort(ServerAgent.Email, "smtpPort", OptionKind.Number, required = true),
     EmailSecure(ServerAgent.Email, "secure", OptionKind.Switch),
     EmailIgnoreTls(ServerAgent.Email, "ignoreTls", OptionKind.Switch),

@@ -205,8 +205,12 @@ internal fun AgentOption.keyboard(): KeyboardOptions =
         keyboardType =
             when (kind) {
                 OptionKind.Number -> KeyboardType.Number
-                OptionKind.Uri -> KeyboardType.Uri
+                OptionKind.Uri, OptionKind.Host -> KeyboardType.Uri
+                OptionKind.Email -> KeyboardType.Email
                 else -> KeyboardType.Text
             },
-        autoCorrectEnabled = autoCorrect && kind != OptionKind.Uri,
+        autoCorrectEnabled = autoCorrect && kind !in VERBATIM_KINDS,
     )
+
+/** The kinds a keyboard must never rewrite: addresses, whatever else the option is. */
+private val VERBATIM_KINDS = setOf(OptionKind.Uri, OptionKind.Host, OptionKind.Email)

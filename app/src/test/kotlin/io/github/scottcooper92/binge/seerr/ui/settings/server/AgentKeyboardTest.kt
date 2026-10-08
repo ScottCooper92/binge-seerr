@@ -26,4 +26,15 @@ class AgentKeyboardTest {
         assertFalse(AgentOption.EmailAuthUser.keyboard().autoCorrectEnabled ?: true)
         assertTrue(AgentOption.DiscordBotUsername.keyboard().autoCorrectEnabled ?: false)
     }
+
+    @Test
+    fun `the smtp host and the from address get their own keyboards, never autocorrected`() {
+        val host = AgentOption.EmailSmtpHost.keyboard()
+        val from = AgentOption.EmailFrom.keyboard()
+
+        assertEquals(KeyboardType.Uri, host.keyboardType)
+        assertFalse(host.autoCorrectEnabled ?: true)
+        assertEquals(KeyboardType.Email, from.keyboardType)
+        assertFalse(from.autoCorrectEnabled ?: true)
+    }
 }
