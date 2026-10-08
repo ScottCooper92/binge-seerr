@@ -27,6 +27,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
@@ -263,5 +264,12 @@ internal fun AdvancedGroup(
                     ) { on -> actions.onEdit { it.copy(csrfProtection = on) } }
                 },
             ),
+        // Overseerr badges both "Restart required", as the forks do on their Network page (#868).
+        belowRows =
+            if (draft.trustProxy != null || draft.csrfProtection != null) {
+                { GroupMessage(stringResource(R.string.server_settings_restart_proxy_csrf), error = false) }
+            } else {
+                null
+            },
     )
 }

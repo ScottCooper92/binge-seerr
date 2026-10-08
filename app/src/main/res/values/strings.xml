@@ -1141,6 +1141,8 @@
     <string name="server_settings_special_episodes_detail">Lets a series\' specials be requested too</string>
     <string name="server_settings_cache_images_detail">Keeps posters on the server; needs a lot of disk</string>
     <string name="server_settings_trust_proxy_detail">Turn on if the server sits behind a reverse proxy</string>
+    <string name="server_settings_restart_network">The server applies changes on this page after it restarts.</string>
+    <string name="server_settings_restart_proxy_csrf">The server applies the proxy and CSRF settings after it restarts.</string>
     <string name="server_settings_csrf_detail">Makes the API read-only to other sites; needs HTTPS</string>
     <string name="server_settings_youtube_default">YouTube</string>
     <string name="server_settings_all_regions">All regions</string>

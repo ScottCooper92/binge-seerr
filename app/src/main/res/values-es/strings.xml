@@ -1086,6 +1086,8 @@
     <string name="server_settings_special_episodes_detail">Permite solicitar también los especiales de una serie</string>
     <string name="server_settings_cache_images_detail">Guarda los pósteres en el servidor; ocupa mucho disco</string>
     <string name="server_settings_trust_proxy_detail">Actívalo si el servidor está detrás de un proxy inverso</string>
+    <string name="server_settings_restart_network">El servidor aplica los cambios de esta página cuando se reinicia.</string>
+    <string name="server_settings_restart_proxy_csrf">El servidor aplica los ajustes de proxy y CSRF cuando se reinicia.</string>
     <string name="server_settings_csrf_detail">Deja la API en solo lectura para otros sitios; requiere HTTPS</string>
     <string name="server_settings_youtube_default">YouTube</string>
     <string name="server_settings_all_regions">Todas las regiones</string>
