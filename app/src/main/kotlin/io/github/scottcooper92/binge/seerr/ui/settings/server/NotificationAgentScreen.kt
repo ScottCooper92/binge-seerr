@@ -1,39 +1,26 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import com.binge.designsystem.component.BingeFilterChip
-import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.ChoiceRow
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleGroup
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
+import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.labelRes
+import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
 
 /** What the agent page does beside the editor: change a field, the switch or a type, and send a test. */
 class AgentActions(
@@ -45,9 +32,9 @@ class AgentActions(
 )
 
 /**
- * One agent's page: its switch, then collapsible sections (#549) for the options it cannot send
- * without, the rest of its options, and the events it is sent as two groups of chips; then a test
- * that sends through the draft as typed. The optional settings start closed.
+ * One agent's page as the web client lays it out, in groups of list rows: its switch, the settings it can't send
+ * without, the rest, the events it's sent, and a row that sends a test through the draft as typed. A required setting
+ * left blank while the agent is on says so in its row, and Save stays off until none is.
  */
 @Composable
 fun NotificationAgentScreen(
@@ -58,151 +45,154 @@ fun NotificationAgentScreen(
     agent: ServerAgent,
 ) {
     val extras = (state as? ExtrasEditorUiState.Ready<AgentForm, AgentExtras>)?.extras ?: AgentExtras()
-    val validation = remember { EditorValidation<AgentForm>(AGENT_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(agent.labelRes()),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        validation = validation,
+        canSave = { it.valid },
     ) { draft, enabled ->
-        EditorToggleGroup(
-            stringResource(agent.labelRes()),
-            listOf(
-                editorToggle(
-                    Icons.Filled.Notifications,
-                    stringResource(R.string.user_settings_agent_enabled),
-                    draft.enabled,
-                    enabled,
-                    onToggle = agentActions.onSetEnabled,
+        ItemGroup(
+            title = null,
+            rows =
+                listOf(
+                    editorToggle(
+                        Icons.Filled.Notifications,
+                        stringResource(R.string.user_settings_agent_enabled),
+                        draft.enabled,
+                        enabled,
+                        onToggle = agentActions.onSetEnabled,
+                    ),
                 ),
-            ),
         )
-        OptionFields(AgentSections.SETTINGS, R.string.server_settings_agent_section_options, draft, extras, enabled, agentActions)
-        OptionFields(AgentSections.MORE_SETTINGS, R.string.server_settings_agent_section_more, draft, extras, enabled, agentActions)
-        TypeChips(draft, enabled, agentActions.onToggleType)
-        BingeOutlinedButton(
-            label = stringResource(R.string.server_settings_agent_test),
-            onClick = agentActions.onTest,
-            enabled = enabled && draft.valid,
-            loading = extras.testing,
-            modifier = Modifier.fillMaxWidth(),
+        OptionGroup(required = true, draft, extras, enabled, agentActions)
+        OptionGroup(required = false, draft, extras, enabled, agentActions)
+        TypeGroups(draft, enabled, agentActions.onToggleType)
+        ItemGroup(
+            title = null,
+            rows =
+                listOf(
+                    ListItem(
+                        icon = Icons.Filled.Send,
+                        label = stringResource(R.string.server_settings_agent_test),
+                        loading = extras.testing,
+                        clickable = enabled && draft.valid && !extras.testing,
+                        disabled = !enabled || !draft.valid,
+                        onClick = agentActions.onTest,
+                    ),
+                ),
         )
     }
 }
 
-/**
- * The agent's options that belong in [sectionId]: the required ones open, the rest closed until asked
- * for. [defaultExpanded] is for a frame of the section alone.
- */
+/** The agent's options it can't send without ([required]), or the rest; no group when it has none of that kind. */
 @Composable
-internal fun OptionFields(
-    sectionId: String,
-    @StringRes titleRes: Int,
+internal fun OptionGroup(
+    required: Boolean,
     draft: AgentForm,
     extras: AgentExtras,
     enabled: Boolean,
     actions: AgentActions,
-    defaultExpanded: Boolean = sectionId == AgentSections.SETTINGS,
 ) {
-    val options = AgentOption.of(draft.agent).filter { it.ownControl && it.sectionId == sectionId }
+    val options = AgentOption.of(draft.agent).filter { it.ownControl && it.required == required }
     if (options.isEmpty()) return
-    EditorSection(sectionId, stringResource(titleRes), defaultExpanded = defaultExpanded) {
-        options.forEach { option -> OptionField(option, draft, extras, enabled, actions) }
-    }
+    ItemGroup(
+        title =
+            stringResource(
+                if (required) R.string.server_settings_agent_section_options else R.string.server_settings_agent_section_more,
+            ),
+        rows = options.map { option -> optionItem(option, draft, extras, enabled, actions) },
+    )
 }
 
 @Composable
-private fun OptionField(
+private fun optionItem(
     option: AgentOption,
     draft: AgentForm,
     extras: AgentExtras,
     enabled: Boolean,
     actions: AgentActions,
-) {
+): ListItem {
     // An option nothing reads follows the switch that would read it. The switches themselves
     // stay live: exclusivity is enforced by turning the other one off, not by refusing this one.
     val editable = enabled && option.gatedBy?.let { draft.switched(it) } != false
-    when {
+    val label = stringResource(option.labelRes())
+    return when {
         option == AgentOption.EmailSecure ->
-            ChoiceRow(
-                title = stringResource(option.labelRes()),
+            choiceSettingItem(
+                icon = Icons.Filled.Tune,
+                title = label,
                 choices = EmailEncryption.entries.map { it to stringResource(it.labelRes()) },
                 selected = EmailEncryption.of(draft),
-                onSelect = actions.onSetEncryption,
                 enabled = editable,
+                onSelect = actions.onSetEncryption,
             )
         option == AgentOption.PushoverSound && extras.sounds.isNotEmpty() ->
-            ChoiceRow(
-                title = stringResource(option.labelRes()),
+            choiceSettingItem(
+                icon = Icons.Filled.Tune,
+                title = label,
                 choices = extras.sounds.map { it.name to it.description },
                 selected = draft.option(option).takeIf { it.isNotEmpty() },
-                onSelect = { name -> actions.onSetOption(option, name) },
                 enabled = editable,
-            )
+            ) { name -> actions.onSetOption(option, name) }
         option.kind == OptionKind.Switch ->
-            EditorToggleRow(
-                editorToggle(Icons.Filled.Tune, stringResource(option.labelRes()), draft.switched(option), enabled) { value ->
-                    actions.onSetOption(option, value.toString())
-                },
-            )
-        else ->
-            EditorTextField(
-                draft.option(option),
-                stringResource(option.labelRes()),
-                enabled = editable,
-                secret = option.secret,
-                singleLine = option.kind != OptionKind.Multiline,
-                keyboardType =
-                    when (option.kind) {
-                        OptionKind.Number -> KeyboardType.Number
-                        OptionKind.Uri -> KeyboardType.Uri
-                        else -> KeyboardType.Text
-                    },
-                autoCorrect = option.autoCorrect,
-                placeholder = option.placeholderRes()?.let { stringResource(it) },
-                supporting = option.hintRes()?.let { stringResource(it) },
-                fieldId = option.fieldId,
-                required = option.required && draft.enabled,
-            ) { value -> actions.onSetOption(option, value) }
+            editorToggle(Icons.Filled.Tune, label, draft.switched(option), enabled) { on -> actions.onSetOption(option, on.toString()) }
+        else -> textOptionItem(option, label, draft, editable, actions)
     }
 }
 
 @Composable
-private fun TypeChips(
+private fun textOptionItem(
+    option: AgentOption,
+    label: String,
     draft: AgentForm,
-    enabled: Boolean,
-    onToggle: (Int) -> Unit,
-) {
-    EditorSection(AgentSections.TYPES, stringResource(R.string.user_settings_types_title)) {
-        TypeChipGroups(draft, enabled, onToggle)
-    }
+    editable: Boolean,
+    actions: AgentActions,
+): ListItem {
+    val value = draft.option(option)
+    val missing = option.required && draft.enabled && value.isBlank()
+    val wrongShape = stringResource(if (option.port) R.string.editor_error_port else R.string.editor_error_whole_number)
+    val row =
+        textSettingItem(
+            icon = Icons.Filled.Tune,
+            label = label,
+            value = value,
+            enabled = editable,
+            onChange = { typed -> actions.onSetOption(option, typed) },
+            hint = (option.hintRes() ?: option.placeholderRes())?.let { stringResource(it) },
+            check = { typed -> wrongShape.takeIf { typed.isNotBlank() && !option.satisfiedBy(typed) } },
+            shown =
+                when {
+                    missing -> stringResource(R.string.editor_field_required)
+                    option.secret && value.isNotEmpty() -> stringResource(R.string.server_settings_secret_set)
+                    else -> value.ifBlank { stringResource(R.string.settings_value_not_set) }
+                },
+            secret = option.secret,
+            multiline = option.kind == OptionKind.Multiline,
+        )
+    return if (missing) row.copy(detailColor = MaterialTheme.colorScheme.error) else row
 }
 
+/** The events the agent is sent, as the web client's checklist: the request ones, then the issue ones. */
 @Composable
-private fun TypeChipGroups(
+private fun TypeGroups(
     draft: AgentForm,
     enabled: Boolean,
     onToggle: (Int) -> Unit,
 ) {
     listOf(false, true).forEach { issues ->
-        Text(
-            stringResource(if (issues) R.string.permission_group_issues else R.string.permission_group_requests),
-            style = MaterialTheme.typography.titleSmall,
+        ItemGroup(
+            title =
+                stringResource(
+                    if (issues) R.string.server_settings_agent_types_issues else R.string.server_settings_agent_types_requests,
+                ),
+            rows =
+                NotificationType.entries.filter { it.isIssue == issues }.map { type ->
+                    editorToggle(Icons.Filled.Notifications, stringResource(type.labelRes()), draft.types and type.bit != 0, enabled) {
+                        onToggle(type.bit)
+                    }
+                },
         )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-        ) {
-            NotificationType.entries.filter { it.isIssue == issues }.forEach { type ->
-                BingeFilterChip(
-                    label = stringResource(type.labelRes()),
-                    selected = draft.types and type.bit != 0,
-                    onClick = { onToggle(type.bit) },
-                    enabled = enabled,
-                )
-            }
-        }
     }
 }
 

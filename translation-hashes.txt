@@ -451,6 +451,8 @@ app:server_settings_agent_test  ae6de6b78417
 app:server_settings_agent_tested  f9a81943ac0f
 app:server_settings_agent_topic  7e61847d61d6
 app:server_settings_agent_topic_hint  acb69c332574
+app:server_settings_agent_types_issues  883d0bfcb2e5
+app:server_settings_agent_types_requests  f304abb71581
 app:server_settings_agent_user_email_required  a981d73bb37c
 app:server_settings_agent_user_key  f30326b712b6
 app:server_settings_agent_user_key_hint  cf097ac2b4b2
