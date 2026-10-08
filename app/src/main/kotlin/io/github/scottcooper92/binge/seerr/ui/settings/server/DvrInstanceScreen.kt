@@ -115,6 +115,7 @@ private fun ServerGroup(
                     value = draft.host,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                    placeholder = stringResource(R.string.placeholder_host),
                     check = { value -> hostLabel.takeIf { value.isBlank() } },
                 ),
                 textSettingItem(
@@ -143,6 +144,16 @@ private fun ServerGroup(
                     value = draft.baseUrl,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(baseUrl = value) } },
+                    placeholder =
+                        stringResource(
+                            if (draft.type ==
+                                ServiceType.Radarr
+                            ) {
+                                R.string.placeholder_url_base_radarr
+                            } else {
+                                R.string.placeholder_url_base_sonarr
+                            },
+                        ),
                 ),
                 ListItem(
                     icon = Icons.Filled.NetworkCheck,

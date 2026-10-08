@@ -117,6 +117,16 @@ private fun SettingsGroup(
             value = draft.externalUrl,
             enabled = enabled,
             onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
+            placeholder =
+                stringResource(
+                    if (draft.kind ==
+                        MediaServerKind.Plex
+                    ) {
+                        R.string.placeholder_plex_web_url
+                    } else {
+                        R.string.placeholder_server_url
+                    },
+                ),
             hint = stringResource(R.string.server_settings_external_hint),
             check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
         )
@@ -138,6 +148,7 @@ private fun SettingsGroup(
                     value = draft.host,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                    placeholder = stringResource(R.string.placeholder_host),
                     check = { value -> requiredError.takeIf { value.isBlank() } },
                 ),
                 textSettingItem(
@@ -146,6 +157,7 @@ private fun SettingsGroup(
                     value = draft.port,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                    placeholder = stringResource(portPlaceholderRes(draft.kind)),
                     check = { value -> portError.takeIf { !portValid(value) } },
                 ),
                 editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { on ->
@@ -169,6 +181,16 @@ private fun SettingsGroup(
                         value = base,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(urlBase = value) } },
+                        placeholder =
+                            stringResource(
+                                if (draft.kind ==
+                                    MediaServerKind.Emby
+                                ) {
+                                    R.string.placeholder_url_base_emby
+                                } else {
+                                    R.string.placeholder_url_base_jellyfin
+                                },
+                            ),
                     )
                 },
                 external,
@@ -281,3 +303,7 @@ private fun MediaServerKind.labelRes(): Int =
         MediaServerKind.Jellyfin -> R.string.user_origin_jellyfin
         MediaServerKind.Emby -> R.string.user_origin_emby
     }
+
+/** The port each kind listens on out of the box: an example in the sheet, never a value. */
+private fun portPlaceholderRes(kind: MediaServerKind): Int =
+    if (kind == MediaServerKind.Plex) R.string.placeholder_port_plex else R.string.placeholder_port_jellyfin

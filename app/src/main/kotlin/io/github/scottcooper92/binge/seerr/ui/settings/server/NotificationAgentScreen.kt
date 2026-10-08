@@ -159,7 +159,8 @@ private fun textOptionItem(
             value = value,
             enabled = editable,
             onChange = { typed -> actions.onSetOption(option, typed) },
-            hint = (option.hintRes() ?: option.placeholderRes())?.let { stringResource(it) },
+            hint = option.hintRes()?.let { stringResource(it) },
+            placeholder = option.placeholderRes()?.let { stringResource(it) },
             check = { typed -> wrongShape.takeIf { typed.isNotBlank() && !option.satisfiedBy(typed) } },
             shown =
                 when {
