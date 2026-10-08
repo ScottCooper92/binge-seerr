@@ -29,7 +29,7 @@ private const val RUNNING_REFRESH_MILLIS = 5_000L
 private const val OUTCOME_MILLIS = 4_000L
 
 /**
- * The Settings root's System group's jobs: every scheduled job, run now, cancelled, or given a new
+ * The Jobs & cache page's jobs: every scheduled job, run now, cancelled, or given a new
  * schedule. While any job is running the list is re-read on a short interval, so the running state
  * clears on its own.
  */
