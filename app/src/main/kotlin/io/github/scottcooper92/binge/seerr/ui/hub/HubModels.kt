@@ -91,6 +91,8 @@ sealed interface HubUiState {
      */
     data class Error(
         val health: ConnectionHealth,
+        /** A retry started from this problem is in flight; the problem stays until the server answers (#873). */
+        val rechecking: Boolean = false,
     ) : HubUiState
 
     data class Ready(
@@ -101,5 +103,10 @@ sealed interface HubUiState {
         val bingeStatus: BingeStatus,
         /** The user closed the hint [bingeStatus] shows, so the tile leaves it out. */
         val bingeHintDismissed: Boolean = false,
+        /**
+         * A retry started from a problem [health] is in flight. The problem stays named until the server has answered,
+         * so the dashboard isn't shown on a re-probe's way through Checking, then taken away again (#873).
+         */
+        val rechecking: Boolean = false,
     ) : HubUiState
 }

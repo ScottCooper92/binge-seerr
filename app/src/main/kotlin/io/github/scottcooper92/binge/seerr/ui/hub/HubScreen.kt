@@ -72,8 +72,9 @@ fun HubScreen(
     admitsUnverifiedCallers: Boolean = false,
 ) {
     val ready = state as? HubUiState.Ready
-    // Held here, above the health branches: a re-probe passes through Checking and would drop it from the problem panel.
+    // The view model holds a problem through the re-check meant to clear it (#873), so this is the problem to name.
     val health = if (state is HubUiState.Error) state.health else ready?.health
+    val rechecking = (state as? HubUiState.Error)?.rechecking ?: ready?.rechecking ?: false
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     BingeScreenScaffold(bar = ScreenBar.Small, title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
@@ -86,6 +87,7 @@ fun HubScreen(
                         state.health,
                         allow,
                         actions.onRetry,
+                        rechecking,
                         actions.onReconnect,
                         actions.onDisconnect,
                         Modifier.padding(inner),
@@ -96,6 +98,7 @@ fun HubScreen(
                         ready.health,
                         allow,
                         actions.onRetry,
+                        rechecking,
                         actions.onReconnect,
                         actions.onDisconnect,
                         Modifier.padding(inner),
@@ -248,13 +251,14 @@ class DeveloperRow(
 
 /**
  * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches
- * here, since the app goes to sign-in instead (#810).
+ * here, since the app goes to sign-in instead (#810). [rechecking] is a retry in flight, which the primary button shows.
  */
 @Composable
 private fun ConnectionProblem(
     health: ConnectionHealth,
     allow: AllowLocalNetwork,
     onRetry: () -> Unit,
+    rechecking: Boolean,
     onReconnect: () -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
@@ -287,7 +291,13 @@ private fun ConnectionProblem(
             if (health == ConnectionHealth.LocalNetworkDenied) {
                 BingeFilledButton(label = stringResource(allow.label), onClick = allow.run, modifier = Modifier.fillMaxWidth())
             } else {
-                BingeFilledButton(label = stringResource(R.string.hub_retry), onClick = onRetry, modifier = Modifier.fillMaxWidth())
+                // While a retry is in flight it says so, and can't be pressed again; the other ways out stay open.
+                BingeFilledButton(
+                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.hub_retry),
+                    onClick = onRetry,
+                    loading = rechecking,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
             BingeOutlinedButton(
                 label = stringResource(R.string.settings_edit_connection),

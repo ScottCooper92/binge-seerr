@@ -95,6 +95,13 @@ class HubScreenshotTest {
     @Composable
     fun unreachable() = HubScreen(state = previewReady(health = ConnectionHealth.Unreachable), actions = previewActions())
 
+    /** A retry in flight from that problem: the problem stays, and Retry says it is checking and can't be pressed again (#873). */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun unreachableRechecking() =
+        HubScreen(state = previewReady(health = ConnectionHealth.Unreachable).copy(rechecking = true), actions = previewActions())
+
     /** The server is on the local network and Android refuses this app that network: the way out is the permission, not a retry. */
     @PreviewTest
     @SeerrScreenStatePreview

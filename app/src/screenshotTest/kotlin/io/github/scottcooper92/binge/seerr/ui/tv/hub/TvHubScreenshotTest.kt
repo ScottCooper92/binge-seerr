@@ -27,6 +27,14 @@ class TvHubScreenshotTest {
         TvHubBoard(state = previewReady(health = ConnectionHealth.Unreachable), actions = previewTvHubActions())
     }
 
+    /** A retry in flight: the problem stays, and the lead button says it is checking (#873). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun UnreachableRechecking() {
+        TvHubBoard(state = previewReady(health = ConnectionHealth.Unreachable).copy(rechecking = true), actions = previewTvHubActions())
+    }
+
     /** The local network is refused: the board's lead action is the permission, with Edit connection and Disconnect beside it. */
     @PreviewTest
     @SeerrTvScreenPreviews

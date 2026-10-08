@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -152,7 +153,7 @@ class HubViewModel
                 Triple(downloading, status, dismissed)
             }
 
-        val uiState: StateFlow<HubUiState> =
+        private val freshState: Flow<HubUiState> =
             combine(
                 server,
                 health,
@@ -177,7 +178,13 @@ class HubViewModel
                             bingeHintDismissed = hintDismissed,
                         )
                 }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, HubUiState.Loading)
+            }
+
+        /** [freshState], with a problem held through the re-check that is meant to clear it: see [holdingProblem]. */
+        val uiState: StateFlow<HubUiState> =
+            freshState
+                .scan<HubUiState, HubUiState>(HubUiState.Loading) { shown, fresh -> holdingProblem(shown, fresh) }
+                .stateIn(viewModelScope, SharingStarted.Lazily, HubUiState.Loading)
 
         private val effectiveHealth: Flow<ConnectionHealth> =
             uiState.map {
@@ -304,3 +311,32 @@ internal fun ConnectionHealth.orLocalNetworkDenied(
     } else {
         this
     }
+
+/**
+ * What the hub shows next, given what it [shown] and the [fresh] state. A re-check passes through Checking, and on its
+ * way the server and the overview re-emit what is remembered: shown as is, that is the dashboard, let back in before
+ * anything has answered, then taken away again. So while the last settled state named a problem, a Checking or Loading
+ * state keeps naming it, marked rechecking, until the re-check settles on a health of its own (#873). A cold start has no
+ * earlier problem, so it still shows the remembered dashboard while it checks.
+ */
+internal fun holdingProblem(
+    shown: HubUiState,
+    fresh: HubUiState,
+): HubUiState {
+    val held =
+        when (shown) {
+            is HubUiState.Error -> shown.health
+            is HubUiState.Ready -> shown.health.takeIf { it.isProblem() }
+            HubUiState.Loading -> null
+        } ?: return fresh
+    return when (fresh) {
+        is HubUiState.Ready -> if (fresh.health == ConnectionHealth.Checking) fresh.copy(health = held, rechecking = true) else fresh
+        HubUiState.Loading ->
+            when (shown) {
+                is HubUiState.Error -> shown.copy(rechecking = true)
+                is HubUiState.Ready -> shown.copy(rechecking = true)
+                HubUiState.Loading -> fresh
+            }
+        is HubUiState.Error -> fresh
+    }
+}

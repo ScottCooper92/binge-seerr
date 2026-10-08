@@ -1229,4 +1229,5 @@
     <string name="server_settings_api_timeout_fraction">%1$s seconds</string>
     <string name="server_settings_api_timeout_none">No timeout</string>
     <string name="placeholder_api_timeout" translatable="false">30</string>
+    <string name="hub_rechecking">Checking the server…</string>
 </resources>

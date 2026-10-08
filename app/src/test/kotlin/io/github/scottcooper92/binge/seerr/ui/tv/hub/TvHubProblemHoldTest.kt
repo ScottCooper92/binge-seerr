@@ -20,25 +20,30 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** The problem page holds through a re-probe's Checking, rather than blinking to loading and dropping the remote (#796). */
+/**
+ * The problem page stays through a re-probe, rather than blinking to loading and dropping the remote (#796). The view
+ * model holds the problem and marks it rechecking (#873), so that is the state a re-probe reaches the board as, and the
+ * board shows it working.
+ */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvHubProblemHoldTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private var health by mutableStateOf(ConnectionHealth.Unreachable)
+    private var state by mutableStateOf(ready(ConnectionHealth.Unreachable))
 
     @Test
     fun `a re-probe keeps the problem it was showing, and the next answer replaces it`() {
-        rule.setContent { BingeTvTheme { TvHubBoard(state = ready(health), actions = TvHubActions({}, {}, {})) } }
+        rule.setContent { BingeTvTheme { TvHubBoard(state = state, actions = TvHubActions({}, {}, {})) } }
         rule.onNode(hasText(string(R.string.hub_unreachable_headline))).assertExists()
 
-        health = ConnectionHealth.Checking
+        state = ready(ConnectionHealth.Unreachable).copy(rechecking = true)
         rule.waitForIdle()
         rule.onNode(hasText(string(R.string.hub_unreachable_headline))).assertExists()
+        rule.onNode(hasText(string(R.string.hub_rechecking))).assertExists()
 
-        health = ConnectionHealth.CouldNotLoad
+        state = ready(ConnectionHealth.CouldNotLoad)
         rule.waitForIdle()
         rule.onNode(hasText(string(R.string.hub_couldnt_load_headline))).assertExists()
     }
