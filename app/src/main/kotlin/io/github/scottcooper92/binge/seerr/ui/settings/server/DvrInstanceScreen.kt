@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Badge
@@ -26,10 +25,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
-import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.theme.BingeSentiment
@@ -268,30 +265,6 @@ internal fun TagChips(
     Text(stringResource(R.string.request_tags), style = MaterialTheme.typography.titleSmall)
     tags.forEach { tag ->
         FilterChip(selected = tag.id in selected, onClick = { onToggle(tag.id) }, enabled = enabled, label = { Text(tag.label) })
-    }
-}
-
-@Composable
-internal fun DeleteButton(onDelete: () -> Unit) {
-    var confirming by rememberSaveable { mutableStateOf(false) }
-    BingeOutlinedButton(
-        label = stringResource(R.string.server_settings_delete),
-        onClick = { confirming = true },
-        destructive = true,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    if (confirming) {
-        BingeConfirmDialog(
-            title = stringResource(R.string.server_settings_delete_title),
-            message = stringResource(R.string.server_settings_delete_message),
-            confirmLabel = stringResource(R.string.server_settings_delete),
-            destructive = true,
-            onConfirm = {
-                confirming = false
-                onDelete()
-            },
-            onDismiss = { confirming = false },
-        )
     }
 }
 

@@ -50,7 +50,7 @@ fun TautulliScreen(
                         value = draft.host,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(host = value) } },
-                        check = { value -> hostLabel.takeIf { value.isBlank() } },
+                        required = draft.configured,
                     ),
                     textSettingItem(
                         icon = Icons.Filled.Tag,
@@ -58,7 +58,8 @@ fun TautulliScreen(
                         value = draft.port,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(port = value) } },
-                        check = { value -> portError.takeIf { !portValid(value) } },
+                        required = draft.configured,
+                        check = { value -> portError.takeIf { value.isNotBlank() && !portValid(value) } },
                     ),
                     editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { on ->
                         actions.onEdit { it.copy(useSsl = on) }
@@ -76,7 +77,7 @@ fun TautulliScreen(
                         value = draft.apiKey,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(apiKey = value) } },
-                        check = { value -> keyLabel.takeIf { value.isBlank() } },
+                        required = draft.configured,
                         shown = draft.apiKey.maskedKey() ?: stringResource(R.string.settings_value_not_set),
                         secret = true,
                     ),
