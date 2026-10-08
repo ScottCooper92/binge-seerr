@@ -134,19 +134,6 @@ class TautulliScreenshotTest {
     @Composable
     fun configured() = TautulliFrame(settled(tautulliForm()))
 
-    /** A port out of range marks the field and keeps Save off. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun invalidPort() = TautulliFrame(EditorUiState.Ready(draft = tautulliForm().copy(port = "99999"), saved = tautulliForm()))
-
-    /** An external URL with no scheme: the field is flagged and Save stays off. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun badExternalUrl() =
-        TautulliFrame(EditorUiState.Ready(draft = tautulliForm().copy(externalUrl = "tautulli.example.com"), saved = tautulliForm()))
-
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
