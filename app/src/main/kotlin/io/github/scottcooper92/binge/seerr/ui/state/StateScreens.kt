@@ -151,7 +151,7 @@ private fun SeerrError.icon(): ImageVector =
         SeerrError.Rejected, SeerrError.Unknown -> Icons.Filled.ErrorOutline
     }
 
-private fun SeerrError.titleRes(): Int =
+internal fun SeerrError.titleRes(): Int =
     when (this) {
         SeerrError.NotConnected -> R.string.state_error_not_connected_title
         SeerrError.Unauthorized -> R.string.state_error_unauthorized_title

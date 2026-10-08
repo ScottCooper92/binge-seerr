@@ -746,7 +746,7 @@ app:settings_request_limit_movie  03bd4b8cbd52
 app:settings_request_limit_tv  cfeb1bf41637
 app:settings_request_limit_unlimited  11dde17d6c3e
 app:settings_request_limit_value  9c7f4dc9bdd6
-app:settings_section_agents_none  33f0bd59a724
+app:settings_section_agents_detail  886387c0bf8b
 app:settings_section_agents_on  18f4ce5b2cc7
 app:settings_section_general_detail  7e0c66ff76f5
 app:settings_section_notifications  788011833a5a

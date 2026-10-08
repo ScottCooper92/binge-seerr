@@ -1,6 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LanguagePickerTest {
@@ -29,5 +31,14 @@ class LanguagePickerTest {
     fun `a code the device cannot name falls back to tmdb's name, then the code`() {
         assertEquals("Klingon list", languageName("zzz", "Klingon list"))
         assertEquals("zzz", languageName("zzz"))
+    }
+
+    @Test
+    fun `typed codes are usable when blank or every code is two or three letters`() {
+        assertTrue(languageEntryUsable(""))
+        assertTrue(languageEntryUsable(" en | ja |"))
+        assertFalse(languageEntryUsable("english"))
+        assertFalse(languageEntryUsable("en-US"))
+        assertFalse(languageEntryUsable("en fr"))
     }
 }

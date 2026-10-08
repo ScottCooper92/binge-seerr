@@ -198,10 +198,19 @@ class HubViewModel
             )
         }
 
-        fun setScreenVisible(visible: Boolean) {
+        /**
+         * Whether a screen that reads the hub is showing. Visible, the hub auto-retries a server that is not answering.
+         * [dashboard] is a screen that draws the phone's dashboard: it also polls the downloads, re-reads the pending
+         * count and checks whether Binge is installed. A screen that reads only the health or the account passes false,
+         * so it doesn't fetch what it never draws (#827).
+         */
+        fun setScreenVisible(
+            visible: Boolean,
+            dashboard: Boolean = true,
+        ) {
             screenVisible.value = visible
-            downloadsPoller.setScreenVisible(visible)
-            if (visible) {
+            downloadsPoller.setScreenVisible(visible && dashboard)
+            if (visible && dashboard) {
                 installedTrigger.value = installCheck.isInstalled()
                 viewModelScope.launch(dispatcher) { loader.pendingRequestCount()?.let { refreshedPendingCount.value = it } }
             }
