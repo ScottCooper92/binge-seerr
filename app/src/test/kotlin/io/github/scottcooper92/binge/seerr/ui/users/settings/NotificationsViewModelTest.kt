@@ -71,13 +71,20 @@ class NotificationsViewModelTest {
                 draft.agent(NotificationAgent.Email),
             )
             assertEquals(
-                AgentSettings(enabled = true, fields = mapOf(AgentField.TelegramChatId to "99"), sendSilently = true, types = 4),
+                AgentSettings(
+                    enabled = true,
+                    fields = mapOf(AgentField.TelegramChatId to "99", AgentField.TelegramThreadId to ""),
+                    sendSilently = true,
+                    types = 4,
+                ),
                 draft.agent(NotificationAgent.Telegram),
             )
             assertTrue(draft.isOn(NotificationAgent.Pushbullet))
             assertFalse(draft.isOn(NotificationAgent.Pushover))
             assertFalse(draft.isOn(NotificationAgent.Discord))
             assertEquals("seerr_bot", draft.telegramBotUsername)
+            assertEquals(listOf("1234"), draft.discordIds)
+            assertFalse(draft.multipleDiscordIds)
             assertFalse(draft.isModerator)
         }
 
@@ -115,40 +122,23 @@ class NotificationsViewModelTest {
         }
 
     @Test
-    fun `a Discord id that is not digits flags the page and blocks the save`() =
+    fun `a Discord id that is not digits blocks the save`() =
         runTest {
             val vm = viewModel()
             vm.awaitReady()
 
-            vm.edit {
-                it.update(
-                    NotificationAgent.Discord,
-                ) { discord -> discord.copy(fields = mapOf(AgentField.DiscordId to "scott#1234")) }
-            }
+            vm.edit { it.copy(discordIds = listOf("scott#1234")) }
             vm.save()
 
             val ready = vm.awaitReady()
-            assertFalse(ready.draft.discordIdValid)
+            assertFalse(ready.draft.discordIdsValid)
             assertFalse(ready.draft.valid)
             assertFalse(ready.saving)
             assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/notifications"))
         }
 
     @Test
-    fun `a blank or numeric Discord id is valid, padded or not`() {
-        listOf("", "  ", "0", "80351110224678912", " 80351110224678912 ").forEach { id ->
-            val settings = NotificationSettings().update(NotificationAgent.Discord) { it.copy(fields = mapOf(AgentField.DiscordId to id)) }
-            assertTrue(id, settings.discordIdValid)
-        }
-        assertTrue(NotificationSettings().valid)
-        listOf("@scott", "<@123>", "123 456", "12a").forEach { id ->
-            val settings = NotificationSettings().update(NotificationAgent.Discord) { it.copy(fields = mapOf(AgentField.DiscordId to id)) }
-            assertFalse(id, settings.discordIdValid)
-        }
-    }
-
-    @Test
-    fun `Seerr's list of Discord ids reads as the first, and the rest and the Telegram topic survive the save`() =
+    fun `Seerr's list of Discord ids reads whole, and an added one and the Telegram topic go out with the save`() =
         runTest {
             seerr.serve(
                 "GET /api/v1/user/8/settings/notifications",
@@ -156,23 +146,55 @@ class NotificationsViewModelTest {
                    "telegramMessageThreadId":"42","notificationTypes":{}}""",
             )
             val vm = viewModel()
-            assertEquals(
-                "1234",
-                vm
-                    .awaitReady()
-                    .draft
-                    .agent(NotificationAgent.Discord)
-                    .fields[AgentField.DiscordId],
-            )
+            val draft = vm.awaitReady().draft
+            assertEquals(listOf("1234", "5678"), draft.discordIds)
+            assertTrue(draft.multipleDiscordIds)
+            assertEquals("42", draft.field(AgentField.TelegramThreadId))
 
-            vm.edit { it.update(NotificationAgent.Discord) { discord -> discord.copy(fields = mapOf(AgentField.DiscordId to "9999")) } }
+            vm.edit { it.copy(discordIds = it.discordIds + " 9999 ").set(AgentField.TelegramThreadId, "7") }
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
-            assertEquals("9999", sent.getValue("discordId").jsonPrimitive.content)
-            assertEquals(listOf("9999", "5678"), sent.getValue("discordIds").jsonArray.map { it.jsonPrimitive.content })
-            assertEquals("42", sent.getValue("telegramMessageThreadId").jsonPrimitive.content)
+            assertEquals("1234", sent.getValue("discordId").jsonPrimitive.content)
+            assertEquals(listOf("1234", "5678", "9999"), sent.getValue("discordIds").jsonArray.map { it.jsonPrimitive.content })
+            assertEquals("7", sent.getValue("telegramMessageThreadId").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `the saved Pushover application's sounds are read with the settings`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/user/8/settings/notifications",
+                """{"pushoverApplicationToken":"azGDORePK8gMaC0QOYAMyEEuzJnyUi","pushoverUserKey":"uQiRzpo4DXghDmr9QzzfQu27cmVRsG",
+                   "pushoverSound":"bike","notificationTypes":{}}""",
+            )
+            seerr.serve(
+                "GET /api/v1/settings/notifications/pushover/sounds",
+                """[{"name":"bike","description":"Bike"},{"name":"tugboat"}]""",
+            )
+
+            val draft = viewModel().awaitReady().draft
+
+            assertEquals(listOf(PushoverSoundChoice("bike", "Bike"), PushoverSoundChoice("tugboat", "tugboat")), draft.pushoverSounds)
+            assertEquals("bike", draft.field(AgentField.PushoverSound))
+        }
+
+    @Test
+    fun `sounds the server will not list leave the page to load without them`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/user/8/settings/notifications",
+                """{"pushoverApplicationToken":"azGDORePK8gMaC0QOYAMyEEuzJnyUi","notificationTypes":{}}""",
+            )
+            seerr.serve("GET /api/v1/settings/notifications/pushover/sounds", code = 403)
+
+            assertTrue(
+                viewModel()
+                    .awaitReady()
+                    .draft.pushoverSounds
+                    .isEmpty(),
+            )
         }
 }

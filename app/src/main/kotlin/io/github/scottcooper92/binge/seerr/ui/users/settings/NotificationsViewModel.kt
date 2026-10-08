@@ -16,7 +16,9 @@ import kotlinx.coroutines.coroutineScope
 /**
  * The notifications page: each agent the user may be reached through, its own fields, and the
  * events it is sent as a bitmask. The moderation events are offered only to a user the server
- * would send them to, which is one who manages requests.
+ * would send them to, which is one who manages requests. The Pushover sounds are the saved
+ * application's, as the web client lists them; a server that will not list them leaves the
+ * device's own sound the only choice.
  */
 @HiltViewModel(assistedFactory = NotificationsViewModel.Factory::class)
 class NotificationsViewModel
@@ -35,8 +37,23 @@ class NotificationsViewModel
                 val api = connection.api()
                 val target = async { api.user(userId) }
                 val settings = api.userNotificationSettings(userId)
-                settings.toNotificationSettings(isModerator = target.await().toPermissions().canManageRequests)
+                val sounds =
+                    settings.pushoverApplicationToken
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { pushoverSounds(it) }
+                        .orEmpty()
+                settings
+                    .toNotificationSettings(isModerator = target.await().toPermissions().canManageRequests)
+                    .copy(pushoverSounds = sounds)
             }
+
+        /** The sounds [token]'s application offers; none where the server is too old, or will not tell this viewer. */
+        private suspend fun pushoverSounds(token: String): List<PushoverSoundChoice> {
+            if (!connection.profile().hasPushoverSounds) return emptyList()
+            return runCatching { connection.api().pushoverSounds(token) }
+                .getOrDefault(emptyList())
+                .map { PushoverSoundChoice(name = it.name, description = it.description ?: it.name) }
+        }
 
         override suspend fun write(draft: NotificationSettings): NotificationSettings {
             connection.api().updateUserNotificationSettings(userId, draft.toDto())
@@ -58,19 +75,7 @@ internal fun SeerrUserNotificationSettingsDto.toNotificationSettings(isModerator
             mapOf(
                 NotificationAgent.Email to
                     AgentSettings(enabled = emailEnabled == true, fields = fields(AgentField.PgpKey to pgpKey), types = types.email ?: 0),
-                NotificationAgent.Discord to
-                    AgentSettings(
-                        enabled = discordEnabled == true,
-                        fields = fields(AgentField.DiscordId to (discordId ?: discordIds?.firstOrNull())),
-                        types = types.discord ?: 0,
-                    ),
-                NotificationAgent.Telegram to
-                    AgentSettings(
-                        enabled = telegramEnabled == true,
-                        fields = fields(AgentField.TelegramChatId to telegramChatId),
-                        sendSilently = telegramSendSilently == true,
-                        types = types.telegram ?: 0,
-                    ),
+                NotificationAgent.Discord to AgentSettings(enabled = discordEnabled == true, types = types.discord ?: 0),
                 NotificationAgent.Pushbullet to
                     AgentSettings(
                         enabled = !pushbulletAccessToken.isNullOrBlank(),
@@ -82,36 +87,48 @@ internal fun SeerrUserNotificationSettingsDto.toNotificationSettings(isModerator
                         enabled = !pushoverUserKey.isNullOrBlank(),
                         fields =
                             fields(
-                                AgentField.PushoverUserKey to pushoverUserKey,
                                 AgentField.PushoverAppToken to pushoverApplicationToken,
+                                AgentField.PushoverUserKey to pushoverUserKey,
                                 AgentField.PushoverSound to pushoverSound,
                             ),
                         types = types.pushover ?: 0,
                     ),
+                NotificationAgent.Telegram to
+                    AgentSettings(
+                        enabled = telegramEnabled == true,
+                        fields =
+                            fields(
+                                AgentField.TelegramChatId to telegramChatId,
+                                AgentField.TelegramThreadId to telegramMessageThreadId,
+                            ),
+                        sendSilently = telegramSendSilently == true,
+                        types = types.telegram ?: 0,
+                    ),
                 NotificationAgent.WebPush to AgentSettings(enabled = webPushEnabled == true, types = types.webpush ?: 0),
             ),
         telegramBotUsername = telegramBotUsername?.takeIf { it.isNotBlank() },
-        otherDiscordIds = discordIds.orEmpty().drop(1),
-        telegramMessageThreadId = telegramMessageThreadId,
+        discordIds = discordIds ?: listOfNotNull(discordId?.takeIf { it.isNotBlank() }),
+        multipleDiscordIds = discordIds != null,
         isModerator = isModerator,
     )
 }
 
 internal fun NotificationSettings.toDto(): SeerrUserNotificationSettingsDto {
-    fun field(field: AgentField): String? = agent(field.agent).fields[field]?.trim()?.takeIf { it.isNotEmpty() }
+    fun sent(of: AgentField): String? = field(of).trim().takeIf { it.isNotEmpty() }
+    val ids = discordIds.map { it.trim() }.filter { it.isNotEmpty() }
     return SeerrUserNotificationSettingsDto(
         emailEnabled = agent(NotificationAgent.Email).enabled,
-        pgpKey = field(AgentField.PgpKey),
+        pgpKey = sent(AgentField.PgpKey),
         discordEnabled = agent(NotificationAgent.Discord).enabled,
-        discordId = field(AgentField.DiscordId),
-        discordIds = listOfNotNull(field(AgentField.DiscordId)) + otherDiscordIds,
-        pushbulletAccessToken = field(AgentField.PushbulletToken),
-        pushoverApplicationToken = field(AgentField.PushoverAppToken),
-        pushoverUserKey = field(AgentField.PushoverUserKey),
-        pushoverSound = field(AgentField.PushoverSound),
+        discordId = ids.firstOrNull(),
+        discordIds = ids,
+        pushbulletAccessToken = sent(AgentField.PushbulletToken),
+        pushoverApplicationToken = sent(AgentField.PushoverAppToken),
+        pushoverUserKey = sent(AgentField.PushoverUserKey),
+        pushoverSound = sent(AgentField.PushoverSound),
         telegramEnabled = agent(NotificationAgent.Telegram).enabled,
-        telegramChatId = field(AgentField.TelegramChatId),
-        telegramMessageThreadId = telegramMessageThreadId,
+        telegramChatId = sent(AgentField.TelegramChatId),
+        telegramMessageThreadId = sent(AgentField.TelegramThreadId),
         telegramSendSilently = agent(NotificationAgent.Telegram).sendSilently,
         webPushEnabled = agent(NotificationAgent.WebPush).enabled,
         notificationTypes =

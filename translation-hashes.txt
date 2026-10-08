@@ -962,10 +962,13 @@ app:user_recently_watched  eb33c3964529
 app:user_role_owner  4b1b8aa3608a
 app:user_settings_account_type  dac7998fba76
 app:user_settings_agent_enabled  92c1cdfdf4cb
-app:user_settings_agent_enabled_hint  9fcb02497263
+app:user_settings_agent_off  4904ac4b9ff7
 app:user_settings_agent_webpush  d4f13b8b53e3
+app:user_settings_discord_add  34a80328adf8
 app:user_settings_discord_id  13b2b9c7370e
+app:user_settings_discord_id_error  67e45fd6ab83
 app:user_settings_discord_id_hint  55da41915c0d
+app:user_settings_discord_ids_hint  1f8a1e481b4f
 app:user_settings_display_name  2b7f6a84de91
 app:user_settings_email  969ccbd3cf63
 app:user_settings_email_invalid  fae6ab037426
@@ -973,10 +976,11 @@ app:user_settings_field_pgp  6fc6e293c53b
 app:user_settings_field_pgp_hint  7064f89ab7aa
 app:user_settings_field_pushbullet_token  9a911b08feb9
 app:user_settings_field_pushover_sound  a8f813d653e5
-app:user_settings_field_pushover_sound_hint  e26c01160f5e
 app:user_settings_field_pushover_token  03cee3f6e95d
 app:user_settings_field_pushover_user  bed33df2905f
 app:user_settings_field_telegram_chat  8fd1a38b785b
+app:user_settings_field_telegram_thread  e80b906e5376
+app:user_settings_field_telegram_thread_hint  2160800570ad
 app:user_settings_link  a6a32dbc5618
 app:user_settings_link_quick_connect  d52940712fbe
 app:user_settings_link_sheet_title  b99a8363093d
@@ -1001,6 +1005,9 @@ app:user_settings_password_mismatch  f694aaa8da2c
 app:user_settings_password_new  3dd9df4441fb
 app:user_settings_password_none  d2e03582d927
 app:user_settings_permissions_lead  bda3e5aa61ea
+app:user_settings_pgp_error  414cf512c517
+app:user_settings_pushover_key_error  9b677f9b2310
+app:user_settings_pushover_sound_default  aa46c3735f07
 app:user_settings_quota_default  4667a465c644
 app:user_settings_quota_override_movie  0057420202a4
 app:user_settings_quota_override_tv  f6c084ed73b8
@@ -1011,6 +1018,7 @@ app:user_settings_saved  b5c120b316c2
 app:user_settings_section_discover  d4a33d5b78bc
 app:user_settings_section_profile  d696a35bdd18
 app:user_settings_telegram_bot  931de21a8a9d
+app:user_settings_telegram_chat_id_error  1a2cda37d9ff
 app:user_settings_telegram_chat_id_hint  f874cb36ce6f
 app:user_settings_telegram_silent  e6ace96135ad
 app:user_settings_title  74a883a037bc
@@ -1025,7 +1033,6 @@ app:user_settings_type_media_available  6fbb1fb4fc9b
 app:user_settings_type_media_declined  1df48b2da038
 app:user_settings_type_media_failed  cfce761befa8
 app:user_settings_type_media_pending  1dd991961f09
-app:user_settings_types_title  efcd0711d801
 app:user_settings_unlink  b90108da0bd2
 app:user_settings_unlink_message  344fb73cd02f
 app:user_settings_unlink_title  5ad31591bf4f

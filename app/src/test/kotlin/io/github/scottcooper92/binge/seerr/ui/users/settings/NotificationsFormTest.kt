@@ -5,123 +5,120 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performKeyInput
-import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.performTextClearance
-import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
-import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 private val EMAIL_ONLY = NotificationSettings(agents = mapOf(NotificationAgent.Email to AgentSettings(enabled = true)))
 
-@Composable
-private fun Notifications(
-    draft: NotificationSettings,
-    onSave: () -> Unit = {},
-) = BingeExpressiveTheme(dynamicColor = false) {
-    NotificationsSettingsScreen(
-        state = EditorUiState.Ready(draft = draft, saved = EMAIL_ONLY),
-        events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = onSave),
-    )
-}
-
-@Composable
-private fun EditableNotifications(initial: NotificationSettings) {
-    var draft by remember { mutableStateOf(initial) }
-    BingeExpressiveTheme(dynamicColor = false) {
-        NotificationsSettingsScreen(
-            state = EditorUiState.Ready(draft = draft, saved = initial),
-            events = emptyFlow(),
-            actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = {}),
-        )
-    }
-}
-
-/** The notifications page's sections: an agent that is on starts open, and a bad Discord ID opens its own. */
+/** The notifications page's groups: every agent but Web push, its values in rows, and its events while it is on. */
 @RunWith(RobolectricTestRunner::class)
 class NotificationsFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
     private var saves = 0
+    private var draft by mutableStateOf(EMAIL_ONLY)
 
-    private fun show(draft: NotificationSettings) = rule.setContent { Notifications(draft) { saves++ } }
+    private fun show(initial: NotificationSettings) {
+        draft = initial
+        rule.setContent { Notifications(saved = initial) }
+    }
+
+    @Composable
+    private fun Notifications(saved: NotificationSettings) {
+        val current = remember { saved }
+        BingeExpressiveTheme(dynamicColor = false) {
+            NotificationsSettingsScreen(
+                state = EditorUiState.Ready(draft = draft, saved = current),
+                events = emptyFlow(),
+                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = { saves++ }),
+            )
+        }
+    }
 
     @Test
-    fun `an agent that is on starts open and one that is off starts closed`() {
+    fun `every agent but web push has a group, and only one that is on lists its events`() {
         show(EMAIL_ONLY)
 
-        rule.onNodeWithText("PGP public key", substring = true).assertExists()
-        rule.onNodeWithText("Discord user ID", substring = true).assertDoesNotExist()
+        listOf("EMAIL", "DISCORD", "PUSHBULLET", "PUSHOVER", "TELEGRAM").forEach { rule.onNodeWithText(it).performScrollTo() }
+        rule.onNodeWithText("WEB PUSH").assertDoesNotExist()
+        rule.onNodeWithText("Request approved").assertExists()
+        rule.onNodeWithText("The server has Discord notifications turned off", substring = true).assertExists()
     }
 
     @Test
-    fun `clearing the only field of an agent without a switch keeps its section open`() {
-        val saved = EMAIL_ONLY.update(NotificationAgent.Pushbullet) { it.copy(fields = mapOf(AgentField.PushbulletToken to "o.abc")) }
-        rule.setContent { EditableNotifications(saved) }
+    fun `a bad discord id is flagged in its row and save does not save`() {
+        show(EMAIL_ONLY.copy(discordIds = listOf("ann#1234")).update(NotificationAgent.Email) { it.copy(types = 4) })
 
-        val token = hasSetTextAction() and hasText("Access token", substring = true)
-        rule.onNode(token).assertExists()
-        rule.onNode(token).performTextClearance()
-
-        rule.onNode(token).assertExists()
-    }
-
-    @Test
-    fun `a bad discord id opens the discord section and save does not save`() {
-        show(EMAIL_ONLY.update(NotificationAgent.Discord) { it.copy(fields = mapOf(AgentField.DiscordId to "ann#1234")) })
-
-        rule.onNodeWithText("1 field needs attention").assertExists()
-        rule.onNode(hasSetTextAction() and hasText("ann#1234")).assertExists()
+        rule.onNodeWithText("Enter the numeric ID, not a username.").performScrollTo()
         rule.onNodeWithText("Save").performClick()
 
         assertEquals(0, saves)
     }
 
     @Test
+    fun `a telegram chat sent events needs its chat id`() {
+        show(EMAIL_ONLY.update(NotificationAgent.Telegram) { it.copy(enabled = true, types = NotificationType.MediaApproved.bit) })
+
+        rule.onNodeWithText("Required").performScrollTo()
+        assertEquals(false, draft.valid)
+    }
+
+    @Test
+    fun `a second discord id is added from its own row`() {
+        show(EMAIL_ONLY.copy(discordIds = listOf("1234"), multipleDiscordIds = true))
+
+        rule.onNodeWithText("Add user ID").performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextInput("5678")
+        rule.onNodeWithText("Done").performClick()
+
+        assertEquals(listOf("1234", "5678"), draft.discordIds)
+    }
+
+    @Test
+    fun `clearing a discord id removes it`() {
+        show(EMAIL_ONLY.copy(discordIds = listOf("1234", "5678"), multipleDiscordIds = true))
+
+        rule.onNodeWithText("1234").performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("")
+        rule.onNodeWithText("Done").performClick()
+
+        assertEquals(listOf("5678"), draft.discordIds)
+    }
+
+    @Test
+    fun `a pushover sound is picked from the application's sounds, the device's own first`() {
+        show(
+            EMAIL_ONLY
+                .set(AgentField.PushoverAppToken, "azGDORePK8gMaC0QOYAMyEEuzJnyUi")
+                .copy(pushoverSounds = listOf(PushoverSoundChoice("bike", "Bike"))),
+        )
+
+        rule.onNodeWithText("Device default").performScrollTo().performClick()
+        rule.onNodeWithText("Bike").performClick()
+
+        assertEquals("bike", draft.field(AgentField.PushoverSound))
+    }
+
+    @Test
     fun `a clean change saves`() {
-        show(EMAIL_ONLY.update(NotificationAgent.Email) { it.copy(types = NotificationType.MediaApproved.bit) })
+        show(EMAIL_ONLY)
+        draft = EMAIL_ONLY.update(NotificationAgent.Email) { it.copy(types = NotificationType.MediaApproved.bit) }
 
         rule.onNodeWithText("Save").performClick()
 
         assertEquals(1, saves)
-    }
-}
-
-/** The notifications page on a television: a closed agent is one stop, and down moves on to the next agent. */
-@RunWith(RobolectricTestRunner::class)
-@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
-class NotificationsTvFocusTest {
-    @get:Rule
-    val rule = createSeerrKeyboardComposeRule()
-
-    @Test
-    fun `down from a closed agent lands on the next agent's header`() {
-        rule.setContent { Notifications(EMAIL_ONLY) }
-        rule.onNodeWithText("Discord").performSemanticsAction(SemanticsActions.RequestFocus)
-
-        rule.onRoot().performKeyInput { pressKey(Key.DirectionDown) }
-        rule.waitForIdle()
-
-        rule.onNodeWithText("Discord").assertIsNotFocused()
-        rule.onNodeWithText("Telegram").assertIsFocused()
     }
 }

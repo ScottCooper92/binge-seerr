@@ -407,7 +407,6 @@
     <string name="user_settings_agent_pushover" translatable="false">Pushover</string>
     <string name="user_settings_agent_webpush">Web push</string>
     <string name="user_settings_agent_enabled">Enabled</string>
-    <string name="user_settings_agent_enabled_hint">Set by the server for everyone; not per-user</string>
     <string name="user_settings_field_pgp">PGP public key</string>
     <string name="user_settings_field_telegram_chat">Chat ID</string>
     <string name="user_settings_field_pushbullet_token">Access token</string>
@@ -415,8 +414,17 @@
     <string name="user_settings_field_pushover_token">Application token</string>
     <string name="user_settings_field_pushover_sound">Notification sound</string>
     <string name="user_settings_telegram_bot">Message %1$s on Telegram and send /start to get your chat ID.</string>
+    <string name="user_settings_agent_off">The server has %1$s notifications turned off. What you set here is used once it turns them on.</string>
+    <string name="user_settings_discord_add">Add user ID</string>
+    <string name="user_settings_discord_ids_hint">Add an ID for each Discord account in your household. Clear one to remove it.</string>
+    <string name="user_settings_discord_id_error">Enter the numeric ID, not a username.</string>
+    <string name="user_settings_field_telegram_thread">Thread or topic ID</string>
+    <string name="user_settings_field_telegram_thread_hint">If your group chat has topics, the ID of the one to post in.</string>
+    <string name="user_settings_telegram_chat_id_error">Enter digits only, with a minus sign in front for a group.</string>
+    <string name="user_settings_pushover_key_error">Enter the 30 letters and digits Pushover gives you.</string>
+    <string name="user_settings_pgp_error">Paste the whole public key, from its BEGIN line to its END line.</string>
+    <string name="user_settings_pushover_sound_default">Device default</string>
     <string name="user_settings_telegram_silent">Send silently</string>
-    <string name="user_settings_types_title">Notify about</string>
     <string name="user_settings_type_media_pending">Request pending approval</string>
     <string name="user_settings_type_media_approved">Request approved</string>
     <string name="user_settings_type_media_available">Request available</string>
@@ -1048,7 +1056,6 @@
     <string name="issue_message_placeholder">Describe what is wrong with this title in as much detail as you can.</string>
     <string name="server_settings_slider_title_hint">The heading this row appears under on Discover.</string>
     <string name="user_settings_field_pgp_hint">Optional. The emails you are sent are encrypted with this key.</string>
-    <string name="user_settings_field_pushover_sound_hint">Blank uses the sound your Pushover device is set to.</string>
     <string name="server_settings_agent_telegram_bot_username_hint">Lets users start their own chat with the bot and choose their own notifications.</string>
     <string name="server_settings_agent_chat_id_hint">Start a chat with your bot, then message @get_id_bot and send /my_id.</string>
     <string name="server_settings_agent_smtp_port_hint">Implicit TLS is usually 465, and STARTTLS 587.</string>

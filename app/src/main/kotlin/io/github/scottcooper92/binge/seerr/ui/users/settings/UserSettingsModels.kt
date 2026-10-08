@@ -140,18 +140,21 @@ data class PasswordSettings(
 }
 
 /**
- * The agents a user may be notified through; slack and webhooks are the server's, not the user's.
- * An agent with no toggle is on whenever its key is set, which is how the server reads it too.
+ * The agents a user may be notified through, in the web client's order; slack and webhooks are the server's, not the
+ * user's. An agent with no toggle is on whenever its key is set, which is how the server reads it too. [onPage] is false
+ * for Web push: its subscription is the browser's, so there is nothing here to set, and it is carried only so a save
+ * keeps its event types.
  */
 enum class NotificationAgent(
     val hasToggle: Boolean,
+    val onPage: Boolean = true,
 ) {
     Email(hasToggle = true),
     Discord(hasToggle = true),
-    Telegram(hasToggle = true),
     Pushbullet(hasToggle = false),
     Pushover(hasToggle = false),
-    WebPush(hasToggle = true),
+    Telegram(hasToggle = true),
+    WebPush(hasToggle = true, onPage = false),
 }
 
 /** One agent's settings: on or off, its own fields, and which events it is sent. */
@@ -162,18 +165,23 @@ data class AgentSettings(
     val types: Int = 0,
 )
 
-/** The text fields the agents need, keyed so one form renders them all; [secret] ones are masked. */
+/**
+ * The text fields the agents need, keyed so one form renders them all, in the order the web client lists them. A
+ * [secret] one is masked. A [key] is one whose being set is what turns an agent without a toggle on. The Discord user
+ * IDs are a list, so they live on [NotificationSettings] rather than here.
+ */
 enum class AgentField(
     val agent: NotificationAgent,
     val secret: Boolean = false,
+    val key: Boolean = false,
 ) {
     PgpKey(NotificationAgent.Email),
-    DiscordId(NotificationAgent.Discord),
-    TelegramChatId(NotificationAgent.Telegram),
-    PushbulletToken(NotificationAgent.Pushbullet, secret = true),
-    PushoverUserKey(NotificationAgent.Pushover, secret = true),
-    PushoverAppToken(NotificationAgent.Pushover, secret = true),
+    PushbulletToken(NotificationAgent.Pushbullet, secret = true, key = true),
+    PushoverAppToken(NotificationAgent.Pushover, key = true),
+    PushoverUserKey(NotificationAgent.Pushover, key = true),
     PushoverSound(NotificationAgent.Pushover),
+    TelegramChatId(NotificationAgent.Telegram),
+    TelegramThreadId(NotificationAgent.Telegram),
 }
 
 /** Seerr's `Notification` enum: the events a user may be told about, each its bit. */
@@ -195,36 +203,87 @@ enum class NotificationType(
     MediaAutoRequested(1 shl 12),
 }
 
+/**
+ * The notifications page, with the web client's rules: a value that is there has to have its shape, and an agent that
+ * is on and sent any event needs what it sends to. A blank value is otherwise allowed, as the server allows it.
+ */
 data class NotificationSettings(
     val agents: Map<NotificationAgent, AgentSettings> = emptyMap(),
     val telegramBotUsername: String? = null,
-    /**
-     * Seerr 3.3 turned the Discord mention id into a list. This page edits the first of them, and
-     * holds the rest so a save keeps the ones it never showed.
-     */
-    val otherDiscordIds: List<String> = emptyList(),
-    /** The Telegram topic id, which this page does not edit; carried so a save does not clear it. */
-    val telegramMessageThreadId: String? = null,
+    /** Discord user IDs, in order. Overseerr and Seerr up to 3.2 keep one, and Seerr 3.3 a list. */
+    val discordIds: List<String> = emptyList(),
+    /** Whether the server keeps a list of Discord user IDs, which is whether a second one can be added. */
+    val multipleDiscordIds: Boolean = false,
+    /** The sounds the saved Pushover application offers; empty where the server would not list them. */
+    val pushoverSounds: List<PushoverSoundChoice> = emptyList(),
     /** Whether the user is told about moderation events at all: those toggles are hidden otherwise. */
     val isModerator: Boolean = false,
 ) {
     fun agent(agent: NotificationAgent): AgentSettings = agents[agent] ?: AgentSettings()
 
-    /** Blank is allowed; anything else must pass the same rule as the profile editor's Discord ID. */
-    val discordIdValid: Boolean
-        get() = agent(NotificationAgent.Discord).fields[AgentField.DiscordId].orEmpty().let { it.isBlank() || it.isDiscordIdShape() }
-
-    val valid: Boolean get() = discordIdValid
+    fun field(field: AgentField): String = agent(field.agent).fields[field].orEmpty()
 
     /** An agent without a toggle is on once it has a key; the server reads it the same way. */
     fun isOn(agent: NotificationAgent): Boolean =
-        if (agent.hasToggle) agent(agent).enabled else agent(agent).fields.values.any { it.isNotBlank() }
+        if (agent.hasToggle) {
+            agent(agent).enabled
+        } else {
+            AgentField.entries.any { it.agent == agent && it.key && field(it).isNotBlank() }
+        }
+
+    /** Whether [agent] needs its own values filled in: it is on, and sent at least one event, as the web client asks. */
+    fun needsValues(agent: NotificationAgent): Boolean = isOn(agent) && agent(agent).types != 0
+
+    /** Each ID has to be blank or a Discord ID's shape, and one has to be there while Discord is sent anything. */
+    val discordIdsValid: Boolean
+        get() =
+            discordIds.all { it.isBlank() || it.isDiscordIdShape() } &&
+                (!needsValues(NotificationAgent.Discord) || discordIds.any { it.isNotBlank() })
+
+    /** Whether [field]'s value, as typed, is one the server would take; a blank one is the required rule's business. */
+    fun fieldValid(field: AgentField): Boolean = field(field).trim().let { it.isEmpty() || field.accepts(it) }
+
+    /** Whether [field] has to be filled in for this draft to save. */
+    fun required(field: AgentField): Boolean = field in REQUIRED && needsValues(field.agent)
+
+    val valid: Boolean
+        get() = discordIdsValid && AgentField.entries.all { fieldValid(it) && !(required(it) && field(it).isBlank()) }
 
     fun update(
         agent: NotificationAgent,
         transform: (AgentSettings) -> AgentSettings,
     ): NotificationSettings = copy(agents = agents + (agent to transform(agent(agent))))
+
+    fun set(
+        field: AgentField,
+        value: String,
+    ): NotificationSettings = update(field.agent) { it.copy(fields = it.fields + (field to value)) }
+
+    private companion object {
+        /** The fields the web client requires while their agent is sent anything. */
+        val REQUIRED = setOf(AgentField.PushbulletToken, AgentField.PushoverAppToken, AgentField.PushoverUserKey, AgentField.TelegramChatId)
+    }
 }
+
+/** One sound a Pushover application offers: the name the server stores, and what the user is shown. */
+data class PushoverSoundChoice(
+    val name: String,
+    val description: String,
+)
+
+/** The web client's shape for each value: Pushover's 30-character keys, Telegram's IDs and an armoured PGP key. */
+internal fun AgentField.accepts(value: String): Boolean =
+    when (this) {
+        AgentField.PgpKey -> PGP_KEY.containsMatchIn(value)
+        AgentField.PushoverAppToken, AgentField.PushoverUserKey -> PUSHOVER_KEY.matches(value)
+        AgentField.TelegramChatId -> TELEGRAM_CHAT_ID.matches(value)
+        AgentField.TelegramThreadId -> value.all { it in '0'..'9' }
+        AgentField.PushbulletToken, AgentField.PushoverSound -> true
+    }
+
+private val PGP_KEY = Regex("-----BEGIN PGP PUBLIC KEY BLOCK-----.+-----END PGP PUBLIC KEY BLOCK-----", RegexOption.DOT_MATCHES_ALL)
+private val PUSHOVER_KEY = Regex("[a-zA-Z0-9]{30}")
+private val TELEGRAM_CHAT_ID = Regex("-?[0-9]+")
 
 /**
  * The permissions page: the toggles offered, what is selected, and the bits the editor leaves

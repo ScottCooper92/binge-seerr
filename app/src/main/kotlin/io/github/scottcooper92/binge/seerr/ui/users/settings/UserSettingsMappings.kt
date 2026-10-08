@@ -54,8 +54,8 @@ internal fun NotificationAgent.labelRes(): Int =
 internal fun AgentField.labelRes(): Int =
     when (this) {
         AgentField.PgpKey -> R.string.user_settings_field_pgp
-        AgentField.DiscordId -> R.string.user_settings_discord_id
         AgentField.TelegramChatId -> R.string.user_settings_field_telegram_chat
+        AgentField.TelegramThreadId -> R.string.user_settings_field_telegram_thread
         AgentField.PushbulletToken -> R.string.user_settings_field_pushbullet_token
         AgentField.PushoverUserKey -> R.string.user_settings_field_pushover_user
         AgentField.PushoverAppToken -> R.string.user_settings_field_pushover_token
@@ -63,17 +63,27 @@ internal fun AgentField.labelRes(): Int =
     }
 
 /**
- * The hint under a field whose value a user cannot guess from its label. Null for the three
- * provider tokens: where those are issued is the provider's own page, not something to spell out here.
+ * The hint in a field's sheet, for a value a user cannot guess from its label. Null for the provider tokens: where
+ * those are issued is the provider's own page, not something to spell out here.
  */
 @StringRes
 internal fun AgentField.hintRes(): Int? =
     when (this) {
         AgentField.PgpKey -> R.string.user_settings_field_pgp_hint
-        AgentField.DiscordId -> R.string.user_settings_discord_id_hint
         AgentField.TelegramChatId -> R.string.user_settings_telegram_chat_id_hint
-        AgentField.PushoverSound -> R.string.user_settings_field_pushover_sound_hint
-        AgentField.PushbulletToken, AgentField.PushoverUserKey, AgentField.PushoverAppToken -> null
+        AgentField.TelegramThreadId -> R.string.user_settings_field_telegram_thread_hint
+        AgentField.PushbulletToken, AgentField.PushoverUserKey, AgentField.PushoverAppToken, AgentField.PushoverSound -> null
+    }
+
+/** What a value [AgentField.accepts] refuses is told; null for a field that takes anything. */
+@StringRes
+internal fun AgentField.errorRes(): Int? =
+    when (this) {
+        AgentField.PgpKey -> R.string.user_settings_pgp_error
+        AgentField.PushoverAppToken, AgentField.PushoverUserKey -> R.string.user_settings_pushover_key_error
+        AgentField.TelegramChatId -> R.string.user_settings_telegram_chat_id_error
+        AgentField.TelegramThreadId -> R.string.editor_error_whole_number
+        AgentField.PushbulletToken, AgentField.PushoverSound -> null
     }
 
 @StringRes
