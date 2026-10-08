@@ -17,6 +17,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -57,7 +58,7 @@ class TautulliViewModelTest {
         uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<TautulliForm>
 
     @Test
-    fun `an unconfigured tautulli is an empty form that cannot be saved until it has an address and a key`() =
+    fun `an unconfigured tautulli is an empty form, and half an address and no key cannot be saved`() =
         runTest {
             val vm = viewModel()
             val draft = vm.awaitReady().draft
@@ -86,5 +87,24 @@ class TautulliViewModelTest {
             val ready = vm.awaitReady()
             assertEquals("tautulli.local", ready.saved.host)
             assertFalse(ready.dirty)
+        }
+
+    @Test
+    fun `emptying the address and key clears tautulli`() =
+        runTest {
+            seerr.serve("GET /api/v1/settings/tautulli", """{"hostname":"tautulli.local","port":8181,"useSsl":false,"apiKey":"t-key"}""")
+            seerr.serve("POST /api/v1/settings/tautulli", "{}")
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(host = "", port = "", apiKey = "") }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/tautulli")).jsonObject
+            assertEquals("", sent.getValue("hostname").jsonPrimitive.content)
+            assertEquals("", sent.getValue("apiKey").jsonPrimitive.content)
+            assertNull(sent["port"])
         }
 }
