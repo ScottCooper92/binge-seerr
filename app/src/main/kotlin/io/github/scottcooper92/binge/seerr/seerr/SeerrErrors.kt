@@ -101,8 +101,8 @@ private fun HttpException.httpStatus(): Status =
 private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
 
 /**
- * The 403 body, peeked rather than consumed so classifying the same failure twice (a report, then the
- * screen's own mapping) agrees with itself. A body that fails to read is the same as a missing or empty
+ * The error body, peeked rather than consumed so reading it and classifying the same failure (a report,
+ * then the screen's own mapping) agree with each other. A body that fails to read is the same as a missing or empty
  * one. This runs inside [toStatusException] itself, so a raw [IOException] here would escape
  * [statusCatching] uncaught rather than become the [Status] the contract expects.
  */
