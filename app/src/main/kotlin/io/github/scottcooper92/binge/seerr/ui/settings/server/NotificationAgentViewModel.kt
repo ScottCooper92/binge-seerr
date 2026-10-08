@@ -47,6 +47,14 @@ class NotificationAgentViewModel
         init {
             reload()
             if (agent == ServerAgent.Pushover) viewModelScope.launch(dispatcher) { followPushoverToken() }
+            if (agent == ServerAgent.Telegram) viewModelScope.launch(dispatcher) { withholdTopic() }
+        }
+
+        /** Overseerr never had a Telegram topic, so its row would be one the server drops. */
+        private suspend fun withholdTopic() {
+            if (!connection.profile().hasTelegramTopics) {
+                editExtras { it.copy(withheld = it.withheld + AgentOption.TelegramMessageThreadId) }
+            }
         }
 
         override suspend fun load(): AgentForm = connection.api().notificationAgent(agent.segment).toForm(agent)

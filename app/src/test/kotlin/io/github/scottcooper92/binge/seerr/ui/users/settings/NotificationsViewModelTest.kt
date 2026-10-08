@@ -217,4 +217,11 @@ class NotificationsViewModelTest {
             )
             assertEquals(0, seerr.count("GET", "/api/v1/settings/notifications/pushover/sounds"))
         }
+
+    @Test
+    fun `Overseerr keeps no Telegram topic, so the page does not offer one`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "1.33.2", settings = "{}")
+            assertFalse(viewModel().awaitReady().draft.telegramTopics)
+        }
 }

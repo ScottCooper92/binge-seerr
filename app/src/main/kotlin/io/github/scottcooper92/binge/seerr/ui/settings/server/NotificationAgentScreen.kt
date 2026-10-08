@@ -95,7 +95,7 @@ internal fun OptionGroup(
     enabled: Boolean,
     actions: AgentActions,
 ) {
-    val options = AgentOption.of(draft.agent).filter { it.ownControl && it.required == required }
+    val options = AgentOption.of(draft.agent).filter { it.ownControl && it.required == required && it !in extras.withheld }
     if (options.isEmpty()) return
     ItemGroup(
         title =
