@@ -76,6 +76,11 @@ class PermissionsSettingsFormTest {
             .performScrollTo()
             .assertIsOn()
             .performClick()
+        rule
+            .onNode(hasText("Advanced requests") and hasClickAction())
+            .performScrollTo()
+            .assertIsOn()
+            .performClick()
 
         assertEquals(emptyList<ManageablePermission>(), toggled)
     }

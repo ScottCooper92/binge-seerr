@@ -3,6 +3,8 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -15,6 +17,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.text.AnnotatedString
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
@@ -115,6 +118,29 @@ class MediaServerFormTest {
 
         rule.onNodeWithText("•••• 1234").performScrollTo().assertExists()
         rule.onNodeWithText("secret-key-1234").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the api key sheet does not display the key`() {
+        show(JELLYFIN.copy(apiKey = "secret-key-1234"))
+
+        rule.onNode(hasText("API key") and hasClickAction()).performScrollTo().performClick()
+
+        // hasText also matches InputText, the raw value; what the field displays is EditableText.
+        val displayed = SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("•".repeat(15)))
+        rule.onNode(displayed).assertExists()
+        rule.onNodeWithText("Done").assertExists()
+    }
+
+    @Test
+    fun `a blank host says it is required`() {
+        show(JELLYFIN)
+
+        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement(" ")
+
+        rule.onNodeWithText("Required").assertExists()
+        rule.onNodeWithText("Done").assertIsNotEnabled()
     }
 
     @Test

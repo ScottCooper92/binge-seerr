@@ -37,7 +37,7 @@ enum class ManageablePermission(
         get() =
             when (this) {
                 Admin -> null
-                ViewRequests -> ManageRequests
+                ViewRequests, RequestAdvanced -> ManageRequests
                 ViewIssues, CreateIssues -> ManageIssues
                 ViewBlocklist -> ManageBlocklist
                 else -> Admin

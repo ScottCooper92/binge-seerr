@@ -1064,7 +1064,7 @@
     <string name="settings_section_services">Servicios</string>
     <string name="settings_section_services_none">Aún no hay Radarr ni Sonarr</string>
     <string name="settings_section_notifications">Notificaciones</string>
-    <string name="settings_section_agents_none">Ningún agente activado</string>
+    <string name="settings_section_agents_detail">Dónde envía notificaciones este servidor</string>
     <string name="settings_section_agents_on">Activados: %1$s</string>
     <string name="settings_users_access_none">Los usuarios nuevos no pueden solicitar</string>
     <string name="settings_users_access_request">Los usuarios nuevos solicitan con aprobación</string>

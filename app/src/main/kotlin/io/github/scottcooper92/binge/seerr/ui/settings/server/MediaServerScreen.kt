@@ -105,20 +105,15 @@ private fun SettingsGroup(
     val urlError =
         stringResource(if (draft.kind == MediaServerKind.Plex) R.string.editor_error_web_url else R.string.editor_error_web_url_no_slash)
     val noSlashError = stringResource(R.string.editor_error_web_url_no_slash)
-    val hostLabel = stringResource(R.string.server_settings_host)
+    val requiredError = stringResource(R.string.editor_field_required)
+    val externalLabel =
+        stringResource(
+            if (draft.kind == MediaServerKind.Plex) R.string.server_settings_plex_web_url else R.string.server_settings_external_host,
+        )
     val external =
         textSettingItem(
             icon = Icons.Filled.Link,
-            label =
-                stringResource(
-                    if (draft.kind ==
-                        MediaServerKind.Plex
-                    ) {
-                        R.string.server_settings_plex_web_url
-                    } else {
-                        R.string.server_settings_external_host
-                    },
-                ),
+            label = externalLabel,
             value = draft.externalUrl,
             enabled = enabled,
             onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
@@ -139,11 +134,11 @@ private fun SettingsGroup(
                 ).takeIf { draft.kind == MediaServerKind.Plex },
                 textSettingItem(
                     icon = Icons.Filled.Dns,
-                    label = hostLabel,
+                    label = stringResource(R.string.server_settings_host),
                     value = draft.host,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(host = value) } },
-                    check = { value -> hostLabel.takeIf { value.isBlank() } },
+                    check = { value -> requiredError.takeIf { value.isBlank() } },
                 ),
                 textSettingItem(
                     icon = Icons.Filled.Tag,
@@ -164,6 +159,7 @@ private fun SettingsGroup(
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(apiKey = value) } },
                         shown = key.maskedKey() ?: stringResource(R.string.settings_value_not_set),
+                        secret = true,
                     )
                 },
                 draft.urlBase?.let { base ->
