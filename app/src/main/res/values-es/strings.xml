@@ -1139,4 +1139,5 @@
     <string name="server_settings_dvr_monitor_none">Ninguna</string>
     <string name="server_settings_rule_any">Cualquiera</string>
     <string name="server_settings_rule_unchanged">Sin cambios</string>
+    <string name="server_settings_dns_ttl_default">El de la respuesta</string>
 </resources>

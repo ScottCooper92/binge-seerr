@@ -1033,8 +1033,6 @@
     <!-- Example values shown while a connection field is empty; an address, a port or a path a translator cannot localise. -->
     <string name="placeholder_host" translatable="false">192.168.1.10</string>
     <string name="placeholder_port_tautulli" translatable="false">8181</string>
-    <string name="placeholder_port_proxy" translatable="false">3128</string>
-    <string name="placeholder_proxy_host" translatable="false">proxy.example.com</string>
     <string name="placeholder_url_base_tautulli" translatable="false">/tautulli</string>
     <string name="placeholder_server_url" translatable="false">https://seerr.example.com</string>
     <string name="placeholder_email" translatable="false">example@domain.com</string>
@@ -1189,4 +1187,6 @@
     <string name="server_settings_dvr_monitor_none">None</string>
     <string name="server_settings_rule_any">Any</string>
     <string name="server_settings_rule_unchanged">Unchanged</string>
+    <string name="server_settings_dns_ttl_default">The answer\'s own</string>
+    <string name="server_settings_secret_set" translatable="false">••••••••</string>
 </resources>
