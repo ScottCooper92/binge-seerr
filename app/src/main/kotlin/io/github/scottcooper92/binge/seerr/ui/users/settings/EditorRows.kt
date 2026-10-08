@@ -40,6 +40,9 @@ import com.binge.designsystem.R as DesR
 /** The keyboard a number asks for: a port, a count, a number of seconds. */
 internal val NumberKeyboard = KeyboardOptions(keyboardType = KeyboardType.Number)
 
+/** The keyboard a number with a fractional part asks for, such as a timeout in seconds. */
+internal val DecimalKeyboard = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+
 /** The keyboard an address asks for: a host, a URL or a URL base, with no autocorrect to rewrite it. */
 internal val AddressKeyboard = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false)
 

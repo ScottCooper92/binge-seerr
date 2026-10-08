@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
+import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 
 /** What the tags picker asks of the page: the saved tags' names, and TMDB's keywords for what is typed. */
@@ -76,6 +77,7 @@ internal fun BlocklistGroup(
                     value = blocklist.tagsLimit,
                     enabled = enabled,
                     onChange = { value -> edit { it.copy(tagsLimit = value) } },
+                    keyboard = NumberKeyboard,
                     hint = stringResource(R.string.server_settings_blocklist_limit_hint),
                     required = true,
                     check = { value -> limitError.takeIf { !blocklist.copy(tagsLimit = value).tagsLimitValid } },
