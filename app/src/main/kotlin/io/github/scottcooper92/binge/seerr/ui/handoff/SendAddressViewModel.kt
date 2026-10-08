@@ -263,14 +263,23 @@ class SendAddressViewModel
                     return false
                 }
                 HandOffStatus.SIGN_IN -> showSignIn(status)
+                // Nothing to do here: the answer is the TV's, and the sheet follows whatever it is (#912).
+                HandOffStatus.CONFIRM ->
+                    _uiState.update { state ->
+                        val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
+                        when (val step = signingIn.step) {
+                            is SignInStep.ConfirmOnTv -> state
+                            else -> signingIn.copy(step = SignInStep.ConfirmOnTv(resume = step as? SignInStep.Session))
+                        }
+                    }
                 // Waiting or checking: the TV is on its address step. A sheet on its sign-in step follows it back there, or a
                 // send would be refused for a step the TV has left (#804). A session that went with the address is the TV
-                // still working on that address, so it stays.
+                // still working on that address, so it stays, and comes back once the TV's user has answered a confirm.
                 else ->
-                    if ((_uiState.value as? SendAddressUiState.SigningIn)?.step !is SignInStep.Session) {
-                        _uiState.showStep(
-                            SignInStep.Waiting,
-                        )
+                    when (val step = (_uiState.value as? SendAddressUiState.SigningIn)?.step) {
+                        is SignInStep.Session -> Unit
+                        is SignInStep.ConfirmOnTv -> _uiState.showStep(step.resume ?: SignInStep.Waiting)
+                        else -> _uiState.showStep(SignInStep.Waiting)
                     }
             }
             return status.state != HandOffStatus.CONNECTED
@@ -315,7 +324,7 @@ class SendAddressViewModel
 
         private companion object {
             /** States a TV can be in that mean the address is done with: a scan then carries on rather than starting over. */
-            val CARRY_ON_STATES = setOf(HandOffStatus.CHECKING, HandOffStatus.SIGN_IN, HandOffStatus.CONNECTED)
+            val CARRY_ON_STATES = setOf(HandOffStatus.CHECKING, HandOffStatus.CONFIRM, HandOffStatus.SIGN_IN, HandOffStatus.CONNECTED)
             const val POLL_MILLIS = 1_500L
             const val LOST_AFTER_SILENT_POLLS = 4
         }

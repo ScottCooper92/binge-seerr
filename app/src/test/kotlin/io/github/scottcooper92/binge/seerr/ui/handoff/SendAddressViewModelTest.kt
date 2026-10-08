@@ -488,6 +488,42 @@ class SendAddressViewModelTest {
             )
         }
 
+    /** #912: a public plain-HTTP address puts the TV on its opt-in, which is not the TV checking the server. */
+    @Test
+    fun `a TV asking its user about plain HTTP says so, and the session that went with the address comes back after`() =
+        runTest {
+            val key = HandOffKey.generate()
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.WAITING), HandOffStatus(HandOffStatus.CONFIRM))
+            val vm =
+                viewModel(
+                    "$LINK&k=${key.encoded()}",
+                    SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)),
+                    scanned = true,
+                )
+            vm.settled()
+            vm.chooseSignIn(true)
+            vm.send()
+
+            val confirming = SignInStep.ConfirmOnTv(resume = SignInStep.Session(awaiting = 1))
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == confirming }
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.CHECKING))
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Session(awaiting = 1) }
+        }
+
+    @Test
+    fun `a code scanned while the TV waits on its user carries on there, and sends no address`() =
+        runTest {
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.CONFIRM))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
+
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.ConfirmOnTv() }
+            assertTrue(sender.sent.isEmpty())
+
+            tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.CHECKING))
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Waiting }
+        }
+
     /** Back on the TV from its sign-in step: the form goes too, rather than send to a step the TV has left (#804). */
     @Test
     fun `the TV going back to its address step takes the sheet back to waiting, and its sign-in step brings the form again`() =
