@@ -1145,4 +1145,6 @@
     <string name="server_settings_metadata_not_tested">Sin probar</string>
     <string name="server_settings_metadata_operational">Funciona</string>
     <string name="server_settings_metadata_failed">No funciona</string>
+    <string name="server_settings_agent_types_requests">Avisar de solicitudes</string>
+    <string name="server_settings_agent_types_issues">Avisar de incidencias</string>
 </resources>

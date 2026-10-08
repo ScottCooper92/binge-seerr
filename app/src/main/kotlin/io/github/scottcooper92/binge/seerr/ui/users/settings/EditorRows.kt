@@ -35,6 +35,10 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
 import com.binge.designsystem.R as DesR
 
+/** How tall a [textSettingItem] sheet's field opens for a value of several lines, and how far it grows. */
+private const val MULTILINE_MIN = 3
+private const val MULTILINE_MAX = 8
+
 /**
  * A text setting as a list row for an `ItemGroup`: its name, and its value (or [emptyLabel] when blank) as the detail;
  * [shown] replaces that for a value the row shouldn't spell out, such as a key.
@@ -55,6 +59,7 @@ internal fun textSettingItem(
     check: (String) -> String? = { null },
     shown: String = value.ifBlank { emptyLabel },
     secret: Boolean = false,
+    multiline: Boolean = false,
 ): ListItem {
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
@@ -88,8 +93,8 @@ internal fun textSettingItem(
                     hint = hint,
                     submitEnabled = problem == null,
                     error = problem.takeIf { draft.isNotEmpty() },
-                    minLines = 1,
-                    maxLines = 1,
+                    minLines = if (multiline) MULTILINE_MIN else 1,
+                    maxLines = if (multiline) MULTILINE_MAX else 1,
                     modifier = Modifier.imePadding(),
                 )
             }

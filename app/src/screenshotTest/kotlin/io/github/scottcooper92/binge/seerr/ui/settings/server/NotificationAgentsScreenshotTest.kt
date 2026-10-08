@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
-import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
@@ -55,7 +54,7 @@ class NotificationAgentScreenshotTest {
     @Composable
     fun emailLayout() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
 
-    /** A Discord agent that is on with its webhook blank: the field is marked required, and says so once Save is tried. */
+    /** A Discord agent that is on with its webhook blank: the row says it is required, and Save stays off. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -170,7 +169,7 @@ private fun webhookForm() =
             ),
     )
 
-/** An agent's optional settings, which start closed on the page, framed open. */
+/** An agent's optional settings, which sit below the fold of the page. */
 class NotificationAgentSectionsScreenshotTest {
     /** Email's optional half: the sender name, the encryption picker, the credentials and the PGP key. */
     @PreviewTest
@@ -203,14 +202,12 @@ private fun MoreSettingsFrame(
     form: AgentForm,
     extras: AgentExtras = AgentExtras(),
 ) = Column(modifier = Modifier.width(SECTION_WIDTH).padding(SECTION_PADDING)) {
-    OptionFields(
-        AgentSections.MORE_SETTINGS,
-        R.string.server_settings_agent_section_more,
-        form,
-        extras,
+    OptionGroup(
+        required = false,
+        draft = form,
+        extras = extras,
         enabled = true,
         actions = AgentActions(onSetEnabled = {}, onSetOption = { _, _ -> }, onSetEncryption = {}, onToggleType = {}, onTest = {}),
-        defaultExpanded = true,
     )
 }
 
