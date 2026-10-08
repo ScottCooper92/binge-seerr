@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.OkHttpDrain
 import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.flow.first
@@ -37,9 +38,13 @@ class TvHomeViewModelTest {
     private val baseUrl = server.url("/").toString()
     private val viewModels = ViewModelStore()
 
+    /** Every client's calls, drained before `MainDispatcherRule` resets Main (#903, as #807 did for `ScriptedSeerr`). */
+    private val drain = OkHttpDrain()
+
     @After
     fun tearDown() {
         viewModels.clear()
+        drain.awaitIdle()
         server.close()
     }
 
@@ -51,7 +56,7 @@ class TvHomeViewModelTest {
                     PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("tv.preferences_pb") },
                     PlainCipher,
                 ),
-            apis = SeerrApiFactory(logRequests = false, health = monitor),
+            apis = SeerrApiFactory(logRequests = false, health = monitor, testDispatcher = drain::newDispatcher),
             healthMonitor = monitor,
         )
     }

@@ -100,7 +100,7 @@ object AuthModule {
         SeerrApiFactory(
             logRequests = BuildConfig.DEBUG,
             health = health,
-            onWrite = { scope.launch { statuses.clearAll() } },
+            onWrite = dropStatusesOnWrite(statuses, scope),
             cleartext = cleartext,
         )
 
@@ -174,3 +174,12 @@ object AuthModule {
             hubOverview.clear()
         })
 }
+
+/**
+ * [AuthModule.apiFactory]'s write hook: a write the saved server accepts drops the title-status cache. Its own function so a
+ * test can build a factory with this exact hook and a dispatcher it can drain (#903).
+ */
+internal fun dropStatusesOnWrite(
+    statuses: MediaStatusStore,
+    scope: CoroutineScope,
+): () -> Unit = { scope.launch { statuses.clearAll() } }
