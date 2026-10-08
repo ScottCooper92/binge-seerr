@@ -1,5 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import kotlinx.serialization.json.jsonPrimitive
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,5 +35,29 @@ class NotificationAgentModelsTest {
     fun `ntfy's priority is a number but not a port, so it is not held to the port range`() {
         assertFalse(AgentOption.NtfyPriority.port)
         assertTrue(AgentOption.NtfyPriority.satisfiedBy("70000"))
+    }
+
+    @Test
+    fun `a password reaches the server as typed, while a token and a host are trimmed`() {
+        val form =
+            email.copy(
+                options =
+                    email.options +
+                        mapOf(
+                            AgentOption.EmailSmtpHost to " smtp.home.lan ",
+                            AgentOption.EmailAuthPass to " hunter2 ",
+                            AgentOption.EmailPgpPassword to "pgp pass ",
+                        ),
+            )
+        val ntfy = AgentForm(ServerAgent.Ntfy, options = mapOf(AgentOption.NtfyPassword to " p w ", AgentOption.NtfyToken to " tk_1 "))
+
+        val sent = form.toDto().options
+        val ntfySent = ntfy.toDto().options
+
+        assertEquals(" hunter2 ", sent.getValue("authPass").jsonPrimitive.content)
+        assertEquals("pgp pass ", sent.getValue("pgpPassword").jsonPrimitive.content)
+        assertEquals("smtp.home.lan", sent.getValue("smtpHost").jsonPrimitive.content)
+        assertEquals(" p w ", ntfySent.getValue("password").jsonPrimitive.content)
+        assertEquals("tk_1", ntfySent.getValue("token").jsonPrimitive.content)
     }
 }
