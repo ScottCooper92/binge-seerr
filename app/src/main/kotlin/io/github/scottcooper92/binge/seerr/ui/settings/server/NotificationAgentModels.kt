@@ -215,10 +215,14 @@ data class PushoverSound(
     val description: String,
 )
 
-/** Beside the form: the sounds the typed Pushover application offers, and whether a test is in flight. */
+/**
+ * Beside the form: the sounds the typed Pushover application offers, whether a test is in flight, and the options this
+ * server has no use for, which the page does not offer.
+ */
 data class AgentExtras(
     val sounds: List<PushoverSound> = emptyList(),
     val testing: Boolean = false,
+    val withheld: Set<AgentOption> = emptySet(),
 )
 
 /** One agent as the agents page lists it; [enabled] is null where its settings could not be read. */

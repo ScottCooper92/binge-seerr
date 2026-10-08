@@ -17,8 +17,8 @@ import kotlinx.coroutines.coroutineScope
  * The notifications page: each agent the user may be reached through, its own fields, and the
  * events it is sent as a bitmask. The moderation events are offered only to a user the server
  * would send them to, which is one who manages requests. The Pushover sounds are the saved
- * application's, as the web client lists them; a server that will not list them leaves the
- * device's own sound the only choice.
+ * application's, as the web client lists them, for a viewer the server would list them to;
+ * otherwise the device's own sound and the current one are the choices.
  */
 @HiltViewModel(assistedFactory = NotificationsViewModel.Factory::class)
 class NotificationsViewModel
@@ -44,14 +44,19 @@ class NotificationsViewModel
                         .orEmpty()
                 settings
                     .toNotificationSettings(isModerator = target.await().toPermissions().canManageRequests)
-                    .copy(pushoverSounds = sounds)
+                    .copy(telegramTopics = connection.profile().hasTelegramTopics, pushoverSounds = sounds)
             }
 
-        /** The sounds [token]'s application offers; none where the server is too old, or will not tell this viewer. */
+        /**
+         * The sounds [token]'s application offers. The list is a server setting, which only an admin may read, so it is
+         * asked for only where the server has it and the viewer is one; a failure leaves the device's own sound.
+         */
         private suspend fun pushoverSounds(token: String): List<PushoverSoundChoice> {
             if (!connection.profile().hasPushoverSounds) return emptyList()
-            return runCatching { connection.api().pushoverSounds(token) }
-                .getOrDefault(emptyList())
+            return runCatching {
+                if (!connection.authenticatedUser().toPermissions().isAdmin) return emptyList()
+                connection.api().pushoverSounds(token)
+            }.getOrDefault(emptyList())
                 .map { PushoverSoundChoice(name = it.name, description = it.description ?: it.name) }
         }
 
