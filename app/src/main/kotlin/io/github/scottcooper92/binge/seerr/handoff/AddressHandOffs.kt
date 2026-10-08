@@ -99,6 +99,8 @@ internal class LanAddressHandOffs
                 storeName = resources.getString(R.string.handoff_page_store_name),
                 sentTitle = resources.getString(R.string.handoff_page_sent_title),
                 sentBody = resources.getString(R.string.handoff_page_sent_body),
+                confirmTitle = resources.getString(R.string.handoff_page_confirm_title),
+                confirmBody = resources.getString(R.string.handoff_page_confirm_body),
                 pinTitle = resources.getString(R.string.handoff_page_pin_title),
                 pinBody = resources.getString(R.string.handoff_page_pin_body),
                 pinField = resources.getString(R.string.handoff_page_pin_field),

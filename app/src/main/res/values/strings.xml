@@ -966,6 +966,8 @@
     <string name="handoff_page_store_name">Google Play Store</string>
     <string name="handoff_page_sent_title">Sent</string>
     <string name="handoff_page_sent_body">Your TV has the address and is checking the server. This page keeps up with it.</string>
+    <string name="handoff_page_confirm_title">Confirm on your TV</string>
+    <string name="handoff_page_confirm_body">That address uses plain HTTP over the internet, so your TV is asking whether to connect anyway. Answer on the TV.</string>
     <string name="handoff_page_pin_title">Enter the PIN on your TV</string>
     <string name="handoff_page_pin_body">Type the 4-digit PIN shown under the code on your TV. It shows this is the TV you are looking at.</string>
     <string name="handoff_page_pin_field">PIN</string>

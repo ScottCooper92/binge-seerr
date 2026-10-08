@@ -24,6 +24,8 @@ class HandOffPageTest {
             storeName = "Store",
             sentTitle = "Sent",
             sentBody = "Sent body",
+            confirmTitle = "Confirm title",
+            confirmBody = "Confirm body",
             pinTitle = "Pin title",
             pinBody = "Pin body",
             pinField = "Pin field",

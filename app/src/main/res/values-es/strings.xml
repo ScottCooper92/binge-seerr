@@ -936,6 +936,8 @@
     <string name="handoff_page_store_name">Google Play Store</string>
     <string name="handoff_page_sent_title">Enviada</string>
     <string name="handoff_page_sent_body">Tu televisor tiene la dirección y está comprobando el servidor. Esta página lo sigue.</string>
+    <string name="handoff_page_confirm_title">Confirma en el televisor</string>
+    <string name="handoff_page_confirm_body">Esa dirección usa HTTP sin cifrar por internet, así que tu televisor pregunta si conectarse de todos modos. Responde en el televisor.</string>
     <string name="handoff_page_pin_title">Escribe el PIN de tu televisor</string>
     <string name="handoff_page_pin_body">Escribe el PIN de 4 cifras que aparece bajo el código en tu televisor. Así se comprueba que es el televisor que tienes delante.</string>
     <string name="handoff_page_pin_field">PIN</string>

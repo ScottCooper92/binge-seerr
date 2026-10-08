@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrTvSpanishScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
@@ -38,6 +39,31 @@ class TvSetupScreenshotTest {
     @Composable
     fun addressInsecure() =
         TvSetupScreen(state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true), actions = NoSetupActions)
+
+    /**
+     * #907: an address a phone sent that waits on the opt-in. The page is the typed form, landed on the opt-in, and the
+     * field sits where it does with no note under it (compare [addressTyped]).
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressFromPhoneAwaitingOptIn() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true).copy(received = true),
+            actions = NoSetupActions,
+            offerHandOff = true,
+        )
+
+    /** The same in Spanish, whose warning runs longest: it has to fit above the button bar without moving the field. */
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun addressFromPhoneAwaitingOptInSpanish() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true).copy(received = true),
+            actions = NoSetupActions,
+            offerHandOff = true,
+        )
 
     @PreviewTest
     @SeerrTvScreenPreviews
