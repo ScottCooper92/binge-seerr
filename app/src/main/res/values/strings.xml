@@ -1030,8 +1030,6 @@
     <string name="field_clear">Clear the value</string>
     <!-- Example values shown while a connection field is empty; an address, a port or a path a translator cannot localise. -->
     <string name="placeholder_host" translatable="false">192.168.1.10</string>
-    <string name="placeholder_port_tautulli" translatable="false">8181</string>
-    <string name="placeholder_url_base_tautulli" translatable="false">/tautulli</string>
     <string name="placeholder_port_plex" translatable="false">32400</string>
     <string name="placeholder_port_jellyfin" translatable="false">8096</string>
     <string name="placeholder_port_proxy" translatable="false">3128</string>
