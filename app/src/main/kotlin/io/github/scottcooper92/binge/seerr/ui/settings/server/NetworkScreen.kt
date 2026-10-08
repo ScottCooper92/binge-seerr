@@ -38,7 +38,8 @@ import kotlinx.coroutines.flow.Flow
 /**
  * The network page in the web client's order, as groups of list rows: the switches every lineage has, then the DNS
  * cache, the API request timeout and the outbound proxy where the server sent them. The DNS cache and the proxy is a switch, and only while it is on do
- * its settings hang beneath it, as the web client shows them. Every value is checked in the sheet that edits it.
+ * its settings hang beneath it, as the web client shows them. Every value is checked in the sheet that edits it. The server
+ * reads all of them only when it starts, so the page says a save waits on a restart (#868).
  */
 @Composable
 fun NetworkScreen(
@@ -74,6 +75,8 @@ fun NetworkScreen(
                         }
                     },
                 ),
+            // Every setting here is one the web client badges "Restart required", on itself or on the switch it hangs from.
+            belowRows = { GroupMessage(stringResource(R.string.server_settings_restart_network), error = false) },
         )
         draft.dnsCache?.let { cache ->
             DnsCacheGroup(cache, enabled) { transform -> actions.onEdit { it.copy(dnsCache = it.dnsCache?.let(transform)) } }

@@ -653,6 +653,8 @@ app:server_settings_proxy_user_missing  2c4065c0ec0d
 app:server_settings_region_code  fdbf9c89e6db
 app:server_settings_regions_unavailable  c24d3d507379
 app:server_settings_request_limits  717a3792b894
+app:server_settings_restart_network  e54fd5000eef
+app:server_settings_restart_proxy_csrf  74132ad1804f
 app:server_settings_rule_add  bed79361ea53
 app:server_settings_rule_any  2b505597daa7
 app:server_settings_rule_applies_to  6687458beee5
