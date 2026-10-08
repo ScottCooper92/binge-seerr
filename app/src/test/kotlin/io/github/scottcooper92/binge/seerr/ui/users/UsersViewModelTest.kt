@@ -240,6 +240,59 @@ class UsersViewModelTest {
             assertEquals(joExpected, cache.rows.first { it.id == 11 }.permissions)
         }
 
+    @Test
+    fun `a bulk edit never carries a managed bit the server hides from one user onto another`() =
+        runTest {
+            // 4K movies is off here, so the editor offers no Request4kMovies toggle and nobody can untick it.
+            // Jo kept it from when it was on; pooling it into the selection would write it onto Ida too.
+            val shared = ManageablePermission.Request.bit
+            val hidden = ManageablePermission.Request4kMovies.bit
+            seerr.dispatcher = { request ->
+                received += request
+                when (request.method + " " + request.url.encodedPath) {
+                    "GET /api/v1/auth/me" -> json("""{"id":1,"displayName":"Admin","permissions":$ADMIN}""")
+                    "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
+                    "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                    "GET /api/v1/user" ->
+                        json(
+                            """{"pageInfo":{"pages":1,"results":2},"results":[
+                               {"id":10,"displayName":"Ida","permissions":$shared,"userType":3,"requestCount":0},
+                               {"id":11,"displayName":"Jo","permissions":${shared or hidden},"userType":3,"requestCount":0}]}""",
+                        )
+                    "PUT /api/v1/user" -> json("[]")
+                    else -> FakeResponse(code = 404)
+                }
+            }
+
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.users.asSnapshot()
+
+            vm.toggleSelected(10)
+            vm.toggleSelected(11)
+            assertEquals(setOf(10, 11), vm.awaitReady { it.selection == setOf(10, 11) }.selection)
+            vm.startBulkEdit()
+            assertEquals(
+                setOf(ManageablePermission.Request),
+                vm.awaitReady { it.edit?.selected?.isNotEmpty() == true }.edit?.selected,
+            )
+
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.selected?.size == 2 }
+
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
+            val puts = received.filter { it.method == "PUT" }
+            val idaExpected = shared or ManageablePermission.CreateIssues.bit
+
+            val idaPut = puts.single { it.body.contains("\"ids\":[10]") }.body
+            assertTrue(idaPut, idaPut.contains("\"permissions\":$idaExpected"))
+            val joPut = puts.single { it.body.contains("\"ids\":[11]") }.body
+            assertTrue(joPut, joPut.contains("\"permissions\":${idaExpected or hidden}"))
+        }
+
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {

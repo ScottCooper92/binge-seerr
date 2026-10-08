@@ -45,7 +45,7 @@ internal fun permissionTree(
  * One group's nodes as switch rows, children joined to their parent by the design system's connector. A permission a
  * selected one already covers reads on and can't be flipped, nor can one in [locked]: what the viewer may not grant.
  * One whose requirement isn't granted, an auto-approve without its request, reads off and can't be flipped, as the
- * web client shows it.
+ * web client shows it, even when a parent or Manage Requests would otherwise cover it.
  */
 @Composable
 internal fun permissionRows(
@@ -57,7 +57,7 @@ internal fun permissionRows(
 ): List<ListItem> =
     nodes.map { (permission, child, last) ->
         val implied = permission !in selected && ManageablePermission.isGranted(permission, selected)
-        val unmet = !implied && !ManageablePermission.requirementsMet(permission, selected)
+        val unmet = !ManageablePermission.requirementsMet(permission, selected)
         editorToggle(
             Icons.Filled.Security,
             stringResource(permission.labelRes()),

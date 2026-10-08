@@ -178,16 +178,18 @@ class UsersViewModel
         /**
          * Opens the editor seeded from what the selection already has — the union of every selected
          * user's decoded permissions — so a save that re-ticks nothing still preserves them, rather
-         * than opening blank and writing an empty set over whatever they had.
+         * than opening blank and writing an empty set over whatever they had. Only the bits the server
+         * offers are seeded: a managed bit the editor hides can't be unticked, so it isn't pooled.
          */
         fun startBulkEdit() {
             val ids = selection.value.toList()
             if (ids.isEmpty() || edit.value != null) return
             edit.value = BulkEdit(saving = true)
+            val offered = offeredNow()
             viewModelScope.launch(dispatcher) {
                 val selected =
                     store.permissionsFor(ids).values.fold(emptySet<ManageablePermission>()) { acc, bitmask ->
-                        acc + ManageablePermission.decode(bitmask)
+                        acc + ManageablePermission.decode(bitmask).filter { it in offered }
                     }
                 edit.value = BulkEdit(selected = selected)
             }
@@ -210,6 +212,9 @@ class UsersViewModel
                     ?: current
             }
 
+        /** What the editor offers right now; nothing before the first read, which keeps every bit as it is. */
+        private fun offeredNow(): Set<ManageablePermission> = (uiState.value as? UsersUiState.Ready)?.offered?.toSet().orEmpty()
+
         fun cancelBulkEdit() {
             if (edit.value?.saving != true) edit.value = null
         }
@@ -219,13 +224,20 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
+            val offered = offeredNow()
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     // Each id's own cached bitmask is the baseline for that id alone, so an unmanaged
-                    // bit only some of the selection holds is never carried onto the rest. Ids whose
+                    // bit only some of the selection holds is never carried onto the rest. The same goes
+                    // for a managed bit the editor doesn't offer: it keeps each user's own value. Ids whose
                     // resulting bitmask agrees are still written together in one PUT.
                     val baselines = store.permissionsFor(ids)
-                    val idsByResult = ids.groupBy { id -> ManageablePermission.apply(baselines[id] ?: 0, current.selected) }
+                    val idsByResult =
+                        ids.groupBy { id ->
+                            val baseline = baselines[id] ?: 0
+                            val hidden = ManageablePermission.decode(baseline).filterNot { it in offered }
+                            ManageablePermission.apply(baseline, current.selected.filter { it in offered }.toSet() + hidden)
+                        }
                     idsByResult.forEach { (permissions, groupIds) ->
                         connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = groupIds, permissions = permissions))
                         store.updatePermissions(groupIds, permissions)

@@ -75,6 +75,14 @@ class ManageablePermissionTest {
     }
 
     @Test
+    fun `manage requests covers an auto-approve as granted but does not meet its request`() {
+        val manager = setOf(ManageablePermission.ManageRequests)
+        assertTrue(ManageablePermission.isGranted(ManageablePermission.AutoApprove, manager))
+        assertFalse(ManageablePermission.requirementsMet(ManageablePermission.AutoApprove, manager))
+        assertFalse(ManageablePermission.requirementsMet(ManageablePermission.AutoApproveMovies, manager))
+    }
+
+    @Test
     fun `a bitmask with only child bits reads them back`() {
         val bits = ManageablePermission.RequestMovies.bit or ManageablePermission.AutoRequestSeries.bit
         assertEquals(
