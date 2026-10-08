@@ -71,7 +71,7 @@ data class SeerrUserNotificationSettingsDto(
     @SerialName("telegramEnabled") val telegramEnabled: Boolean? = null,
     @SerialName("telegramBotUsername") val telegramBotUsername: String? = null,
     @SerialName("telegramChatId") val telegramChatId: String? = null,
-    /** The Jellyseerr lineage's topic within a Telegram group; Overseerr has none, so it is edited only where the profile says. */
+    /** A topic within a Telegram group, from Jellyseerr 2.2; Overseerr has none, so it is edited only where the profile says. */
     @SerialName("telegramMessageThreadId") val telegramMessageThreadId: String? = null,
     @SerialName("telegramSendSilently") val telegramSendSilently: Boolean? = null,
     @SerialName("webPushEnabled") val webPushEnabled: Boolean? = null,
