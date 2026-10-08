@@ -76,6 +76,12 @@ app:handoff_page_mode_api_key  16f0ee47f993
 app:handoff_page_mode_local  871e019bee76
 app:handoff_page_open_app  e19306c1997f
 app:handoff_page_password  e7cf3ef4f17c
+app:handoff_page_pin_body  3d1ab6d24f6b
+app:handoff_page_pin_field  709e58acb65e
+app:handoff_page_pin_locked  415aa40dfc5c
+app:handoff_page_pin_submit  31fbef162594
+app:handoff_page_pin_title  c0b5609ed81f
+app:handoff_page_pin_wrong  e772bfb7c9df
 app:handoff_page_rejected  532f6ab0e80f
 app:handoff_page_send  f89f3b050177
 app:handoff_page_sent_body  7ac6c00d22fc

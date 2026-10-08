@@ -79,8 +79,14 @@ internal class OkHttpTvSignInClient(
                 Request
                     .Builder()
                     .url(target.credentialsUrl)
-                    .post(FormBody.Builder().add("sealed", sealed).build())
-                    .build()
+                    // With the PIN the phone already checked against the key (#909), which the TV asks of every sender.
+                    .post(
+                        FormBody
+                            .Builder()
+                            .add("sealed", sealed)
+                            .add("pin", key.pin())
+                            .build(),
+                    ).build()
             try {
                 client.newCall(request).execute().use { response ->
                     // The status code only: the body says nothing a failure's reason would help with, and logging it is never worth the risk.

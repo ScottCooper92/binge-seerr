@@ -62,6 +62,11 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
  *   the TV is waiting for one, and is bounded in time: before an address arrives its port and token are
  *   replaced every five minutes, and after one it stays up for at most the sign-in timeout. Any other path, a wrong token included, is a bare 404 that says
  *   nothing about what is listening. The comparison is constant-time.
+ * - **PIN step.** When the TV also shows a PIN, the token alone does not let a client send an address or
+ *   credentials. A client proves it by posting the PIN, and the match is bound to that client: the listener
+ *   answers it with a random cookie (see `HandOffClients`) and trusts later requests that carry it. A match
+ *   does not open the code to anyone else. The app keeps no cookies and sends the PIN with every post. Five
+ *   wrong PINs lock the code.
  * - **LAN only.** The socket is bound to the TV's private IPv4 address on the active Wi-Fi or
  *   Ethernet network, never to every interface.
  * - **Short-lived.** It accepts an address while the TV is waiting for one: the first, and another
@@ -95,6 +100,51 @@ internal class AddressHandOffListener(
     override val scanUrl: String get() = key?.let { "$url#k=${it.encoded()}" } ?: url
 
     override val pin: String? = key?.pin()
+
+    /** The browsers that have shown they can see this TV, by the PIN beside its code (#909). A sender that keeps no cookies, as the app does not, sends the PIN with every post. */
+    private val clients = HandOffClients(token)
+
+    @Volatile private var wrongPins = 0
+
+    /** After [MAX_WRONG_PINS] wrong tries the code takes no more: guessing 4 digits needs more chances than that. */
+    private val locked: Boolean get() = wrongPins >= MAX_WRONG_PINS
+
+    /** Whether [request] comes from a client the PIN already matched for, or the code has no PIN to match. */
+    private fun trusted(request: HandOffRequest): Boolean = pin == null || clients.recognises(request)
+
+    /**
+     * Whether [request] lets a phone act: it comes from a client that has matched, or [given] matches the PIN now, in which
+     * case the answer carries the cookie that marks the client. A miss counts.
+     */
+    private fun pinCheck(
+        request: HandOffRequest,
+        given: String?,
+    ): PinCheck {
+        val expected = pin
+        return when {
+            expected == null || clients.recognises(request) -> PinCheck.Trusted
+            locked || given == null -> PinCheck.Refused
+            MessageDigest.isEqual(given.trim().toByteArray(), expected.toByteArray()) -> PinCheck.Matched(clients.mint())
+            else -> {
+                wrongPins++
+                PinCheck.Refused
+            }
+        }
+    }
+
+    private sealed interface PinCheck {
+        data object Trusted : PinCheck
+
+        data object Refused : PinCheck
+
+        data class Matched(
+            val cookie: String,
+        ) : PinCheck
+    }
+
+    /** Where a phone acts on the code, and so where the page asks for the PIN until the client has matched. */
+    private fun HandOffProgress.asksForPin(trusted: Boolean): Boolean =
+        !trusted && (this is HandOffProgress.Waiting || this is HandOffProgress.Failed || this is HandOffProgress.SignIn)
 
     override suspend fun serve(
         progress: () -> HandOffProgress,
@@ -199,7 +249,12 @@ internal class AddressHandOffListener(
         language: String?,
     ): Pair<HandOffResponse, HandOffAccepted?> =
         when (request.method) {
-            "GET" -> HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
+            "GET" ->
+                if (progress.asksForPin(trusted(request))) {
+                    HandOffResponse(HttpStatus.Ok, page.pin(language, wrong = false, locked = locked)) to null
+                } else {
+                    HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
+                }
             "POST" -> post(request, progress, language)
             else -> HandOffResponse(HttpStatus.NotFound, page.refused()) to null
         }
@@ -210,8 +265,10 @@ internal class AddressHandOffListener(
         progress: HandOffProgress,
         language: String?,
     ): Pair<HandOffResponse, HandOffAccepted?> {
-        if (!progress.acceptsAddress) return HandOffResponse(HttpStatus.Ok, page.status(language, progress)) to null
         val fields = request.body.formFields()
+        val check = pinCheck(request, fields["pin"])
+        val cookie = (check as? PinCheck.Matched)?.cookie
+        pinGate(check, fields, progress, language)?.let { return it.copy(clientCookie = cookie) to null }
         val address = fields["address"]?.trim()
         // The phone's session can ride on the same post (#772), sealed like any credentials. One that doesn't open,
         // or isn't a session, refuses the whole post rather than sending the TV on without it.
@@ -220,12 +277,30 @@ internal class AddressHandOffListener(
         val addressOk = !address.isNullOrEmpty() && isAcceptable(address)
         val sessionOk = sealed == null || session != null
         return if (addressOk && sessionOk) {
-            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking)) to
+            HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking), clientCookie = cookie) to
                 HandOffAccepted.Address(checkNotNull(address), session)
         } else {
-            HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true)) to null
+            HandOffResponse(HttpStatus.BadRequest, page.form(language, invalid = true), clientCookie = cookie) to null
         }
     }
+
+    /**
+     * What a post gets instead of being read for an address, if anything. The page's PIN form posts the PIN alone and the
+     * app sends it with the address; either way nothing goes on without it (#909). A post of the PIN alone, once it
+     * matches, opens whatever the page would show now, and so does any post while the TV isn't waiting for an address.
+     */
+    private fun pinGate(
+        check: PinCheck,
+        fields: Map<String, String>,
+        progress: HandOffProgress,
+        language: String?,
+    ): HandOffResponse? =
+        when {
+            check is PinCheck.Refused ->
+                HandOffResponse(HttpStatus.Forbidden, page.pin(language, wrong = fields["pin"] != null, locked = locked))
+            fields.keys == setOf("pin") || !progress.acceptsAddress -> HandOffResponse(HttpStatus.Ok, page.status(language, progress))
+            else -> null
+        }
 
     /** The session [sealed] carries, if it opens under this listener's key for this token and is a session. */
     private fun openSession(sealed: String): String? =
@@ -246,19 +321,23 @@ internal class AddressHandOffListener(
         progress: HandOffProgress,
     ): Pair<HandOffResponse, HandOffAccepted?> {
         if (progress !is HandOffProgress.SignIn) return HandOffResponse(HttpStatus.Conflict, REFUSED_JSON, JSON_TYPE) to null
+        val fields = request.body.formFields()
+        val check = pinCheck(request, fields["pin"])
+        if (check is PinCheck.Refused) return HandOffResponse(HttpStatus.Forbidden, REFUSED_JSON, JSON_TYPE) to null
+        val cookie = (check as? PinCheck.Matched)?.cookie
         val credentials =
-            request.body
-                .formFields()["sealed"]
+            fields["sealed"]
                 ?.let { key?.open(it, token) }
                 ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
                 ?.takeIf { it.mode in progress.modes || (it.mode == HAND_OFF_SESSION_MODE && it.session.isNotEmpty()) }
-                ?: return HandOffResponse(HttpStatus.BadRequest, REFUSED_JSON, JSON_TYPE) to null
+                ?: return HandOffResponse(HttpStatus.BadRequest, REFUSED_JSON, JSON_TYPE, clientCookie = cookie) to null
         // The number the TV will count these as, so the phone knows which attempt a later `failed` is about.
         val taken = STATUS_JSON.encodeToString(HandOffTaken(attempt = progress.attempt + 1))
-        return HandOffResponse(HttpStatus.Ok, taken, JSON_TYPE) to HandOffAccepted.Credentials(credentials)
+        return HandOffResponse(HttpStatus.Ok, taken, JSON_TYPE, clientCookie = cookie) to HandOffAccepted.Credentials(credentials)
     }
 
     private companion object {
+        const val MAX_WRONG_PINS = 5
         const val JSON_TYPE = "application/json; charset=utf-8"
         const val REFUSED_JSON = "{\"ok\":false}"
         val STATUS_JSON = Json { ignoreUnknownKeys = true }

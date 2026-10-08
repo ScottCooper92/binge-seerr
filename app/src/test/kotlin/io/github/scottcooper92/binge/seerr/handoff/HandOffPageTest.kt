@@ -26,6 +26,12 @@ class HandOffPageTest {
             sentBody = "Sent body",
             confirmTitle = "Confirm title",
             confirmBody = "Confirm body",
+            pinTitle = "Pin title",
+            pinBody = "Pin body",
+            pinField = "Pin field",
+            pinSubmit = "Pin submit",
+            pinWrong = "Pin wrong",
+            pinLocked = "Pin locked",
             failed = "Not found <here>",
             signInTitle = "Finish",
             signInBody = { server -> "Sign in to $server" },
@@ -69,6 +75,8 @@ class HandOffPageTest {
         assertEquals(1, Regex("<script").findAll(html).count())
         assertTrue(html.contains("<script>$PAGE_SCRIPT</script>"))
         assertTrue(html.contains("id=\"app\""))
+        // The app link sits in a block the script hides where the page has no key to hand it: a typed URL.
+        assertTrue(Regex("""<div id="openapp">[^<]*<hr>.*id="app".*?</div>""", RegexOption.DOT_MATCHES_ALL).containsMatchIn(html))
         assertFalse(html.contains("Invalid"))
     }
 
@@ -163,6 +171,7 @@ class HandOffPageTest {
 
         assertTrue(failed.contains("<form method=\"post\">"))
         assertTrue(failed.contains("Not found &lt;here&gt;"))
+        assertTrue(Regex("""<div id="openapp">[^<]*<hr>.*id="app".*?</div>""", RegexOption.DOT_MATCHES_ALL).containsMatchIn(failed))
         assertFalse(failed.contains("Invalid"))
     }
 
@@ -210,5 +219,25 @@ class HandOffPageTest {
         assertTrue(text.contains("Content-Security-Policy: default-src 'none'"))
         assertTrue(text.contains("form-action 'self'"))
         assertTrue(text.endsWith("\r\n\r\né"))
+    }
+
+    @Test
+    fun `the PIN step posts a 4-digit PIN back to itself, says when one missed, and offers no form once locked`() {
+        val html = page.pin(acceptLanguage = null, wrong = false, locked = false)
+        assertTrue(html.contains("<form method=\"post\">"))
+        assertTrue(html.contains("name=\"pin\""))
+        assertTrue(html.contains("pattern=\"[0-9]{4}\""))
+        assertTrue(html.contains("Pin title"))
+        assertFalse(html.contains("Pin wrong"))
+
+        assertTrue(page.pin(acceptLanguage = null, wrong = true, locked = false).contains("Pin wrong"))
+
+        val locked = page.pin(acceptLanguage = null, wrong = true, locked = true)
+        assertTrue(locked.contains("Pin locked"))
+        assertFalse(locked.contains("name=\"pin\""))
+        // The app is still offered, in a block the script hides where the page has no key to hand it: a typed URL.
+        assertTrue(locked.contains("intent://tv-handoff"))
+        assertTrue(locked.contains("id=\"openapp\""))
+        assertTrue(PAGE_SCRIPT.contains("if(o&&!K){o.hidden=true;}"))
     }
 }

@@ -968,6 +968,12 @@
     <string name="handoff_page_sent_body">Your TV has the address and is checking the server. This page keeps up with it.</string>
     <string name="handoff_page_confirm_title">Confirm on your TV</string>
     <string name="handoff_page_confirm_body">That address uses plain HTTP over the internet, so your TV is asking whether to connect anyway. Answer on the TV.</string>
+    <string name="handoff_page_pin_title">Enter the PIN on your TV</string>
+    <string name="handoff_page_pin_body">Type the 4-digit PIN shown under the code on your TV. It shows this is the TV you are looking at.</string>
+    <string name="handoff_page_pin_field">PIN</string>
+    <string name="handoff_page_pin_submit">Continue</string>
+    <string name="handoff_page_pin_wrong">That isn\'t the PIN on your TV. Check it and try again.</string>
+    <string name="handoff_page_pin_locked">Too many wrong PINs. On the TV, go back and open a new code, then scan that one.</string>
     <string name="handoff_page_failed">Your TV couldn\'t reach a Seerr server at that address. Check it and send it again.</string>
     <string name="handoff_page_signin_title">Finish on your TV</string>
     <string name="handoff_page_signin_body">Your TV found %1$s. Sign in there with your remote.</string>

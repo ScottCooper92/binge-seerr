@@ -7,7 +7,8 @@ package io.github.scottcooper92.binge.seerr.handoff
  *   storage so it survives the page posting the address and following the TV. It then takes the fragment out of the
  *   address bar: a refresh to a URL with a fragment is a jump within the page, not a reload, so the page would stop
  *   following the TV, and the key has no business in the tab's history.
- * - It puts the key into the "Open Seerr" link, so the app gets it without it crossing the LAN.
+ * - It puts the key into the "Open Seerr" link, so the app gets it without it crossing the LAN. Without the key, as
+ *   on a page opened from the typed URL, the app could not send the PIN, so the PIN step hides the link.
  * - On the TV's sign-in step it shows the server's sign-in fields and seals what is typed exactly as the app does
  *   ([HandOffKey.seal]: AES-256-GCM under an HKDF-SHA256 key, the token as associated data), then follows the TV.
  *
@@ -90,6 +91,8 @@ try{if(K){sessionStorage.setItem(S,K);}else{K=sessionStorage.getItem(S);}}catch(
 if(m&&history.replaceState){history.replaceState(null,"",location.pathname);}
 var a=document.getElementById("app");
 if(K&&a){a.setAttribute("href",a.getAttribute("href").replace("#Intent;","&k="+K+"#Intent;"));}
+var o=document.getElementById("openapp");
+if(o&&!K){o.hidden=true;}
 var f=document.getElementById("signin");
 if(!f)return;
 var page="/a/"+T,sel=document.getElementById("mode"),go=document.getElementById("go"),err=document.getElementById("err");

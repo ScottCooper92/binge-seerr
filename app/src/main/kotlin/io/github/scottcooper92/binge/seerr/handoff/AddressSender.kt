@@ -46,6 +46,8 @@ internal class OkHttpAddressSender(
     ): Boolean =
         withContext(dispatcher) {
             val form = FormBody.Builder().add("address", address)
+            // The PIN the phone already checked against the key (#909): the TV takes nothing from a phone without it.
+            target.key?.let { form.add("pin", it.pin()) }
             sealed?.let { form.add("sealed", it) }
             val request =
                 Request

@@ -938,6 +938,12 @@
     <string name="handoff_page_sent_body">Tu televisor tiene la dirección y está comprobando el servidor. Esta página lo sigue.</string>
     <string name="handoff_page_confirm_title">Confirma en el televisor</string>
     <string name="handoff_page_confirm_body">Esa dirección usa HTTP sin cifrar por internet, así que tu televisor pregunta si conectarse de todos modos. Responde en el televisor.</string>
+    <string name="handoff_page_pin_title">Escribe el PIN de tu televisor</string>
+    <string name="handoff_page_pin_body">Escribe el PIN de 4 cifras que aparece bajo el código en tu televisor. Así se comprueba que es el televisor que tienes delante.</string>
+    <string name="handoff_page_pin_field">PIN</string>
+    <string name="handoff_page_pin_submit">Continuar</string>
+    <string name="handoff_page_pin_wrong">Ese no es el PIN de tu televisor. Revísalo y vuelve a intentarlo.</string>
+    <string name="handoff_page_pin_locked">Demasiados PIN incorrectos. En el televisor, vuelve atrás y abre un código nuevo; luego escanéalo.</string>
     <string name="handoff_page_failed">Tu televisor no pudo llegar a un servidor Seerr en esa dirección. Revísala y envíala de nuevo.</string>
     <string name="handoff_page_signin_title">Termina en tu televisor</string>
     <string name="handoff_page_signin_body">Tu televisor encontró %1$s. Inicia sesión allí con el mando.</string>
