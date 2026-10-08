@@ -18,11 +18,13 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 
 - Phase 0 (#27), Phase 1 (#28), Phase 2 (#29), Phase 3 (#30), Phase 4 (#31), Phase 8 (#35).
   Phases 5, 6, 10 and 11 add no endpoints: they are the poll, the host contract, TV and release.
+- A few lookups that sit beside discovery are used anyway, because a settings picker needs them:
+  the region, language and streaming region lists, and the two keyword calls behind the blocklist
+  settings. The table marks each one with what uses it.
 - "Not planned" is three things. Discovery, search, title, person, collection, studio, network,
-  and watchlist calls (bar the two keyword lookups behind the blocklist settings): this app is the
-  companion and an admin console, not a discovery
-  client, and a title opens in Binge or the web client (#26, and the closed #34). Web push, which
-  is the PWA's transport. And the first-run wizard, which stays the web client's.
+  and watchlist calls: this app is the companion and an admin console, not a discovery client, and
+  a title opens in Binge or the web client (#26, and the closed #34). Web push, which is the PWA's
+  transport. And the first-run wizard, which stays the web client's.
 - Phase 9 (#36) is closed and deferred: one server done well comes first, and nothing in Phases 0
   to 8 depends on more than one.
 
@@ -253,7 +255,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /genres/movie` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /genres/tv` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /keyword/{keywordId}` | Get keyword | v1.32.0 | v1.4.0 | yes | Names a blocklisted tag on the General settings page. |
-| `GET /languages` | Languages supported by TMDB | v1.20.0 | v1.0.0 |  | Discovery is Binge's surface. |
+| `GET /languages` | Languages supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's language pickers: discover languages and blocklisted languages. |
 | `GET /media` | Get media | v1.0.0 | v1.0.0 |  | Recently-added is a discovery slider. |
 | `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
@@ -262,7 +264,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /network/{networkId}` | Get TV network details | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /regions` | Regions supported by TMDB | v1.20.0 | v1.0.0 |  | Discovery is Binge's surface. |
+| `GET /regions` | Regions supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's region pickers: discover region and blocklisted regions. |
 | `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
 | `GET /search/keyword` | Search for keywords | v1.32.0 | v1.4.0 | yes | Finds tags to blocklist on the General settings page. |
@@ -279,5 +281,5 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /watchlist` | Add media to watchlist | — | v1.6.0 |  | A title-page action; title pages are Binge's. |
 | `DELETE /watchlist/{tmdbId}` | Delete watchlist item | — | v1.6.0 |  | A title-page action; title pages are Binge's. |
 | `GET /watchproviders/movies` | Get watch provider movies | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
-| `GET /watchproviders/regions` | Get watch provider regions | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
+| `GET /watchproviders/regions` | Get watch provider regions | v1.32.0 | v1.4.0 | yes | The General settings page's streaming region picker. |
 | `GET /watchproviders/tv` | Get watch provider series | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
