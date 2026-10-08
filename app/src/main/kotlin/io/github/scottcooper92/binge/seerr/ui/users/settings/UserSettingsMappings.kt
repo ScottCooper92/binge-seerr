@@ -20,14 +20,13 @@ internal fun UserSettingsPage.titleRes(): Int =
         UserSettingsPage.LinkedAccounts -> R.string.user_settings_page_linked
     }
 
+/** The line under a page's row where its title alone doesn't say what is in it; null where it does. */
 @StringRes
-internal fun UserSettingsPage.descriptionRes(): Int =
+internal fun UserSettingsPage.descriptionRes(): Int? =
     when (this) {
         UserSettingsPage.General -> R.string.user_settings_page_general_desc
-        UserSettingsPage.Password -> R.string.user_settings_page_password_desc
-        UserSettingsPage.Notifications -> R.string.user_settings_page_notifications_desc
-        UserSettingsPage.Permissions -> R.string.user_settings_page_permissions_desc
         UserSettingsPage.LinkedAccounts -> R.string.user_settings_page_linked_desc
+        UserSettingsPage.Password, UserSettingsPage.Notifications, UserSettingsPage.Permissions -> null
     }
 
 internal fun UserSettingsPage.icon(): ImageVector =

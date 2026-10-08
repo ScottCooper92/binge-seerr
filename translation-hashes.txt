@@ -987,6 +987,8 @@ app:user_settings_link_sheet_title  b99a8363093d
 app:user_settings_linked  bfda026e6c59
 app:user_settings_linked_as  cd83f10c1bf3
 app:user_settings_linked_done  6e24333d3e30
+app:user_settings_linked_group  748568496440
+app:user_settings_linked_hint  46efafd47934
 app:user_settings_none  01ac63f01dd2
 app:user_settings_not_linked  1e31d9596d67
 app:user_settings_page_general  c910d474dcd7
@@ -994,12 +996,10 @@ app:user_settings_page_general_desc  a555713b9edd
 app:user_settings_page_linked  feda46a46abb
 app:user_settings_page_linked_desc  471cb09e9d9f
 app:user_settings_page_notifications  788011833a5a
-app:user_settings_page_notifications_desc  a074b8861f87
 app:user_settings_page_password  e7cf3ef4f17c
-app:user_settings_page_password_desc  0471062d7415
-app:user_settings_page_permissions_desc  ac55fe251a2f
 app:user_settings_password_confirm  5ac265f396a2
 app:user_settings_password_current  72ed2bd767ce
+app:user_settings_password_description  d0cf0e8d0957
 app:user_settings_password_hint  3383529c8a7d
 app:user_settings_password_mismatch  f694aaa8da2c
 app:user_settings_password_new  3dd9df4441fb

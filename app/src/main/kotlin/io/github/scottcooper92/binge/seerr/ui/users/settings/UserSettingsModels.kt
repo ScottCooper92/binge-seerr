@@ -10,8 +10,8 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerList
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.isEmailShape
 
-/** The pages under a user, in the order the index lists them. */
-enum class UserSettingsPage { General, Password, Notifications, Permissions, LinkedAccounts }
+/** The pages under a user, in the order the web client's menu lists them. */
+enum class UserSettingsPage { General, Password, LinkedAccounts, Notifications, Permissions }
 
 /** Which pages this viewer gets for this user, per the server's own rules. */
 data class UserSettingsIndex(
