@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -80,6 +81,25 @@ class NotificationAgentFormTest {
 
         rule.onNodeWithText("Notify about requests", ignoreCase = true).performScrollTo().assertExists()
         rule.onNodeWithText("Notify about issues", ignoreCase = true).performScrollTo().assertExists()
+    }
+
+    @Test
+    fun `a secret option's hint shows in its sheet`() {
+        show(AgentForm(ServerAgent.Pushover))
+
+        rule.onNode(hasText("Application token") and hasClickAction()).performScrollTo().performClick()
+
+        rule.onNodeWithText("Register an application with Pushover and use the API token it gives you.").assertExists()
+    }
+
+    @Test
+    fun `a port outside the range shows its error in the sheet and keeps Done off`() {
+        show(AgentForm(ServerAgent.Email))
+
+        rule.onNode(hasText("SMTP port") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("70000")
+
+        rule.onNodeWithText("Done").assertIsNotEnabled()
     }
 
     @Test

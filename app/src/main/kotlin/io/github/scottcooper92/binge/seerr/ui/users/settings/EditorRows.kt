@@ -71,6 +71,7 @@ internal fun textSettingItem(
                 SecretEntry(
                     title = label,
                     value = draft,
+                    hint = hint,
                     onValueChange = { draft = it },
                     submitEnabled = problem == null,
                     onSubmit = {
@@ -115,6 +116,7 @@ internal fun textSettingItem(
 private fun SecretEntry(
     title: String,
     value: String,
+    hint: String?,
     onValueChange: (String) -> Unit,
     submitEnabled: Boolean,
     onSubmit: () -> Unit,
@@ -130,6 +132,7 @@ private fun SecretEntry(
             label = title,
             secret = true,
             autoCorrect = false,
+            supporting = hint,
             imeAction = ImeAction.Done,
             onDone = { if (submitEnabled) onSubmit() },
             onValueChange = onValueChange,
