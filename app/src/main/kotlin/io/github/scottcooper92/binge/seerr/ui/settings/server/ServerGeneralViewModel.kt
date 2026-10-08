@@ -80,7 +80,11 @@ class ServerGeneralViewModel
                 val named =
                     missing
                         .mapNotNull { id ->
-                            runCatching { api.keyword(id) }.onFailure(::rethrowCancellation).getOrNull()?.name?.let { id to it }
+                            runCatching { api.keyword(id) }
+                                .onFailure(::rethrowCancellation)
+                                .getOrNull()
+                                ?.name
+                                ?.let { id to it }
                         }.toMap()
                 editExtras { it.copy(keywords = it.keywords.copy(names = it.keywords.names + named)) }
             }
