@@ -27,18 +27,18 @@ class TvRefreshPhaseTest {
 
     @Test
     fun `a failed refresh behind rows fails, a running one loads, and a quiet one is idle`() {
-        assertEquals(TvLoadPhase.Failed(rejected = false), PagedPhase.Rows(refreshing = false, refreshError = failure).tvRefresh())
+        assertEquals(TvLoadPhase.Failed, PagedPhase.Rows(refreshing = false, refreshError = failure).tvRefresh())
         assertEquals(TvLoadPhase.Loading, PagedPhase.Rows(refreshing = true, refreshError = null).tvRefresh())
         assertEquals(TvLoadPhase.Idle, PagedPhase.Rows(refreshing = false, refreshError = null).tvRefresh())
     }
 
     @Test
-    fun `a first load the server rejected offers to reconnect`() {
+    fun `a first load the server rejected fails like any other, so it is retried`() {
         assertEquals(
-            TvLoadPhase.Failed(rejected = true),
+            TvLoadPhase.Failed,
             PagedPhase.Failed(HttpException(Response.error<Unit>(401, "{}".toResponseBody()))).tvRefresh(),
         )
-        assertEquals(TvLoadPhase.Failed(rejected = false), PagedPhase.Failed(failure).tvRefresh())
+        assertEquals(TvLoadPhase.Failed, PagedPhase.Failed(failure).tvRefresh())
     }
 
     @Test
@@ -52,6 +52,6 @@ class TvRefreshPhaseTest {
                 mediator = LoadStates(refresh = idle, prepend = idle, append = LoadState.Error(failure)),
             )
 
-        assertEquals(TvLoadPhase.Failed(rejected = false), states.appendPhase())
+        assertEquals(TvLoadPhase.Failed, states.appendPhase())
     }
 }

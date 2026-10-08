@@ -183,14 +183,13 @@ private fun LogsBody(
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
                     lazyItems[index]?.let { entry -> LogRow(entry, onCopy = { actions.onCopy(entry.copyText) }) }
                 }
-                item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry, onReconnect = actions.onBack) }
+                item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry) }
             }
         PagedPhase.Skeleton -> LoadingScreen(modifier.padding(contentPadding))
         is PagedPhase.Failed ->
             PagedRefreshError(
                 phase.error,
                 onRetry = lazyItems::retry,
-                onReconnect = actions.onBack,
                 modifier = modifier.padding(contentPadding),
             )
         PagedPhase.Empty ->

@@ -7,8 +7,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.template.PagedPhase
 import io.github.scottcooper92.binge.seerr.data.ListRefresh
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
-import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 
 /**
@@ -38,11 +36,14 @@ internal fun PagedPhase.tvRefresh(): TvLoadPhase =
     when (this) {
         PagedPhase.Skeleton -> TvLoadPhase.Loading
         PagedPhase.Empty -> TvLoadPhase.Idle
-        is PagedPhase.Rows -> refreshError?.toTvFailed() ?: if (refreshing) TvLoadPhase.Loading else TvLoadPhase.Idle
-        is PagedPhase.Failed -> error.toTvFailed()
+        is PagedPhase.Rows ->
+            when {
+                refreshError != null -> TvLoadPhase.Failed
+                refreshing -> TvLoadPhase.Loading
+                else -> TvLoadPhase.Idle
+            }
+        is PagedPhase.Failed -> TvLoadPhase.Failed
     }
-
-private fun Throwable.toTvFailed() = TvLoadPhase.Failed(rejected = toSeerrError() == SeerrError.Unauthorized)
 
 internal fun CombinedLoadStates.appendPhase(): TvLoadPhase = settle(mediator?.append, append).toPhase()
 
@@ -58,6 +59,6 @@ private fun settle(
 private fun LoadState.toPhase(): TvLoadPhase =
     when (this) {
         is LoadState.Loading -> TvLoadPhase.Loading
-        is LoadState.Error -> TvLoadPhase.Failed(rejected = error.toSeerrError() == SeerrError.Unauthorized)
+        is LoadState.Error -> TvLoadPhase.Failed
         is LoadState.NotLoading -> TvLoadPhase.Idle
     }

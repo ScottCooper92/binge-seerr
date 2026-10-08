@@ -232,8 +232,8 @@ private fun UserDetailContent(
                         icon = Icons.Filled.Inbox,
                     )
                 refresh is LoadState.Loading || refresh is LoadState.Error ->
-                    PagedAppendState(refresh, onRetry = requests::retry, onReconnect = actions.onBack)
-                else -> PagedAppendState(requests.loadState.append, onRetry = requests::retry, onReconnect = actions.onBack)
+                    PagedAppendState(refresh, onRetry = requests::retry)
+                else -> PagedAppendState(requests.loadState.append, onRetry = requests::retry)
             }
         }
     }

@@ -16,44 +16,37 @@ import androidx.compose.ui.res.stringResource
 import androidx.paging.LoadState
 import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import com.binge.designsystem.R as DesR
 
-/** A list's first-load failure: the classified error with a retry, and the way back for a rejected session. */
+/**
+ * A list's first-load failure: the classified error with a retry. A rejected session is retried like any other
+ * failure; the root gate moves to sign-in once the server confirms the session is gone.
+ */
 @Composable
 internal fun PagedRefreshError(
     error: Throwable,
     onRetry: () -> Unit,
-    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val classified = error.toSeerrError()
-    ErrorScreen(
-        error = classified,
-        modifier = modifier,
-        onRetry = if (classified == SeerrError.Unauthorized) onReconnect else onRetry,
-    )
+    ErrorScreen(error = error.toSeerrError(), modifier = modifier, onRetry = onRetry)
 }
 
-/** A refresh that failed behind rows still on screen: [messageRes] says the rows are stale, and a tap retries or reconnects. */
+/** A refresh that failed behind rows still on screen: [messageRes] says the rows are stale, and a tap retries. */
 @Composable
 internal fun RefreshFailedLine(
-    error: Throwable,
     @StringRes messageRes: Int,
     onRetry: () -> Unit,
-    onReconnect: () -> Unit,
 ) {
-    val rejected = error.toSeerrError() == SeerrError.Unauthorized
     Text(
-        text = stringResource(if (rejected) R.string.requests_reconnect else messageRes),
+        text = stringResource(messageRes),
         style = MaterialTheme.typography.bodyMedium,
-        color = if (rejected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable { if (rejected) onReconnect() else onRetry() }
+                .clickable(onClick = onRetry)
                 .padding(
                     horizontal = resolvedContentInset(),
                     vertical = dimensionResource(DesR.dimen.padding_s),
@@ -66,7 +59,6 @@ internal fun RefreshFailedLine(
 internal fun PagedAppendState(
     state: LoadState,
     onRetry: () -> Unit,
-    onReconnect: () -> Unit,
 ) {
     when (state) {
         is LoadState.Loading ->
@@ -74,19 +66,17 @@ internal fun PagedAppendState(
                 modifier = Modifier.fillMaxWidth().padding(vertical = dimensionResource(DesR.dimen.padding_m)),
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator() }
-        is LoadState.Error -> {
-            val rejected = state.error.toSeerrError() == SeerrError.Unauthorized
+        is LoadState.Error ->
             Text(
-                text = stringResource(if (rejected) R.string.requests_reconnect else R.string.requests_load_more_failed),
+                text = stringResource(R.string.requests_load_more_failed),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (rejected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable { if (rejected) onReconnect() else onRetry() }
+                        .clickable(onClick = onRetry)
                         .padding(vertical = dimensionResource(DesR.dimen.padding_m)),
             )
-        }
         is LoadState.NotLoading -> Unit
     }
 }

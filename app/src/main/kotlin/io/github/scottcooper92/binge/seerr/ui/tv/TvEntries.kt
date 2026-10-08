@@ -61,7 +61,6 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                                     detailOpen = openRequestId != null,
                                     onOpenRequest = { openRequestId = it },
                                     onDone = { seeAllRequests = null },
-                                    onReconnect = { editingConnection = true },
                                 )
                             }
                             seeAllIssues?.let { name ->
@@ -70,7 +69,6 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                                     detailOpen = openIssueId != null,
                                     onOpenIssue = { openIssueId = it },
                                     onDone = { seeAllIssues = null },
-                                    onReconnect = { editingConnection = true },
                                 )
                             }
                             // Each page its own view models, cleared when it closes: a reopened page starts fresh, and nothing
@@ -105,7 +103,6 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                 )
             TvDestination.Issues ->
                 TvIssuesEntry(
-                    onReconnect = { editingConnection = true },
                     openIssueId = openIssueId,
                     onOpenIssue = { openIssueId = it },
                     seeAllOpen = seeAllIssues != null,

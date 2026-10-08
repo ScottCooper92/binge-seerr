@@ -212,8 +212,6 @@ private fun BlocklistPage(
         canManage = state.canManage,
         onOpen = { item -> actions.onOpen(item, state.canManage) },
         onRemove = { item -> removing = item.tmdbId },
-        // A rejected session cannot be retried past: the hub owns reconnecting.
-        onReconnect = actions.onBack,
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
     )

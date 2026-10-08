@@ -56,7 +56,6 @@ internal fun BlocklistBody(
     canManage: Boolean,
     onOpen: (BlocklistItem) -> Unit,
     onRemove: (BlocklistItem) -> Unit,
-    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -67,10 +66,10 @@ internal fun BlocklistBody(
                 // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
                 Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
-                    BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding.belowPinnedLine())
+                    BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, contentPadding.belowPinnedLine())
                 }
             } else {
-                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, onReconnect, contentPadding)
+                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, contentPadding)
             }
         PagedPhase.Skeleton ->
             ListRowSkeletonColumn(
@@ -81,7 +80,6 @@ internal fun BlocklistBody(
             PagedRefreshError(
                 phase.error,
                 onRetry = lazyItems::retry,
-                onReconnect = onReconnect,
                 modifier = modifier.padding(contentPadding),
             )
         PagedPhase.Empty ->
@@ -100,7 +98,6 @@ private fun BlocklistList(
     canManage: Boolean,
     onOpen: (BlocklistItem) -> Unit,
     onRemove: (BlocklistItem) -> Unit,
-    onReconnect: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     LazyColumn(
@@ -118,7 +115,7 @@ private fun BlocklistList(
                 )
             }
         }
-        item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry, onReconnect = onReconnect) }
+        item { PagedAppendState(lazyItems.loadState.append, onRetry = lazyItems::retry) }
     }
 }
 

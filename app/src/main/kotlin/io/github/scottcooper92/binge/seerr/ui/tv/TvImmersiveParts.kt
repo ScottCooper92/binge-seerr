@@ -164,7 +164,7 @@ internal fun ColumnScope.TvBackdropCopy(
 }
 
 /**
- * What an immersive board shows when no row has anything: loading, why it could not load (with the way out), or
+ * What an immersive board shows when no row has anything: loading, that it could not load (with a retry), or
  * that there is nothing yet. [rows] are every row's pager, in any order. A whole-page message, so it holds focus
  * itself: the page it hands over to, when rows arrive, is placed by the shell.
  */
@@ -173,24 +173,18 @@ internal fun TvRowsFallback(
     rows: List<TvPagedRows<*>>,
     emptyBody: String,
     onRetryLoad: () -> Unit,
-    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val failed = rows.firstNotNullOfOrNull { it.refresh as? TvLoadPhase.Failed }
+    val failed = rows.any { it.refresh == TvLoadPhase.Failed }
     val loading = rows.any { it.refresh is TvLoadPhase.Loading }
     when {
         loading -> TvHubLoading(modifier)
-        failed != null ->
+        failed ->
             TvMessagePage(
-                body = stringResource(if (failed.rejected) R.string.requests_reconnect else R.string.tv_list_load_failed),
+                body = stringResource(R.string.tv_list_load_failed),
                 modifier = modifier,
                 icon = Icons.Filled.Warning,
-                primary =
-                    if (failed.rejected) {
-                        TvPageAction(stringResource(R.string.tv_hub_reconnect), onReconnect)
-                    } else {
-                        TvPageAction(stringResource(R.string.hub_retry), onRetryLoad)
-                    },
+                primary = TvPageAction(stringResource(R.string.hub_retry), onRetryLoad),
             )
         else -> TvMessagePage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
     }
@@ -207,7 +201,6 @@ internal fun <T : Any> TvPagedGridScreen(
     rows: TvPagedRows<T>,
     emptyBody: String,
     onRetryLoad: () -> Unit,
-    onReconnect: () -> Unit,
     onBack: () -> Unit,
     detailOpen: Boolean,
     artwork: @Composable (T) -> Unit,
@@ -243,7 +236,6 @@ internal fun <T : Any> TvPagedGridScreen(
             rows = listOf(rows),
             emptyBody = emptyBody,
             onRetryLoad = onRetryLoad,
-            onReconnect = onReconnect,
         )
     }
 }

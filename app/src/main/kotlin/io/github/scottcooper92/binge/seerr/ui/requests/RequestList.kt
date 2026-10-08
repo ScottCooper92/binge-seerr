@@ -65,7 +65,6 @@ internal fun RequestsBody(
     actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
-    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -74,16 +73,15 @@ internal fun RequestsBody(
             if (phase.refreshing || phase.refreshError != null) {
                 // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
                 Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                    val error = phase.refreshError
-                    if (error == null) {
+                    if (phase.refreshError == null) {
                         LinearProgressIndicator(Modifier.fillMaxWidth())
                     } else {
-                        RefreshFailedLine(error, R.string.requests_refresh_failed, onRetry = lazyItems::retry, onReconnect = onReconnect)
+                        RefreshFailedLine(R.string.requests_refresh_failed, onRetry = lazyItems::retry)
                     }
-                    RequestList(lazyItems, scope, actingIds, onOpen, onManage, onReconnect, contentPadding.belowPinnedLine())
+                    RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding.belowPinnedLine())
                 }
             } else {
-                RequestList(lazyItems, scope, actingIds, onOpen, onManage, onReconnect, contentPadding)
+                RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding)
             }
         PagedPhase.Skeleton ->
             ListRowSkeletonColumn(
@@ -94,7 +92,6 @@ internal fun RequestsBody(
             PagedRefreshError(
                 phase.error,
                 onRetry = lazyItems::retry,
-                onReconnect = onReconnect,
                 modifier = modifier.padding(contentPadding),
             )
         PagedPhase.Empty ->
@@ -113,7 +110,6 @@ private fun RequestList(
     actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
-    onReconnect: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     LazyColumn(
@@ -133,7 +129,7 @@ private fun RequestList(
         }
         item {
             val append = lazyItems.loadState.mediator?.append ?: lazyItems.loadState.append
-            PagedAppendState(append, onRetry = lazyItems::retry, onReconnect = onReconnect)
+            PagedAppendState(append, onRetry = lazyItems::retry)
         }
     }
 }
