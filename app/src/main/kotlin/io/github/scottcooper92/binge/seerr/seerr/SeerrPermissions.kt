@@ -107,6 +107,22 @@ private val REQUEST_BITS =
         PERMISSION_REQUEST_4K_TV,
     )
 
+/** Each media type's request bits, paired with the auto-approve bits that cover it. */
+private val APPROVAL_BY_TYPE =
+    listOf(
+        listOf(PERMISSION_REQUEST, PERMISSION_REQUEST_MOVIE) to listOf(PERMISSION_AUTO_APPROVE_MOVIE),
+        listOf(PERMISSION_REQUEST, PERMISSION_REQUEST_TV) to listOf(PERMISSION_AUTO_APPROVE_TV),
+        listOf(PERMISSION_REQUEST_4K, PERMISSION_REQUEST_4K_MOVIE) to listOf(PERMISSION_AUTO_APPROVE_4K, PERMISSION_AUTO_APPROVE_4K_MOVIE),
+        listOf(PERMISSION_REQUEST_4K, PERMISSION_REQUEST_4K_TV) to listOf(PERMISSION_AUTO_APPROVE_4K, PERMISSION_AUTO_APPROVE_4K_TV),
+    )
+
+/**
+ * True when every media type the mask can request has its own auto-approve bit, which is the same as
+ * the umbrella for what that default allows. Manage Requests is not counted: it is a separate grant.
+ */
+private fun approvesEveryRequestableType(granted: (Int) -> Boolean): Boolean =
+    APPROVAL_BY_TYPE.filter { (requests, _) -> requests.any(granted) }.all { (_, approvals) -> approvals.any(granted) }
+
 /** What a new user may do, read off the server's `defaultPermissions` bitmask. */
 enum class SeerrDefaultAccess {
     NoRequests,
@@ -122,7 +138,7 @@ enum class SeerrDefaultAccess {
             fun granted(bit: Int) = isAdmin || value and bit != 0
             return when {
                 REQUEST_BITS.none(::granted) -> NoRequests
-                granted(PERMISSION_AUTO_APPROVE) -> AutoApprove
+                granted(PERMISSION_AUTO_APPROVE) || approvesEveryRequestableType(::granted) -> AutoApprove
                 else -> RequestWithApproval
             }
         }

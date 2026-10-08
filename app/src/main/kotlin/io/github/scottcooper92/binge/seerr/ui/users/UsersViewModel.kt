@@ -185,7 +185,7 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (ids.isEmpty() || edit.value != null) return
             edit.value = BulkEdit(saving = true)
-            val offered = offeredNow()
+            val offered = offeredNow().also { offeredAtStart = it }
             viewModelScope.launch(dispatcher) {
                 val selected =
                     store.permissionsFor(ids).values.fold(emptySet<ManageablePermission>()) { acc, bitmask ->
@@ -212,7 +212,14 @@ class UsersViewModel
                     ?: current
             }
 
-        /** What the editor offers right now; nothing before the first read, which keeps every bit as it is. */
+        /**
+         * What the editor offered when it opened. The seed and the save both filter against this one
+         * snapshot, so a scope that changes while the sheet is open can't make the save clear a bit the
+         * seed left out.
+         */
+        private var offeredAtStart: Set<ManageablePermission> = emptySet()
+
+        /** What the editor offers right now; before the profile is read this is the default scope's rows, not none. */
         private fun offeredNow(): Set<ManageablePermission> = (uiState.value as? UsersUiState.Ready)?.offered?.toSet().orEmpty()
 
         fun cancelBulkEdit() {
@@ -224,7 +231,7 @@ class UsersViewModel
             val ids = selection.value.toList()
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
-            val offered = offeredNow()
+            val offered = offeredAtStart
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     // Each id's own cached bitmask is the baseline for that id alone, so an unmanaged

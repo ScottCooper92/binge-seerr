@@ -31,6 +31,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 private const val ADMIN = 2
 
@@ -291,6 +292,54 @@ class UsersViewModelTest {
             assertTrue(idaPut, idaPut.contains("\"permissions\":$idaExpected"))
             val joPut = puts.single { it.body.contains("\"ids\":[11]") }.body
             assertTrue(joPut, joPut.contains("\"permissions\":${idaExpected or hidden}"))
+        }
+
+    @Test
+    fun `a bulk edit filters the save against what the editor offered when it opened`() =
+        runTest {
+            // The profile is old enough to offer no blocklist toggles when the edit starts, then a refresh
+            // lands a newer one before the save. The bit the seed left out must not be cleared by the save.
+            val blocklist = ManageablePermission.ManageBlocklist.bit
+            val request = ManageablePermission.Request.bit
+            val version = AtomicReference("1.5.0")
+            seerr.dispatcher = { req ->
+                received += req
+                when (req.method + " " + req.url.encodedPath) {
+                    "GET /api/v1/auth/me" -> json("""{"id":1,"displayName":"Admin","permissions":$ADMIN}""")
+                    "GET /api/v1/status" -> json("""{"version":"${version.get()}"}""")
+                    "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                    "GET /api/v1/user" ->
+                        json(
+                            """{"pageInfo":{"pages":1,"results":2},"results":[
+                               {"id":10,"displayName":"Ida","permissions":${request or blocklist},"userType":3,"requestCount":0},
+                               {"id":11,"displayName":"Jo","permissions":${request or blocklist},"userType":3,"requestCount":0}]}""",
+                        )
+                    "PUT /api/v1/user" -> json("[]")
+                    else -> FakeResponse(code = 404)
+                }
+            }
+
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.users.asSnapshot()
+            vm.toggleSelected(10)
+            vm.toggleSelected(11)
+            vm.awaitReady { it.selection == setOf(10, 11) }
+            assertFalse(ManageablePermission.ManageBlocklist in vm.awaitReady().offered)
+
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.selected?.isNotEmpty() == true }
+
+            version.set("3.1.0")
+            vm.setScreenVisible(true)
+            vm.awaitReady { ManageablePermission.ManageBlocklist in it.offered }
+
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
+            val put = received.single { it.method == "PUT" }.body
+            assertTrue(put, put.contains("\"permissions\":${request or blocklist}"))
         }
 
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
