@@ -1128,7 +1128,7 @@
     <string name="settings_section_services">Services</string>
     <string name="settings_section_services_none">No Radarr or Sonarr yet</string>
     <string name="settings_section_notifications">Notifications</string>
-    <string name="settings_section_agents_none">No agents on</string>
+    <string name="settings_section_agents_detail">Where this server sends notifications</string>
     <string name="settings_section_agents_on">%1$s on</string>
     <string name="settings_users_access_none">New users can\'t request</string>
     <string name="settings_users_access_request">New users request with approval</string>

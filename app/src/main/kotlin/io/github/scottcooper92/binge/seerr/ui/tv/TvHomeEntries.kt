@@ -88,9 +88,9 @@ private fun TvHubEntry(
     viewModel: HubViewModel,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    // The downloading poll and the auto-retry run only while the hub is on screen.
+    // The problem page needs the auto-retry and nothing of the dashboard's, so no downloads poll and no counts (#827).
     DisposableEffect(viewModel) {
-        viewModel.setScreenVisible(true)
+        viewModel.setScreenVisible(true, dashboard = false)
         onDispose { viewModel.setScreenVisible(false) }
     }
     TvHubBoard(

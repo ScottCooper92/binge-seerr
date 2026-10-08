@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
@@ -42,6 +43,14 @@ internal fun serverSectionRows(
     return listOfNotNull(
         general?.let {
             section(Icons.Filled.Tune, stringResource(R.string.settings_group_general), it.sectionSummary(), ServerSettingsPage.General)
+        },
+        general?.takeIf { it.discoverSliders }?.let {
+            section(
+                Icons.Filled.ViewCarousel,
+                stringResource(R.string.server_settings_sliders),
+                stringResource(R.string.server_settings_sliders_caption),
+                ServerSettingsPage.DiscoverSliders,
+            )
         },
         config.requestPolicy?.let { policy ->
             section(
@@ -99,7 +108,9 @@ internal fun serverSectionRows(
         section(
             Icons.Filled.Info,
             stringResource(R.string.settings_about),
-            server.versionLabel?.let { "${server.variant.displayName} $it" } ?: stringResource(R.string.settings_about_caption),
+            server.versionLabel
+                ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
+                ?: stringResource(R.string.settings_about_caption),
             ServerSettingsPage.About,
         ),
     )
@@ -113,7 +124,7 @@ private fun GeneralSettings.sectionSummary(): String =
         .joinToString(" · ")
         .ifEmpty { stringResource(R.string.settings_section_general_detail) }
 
-/** Which of the agents this app can read are on. */
+/** Which of the agents this app can read are on, or what the page is for when neither is: it never claims none are. */
 @Composable
 private fun NotificationAgents.agentsSummary(): String {
     val on =
@@ -122,13 +133,13 @@ private fun NotificationAgents.agentsSummary(): String {
             stringResource(R.string.settings_agent_discord).takeIf { discordEnabled == true },
         )
     return if (on.isEmpty()) {
-        stringResource(R.string.settings_section_agents_none)
+        stringResource(R.string.settings_section_agents_detail)
     } else {
         stringResource(R.string.settings_section_agents_on, on.joinToString(", "))
     }
 }
 
-private fun SeerrMediaServer.labelRes(): Int =
+internal fun SeerrMediaServer.labelRes(): Int =
     when (this) {
         SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
         SeerrMediaServer.Emby -> R.string.user_origin_emby

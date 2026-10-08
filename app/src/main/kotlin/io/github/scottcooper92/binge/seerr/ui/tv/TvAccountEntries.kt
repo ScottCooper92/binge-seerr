@@ -22,7 +22,8 @@ internal fun TvAccountEntry(
     val hub by hubViewModel.uiState.collectAsStateWithLifecycle()
     // The hub is `Lazily` and only auto-retries while it is visible, so this page says so, as Home and Settings do.
     DisposableEffect(hubViewModel) {
-        hubViewModel.setScreenVisible(true)
+        // It reads the account and nothing of the dashboard's, so no downloads poll and no counts (#827).
+        hubViewModel.setScreenVisible(true, dashboard = false)
         onDispose { hubViewModel.setScreenVisible(false) }
     }
     val account = (hub as? HubUiState.Ready)?.overview?.account
