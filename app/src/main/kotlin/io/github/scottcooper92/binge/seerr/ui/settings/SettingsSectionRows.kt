@@ -48,7 +48,7 @@ internal fun serverSectionRows(
                 Icons.Filled.Group,
                 stringResource(R.string.hub_section_users),
                 policy.policySummary(),
-                ServerSettingsPage.DefaultPermissions,
+                ServerSettingsPage.Users,
             )
         },
         section(
@@ -128,7 +128,7 @@ private fun NotificationAgents.agentsSummary(): String {
     }
 }
 
-private fun SeerrMediaServer.labelRes(): Int =
+internal fun SeerrMediaServer.labelRes(): Int =
     when (this) {
         SeerrMediaServer.Jellyfin -> R.string.user_origin_jellyfin
         SeerrMediaServer.Emby -> R.string.user_origin_emby

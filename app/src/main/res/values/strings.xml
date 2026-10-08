@@ -1168,4 +1168,20 @@
     <string name="server_settings_api_key_show">Show key</string>
     <string name="server_settings_api_key_hide">Hide key</string>
     <string name="server_settings_api_key_regenerate_detail">The old key stops working at once</string>
+    <string name="server_settings_sign_in">Sign-in</string>
+    <string name="server_settings_local_login">Local sign-in</string>
+    <string name="server_settings_local_login_detail">Email and password accounts kept by the server</string>
+    <string name="server_settings_media_server_login">%1$s sign-in</string>
+    <string name="server_settings_new_media_server_login">New %1$s users</string>
+    <string name="server_settings_new_media_server_login_detail">Anyone on your %1$s can sign in without being imported first</string>
+    <string name="server_settings_sign_in_required">Keep at least one way to sign in turned on.</string>
+    <string name="server_settings_request_limits">Request limits</string>
+    <string name="server_settings_movie_limit">Movie requests</string>
+    <string name="server_settings_tv_limit">Series requests</string>
+    <string name="server_settings_limit_window">Resets</string>
+    <plurals name="server_settings_limit_count">
+        <item quantity="one">%1$d request</item>
+        <item quantity="other">%1$d requests</item>
+    </plurals>
+    <string name="server_settings_permissions_none">None</string>
 </resources>
