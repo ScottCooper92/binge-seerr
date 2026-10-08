@@ -44,7 +44,9 @@ private const val MULTILINE_MAX = 8
  * [shown] replaces that for a value the row shouldn't spell out, such as a key.
  * A tap edits it in the design system's text entry sheet; [check] names what is wrong with a value, which keeps Done
  * off. A [secret] value is edited in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
- * does, since the design system's text entry has no way to hide what it shows.
+ * does, since the design system's text entry has no way to hide what it shows. A [hint] explains the value and stays
+ * in view while it is edited; a [placeholder] is an example of one, shown only while the field is empty. A [required]
+ * row left blank, or a value [check] refuses, says so in its detail, in the error colour.
  * The sheet belongs to this call, so a page lists its rows and nothing else.
  */
 @Composable
@@ -56,6 +58,8 @@ internal fun textSettingItem(
     onChange: (String) -> Unit,
     emptyLabel: String = stringResource(R.string.settings_value_not_set),
     hint: String? = null,
+    placeholder: String? = null,
+    required: Boolean = false,
     check: (String) -> String? = { null },
     shown: String = value.ifBlank { emptyLabel },
     secret: Boolean = false,
@@ -93,7 +97,10 @@ internal fun textSettingItem(
                     },
                     onCancel = { open = false },
                     submitLabel = stringResource(R.string.editor_done),
-                    hint = hint,
+                    // The surface's own hint is a placeholder, gone once the field holds a value; an explanation
+                    // has to stay readable while the value is edited, so it sits under the title instead.
+                    hint = placeholder,
+                    header = { hint?.let { SheetHint(it) } },
                     submitEnabled = problem == null,
                     error = problem.takeIf { draft.isNotEmpty() },
                     minLines = if (multiline) MULTILINE_MIN else 1,
@@ -103,15 +110,53 @@ internal fun textSettingItem(
             }
         }
     }
+    val rowProblem = rowProblem(value, required, secret, check)
     return ListItem(
         icon = icon,
         label = label,
-        detail = shown,
+        detail = rowProblem ?: shown,
+        detailColor = if (rowProblem != null) MaterialTheme.colorScheme.error else null,
         clickable = enabled,
         disabled = !enabled,
         onClick = { open = true },
     )
 }
+
+/**
+ * What a text row says in place of its value when it holds Save back: a required value left blank, or one the server
+ * sent that the row's own check refuses. Save follows the form's validity, so this is where the user looks for why.
+ */
+@Composable
+private fun rowProblem(
+    value: String,
+    required: Boolean,
+    secret: Boolean,
+    check: (String) -> String?,
+): String? =
+    when {
+        required && value.isBlank() -> stringResource(R.string.editor_field_required)
+        value.isNotBlank() -> check(if (secret) value else value.trim())
+        else -> null
+    }
+
+/**
+ * A line under an `ItemGroup`'s rows, through its `belowRows`: what the group still needs before Save. [error] marks
+ * something wrong in what was entered; a step not yet taken, such as a new rule's first condition, is not an error.
+ */
+@Composable
+internal fun GroupMessage(
+    text: String,
+    error: Boolean,
+) = Text(
+    text,
+    style = MaterialTheme.typography.bodyMedium,
+    color = if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    modifier =
+        Modifier.padding(
+            horizontal = dimensionResource(DesR.dimen.padding_m),
+            vertical = dimensionResource(DesR.dimen.padding_s),
+        ),
+)
 
 /** [textSettingItem]'s sheet for a secret: the title, a masked [EditorTextField], and the same Cancel and Done pair. */
 @Composable
@@ -150,6 +195,11 @@ private fun SecretEntry(
         }
     }
 }
+
+/** An explanation under a text sheet's title, readable while the field holds a value. */
+@Composable
+private fun SheetHint(text: String) =
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
 /**
  * A pick from a fixed list as a list row: the setting's name, and what it is set to now. A tap opens a peeking sheet

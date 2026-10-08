@@ -144,6 +144,16 @@ class MediaServerFormTest {
     }
 
     @Test
+    fun `a row's explanation stays in view while its value is edited`() {
+        show(JELLYFIN.copy(externalUrl = "https://jf.example.com"))
+
+        rule.onNode(hasText("External host") and hasClickAction()).performScrollTo().performClick()
+
+        rule.onNode(hasSetTextAction() and hasText("https://jf.example.com")).assertExists()
+        rule.onNodeWithText("Where users open the media server from their own devices; blank for the address above.").assertExists()
+    }
+
+    @Test
     fun `a clean change saves`() {
         show(JELLYFIN.copy(useSsl = true))
 

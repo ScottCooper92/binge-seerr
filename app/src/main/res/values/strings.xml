@@ -1029,6 +1029,16 @@
     <string name="field_secret_hide">Hide the value</string>
     <string name="field_clear">Clear the value</string>
     <!-- Example values shown while a connection field is empty; an address, a port or a path a translator cannot localise. -->
+    <string name="placeholder_host" translatable="false">192.168.1.10</string>
+    <string name="placeholder_port_plex" translatable="false">32400</string>
+    <string name="placeholder_port_jellyfin" translatable="false">8096</string>
+    <string name="placeholder_port_proxy" translatable="false">3128</string>
+    <string name="placeholder_proxy_host" translatable="false">proxy.example.com</string>
+    <string name="placeholder_url_base_jellyfin" translatable="false">/jellyfin</string>
+    <string name="placeholder_url_base_emby" translatable="false">/emby</string>
+    <string name="placeholder_url_base_radarr" translatable="false">/radarr</string>
+    <string name="placeholder_url_base_sonarr" translatable="false">/sonarr</string>
+    <string name="placeholder_plex_web_url" translatable="false">https://your-server-fqdn.com/web/index.html</string>
     <string name="placeholder_server_url" translatable="false">https://seerr.example.com</string>
     <string name="placeholder_email" translatable="false">example@domain.com</string>
     <!-- %1$s is the media server's own name where the administrator set one, else Jellyfin or Emby. -->

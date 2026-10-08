@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Dns
@@ -16,11 +15,7 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -30,10 +25,10 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
 
 /**
  * The network page in the web client's order, as groups of list rows: the switches every lineage has, then the DNS
@@ -171,21 +166,7 @@ private fun ProxyGroup(
                     onEdit { it.copy(enabled = on) }
                 },
             ) + if (proxy.enabled) settings.joined() else emptyList(),
-        belowRows =
-            credentials?.let { message ->
-                {
-                    Text(
-                        stringResource(message),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier =
-                            Modifier.padding(
-                                horizontal = dimensionResource(DesR.dimen.padding_m),
-                                vertical = dimensionResource(DesR.dimen.padding_s),
-                            ),
-                    )
-                }
-            },
+        belowRows = credentials?.let { message -> { GroupMessage(stringResource(message), error = true) } },
     )
 }
 
@@ -205,6 +186,8 @@ private fun proxySettingRows(
             value = proxy.host,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(host = value) } },
+            required = true,
+            placeholder = stringResource(R.string.placeholder_proxy_host),
             check = { value -> requiredError.takeIf { value.isBlank() } },
         ),
         textSettingItem(
@@ -213,6 +196,8 @@ private fun proxySettingRows(
             value = proxy.port,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(port = value) } },
+            required = true,
+            placeholder = stringResource(R.string.placeholder_port_proxy),
             check = { value -> portError.takeIf { !portValid(value) } },
         ),
         editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), proxy.useSsl, enabled) { on ->

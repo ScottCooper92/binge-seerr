@@ -75,10 +75,11 @@ class DvrInstanceFormTest {
     }
 
     @Test
-    fun `an instance missing its name can't be saved`() {
+    fun `an instance missing its name says so in the row and can't be saved`() {
         show(completeRadarr().copy(name = ""))
 
         rule.onNodeWithText("Save").assertIsNotEnabled()
+        rule.onNodeWithText("Required").assertExists()
     }
 
     @Test

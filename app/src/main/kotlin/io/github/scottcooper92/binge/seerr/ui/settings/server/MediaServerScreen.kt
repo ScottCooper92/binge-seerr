@@ -102,24 +102,7 @@ private fun SettingsGroup(
     serverActions: MediaServerActions,
 ) {
     val portError = stringResource(R.string.editor_error_port)
-    val urlError =
-        stringResource(if (draft.kind == MediaServerKind.Plex) R.string.editor_error_web_url else R.string.editor_error_web_url_no_slash)
-    val noSlashError = stringResource(R.string.editor_error_web_url_no_slash)
     val requiredError = stringResource(R.string.editor_field_required)
-    val externalLabel =
-        stringResource(
-            if (draft.kind == MediaServerKind.Plex) R.string.server_settings_plex_web_url else R.string.server_settings_external_host,
-        )
-    val external =
-        textSettingItem(
-            icon = Icons.Filled.Link,
-            label = externalLabel,
-            value = draft.externalUrl,
-            enabled = enabled,
-            onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
-            hint = stringResource(R.string.server_settings_external_hint),
-            check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
-        )
     ItemGroup(
         title = stringResource(R.string.server_settings_media_server_settings, stringResource(draft.kind.labelRes())),
         rows =
@@ -138,6 +121,8 @@ private fun SettingsGroup(
                     value = draft.host,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                    required = true,
+                    placeholder = stringResource(R.string.placeholder_host),
                     check = { value -> requiredError.takeIf { value.isBlank() } },
                 ),
                 textSettingItem(
@@ -146,6 +131,8 @@ private fun SettingsGroup(
                     value = draft.port,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                    required = true,
+                    placeholder = stringResource(draft.kind.portPlaceholderRes()),
                     check = { value -> portError.takeIf { !portValid(value) } },
                 ),
                 editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { on ->
@@ -169,20 +156,51 @@ private fun SettingsGroup(
                         value = base,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(urlBase = value) } },
+                        placeholder = stringResource(draft.kind.urlBasePlaceholderRes()),
                     )
                 },
-                external,
-                draft.forgotPasswordUrl?.let { url ->
-                    textSettingItem(
-                        icon = Icons.Filled.LinkOff,
-                        label = stringResource(R.string.server_settings_forgot_password_url),
-                        value = url,
-                        enabled = enabled,
-                        onChange = { value -> actions.onEdit { it.copy(forgotPasswordUrl = value) } },
-                        check = { value -> noSlashError.takeIf { !draft.copy(forgotPasswordUrl = value).forgotPasswordUrlValid } },
-                    )
-                },
+                externalItem(draft, enabled, actions),
+                draft.forgotPasswordUrl?.let { url -> forgotPasswordItem(draft, url, enabled, actions) },
             ),
+    )
+}
+
+/** Where users open the server from, rather than where the server reaches it. */
+@Composable
+private fun externalItem(
+    draft: MediaServerForm,
+    enabled: Boolean,
+    actions: EditorActions<MediaServerForm>,
+): ListItem {
+    val plex = draft.kind == MediaServerKind.Plex
+    val urlError = stringResource(if (plex) R.string.editor_error_web_url else R.string.editor_error_web_url_no_slash)
+    return textSettingItem(
+        icon = Icons.Filled.Link,
+        label = stringResource(if (plex) R.string.server_settings_plex_web_url else R.string.server_settings_external_host),
+        value = draft.externalUrl,
+        enabled = enabled,
+        onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
+        hint = stringResource(R.string.server_settings_external_hint),
+        placeholder = stringResource(if (plex) R.string.placeholder_plex_web_url else R.string.placeholder_server_url),
+        check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
+    )
+}
+
+@Composable
+private fun forgotPasswordItem(
+    draft: MediaServerForm,
+    url: String,
+    enabled: Boolean,
+    actions: EditorActions<MediaServerForm>,
+): ListItem {
+    val noSlashError = stringResource(R.string.editor_error_web_url_no_slash)
+    return textSettingItem(
+        icon = Icons.Filled.LinkOff,
+        label = stringResource(R.string.server_settings_forgot_password_url),
+        value = url,
+        enabled = enabled,
+        onChange = { value -> actions.onEdit { it.copy(forgotPasswordUrl = value) } },
+        check = { value -> noSlashError.takeIf { !draft.copy(forgotPasswordUrl = value).forgotPasswordUrlValid } },
     )
 }
 
@@ -281,3 +299,11 @@ private fun MediaServerKind.labelRes(): Int =
         MediaServerKind.Jellyfin -> R.string.user_origin_jellyfin
         MediaServerKind.Emby -> R.string.user_origin_emby
     }
+
+/** The port each kind listens on out of the box: an example in the sheet, never a value. */
+private fun MediaServerKind.portPlaceholderRes(): Int =
+    if (this == MediaServerKind.Plex) R.string.placeholder_port_plex else R.string.placeholder_port_jellyfin
+
+/** The path each kind is commonly served under when it is not at the root. */
+private fun MediaServerKind.urlBasePlaceholderRes(): Int =
+    if (this == MediaServerKind.Emby) R.string.placeholder_url_base_emby else R.string.placeholder_url_base_jellyfin
