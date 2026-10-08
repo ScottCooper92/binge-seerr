@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -100,7 +99,7 @@ private fun statusItem(
             ),
         detailColor =
             when (check) {
-                ProviderCheck.NotTested -> Color.Unspecified
+                ProviderCheck.NotTested -> null
                 ProviderCheck.Operational -> BingeSentiment.Positive.fill()
                 ProviderCheck.Failed -> BingeSentiment.Negative.fill()
             },
