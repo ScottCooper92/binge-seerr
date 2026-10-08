@@ -1,220 +1,270 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.settings.DisplayLanguages
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerList
+import io.github.scottcooper92.binge.seerr.ui.settings.server.languageSettingItem
+import io.github.scottcooper92.binge.seerr.ui.settings.server.limitRows
+import io.github.scottcooper92.binge.seerr.ui.settings.server.regionSettingItem
+import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
 
 /**
- * The general page, as collapsible sections (#549): identity and contact, the discovery locale, and,
- * for a manager, the quotas. Nothing is required. Profile starts open; Discover and the quotas start
- * closed, and open themselves when they hold a value of the wrong shape.
+ * A user's General settings as the web client's page lists them, in groups of list rows: who the account is, what
+ * Discover shows them, and, for a manager, their request quotas, then the Plex watchlist's auto-requests where the
+ * server has them. A text value is edited in a sheet that checks it, and a pick from the server's lists in a picker
+ * sheet whose first choice is the server's own setting. [onLoadList] reads one of those lists the first time its picker
+ * opens.
  */
 @Composable
 fun GeneralSettingsScreen(
-    state: EditorUiState<GeneralSettings>,
+    state: ExtrasEditorUiState<GeneralSettings, UserGeneralExtras>,
     events: Flow<EditorEvent>,
     actions: EditorActions<GeneralSettings>,
+    onLoadList: (ServerList) -> Unit = {},
 ) {
-    val validation = remember { EditorValidation<GeneralSettings>(GENERAL_FORM_KEY) { it.issues() } }
+    val extras = (state as? ExtrasEditorUiState.Ready<GeneralSettings, UserGeneralExtras>)?.extras ?: UserGeneralExtras()
     EditorPage(
         title = stringResource(R.string.user_settings_page_general),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        validation = validation,
+        canSave = { it.valid },
     ) { draft, enabled ->
-        ProfileCard(draft, enabled, actions)
-        DiscoverCard(draft, enabled, actions)
+        ProfileGroup(draft, extras, enabled, actions)
+        DiscoverGroup(draft, extras, enabled, onLoadList, actions)
         if (draft.canEditQuotas) {
-            QuotasCard(draft, enabled, actions)
+            QuotasGroup(draft, enabled, actions)
         }
+        WatchlistGroup(draft, enabled, actions)
     }
 }
 
 @Composable
-private fun ProfileCard(
+private fun ProfileGroup(
     draft: GeneralSettings,
+    extras: UserGeneralExtras,
     enabled: Boolean,
     actions: EditorActions<GeneralSettings>,
 ) {
-    EditorSection(GeneralSections.PROFILE, stringResource(R.string.user_settings_section_profile)) {
-        EditorTextField(
-            draft.displayName,
-            stringResource(R.string.user_settings_display_name),
-            icon = Icons.Filled.Person,
-            enabled = enabled,
-            prose = true,
-            // What the server itself shows when this is blank, so the example is also the answer to "or what?".
-            placeholder = draft.fallbackName.takeIf { it.isNotBlank() },
-        ) { value ->
-            actions.onEdit { it.copy(displayName = value) }
-        }
-        EditorTextField(
-            draft.email,
-            stringResource(R.string.user_settings_email),
-            icon = Icons.Filled.Email,
-            enabled = enabled && draft.canEditEmail,
-            keyboardType = KeyboardType.Email,
-            placeholder = stringResource(R.string.placeholder_email),
-            fieldId = GeneralFields.EMAIL,
-        ) { value -> actions.onEdit { it.copy(email = value) } }
-        EditorTextField(
-            draft.discordId,
-            stringResource(R.string.user_settings_discord_id),
-            icon = Icons.Filled.Forum,
-            enabled = enabled,
-            keyboardType = KeyboardType.Number,
-            supporting = stringResource(R.string.user_settings_discord_id_hint),
-            fieldId = GeneralFields.DISCORD_ID,
-        ) { value -> actions.onEdit { it.copy(discordId = value) } }
-    }
-}
-
-@Composable
-private fun DiscoverCard(
-    draft: GeneralSettings,
-    enabled: Boolean,
-    actions: EditorActions<GeneralSettings>,
-) {
-    EditorSection(GeneralSections.DISCOVER, stringResource(R.string.user_settings_section_discover), defaultExpanded = false) {
-        EditorTextField(
-            draft.locale,
-            stringResource(R.string.settings_display_language),
-            icon = Icons.Filled.Translate,
-            enabled = enabled,
-            supporting = stringResource(R.string.user_settings_locale_hint),
-            fieldId = GeneralFields.LOCALE,
-        ) { value -> actions.onEdit { it.copy(locale = value) } }
-        EditorTextField(
-            draft.region,
-            stringResource(R.string.user_settings_region),
-            icon = Icons.Filled.Public,
-            enabled = enabled,
-            supporting = stringResource(R.string.user_settings_region_hint),
-            fieldId = GeneralFields.REGION,
-        ) { value -> actions.onEdit { it.copy(region = value) } }
-        EditorTextField(
-            draft.originalLanguage,
-            stringResource(R.string.user_settings_original_language),
-            icon = Icons.Filled.Language,
-            enabled = enabled,
-            // The same field as the server-level one, so it says the same thing rather than a second wording of it.
-            supporting = stringResource(R.string.server_settings_original_language_hint),
-            fieldId = GeneralFields.ORIGINAL_LANGUAGE,
-            imeAction = imeActionIf(last = !draft.canEditQuotas),
-        ) { value ->
-            actions.onEdit { it.copy(originalLanguage = value) }
-        }
-        draft.watchlistSyncMovies?.let { on ->
-            EditorToggleRow(
-                editorToggle(Icons.Filled.Bookmark, stringResource(R.string.user_settings_watchlist_movies), on, enabled) { value ->
-                    actions.onEdit { it.copy(watchlistSyncMovies = value) }
+    val emailError = stringResource(R.string.user_settings_email_invalid)
+    val serverLanguage = DisplayLanguages.nativeName(extras.serverDefaults.locale.ifBlank { DEFAULT_LOCALE })
+    ItemGroup(
+        title = stringResource(R.string.user_settings_section_profile),
+        rows =
+            listOfNotNull(
+                draft.accountType?.let { origin ->
+                    readOut(Icons.Filled.Badge, stringResource(R.string.user_settings_account_type), stringResource(origin.labelRes()))
                 },
-            )
-        }
-        draft.watchlistSyncTv?.let { on ->
-            EditorToggleRow(
-                editorToggle(Icons.Filled.Bookmark, stringResource(R.string.user_settings_watchlist_tv), on, enabled) { value ->
-                    actions.onEdit { it.copy(watchlistSyncTv = value) }
-                },
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuotasCard(
-    draft: GeneralSettings,
-    enabled: Boolean,
-    actions: EditorActions<GeneralSettings>,
-) {
-    EditorSection(GeneralSections.QUOTAS, stringResource(R.string.user_settings_quotas), defaultExpanded = false) {
-        QuotaFields(
-            title = stringResource(R.string.hub_quota_movies),
-            limit = draft.movieQuotaLimit,
-            days = draft.movieQuotaDays,
-            default = draft.defaultMovieQuota,
-            fieldIds = GeneralFields.MOVIE_QUOTA_LIMIT to GeneralFields.MOVIE_QUOTA_DAYS,
-            enabled = enabled,
-            onLimit = { value -> actions.onEdit { it.copy(movieQuotaLimit = value) } },
-            onDays = { value -> actions.onEdit { it.copy(movieQuotaDays = value) } },
-        )
-        QuotaFields(
-            title = stringResource(R.string.hub_quota_tv),
-            limit = draft.tvQuotaLimit,
-            days = draft.tvQuotaDays,
-            default = draft.defaultTvQuota,
-            fieldIds = GeneralFields.TV_QUOTA_LIMIT to GeneralFields.TV_QUOTA_DAYS,
-            enabled = enabled,
-            onLimit = { value -> actions.onEdit { it.copy(tvQuotaLimit = value) } },
-            onDays = { value -> actions.onEdit { it.copy(tvQuotaDays = value) } },
-            daysImeAction = ImeAction.Done,
-        )
-    }
-}
-
-/** A limit and its window side by side, under what the server applies when both are blank. */
-@Composable
-private fun QuotaFields(
-    title: String,
-    limit: String,
-    days: String,
-    default: QuotaDefault?,
-    /** The limit's and the window's ids, so a value of the wrong shape is reported beside its own field. */
-    fieldIds: Pair<String, String>,
-    enabled: Boolean,
-    onLimit: (String) -> Unit,
-    onDays: (String) -> Unit,
-    daysImeAction: ImeAction = ImeAction.Next,
-) {
-    Text(title, style = MaterialTheme.typography.titleSmall)
-    Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)), modifier = Modifier.fillMaxWidth()) {
-        EditorTextField(
-            limit,
-            stringResource(R.string.user_settings_quota_limit),
-            onValueChange = onLimit,
-            modifier = Modifier.weight(1f),
-            enabled = enabled,
-            keyboardType = KeyboardType.Number,
-            fieldId = fieldIds.first,
-        )
-        EditorTextField(
-            days,
-            stringResource(R.string.user_settings_quota_days),
-            onValueChange = onDays,
-            modifier = Modifier.weight(1f),
-            enabled = enabled,
-            keyboardType = KeyboardType.Number,
-            fieldId = fieldIds.second,
-            imeAction = daysImeAction,
-        )
-    }
-    Text(
-        stringResource(R.string.user_settings_quota_default, default.label()),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                readOut(
+                    Icons.Filled.AdminPanelSettings,
+                    stringResource(R.string.user_settings_role),
+                    stringResource(draft.role.labelRes()),
+                ),
+                textSettingItem(
+                    icon = Icons.Filled.Person,
+                    label = stringResource(R.string.user_settings_display_name),
+                    value = draft.displayName,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(displayName = value) } },
+                    // What the server itself shows when this is blank, so the row answers "or what?".
+                    emptyLabel = draft.fallbackName.ifBlank { stringResource(R.string.settings_value_not_set) },
+                    placeholder = draft.fallbackName.takeIf { it.isNotBlank() },
+                ),
+                textSettingItem(
+                    icon = Icons.Filled.Email,
+                    label = stringResource(R.string.user_settings_email),
+                    value = draft.email,
+                    enabled = enabled && draft.canEditEmail,
+                    onChange = { value -> actions.onEdit { it.copy(email = value) } },
+                    placeholder = stringResource(R.string.placeholder_email),
+                    required = draft.emailRequired,
+                    check = { value -> emailError.takeIf { !draft.copy(email = value).emailValid } },
+                    keyboard = EmailKeyboard,
+                ),
+                choiceSettingItem(
+                    icon = Icons.Filled.Translate,
+                    title = stringResource(R.string.settings_display_language),
+                    choices =
+                        listOf("" to stringResource(R.string.settings_value_server_default, serverLanguage)) +
+                            DisplayLanguages.choices(extras.variant, draft.locale),
+                    selected = draft.locale.trim(),
+                    enabled = enabled,
+                    onSelect = { code -> actions.onEdit { it.copy(locale = code) } },
+                ),
+            ),
     )
 }
+
+@Composable
+private fun DiscoverGroup(
+    draft: GeneralSettings,
+    extras: UserGeneralExtras,
+    enabled: Boolean,
+    onLoadList: (ServerList) -> Unit,
+    actions: EditorActions<GeneralSettings>,
+) {
+    val defaults = extras.serverDefaults
+    ItemGroup(
+        title = stringResource(R.string.user_settings_section_discover),
+        rows =
+            listOfNotNull(
+                regionSettingItem(
+                    icon = Icons.Filled.Public,
+                    title = stringResource(R.string.server_settings_discover_region),
+                    value = draft.region,
+                    choices = extras.lists[ServerList.DiscoverRegions],
+                    enabled = enabled,
+                    onOpen = { onLoadList(ServerList.DiscoverRegions) },
+                    onSelect = { code -> actions.onEdit { it.copy(region = code) } },
+                    serverDefault = defaults.region,
+                ),
+                languageSettingItem(
+                    icon = Icons.Filled.Language,
+                    title = stringResource(R.string.server_settings_discover_language),
+                    value = draft.originalLanguage,
+                    choices = extras.lists[ServerList.Languages],
+                    enabled = enabled,
+                    onOpen = { onLoadList(ServerList.Languages) },
+                    onSelect = { codes -> actions.onEdit { it.copy(originalLanguage = codes) } },
+                    serverDefault = defaults.originalLanguage,
+                ),
+                draft.streamingRegion?.let { region ->
+                    regionSettingItem(
+                        icon = Icons.Filled.LiveTv,
+                        title = stringResource(R.string.server_settings_streaming_region),
+                        value = region,
+                        choices = extras.lists[ServerList.StreamingRegions],
+                        enabled = enabled,
+                        onOpen = { onLoadList(ServerList.StreamingRegions) },
+                        onSelect = { code -> actions.onEdit { it.copy(streamingRegion = code) } },
+                        serverDefault = defaults.streamingRegion,
+                    )
+                },
+            ),
+    )
+}
+
+/** Each quota is the server's until its override is on; then its limit, and its window while limited, hang beneath. */
+@Composable
+private fun QuotasGroup(
+    draft: GeneralSettings,
+    enabled: Boolean,
+    actions: EditorActions<GeneralSettings>,
+) {
+    ItemGroup(
+        title = stringResource(R.string.user_settings_quotas),
+        rows =
+            quotaRows(
+                QuotaRow(Icons.Filled.Movie, R.string.user_settings_quota_override_movie, R.string.server_settings_movie_limit),
+                draft.movieQuotaOverride,
+                draft.movieQuotaLimit,
+                draft.movieQuotaDays,
+                draft.defaultMovieQuota,
+                enabled,
+                onOverride = { on -> actions.onEdit { it.copy(movieQuotaOverride = on) } },
+                onChange = { limit, days -> actions.onEdit { it.copy(movieQuotaLimit = limit, movieQuotaDays = days) } },
+            ) +
+                quotaRows(
+                    QuotaRow(Icons.Filled.Tv, R.string.user_settings_quota_override_tv, R.string.server_settings_tv_limit),
+                    draft.tvQuotaOverride,
+                    draft.tvQuotaLimit,
+                    draft.tvQuotaDays,
+                    draft.defaultTvQuota,
+                    enabled,
+                    onOverride = { on -> actions.onEdit { it.copy(tvQuotaOverride = on) } },
+                    onChange = { limit, days -> actions.onEdit { it.copy(tvQuotaLimit = limit, tvQuotaDays = days) } },
+                ),
+    )
+}
+
+/** One media type's quota rows: the override's icon, its switch's label and its limit's label. */
+private class QuotaRow(
+    val icon: ImageVector,
+    val overrideLabel: Int,
+    val limitLabel: Int,
+)
+
+@Composable
+private fun quotaRows(
+    row: QuotaRow,
+    override: Boolean,
+    limit: Int,
+    days: Int,
+    default: QuotaDefault?,
+    enabled: Boolean,
+    onOverride: (Boolean) -> Unit,
+    onChange: (limit: Int, days: Int) -> Unit,
+): List<ListItem> {
+    val toggle =
+        editorToggle(
+            row.icon,
+            stringResource(row.overrideLabel),
+            override,
+            enabled,
+            // Off, the server's limit is what applies, so the row says what that is.
+            detail = if (override) null else stringResource(R.string.user_settings_quota_default, default.label()),
+            onToggle = onOverride,
+        )
+    return if (override) {
+        listOf(toggle) + limitRows(row.icon, stringResource(row.limitLabel), limit, days, enabled, onChange).joined()
+    } else {
+        listOf(toggle)
+    }
+}
+
+@Composable
+private fun WatchlistGroup(
+    draft: GeneralSettings,
+    enabled: Boolean,
+    actions: EditorActions<GeneralSettings>,
+) {
+    val rows =
+        listOfNotNull(
+            draft.watchlistSyncMovies?.let { on ->
+                editorToggle(Icons.Filled.Bookmark, stringResource(R.string.user_settings_watchlist_movies), on, enabled) { value ->
+                    actions.onEdit { it.copy(watchlistSyncMovies = value) }
+                }
+            },
+            draft.watchlistSyncTv?.let { on ->
+                editorToggle(Icons.Filled.Bookmark, stringResource(R.string.user_settings_watchlist_tv), on, enabled) { value ->
+                    actions.onEdit { it.copy(watchlistSyncTv = value) }
+                }
+            },
+        )
+    if (rows.isNotEmpty()) ItemGroup(title = null, rows = rows)
+}
+
+/** A fact about the account the page shows and does not edit. */
+private fun readOut(
+    icon: ImageVector,
+    label: String,
+    value: String,
+) = ListItem(icon = icon, label = label, detail = value, clickable = false)
+
+private fun UserRole.labelRes(): Int =
+    when (this) {
+        UserRole.Owner -> R.string.user_role_owner
+        UserRole.Admin -> R.string.hub_role_admin
+        UserRole.User -> R.string.hub_role_user
+    }
 
 @Composable
 private fun QuotaDefault?.label(): String =
@@ -223,3 +273,6 @@ private fun QuotaDefault?.label(): String =
     } else {
         stringResource(R.string.settings_request_limit_value, limit, days)
     }
+
+/** The language a server with no display language of its own shows its pages in. */
+private const val DEFAULT_LOCALE = "en"

@@ -124,9 +124,9 @@ private fun SignInGroup(
     )
 }
 
-/** A limit as a picker row, and while it is set, its window as a picker row joined beneath it. */
+/** A limit as a picker row, and while it is set, its window as a picker row joined beneath it. A user's quota uses it too. */
 @Composable
-private fun limitRows(
+internal fun limitRows(
     icon: ImageVector,
     label: String,
     limit: Int,

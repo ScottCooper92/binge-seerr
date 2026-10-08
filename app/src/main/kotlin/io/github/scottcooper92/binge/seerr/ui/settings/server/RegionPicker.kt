@@ -32,7 +32,8 @@ private const val REGION_CODE_LENGTH = 2
  * A region setting as a list row: its current value named in the device's language, so the page needs no list to draw
  * it. The server's list is read only when the sheet opens ([onOpen]); the sheet shows it being read, then the choices
  * with "All regions" (the server's blank, no filter) first, or a way to retry or type the code if the server can't
- * send its list.
+ * send its list. A user's region passes [serverDefault], the server's own region: blank then reads "Default (…)", and
+ * "All regions" is [Regions.ALL].
  */
 @Composable
 internal fun regionSettingItem(
@@ -43,10 +44,15 @@ internal fun regionSettingItem(
     enabled: Boolean,
     onOpen: () -> Unit,
     onSelect: (String) -> Unit,
+    serverDefault: String? = null,
 ): ListItem {
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
     val allRegions = stringResource(R.string.server_settings_all_regions)
+    val defaultLabel =
+        serverDefault?.let { region ->
+            stringResource(R.string.settings_value_server_default, region.takeIf { it.isNotBlank() }?.let(Regions::name) ?: allRegions)
+        }
     if (open) {
         val pick = { code: String ->
             onSelect(code)
@@ -57,7 +63,7 @@ internal fun regionSettingItem(
                 is ListChoices.Ready ->
                     ChoiceRows(
                         icon,
-                        Regions.choices(choices.entries.map { it.code }, value, allRegions),
+                        Regions.choices(choices.entries.map { it.code }, value, allRegions, defaultLabel),
                         value.trim(),
                         pick,
                     )
@@ -69,7 +75,12 @@ internal fun regionSettingItem(
     return ListItem(
         icon = icon,
         label = title,
-        detail = value.trim().takeIf { it.isNotEmpty() }?.let(Regions::name) ?: allRegions,
+        detail =
+            when (val code = value.trim()) {
+                "" -> defaultLabel ?: allRegions
+                Regions.ALL -> allRegions
+                else -> Regions.name(code)
+            },
         clickable = enabled,
         disabled = !enabled,
         onClick = {

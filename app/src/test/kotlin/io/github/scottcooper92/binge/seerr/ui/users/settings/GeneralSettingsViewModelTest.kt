@@ -1,6 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerListCatalog
+import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
@@ -50,24 +52,31 @@ class GeneralSettingsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): GeneralSettingsViewModel {
-        val vm = GeneralSettingsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, 8)
+        val connection = seerr.connection(this)
+        val vm = GeneralSettingsViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
 
-    private suspend fun GeneralSettingsViewModel.awaitReady(): EditorUiState.Ready<GeneralSettings> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<GeneralSettings>
+    private suspend fun GeneralSettingsViewModel.awaitReady(): ExtrasEditorUiState.Ready<GeneralSettings, UserGeneralExtras> =
+        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving } as ExtrasEditorUiState.Ready<GeneralSettings, UserGeneralExtras>
 
     @Test
-    fun `the record reads as text fields with the server's defaults alongside, and a manager may edit the quotas`() =
+    fun `the record reads with the server's defaults alongside, and a manager may edit the quotas`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val draft = viewModel().awaitReady().draft
 
             assertEquals("Ana", draft.displayName)
-            assertEquals("5", draft.movieQuotaLimit)
-            assertEquals("", draft.tvQuotaLimit)
+            assertEquals(UserOrigin.Jellyfin, draft.accountType)
+            assertEquals(UserRole.User, draft.role)
+            assertTrue(draft.movieQuotaOverride)
+            assertEquals(5, draft.movieQuotaLimit)
+            // No override of its own: the switch is off, and turning it on starts from the server's quota.
+            assertFalse(draft.tvQuotaOverride)
+            assertEquals(0, draft.tvQuotaLimit)
+            assertEquals(7, draft.tvQuotaDays)
             assertEquals(QuotaDefault(limit = 10, days = 7), draft.defaultMovieQuota)
             assertEquals(QuotaDefault(limit = 0, days = 7), draft.defaultTvQuota)
             assertEquals(true, draft.watchlistSyncMovies)
@@ -105,17 +114,40 @@ class GeneralSettingsViewModelTest {
         }
 
     @Test
-    fun `saving posts the draft with a blank quota as null, then adopts the server's re-read`() =
+    fun `the web client's email rule, where a Jellyfin user may go without, a local user or the owner may not`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            assertFalse(viewModel().awaitReady().draft.emailRequired)
+
+            seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","userType":2,"permissions":$ADMIN}""")
+            val local = viewModel().awaitReady().draft
+            assertTrue(local.emailRequired)
+            assertEquals(UserRole.Admin, local.role)
+            assertFalse(local.copy(email = "").valid)
+        }
+
+    @Test
+    fun `the server's own Discover settings come alongside, for the blank choices to name`() =
+        runTest {
+            seerr.viewer(
+                id = 1,
+                permissions = ADMIN,
+                settings = """{"locale":"fr","discoverRegion":"FR","streamingRegion":"BE","originalLanguage":"fr|en"}""",
+            )
+            assertEquals(
+                ServerDiscoverDefaults(locale = "fr", region = "FR", streamingRegion = "BE", originalLanguage = "fr|en"),
+                viewModel().awaitReady().extras.serverDefaults,
+            )
+        }
+
+    @Test
+    fun `saving sends an override's quota and nulls one that is off, then adopts the server's re-read`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
             vm.awaitReady()
 
-            vm.edit { it.copy(displayName = "Ana B", movieQuotaLimit = "", tvQuotaLimit = "x") }
-            vm.save()
-            assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/main"))
-
-            vm.edit { it.copy(tvQuotaLimit = "3") }
+            vm.edit { it.copy(displayName = "Ana B", movieQuotaOverride = false, tvQuotaOverride = true, tvQuotaLimit = 3) }
             seerr.serve("GET /api/v1/user/8/settings/main", """{"username":"Ana B","tvQuotaLimit":3,"tvQuotaDays":7}""")
             val saved = awaitEvent(vm.events)
             vm.save()
@@ -124,24 +156,29 @@ class GeneralSettingsViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
             assertEquals("Ana B", sent.getValue("username").jsonPrimitive.content)
             assertNull(sent["movieQuotaLimit"])
+            assertNull(sent["movieQuotaDays"])
             assertEquals("3", sent.getValue("tvQuotaLimit").jsonPrimitive.content)
+            assertEquals("7", sent.getValue("tvQuotaDays").jsonPrimitive.content)
             val ready = vm.awaitReady()
             assertEquals("Ana B", ready.saved.displayName)
+            assertTrue(ready.saved.tvQuotaOverride)
             assertFalse(ready.dirty)
         }
 
     @Test
-    fun `the Jellyseerr lineage's split regions read and write, and the one this page hides survives the save`() =
+    fun `the Jellyseerr lineage's split regions read and write, and the Discord ID this page hides survives the save`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             seerr.serve(
                 "GET /api/v1/user/8/settings/main",
-                """{"username":"Ana","discoverRegion":"GB","streamingRegion":"IE","locale":"en"}""",
+                """{"username":"Ana","discoverRegion":"GB","streamingRegion":"IE","locale":"en","discordId":"1234"}""",
             )
             val vm = viewModel()
-            assertEquals("GB", vm.awaitReady().draft.region)
+            val draft = vm.awaitReady().draft
+            assertEquals("GB", draft.region)
+            assertEquals("IE", draft.streamingRegion)
 
-            vm.edit { it.copy(region = "US") }
+            vm.edit { it.copy(region = "US", streamingRegion = "all") }
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())
@@ -149,6 +186,21 @@ class GeneralSettingsViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
             assertEquals("US", sent.getValue("discoverRegion").jsonPrimitive.content)
             assertEquals("US", sent.getValue("region").jsonPrimitive.content)
-            assertEquals("IE", sent.getValue("streamingRegion").jsonPrimitive.content)
+            assertEquals("all", sent.getValue("streamingRegion").jsonPrimitive.content)
+            assertEquals("1234", sent.getValue("discordId").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `Overseerr has no streaming region, so the page shows none and sends none`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "1.33.2", settings = "{}")
+            val vm = viewModel()
+            assertNull(vm.awaitReady().draft.streamingRegion)
+
+            vm.edit { it.copy(displayName = "Ana B") }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+            assertNull(Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject["streamingRegion"])
         }
 }

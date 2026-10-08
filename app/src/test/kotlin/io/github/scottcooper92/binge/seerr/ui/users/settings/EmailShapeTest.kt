@@ -51,7 +51,9 @@ class EmailShapeTest {
     }
 
     @Test
-    fun `a bad quota still blocks saving with a good email`() {
-        assertEquals(false, GeneralSettings(email = "a@b.com", movieQuotaLimit = "x").valid)
+    fun `a required email may not be cleared, unless the viewer could not have changed it`() {
+        assertEquals(false, GeneralSettings(email = "", emailRequired = true, canEditEmail = true).valid)
+        assertEquals(true, GeneralSettings(email = "", emailRequired = true, canEditEmail = false).valid)
+        assertEquals(true, GeneralSettings(email = "", emailRequired = false, canEditEmail = true).valid)
     }
 }

@@ -32,6 +32,7 @@ import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemConnector
 import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
@@ -42,6 +43,13 @@ internal val NumberKeyboard = KeyboardOptions(keyboardType = KeyboardType.Number
 
 /** The keyboard a number with a fractional part asks for, such as a timeout in seconds. */
 internal val DecimalKeyboard = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+
+/** The keyboard an email address asks for, with no autocorrect to rewrite it. */
+internal val EmailKeyboard = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrectEnabled = false)
+
+/** Rows that hang beneath the switch above them, joined to it by the design system's connector. */
+internal fun List<ListItem>.joined(): List<ListItem> =
+    mapIndexed { index, row -> row.copy(connector = if (index == lastIndex) ListItemConnector.End else ListItemConnector.Continue) }
 
 /** The keyboard an address asks for: a host, a URL or a URL base, with no autocorrect to rewrite it. */
 internal val AddressKeyboard = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false)

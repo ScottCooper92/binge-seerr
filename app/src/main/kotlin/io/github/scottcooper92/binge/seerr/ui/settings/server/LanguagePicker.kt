@@ -26,7 +26,12 @@ import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 /** The server keeps a discover-language filter as codes joined by `|`: `en|ja`. Blank is no filter. */
-internal fun String.languageCodes(): List<String> = split('|').map { it.trim() }.filter { it.isNotEmpty() }
+internal fun String.languageCodes(): List<String> =
+    split('|').map { it.trim() }.filter { it.isNotEmpty() && it != ALL_LANGUAGES && it != SERVER_LANGUAGES }
+
+/** A user's "no filter". A blank user filter means the server's, which Overseerr also keeps as `server`. */
+internal const val ALL_LANGUAGES = "all"
+internal const val SERVER_LANGUAGES = "server"
 
 /** Whether typed codes may be used: blank clears the filter, otherwise every code must be the shape the page saves. */
 internal fun languageEntryUsable(typed: String): Boolean =
@@ -63,7 +68,9 @@ internal fun languageChecklist(
 /**
  * A language filter as a list row: the languages chosen, named on the device, so the page needs no list to draw it.
  * The server's list is read only when the sheet opens ([onOpen]). The sheet is a checklist with a search field, its
- * Clear and Done in the header at either height; Done applies the picks.
+ * Clear and Done in the header at either height; Done applies the picks. A user's filter passes [serverDefault], the
+ * server's own filter: blank then reads "Default (…)", the header gains a Default that goes back to it, and Clear keeps
+ * [ALL_LANGUAGES] rather than blank.
  */
 @Composable
 internal fun languageSettingItem(
@@ -74,13 +81,15 @@ internal fun languageSettingItem(
     enabled: Boolean,
     onOpen: () -> Unit,
     onSelect: (String) -> Unit,
+    serverDefault: String? = null,
 ): ListItem {
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
     val chosen = value.languageCodes()
+    val user = serverDefault != null
     if (open) {
         val apply = { codes: List<String> ->
-            onSelect(codes.joinToString("|"))
+            onSelect(if (codes.isEmpty() && user) ALL_LANGUAGES else codes.joinToString("|"))
             open = false
         }
         // Held here, not in the list, so the header's Clear and Done act on it at either height.
@@ -90,6 +99,15 @@ internal fun languageSettingItem(
             onDismiss = { open = false },
             actions = {
                 if (choices is ListChoices.Ready) {
+                    if (user) {
+                        BingeTextButton(
+                            label = stringResource(R.string.settings_use_server_default),
+                            onClick = {
+                                onSelect("")
+                                open = false
+                            },
+                        )
+                    }
                     BingeTextButton(label = stringResource(R.string.server_settings_list_clear), onClick = { picked = emptyList() })
                     BingeTextButton(label = stringResource(R.string.editor_done), onClick = { apply(picked) })
                 }
@@ -105,14 +123,7 @@ internal fun languageSettingItem(
     return ListItem(
         icon = icon,
         label = title,
-        detail =
-            if (chosen.isEmpty()) {
-                stringResource(
-                    R.string.server_settings_all_languages,
-                )
-            } else {
-                chosen.joinToString(", ") { languageName(it) }
-            },
+        detail = languageDetail(value, chosen, serverDefault),
         clickable = enabled,
         disabled = !enabled,
         onClick = {
@@ -175,4 +186,29 @@ private fun LanguagesUnavailable(
             )
         },
     )
+}
+
+/** What a language row reads: the languages chosen, "All languages", or for a user left on the server's, its filter. */
+@Composable
+private fun languageDetail(
+    value: String,
+    chosen: List<String>,
+    serverDefault: String?,
+): String {
+    val all = stringResource(R.string.server_settings_all_languages)
+    val names = { codes: List<String> -> codes.joinToString(", ") { languageName(it) } }
+    val onDefault = serverDefault != null && value.trim().let { it.isEmpty() || it == SERVER_LANGUAGES }
+    return when {
+        onDefault ->
+            stringResource(
+                R.string.settings_value_server_default,
+                serverDefault
+                    .orEmpty()
+                    .languageCodes()
+                    .ifEmpty { null }
+                    ?.let(names) ?: all,
+            )
+        chosen.isEmpty() -> all
+        else -> names(chosen)
+    }
 }

@@ -16,13 +16,4 @@ class DiscordIdShapeTest {
             assertFalse(it, it.isDiscordIdShape())
         }
     }
-
-    @Test
-    fun `a blank id is valid and a non-digit one blocks saving`() {
-        assertTrue(GeneralSettings(discordId = "").valid)
-        assertTrue(GeneralSettings(discordId = "123").valid)
-        val bad = GeneralSettings(discordId = "scott#1234")
-        assertFalse(bad.discordIdValid)
-        assertFalse(bad.valid)
-    }
 }
