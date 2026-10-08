@@ -6,9 +6,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!--
         A normal permission: the television's address hand-off (#323) reads its own LAN address
-        from the active network's link properties. The phone-to-TV traffic is LAN traffic, which on
-        SDK 37 needs ACCESS_LOCAL_NETWORK once this app targets 37 (#732); targeting 36, it is
-        granted automatically, so it is not declared or requested here.
+        from the active network's link properties. The phone-to-TV traffic is LAN traffic, so it
+        also falls under ACCESS_LOCAL_NETWORK, declared below.
     -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
