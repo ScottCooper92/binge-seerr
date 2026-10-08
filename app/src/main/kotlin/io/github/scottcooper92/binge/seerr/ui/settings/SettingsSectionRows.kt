@@ -57,7 +57,7 @@ internal fun serverSectionRows(
                 Icons.Filled.Group,
                 stringResource(R.string.hub_section_users),
                 policy.policySummary(),
-                ServerSettingsPage.DefaultPermissions,
+                ServerSettingsPage.Users,
             )
         },
         section(

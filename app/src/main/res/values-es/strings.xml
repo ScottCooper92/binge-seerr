@@ -1109,4 +1109,21 @@
     <string name="server_settings_api_key_show">Mostrar clave</string>
     <string name="server_settings_api_key_hide">Ocultar clave</string>
     <string name="server_settings_api_key_regenerate_detail">La clave anterior deja de funcionar al momento</string>
+    <string name="server_settings_sign_in">Inicio de sesión</string>
+    <string name="server_settings_local_login">Inicio de sesión local</string>
+    <string name="server_settings_local_login_detail">Cuentas con correo y contraseña guardadas en el servidor</string>
+    <string name="server_settings_media_server_login">Inicio de sesión con %1$s</string>
+    <string name="server_settings_new_media_server_login">Nuevos usuarios de %1$s</string>
+    <string name="server_settings_new_media_server_login_detail">Cualquiera de tu %1$s puede entrar sin importarlo antes</string>
+    <string name="server_settings_sign_in_required">Deja activada al menos una forma de iniciar sesión.</string>
+    <string name="server_settings_request_limits">Límites de solicitudes</string>
+    <string name="server_settings_movie_limit">Solicitudes de películas</string>
+    <string name="server_settings_tv_limit">Solicitudes de series</string>
+    <string name="server_settings_limit_window">Se renueva</string>
+    <plurals name="server_settings_limit_count">
+        <item quantity="one">%1$d solicitud</item>
+        <item quantity="many">%1$d solicitudes</item>
+        <item quantity="other">%1$d solicitudes</item>
+    </plurals>
+    <string name="server_settings_permissions_none">Ninguno</string>
 </resources>

@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -39,6 +40,8 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerGeneralScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerGeneralViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerUsersScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerUsersViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServicesActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServicesScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServicesViewModel
@@ -70,6 +73,7 @@ internal fun ServerSettingsPageEntry(
         ServerSettingsPage.NotificationAgents -> NotificationAgentsPage(onBack, onOpenAgent)
         ServerSettingsPage.Services -> ServicesPage(onBack, onOpenInstance, onOpenRule)
         ServerSettingsPage.General -> GeneralPage(onBack)
+        ServerSettingsPage.Users -> UsersPage(onBack, onOpenPage)
         ServerSettingsPage.MediaServer -> MediaServerPage(onBack, onOpenPage)
         ServerSettingsPage.Tautulli -> TautulliPage(onBack)
         ServerSettingsPage.DefaultPermissions -> DefaultPermissionsPage(onBack)
@@ -267,6 +271,27 @@ private fun TautulliPage(onBack: () -> Unit) {
     val viewModel = hiltViewModel<TautulliViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     TautulliScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack))
+}
+
+/** How people sign in, everyone's request limits, and the way into the default permissions. */
+@Composable
+private fun UsersPage(
+    onBack: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
+) {
+    val viewModel = hiltViewModel<ServerUsersViewModel>()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The entry leaves composition while Default permissions is on top, so this runs again on return.
+    DisposableEffect(viewModel) {
+        viewModel.refreshDefaultPermissions()
+        onDispose { }
+    }
+    ServerUsersScreen(
+        state = state,
+        events = viewModel.events,
+        actions = viewModel.editorActions(onBack),
+        onOpenDefaultPermissions = { onOpenPage(ServerSettingsPage.DefaultPermissions) },
+    )
 }
 
 /** The permissions a new account starts with. */

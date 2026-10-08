@@ -29,6 +29,7 @@ internal fun portValid(port: String): Boolean = port.trim().toIntOrNull()?.let {
 /** The server's own settings pages, for a user who manages settings. */
 enum class ServerSettingsPage {
     General,
+    Users,
     DefaultPermissions,
     MediaServer,
     Tautulli,

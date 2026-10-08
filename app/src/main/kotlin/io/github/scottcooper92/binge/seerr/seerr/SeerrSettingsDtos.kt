@@ -36,6 +36,10 @@ data class SeerrMainSettingsDto(
     @SerialName("csrfProtection") val csrfProtection: Boolean? = null,
     @SerialName("defaultPermissions") val defaultPermissions: Int? = null,
     @SerialName("defaultQuotas") val defaultQuotas: SeerrDefaultQuotasDto? = null,
+    @SerialName("localLogin") val localLogin: Boolean? = null,
+    /** The Jellyseerr lineage only; Overseerr has no switch for its media server sign-in. */
+    @SerialName("mediaServerLogin") val mediaServerLogin: Boolean? = null,
+    @SerialName("newPlexLogin") val newPlexLogin: Boolean? = null,
 )
 
 /**
@@ -62,6 +66,10 @@ data class SeerrMainSettingsUpdateBody(
     @SerialName("trustProxy") val trustProxy: Boolean? = null,
     @SerialName("csrfProtection") val csrfProtection: Boolean? = null,
     @SerialName("defaultPermissions") val defaultPermissions: Int? = null,
+    @SerialName("defaultQuotas") val defaultQuotas: SeerrDefaultQuotasDto? = null,
+    @SerialName("localLogin") val localLogin: Boolean? = null,
+    @SerialName("mediaServerLogin") val mediaServerLogin: Boolean? = null,
+    @SerialName("newPlexLogin") val newPlexLogin: Boolean? = null,
 )
 
 @Serializable
