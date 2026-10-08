@@ -1,11 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
@@ -168,6 +170,7 @@ private fun textOptionItem(
             },
         secret = option.secret,
         multiline = option.kind == OptionKind.Multiline,
+        keyboard = option.keyboard(),
     )
 }
 
@@ -195,3 +198,15 @@ private fun TypeGroups(
 }
 
 private val NotificationType.isIssue: Boolean get() = name.startsWith("Issue")
+
+/** The keyboard an option's sheet asks for, from its kind; an option the server matches exactly is not autocorrected. */
+internal fun AgentOption.keyboard(): KeyboardOptions =
+    KeyboardOptions(
+        keyboardType =
+            when (kind) {
+                OptionKind.Number -> KeyboardType.Number
+                OptionKind.Uri -> KeyboardType.Uri
+                else -> KeyboardType.Text
+            },
+        autoCorrectEnabled = autoCorrect && kind != OptionKind.Uri,
+    )

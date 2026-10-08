@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.DisplayLanguages
+import io.github.scottcooper92.binge.seerr.ui.users.settings.AddressKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -86,6 +87,7 @@ private fun ApplicationGroup(
                     value = draft.applicationUrl,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(applicationUrl = value) } },
+                    keyboard = AddressKeyboard,
                     hint = stringResource(R.string.server_settings_application_url_hint),
                     check = { value -> urlError.takeIf { !draft.copy(applicationUrl = value).urlValid } },
                 ),
@@ -219,6 +221,7 @@ internal fun AdvancedGroup(
                         value = url,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(youtubeUrl = value) } },
+                        keyboard = AddressKeyboard,
                         emptyLabel = stringResource(R.string.server_settings_youtube_default),
                         hint = stringResource(R.string.server_settings_youtube_url_hint),
                     )

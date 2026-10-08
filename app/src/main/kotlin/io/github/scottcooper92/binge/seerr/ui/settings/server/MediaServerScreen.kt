@@ -27,10 +27,12 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.users.settings.AddressKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
@@ -121,6 +123,7 @@ private fun SettingsGroup(
                     value = draft.host,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                    keyboard = AddressKeyboard,
                     required = true,
                     placeholder = stringResource(R.string.placeholder_host),
                     check = { value -> requiredError.takeIf { value.isBlank() } },
@@ -131,6 +134,7 @@ private fun SettingsGroup(
                     value = draft.port,
                     enabled = enabled,
                     onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                    keyboard = NumberKeyboard,
                     required = true,
                     placeholder = stringResource(draft.kind.portPlaceholderRes()),
                     check = { value -> portError.takeIf { !portValid(value) } },
@@ -156,6 +160,7 @@ private fun SettingsGroup(
                         value = base,
                         enabled = enabled,
                         onChange = { value -> actions.onEdit { it.copy(urlBase = value) } },
+                        keyboard = AddressKeyboard,
                         placeholder = stringResource(draft.kind.urlBasePlaceholderRes()),
                     )
                 },
@@ -180,6 +185,7 @@ private fun externalItem(
         value = draft.externalUrl,
         enabled = enabled,
         onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
+        keyboard = AddressKeyboard,
         hint = stringResource(R.string.server_settings_external_hint),
         placeholder = stringResource(if (plex) R.string.placeholder_plex_web_url else R.string.placeholder_server_url),
         check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
@@ -200,6 +206,7 @@ private fun forgotPasswordItem(
         value = url,
         enabled = enabled,
         onChange = { value -> actions.onEdit { it.copy(forgotPasswordUrl = value) } },
+        keyboard = AddressKeyboard,
         check = { value -> noSlashError.takeIf { !draft.copy(forgotPasswordUrl = value).forgotPasswordUrlValid } },
     )
 }

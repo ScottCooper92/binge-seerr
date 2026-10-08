@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
@@ -34,6 +36,15 @@ import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
 import com.binge.designsystem.R as DesR
+
+/** The keyboard a number asks for: a port, a count, a number of seconds. */
+internal val NumberKeyboard = KeyboardOptions(keyboardType = KeyboardType.Number)
+
+/** The keyboard an address asks for: a host, a URL or a URL base, with no autocorrect to rewrite it. */
+internal val AddressKeyboard = KeyboardOptions(keyboardType = KeyboardType.Uri, autoCorrectEnabled = false)
+
+/** The keyboard a name the server matches exactly asks for, such as a username: text, with no autocorrect. */
+internal val VerbatimKeyboard = KeyboardOptions(autoCorrectEnabled = false)
 
 /** How tall a [textSettingItem] sheet's field opens for a value of several lines, and how far it grows. */
 private const val MULTILINE_MIN = 3
@@ -46,7 +57,8 @@ private const val MULTILINE_MAX = 8
  * off. A [secret] value is edited in a masked field with a reveal toggle and no autocorrect, as an `EditorTextField`
  * does, since the design system's text entry has no way to hide what it shows. A [hint] explains the value and stays
  * in view while it is edited; a [placeholder] is an example of one, shown only while the field is empty. A [required]
- * row left blank, or a value [check] refuses, says so in its detail, in the error colour.
+ * row left blank, or a value [check] refuses, says so in its detail, in the error colour. [keyboard] is the keyboard the
+ * sheet asks for: [NumberKeyboard], [AddressKeyboard] or [VerbatimKeyboard] where the value needs one.
  * The sheet belongs to this call, so a page lists its rows and nothing else.
  */
 @Composable
@@ -64,6 +76,7 @@ internal fun textSettingItem(
     shown: String = value.ifBlank { emptyLabel },
     secret: Boolean = false,
     multiline: Boolean = false,
+    keyboard: KeyboardOptions = KeyboardOptions.Default,
 ): ListItem {
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
@@ -105,6 +118,7 @@ internal fun textSettingItem(
                     error = problem.takeIf { draft.isNotEmpty() },
                     minLines = if (multiline) MULTILINE_MIN else 1,
                     maxLines = if (multiline) MULTILINE_MAX else 1,
+                    keyboardOptions = keyboard,
                     modifier = Modifier.imePadding(),
                 )
             }
