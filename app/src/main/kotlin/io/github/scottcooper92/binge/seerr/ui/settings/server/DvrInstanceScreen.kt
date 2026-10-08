@@ -265,28 +265,4 @@ internal fun TagChips(
     }
 }
 
-@Composable
-internal fun DeleteButton(onDelete: () -> Unit) {
-    var confirming by rememberSaveable { mutableStateOf(false) }
-    BingeOutlinedButton(
-        label = stringResource(R.string.server_settings_delete),
-        onClick = { confirming = true },
-        destructive = true,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    if (confirming) {
-        BingeConfirmDialog(
-            title = stringResource(R.string.server_settings_delete_title),
-            message = stringResource(R.string.server_settings_delete_message),
-            confirmLabel = stringResource(R.string.server_settings_delete),
-            destructive = true,
-            onConfirm = {
-                confirming = false
-                onDelete()
-            },
-            onDismiss = { confirming = false },
-        )
-    }
-}
-
 internal fun Set<Int>.toggled(id: Int): Set<Int> = if (id in this) this - id else this + id

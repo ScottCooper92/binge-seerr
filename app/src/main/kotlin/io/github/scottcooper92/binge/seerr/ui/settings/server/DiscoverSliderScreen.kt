@@ -62,6 +62,6 @@ fun DiscoverSliderScreen(
             supporting = stringResource(draft.type.dataHintRes()),
             imeAction = ImeAction.Done,
         ) { value -> actions.onEdit { it.copy(data = value) } }
-        if (draft.id != null) DeleteButton(onDelete)
+        if (draft.id != null) DeleteGroup(onDelete)
     }
 }
