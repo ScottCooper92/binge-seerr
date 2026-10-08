@@ -25,7 +25,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 private const val SEERR_NETWORK =
-    """{"csrfProtection":false,"trustProxy":true,"forceIpv4First":false,
+    """{"csrfProtection":false,"trustProxy":true,"forceIpv4First":false,"apiRequestTimeout":30000,
         "proxy":{"enabled":false,"hostname":"","port":8080,"useSsl":false,"user":"","password":"","bypassFilter":"","bypassLocalAddresses":true},
         "dnsCache":{"enabled":true,"forceMinTtl":0,"forceMaxTtl":-1}}"""
 
@@ -138,5 +138,92 @@ class NetworkViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals(setOf("csrfProtection", "trustProxy"), sent.keys)
             assertEquals("true", sent.getValue("trustProxy").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `the api request timeout is read and sent in milliseconds, shown in seconds`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val vm = viewModel()
+            assertEquals("30", vm.awaitReady().draft.apiRequestTimeout)
+
+            vm.edit { it.copy(apiRequestTimeout = "-1") }
+            assertFalse(vm.awaitReady().draft.valid)
+            vm.edit { it.copy(apiRequestTimeout = "45") }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
+            assertEquals("45000", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `an api request timeout past the int range loads and is refused or sent without wrapping`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK.replace("30000", "3000000000"))
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val vm = viewModel()
+            assertEquals("3000000", vm.awaitReady().draft.apiRequestTimeout)
+
+            vm.edit { it.copy(apiRequestTimeout = Long.MAX_VALUE.toString()) }
+            assertFalse(vm.awaitReady().draft.valid)
+            vm.edit { it.copy(apiRequestTimeout = "2147484") }
+            assertTrue(vm.awaitReady().draft.valid)
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
+            assertEquals("2147484000", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a fractional api request timeout from the web client loads and is rounded to whole milliseconds`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK.replace("30000", "1100.0000000000002"))
+            val vm = viewModel()
+            assertEquals("1.1", vm.awaitReady().draft.apiRequestTimeout)
+        }
+
+    @Test
+    fun `an untouched api request timeout is sent back as the server had it`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK.replace("30000", "1500"))
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val vm = viewModel()
+            assertEquals("1.5", vm.awaitReady().draft.apiRequestTimeout)
+
+            vm.edit { it.copy(trustProxy = false) }
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
+            assertEquals("1500", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a fractional api request timeout entered in the app is sent as whole milliseconds`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(apiRequestTimeout = "1.5") }
+            assertTrue(vm.awaitReady().draft.valid)
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
+            assertEquals("1500", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
         }
 }
