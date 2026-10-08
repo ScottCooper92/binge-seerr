@@ -21,8 +21,8 @@ private const val SOMEONE_ELSE = 2
 /** The per-request rules are Seerr's own, from `server/routes/request.ts`; each case names the check it mirrors. */
 class SeerrAllowedActionsTest {
     private val profile = SeerrServerProfile.from(SeerrStatusDto(version = "2.7.0"), SeerrPublicSettings())
-    private val requester = SeerrPermissions(canRequest = true)
-    private val moderator = SeerrPermissions(canRequest = true, canManageRequests = true)
+    private val requester = SeerrPermissions(canRequestMovie = true, canRequestSeries = true)
+    private val moderator = SeerrPermissions(canRequestMovie = true, canRequestSeries = true, canManageRequests = true)
 
     private fun request(
         id: Int,
@@ -129,6 +129,29 @@ class SeerrAllowedActionsTest {
                 profile = profile,
             )
         assertTrue(Capability.CAPABILITY_EDIT_SEASONS in asModerator.actionsOf(6))
+    }
+
+    /** #897: seasons belong only to a series, which a Request Movies user cannot ask for. */
+    @Test
+    fun `a user who may request only movies is offered cancel but no season edit`() {
+        val moviesOnly = SeerrPermissions(canRequestMovie = true).toCapabilities(profile)
+        assertTrue(Capability.CAPABILITY_CANCEL in moviesOnly)
+        assertFalse(Capability.CAPABILITY_EDIT_SEASONS in moviesOnly)
+
+        assertTrue(Capability.CAPABILITY_EDIT_SEASONS in SeerrPermissions(canRequestSeries = true).toCapabilities(profile))
+        assertTrue(Capability.CAPABILITY_EDIT_SEASONS in SeerrPermissions(canManageRequests = true).toCapabilities(profile))
+    }
+
+    @Test
+    fun `a movies-only requester is offered no season edit even on their own series request`() {
+        val status =
+            SeerrPermissions(canRequestMovie = true).withAllowedActions(
+                server(request(4, ApprovalState.APPROVAL_STATE_PENDING, listOf(1)) to VIEWER),
+                viewerId = VIEWER,
+                profile = profile,
+            )
+
+        assertEquals(listOf(Capability.CAPABILITY_CANCEL), status.actionsOf(4))
     }
 
     @Test

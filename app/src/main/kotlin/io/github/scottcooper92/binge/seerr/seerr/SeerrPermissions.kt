@@ -37,7 +37,10 @@ internal const val PERMISSION_VIEW_BLOCKLIST = 1 shl 30
  */
 data class SeerrPermissions(
     val isAdmin: Boolean = false,
-    val canRequest: Boolean = false,
+    /** `REQUEST` or `REQUEST_MOVIE`, as Seerr's request route checks a movie request. */
+    val canRequestMovie: Boolean = false,
+    /** `REQUEST` or `REQUEST_TV`, as it checks a series request. */
+    val canRequestSeries: Boolean = false,
     val canRequest4kMovie: Boolean = false,
     val canRequest4kTv: Boolean = false,
     val canRequestAdvanced: Boolean = false,
@@ -53,6 +56,9 @@ data class SeerrPermissions(
     val canManageSettings: Boolean = false,
     val canViewBlocklist: Boolean = false,
 ) {
+    /** Whether the user may request something; the server checks the media type it is asked for. */
+    val canRequest: Boolean get() = canRequestMovie || canRequestSeries
+
     val canRequest4k: Boolean get() = canRequest4kMovie || canRequest4kTv
 
     /** Whether some 4K request is open to this user: they hold the permission for a media type the server has 4K on for. */
@@ -75,8 +81,8 @@ data class SeerrPermissions(
             val request4k = granted(PERMISSION_REQUEST_4K)
             return SeerrPermissions(
                 isAdmin = isAdmin,
-                // Either media type's own bit lets the user request; the server checks the type it is asked for.
-                canRequest = granted(PERMISSION_REQUEST) || granted(PERMISSION_REQUEST_MOVIE) || granted(PERMISSION_REQUEST_TV),
+                canRequestMovie = granted(PERMISSION_REQUEST) || granted(PERMISSION_REQUEST_MOVIE),
+                canRequestSeries = granted(PERMISSION_REQUEST) || granted(PERMISSION_REQUEST_TV),
                 canRequest4kMovie = request4k || granted(PERMISSION_REQUEST_4K_MOVIE),
                 canRequest4kTv = request4k || granted(PERMISSION_REQUEST_4K_TV),
                 canRequestAdvanced = granted(PERMISSION_REQUEST_ADVANCED),

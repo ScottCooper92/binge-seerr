@@ -34,7 +34,8 @@ internal fun previewAdminOverview() =
         permissions =
             SeerrPermissions(
                 isAdmin = true,
-                canRequest = true,
+                canRequestMovie = true,
+                canRequestSeries = true,
                 canManageRequests = true,
                 canViewRequests = true,
                 canManageUsers = true,
@@ -65,7 +66,7 @@ internal fun previewRestrictedOverview() =
         userLoad = HubUserLoad.Loaded,
         account = HubAccount(id = 7, name = "Grace", isAdmin = false, avatarUrl = null),
         quota = null,
-        permissions = SeerrPermissions(canRequest = true),
+        permissions = SeerrPermissions(canRequestMovie = true, canRequestSeries = true),
         movieRequestCount = 12,
         tvRequestCount = 4,
         pendingRequestCount = 1,
