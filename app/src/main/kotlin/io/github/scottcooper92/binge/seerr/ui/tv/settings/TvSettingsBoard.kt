@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,11 +27,8 @@ import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.ServerSummary
 import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.SignInKind
-import io.github.scottcooper92.binge.seerr.ui.settings.generalRows
-import io.github.scottcooper92.binge.seerr.ui.settings.mediaServerRows
+import io.github.scottcooper92.binge.seerr.ui.settings.labelRes
 import io.github.scottcooper92.binge.seerr.ui.settings.requestPolicyRows
-import io.github.scottcooper92.binge.seerr.ui.settings.serviceRows
-import io.github.scottcooper92.binge.seerr.ui.settings.systemRows
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
@@ -169,7 +167,7 @@ private fun tvSettingGroups(
         )
         hub?.let { serverStatusGroup(it, onOpenBingeListing) }?.let(::add)
         config?.general?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it) {}, readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it), readOnly))
         }
         // Admin-only, same as the phone: this is the one section that also gets an action, so it is
         // built by hand rather than through the read-only mapping every other section shares.
@@ -177,11 +175,11 @@ private fun tvSettingGroups(
             add(mediaServerGroup(state.server, onStartLibraryScan, note = scanNote ?: readOnly))
         }
         config?.services?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it, {}) { _, _ -> }, readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it), readOnly))
         }
         config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it), readOnly)) }
         config?.system?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it) {}, readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it), readOnly))
         }
     }.filter { it.rows.isNotEmpty() }
 }
@@ -198,21 +196,20 @@ private fun mediaServerGroup(
     onStartLibraryScan: () -> Unit,
     note: String,
 ): TvPaneGroup {
-    val row = mediaServerRows(server) {}.first()
     return TvPaneGroup(
         title = stringResource(R.string.server_settings_media_server),
         rows =
             listOf(
                 TvPaneRow(
                     key = KEY_MEDIA_SERVER,
-                    label = row.label,
-                    body = row.detail.orEmpty(),
+                    label = stringResource(server.mediaServer.labelRes()),
+                    body = stringResource(R.string.server_settings_media_server_caption),
                     note = note,
                     options =
                         listOf(
                             TvPaneOption(label = stringResource(R.string.tv_settings_start_library_scan), onSelect = onStartLibraryScan),
                         ),
-                    icon = row.icon,
+                    icon = Icons.Filled.Storage,
                 ),
             ),
     )
