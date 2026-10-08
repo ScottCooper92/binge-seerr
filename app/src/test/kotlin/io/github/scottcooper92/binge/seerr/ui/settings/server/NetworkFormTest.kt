@@ -7,6 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
@@ -20,6 +22,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.text.AnnotatedString
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
@@ -93,6 +96,27 @@ class NetworkFormTest {
         show(ALL_OFF.copy(proxy = ProxyForm(enabled = true)))
 
         rule.onNodeWithText("Save").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `the password sheet does not display the password`() {
+        show(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "p.lan", port = "3128", password = "hunter2")))
+
+        rule.onNode(hasText("Password") and hasClickAction()).performScrollTo().performClick()
+
+        // hasText also matches InputText, the raw value; what the field displays is EditableText.
+        val displayed = SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("•".repeat(7)))
+        rule.onNode(displayed).assertExists()
+    }
+
+    @Test
+    fun `a blank host says it is required`() {
+        show(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "p.lan", port = "3128")))
+
+        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement(" ")
+
+        rule.onNodeWithText("Required").assertExists()
     }
 
     @Test

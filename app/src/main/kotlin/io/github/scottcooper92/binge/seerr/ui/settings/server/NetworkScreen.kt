@@ -196,16 +196,16 @@ private fun proxySettingRows(
     enabled: Boolean,
     onEdit: ((ProxyForm) -> ProxyForm) -> Unit,
 ): List<ListItem> {
-    val hostLabel = stringResource(R.string.server_settings_host)
+    val requiredError = stringResource(R.string.editor_field_required)
     val portError = stringResource(R.string.editor_error_port)
     return listOf(
         textSettingItem(
             icon = Icons.Filled.Dns,
-            label = hostLabel,
+            label = stringResource(R.string.server_settings_host),
             value = proxy.host,
             enabled = enabled,
             onChange = { value -> onEdit { it.copy(host = value) } },
-            check = { value -> hostLabel.takeIf { value.isBlank() } },
+            check = { value -> requiredError.takeIf { value.isBlank() } },
         ),
         textSettingItem(
             icon = Icons.Filled.Tag,
@@ -235,6 +235,7 @@ private fun proxySettingRows(
                 stringResource(
                     if (proxy.password.isEmpty()) R.string.settings_value_not_set else R.string.server_settings_secret_set,
                 ),
+            secret = true,
         ),
         textSettingItem(
             icon = Icons.Filled.Block,
