@@ -55,24 +55,6 @@ internal fun TvSetupAddressPage(
         icon = Icons.Filled.Dns,
         modifier = modifier,
         buttonBar = true,
-        // Plain HTTP to a public host is the one thing standing between this address and the server, so agreeing to it is
-        // the page's action, in the bar, and it connects as it agrees. An address a phone sent lands here (#907).
-        pinnedAction =
-            if (state.insecure && !state.cleartextAllowed) {
-                {
-                    TvButton(
-                        label = stringResource(R.string.setup_allow_cleartext),
-                        onClick = {
-                            actions.onAllowCleartext(true)
-                            actions.onInspect()
-                        },
-                        enabled = !state.isInspecting,
-                        modifier = if (state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier,
-                    )
-                }
-            } else {
-                null
-            },
         // Back to the code, in the same place the way here was.
         copyAction = {
             TvButton(
@@ -135,8 +117,17 @@ private fun ColumnScope.TvSetupAddressFields(
         modifier = Modifier.fillMaxWidth().belowWithoutHeight(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
     ) {
-        // The warning stays while the address does; agreeing to it is the bar's button.
-        if (state.insecure) TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
+        if (state.insecure) {
+            TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
+            // A checkbox, not an action: Continue beside the field is what goes on once it is ticked (#915). An address a phone
+            // sent lands here, and ticking it goes on by itself, since the phone is already waiting (#907).
+            TvCheckboxRow(
+                label = stringResource(R.string.setup_allow_cleartext),
+                checked = state.cleartextAllowed,
+                onCheckedChange = actions.onAllowCleartext,
+                modifier = if (state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier,
+            )
+        }
         state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
         if (state.needsLocalNetwork) {
             val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
