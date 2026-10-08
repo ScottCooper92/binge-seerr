@@ -22,7 +22,8 @@ val MINIMUM_AVAILABILITIES: List<String> = listOf("announced", "inCinemas", "rel
 val SERIES_TYPES: List<String> = listOf("standard", "daily", "anime")
 
 /** Sonarr's "Monitor New Seasons" default: the web client's own default for a new instance. */
-private const val MONITOR_NEW_ITEMS_ALL = "all"
+internal const val MONITOR_NEW_ITEMS_ALL = "all"
+internal const val MONITOR_NEW_ITEMS_NONE = "none"
 
 /** One instance as the services page lists it. */
 data class DvrSummary(

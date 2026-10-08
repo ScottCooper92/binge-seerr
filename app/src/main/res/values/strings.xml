@@ -513,7 +513,6 @@
     <string name="server_settings_dvr_season_folders">Season folders</string>
     <string name="server_settings_dvr_anime">Anime</string>
     <string name="server_settings_dvr_behaviour">Behaviour</string>
-    <string name="server_settings_dvr_advanced">Advanced</string>
     <string name="editor_cancel">Cancel</string>
     <string name="editor_field_required">Required</string>
     <!-- Format-only: a field's label and the mark that it is required. -->
@@ -1037,8 +1036,6 @@
     <string name="placeholder_port_proxy" translatable="false">3128</string>
     <string name="placeholder_proxy_host" translatable="false">proxy.example.com</string>
     <string name="placeholder_url_base_tautulli" translatable="false">/tautulli</string>
-    <string name="placeholder_url_base_radarr" translatable="false">/radarr</string>
-    <string name="placeholder_url_base_sonarr" translatable="false">/sonarr</string>
     <string name="placeholder_server_url" translatable="false">https://seerr.example.com</string>
     <string name="placeholder_email" translatable="false">example@domain.com</string>
     <!-- %1$s is the media server's own name where the administrator set one, else Jellyfin or Emby. -->
@@ -1185,4 +1182,11 @@
     <string name="permission_view_issues_detail">See everyone\'s issues, not only their own</string>
     <string name="server_settings_media_server_settings">%1$s settings</string>
     <string name="server_settings_plex_server">Server</string>
+    <string name="server_settings_dvr_test_first">Test the connection first</string>
+    <string name="server_settings_dvr_tags_none">No tags</string>
+    <string name="server_settings_dvr_monitor_new">Monitor new seasons</string>
+    <string name="server_settings_dvr_monitor_all">All</string>
+    <string name="server_settings_dvr_monitor_none">None</string>
+    <string name="server_settings_rule_any">Any</string>
+    <string name="server_settings_rule_unchanged">Unchanged</string>
 </resources>
