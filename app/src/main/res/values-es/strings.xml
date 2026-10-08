@@ -1156,4 +1156,5 @@
     </plurals>
     <string name="server_settings_api_timeout_fraction">%1$s segundos</string>
     <string name="server_settings_api_timeout_none">Sin límite</string>
+    <string name="hub_rechecking">Comprobando el servidor…</string>
 </resources>

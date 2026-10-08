@@ -338,6 +338,24 @@ class HubViewModelTest {
         }
 
     @Test
+    fun `retrying a warm hub over a server that is still down never lets the dashboard back in`() =
+        runTest {
+            healthyServer()
+            viewModel().awaitReady { it.overview.account != null }
+            serverDown.set(true)
+            val vm = returnToHub()
+            vm.awaitReady { it.health == ConnectionHealth.Unreachable }
+            val states = mutableListOf<HubUiState>()
+            backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
+
+            vm.recheck()
+            vm.uiState.first { (it as? HubUiState.Ready)?.rechecking == true }
+            vm.awaitReady { !it.rechecking && it.health == ConnectionHealth.Unreachable }
+
+            assertTrue(states.filterIsInstance<HubUiState.Ready>().all { it.health.isProblem() })
+        }
+
+    @Test
     fun `disconnecting forgets the server`() =
         runTest {
             healthyServer()

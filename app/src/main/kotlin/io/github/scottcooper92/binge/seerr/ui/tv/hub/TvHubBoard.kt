@@ -4,8 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -41,11 +39,10 @@ internal fun TvHubBoard(
 ) {
     val ready = state as? HubUiState.Ready
     val health = if (state is HubUiState.Error) state.health else ready?.health
-    // A re-probe passes through Checking. The page keeps the problem it was showing rather than blinking to the
-    // loading page, so the remote stays on its button and the retry's backoff carries on (#796).
-    var shown by remember { mutableStateOf<ConnectionHealth?>(null) }
-    if (health != null && health.isProblem()) shown = health
-    val problem = shown.takeIf { health == ConnectionHealth.Checking || health?.isProblem() == true }
+    // The view model holds a problem through the re-check meant to clear it (#873), so the page keeps its problem, and the
+    // remote its button, rather than blinking to the loading page and back (#796).
+    val problem = health?.takeIf { it.isProblem() }
+    val rechecking = (state as? HubUiState.Error)?.rechecking ?: ready?.rechecking ?: false
     // Held here, above the problem: the permission's answer is read again whichever problem the page is showing.
     val allow = rememberAllowLocalNetwork { if (problem == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     if (problem == null) {
@@ -55,7 +52,7 @@ internal fun TvHubBoard(
         return
     }
     TvBoard(title = ready?.server?.title ?: stringResource(R.string.companion_name), modifier = modifier) {
-        TvHubProblem(problem, actions, allow, modifier = Modifier.weight(1f))
+        TvHubProblem(problem, rechecking, actions, allow, modifier = Modifier.weight(1f))
     }
 }
 
@@ -66,6 +63,7 @@ internal fun TvHubBoard(
 @Composable
 private fun TvHubProblem(
     health: ConnectionHealth,
+    rechecking: Boolean,
     actions: TvHubActions,
     allow: AllowLocalNetwork,
     modifier: Modifier = Modifier,
@@ -94,7 +92,9 @@ private fun TvHubProblem(
             if (health == ConnectionHealth.LocalNetworkDenied) {
                 stringResource(allow.shortLabel) to allow.run
             } else {
-                stringResource(R.string.hub_retry) to actions.onRetry
+                // While a retry is in flight the button says so and does nothing more; focus stays on it.
+                stringResource(if (rechecking) R.string.hub_rechecking else R.string.hub_retry) to
+                    if (rechecking) ({}) else actions.onRetry
             },
         alternate = stringResource(R.string.settings_edit_connection) to actions.onReconnect,
         secondary = stringResource(R.string.hub_disconnect) to actions.onDisconnect,
