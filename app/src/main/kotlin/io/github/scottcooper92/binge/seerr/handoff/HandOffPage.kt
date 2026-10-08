@@ -148,9 +148,11 @@ internal class HandOffPageTemplate(
             $error
             <button type="submit">${copy.send.escapeHtml()}</button>
             </form>
+            <div id="openapp">
             <hr>
             <p>${copy.appBody.escapeHtml()}</p>
             <a class="app" id="app" href="${appLink.escapeHtml()}">${copy.openApp.escapeHtml()}</a>
+            </div>
             <p class="note">${installLine(copy)}</p>
             """.trimIndent(),
         )

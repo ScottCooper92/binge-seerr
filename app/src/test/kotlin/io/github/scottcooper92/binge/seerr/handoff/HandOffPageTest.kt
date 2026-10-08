@@ -75,6 +75,8 @@ class HandOffPageTest {
         assertEquals(1, Regex("<script").findAll(html).count())
         assertTrue(html.contains("<script>$PAGE_SCRIPT</script>"))
         assertTrue(html.contains("id=\"app\""))
+        // The app link sits in a block the script hides where the page has no key to hand it: a typed URL.
+        assertTrue(Regex("""<div id="openapp">[^<]*<hr>.*id="app".*?</div>""", RegexOption.DOT_MATCHES_ALL).containsMatchIn(html))
         assertFalse(html.contains("Invalid"))
     }
 
@@ -169,6 +171,7 @@ class HandOffPageTest {
 
         assertTrue(failed.contains("<form method=\"post\">"))
         assertTrue(failed.contains("Not found &lt;here&gt;"))
+        assertTrue(Regex("""<div id="openapp">[^<]*<hr>.*id="app".*?</div>""", RegexOption.DOT_MATCHES_ALL).containsMatchIn(failed))
         assertFalse(failed.contains("Invalid"))
     }
 

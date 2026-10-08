@@ -62,6 +62,11 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
  *   the TV is waiting for one, and is bounded in time: before an address arrives its port and token are
  *   replaced every five minutes, and after one it stays up for at most the sign-in timeout. Any other path, a wrong token included, is a bare 404 that says
  *   nothing about what is listening. The comparison is constant-time.
+ * - **PIN step.** When the TV also shows a PIN, the token alone does not let a client send an address or
+ *   credentials. A client proves it by posting the PIN, and the match is bound to that client: the listener
+ *   answers it with a random cookie (see `HandOffClients`) and trusts later requests that carry it. A match
+ *   does not open the code to anyone else. The app keeps no cookies and sends the PIN with every post. Five
+ *   wrong PINs lock the code.
  * - **LAN only.** The socket is bound to the TV's private IPv4 address on the active Wi-Fi or
  *   Ethernet network, never to every interface.
  * - **Short-lived.** It accepts an address while the TV is waiting for one: the first, and another
