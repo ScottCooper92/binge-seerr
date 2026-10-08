@@ -980,7 +980,7 @@
     <string name="send_signin_session">Signing in the TV at %1$s…</string>
     <string name="send_signin_waiting">The TV at %1$s has the address and is checking the server…</string>
     <string name="send_signin_form">The TV found %1$s. Sign in here, and the TV is signed in too.</string>
-    <string name="send_signin_sealed">What you type here is sealed so only that TV can read it, then sent over your Wi-Fi. It is not kept on this phone.</string>
+    <string name="send_signin_sealed">What you type here is encrypted for the TV whose code you scanned, then sent over your Wi-Fi. It is not kept on this phone.</string>
     <string name="send_signin_rejected">The server didn\'t accept those details. Check them and try again.</string>
     <string name="send_signin_on_tv">The TV found %1$s. Finish signing in with the TV\'s remote.</string>
     <string name="send_signin_connected">Signed in. The TV at %1$s is ready.</string>

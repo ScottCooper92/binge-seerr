@@ -64,7 +64,14 @@ class SendAddressViewModel
         private val _uiState = MutableStateFlow<SendAddressUiState>(SendAddressUiState.Loading)
         val uiState: StateFlow<SendAddressUiState> = _uiState.asStateFlow()
 
-        private val target: TvHandOffTarget? = TvHandOffLinks.parse(link)?.takeIf { it.isOnLan }
+        /**
+         * The TV to send to. A link from outside this app loses its key (#803). A web page, a message or a printed code
+         * can name any listener on the LAN with a key of its own, and the sheet's sign-in form would then seal what the
+         * user types for whoever wrote the link. Without the key, such a link sends the server's address and nothing more.
+         * The TV then signs in on its own screen, or from this app's scan of its code.
+         */
+        private val target: TvHandOffTarget? =
+            TvHandOffLinks.parse(link)?.takeIf { it.isOnLan }?.let { if (scanned) it else it.copy(key = null) }
 
         /** The address field as it stood when it was sent, for the sheet to return to if the TV could not use the address. */
         private var lastReady: SendAddressUiState.Ready? = null
@@ -92,9 +99,8 @@ class SendAddressViewModel
             // is the point, so it does not need this phone to be signed in anywhere.
             if (connected == null && target.key == null) return _uiState.update { SendAddressUiState.NotConnected }
             server = connected
-            // Only for a code this app scanned: a link a web page can fire carries a key of its own choosing, and the
-            // session must not go to whoever wrote it.
-            offer = if (connected != null && scanned) signInOffer(target) else null
+            // A key survives only on a code this app scanned (see [target]), so the session goes only there.
+            offer = if (connected != null) signInOffer(target) else null
             // A TV past its address (a phone carrying on where it left off, or a code from the sign-in step) needs no
             // address from this one: go straight to where the TV is.
             if (target.key != null) {

@@ -340,7 +340,7 @@ class SendAddressViewModelTest {
     @Test
     fun `a scanned code takes a phone with no server to the address field, empty`() =
         runTest {
-            val ready = viewModel(scannedLink).settled() as SendAddressUiState.Ready
+            val ready = viewModel(scannedLink, scanned = true).settled() as SendAddressUiState.Ready
 
             assertEquals("", ready.address)
             assertFalse(ready.canSend)
@@ -355,7 +355,7 @@ class SendAddressViewModelTest {
                     HandOffStatus(HandOffStatus.CHECKING),
                     HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local", "Jellyfin")),
                 )
-            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
             vm.settled()
 
             vm.send()
@@ -404,21 +404,26 @@ class SendAddressViewModelTest {
         }
 
     @Test
-    fun `a link a web page could have fired never offers the session, however it is dressed`() =
+    fun `a keyed link from outside the app sends the address and nothing more, however it is dressed`() =
         runTest {
+            // #803: a web page or a message can carry a key its writer chose, so neither the session nor the
+            // sign-in form may follow it. Its key is dropped, and the sheet behaves as a keyless link does.
             val saved = SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4))
-            val ready = viewModel(scannedLink, saved).settled() as SendAddressUiState.Ready
-            assertEquals(null, ready.signIn)
-
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local")))
-            val carried = viewModel(scannedLink, saved)
-            val form =
-                carried.uiState.first {
-                    it is SendAddressUiState.SigningIn && it.step is SignInStep.Form
-                } as SendAddressUiState.SigningIn
-            assertEquals(null, (form.step as SignInStep.Form).sessionOffer)
-            carried.sendSession()
-            assertTrue("and sendSession is a no-op", tv.sentCredentials.isEmpty())
+            val vm = viewModel(scannedLink, saved)
+            val ready = vm.settled() as SendAddressUiState.Ready
+            assertEquals("no session offered", null, ready.signIn)
+
+            vm.send()
+            assertEquals(SendAddressUiState.Sent(tv = "192.168.86.53"), vm.uiState.first { it is SendAddressUiState.Sent })
+            vm.sendSession()
+            assertTrue("no credentials ever leave", tv.sentCredentials.isEmpty())
+        }
+
+    @Test
+    fun `a phone with no server and an outside keyed link says there is nothing to send`() =
+        runTest {
+            assertEquals(SendAddressUiState.NotConnected, viewModel(scannedLink).settled())
         }
 
     @Test
@@ -460,7 +465,7 @@ class SendAddressViewModelTest {
     fun `the TV saying no brings the form back with its fields, and saying yes ends on Connected`() =
         runTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin")))
-            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
             vm.settled()
             vm.send()
             vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
@@ -489,7 +494,7 @@ class SendAddressViewModelTest {
     fun `the TV going back to its address step takes the sheet back to waiting, and its sign-in step brings the form again`() =
         runTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin")))
-            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
             vm.settled()
             vm.send()
             vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
@@ -508,7 +513,7 @@ class SendAddressViewModelTest {
         runTest {
             val stale = HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Jellyfin"), failed = true, attempt = 1)
             tv.statuses = mutableListOf(stale)
-            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
             vm.settled()
             vm.send()
             vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
@@ -535,7 +540,7 @@ class SendAddressViewModelTest {
     fun `a TV that could not use the address returns the sheet to the field, and one that goes quiet is lost`() =
         runTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.FAILED))
-            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
             vm.settled()
             vm.send()
             val back = vm.uiState.first { it is SendAddressUiState.Ready && it.failed } as SendAddressUiState.Ready
@@ -557,7 +562,7 @@ class SendAddressViewModelTest {
     fun `a TV that offers only sign-ins finished on its own screen says so, and a refused send shows the form again`() =
         runTest {
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Plex", "QuickConnect")))
-            val onTv = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            val onTv = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
             onTv.settled()
             onTv.send()
             assertEquals(
@@ -571,7 +576,7 @@ class SendAddressViewModelTest {
 
             tv.statuses = mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Home", listOf("Local")))
             tv.accept = false
-            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")), scanned = true)
             vm.settled()
             vm.send()
             vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form }
