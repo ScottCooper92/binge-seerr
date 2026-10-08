@@ -17,7 +17,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -93,7 +92,7 @@ class TautulliViewModelTest {
     fun `emptying the address and key clears tautulli`() =
         runTest {
             seerr.serve("GET /api/v1/settings/tautulli", """{"hostname":"tautulli.local","port":8181,"useSsl":false,"apiKey":"t-key"}""")
-            seerr.serve("POST /api/v1/settings/tautulli", "{}")
+            seerr.serve("POST /api/v1/settings/tautulli", """{"hostname":"","port":0,"apiKey":""}""")
             val vm = viewModel()
             vm.awaitReady()
 
@@ -105,6 +104,9 @@ class TautulliViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/tautulli")).jsonObject
             assertEquals("", sent.getValue("hostname").jsonPrimitive.content)
             assertEquals("", sent.getValue("apiKey").jsonPrimitive.content)
-            assertNull(sent["port"])
+            assertEquals("0", sent.getValue("port").jsonPrimitive.content)
+            val ready = vm.awaitReady()
+            assertFalse(ready.draft.configured)
+            assertEquals("", ready.draft.port)
         }
 }
