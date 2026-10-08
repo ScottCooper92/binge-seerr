@@ -99,6 +99,18 @@ class NotificationsFormTest {
     }
 
     @Test
+    fun `clearing a set pushover app token turns pushover off`() {
+        show(EMAIL_ONLY.set(AgentField.PushoverAppToken, "azGDORePK8gMaC0QOYAMyEEuzJnyUi"))
+
+        rule.onNodeWithText("azGDORePK8gMaC0QOYAMyEEuzJnyUi").performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("")
+        rule.onNodeWithText("Done").performClick()
+
+        assertEquals("", draft.field(AgentField.PushoverAppToken))
+        assertEquals(false, draft.isOn(NotificationAgent.Pushover))
+    }
+
+    @Test
     fun `a pushover sound is picked from the application's sounds, the device's own first`() {
         show(
             EMAIL_ONLY

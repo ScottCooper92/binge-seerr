@@ -173,7 +173,7 @@ private fun fieldItem(
         onChange = { typed -> onEdit { it.set(field, typed) } },
         hint = field.hintRes()?.let { stringResource(it) },
         required = draft.required(field),
-        check = { typed -> problem.takeIf { !field.accepts(typed) } },
+        check = { typed -> problem.takeIf { typed.isNotEmpty() && !field.accepts(typed) } },
         // Whether a hidden value is there is all its row needs to say.
         shown =
             if (field.hidden && value.isNotBlank()) {
