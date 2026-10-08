@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
@@ -12,10 +13,9 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * The media-server settings page: the connection form, the libraries with their switches, and the full
- * scan. Plex and Jellyfin draw different forms, so each has a frame. The libraries carry no last-scan
- * time, since that renders against the clock. The Plex server picker is a modal window and does not
- * capture.
+ * The media-server settings page, in the web client's order for each kind: Plex leads with its settings, Jellyfin
+ * with its libraries. The libraries carry no last-scan time, since that renders against the clock. The Plex server
+ * picker is a modal window and does not capture, so its body is framed on its own in [PlexServerChoicesScreenshotTest].
  */
 class MediaServerScreenshotTest {
     @PreviewTest
@@ -28,17 +28,14 @@ class MediaServerScreenshotTest {
     @Composable
     fun jellyfin() = Frame(ready(jellyfinForm(), MediaServerExtras(libraries = libraries())))
 
-    /**
-     * A full scan on its second library, with a cancel where the start button was. A running scan holds its
-     * section open. The scan section sits below the libraries, so this frame leaves the libraries out to keep it in view.
-     */
+    /** A full scan on its second library: the start row shows progress, a bar runs beneath, and a row stops it. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
     fun scanRunning() =
         Frame(
             ready(
-                plexForm(),
+                jellyfinForm(),
                 MediaServerExtras(scan = LibraryScan(running = true, progress = 40, total = 120, currentLibrary = "TV Shows")),
             ),
         )
@@ -56,44 +53,11 @@ class MediaServerScreenshotTest {
     fun syncingLibraries() =
         Frame(ready(plexForm(), MediaServerExtras(libraries = libraries(), syncingLibraries = true, busyLibraryIds = setOf("2"))))
 
-    /** A form with no host: Host is marked required, and says so once Save is tried. */
+    /** Jellyfin with no libraries yet, so its settings group, last in the web client's order, is in view whole. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun unsavedInvalid() =
-        Frame(
-            ExtrasEditorUiState.Ready(
-                draft = plexForm().copy(host = ""),
-                saved = plexForm(),
-                extras = MediaServerExtras(libraries = libraries()),
-            ),
-        )
-
-    /** A Jellyfin external host with no scheme: Links for users opens itself and the field says what it wants. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun badExternalUrl() =
-        Frame(
-            ExtrasEditorUiState.Ready(
-                draft = jellyfinForm().copy(externalUrl = "jellyfin.example.com"),
-                saved = jellyfinForm(),
-                extras = MediaServerExtras(libraries = libraries()),
-            ),
-        )
-
-    /** A Jellyfin forgot-password link with a trailing slash: only that field is flagged, and its section opens itself. */
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun badForgotPasswordUrl() =
-        Frame(
-            ExtrasEditorUiState.Ready(
-                draft = jellyfinForm().copy(forgotPasswordUrl = "https://jellyfin.example.com/forgot/"),
-                saved = jellyfinForm(),
-                extras = MediaServerExtras(libraries = libraries()),
-            ),
-        )
+    fun jellyfinSettings() = Frame(ready(jellyfinForm(), MediaServerExtras()))
 
     @PreviewTest
     @SeerrSpanishPreviews
@@ -115,6 +79,28 @@ class MediaServerScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun failed() = Frame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
+}
+
+/** The Plex picker's body: the admin's servers, each a group of its connections, with the server's reachability test. */
+class PlexServerChoicesScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun servers() =
+        PlexServerChoices(
+            PlexServerPicker.Ready(
+                listOf(
+                    PlexServerChoice(
+                        "Den",
+                        listOf(
+                            PlexConnection("192.168.1.20", 32400, useSsl = false, local = true, reachable = true),
+                            PlexConnection("den.example.com", 32400, useSsl = true, local = false, reachable = false),
+                        ),
+                    ),
+                ),
+            ),
+            noServerActions(),
+        )
 }
 
 private fun plexForm() =
@@ -156,15 +142,17 @@ private fun Frame(state: ExtrasEditorUiState<MediaServerForm, MediaServerExtras>
         state = state,
         events = emptyFlow(),
         actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
-        serverActions =
-            MediaServerActions(
-                onSetLibraryEnabled = { _, _ -> },
-                onSyncLibraries = {},
-                onStartScan = {},
-                onCancelScan = {},
-                onOpenServerPicker = {},
-                onCloseServerPicker = {},
-                onChooseConnection = { _, _ -> },
-                onOpenTautulli = {},
-            ),
+        serverActions = noServerActions(),
+    )
+
+private fun noServerActions() =
+    MediaServerActions(
+        onSetLibraryEnabled = { _, _ -> },
+        onSyncLibraries = {},
+        onStartScan = {},
+        onCancelScan = {},
+        onOpenServerPicker = {},
+        onCloseServerPicker = {},
+        onChooseConnection = { _, _ -> },
+        onOpenTautulli = {},
     )

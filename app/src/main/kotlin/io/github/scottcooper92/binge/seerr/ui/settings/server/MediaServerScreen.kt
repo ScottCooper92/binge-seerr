@@ -1,40 +1,41 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.AltRoute
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Https
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.theme.BingeSentiment
+import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorSection
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorToggleRow
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorValidation
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
-import io.github.scottcooper92.binge.seerr.ui.users.settings.imeActionIf
+import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
+import com.binge.designsystem.R as DesR
 
 /** What the page does beside the form: the libraries, the scan, the Plex picker, and the way to Tautulli. */
 class MediaServerActions(
@@ -49,9 +50,9 @@ class MediaServerActions(
 )
 
 /**
- * The media-server page, as collapsible sections (#549): the connection, with its host and port
- * required; the links users open, closed until asked for; the libraries; the full scan, closed unless
- * one is running; and, for Plex, the way to Tautulli.
+ * The media-server page in the web client's order, as groups of list rows. Plex leads with its settings, then the
+ * libraries, the scan and Tautulli; Jellyfin and Emby lead with the libraries and the scan, their settings last. Each
+ * text value is edited in a sheet that checks it, so the page holds nothing of the wrong shape.
  */
 @Composable
 fun MediaServerScreen(
@@ -61,189 +62,157 @@ fun MediaServerScreen(
     serverActions: MediaServerActions,
 ) {
     val extras = (state as? ExtrasEditorUiState.Ready<MediaServerForm, MediaServerExtras>)?.extras ?: MediaServerExtras()
-    val validation = remember { EditorValidation<MediaServerForm>(MEDIA_SERVER_FORM_KEY) { it.issues() } }
     EditorPage(
         title = stringResource(R.string.server_settings_media_server),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
-        validation = validation,
+        canSave = { it.valid },
     ) { draft, enabled ->
-        ConnectionFields(draft, enabled, actions, serverActions)
-        LinkFields(draft, enabled, actions)
-        LibrariesSection(extras, serverActions)
-        ScanSection(extras.scan, serverActions)
         if (draft.kind == MediaServerKind.Plex) {
-            EditorSection(MediaServerSections.TAUTULLI, stringResource(R.string.server_settings_tautulli)) {
-                BingeOutlinedButton(
-                    label = stringResource(R.string.server_settings_tautulli_open),
-                    onClick = serverActions.onOpenTautulli,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            SettingsGroup(draft, enabled, actions, serverActions)
+            LibrariesGroup(extras, serverActions)
+            ScanGroup(extras.scan, serverActions)
+            ItemGroup(
+                title = stringResource(R.string.server_settings_tautulli),
+                rows =
+                    listOf(
+                        ListItem(
+                            icon = Icons.Filled.Insights,
+                            label = stringResource(R.string.server_settings_tautulli_open),
+                            onClick = serverActions.onOpenTautulli,
+                        ),
+                    ),
+            )
+        } else {
+            LibrariesGroup(extras, serverActions)
+            ScanGroup(extras.scan, serverActions)
+            SettingsGroup(draft, enabled, actions, serverActions)
         }
     }
     extras.picker?.let { picker -> PlexServerSheet(picker, serverActions) }
 }
 
+/** How the server is reached, and the links users are sent to, in the web client's field order. */
 @Composable
-private fun ConnectionFields(
+private fun SettingsGroup(
     draft: MediaServerForm,
     enabled: Boolean,
     actions: EditorActions<MediaServerForm>,
     serverActions: MediaServerActions,
 ) {
-    EditorSection(MediaServerSections.CONNECTION, stringResource(R.string.settings_group_connection)) {
-        Text(
-            stringResource(R.string.server_settings_media_server_lead, stringResource(draft.kind.labelRes()), draft.serverName)
-                .trimEnd(' ', ':'),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (draft.kind == MediaServerKind.Plex) {
-            BingeOutlinedButton(
-                label = stringResource(R.string.server_settings_plex_pick),
-                onClick = serverActions.onOpenServerPicker,
-                enabled = enabled,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        AddressFields(draft, enabled, actions)
-    }
-}
-
-@Composable
-private fun AddressFields(
-    draft: MediaServerForm,
-    enabled: Boolean,
-    actions: EditorActions<MediaServerForm>,
-) {
-    EditorTextField(
-        draft.host,
-        stringResource(R.string.server_settings_host),
-        icon = Icons.Filled.Dns,
-        enabled = enabled,
-        keyboardType = KeyboardType.Uri,
-        placeholder = stringResource(R.string.placeholder_host),
-        fieldId = MediaServerFields.HOST,
-        required = true,
-    ) { value ->
-        actions.onEdit { it.copy(host = value) }
-    }
-    EditorTextField(
-        draft.port,
-        stringResource(R.string.server_settings_port),
-        icon = Icons.Filled.Tag,
-        enabled = enabled,
-        keyboardType = KeyboardType.Number,
-        placeholder = portPlaceholder(draft.kind),
-        fieldId = MediaServerFields.PORT,
-        required = true,
-    ) { value -> actions.onEdit { it.copy(port = value) } }
-    EditorToggleRow(
-        editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { value ->
-            actions.onEdit { it.copy(useSsl = value) }
-        },
-    )
-    draft.urlBase?.let { base ->
-        EditorTextField(
-            base,
-            stringResource(R.string.server_settings_url_base),
-            icon = Icons.AutoMirrored.Filled.AltRoute,
-            enabled = enabled,
-            placeholder = urlBasePlaceholder(draft.kind),
-        ) { value ->
-            actions.onEdit { it.copy(urlBase = value) }
-        }
-    }
-    draft.apiKey?.let { key ->
-        EditorTextField(
-            key,
-            stringResource(R.string.server_settings_api_key),
-            icon = Icons.Filled.Key,
-            enabled = enabled,
-            secret = true,
-        ) { value ->
-            actions.onEdit { it.copy(apiKey = value) }
-        }
-    }
-}
-
-/** The addresses users are sent to, rather than the one the server is reached at. Optional, so closed until asked for. */
-@Composable
-private fun LinkFields(
-    draft: MediaServerForm,
-    enabled: Boolean,
-    actions: EditorActions<MediaServerForm>,
-) = EditorSection(MediaServerSections.LINKS, stringResource(R.string.server_settings_media_server_links), defaultExpanded = false) {
-    EditorTextField(
-        draft.externalUrl,
+    val portError = stringResource(R.string.editor_error_port)
+    val urlError =
+        stringResource(if (draft.kind == MediaServerKind.Plex) R.string.editor_error_web_url else R.string.editor_error_web_url_no_slash)
+    val noSlashError = stringResource(R.string.editor_error_web_url_no_slash)
+    val requiredError = stringResource(R.string.editor_field_required)
+    val externalLabel =
         stringResource(
             if (draft.kind == MediaServerKind.Plex) R.string.server_settings_plex_web_url else R.string.server_settings_external_host,
-        ),
-        icon = Icons.Filled.Link,
-        enabled = enabled,
-        keyboardType = KeyboardType.Uri,
-        placeholder = externalUrlPlaceholder(draft.kind),
-        supporting = stringResource(R.string.server_settings_external_hint),
-        fieldId = MediaServerFields.EXTERNAL_URL,
-        imeAction = imeActionIf(last = draft.forgotPasswordUrl == null),
-    ) { value -> actions.onEdit { it.copy(externalUrl = value) } }
-    draft.forgotPasswordUrl?.let { url ->
-        EditorTextField(
-            url,
-            stringResource(R.string.server_settings_forgot_password_url),
-            icon = Icons.Filled.LinkOff,
+        )
+    val external =
+        textSettingItem(
+            icon = Icons.Filled.Link,
+            label = externalLabel,
+            value = draft.externalUrl,
             enabled = enabled,
-            keyboardType = KeyboardType.Uri,
-            placeholder = stringResource(R.string.placeholder_url_https),
-            fieldId = MediaServerFields.FORGOT_PASSWORD_URL,
-            imeAction = ImeAction.Done,
-        ) { value ->
-            actions.onEdit { it.copy(forgotPasswordUrl = value) }
-        }
-    }
+            onChange = { value -> actions.onEdit { it.copy(externalUrl = value) } },
+            hint = stringResource(R.string.server_settings_external_hint),
+            check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
+        )
+    ItemGroup(
+        title = stringResource(R.string.server_settings_media_server_settings, stringResource(draft.kind.labelRes())),
+        rows =
+            listOfNotNull(
+                ListItem(
+                    icon = Icons.Filled.Storage,
+                    label = stringResource(R.string.server_settings_plex_server),
+                    detail = draft.serverName.ifBlank { stringResource(R.string.settings_value_not_set) },
+                    clickable = enabled,
+                    disabled = !enabled,
+                    onClick = serverActions.onOpenServerPicker,
+                ).takeIf { draft.kind == MediaServerKind.Plex },
+                textSettingItem(
+                    icon = Icons.Filled.Dns,
+                    label = stringResource(R.string.server_settings_host),
+                    value = draft.host,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(host = value) } },
+                    check = { value -> requiredError.takeIf { value.isBlank() } },
+                ),
+                textSettingItem(
+                    icon = Icons.Filled.Tag,
+                    label = stringResource(R.string.server_settings_port),
+                    value = draft.port,
+                    enabled = enabled,
+                    onChange = { value -> actions.onEdit { it.copy(port = value) } },
+                    check = { value -> portError.takeIf { !portValid(value) } },
+                ),
+                editorToggle(Icons.Filled.Https, stringResource(R.string.server_settings_use_ssl), draft.useSsl, enabled) { on ->
+                    actions.onEdit { it.copy(useSsl = on) }
+                },
+                draft.apiKey?.let { key ->
+                    textSettingItem(
+                        icon = Icons.Filled.Key,
+                        label = stringResource(R.string.server_settings_api_key),
+                        value = key,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(apiKey = value) } },
+                        shown = key.maskedKey() ?: stringResource(R.string.settings_value_not_set),
+                        secret = true,
+                    )
+                },
+                draft.urlBase?.let { base ->
+                    textSettingItem(
+                        icon = Icons.AutoMirrored.Filled.AltRoute,
+                        label = stringResource(R.string.server_settings_url_base),
+                        value = base,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(urlBase = value) } },
+                    )
+                },
+                external,
+                draft.forgotPasswordUrl?.let { url ->
+                    textSettingItem(
+                        icon = Icons.Filled.LinkOff,
+                        label = stringResource(R.string.server_settings_forgot_password_url),
+                        value = url,
+                        enabled = enabled,
+                        onChange = { value -> actions.onEdit { it.copy(forgotPasswordUrl = value) } },
+                        check = { value -> noSlashError.takeIf { !draft.copy(forgotPasswordUrl = value).forgotPasswordUrlValid } },
+                    )
+                },
+            ),
+    )
 }
 
-/** Each library with its toggle, and the way to re-read them; a toggle in flight is disabled rather than optimistic. */
+/** Each library with its switch, then the way to re-read them; a switch in flight is disabled rather than optimistic. */
 @Composable
-private fun LibrariesSection(
+private fun LibrariesGroup(
     extras: MediaServerExtras,
     actions: MediaServerActions,
 ) {
-    EditorSection(MediaServerSections.LIBRARIES, stringResource(R.string.server_settings_libraries)) {
-        if (extras.libraries.isEmpty()) {
-            Text(
-                stringResource(R.string.server_settings_libraries_none),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        extras.libraries.forEach { library ->
-            EditorToggleRow(
+    val sync =
+        ListItem(
+            icon = Icons.Filled.Sync,
+            label = stringResource(R.string.server_settings_libraries_sync),
+            detail = stringResource(R.string.server_settings_libraries_none).takeIf { extras.libraries.isEmpty() },
+            loading = extras.syncingLibraries,
+            clickable = !extras.syncingLibraries,
+            onClick = actions.onSyncLibraries,
+        )
+    ItemGroup(
+        title = stringResource(R.string.server_settings_libraries),
+        rows =
+            extras.libraries.map { library ->
                 editorToggle(
                     Icons.Filled.VideoLibrary,
                     library.name,
                     library.enabled,
                     library.id !in extras.busyLibraryIds,
                     detail = library.detail(),
-                ) { on -> actions.onSetLibraryEnabled(library.id, on) },
-            )
-        }
-        SyncLibrariesButton(extras, actions)
-    }
-}
-
-@Composable
-private fun SyncLibrariesButton(
-    extras: MediaServerExtras,
-    actions: MediaServerActions,
-) {
-    BingeTextButton(
-        label = stringResource(R.string.server_settings_libraries_sync),
-        onClick = actions.onSyncLibraries,
-        enabled = !extras.syncingLibraries,
-        loading = extras.syncingLibraries,
+                ) { on -> actions.onSetLibraryEnabled(library.id, on) }
+            } + sync,
     )
 }
 
@@ -261,48 +230,49 @@ private fun MediaLibrary.detail(): String {
     }
 }
 
-/** The full scan: its progress while running with a way to stop it, else a way to start one. Closed unless one is running. */
+/** The full scan: a row that starts one, and while one runs, its progress and a row that stops it. */
 @Composable
-private fun ScanSection(
+private fun ScanGroup(
     scan: LibraryScan?,
     actions: MediaServerActions,
 ) {
-    EditorSection(MediaServerSections.SCAN, stringResource(R.string.server_settings_scan), defaultExpanded = scan?.running == true) {
-        ScanContent(scan, actions)
-    }
-}
-
-@Composable
-private fun ScanContent(
-    scan: LibraryScan?,
-    actions: MediaServerActions,
-) {
-    if (scan?.running == true) {
-        val fraction = if (scan.total > 0) scan.progress.toFloat() / scan.total else 0f
-        LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
-        Text(
-            scan.currentLibrary?.let { stringResource(R.string.server_settings_scan_running_library, scan.progress, scan.total, it) }
-                ?: stringResource(R.string.server_settings_scan_running, scan.progress, scan.total),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        BingeOutlinedButton(
-            label = stringResource(R.string.server_settings_scan_cancel),
-            onClick = actions.onCancelScan,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    } else {
-        Text(
-            stringResource(R.string.server_settings_scan_lead),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        BingeOutlinedButton(
-            label = stringResource(R.string.server_settings_scan_start),
-            onClick = actions.onStartScan,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    val running = scan?.running == true
+    val progress =
+        scan?.takeIf { it.running }?.let {
+            it.currentLibrary?.let { library ->
+                stringResource(R.string.server_settings_scan_running_library, it.progress, it.total, library)
+            }
+                ?: stringResource(R.string.server_settings_scan_running, it.progress, it.total)
+        }
+    ItemGroup(
+        title = stringResource(R.string.server_settings_scan),
+        rows =
+            listOfNotNull(
+                ListItem(
+                    icon = Icons.Filled.Refresh,
+                    label = stringResource(R.string.server_settings_scan_start),
+                    detail = progress ?: stringResource(R.string.server_settings_scan_lead),
+                    loading = running,
+                    clickable = !running,
+                    onClick = actions.onStartScan,
+                ),
+                ListItem(
+                    icon = Icons.Filled.Stop,
+                    iconTint = BingeSentiment.Negative.fill(),
+                    label = stringResource(R.string.server_settings_scan_cancel),
+                    onClick = actions.onCancelScan,
+                ).takeIf { running },
+            ),
+        belowRows =
+            scan?.takeIf { it.running }?.let {
+                {
+                    LinearProgressIndicator(
+                        progress = { if (it.total > 0) it.progress.toFloat() / it.total else 0f },
+                        modifier = Modifier.fillMaxWidth().padding(dimensionResource(DesR.dimen.padding_m)),
+                    )
+                }
+            },
+    )
 }
 
 private fun MediaServerKind.labelRes(): Int =
@@ -311,18 +281,3 @@ private fun MediaServerKind.labelRes(): Int =
         MediaServerKind.Jellyfin -> R.string.user_origin_jellyfin
         MediaServerKind.Emby -> R.string.user_origin_emby
     }
-
-/** The port the kind listens on out of the box. An example only: unlike the DVR form, this one starts blank. */
-@Composable
-private fun portPlaceholder(kind: MediaServerKind): String =
-    stringResource(if (kind == MediaServerKind.Plex) R.string.placeholder_port_plex else R.string.placeholder_port_jellyfin)
-
-/** The path each install is commonly served under when it is not at the root. Plex has no URL base. */
-@Composable
-private fun urlBasePlaceholder(kind: MediaServerKind): String =
-    stringResource(if (kind == MediaServerKind.Emby) R.string.placeholder_url_base_emby else R.string.placeholder_url_base_jellyfin)
-
-/** Plex asks for its web app's own address; the others for the address the server is reached at. */
-@Composable
-private fun externalUrlPlaceholder(kind: MediaServerKind): String =
-    stringResource(if (kind == MediaServerKind.Plex) R.string.placeholder_plex_web_url else R.string.placeholder_server_url)
