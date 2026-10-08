@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.DateRange
@@ -9,12 +8,8 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
@@ -27,11 +22,11 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
-import com.binge.designsystem.R as DesR
 
 /**
  * The web client's Users settings page, as list rows: how people sign in, the request limits everyone gets, and the
@@ -125,23 +120,7 @@ private fun SignInGroup(
                     detail = stringResource(R.string.server_settings_new_media_server_login_detail, server),
                 ) { on -> actions.onEdit { it.copy(newMediaServerLogin = on) } },
             ),
-        belowRows =
-            if (draft.valid) {
-                null
-            } else {
-                {
-                    Text(
-                        required,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier =
-                            Modifier.padding(
-                                horizontal = dimensionResource(DesR.dimen.padding_m),
-                                vertical = dimensionResource(DesR.dimen.padding_s),
-                            ),
-                    )
-                }
-            },
+        belowRows = if (draft.valid) null else ({ GroupMessage(required, error = true) }),
     )
 }
 

@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
@@ -150,28 +149,26 @@ private fun textOptionItem(
     actions: AgentActions,
 ): ListItem {
     val value = draft.option(option)
-    val missing = option.required && draft.enabled && value.isBlank()
     val wrongShape = stringResource(if (option.port) R.string.editor_error_port else R.string.editor_error_whole_number)
-    val row =
-        textSettingItem(
-            icon = Icons.Filled.Tune,
-            label = label,
-            value = value,
-            enabled = editable,
-            onChange = { typed -> actions.onSetOption(option, typed) },
-            hint = option.hintRes()?.let { stringResource(it) },
-            placeholder = option.placeholderRes()?.let { stringResource(it) },
-            check = { typed -> wrongShape.takeIf { typed.isNotBlank() && !option.satisfiedBy(typed) } },
-            shown =
-                when {
-                    missing -> stringResource(R.string.editor_field_required)
-                    option.secret && value.isNotEmpty() -> stringResource(R.string.server_settings_secret_set)
-                    else -> value.ifBlank { stringResource(R.string.settings_value_not_set) }
-                },
-            secret = option.secret,
-            multiline = option.kind == OptionKind.Multiline,
-        )
-    return if (missing) row.copy(detailColor = MaterialTheme.colorScheme.error) else row
+    return textSettingItem(
+        icon = Icons.Filled.Tune,
+        label = label,
+        value = value,
+        enabled = editable,
+        onChange = { typed -> actions.onSetOption(option, typed) },
+        hint = option.hintRes()?.let { stringResource(it) },
+        placeholder = option.placeholderRes()?.let { stringResource(it) },
+        required = option.required && draft.enabled,
+        check = { typed -> wrongShape.takeIf { typed.isNotBlank() && !option.satisfiedBy(typed) } },
+        shown =
+            if (option.secret && value.isNotEmpty()) {
+                stringResource(R.string.server_settings_secret_set)
+            } else {
+                value.ifBlank { stringResource(R.string.settings_value_not_set) }
+            },
+        secret = option.secret,
+        multiline = option.kind == OptionKind.Multiline,
+    )
 }
 
 /** The events the agent is sent, as the web client's checklist: the request ones, then the issue ones. */
