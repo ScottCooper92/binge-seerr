@@ -51,13 +51,25 @@ private fun Network(
 }
 
 @Composable
-private fun EditableNetwork(initial: NetworkForm) {
+private fun EditableNetwork(
+    initial: NetworkForm,
+    onDraft: (NetworkForm) -> Unit = {},
+) {
     var draft by remember { mutableStateOf(initial) }
     BingeExpressiveTheme(dynamicColor = false) {
         NetworkScreen(
             state = EditorUiState.Ready(draft = draft, saved = ALL_OFF),
             events = emptyFlow(),
-            actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = {}),
+            actions =
+                EditorActions(
+                    onBack = {},
+                    onRetry = {},
+                    onEdit = {
+                        draft = it(draft)
+                        onDraft(draft)
+                    },
+                    onSave = {},
+                ),
         )
     }
 }
@@ -136,6 +148,24 @@ class NetworkFormTest {
 
         rule.onNodeWithText("The maximum must not be below the minimum").assertExists()
         rule.onNodeWithText("Done").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `a proxy password keeps its edge spaces, while the host is trimmed`() {
+        var latest = ALL_OFF
+        rule.setContent {
+            EditableNetwork(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "p.lan", port = "3128"))) { latest = it }
+        }
+
+        rule.onNode(hasText("Password") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement(" hunter2 ")
+        rule.onNodeWithText("Done").performClick()
+        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement(" proxy.lan ")
+        rule.onNodeWithText("Done").performClick()
+
+        assertEquals(" hunter2 ", latest.proxy?.password)
+        assertEquals("proxy.lan", latest.proxy?.host)
     }
 
     @Test

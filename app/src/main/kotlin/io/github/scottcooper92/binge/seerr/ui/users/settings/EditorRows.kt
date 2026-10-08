@@ -65,7 +65,9 @@ internal fun textSettingItem(
     LaunchedEffect(enabled) { if (!enabled) open = false }
     if (open) {
         var draft by rememberSaveable { mutableStateOf(value) }
-        val problem = check(draft.trim())
+        // A secret is kept as typed: a password's edge spaces are part of it. A caller that wants a key trimmed trims it.
+        val submitted = if (secret) draft else draft.trim()
+        val problem = check(submitted)
         BingeBottomSheet(onDismissRequest = { open = false }) {
             if (secret) {
                 SecretEntry(
@@ -75,7 +77,7 @@ internal fun textSettingItem(
                     onValueChange = { draft = it },
                     submitEnabled = problem == null,
                     onSubmit = {
-                        onChange(draft.trim())
+                        onChange(submitted)
                         open = false
                     },
                     onCancel = { open = false },
@@ -86,7 +88,7 @@ internal fun textSettingItem(
                     value = draft,
                     onValueChange = { draft = it },
                     onSubmit = {
-                        onChange(draft.trim())
+                        onChange(submitted)
                         open = false
                     },
                     onCancel = { open = false },
