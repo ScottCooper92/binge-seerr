@@ -20,12 +20,17 @@ import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.LanguageCodeShapes
 import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
 import java.util.Locale
 import com.binge.designsystem.R as DesR
 
 /** The server keeps a discover-language filter as codes joined by `|`: `en|ja`. Blank is no filter. */
 internal fun String.languageCodes(): List<String> = split('|').map { it.trim() }.filter { it.isNotEmpty() }
+
+/** Whether typed codes may be used: blank clears the filter, otherwise every code must be the shape the page saves. */
+internal fun languageEntryUsable(typed: String): Boolean =
+    typed.languageCodes().let { it.isEmpty() || LanguageCodeShapes.isOriginalLanguage(it.joinToString("|")) }
 
 /** A language named in the device's language, falling back to TMDB's English name, then its code. */
 internal fun languageName(
@@ -159,7 +164,7 @@ private fun LanguagesUnavailable(
         onCancel = onRetry,
         submitLabel = stringResource(R.string.server_settings_list_use),
         cancelLabel = stringResource(R.string.action_try_again),
-        submitEnabled = true,
+        submitEnabled = languageEntryUsable(typed),
         minLines = 1,
         maxLines = 1,
         header = {
