@@ -36,8 +36,7 @@ repos and audits) and `build/`.
 - **State shape**: a screen state that is a flat class with `isLoading`-style flags instead of a
   sealed interface (`Loading` / data / `Error`). Exempt `LogsUiState` and `BlocklistDetailUiState` (KDoc'd flat state).
 - **One `StateFlow` per ViewModel**: count public `StateFlow`s per `*ViewModel.kt`; allowed extras
-  are `Flow<PagingData<T>>` and one-shot events only. Any exposed `MutableStateFlow`. Exempt the
-  DVR instance/override editors' picker stream (#188).
+  are `Flow<PagingData<T>>` and one-shot events only. Any exposed `MutableStateFlow`.
 - **Events**: private `MutableSharedFlow(extraBufferCapacity = 1)` exposed via `asSharedFlow()`. A
   `tryEmit` on a flow with no buffer silently drops events; `replay = 1` for a one-shot re-fires on
   recomposition. Tests: `act(); vm.events.first()` is the race `awaitEvent` exists to avoid
