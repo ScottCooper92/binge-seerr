@@ -147,8 +147,9 @@ internal fun textSettingItem(
 }
 
 /**
- * What a text row says in place of its value when it holds Save back: a required value left blank, or one the server
- * sent that the row's own check refuses. Save follows the form's validity, so this is where the user looks for why.
+ * What a text row says in place of its value when it is wrong: a required value left blank, or one the server sent that
+ * the row's own check refuses. On a page with a Save, Save follows the form's validity, so this is where the user looks
+ * for why. A page that saves as it changes sends a value the server sent back as it came, so the row only says so.
  */
 @Composable
 private fun rowProblem(
