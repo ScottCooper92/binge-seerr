@@ -29,6 +29,7 @@ internal fun portValid(port: String): Boolean = port.trim().toIntOrNull()?.let {
 /** The server's own settings pages, for a user who manages settings. */
 enum class ServerSettingsPage {
     General,
+    BlocklistTags,
     Users,
     DefaultPermissions,
     MediaServer,
@@ -125,18 +126,18 @@ data class ServerGeneralExtras(
     val variant: SeerrVariant = SeerrVariant.Unknown,
     /** The server's lists, each read only once its picker opens; absent until then. */
     val lists: Map<ServerList, ListChoices> = emptyMap(),
-    /** The blocklisted tags' names and the keyword search, read only while the tags picker is open. */
+    /** The blocklisted tags' names, read for the row that opens the tags page. */
     val keywords: KeywordSearch = KeywordSearch(),
 )
 
-/** One TMDB keyword, as the tags picker lists it. */
+/** One TMDB keyword, as the blocklisted tags page lists it. */
 data class Keyword(
     val id: Int,
     val name: String,
 )
 
 /**
- * The tags picker's keywords: [names] for the ids the server holds, read once the picker opens, and [results] for the
+ * The blocklisted tags page's keywords: [names] for the ids the server holds, and [results] for the
  * last search, null before one. [failed] is a search that could not be read.
  */
 data class KeywordSearch(
@@ -172,7 +173,7 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
 }
 
 /** Jellyseerr 2.6 to 2.x: the old names are there and none of Seerr 3.0's are. */
-private val SeerrMainSettingsDto.usesBlacklistNames: Boolean
+internal val SeerrMainSettingsDto.usesBlacklistNames: Boolean
     get() =
         listOf(hideBlocklisted, blocklistRegion, blocklistLanguage, blocklistedTags, blocklistedTagsLimit).all { it == null } &&
             listOf(hideBlacklisted, blacklistedTags, blacklistedTagsLimit).any { it != null }
@@ -196,7 +197,7 @@ private fun SeerrMainSettingsDto.toBlocklist(): BlocklistSettings? =
     }
 
 /** The tags and their limit under whichever name the server keeps them. */
-private val SeerrMainSettingsDto.tags: String? get() = blocklistedTags ?: blacklistedTags
+internal val SeerrMainSettingsDto.tags: String? get() = blocklistedTags ?: blacklistedTags
 private val SeerrMainSettingsDto.tagsLimit: Int? get() = blocklistedTagsLimit ?: blacklistedTagsLimit
 
 /**
@@ -217,10 +218,8 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         hideBlocklisted = hideBlocklisted.takeUnless { blacklistNames },
         blocklistRegion = blocklist?.region?.trim(),
         blocklistLanguage = blocklist?.languages?.trim(),
-        blocklistedTags = blocklistTags.takeUnless { blacklistNames },
         blocklistedTagsLimit = blocklistTagsLimit.takeUnless { blacklistNames },
         hideBlacklisted = hideBlocklisted.takeIf { blacklistNames },
-        blacklistedTags = blocklistTags.takeIf { blacklistNames },
         blacklistedTagsLimit = blocklistTagsLimit.takeIf { blacklistNames },
         partialRequestsEnabled = partialRequests,
         enableSpecialEpisodes = specialEpisodes,
@@ -231,5 +230,4 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         csrfProtection = csrfProtection,
     )
 
-private val ServerGeneralSettings.blocklistTags: String? get() = blocklist?.tagIds?.joinToString(",")
 private val ServerGeneralSettings.blocklistTagsLimit: Int? get() = blocklist?.tagsLimit?.trim()?.toIntOrNull()

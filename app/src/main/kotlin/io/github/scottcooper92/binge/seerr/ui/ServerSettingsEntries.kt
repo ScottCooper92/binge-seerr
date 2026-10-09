@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
@@ -16,6 +17,9 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.AboutScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AboutViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.AgentsActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ApiKeyActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.BlocklistTagsActions
+import io.github.scottcooper92.binge.seerr.ui.settings.server.BlocklistTagsScreen
+import io.github.scottcooper92.binge.seerr.ui.settings.server.BlocklistTagsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheActions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.CacheViewModel
@@ -73,7 +77,8 @@ internal fun ServerSettingsPageEntry(
         ServerSettingsPage.DiscoverSliders -> DiscoverSlidersPage(onBack, onOpenSlider)
         ServerSettingsPage.NotificationAgents -> NotificationAgentsPage(onBack, onOpenAgent)
         ServerSettingsPage.Services -> ServicesPage(onBack, onOpenInstance, onOpenRule)
-        ServerSettingsPage.General -> GeneralPage(onBack)
+        ServerSettingsPage.General -> GeneralPage(onBack, onOpenPage)
+        ServerSettingsPage.BlocklistTags -> BlocklistTagsPage(onBack)
         ServerSettingsPage.Users -> UsersPage(onBack, onOpenPage)
         ServerSettingsPage.MediaServer -> MediaServerPage(onBack, onOpenPage)
         ServerSettingsPage.Tautulli -> TautulliPage(onBack)
@@ -221,9 +226,17 @@ private fun ServicesPage(
 
 /** The server's general settings, with the API key and the way into default permissions. */
 @Composable
-private fun GeneralPage(onBack: () -> Unit) {
+private fun GeneralPage(
+    onBack: () -> Unit,
+    onOpenPage: (ServerSettingsPage) -> Unit,
+) {
     val viewModel = hiltViewModel<ServerGeneralViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The tags page saves them itself; coming back, the row reads what the server now holds.
+    LifecycleResumeEffect(viewModel) {
+        viewModel.refreshBlocklistTags()
+        onPauseOrDispose {}
+    }
     val context = LocalContext.current
     val keyLabel = stringResource(R.string.server_settings_api_key)
     ServerGeneralScreen(
@@ -237,7 +250,29 @@ private fun GeneralPage(onBack: () -> Unit) {
                 onRegenerate = viewModel::regenerateApiKey,
             ),
         onLoadList = viewModel::loadList,
-        keywordActions = KeywordActions(onLoadNames = viewModel::loadKeywordNames, onSearch = viewModel::searchKeywords),
+        keywordActions =
+            KeywordActions(
+                onLoadNames = viewModel::loadKeywordNames,
+                onOpen = { onOpenPage(ServerSettingsPage.BlocklistTags) },
+            ),
+    )
+}
+
+/** The automatic blocklist's tags, which save as they change. */
+@Composable
+private fun BlocklistTagsPage(onBack: () -> Unit) {
+    val viewModel = hiltViewModel<BlocklistTagsViewModel>()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    BlocklistTagsScreen(
+        state = state,
+        actions =
+            BlocklistTagsActions(
+                onBack = onBack,
+                onSearch = viewModel::search,
+                onToggle = viewModel::toggle,
+                onRetry = viewModel::retry,
+                onReload = viewModel::reload,
+            ),
     )
 }
 

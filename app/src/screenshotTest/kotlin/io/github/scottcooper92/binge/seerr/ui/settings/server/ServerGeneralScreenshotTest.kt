@@ -122,7 +122,7 @@ class ServerGeneralPartsScreenshotTest {
                 ServerGeneralExtras(keywords = KeywordSearch(names = mapOf(9951 to "kaiju", 210024 to "anime"))),
                 enabled = true,
                 onLoadList = {},
-                keywordActions = KeywordActions(onLoadNames = {}, onSearch = {}),
+                keywordActions = KeywordActions(onLoadNames = {}, onOpen = {}),
                 actions = noActions(),
             )
         }
