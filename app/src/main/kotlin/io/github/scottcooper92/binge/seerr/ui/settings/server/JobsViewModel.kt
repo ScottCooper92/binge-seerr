@@ -20,7 +20,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,8 +36,9 @@ private const val DUE_GRACE_MILLIS = 5_000L
 /**
  * The Jobs & cache page's jobs: every scheduled job, run now, cancelled, or given a new
  * schedule. While any job is running the list is re-read on a short interval, so the running state
- * clears on its own. While none is, it is re-read once the earliest next run comes due, so a job the
- * schedule starts while the page is open shows as running, and its next run moves on.
+ * clears on its own. While none is, and something is showing the list, it is re-read once the earliest
+ * next run comes due, so a job the schedule starts while the page is open shows as running, and its
+ * next run moves on.
  */
 @HiltViewModel
 class JobsViewModel
@@ -60,6 +63,13 @@ class JobsViewModel
 
         init {
             reload()
+            // The due-run wait serves a page showing the list. A holder that only runs a job (the TV settings board)
+            // never collects the state, and a page off screen stops collecting it, so neither re-reads the list (#936).
+            viewModelScope.launch(dispatcher) {
+                state.subscriptionCount.map { it > 0 }.distinctUntilChanged().collect { watched ->
+                    if (watched) checkWhenDue() else dueCheck?.cancel()
+                }
+            }
         }
 
         fun reload() {
@@ -175,6 +185,7 @@ class JobsViewModel
          */
         private fun checkWhenDue() {
             dueCheck?.cancel()
+            if (state.subscriptionCount.value == 0 || jobs().any { it.running }) return
             val now = clock()
             val next = jobs().mapNotNull { it.nextRunMillis }.filter { it > now }.minOrNull() ?: return
             dueCheck =

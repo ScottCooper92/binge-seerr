@@ -223,6 +223,22 @@ class JobsViewModelTest {
             vm.uiState.first { it is JobsUiState.Ready && !it.jobs[1].running }
         }
 
+    /** #936: the TV settings board holds this view model only to run a scan, and never shows the list. */
+    @Test
+    fun `a holder that never shows the list does not re-read it when a run comes due`() =
+        runTest {
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            vm.clock = { 1_789_275_660_000L - 60 * 60_000L }
+            vm.reload()
+            vm.uiState.first { it is JobsUiState.Ready }
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+            testScheduler.advanceTimeBy(2 * 60 * 60_000L)
+            testScheduler.runCurrent()
+            assertEquals(reads, seerr.count("GET", "/api/v1/settings/jobs"))
+        }
+
     @Test
     fun `a next run already past schedules no re-read`() =
         runTest {
