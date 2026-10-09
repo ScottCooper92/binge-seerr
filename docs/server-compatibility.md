@@ -146,9 +146,10 @@ client offers:
 
 - `CAPABILITY_REQUEST_4K` needs the user to hold the 4K permission for a media type the server has
   4K on for: `movie4kEnabled` for movies, `series4kEnabled` for series.
-- `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the server takes a whole
-  show. A user who may change the destination still gets the editor for that, with no season list,
-  and its save sends no `seasons`, so the request keeps the ones it has.
+- `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the web client takes a whole
+  show; the server itself does not check the setting. A user who may change the destination still
+  gets the editor for that, with no season list. Its save sends the request's own `seasons` back,
+  because both lineages answer a show's `PUT /request/{id}` without them with a 500.
 
 ## A capability this companion does not offer
 
