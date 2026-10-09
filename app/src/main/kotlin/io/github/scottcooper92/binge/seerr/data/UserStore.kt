@@ -42,8 +42,9 @@ class RoomUserStore(
 ) : UserStore {
     private val users get() = db.userDao()
     private val keys get() = db.userRemoteKeyDao()
+    private val sources = OpenPagingSources<Int, UserEntity>()
 
-    override fun pagingSource(listKey: String): PagingSource<Int, UserEntity> = users.pagingSource(listKey)
+    override fun pagingSource(listKey: String): PagingSource<Int, UserEntity> = sources.track(users.pagingSource(listKey))
 
     override suspend fun nextSkip(listKey: String): Int? = keys.nextSkip(listKey)
 
@@ -53,25 +54,29 @@ class RoomUserStore(
         listKey: String,
         users: List<UserEntity>,
         nextSkip: Int?,
-    ) = db.withTransaction {
-        this.users.clear(listKey)
-        this.users.upsertAll(users)
-        keys.upsert(UserRemoteKeyEntity(listKey, nextSkip))
+    ) = sources.afterWrite {
+        db.withTransaction {
+            this.users.clear(listKey)
+            this.users.upsertAll(users)
+            keys.upsert(UserRemoteKeyEntity(listKey, nextSkip))
+        }
     }
 
     override suspend fun append(
         listKey: String,
         users: List<UserEntity>,
         nextSkip: Int?,
-    ) = db.withTransaction {
-        this.users.upsertAll(users)
-        keys.upsert(UserRemoteKeyEntity(listKey, nextSkip))
+    ) = sources.afterWrite {
+        db.withTransaction {
+            this.users.upsertAll(users)
+            keys.upsert(UserRemoteKeyEntity(listKey, nextSkip))
+        }
     }
 
     override suspend fun updatePermissions(
         ids: List<Int>,
         permissions: Int,
-    ) = users.updatePermissions(ids, permissions)
+    ) = sources.afterWrite { users.updatePermissions(ids, permissions) }
 
     override suspend fun permissionsFor(ids: List<Int>): Map<Int, Int> =
         users
@@ -79,11 +84,13 @@ class RoomUserStore(
             .groupBy({ it.id }, { it.permissions })
             .mapValues { (_, bitmasks) -> bitmasks.fold(0) { acc, bitmask -> acc or bitmask } }
 
-    override suspend fun delete(userId: Int) = users.delete(userId)
+    override suspend fun delete(userId: Int) = sources.afterWrite { users.delete(userId) }
 
     override suspend fun clearAll() =
-        db.withTransaction {
-            users.clearAll()
-            keys.clearAll()
+        sources.afterWrite {
+            db.withTransaction {
+                users.clearAll()
+                keys.clearAll()
+            }
         }
 }

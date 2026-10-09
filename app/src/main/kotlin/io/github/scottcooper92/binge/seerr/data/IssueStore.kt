@@ -48,11 +48,12 @@ class RoomIssueStore(
 ) : IssueStore {
     private val issues get() = db.issueDao()
     private val keys get() = db.issueRemoteKeyDao()
+    private val sources = OpenPagingSources<Int, IssueEntity>()
 
     override fun pagingSource(
         listKey: String,
         status: String?,
-    ): PagingSource<Int, IssueEntity> = issues.pagingSource(listKey, status)
+    ): PagingSource<Int, IssueEntity> = sources.track(issues.pagingSource(listKey, status))
 
     override suspend fun nextSkip(listKey: String): Int? = keys.nextSkip(listKey)
 
@@ -62,31 +63,37 @@ class RoomIssueStore(
         listKey: String,
         issues: List<IssueEntity>,
         nextSkip: Int?,
-    ) = db.withTransaction {
-        this.issues.clear(listKey)
-        this.issues.upsertAll(issues)
-        keys.upsert(IssueRemoteKeyEntity(listKey, nextSkip))
+    ) = sources.afterWrite {
+        db.withTransaction {
+            this.issues.clear(listKey)
+            this.issues.upsertAll(issues)
+            keys.upsert(IssueRemoteKeyEntity(listKey, nextSkip))
+        }
     }
 
     override suspend fun append(
         listKey: String,
         issues: List<IssueEntity>,
         nextSkip: Int?,
-    ) = db.withTransaction {
-        this.issues.upsertAll(issues)
-        keys.upsert(IssueRemoteKeyEntity(listKey, nextSkip))
+    ) = sources.afterWrite {
+        db.withTransaction {
+            this.issues.upsertAll(issues)
+            keys.upsert(IssueRemoteKeyEntity(listKey, nextSkip))
+        }
     }
 
     override suspend fun updateStatus(
         issueId: Int,
         status: String,
-    ) = issues.updateStatus(issueId, status)
+    ) = sources.afterWrite { issues.updateStatus(issueId, status) }
 
-    override suspend fun delete(issueId: Int) = issues.delete(issueId)
+    override suspend fun delete(issueId: Int) = sources.afterWrite { issues.delete(issueId) }
 
     override suspend fun clearAll() =
-        db.withTransaction {
-            issues.clearAll()
-            keys.clearAll()
+        sources.afterWrite {
+            db.withTransaction {
+                issues.clearAll()
+                keys.clearAll()
+            }
         }
 }
