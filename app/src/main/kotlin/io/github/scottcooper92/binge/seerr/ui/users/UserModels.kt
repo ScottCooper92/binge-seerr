@@ -35,16 +35,22 @@ data class UserItem(
     val isAdmin: Boolean get() = ManageablePermission.Admin in ManageablePermission.decode(permissions)
 }
 
-/** The bulk editor while it is open: one permission set to write to every selected user. */
+/** The bulk editor while it is open: the toggles to apply onto each selected user's own permissions. */
 data class BulkEdit(
     /** What the sheet shows ticked: at first, only what every selected user already has. */
     val selected: Set<ManageablePermission> = emptySet(),
     val saving: Boolean = false,
     /** Permissions some selected users have and others don't. They start unticked, and each user keeps their own until one is changed. */
     val mixed: Set<ManageablePermission> = emptySet(),
-    /** What the user has toggled. A save writes these and nothing else (#1007). */
-    val touched: Set<ManageablePermission> = emptySet(),
-)
+    /** What the sheet showed ticked when it opened. */
+    val initial: Set<ManageablePermission> = selected,
+) {
+    /**
+     * The permissions whose tick differs from where the sheet opened. A save writes these and nothing else (#1007), so a
+     * permission toggled and toggled back is untouched again, and each user keeps their own.
+     */
+    val touched: Set<ManageablePermission> get() = (selected - initial) + (initial - selected)
+}
 
 sealed interface UsersUiState {
     data object Loading : UsersUiState

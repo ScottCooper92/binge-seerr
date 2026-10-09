@@ -200,10 +200,7 @@ class UsersViewModel
         fun togglePermission(permission: ManageablePermission) =
             edit.update { current ->
                 current?.takeUnless { it.saving }?.let {
-                    it.copy(
-                        selected = if (permission in it.selected) it.selected - permission else it.selected + permission,
-                        touched = it.touched + permission,
-                    )
+                    it.copy(selected = if (permission in it.selected) it.selected - permission else it.selected + permission)
                 }
                     ?: current
             }

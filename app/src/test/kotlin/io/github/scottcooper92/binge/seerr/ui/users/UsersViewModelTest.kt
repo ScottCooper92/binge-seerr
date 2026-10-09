@@ -416,6 +416,34 @@ class UsersViewModelTest {
             assertTrue(puts.single { it.body.contains("\"ids\":[11]") }.body.contains("\"permissions\":$joExpected"))
         }
 
+    @Test
+    fun `a permission toggled on and back off is untouched again, so the user who had it keeps it`() =
+        runTest {
+            serveIdaAndJoWhoDiffer()
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.users.asSnapshot()
+            vm.toggleSelected(10)
+            vm.toggleSelected(11)
+            vm.awaitReady { it.selection == setOf(10, 11) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+
+            // Manage issues is Jo's alone, so it opens unticked: ticked and then unticked, the sheet is where it began.
+            vm.togglePermission(ManageablePermission.ManageIssues)
+            vm.awaitReady { ManageablePermission.ManageIssues in it.edit?.selected.orEmpty() }
+            vm.togglePermission(ManageablePermission.ManageIssues)
+            val back = vm.awaitReady { ManageablePermission.ManageIssues !in it.edit?.selected.orEmpty() }
+            assertEquals(emptySet<ManageablePermission>(), back.edit?.touched)
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
+            assertTrue(received.none { it.method == "PUT" })
+            val jo = ManageablePermission.decode(cache.rows.first { it.id == 11 }.permissions)
+            assertTrue(ManageablePermission.ManageIssues in jo)
+        }
+
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object PlainCipher : SecretCipher {
