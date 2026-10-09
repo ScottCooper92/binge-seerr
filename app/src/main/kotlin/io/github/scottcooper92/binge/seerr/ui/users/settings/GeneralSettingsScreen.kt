@@ -48,6 +48,7 @@ fun GeneralSettingsScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        saveAsMade = true,
     ) { draft, enabled ->
         ProfileGroup(draft, extras, enabled, actions)
         DiscoverGroup(draft, extras, enabled, onLoadList, actions)

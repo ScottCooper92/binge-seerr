@@ -4,10 +4,11 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerListCatalog
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
-import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -53,7 +54,7 @@ class GeneralSettingsViewModelTest {
 
     private suspend fun TestScope.viewModel(): GeneralSettingsViewModel {
         val connection = seerr.connection(this)
-        val vm = GeneralSettingsViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, 8)
+        val vm = GeneralSettingsViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, backgroundScope, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -61,6 +62,12 @@ class GeneralSettingsViewModelTest {
 
     private suspend fun GeneralSettingsViewModel.awaitReady(): ExtrasEditorUiState.Ready<GeneralSettings, UserGeneralExtras> =
         uiState.first { it is ExtrasEditorUiState.Ready && !it.saving } as ExtrasEditorUiState.Ready<GeneralSettings, UserGeneralExtras>
+
+    /** A user's General saves as it changes: the change goes out once the delay has passed, and the re-read is adopted. */
+    private suspend fun TestScope.awaitWritten(vm: GeneralSettingsViewModel) {
+        advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+        vm.uiState.first { it is ExtrasEditorUiState.Ready && !it.dirty }
+    }
 
     @Test
     fun `the record reads with the server's defaults alongside, and a manager may edit the quotas`() =
@@ -141,7 +148,7 @@ class GeneralSettingsViewModelTest {
         }
 
     @Test
-    fun `saving sends an override's quota and nulls one that is off, then adopts the server's re-read`() =
+    fun `a change sends an override's quota and nulls one that is off, then adopts the server's re-read`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
@@ -149,9 +156,7 @@ class GeneralSettingsViewModelTest {
 
             vm.edit { it.copy(displayName = "Ana B", movieQuotaOverride = false, tvQuotaOverride = true, tvQuotaLimit = 3) }
             seerr.serve("GET /api/v1/user/8/settings/main", """{"username":"Ana B","tvQuotaLimit":3,"tvQuotaDays":7}""")
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
             assertEquals("Ana B", sent.getValue("username").jsonPrimitive.content)
@@ -179,9 +184,7 @@ class GeneralSettingsViewModelTest {
             assertEquals("IE", draft.streamingRegion)
 
             vm.edit { it.copy(region = "US", streamingRegion = "all") }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
             assertEquals("US", sent.getValue("discoverRegion").jsonPrimitive.content)
@@ -198,9 +201,21 @@ class GeneralSettingsViewModelTest {
             assertNull(vm.awaitReady().draft.streamingRegion)
 
             vm.edit { it.copy(displayName = "Ana B") }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
             assertNull(Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject["streamingRegion"])
+        }
+
+    @Test
+    fun `a required email cleared is never written`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(email = "") }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/main"))
         }
 }
