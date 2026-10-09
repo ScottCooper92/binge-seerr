@@ -24,6 +24,9 @@
     <dimen name="tv_form_option_height">48dp</dimen>
     <dimen name="tv_form_option_padding_horizontal">20dp</dimen>
     <dimen name="tv_form_option_gap">8dp</dimen>
+    <!-- TvCheckboxRow: the box, and its outline -->
+    <dimen name="tv_checkbox_size">28dp</dimen>
+    <dimen name="tv_checkbox_border">2dp</dimen>
     <!-- The television shell: boards, list rows, the action sheet and the list/pane board. -->
     <dimen name="tv_list_row_height">76dp</dimen>
     <dimen name="tv_list_row_padding_horizontal">16dp</dimen>
