@@ -274,10 +274,11 @@ internal class AddressHandOffListener(
         pinGate(check, fields, progress, language)?.let { return it.copy(clientCookie = cookie) to null }
         val address = fields["address"]?.trim()
         // The phone's session can ride on the same post (#772), sealed like any credentials. One that doesn't open,
-        // or isn't a session, refuses the whole post rather than sending the TV on without it.
+        // or isn't a session, refuses the whole post rather than sending the TV on without it. It is sealed for this
+        // address (#1029), so an address rewritten on the way here does not open it, and the session goes nowhere.
         val sealed = fields["sealed"]
-        val session = sealed?.let(::openSession)
         val addressOk = !address.isNullOrEmpty() && isAcceptable(address)
+        val session = if (addressOk) sealed?.let { openSession(it, checkNotNull(address)) } else null
         val sessionOk = sealed == null || session != null
         return if (addressOk && sessionOk) {
             HandOffResponse(HttpStatus.Ok, page.status(language, HandOffProgress.Checking), clientCookie = cookie) to
@@ -305,10 +306,13 @@ internal class AddressHandOffListener(
             else -> null
         }
 
-    /** The session [sealed] carries, if it opens under this listener's key for this token and is a session. */
-    private fun openSession(sealed: String): String? =
+    /** The session [sealed] carries, if it opens under this listener's key for this token and [address], and is a session. */
+    private fun openSession(
+        sealed: String,
+        address: String,
+    ): String? =
         key
-            ?.open(sealed, token)
+            ?.open(sealed, HandOffKey.context(token, address))
             ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
             ?.takeIf { it.mode == HAND_OFF_SESSION_MODE }
             ?.session
@@ -316,8 +320,8 @@ internal class AddressHandOffListener(
 
     /**
      * Credentials a phone app sealed with the key in the code. Read only while the TV is on its sign-in step, and
-     * only if they open under this listener's key for this token; anything else is refused without saying which
-     * part was wrong. Nothing here is ever logged or echoed.
+     * only if they open under this listener's key for this token and the address the TV is signing in to (#1029);
+     * anything else is refused without saying which part was wrong. Nothing here is ever logged or echoed.
      */
     private fun receiveCredentials(
         request: HandOffRequest,
@@ -330,7 +334,7 @@ internal class AddressHandOffListener(
         val cookie = (check as? PinCheck.Matched)?.cookie
         val credentials =
             fields["sealed"]
-                ?.let { key?.open(it, token) }
+                ?.let { key?.open(it, HandOffKey.context(token, progress.address)) }
                 ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
                 ?.takeIf { it.mode in progress.modes || (it.mode == HAND_OFF_SESSION_MODE && it.session.isNotEmpty()) }
                 ?: return HandOffResponse(HttpStatus.BadRequest, REFUSED_JSON, JSON_TYPE, clientCookie = cookie) to null

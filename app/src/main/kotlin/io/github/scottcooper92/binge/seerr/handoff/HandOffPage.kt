@@ -52,6 +52,8 @@ internal data class HandOffPageCopy(
     /** The sign-in form the page shows on the TV's sign-in step (#772), naming the server. */
     val signInFormTitle: (server: String) -> String,
     val signInFormBody: String,
+    /** The address the TV is signing in to, under the form's title: what the form seals for, and what to check (#1029). */
+    val signInAddress: (address: String) -> String,
     val modeField: String,
     /** A sign-in mode's name as the page offers it, by the mode's name on the wire. */
     val modeLabel: (mode: String) -> String,
@@ -245,8 +247,9 @@ internal class HandOffPageTemplate(
         val content =
             """
             <div id="ontv"><h1>${copy.signInTitle.escapeHtml()}</h1><p>${copy.signInBody(progress.server).escapeHtml()}</p></div>
-            <form id="signin" hidden data-mode="${modes.first().escapeHtml()}">
+            <form id="signin" hidden data-mode="${modes.first().escapeHtml()}" data-address="${progress.address.escapeHtml()}">
             <h1>${copy.signInFormTitle(progress.server).escapeHtml()}</h1>
+            <p>${copy.signInAddress(progress.address).escapeHtml()}</p>
             <p>${copy.signInFormBody.escapeHtml()}</p>
             $chooser
             <div data-for="Jellyfin Emby"><label for="username">${copy.username.escapeHtml()}</label>

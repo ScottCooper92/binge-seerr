@@ -124,4 +124,10 @@ sealed interface SignInStep {
 
     /** The TV stopped answering: it was switched off, left the page, or is no longer on this network. */
     data object Lost : SignInStep
+
+    /**
+     * The TV is signing in to an address other than the one this phone sent, or will not say which (#1029). Something on
+     * the network may have rewritten the address on its way, so nothing more is sent.
+     */
+    data object Redirected : SignInStep
 }

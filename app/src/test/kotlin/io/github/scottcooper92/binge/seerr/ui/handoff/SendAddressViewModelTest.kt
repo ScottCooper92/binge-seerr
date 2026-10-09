@@ -82,32 +82,37 @@ class SendAddressViewModelTest {
 
     private val sender = RecordingSender()
 
-    /** Answers with [statuses] in turn, the last one for ever; records what it was asked to send. */
-    private class FakeTv : TvSignInClient {
+    /**
+     * Answers with [statuses] in turn, the last one for ever; records what it was asked to send, and for which address. A
+     * sign-in status that names no address is signing in to [signingInTo]'s, as a TV that took the phone's address would be.
+     */
+    private class FakeTv(
+        private val signingInTo: () -> String,
+    ) : TvSignInClient {
         var statuses: MutableList<HandOffStatus?> = mutableListOf(HandOffStatus(HandOffStatus.WAITING))
         val sentCredentials = mutableListOf<HandOffCredentials>()
+        val sealedFor = mutableListOf<String>()
         var accept = true
         var attempt = 1
 
-        override suspend fun status(target: TvHandOffTarget): HandOffStatus? =
-            if (statuses.size >
-                1
-            ) {
-                statuses.removeAt(0)
-            } else {
-                statuses.first()
-            }
+        override suspend fun status(target: TvHandOffTarget): HandOffStatus? {
+            val status = if (statuses.size > 1) statuses.removeAt(0) else statuses.first()
+            return if (status?.state == HandOffStatus.SIGN_IN && status.address == null) status.copy(address = signingInTo()) else status
+        }
 
         override suspend fun send(
             target: TvHandOffTarget,
+            address: String,
             credentials: HandOffCredentials,
         ): Int? {
             sentCredentials += credentials
+            sealedFor += address
             return if (accept) attempt else null
         }
     }
 
-    private val tv = FakeTv()
+    /** The address the phone sent, or, for a TV that had one already, the server the tests' phones are connected to. */
+    private val tv = FakeTv { sender.sent.lastOrNull()?.second ?: "http://seerr.lan:5055/" }
 
     private val memory = DataStoreHandOffAddressMemory(InMemoryDataStore())
 
@@ -378,6 +383,47 @@ class SendAddressViewModelTest {
                 listOf(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "correct horse")),
                 tv.sentCredentials,
             )
+            // Sealed for the address the TV reported, which is the one this phone sent (#1029).
+            assertEquals(listOf(sender.sent.single().second), tv.sealedFor)
+        }
+
+    @Test
+    fun `a TV signing in to another address than the one sent gets nothing more, and the sheet says why`() =
+        runTest {
+            tv.statuses =
+                mutableListOf(
+                    HandOffStatus(HandOffStatus.CHECKING),
+                    HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = "http://192.168.1.66:5055/"),
+                )
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)))
+            vm.settled()
+
+            vm.send()
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Redirected }
+            vm.sendSignIn()
+            vm.sendSession()
+
+            assertTrue(tv.sentCredentials.isEmpty())
+        }
+
+    @Test
+    fun `the same server written another way is not a redirect`() =
+        runTest {
+            tv.statuses =
+                mutableListOf(
+                    HandOffStatus(HandOffStatus.CHECKING),
+                    HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = "http://seerr.lan:5055"),
+                )
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.ApiKey("k")))
+            vm.settled()
+
+            vm.send()
+            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.Form }
+            vm.editSignIn { copy(email = "ana@example.com", password = "correct horse") }
+            vm.sendSignIn()
+
+            // Sealed for the address exactly as the TV wrote it, since that is what the TV opens with.
+            assertEquals(listOf("http://seerr.lan:5055"), tv.sealedFor)
         }
 
     @Test
@@ -401,7 +447,11 @@ class SendAddressViewModelTest {
             val step = (vm.uiState.first { it is SendAddressUiState.SigningIn } as SendAddressUiState.SigningIn).step
 
             assertEquals(SignInStep.Session(awaiting = 1), step)
-            val opened = key.open(checkNotNull(sender.sealed.single()), context = TOKEN)?.decodeToString()
+            // Sealed for the address it went with (#1029): rewritten on the way, it would not open.
+            val address = sender.sent.single().second
+            assertNull(key.open(checkNotNull(sender.sealed.single()), context = TOKEN))
+            assertNull(key.open(checkNotNull(sender.sealed.single()), context = HandOffKey.context(TOKEN, "http://192.168.1.66:5055/")))
+            val opened = key.open(checkNotNull(sender.sealed.single()), context = HandOffKey.context(TOKEN, address))?.decodeToString()
             assertEquals(
                 HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "s1d"),
                 Json.decodeFromString<HandOffCredentials>(opened!!),
@@ -460,6 +510,21 @@ class SendAddressViewModelTest {
             vm.sendSession()
             vm.uiState.first { ((it as? SendAddressUiState.SigningIn)?.step as? SignInStep.Form)?.awaiting != null }
             assertEquals(listOf(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "s1d")), tv.sentCredentials)
+            assertEquals(listOf("http://seerr.lan:5055/"), tv.sealedFor)
+        }
+
+    @Test
+    fun `a TV already signing in to some other server is never offered the session`() =
+        runTest {
+            tv.statuses =
+                mutableListOf(HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = "http://192.168.1.66:5055/"))
+            val vm = viewModel(scannedLink, SeerrCredentials("http://seerr.lan:5055/", SeerrAuth.Session("s1d", 4)), scanned = true)
+
+            val form = vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form } as SendAddressUiState.SigningIn
+            // The phone sent no address here, so the TV's is the only one there is: it can type for it, but not hand it the session.
+            assertNull((form.step as SignInStep.Form).sessionOffer)
+            vm.sendSession()
+            assertTrue(tv.sentCredentials.isEmpty())
         }
 
     @Test

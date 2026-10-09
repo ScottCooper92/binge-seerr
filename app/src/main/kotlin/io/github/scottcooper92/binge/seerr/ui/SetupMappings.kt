@@ -59,6 +59,7 @@ internal fun SetupUiState.toHandOffProgress(
         is SetupUiState.SignIn ->
             HandOffProgress.SignIn(
                 server = server.title,
+                address = server.baseUrl,
                 modes = server.modes.filter { it in HandOffSignInModes }.map { it.name },
                 failed = failed,
                 attempt = attempts,

@@ -28,6 +28,9 @@ import kotlin.concurrent.thread
 
 private const val TOKEN = "k7m2pqx4"
 
+/** The address the TV is signing in to, once a test has moved it to its sign-in step. */
+private const val SIGNING_IN_TO = "http://192.168.1.10:5055"
+
 /**
  * The television's listener over real loopback sockets: what it answers, what it refuses, and that
  * it stops — after one address, when cancelled, and against a client that sends nothing.
@@ -63,11 +66,21 @@ class AddressHandOffListenerTest {
     /** Serves until cancelled, handing each address the listener accepts to the channel. */
     private val credentials = Channel<HandOffCredentials>(Channel.UNLIMITED)
 
+    /** The session that came with each accepted address, or an empty string for none. */
+    private val sessions = Channel<String>(Channel.UNLIMITED)
+
     private fun serving(): Pair<Channel<String>, Job> {
         val addresses = Channel<String>(Channel.UNLIMITED)
         return addresses to
             serverScope.launch {
-                listener.serve({ progress }, { address, _ -> addresses.trySend(address) }, { credentials.trySend(it) })
+                listener.serve(
+                    { progress },
+                    { address, session ->
+                        sessions.trySend(session.orEmpty())
+                        addresses.trySend(address)
+                    },
+                    { credentials.trySend(it) },
+                )
             }
     }
 
@@ -215,7 +228,7 @@ class AddressHandOffListenerTest {
             post("/a/$TOKEN", "address=seerr.lan")
             assertEquals("seerr.lan", withTimeout(5_000) { addresses.receive() })
 
-            progress = HandOffProgress.SignIn("Living room")
+            progress = HandOffProgress.SignIn("Living room", SIGNING_IN_TO)
             get("/a/$TOKEN", cookie).let { assertTrue(it, it.contains("status:es:SignIn(Living room)")) }
             post("/a/$TOKEN", "address=other.lan").let { assertTrue(it, it.contains("status:en:SignIn(Living room)")) }
             assertTrue(addresses.isEmpty)
@@ -335,8 +348,11 @@ class AddressHandOffListenerTest {
     private fun sealedFor(
         credentials: HandOffCredentials,
         using: HandOffKey = key,
-        context: String = TOKEN,
+        context: String = HandOffKey.context(TOKEN, SIGNING_IN_TO),
     ) = "sealed=" + using.seal(Json.encodeToString(credentials).toByteArray(), context)
+
+    private fun sessionFor(address: String) =
+        sealedFor(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = "s:phone"), context = HandOffKey.context(TOKEN, address))
 
     private val local = HandOffCredentials(mode = "Local", email = "ana@example.com", password = "correct horse")
 
@@ -345,13 +361,13 @@ class AddressHandOffListenerTest {
         runBlocking {
             val (_, serving) = serving()
 
-            progress = HandOffProgress.SignIn("Living room", modes = listOf("Local", "Jellyfin"), failed = true)
+            progress = HandOffProgress.SignIn("Living room", SIGNING_IN_TO, modes = listOf("Local", "Jellyfin"), failed = true)
             val answer = get("/s/$TOKEN")
 
             assertTrue(answer.startsWith("HTTP/1.1 200 OK\r\n"))
             assertTrue(answer.contains("Content-Type: application/json"))
             assertEquals(
-                HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local", "Jellyfin"), failed = true),
+                HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local", "Jellyfin"), failed = true, address = SIGNING_IN_TO),
                 Json.decodeFromString<HandOffStatus>(answer.substringAfter("\r\n\r\n")),
             )
             assertTrue(get("/s/abcdefghjkmnpqrstuvw").startsWith("HTTP/1.1 404 "))
@@ -366,11 +382,11 @@ class AddressHandOffListenerTest {
 
             progress = HandOffProgress.Checking
             assertTrue(post("/c/$TOKEN", sealedFor(local)).startsWith("HTTP/1.1 409 "))
-            progress = HandOffProgress.SignIn("Home", modes = listOf("Jellyfin"))
+            progress = HandOffProgress.SignIn("Home", SIGNING_IN_TO, modes = listOf("Jellyfin"))
             assertTrue(post("/c/$TOKEN", sealedFor(local)).startsWith("HTTP/1.1 400 "))
             assertTrue(credentials.isEmpty)
 
-            progress = HandOffProgress.SignIn("Home", modes = listOf("Local"), attempt = 4)
+            progress = HandOffProgress.SignIn("Home", SIGNING_IN_TO, modes = listOf("Local"), attempt = 4)
             val answer = post("/c/$TOKEN", sealedFor(local))
 
             assertTrue(answer.startsWith("HTTP/1.1 200 OK\r\n"))
@@ -383,15 +399,36 @@ class AddressHandOffListenerTest {
     fun `credentials sealed with another key or for another token, or not sealed at all, are refused`() =
         runBlocking {
             val (_, serving) = serving()
-            progress = HandOffProgress.SignIn("Home", modes = listOf("Local"))
+            progress = HandOffProgress.SignIn("Home", SIGNING_IN_TO, modes = listOf("Local"))
 
             assertTrue(post("/c/$TOKEN", sealedFor(local, using = HandOffKey.generate())).startsWith("HTTP/1.1 400 "))
             assertTrue(post("/c/$TOKEN", sealedFor(local, context = "other000")).startsWith("HTTP/1.1 400 "))
+            // Sealed for the token alone, as before #1029, or for an address other than the one the TV signs in to.
+            assertTrue(post("/c/$TOKEN", sealedFor(local, context = TOKEN)).startsWith("HTTP/1.1 400 "))
+            assertTrue(post("/c/$TOKEN", sealedFor(local, context = HandOffKey.context(TOKEN, "http://192.168.1.66:5055"))).startsWith("HTTP/1.1 400 "))
             assertTrue(post("/c/$TOKEN", "sealed=garbage").startsWith("HTTP/1.1 400 "))
             assertTrue(post("/c/$TOKEN", "password=correct+horse&email=ana%40example.com&mode=Local").startsWith("HTTP/1.1 400 "))
             assertTrue(post("/c/abcdefghjkmnpqrstuvw", sealedFor(local)).startsWith("HTTP/1.1 404 "))
             assertTrue(get("/c/$TOKEN").startsWith("HTTP/1.1 404 "))
             assertTrue(credentials.isEmpty)
+            serving.cancelAndJoin()
+        }
+
+    @Test
+    fun `a session posted with an address is taken only for the address it was sealed for`() =
+        runBlocking {
+            val (addresses, serving) = serving()
+
+            // Someone on the LAN rewrote the address on its way: the session sealed for the real one does not open (#1029).
+            val rewritten = post("/a/$TOKEN", "address=http%3A%2F%2F192.168.1.66%3A5055&" + sessionFor(SIGNING_IN_TO))
+            assertTrue(rewritten, rewritten.startsWith("HTTP/1.1 400 "))
+            assertTrue(rewritten.contains("form:en:true"))
+            assertTrue(addresses.isEmpty)
+
+            val answer = post("/a/$TOKEN", "address=http%3A%2F%2F192.168.1.10%3A5055&" + sessionFor(SIGNING_IN_TO))
+            assertTrue(answer, answer.startsWith("HTTP/1.1 200 OK\r\n"))
+            assertEquals(SIGNING_IN_TO, withTimeout(5_000) { addresses.receive() })
+            assertEquals("s:phone", withTimeout(5_000) { sessions.receive() })
             serving.cancelAndJoin()
         }
 
