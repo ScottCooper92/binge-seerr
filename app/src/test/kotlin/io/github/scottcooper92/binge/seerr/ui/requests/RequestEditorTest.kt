@@ -317,6 +317,39 @@ class RequestEditorTest {
             assertTrue(seasons.single { it.number == 2 }.selected)
         }
 
+    @Test
+    fun `a held season the request already covers stays in the body, or the server would drop it`() =
+        runTest {
+            val editor = editor()
+            // Season 3 is on the server now, so it is locked; the request still covers it.
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            assertTrue(editor.awaitLoaded().seasons.single { it.number == 3 }.let { it.locked && it.selected })
+
+            editor.toggleSeason(2)
+            editor.save()
+            editor.awaitClosed()
+
+            assertEquals(listOf(1, 2, 3), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `a request whose seasons are all held can still change where it goes`() =
+        runTest {
+            val editor = editor()
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = true))
+
+            assertTrue(editor.awaitLoaded().canSave)
+            editor.selectProfile(8)
+            editor.save()
+            editor.awaitClosed()
+
+            val body = editBody()
+            assertEquals(listOf(3), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+            assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
+        }
+
     private fun movieRequest(tags: List<Int> = emptyList()) =
         SeerrRequestDto(
             id = 11,
