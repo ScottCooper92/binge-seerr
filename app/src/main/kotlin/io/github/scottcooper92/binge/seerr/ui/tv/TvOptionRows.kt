@@ -115,7 +115,10 @@ internal fun TvOptionRow(
                 .tvFocusFill(isFocused = focused, shape = BingeShapes.Pill)
                 .tvClickable(onFocusChanged = { focused = it }, onClick = onSelect)
                 .padding(horizontal = dimensionResource(R.dimen.tv_form_option_padding_horizontal))
-                .semantics { this.selected = selected },
+                .semantics {
+                    this.selected = selected
+                    role = Role.RadioButton
+                },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_form_option_gap)),
     ) {
