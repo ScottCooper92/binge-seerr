@@ -9,7 +9,7 @@ This app's screen is built from
 [binge-design-system](https://github.com/ScottCooper92/binge-design-system), checked out at
 `design-system/` as a git submodule and included as a composite build (`com.binge:designsystem`,
 package `com.binge.designsystem`). The theme, the components and the dp tokens come from there;
-this repository holds only what is this app's own — its strings, its screen, its ViewModel.
+this repository holds only what is this app's own: its strings, its screens, its ViewModels and its brand.
 
 That replaces the copying an earlier `design-system-provenance.tsv` recorded. Nothing is copied
 any more, so there is no drift to track: the submodule pin says exactly which design system this

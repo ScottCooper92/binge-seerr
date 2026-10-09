@@ -119,7 +119,8 @@ git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 That is the whole gate: the checks `CLAUDE.md` lists under Gates, from the Kotlin compile to the
 screenshot suite. JDK 17, `compileSdk` 37, `minSdk` 26 and the AGP in `libs.versions.toml`, matching Binge,
 so the extraction is a code move rather than a toolchain negotiation. The object graph is Hilt's,
-through KSP, at the versions Binge pins; the wiring is one module, `di/SeerrModule.kt`.
+through KSP, at the versions Binge pins; the wiring lives in `di/`: `SeerrModule`, `AuthModule`, `DeviceKeysModule`,
+`HandOffModule` and `TelemetryModule`, plus `ServerScopedCaches`.
 
 A release build is shrunk by R8, with this app's own keep rules in `app/src/main/keepRules/`
 on top of what the libraries ship. Measured on the unsigned release APK when it was turned on:

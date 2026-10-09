@@ -22,8 +22,7 @@ repos and audits) and `build/`.
 
 1. **Exemptions first.** Check every hit against the exemption for that rule (below). Recurring
    ones: `src/test`, `src/androidTest`, `src/screenshotTest`, `*PreviewData*`, `@Preview` bodies,
-   the sanctioned second stream on the DVR instance / override rule editors (#188), `LogsUiState`
-   (flat state, documented), and generated/DI code under `di/`.
+   `LogsUiState` and `BlocklistDetailUiState` (flat state, documented), and generated/DI code under `di/`.
 2. **Verify before reporting.** Re-read every candidate in context; label it **confirmed**
    (`file:line` and the exact violation or failure scenario) or **plausible** (needs a repro or a
    design decision). Never report a raw grep hit.
@@ -35,10 +34,9 @@ repos and audits) and `build/`.
 ## Dimension 1 — ungated convention invariants (`CLAUDE.md` > Screens and ViewModels)
 
 - **State shape**: a screen state that is a flat class with `isLoading`-style flags instead of a
-  sealed interface (`Loading` / data / `Error`). Exempt `LogsUiState` (KDoc'd flat state).
+  sealed interface (`Loading` / data / `Error`). Exempt `LogsUiState` and `BlocklistDetailUiState` (KDoc'd flat state).
 - **One `StateFlow` per ViewModel**: count public `StateFlow`s per `*ViewModel.kt`; allowed extras
-  are `Flow<PagingData<T>>` and one-shot events only. Any exposed `MutableStateFlow`. Exempt the
-  DVR instance/override editors' picker stream (#188).
+  are `Flow<PagingData<T>>` and one-shot events only. Any exposed `MutableStateFlow`.
 - **Events**: private `MutableSharedFlow(extraBufferCapacity = 1)` exposed via `asSharedFlow()`. A
   `tryEmit` on a flow with no buffer silently drops events; `replay = 1` for a one-shot re-fires on
   recomposition. Tests: `act(); vm.events.first()` is the race `awaitEvent` exists to avoid
@@ -57,7 +55,7 @@ repos and audits) and `build/`.
 - **Structure**: production `.kt` over 400 lines (no gate exists; `wc -l`), a screen composable
   over ~40 lines of UI that should have children, route entries outside `*Entries.kt`.
 - **Never-silence rule**: any `@Suppress`, `ktlint-disable`, `abortOnError = false`,
-  `lint-baseline.xml`, or growth in `detekt-baseline.xml` (it should only shrink, #165).
+  `lint-baseline.xml`, or growth in `detekt-baseline.xml` (it should only shrink).
 
 ## Dimension 2 — the reference-companion rule and the host boundary
 
@@ -147,7 +145,7 @@ content; stateless `*Content` composables exist where a modal window cannot be c
 Extract every checkable claim from `CLAUDE.md`, `.ai/agents/*.md`, `docs/*.md`, `README.md` and
 `.github/workflows/*.yml` comments (task names, thresholds — e.g. 78% kover, 400-line signal,
 SDK/JDK/AGP versions, "pre-alpha at contract parity" status claims, capability lists, the
-list of what `build` covers (compare it to `check`'s dependencies, not to a count), workflow names, paths, issue numbers like #165/#188) and
+list of what `build` covers (compare it to `check`'s dependencies, not to a count), workflow names, paths, issue numbers) and
 verify each against source, `libs.versions.toml`, `app/build.gradle.kts` and `buildSrc/`. Report
 claim → reality → which side should change. Also check `docs/listing/` (data-safety, privacy)
 against actual permissions, SDKs and data collected.

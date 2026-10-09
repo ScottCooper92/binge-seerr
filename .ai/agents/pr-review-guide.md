@@ -104,9 +104,10 @@ missed nit, which costs almost nothing. The asymmetry is deliberate.
 ships against this yet, and that is exactly why the example should be right before
 anyone copies it.
 
-**But do not review the skeleton as though it were the app.** Until the extraction
-lands, much of this repository is scaffolding that exists so the build and the bots
-are wired. A placeholder that is honest about being a placeholder is not a finding.
+**But do not review a placeholder as though it were the finished feature.** The app is
+pre-alpha at contract parity: the console and the REQUEST v1 service are built, and what is
+still open is named in `CLAUDE.md`. A placeholder that is honest about being a placeholder is
+not a finding.
 
 ## 5. Where a finding goes
 

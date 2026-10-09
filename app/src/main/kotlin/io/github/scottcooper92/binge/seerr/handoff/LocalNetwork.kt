@@ -14,6 +14,7 @@ internal fun Context.localNetwork(): Network? {
     val connectivity = getSystemService(ConnectivityManager::class.java) ?: return null
     val candidates =
         listOfNotNull(connectivity.activeNetwork) +
+            // `allNetworks` is the only way to list them below API 31, and `minSdk` is 26.
             @Suppress("DEPRECATION")
             connectivity.allNetworks
     return candidates.firstOrNull { network ->
