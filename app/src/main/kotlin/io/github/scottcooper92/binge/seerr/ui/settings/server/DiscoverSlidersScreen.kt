@@ -51,6 +51,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPageActionBar
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorPageInsets
 import kotlinx.coroutines.flow.Flow
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.binge.designsystem.R as DesR
@@ -138,24 +139,13 @@ fun DiscoverSlidersScreen(
             }
             itemsIndexed(sliders, key = { _, slider -> slider.id }) { index, slider ->
                 ReorderableItem(reorderableState, key = slider.id) {
-                    val interactionSource = remember { MutableInteractionSource() }
-                    val haptics = LocalHapticFeedback.current
                     SliderRow(
                         slider = slider,
                         enabled = enabled,
                         actions = sliderActions,
                         index = index,
                         lastIndex = sliders.lastIndex,
-                        // draggableHandle()/longPressDraggableHandle() are extensions on this
-                        // ReorderableCollectionItemScope, unreachable from SliderRow itself.
-                        // The handle drags on first touch, as Binge's reorder lists do, so a swipe elsewhere still scrolls.
-                        handleModifier =
-                            Modifier.draggableHandle(
-                                enabled = enabled,
-                                interactionSource = interactionSource,
-                                onDragStarted = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
-                                onDragStopped = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) },
-                            ),
+                        handleModifier = dragHandle(enabled),
                     )
                 }
             }
@@ -338,3 +328,21 @@ internal fun SliderType.dataHintRes(): Int =
         SliderType.MovieStreamingServices, SliderType.TvStreamingServices -> R.string.server_settings_slider_data_streaming
         else -> R.string.server_settings_slider_data_generic
     }
+
+/**
+ * A slider row's drag handle. draggableHandle() is an extension on this ReorderableCollectionItemScope, unreachable from
+ * SliderRow itself. It drags on first touch, as Binge's reorder lists do, so a swipe elsewhere still scrolls, with a
+ * tick as the drag starts and another as it ends.
+ */
+@Composable
+private fun ReorderableCollectionItemScope.dragHandle(enabled: Boolean): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    val haptics = LocalHapticFeedback.current
+    return Modifier.draggableHandle(
+        enabled = enabled,
+        interactionSource = interactionSource,
+        onDragStarted = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+        onDragStopped = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+    )
+}
+
