@@ -10,6 +10,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -61,7 +62,8 @@ class ServerUsersFormTest {
     private val edits = mutableListOf<ServerUsersSettings>()
     private var permissionsOpened = 0
 
-    private fun show() = rule.setContent { Users(SAVED, onEdit = { edits += it }, onOpenDefaultPermissions = { permissionsOpened++ }) }
+    private fun show(initial: ServerUsersSettings = SAVED) =
+        rule.setContent { Users(initial, onEdit = { edits += it }, onOpenDefaultPermissions = { permissionsOpened++ }) }
 
     @Test
     fun `the sign-in switches are named for the media server`() {
@@ -96,6 +98,20 @@ class ServerUsersFormTest {
         rule.onNodeWithText("Every 14 days").assertDoesNotExist()
         // The pick is the edit that saves.
         assertEquals(SAVED.copy(movieLimit = 0), edits.last())
+    }
+
+    @Test
+    fun `a limit and window past the web client's 100 read as stored, and a step down can step back`() {
+        // Seerr takes these through its API, though the web client offers no more than 100.
+        show(SAVED.copy(movieLimit = 150, movieDays = 120))
+        rule.onNodeWithText("150 requests").assertExists()
+        rule.onNodeWithText("Every 120 days").assertExists()
+
+        rule.onNode(hasText("Movie requests") and hasClickAction()).performScrollTo().performClick()
+        rule.onNodeWithContentDescription("Decrease Movie requests").performClick()
+        assertEquals(149, edits.last().movieLimit)
+        rule.onNodeWithContentDescription("Increase Movie requests").performClick()
+        assertEquals(150, edits.last().movieLimit)
     }
 
     @Test
