@@ -374,7 +374,6 @@ private fun instanceRow(
         detail = stringResource(R.string.media_mark_as).takeIf { canSetStatus },
         clickable = canSetStatus,
         trailingContent = instance.status?.let { status -> { MediaStateChip(status = status) } },
-        destination = ListItemDestination.Action,
         onClick = onMarkStatus,
     )
 
