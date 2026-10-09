@@ -8,7 +8,6 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -94,7 +93,7 @@ class DvrInstanceFormTest {
     fun `the test row runs the test`() {
         show(completeRadarr(), choices = null)
 
-        rule.onNode(hasText("Test the connection") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Test the connection") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, tests)
     }
@@ -103,7 +102,7 @@ class DvrInstanceFormTest {
     fun `a port out of range keeps done off`() {
         show(completeRadarr())
 
-        rule.onNode(hasText("Port") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Port") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement("78x8")
 
         rule.onNodeWithText("Enter a port between 1 and 65535.").assertExists()

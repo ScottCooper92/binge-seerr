@@ -86,7 +86,7 @@ class OverrideRuleFormTest {
     fun `a rule with an instance, a condition and an override saves`() {
         show(ON_RADARR.copy(genres = "16", profileId = 4))
 
-        rule.onNodeWithText("Save").assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+        rule.onNodeWithText("Create").assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, saves)
     }
