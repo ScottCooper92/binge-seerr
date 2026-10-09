@@ -31,6 +31,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -108,8 +110,11 @@ fun DiscoverSlidersScreen(
         },
     ) { sliders, enabled ->
         val lazyListState = rememberLazyListState()
+        val moveHaptics = LocalHapticFeedback.current
         val reorderableState =
             rememberReorderableLazyListState(lazyListState) { from, to ->
+                // A light tick each time the row passes another, so the drag can be felt slot by slot.
+                moveHaptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                 // from.index/to.index are absolute LazyColumn positions, one ahead of `sliders`'
                 // own indices because of the reorder-hint item below - shift both back before they
                 // reach a viewmodel that indexes straight into `sliders`.
@@ -133,6 +138,7 @@ fun DiscoverSlidersScreen(
             itemsIndexed(sliders, key = { _, slider -> slider.id }) { index, slider ->
                 ReorderableItem(reorderableState, key = slider.id) {
                     val interactionSource = remember { MutableInteractionSource() }
+                    val haptics = LocalHapticFeedback.current
                     SliderRow(
                         slider = slider,
                         enabled = enabled,
@@ -141,7 +147,14 @@ fun DiscoverSlidersScreen(
                         lastIndex = sliders.lastIndex,
                         // draggableHandle()/longPressDraggableHandle() are extensions on this
                         // ReorderableCollectionItemScope, unreachable from SliderRow itself.
-                        handleModifier = Modifier.longPressDraggableHandle(enabled = enabled, interactionSource = interactionSource),
+                        // The handle drags on first touch, as Binge's reorder lists do, so a swipe elsewhere still scrolls.
+                        handleModifier =
+                            Modifier.draggableHandle(
+                                enabled = enabled,
+                                interactionSource = interactionSource,
+                                onDragStarted = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                                onDragStopped = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+                            ),
                     )
                 }
             }

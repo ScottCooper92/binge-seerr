@@ -750,7 +750,7 @@ app:server_settings_slider_watchlist  7bd2242eb729
 app:server_settings_sliders  d3117ef238a4
 app:server_settings_sliders_caption  ed31d0458307
 app:server_settings_sliders_more_actions  f8d46c2570e7
-app:server_settings_sliders_reorder_hint  d79c98c7d09d
+app:server_settings_sliders_reorder_hint  bcc46d0daa39
 app:server_settings_sliders_reset  e240e635ff6d
 app:server_settings_sliders_reset_done  83599d812f44
 app:server_settings_sliders_reset_message  02e70440baaa
