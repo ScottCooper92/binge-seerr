@@ -210,6 +210,10 @@ abstract class ExtrasEditorViewModel<T, X>(
 
     protected fun ready(): ExtrasEditorUiState.Ready<T, X>? = state.value as? ExtrasEditorUiState.Ready<T, X>
 
+    /** Changes the saved record and the draft together: a page whose record another page wrote part of. */
+    protected fun editReady(transform: (ExtrasEditorUiState.Ready<T, X>) -> ExtrasEditorUiState.Ready<T, X>) =
+        state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.let(transform) ?: current }
+
     /** What the next [ExtrasEditorUiState.Ready] adopts extras from; for [write], reached while still [saving]. */
     protected fun currentExtras(): X = extrasState.value
 

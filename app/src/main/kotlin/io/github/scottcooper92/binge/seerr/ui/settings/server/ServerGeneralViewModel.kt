@@ -11,10 +11,8 @@ import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -69,8 +67,6 @@ class ServerGeneralViewModel
             }
         }
 
-        private var keywordSearch: Job? = null
-
         /** Names the blocklisted tags the draft holds, once each: the server keeps them as TMDB ids. */
         fun loadKeywordNames(ids: List<Int>) {
             val missing = ids.filter { it !in currentExtras().keywords.names }
@@ -89,33 +85,21 @@ class ServerGeneralViewModel
             }
         }
 
-        /** Searches TMDB's keywords as the user types; a newer query cancels the one before, and blank clears the results. */
-        fun searchKeywords(query: String) {
-            keywordSearch?.cancel()
-            if (query.isBlank()) {
-                editExtras { it.copy(keywords = it.keywords.copy(results = null, searching = false, failed = false)) }
-                return
-            }
-            keywordSearch =
-                viewModelScope.launch(dispatcher) {
-                    delay(KEYWORD_SEARCH_DEBOUNCE_MILLIS)
-                    editExtras { it.copy(keywords = it.keywords.copy(searching = true, failed = false)) }
-                    val found =
-                        attempt { connection.api().searchKeywords(query.trim()).results }
-                    val keywords = found.getOrNull()?.mapNotNull { dto -> dto.name?.let { Keyword(dto.id, it) } }
-                    editExtras {
-                        it.copy(
-                            keywords =
-                                it.keywords.copy(
-                                    // A keyword picked from the results is named for the row without another read.
-                                    names = it.keywords.names + keywords.orEmpty().associate { k -> k.id to k.name },
-                                    results = keywords ?: it.keywords.results,
-                                    searching = false,
-                                    failed = keywords == null,
-                                ),
-                        )
-                    }
+        /**
+         * Re-reads the blocklisted tags after the tags page has saved them, into the saved record and the draft alike, so
+         * the row shows what the server holds without disturbing an unsaved edit elsewhere on the page.
+         */
+        fun refreshBlocklistTags() {
+            if (ready() == null) return
+            viewModelScope.launch(dispatcher) {
+                val tags = attempt { connection.api().mainSettings() }.getOrNull()?.tags ?: return@launch
+                editReady { ready ->
+                    ready.copy(
+                        saved = ready.saved.copy(blocklist = ready.saved.blocklist?.copy(tags = tags)),
+                        draft = ready.draft.copy(blocklist = ready.draft.blocklist?.copy(tags = tags)),
+                    )
                 }
+            }
         }
 
         fun toggleReveal() = editExtras { it.copy(apiKey = it.apiKey.copy(revealed = !it.apiKey.revealed)) }

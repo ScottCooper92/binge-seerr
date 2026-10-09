@@ -13,10 +13,10 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 
-/** What the tags picker asks of the page: the saved tags' names, and TMDB's keywords for what is typed. */
+/** What the tags row asks of the page: the saved tags' names, and the way into the blocklisted tags page. */
 class KeywordActions(
     val onLoadNames: (List<Int>) -> Unit,
-    val onSearch: (String) -> Unit,
+    val onOpen: () -> Unit,
 )
 
 /**
@@ -64,13 +64,11 @@ internal fun BlocklistGroup(
                     icon = Icons.Filled.Sell,
                     title = stringResource(R.string.server_settings_blocklist_tags),
                     chosen = blocklist.tagIds,
-                    search = extras.keywords,
+                    names = extras.keywords.names,
                     enabled = enabled,
-                    onOpen = { keywordActions.onLoadNames(blocklist.tagIds) },
-                    onQuery = keywordActions.onSearch,
-                ) { id ->
-                    edit { it.copy(tags = it.tagIds.toggledIn(id).joinToString(",")) }
-                },
+                    onLoadNames = keywordActions.onLoadNames,
+                    onOpen = keywordActions.onOpen,
+                ),
                 textSettingItem(
                     icon = Icons.Filled.Numbers,
                     label = stringResource(R.string.server_settings_blocklist_limit),

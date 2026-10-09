@@ -88,4 +88,9 @@
     <dimen name="tv_tabs_inset">4dp</dimen>
     <dimen name="tv_form_top_inset">96dp</dimen>
     <dimen name="tv_form_commit_min_width">200dp</dimen>
+    <dimen name="search_result_min_height">64dp</dimen>
+    <dimen name="search_result_icon_container">40dp</dimen>
+    <dimen name="search_result_toggle">36dp</dimen>
+    <dimen name="tag_chip_height">44dp</dimen>
+    <dimen name="tag_chip_icon">20dp</dimen>
 </resources>

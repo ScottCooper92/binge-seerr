@@ -29,6 +29,7 @@ internal fun portValid(port: String): Boolean = port.trim().toIntOrNull()?.let {
 /** The server's own settings pages, for a user who manages settings. */
 enum class ServerSettingsPage {
     General,
+    BlocklistTags,
     Users,
     DefaultPermissions,
     MediaServer,
@@ -172,7 +173,7 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
 }
 
 /** Jellyseerr 2.6 to 2.x: the old names are there and none of Seerr 3.0's are. */
-private val SeerrMainSettingsDto.usesBlacklistNames: Boolean
+internal val SeerrMainSettingsDto.usesBlacklistNames: Boolean
     get() =
         listOf(hideBlocklisted, blocklistRegion, blocklistLanguage, blocklistedTags, blocklistedTagsLimit).all { it == null } &&
             listOf(hideBlacklisted, blacklistedTags, blacklistedTagsLimit).any { it != null }
@@ -196,7 +197,7 @@ private fun SeerrMainSettingsDto.toBlocklist(): BlocklistSettings? =
     }
 
 /** The tags and their limit under whichever name the server keeps them. */
-private val SeerrMainSettingsDto.tags: String? get() = blocklistedTags ?: blacklistedTags
+internal val SeerrMainSettingsDto.tags: String? get() = blocklistedTags ?: blacklistedTags
 private val SeerrMainSettingsDto.tagsLimit: Int? get() = blocklistedTagsLimit ?: blacklistedTagsLimit
 
 /**

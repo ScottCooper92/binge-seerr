@@ -13,8 +13,6 @@ import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -311,12 +309,11 @@ class ServerGeneralViewModelTest {
         }
 
     @Test
-    fun `the saved tags are named once, and a search lists what tmdb matches`() =
+    fun `the saved tags are named once`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             seerr.serve("GET /api/v1/keyword/9951", """{"id":9951,"name":"kaiju"}""")
             seerr.serve("GET /api/v1/keyword/210024", """{"id":210024,"name":"anime"}""")
-            seerr.serve("GET /api/v1/search/keyword", """{"results":[{"id":4344,"name":"musical"},{"id":5,"name":null}]}""")
             val vm = viewModel()
             vm.awaitReady()
 
@@ -324,42 +321,26 @@ class ServerGeneralViewModelTest {
             val named = vm.awaitReady { it.extras.keywords.names.size == 2 }
             vm.loadKeywordNames(listOf(9951, 210024))
             assertEquals(mapOf(9951 to "kaiju", 210024 to "anime"), named.extras.keywords.names)
-
-            vm.searchKeywords("mus")
-            val found = vm.awaitReady { it.extras.keywords.results != null }
-            assertEquals(listOf(Keyword(4344, "musical")), found.extras.keywords.results)
-            assertEquals("musical", found.extras.keywords.names[4344])
             assertEquals(1, seerr.count("GET", "/api/v1/keyword/9951"))
-
-            vm.searchKeywords("")
-            assertNull(
-                vm
-                    .awaitReady { it.extras.keywords.results == null }
-                    .extras.keywords.results,
-            )
         }
 
+    /** The tags page saves them itself; back on General, the saved record and the draft both take what the server holds. */
     @Test
-    fun `a search cancelled by a newer query does not report a failure`() =
+    fun `tags saved elsewhere are re-read into the record without touching an unsaved edit`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
-            seerr.serveFrom("GET /api/v1/search/keyword", delayMillis = 200) { """{"results":[{"id":4344,"name":"musical"}]}""" }
             val vm = viewModel()
             vm.awaitReady()
-            val failures = mutableListOf<Boolean>()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                vm.uiState.collect { state ->
-                    if (state is ExtrasEditorUiState.Ready) failures += state.extras.keywords.failed
-                }
-            }
+            vm.edit { it.copy(applicationTitle = "Cinema") }
 
-            vm.searchKeywords("mu")
-            advanceTimeBy(KEYWORD_SEARCH_DEBOUNCE_MILLIS + 1)
-            vm.awaitReady { it.extras.keywords.searching }
-            vm.searchKeywords("mus")
-            val found = vm.awaitReady { it.extras.keywords.results != null }
+            seerr.serve(
+                "GET /api/v1/settings/main",
+                LINEAGE_MAIN.replace("\"blocklistedTags\":\"9951,210024\"", "\"blocklistedTags\":\"4344\""),
+            )
+            vm.refreshBlocklistTags()
+            val refreshed = vm.awaitReady { it.saved.blocklist?.tags == "4344" }
 
-            assertEquals(listOf(Keyword(4344, "musical")), found.extras.keywords.results)
-            assertFalse(failures.any { it })
+            assertEquals("4344", refreshed.draft.blocklist?.tags)
+            assertEquals("Cinema", refreshed.draft.applicationTitle)
         }
 }

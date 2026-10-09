@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.Flow
  * application, what Discover shows, how series are requested, and what the web client marks advanced. A text value is
  * edited in a sheet that checks it, and a pick from the server's lists in a picker sheet, so the page holds no field
  * that can be wrong. [onLoadList] reads one of those lists the first time its picker opens. On a server with an automatic
- * blocklist, a Blocklist group follows Discover; [keywordActions] names its tags and searches TMDB's keywords.
+ * blocklist, a Blocklist group follows Discover; [keywordActions] names its tags and opens the page that edits them.
  */
 @Composable
 fun ServerGeneralScreen(
@@ -48,7 +48,7 @@ fun ServerGeneralScreen(
     actions: EditorActions<ServerGeneralSettings>,
     keyActions: ApiKeyActions,
     onLoadList: (ServerList) -> Unit = {},
-    keywordActions: KeywordActions = KeywordActions(onLoadNames = {}, onSearch = {}),
+    keywordActions: KeywordActions = KeywordActions(onLoadNames = {}, onOpen = {}),
 ) {
     val extras = (state as? ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>)?.extras ?: ServerGeneralExtras()
     EditorPage(
