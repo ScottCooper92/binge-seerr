@@ -130,7 +130,13 @@ private fun JobsSection(
                     title = stringResource(R.string.server_settings_jobs),
                     rows =
                         jobs.jobs.map { job ->
-                            jobRow(job, busy = job.id in jobs.busyIds, outcome = jobs.outcomes[job.id], jobActions) { onSchedule(job.id) }
+                            jobRow(
+                                job,
+                                busy = job.id in jobs.busyIds,
+                                outcome = jobs.outcomes[job.id],
+                                jobActions,
+                                jobs.now,
+                            ) { onSchedule(job.id) }
                         },
                     modifier = Modifier.padding(horizontal = inset),
                 )
