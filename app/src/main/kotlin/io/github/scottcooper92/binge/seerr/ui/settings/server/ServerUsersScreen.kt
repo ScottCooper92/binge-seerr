@@ -10,11 +10,12 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
+import com.binge.designsystem.component.bingeNumberItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.labelRes
 import io.github.scottcooper92.binge.seerr.ui.users.labelRes
@@ -23,7 +24,6 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
@@ -125,7 +125,10 @@ private fun SignInGroup(
     )
 }
 
-/** A limit as a picker row, and while it is set, its window as a picker row joined beneath it. A user's quota uses it too. */
+/**
+ * A limit as a slider row, and while it is set, its window as a slider row joined beneath it. A user's quota uses it
+ * too. Unlimited is the limit slider's last stop: Seerr stores it as 0, which the slider holds as its open end.
+ */
 @Composable
 internal fun limitRows(
     icon: ImageVector,
@@ -135,14 +138,27 @@ internal fun limitRows(
     enabled: Boolean,
     onChange: (limit: Int, days: Int) -> Unit,
 ): List<ListItem> {
-    val unlimited = stringResource(R.string.hub_quota_unlimited)
-    val counts =
-        listOf(0 to unlimited) + (1..MAX_LIMIT_CHOICE).map { it to pluralStringResource(R.plurals.server_settings_limit_count, it, it) }
-    val windows = (1..MAX_LIMIT_CHOICE).map { it to pluralStringResource(R.plurals.hub_quota_period, it, it) }
-    val limitRow = choiceSettingItem(icon, label, counts, limit, enabled) { onChange(it, days) }
+    val resources = LocalResources.current
+    val limitRow =
+        bingeNumberItem(
+            icon = icon,
+            title = label,
+            value = limit.takeIf { it > 0 },
+            range = 1..MAX_LIMIT_CHOICE,
+            format = { resources.getQuantityString(R.plurals.server_settings_limit_count, it, it) },
+            enabled = enabled,
+            onChange = { onChange(it ?: 0, days) },
+            openEndLabel = stringResource(R.string.hub_quota_unlimited),
+        )
     val windowRow =
-        choiceSettingItem(Icons.Filled.DateRange, stringResource(R.string.server_settings_limit_window), windows, days, enabled) {
-            onChange(limit, it)
-        }.copy(connector = ListItemConnector.End)
+        bingeNumberItem(
+            icon = Icons.Filled.DateRange,
+            title = stringResource(R.string.server_settings_limit_window),
+            value = days,
+            range = 1..MAX_LIMIT_CHOICE,
+            format = { resources.getQuantityString(R.plurals.hub_quota_period, it, it) },
+            enabled = enabled,
+            onChange = { onChange(limit, it ?: days) },
+        ).copy(connector = ListItemConnector.End)
     return if (limit > 0) listOf(limitRow, windowRow) else listOf(limitRow)
 }
