@@ -182,17 +182,27 @@ class RequestsViewModel
 
         fun requests(filter: RequestFilter): Flow<PagingData<RequestItem>> = streams.getValue(filter)
 
+        /**
+         * The chip counts, for a viewer who sees every request. `request/count` counts the whole server and has no
+         * `requestedBy`, so for a viewer whose list is theirs alone it would count requests the list never shows (#977):
+         * their chips carry no count, and it is not asked.
+         */
         private val counts: Flow<RequestCounts?> =
-            combine(selectedFilter, refreshTrigger, countsRefresh) { _, _, _ -> }
-                .flatMapLatest {
-                    flow {
-                        emit(
+            combine(selectedFilter, refreshTrigger, countsRefresh, scope) { _, _, _, scope ->
+                scope is ScopeState.Resolved && scope.scope.requestedBy == null
+            }.flatMapLatest { seesEveryRequest ->
+                flow {
+                    emit(
+                        if (seesEveryRequest) {
                             runCatching { connection.api().requestCount() }
                                 .getOrNull()
-                                ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) },
-                        )
-                    }
-                }.flowOn(dispatcher)
+                                ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) }
+                        } else {
+                            null
+                        },
+                    )
+                }
+            }.flowOn(dispatcher)
                 .onStart { emit(null) }
 
         val uiState: StateFlow<RequestsUiState> =
