@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -95,7 +96,7 @@ class BlocklistTagsViewModelTest {
             vm.toggle(210024)
             vm.toggle(9951)
             assertEquals(listOf(4344, 210024), vm.awaitReady().tags)
-            advanceTimeBy(TAGS_SAVE_DELAY_MILLIS + 1)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
             vm.uiState.first { seerr.count("POST", "/api/v1/settings/main") == 1 }
 
             assertEquals(mapOf("blocklistedTags" to "4344,210024"), sent())
@@ -111,7 +112,7 @@ class BlocklistTagsViewModelTest {
             vm.awaitReady { it.tags == listOf(9951, 4344) }
             viewModels.clear()
             seerr.awaitCount("POST", "/api/v1/settings/main", moreThan = 0)
-            advanceTimeBy(TAGS_SAVE_DELAY_MILLIS * 2)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 2)
 
             assertEquals(1, seerr.count("POST", "/api/v1/settings/main"))
             assertEquals(mapOf("blocklistedTags" to "9951,4344"), sent())
@@ -126,7 +127,7 @@ class BlocklistTagsViewModelTest {
             vm.awaitReady()
 
             vm.toggle(4344)
-            advanceTimeBy(TAGS_SAVE_DELAY_MILLIS + 1)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
             vm.uiState.first { seerr.count("POST", "/api/v1/settings/main") == 1 }
 
             assertEquals(mapOf("blacklistedTags" to "9951,4344"), sent())

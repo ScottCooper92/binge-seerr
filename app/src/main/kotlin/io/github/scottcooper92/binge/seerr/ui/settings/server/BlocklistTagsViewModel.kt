@@ -10,10 +10,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SaveAsMade
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,9 +21,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-/** How long the tags wait after the last change before they save, so a burst of taps is one request. */
-internal const val TAGS_SAVE_DELAY_MILLIS = 600L
 
 /** The blocklisted tags page. */
 sealed interface BlocklistTagsUiState {
@@ -47,7 +44,8 @@ sealed interface BlocklistTagsUiState {
 
 /**
  * The automatic blocklist's tags, as a page of their own that saves as it changes (#930). It reads the tags from
- * `settings/main` and names them, searches TMDB's keywords as the user types, and writes each change a moment later.
+ * `settings/main` and names them, searches TMDB's keywords as the user types, and writes each change a moment later
+ * through [SaveAsMade], the mode the editor pages share (#952).
  * `POST /settings/main` merges what it is sent, so a write carries the tags alone, under whichever name this server
  * keeps them (`blacklistedTags` before Seerr 3.0), and the rest of the General page is left as the server holds it.
  */
@@ -64,10 +62,19 @@ class BlocklistTagsViewModel
 
         private var blacklistNames = false
         private var search: Job? = null
-        private var save: Job? = null
 
-        /** A change that has not reached the server yet, waiting out its delay or refused: leaving the page sends it. */
-        private var unsent = false
+        private val saveAsMade =
+            SaveAsMade(
+                scope = viewModelScope,
+                appScope = appScope,
+                dispatcher = dispatcher,
+                draft = { (state.value as? BlocklistTagsUiState.Ready)?.tags },
+                canSave = { true },
+                write = ::write,
+                // The server answers with the whole of settings/main, so the tags sent are what is adopted.
+                adopt = { sent, _ -> (state.value as? BlocklistTagsUiState.Ready)?.tags != sent },
+                failed = { failed -> editReady { it.copy(saveFailed = failed) } },
+            )
 
         init {
             reload()
@@ -113,49 +120,27 @@ class BlocklistTagsViewModel
 
         /** Adds [id] to the tags or takes it out, and saves the tags a moment after the last change. */
         fun toggle(id: Int) {
+            if (state.value !is BlocklistTagsUiState.Ready) return
             editReady { it.copy(tags = if (id in it.tags) it.tags - id else it.tags + id) }
-            saveSoon(TAGS_SAVE_DELAY_MILLIS)
+            saveAsMade.changed()
         }
 
         /** Sends the tags as they stand, after a save that failed: the failed changes and any made since, as one. */
-        fun retry() = saveSoon(0)
+        fun retry() = saveAsMade.now()
 
-        private fun saveSoon(wait: Long) {
-            unsent = true
-            save?.cancel()
-            save =
-                viewModelScope.launch(dispatcher) {
-                    delay(wait)
-                    val tags = (state.value as? BlocklistTagsUiState.Ready)?.tags ?: return@launch
-                    unsent = false
-                    // Clearing the flag first makes a failure of this save a new signal, even after one that failed before it.
-                    editReady { it.copy(saveFailed = false) }
-                    // The write runs on the application's scope, so leaving the page cannot cancel it half-sent.
-                    val saved = appScope.async(dispatcher) { write(tags) }.await()
-                    // A failed write is still unsent: leaving the page tries it once more.
-                    unsent = !saved
-                    editReady { it.copy(saveFailed = !saved) }
-                }
-        }
-
-        private suspend fun write(tags: List<Int>): Boolean {
+        private suspend fun write(tags: List<Int>): List<Int> {
             val csv = tags.joinToString(",")
             val body =
                 SeerrMainSettingsUpdateBody(
                     blocklistedTags = csv.takeUnless { blacklistNames },
                     blacklistedTags = csv.takeIf { blacklistNames },
                 )
-            return attempt { connection.api().updateMainSettings(body) }.isSuccess
+            connection.api().updateMainSettings(body)
+            return tags
         }
 
-        /** Leaving the page with a change still waiting out its delay sends it now, on the application's scope. */
-        override fun onCleared() {
-            val tags = (state.value as? BlocklistTagsUiState.Ready)?.tags
-            if (unsent && tags != null) {
-                save?.cancel()
-                appScope.launch(dispatcher) { write(tags) }
-            }
-        }
+        /** Leaving the page with a change not yet sent sends it now, on the application's scope. */
+        override fun onCleared() = saveAsMade.cleared()
 
         private fun name(ids: List<Int>) {
             val missing = ids.filter { it !in ((state.value as? BlocklistTagsUiState.Ready)?.names ?: emptyMap()) }
