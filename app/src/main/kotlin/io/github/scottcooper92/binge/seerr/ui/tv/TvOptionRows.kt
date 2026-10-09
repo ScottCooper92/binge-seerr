@@ -239,8 +239,7 @@ internal fun TvCheckboxRow(
                     onFocusChanged = { focused = it },
                     enabled = enabled,
                     onClick = { onCheckedChange(!checked) },
-                )
-                .padding(horizontal = dimensionResource(R.dimen.tv_form_option_padding_horizontal))
+                ).padding(horizontal = dimensionResource(R.dimen.tv_form_option_padding_horizontal))
                 .semantics {
                     role = Role.Checkbox
                     toggleableState = ToggleableState(checked)
