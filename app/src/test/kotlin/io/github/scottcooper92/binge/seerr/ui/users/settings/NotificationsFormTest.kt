@@ -107,6 +107,24 @@ class NotificationsFormTest {
     }
 
     @Test
+    fun `a required key pushover still needs cannot be cleared from its sheet`() {
+        val token = "azGDORePK8gMaC0QOYAMyEEuzJnyUi"
+        show(
+            EMAIL_ONLY
+                .set(AgentField.PushoverAppToken, token)
+                .set(AgentField.PushoverUserKey, "uQiRzpo4DXghDmr9QzzfQu27cmVRsG")
+                .update(NotificationAgent.Pushover) { it.copy(types = NotificationType.MediaApproved.bit) },
+        )
+
+        rule.onNodeWithText("Application token").performScrollTo().performClick()
+        rule.onNode(hasSetTextAction()).performTextReplacement("")
+        rule.onNodeWithText("Done").performClick()
+
+        assertEquals(token, draft.field(AgentField.PushoverAppToken))
+        assertEquals(true, draft.valid)
+    }
+
+    @Test
     fun `the telegram topic is offered only where the server keeps one`() {
         show(EMAIL_ONLY)
         rule.onNodeWithText("Thread or topic ID").assertDoesNotExist()
