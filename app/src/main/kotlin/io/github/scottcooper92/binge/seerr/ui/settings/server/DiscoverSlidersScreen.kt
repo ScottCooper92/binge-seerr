@@ -345,4 +345,3 @@ private fun ReorderableCollectionItemScope.dragHandle(enabled: Boolean): Modifie
         onDragStopped = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) },
     )
 }
-
