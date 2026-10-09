@@ -206,6 +206,15 @@ class GeneralSettingsViewModelTest {
             assertNull(Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject["streamingRegion"])
         }
 
+    /** Jellyseerr split its one region in two at 2.2, not at its first release (#1012). */
+    @Test
+    fun `Jellyseerr before 2_2 has one region too, so the page shows no streaming region`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "2.1.0")
+
+            assertNull(viewModel().awaitReady().draft.streamingRegion)
+        }
+
     @Test
     fun `a required email cleared is never written`() =
         runTest {

@@ -91,7 +91,7 @@ know.
 
 | Write | Overseerr | Jellyseerr / Seerr |
 |---|---|---|
-| `POST /user/{id}/settings/main` | `region`, `discordId` | `discoverRegion` and `streamingRegion`; `discordId` was dropped after Seerr 3.2 |
+| `POST /user/{id}/settings/main` | `region`, `discordId` | `region` up to Jellyseerr 2.1; `discoverRegion` and `streamingRegion` from 2.2; `discordId` was dropped after Seerr 3.2 |
 | `POST /user/{id}/settings/notifications` | `discordId` | `discordId` up to Seerr 3.2, the list `discordIds` from 3.3; `telegramMessageThreadId` throughout |
 | `GET`/`PUT /settings/metadatas` | never | `{tv, anime}` at the top level, with no wrapper |
 

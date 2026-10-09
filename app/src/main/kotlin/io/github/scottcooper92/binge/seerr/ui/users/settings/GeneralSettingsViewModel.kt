@@ -12,7 +12,6 @@ import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserMainSettingsDto
-import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ListChoices
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerList
@@ -63,7 +62,8 @@ class GeneralSettingsViewModel
                 val settings = api.userMainSettings(userId)
                 val permissions = viewer.await().toPermissions()
                 val user = target.await()
-                val variant = profile.await().variant
+                val server = profile.await()
+                val variant = server.variant
                 val defaults = public.await().toDiscoverDefaults()
                 editExtras { it.copy(variant = variant, serverDefaults = defaults) }
                 settings
@@ -71,8 +71,8 @@ class GeneralSettingsViewModel
                         canEditQuotas = permissions.canManageUsers,
                         canEditEmail = permissions.canManageUsers || user.userType.toUserOrigin() == UserOrigin.Local,
                         fallbackName = user.fallbackName(),
-                        // Only Overseerr lacks the streaming region; an unrecognised server is read as the newer lineage.
-                        streamingRegions = variant != SeerrVariant.Overseerr,
+                        // The profile's capability, not the lineage: Jellyseerr before 2.2 has one region too (#1012).
+                        streamingRegions = server.hasStreamingRegion,
                     ).withAccount(user)
             }
 

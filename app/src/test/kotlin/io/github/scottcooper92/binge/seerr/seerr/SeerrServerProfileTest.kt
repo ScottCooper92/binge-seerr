@@ -36,6 +36,7 @@ class SeerrServerProfileTest {
         assertFalse(current.hasDeleteMediaFiles)
         assertFalse(profile("1.28.0").hasWatchData)
         assertTrue(current.hasWatchData)
+        assertFalse(current.hasStreamingRegion)
     }
 
     @Test
@@ -57,6 +58,10 @@ class SeerrServerProfileTest {
         assertFalse(profile("1.4.0").hasDeleteMediaFiles)
         assertTrue(jellyseerr.hasDeleteMediaFiles)
         assertTrue(jellyseerr.hasWatchData)
+        // The one region split in two at 2.2, not at Jellyseerr's first release (#1012).
+        assertFalse(jellyseerr.hasStreamingRegion)
+        assertTrue(profile("2.2.0").hasStreamingRegion)
+        assertTrue(seerr.hasStreamingRegion)
     }
 
     @Test

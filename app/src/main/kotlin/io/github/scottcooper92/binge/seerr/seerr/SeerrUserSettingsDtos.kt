@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  *
  * The two lineages name the discovery region differently and the server writes every key it reads,
  * so all three are carried: Overseerr has [region] alone, and the Jellyseerr lineage split it into
- * [discoverRegion] and [streamingRegion] from its first release. A key left out of the body is the
+ * [discoverRegion] and [streamingRegion] at Jellyseerr 2.2 (#1012). A key left out of the body is the
  * user's setting cleared, not left alone, which is why the one this app does not edit is sent back
  * unchanged.
  */
