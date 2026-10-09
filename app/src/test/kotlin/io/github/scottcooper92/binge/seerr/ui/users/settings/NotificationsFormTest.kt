@@ -28,7 +28,6 @@ class NotificationsFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private var saves = 0
     private var draft by mutableStateOf(EMAIL_ONLY)
 
     private fun show(initial: NotificationSettings) {
@@ -43,7 +42,7 @@ class NotificationsFormTest {
             NotificationsSettingsScreen(
                 state = EditorUiState.Ready(draft = draft, saved = current),
                 events = emptyFlow(),
-                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = { saves++ }),
+                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = {}),
             )
         }
     }
@@ -59,13 +58,10 @@ class NotificationsFormTest {
     }
 
     @Test
-    fun `a bad discord id is flagged in its row and save does not save`() {
+    fun `a bad discord id is flagged in its row`() {
         show(EMAIL_ONLY.copy(discordIds = listOf("ann#1234")).update(NotificationAgent.Email) { it.copy(types = 4) })
 
-        rule.onNodeWithText("Enter the numeric ID, not a username.").performScrollTo()
-        rule.onNodeWithText("Save").performClick()
-
-        assertEquals(0, saves)
+        rule.onNodeWithText("Enter the numeric ID, not a username.").performScrollTo().assertExists()
     }
 
     @Test
@@ -136,13 +132,11 @@ class NotificationsFormTest {
         assertEquals("bike", draft.field(AgentField.PushoverSound))
     }
 
+    /** The page saves as it changes (#930): there is no Save, and the view model never writes a draft that fails its check. */
     @Test
-    fun `a clean change saves`() {
+    fun `there is no Save to press`() {
         show(EMAIL_ONLY)
-        draft = EMAIL_ONLY.update(NotificationAgent.Email) { it.copy(types = NotificationType.MediaApproved.bit) }
 
-        rule.onNodeWithText("Save").performClick()
-
-        assertEquals(1, saves)
+        rule.onNodeWithText("Save").assertDoesNotExist()
     }
 }

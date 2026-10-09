@@ -2,10 +2,11 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
-import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -52,7 +53,7 @@ class NotificationsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): NotificationsViewModel {
-        val vm = NotificationsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, 8)
+        val vm = NotificationsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -97,7 +98,7 @@ class NotificationsViewModelTest {
         }
 
     @Test
-    fun `saving posts every agent's fields and the whole bitmask table`() =
+    fun `a change posts every agent's fields and the whole bitmask table`() =
         runTest {
             val vm = viewModel()
             vm.awaitReady()
@@ -107,9 +108,9 @@ class NotificationsViewModelTest {
                     .update(NotificationAgent.Discord) { it.copy(enabled = true, types = NotificationType.MediaApproved.bit) }
                     .update(NotificationAgent.Email) { it.copy(types = it.types or NotificationType.IssueComment.bit) }
             }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            // Notifications save as they change: the edit goes out once the delay has passed.
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
             assertEquals("true", sent.getValue("discordEnabled").jsonPrimitive.content)
@@ -123,13 +124,14 @@ class NotificationsViewModelTest {
         }
 
     @Test
-    fun `a Discord id that is not digits blocks the save`() =
+    fun `a Discord id that is not digits is never written`() =
         runTest {
             val vm = viewModel()
             vm.awaitReady()
 
             vm.edit { it.copy(discordIds = listOf("scott#1234")) }
-            vm.save()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
 
             val ready = vm.awaitReady()
             assertFalse(ready.draft.discordIdsValid)
@@ -153,9 +155,9 @@ class NotificationsViewModelTest {
             assertEquals("42", draft.field(AgentField.TelegramThreadId))
 
             vm.edit { it.copy(discordIds = it.discordIds + " 9999 ").set(AgentField.TelegramThreadId, "7") }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            // Notifications save as they change: the edit goes out once the delay has passed.
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
             assertEquals("1234", sent.getValue("discordId").jsonPrimitive.content)
