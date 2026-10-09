@@ -139,17 +139,3 @@ private fun EditorSectionHeader(
         }
     }
 }
-
-/**
- * The message for the issue on a field that has no text field of its own to carry it, such as a
- * picker row. Renders nothing while the field has no issue to show.
- */
-@Composable
-internal fun EditorFieldIssueText(fieldId: String) {
-    val issue = editorFieldIssue(fieldId) ?: return
-    Text(
-        stringResource(issue.messageRes),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.error,
-    )
-}

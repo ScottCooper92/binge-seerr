@@ -908,7 +908,6 @@ data class SeerrPublicSettings(
     @SerialName("localLogin") val localLogin: Boolean = true,
     @SerialName("mediaServerLogin") val mediaServerLogin: Boolean = true,
     @SerialName("mediaServerType") val mediaServerType: Int? = null,
-    @SerialName("jellyfinExternalHost") val jellyfinExternalHost: String? = null,
     @SerialName("jellyfinServerName") val jellyfinServerName: String? = null,
     @SerialName("movie4kEnabled") val movie4kEnabled: Boolean = false,
     @SerialName("series4kEnabled") val series4kEnabled: Boolean = false,
@@ -1164,7 +1163,6 @@ data class SeerrSeasonDto(
     @SerialName("seasonNumber") val seasonNumber: Int,
     @SerialName("name") val name: String? = null,
     @SerialName("episodeCount") val episodeCount: Int = 0,
-    @SerialName("airDate") val airDate: String? = null,
 )
 
 @Serializable

@@ -10,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -280,16 +279,6 @@ internal fun rowLabelColor(
     enabled: Boolean,
     color: Color = MaterialTheme.colorScheme.onSurface,
 ): Color = if (enabled) color else color.copy(alpha = DISABLED_CONTENT_ALPHA)
-
-@Composable
-internal fun EditorSectionTitle(text: String) {
-    Text(
-        text.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = dimensionResource(DesR.dimen.padding_s)),
-    )
-}
 
 /**
  * A page that saves as it changes says a write failed in a snackbar that stays until it is answered: Retry sends the
