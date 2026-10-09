@@ -73,6 +73,7 @@ fun MediaServerScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
     ) { draft, enabled ->
         if (draft.kind == MediaServerKind.Plex) {
             SettingsGroup(draft, enabled, actions, serverActions)

@@ -9,7 +9,6 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -87,7 +86,7 @@ class NotificationAgentFormTest {
     fun `a secret option's hint shows in its sheet`() {
         show(AgentForm(ServerAgent.Pushover))
 
-        rule.onNode(hasText("Application token") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Application token") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
 
         rule.onNodeWithText("Register an application with Pushover and use the API token it gives you.").assertExists()
     }
@@ -96,7 +95,7 @@ class NotificationAgentFormTest {
     fun `a port outside the range shows its error in the sheet and keeps Done off`() {
         show(AgentForm(ServerAgent.Email))
 
-        rule.onNode(hasText("SMTP port") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("SMTP port") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement("70000")
 
         rule.onNodeWithText("Done").assertIsNotEnabled()
@@ -106,7 +105,11 @@ class NotificationAgentFormTest {
     fun `a complete agent sends a test`() {
         show(DISCORD_OFF.copy(enabled = true, options = mapOf(AgentOption.DiscordWebhookUrl to "https://discord.example/hook")))
 
-        rule.onNode(hasText("Send a test notification") and hasClickAction()).performScrollTo().performClick()
+        rule
+            .onNode(
+                hasText("Send a test notification") and hasClickAction(),
+            ).performScrollTo()
+            .performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, tests)
     }

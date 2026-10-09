@@ -37,6 +37,7 @@ fun TautulliScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
     ) { draft, enabled ->
         val hostLabel = stringResource(R.string.server_settings_host)
         val keyLabel = stringResource(R.string.server_settings_api_key)

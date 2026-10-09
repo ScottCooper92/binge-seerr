@@ -99,7 +99,7 @@ class NetworkFormTest {
     fun `turning the proxy on shows its settings`() {
         rule.setContent { EditableNetwork(ALL_OFF) }
 
-        rule.onNode(hasText("Use a proxy") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Use a proxy") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
 
         rule.onNodeWithText("Bypass for").performScrollTo().assertExists()
     }
@@ -116,7 +116,7 @@ class NetworkFormTest {
     fun `the password sheet does not display the password`() {
         show(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "p.lan", port = "3128", password = "hunter2")))
 
-        rule.onNode(hasText("Password") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Password") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
 
         // hasText also matches InputText, the raw value; what the field displays is EditableText.
         val displayed = SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("•".repeat(7)))
@@ -127,7 +127,7 @@ class NetworkFormTest {
     fun `a blank host says it is required`() {
         show(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "p.lan", port = "3128")))
 
-        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement(" ")
 
         rule.onNodeWithText("Required").assertExists()
@@ -145,7 +145,7 @@ class NetworkFormTest {
     fun `a minimum ttl above the maximum keeps done off`() {
         show(ALL_OFF.copy(dnsCache = DnsCacheForm(enabled = true, maxTtl = "5")))
 
-        rule.onNode(hasText("Minimum TTL") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Minimum TTL") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement("60")
 
         rule.onNodeWithText("The maximum must not be below the minimum").assertExists()
@@ -159,10 +159,10 @@ class NetworkFormTest {
             EditableNetwork(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "p.lan", port = "3128"))) { latest = it }
         }
 
-        rule.onNode(hasText("Password") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Password") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement(" hunter2 ")
         rule.onNodeWithText("Done").performClick()
-        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement(" proxy.lan ")
         rule.onNodeWithText("Done").performClick()
 

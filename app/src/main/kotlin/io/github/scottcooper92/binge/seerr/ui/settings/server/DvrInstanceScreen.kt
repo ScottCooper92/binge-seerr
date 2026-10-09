@@ -70,6 +70,7 @@ fun DvrInstanceScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
     ) { draft, enabled ->
         ServerGroup(draft, extras, enabled, actions, onTest)
         DestinationGroup(draft, extras.choices, enabled, actions)

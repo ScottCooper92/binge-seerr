@@ -117,6 +117,10 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  * shows the page's required fields and scrolls the first issue into view (see [EditorSection]).
  * Without it the page is exactly as it was.
  *
+ * [footerCommit] puts the commit in that same bottom bar, Cancel beside it, for a page whose commit stays explicit
+ * because the server checks what was entered or the fields only make sense together (#941). [commitLabel] names
+ * it where Save is not the word: Create for something new, Change password.
+ *
  * Leaving a page with a change still unsaved, by the top bar's Back, the system Back or Cancel, asks first
  * ([DiscardChangesDialog]). A page that saves as it changes has nothing to lose, so it never asks.
  */
@@ -130,6 +134,8 @@ internal fun <T> EditorPage(
     validation: EditorValidation<T>? = null,
     showSaveAction: Boolean = true,
     saveAsMade: Boolean = false,
+    footerCommit: Boolean = false,
+    commitLabel: String? = null,
     scrolling: Boolean = true,
     bottomBar: @Composable () -> Unit = {},
     extraActions: @Composable RowScope.() -> Unit = {},
@@ -147,22 +153,22 @@ internal fun <T> EditorPage(
         title = title,
         onBack = onBack,
         snackbarHostState = snackbarHostState,
-        placement = if (validation != null) FormActionPlacement.Footer else FormActionPlacement.TopBar,
+        placement = if (validation != null || footerCommit) FormActionPlacement.Footer else FormActionPlacement.TopBar,
         primaryAction =
             ready?.let { draft ->
                 when {
                     validation != null ->
                         // Save stays tappable while the draft has issues: the tap is what shows the user which ones.
                         FormAction(
-                            label = stringResource(R.string.user_settings_save),
+                            label = commitLabel ?: stringResource(R.string.user_settings_save),
                             onClick = { issues.firstOrNull()?.let(form::saveFailed) ?: actions.onSave() },
                             enabled = draft.dirty && !draft.saving,
                             busy = draft.saving,
                         )
                     // A page that saves as it changes has nothing to press.
-                    showSaveAction && !saveAsMade ->
+                    footerCommit || (showSaveAction && !saveAsMade) ->
                         FormAction(
-                            label = stringResource(R.string.user_settings_save),
+                            label = commitLabel ?: stringResource(R.string.user_settings_save),
                             onClick = actions.onSave,
                             enabled = draft.dirty && !draft.saving && canSave(draft.draft),
                             busy = draft.saving,
@@ -171,7 +177,7 @@ internal fun <T> EditorPage(
                 }
             },
         secondaryAction =
-            ready?.takeIf { validation != null }?.let { draft ->
+            ready?.takeIf { validation != null || footerCommit }?.let { draft ->
                 FormAction(label = stringResource(R.string.editor_cancel), onClick = onBack, enabled = !draft.saving)
             },
         scrolling = scrolling,

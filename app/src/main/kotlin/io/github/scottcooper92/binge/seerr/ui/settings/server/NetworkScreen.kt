@@ -56,6 +56,7 @@ fun NetworkScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
     ) { draft, enabled ->
         ItemGroup(
             title = stringResource(R.string.settings_group_general),

@@ -1275,4 +1275,6 @@
     <string name="editor_discard_message">Your changes on this page haven\'t been saved.</string>
     <string name="editor_discard">Discard</string>
     <string name="editor_keep_editing">Keep editing</string>
+    <string name="editor_create">Create</string>
+    <string name="user_settings_password_change">Change password</string>
 </resources>

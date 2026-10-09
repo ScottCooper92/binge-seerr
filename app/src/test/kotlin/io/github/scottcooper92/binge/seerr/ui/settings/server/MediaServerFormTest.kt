@@ -13,7 +13,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -108,7 +107,7 @@ class MediaServerFormTest {
     fun `a port out of range keeps done off`() {
         show(JELLYFIN)
 
-        rule.onNode(hasText("Port") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Port") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement("99999")
 
         rule.onNodeWithText("Enter a port between 1 and 65535.").assertExists()
@@ -127,7 +126,7 @@ class MediaServerFormTest {
     fun `the api key sheet does not display the key`() {
         show(JELLYFIN.copy(apiKey = "secret-key-1234"))
 
-        rule.onNode(hasText("API key") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("API key") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
 
         // hasText also matches InputText, the raw value; what the field displays is EditableText.
         val displayed = SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("•".repeat(15)))
@@ -139,7 +138,7 @@ class MediaServerFormTest {
     fun `a blank host says it is required`() {
         show(JELLYFIN)
 
-        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("Host") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         rule.onNode(hasSetTextAction()).performTextReplacement(" ")
 
         rule.onNodeWithText("Required").assertExists()
@@ -150,7 +149,7 @@ class MediaServerFormTest {
     fun `a row's explanation stays in view while its value is edited`() {
         show(JELLYFIN.copy(externalUrl = "https://jf.example.com"))
 
-        rule.onNode(hasText("External host") and hasClickAction()).performScrollTo().performClick()
+        rule.onNode(hasText("External host") and hasClickAction()).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
 
         rule.onNode(hasSetTextAction() and hasText("https://jf.example.com")).assertExists()
         rule.onNodeWithText("Where users open the media server from their own devices; blank for the address above.").assertExists()
