@@ -483,8 +483,9 @@ class UsersViewModelTest {
 
             vm.togglePermission(ManageablePermission.Admin)
 
-            assertFalse(ManageablePermission.Admin in vm.awaitReady().edit?.selected.orEmpty())
-            assertTrue(vm.awaitReady().edit?.touched.orEmpty().isEmpty())
+            val edit = vm.awaitReady().edit
+            assertFalse(ManageablePermission.Admin in edit?.selected.orEmpty())
+            assertTrue(edit?.touched.orEmpty().isEmpty())
         }
 
     @Test
