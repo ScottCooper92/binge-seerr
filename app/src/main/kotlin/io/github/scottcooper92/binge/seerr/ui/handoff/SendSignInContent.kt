@@ -64,6 +64,7 @@ internal fun SigningInContent(
         }
         SignInStep.Connected -> Done(stringResource(R.string.send_signin_connected, state.tv), R.string.send_address_done, actions.onClose)
         SignInStep.Lost -> Done(stringResource(R.string.send_signin_lost), R.string.send_address_close, actions.onClose)
+        SignInStep.Redirected -> Done(stringResource(R.string.send_signin_redirected), R.string.send_address_close, actions.onClose)
     }
 }
 

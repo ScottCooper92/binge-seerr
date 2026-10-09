@@ -170,6 +170,8 @@ class SetupViewModelHandOffTest {
             assertFalse(session.closed)
             val progress = session.progress() as HandOffProgress.SignIn
             assertEquals(signIn.server.title, progress.server)
+            // What a phone seals credentials for (#1029): the address the TV is signing in to, not the name the server gives.
+            assertEquals(signIn.server.baseUrl, progress.address)
             assertTrue("Local" in progress.modes)
 
             // Nobody signs in, so the virtual clock runs out the sign-in timeout and the listener is let go.

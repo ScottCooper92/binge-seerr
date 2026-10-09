@@ -7,6 +7,9 @@ import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 
+/** Where the TV is signing in, with a character the page must escape. */
+private const val SIGNING_IN_TO = "http://seerr.lan:5055/?a=1&b=2"
+
 /** The page the TV serves, the language it picks, and the small HTTP pieces under the listener. */
 class HandOffPageTest {
     private fun copy(language: String) =
@@ -39,6 +42,7 @@ class HandOffPageTest {
             connectedBody = "Done body",
             signInFormTitle = { server -> "Sign in to $server here" },
             signInFormBody = "Sealed for your TV",
+            signInAddress = { "At $it" },
             modeField = "Sign in with",
             modeLabel = { it },
             username = "Username",
@@ -111,7 +115,7 @@ class HandOffPageTest {
 
         listOf(
             HandOffProgress.Checking,
-            HandOffProgress.SignIn("Home"),
+            HandOffProgress.SignIn("Home", SIGNING_IN_TO),
             HandOffProgress.Connected,
         ).forEach { progress ->
             val html = page.status("en", progress)
@@ -140,7 +144,7 @@ class HandOffPageTest {
         assertTrue(checking.contains("Sent body"))
         assertTrue(checking.contains("<meta http-equiv=\"refresh\" content=\"2\">"))
 
-        val signIn = page.status("en", HandOffProgress.SignIn("Living <room>"))
+        val signIn = page.status("en", HandOffProgress.SignIn("Living <room>", SIGNING_IN_TO))
         assertTrue(signIn.contains("Sign in to Living &lt;room&gt;"))
         assertTrue(signIn.contains("http-equiv=\"refresh\""))
 
@@ -151,11 +155,15 @@ class HandOffPageTest {
 
     @Test
     fun `the sign-in step offers the server's fields, and holds still so typing isn't lost`() {
-        val html = page.status("en", HandOffProgress.SignIn("Living <room>", modes = listOf("Jellyfin", "Local", "ApiKey", "Plex")))
+        val html =
+            page.status("en", HandOffProgress.SignIn("Living <room>", SIGNING_IN_TO, modes = listOf("Jellyfin", "Local", "ApiKey", "Plex")))
 
         assertTrue(html.contains("Sign in to Living &lt;room&gt; here"))
-        // Hidden until the script has the key; the "finish on your TV" message is what a page without it shows.
-        assertTrue(html.contains("<form id=\"signin\" hidden data-mode=\"Jellyfin\">"))
+        // Hidden until the script has the key; the "finish on your TV" message is what a page without it shows. The script
+        // seals for the address the form carries, and the page shows it, since the name is whatever the server says (#1029).
+        val escaped = "http://seerr.lan:5055/?a=1&amp;b=2"
+        assertTrue(html, html.contains("<form id=\"signin\" hidden data-mode=\"Jellyfin\" data-address=\"$escaped\">"))
+        assertTrue(html.contains("<p>At $escaped</p>"))
         assertTrue(html.contains("<div id=\"ontv\">"))
         // Only the modes with fields: Plex finishes with a code on the TV.
         assertEquals(3, Regex("<option ").findAll(html).count())

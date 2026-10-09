@@ -97,6 +97,17 @@ class HandOffKey(
     }
 
     companion object {
+        /**
+         * The associated data every hand-off seal binds in: this code's [token], and the server [address] the sealed
+         * secret is for (#1029). The address travels beside the sealed bytes in plain text, so on its own anyone on the
+         * LAN could rewrite it and send the TV, and the session or password, somewhere else. Bound in here, a rewritten
+         * address no longer opens what was sealed for the real one.
+         */
+        fun context(
+            token: String,
+            address: String,
+        ): String = "$token\n$address"
+
         fun generate(random: SecureRandom = SecureRandom()): HandOffKey = HandOffKey(ByteArray(KEY_BYTES).also(random::nextBytes))
 
         /** The key a link carries, or null for anything that is not 43 URL-safe characters. */
