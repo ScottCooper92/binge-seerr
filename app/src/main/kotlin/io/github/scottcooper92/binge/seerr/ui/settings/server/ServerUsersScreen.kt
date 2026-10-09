@@ -47,6 +47,7 @@ fun ServerUsersScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        saveAsMade = true,
     ) { draft, enabled ->
         SignInGroup(draft, stringResource(extras.mediaServer.labelRes()), enabled, actions)
         ItemGroup(

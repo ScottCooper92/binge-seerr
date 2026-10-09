@@ -4,14 +4,15 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
-import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
@@ -55,7 +56,7 @@ class ServerUsersViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): ServerUsersViewModel {
-        val vm = ServerUsersViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+        val vm = ServerUsersViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -103,16 +104,16 @@ class ServerUsersViewModelTest {
         }
 
     @Test
-    fun `saving sends only this page's fields`() =
+    fun `an edit is written by itself, sending only this page's fields`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
             vm.awaitReady()
 
             vm.edit { it.copy(tvLimit = 3, tvDays = 30) }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            // Users saves as it changes: the edit goes out once the delay has passed.
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.awaitReady { !it.dirty }
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             val tv =
@@ -129,21 +130,22 @@ class ServerUsersViewModelTest {
         }
 
     @Test
-    fun `turning every way in off blocks the save`() =
+    fun `turning every way in off is never written`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
             vm.awaitReady()
 
             vm.edit { it.copy(localLogin = false) }
-            vm.save()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
 
             assertEquals(false, vm.awaitReady().draft.valid)
             assertEquals(0, seerr.count("POST", "/api/v1/settings/main"))
         }
 
     @Test
-    fun `returning from the default permissions reads them again and keeps the unsaved edit`() =
+    fun `returning from the default permissions reads them again without dropping an edit`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
@@ -152,8 +154,19 @@ class ServerUsersViewModelTest {
 
             seerr.serve("GET /api/v1/settings/main", LINEAGE_MAIN.replace("\"defaultPermissions\":32", "\"defaultPermissions\":160"))
             vm.refreshDefaultPermissions()
-            val ready = vm.awaitReady { it.extras.defaultPermissions.size == 2 }
+            vm.awaitReady { it.extras.defaultPermissions.size == 2 }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.awaitReady { !it.dirty }
 
-            assertEquals(9, ready.draft.movieLimit)
+            // Re-reading the defaults did not drop the edit: it went out with the page's own write.
+            val movie =
+                Json
+                    .parseToJsonElement(seerr.body("POST", "/api/v1/settings/main"))
+                    .jsonObject
+                    .getValue("defaultQuotas")
+                    .jsonObject
+                    .getValue("movie")
+                    .jsonObject
+            assertEquals(9, movie.getValue("quotaLimit").jsonPrimitive.int)
         }
 }

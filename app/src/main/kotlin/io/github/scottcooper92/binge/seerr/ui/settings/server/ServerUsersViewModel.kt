@@ -4,9 +4,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -19,7 +21,11 @@ class ServerUsersViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
     ) : ExtrasEditorViewModel<ServerUsersSettings, ServerUsersExtras>(ServerUsersExtras(), dispatcher) {
+        /** Users saves as it changes (#930): each default, limit and switch stands alone, and settings/main merges what it is sent. */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         init {
             reload()
         }
