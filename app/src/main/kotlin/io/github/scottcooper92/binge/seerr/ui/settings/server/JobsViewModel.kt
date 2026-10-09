@@ -56,6 +56,9 @@ class JobsViewModel
         internal var runningRefreshMillis = RUNNING_REFRESH_MILLIS
         private var refresh: Job? = null
         private var dueCheck: Job? = null
+
+        /** The run [dueCheck] is waiting for, kept while it is paused so a run that falls due meanwhile is noticed. */
+        private var pendingDueMillis: Long? = null
         internal var clock: () -> Long = System::currentTimeMillis
         internal var outcomeMillis = OUTCOME_MILLIS
         private var readyWait: Job? = null
@@ -67,7 +70,7 @@ class JobsViewModel
             // never collects the state, and a page off screen stops collecting it, so neither re-reads the list (#936).
             viewModelScope.launch(dispatcher) {
                 state.subscriptionCount.map { it > 0 }.distinctUntilChanged().collect { watched ->
-                    if (watched) checkWhenDue() else dueCheck?.cancel()
+                    if (watched) resumeDueCheck() else dueCheck?.cancel()
                 }
             }
         }
@@ -179,19 +182,41 @@ class JobsViewModel
         }
 
         /**
+         * A page back on screen re-reads the list at once if a scheduled run came due while nothing was
+         * showing it, since the list held in memory then predates that run. Otherwise the wait resumes.
+         */
+        private fun resumeDueCheck() {
+            val missed = pendingDueMillis?.let { it <= clock() } == true
+            if (missed) {
+                pendingDueMillis = null
+                dueCheck?.cancel()
+                dueCheck = viewModelScope.launch(dispatcher) { readDue() }
+            } else {
+                checkWhenDue()
+            }
+        }
+
+        private suspend fun readDue() {
+            runCatching { connection.api().jobs().map { it.toServerJob() } }.onSuccess { setJobs(it) }
+        }
+
+        /**
          * Re-reads the list a moment after the earliest scheduled run that is still ahead, which is when the schedule will
          * have started a job. A next run already past is the server's stale word, not a time to wait for, so it schedules
          * nothing: the list would otherwise be re-read without end.
          */
         private fun checkWhenDue() {
             dueCheck?.cancel()
+            pendingDueMillis = null
             if (state.subscriptionCount.value == 0 || jobs().any { it.running }) return
             val now = clock()
             val next = jobs().mapNotNull { it.nextRunMillis }.filter { it > now }.minOrNull() ?: return
+            pendingDueMillis = next
             dueCheck =
                 viewModelScope.launch(dispatcher) {
                     delay(next + DUE_GRACE_MILLIS - now)
-                    runCatching { connection.api().jobs().map { it.toServerJob() } }.onSuccess { setJobs(it) }
+                    pendingDueMillis = null
+                    readDue()
                 }
         }
 

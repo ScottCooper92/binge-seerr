@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -237,6 +238,31 @@ class JobsViewModelTest {
             testScheduler.advanceTimeBy(2 * 60 * 60_000L)
             testScheduler.runCurrent()
             assertEquals(reads, seerr.count("GET", "/api/v1/settings/jobs"))
+        }
+
+    @Test
+    fun `a page back on screen re-reads the list when a run came due while it was away`() =
+        runTest {
+            val vm = viewModel()
+            var now = 1_789_275_660_000L - 60 * 60_000L
+            vm.clock = { now }
+            vm.reload()
+            val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            vm.awaitReady()
+            testScheduler.runCurrent()
+            // The view model's own first read and the reload above: wait for both to land before counting.
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            testScheduler.runCurrent()
+            collector.cancel()
+            testScheduler.runCurrent()
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+            now += 2 * 60 * 60_000L
+            val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            testScheduler.runCurrent()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = reads)
+            assertEquals(reads + 1, seerr.count("GET", "/api/v1/settings/jobs"))
+            returned.cancel()
         }
 
     @Test
