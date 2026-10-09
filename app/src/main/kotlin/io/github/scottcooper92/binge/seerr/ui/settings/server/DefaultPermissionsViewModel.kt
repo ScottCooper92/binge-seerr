@@ -18,7 +18,7 @@ import javax.inject.Inject
 /**
  * The permissions a new user starts with, as the same editor a user's own page uses, over the
  * `defaultPermissions` bits of the main settings. The write sends only those bits; the server
- * merges them over the rest of the record. A viewer may grant by default only what they hold.
+ * merges them over the rest of the record. As on a user's own page, only the owner may set Admin (#1016).
  */
 @HiltViewModel
 class DefaultPermissionsViewModel
