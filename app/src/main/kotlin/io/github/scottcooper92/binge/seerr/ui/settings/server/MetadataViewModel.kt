@@ -5,12 +5,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataTestResultDto
 import io.github.scottcooper92.binge.seerr.seerr.peekedBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -24,7 +26,11 @@ class MetadataViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
     ) : ExtrasEditorViewModel<MetadataForm, MetadataExtras>(MetadataExtras(), dispatcher) {
+        /** Metadata saves as it changes (#930): it is two provider choices, and Test is an action beside them. */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         init {
             reload()
         }

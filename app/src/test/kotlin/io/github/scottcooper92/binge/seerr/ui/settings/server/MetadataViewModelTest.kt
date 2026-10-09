@@ -5,12 +5,14 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -52,7 +54,7 @@ class MetadataViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): MetadataViewModel {
-        val vm = MetadataViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+        val vm = MetadataViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -70,9 +72,9 @@ class MetadataViewModelTest {
             assertEquals(MetadataProvider.Tmdb, draft.anime)
 
             vm.edit { it.copy(anime = MetadataProvider.Tvdb) }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            // Metadata saves as it changes: the pick goes out once the delay has passed.
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is ExtrasEditorUiState.Ready && !it.dirty }
             val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/settings/metadatas")).jsonObject
             assertEquals("tvdb", sent.getValue("anime").jsonPrimitive.content)
             assertEquals("tvdb", sent.getValue("tv").jsonPrimitive.content)
