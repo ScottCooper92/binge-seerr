@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -15,7 +16,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +26,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
+import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
@@ -112,6 +116,9 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  * pinned at the bottom, Save stays tappable while the draft has issues, and a Save that finds one
  * shows the page's required fields and scrolls the first issue into view (see [EditorSection]).
  * Without it the page is exactly as it was.
+ *
+ * Leaving a page with a change still unsaved, by the top bar's Back, the system Back or Cancel, asks first
+ * ([DiscardChangesDialog]). A page that saves as it changes has nothing to lose, so it never asks.
  */
 @Composable
 internal fun <T> EditorPage(
@@ -135,9 +142,10 @@ internal fun <T> EditorPage(
     val form = rememberEditorFormState(validation?.formKey.orEmpty())
     val issues = remember(validation, ready?.draft) { ready?.draft?.let { validation?.issues?.invoke(it) }.orEmpty() }
     EditorRevealEffect(form)
+    val onBack = rememberDiscardGuard(guarded = !saveAsMade && ready?.dirty == true && !ready.saving, onLeave = actions.onBack)
     FormScreen(
         title = title,
-        onBack = actions.onBack,
+        onBack = onBack,
         snackbarHostState = snackbarHostState,
         placement = if (validation != null) FormActionPlacement.Footer else FormActionPlacement.TopBar,
         primaryAction =
@@ -164,7 +172,7 @@ internal fun <T> EditorPage(
             },
         secondaryAction =
             ready?.takeIf { validation != null }?.let { draft ->
-                FormAction(label = stringResource(R.string.editor_cancel), onClick = actions.onBack, enabled = !draft.saving)
+                FormAction(label = stringResource(R.string.editor_cancel), onClick = onBack, enabled = !draft.saving)
             },
         scrolling = scrolling,
         extraActions = extraActions,
@@ -190,6 +198,46 @@ internal fun <T> EditorPage(
             }
         }
     }
+}
+
+/**
+ * Back for a page that may hold an unsaved change: while [guarded], Back (the system's too) asks before [onLeave] runs, and
+ * otherwise goes straight through. The question defaults to staying: dismissing it keeps editing.
+ */
+@Composable
+private fun rememberDiscardGuard(
+    guarded: Boolean,
+    onLeave: () -> Unit,
+): () -> Unit {
+    var asking by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = guarded) { asking = true }
+    if (asking && guarded) {
+        DiscardChangesDialog(
+            onDiscard = {
+                asking = false
+                onLeave()
+            },
+            onKeepEditing = { asking = false },
+        )
+    }
+    return { if (guarded) asking = true else onLeave() }
+}
+
+/** "Discard changes?", with Keep editing as the way out that loses nothing. */
+@Composable
+internal fun DiscardChangesDialog(
+    onDiscard: () -> Unit,
+    onKeepEditing: () -> Unit,
+) {
+    BingeConfirmDialog(
+        title = stringResource(R.string.editor_discard_title),
+        message = stringResource(R.string.editor_discard_message),
+        confirmLabel = stringResource(R.string.editor_discard),
+        dismissLabel = stringResource(R.string.editor_keep_editing),
+        destructive = true,
+        onConfirm = onDiscard,
+        onDismiss = onKeepEditing,
+    )
 }
 
 /** Each editor outcome as a snackbar; a newer one supersedes the one still showing. */
