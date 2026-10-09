@@ -38,6 +38,7 @@ fun MetadataScreen(
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
+        saveAsMade = true,
     ) { draft, enabled ->
         ItemGroup(
             title = stringResource(R.string.server_settings_metadata_status),
