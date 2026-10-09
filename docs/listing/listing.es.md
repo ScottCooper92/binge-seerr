@@ -46,10 +46,10 @@
 > desde el mando.
 >
 > **Tu servidor, tus datos.** Inicia sesión con una clave de API, una cuenta local, Plex, Jellyfin o
-> Emby (con Quick Connect si el servidor lo ofrece). La clave o la sesión se cifra con una clave del Keystore de Android. La app
-> habla con el servidor que introdujiste y, si eliges iniciar sesión con Plex, con plex.tv. Los
-> datos de uso van a PostHog solo si lo aceptas, y los informes de fallos van a Firebase Crashlytics
-> salvo que los desactives en Ajustes. El Block Store de Google Play puede llevar tu conexión a un
-> dispositivo nuevo. Sin anuncios, sin cuentas propias.
+> Emby (con Quick Connect si el servidor lo ofrece). La clave o la sesión se cifra con una clave del
+> Keystore de Android. La app habla con el servidor que introdujiste y, si eliges iniciar sesión con
+> Plex, con plex.tv. Los datos de uso van a PostHog solo si lo aceptas, y los informes de fallos van
+> a Firebase Crashlytics salvo que los desactives en Ajustes. El Block Store de Google Play puede
+> llevar tu conexión a un dispositivo nuevo. Sin anuncios, sin cuentas propias.
 >
 > Código abierto, con licencia Apache 2.0: github.com/ScottCooper92/binge-seerr.
