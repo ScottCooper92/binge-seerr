@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -128,6 +129,10 @@ private fun SignInGroup(
 /**
  * A limit as a slider row, and while it is set, its window as a slider row joined beneath it. A user's quota uses it
  * too. Unlimited is the limit slider's last stop: Seerr stores it as 0, which the slider holds as its open end.
+ *
+ * The web client offers 1 to [MAX_LIMIT_CHOICE], but Seerr takes more through its API. A value past that loaded with
+ * the rows widens its slider to reach it, so the row reads the stored value and not the slider's clamp, and the value
+ * stays reachable after a step down from it (#964).
  */
 @Composable
 internal fun limitRows(
@@ -139,12 +144,14 @@ internal fun limitRows(
     onChange: (limit: Int, days: Int) -> Unit,
 ): List<ListItem> {
     val resources = LocalResources.current
+    val limitTop = remember { maxOf(MAX_LIMIT_CHOICE, limit) }
+    val daysTop = remember { maxOf(MAX_LIMIT_CHOICE, days) }
     val limitRow =
         bingeNumberItem(
             icon = icon,
             title = label,
             value = limit.takeIf { it > 0 },
-            range = 1..MAX_LIMIT_CHOICE,
+            range = 1..limitTop,
             format = { resources.getQuantityString(R.plurals.server_settings_limit_count, it, it) },
             enabled = enabled,
             onChange = { onChange(it ?: 0, days) },
@@ -155,7 +162,7 @@ internal fun limitRows(
             icon = Icons.Filled.DateRange,
             title = stringResource(R.string.server_settings_limit_window),
             value = days,
-            range = 1..MAX_LIMIT_CHOICE,
+            range = 1..daysTop,
             format = { resources.getQuantityString(R.plurals.hub_quota_period, it, it) },
             enabled = enabled,
             onChange = { onChange(limit, it ?: days) },
