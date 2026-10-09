@@ -45,30 +45,26 @@ internal fun languageName(
         ?: code
 
 /**
- * What a language filter's checklist shows: a saved code the list lacks stays (so Done never quietly drops it), the
- * chosen ones lead, and the rest follow by name. [filter] narrows by name or code.
+ * What a language filter's sheet offers: the list's entries named on the device, by name, plus any saved code the list
+ * lacks (so Done never quietly drops it). Leading the chosen ones is the sheet's job.
  */
 internal fun languageChecklist(
     entries: List<ListEntry>,
     initial: List<String>,
-    filter: String,
 ): List<Pair<String, String>> {
     val named = entries.map { it.code to languageName(it.code, it.englishName) }
     val all = initial.filter { code -> named.none { it.first == code } }.map { it to it } + named
-    return all
-        .filter { (code, name) ->
-            filter.isBlank() ||
-                name.contains(filter.trim(), ignoreCase = true) ||
-                code.equals(filter.trim(), ignoreCase = true)
-        }.sortedWith(compareBy({ it.first !in initial }, { it.second.lowercase() }))
+    return all.sortedBy { it.second.lowercase() }
 }
 
 /**
  * A language filter as a list row: the languages chosen, named on the device, so the page needs no list to draw it.
- * The server's list is read only when the sheet opens ([onOpen]). The sheet is a checklist with a search field, its
- * Clear and Done in the header at either height; Done applies the picks. A user's filter passes [serverDefault], the
- * server's own filter: blank then reads "Default (…)", the header gains a Default that goes back to it, and Clear keeps
- * [ALL_LANGUAGES] rather than blank.
+ * The server's list is read only when the sheet opens ([onOpen]). The sheet is a [BingeMultiChoiceSheet]: the
+ * chosen languages in a Selected section, the device's and popular ones in Suggested, the rest in All, each marked with
+ * its code. Clear and Done sit in the header; Done applies the picks. A user's filter passes [serverDefault], the
+ * server's own filter: blank then reads "Default (…)", a Default beside Clear and Done in the header's `actions` goes
+ * back to it, and Clear keeps [ALL_LANGUAGES] rather than blank. A list the server cannot send falls back to typing
+ * codes on a [PeekingListSheet].
  */
 @Composable
 internal fun languageSettingItem(
@@ -97,8 +93,7 @@ internal fun languageSettingItem(
         } else {
             val listed =
                 (choices as? ListChoices.Ready)?.let { ready ->
-                    languageChecklist(ready.entries, chosen, filter = "")
-                        .sortedBy { it.second.lowercase() }
+                    languageChecklist(ready.entries, chosen)
                         .map { (code, name) -> BingeChoice(code, name, mark = code.uppercase()) }
                 }
             BingeMultiChoiceSheet(
@@ -201,6 +196,10 @@ private const val SUGGESTED_LANGUAGES = 6
 /** The languages a picker suggests: the device's own, in its order of preference, then popular ones, up to a handful. */
 private fun suggestedLanguages(): List<String> {
     val locales = LocaleListCompat.getAdjustedDefault()
-    val device = (0 until locales.size()).mapNotNull { locales[it]?.language?.takeIf { l -> l.isNotBlank() } }
+    val device =
+        (0 until locales.size()).mapNotNull { index ->
+            // The tag, not Locale.language: that still answers the legacy iw/in/ji where TMDB lists he/id/yi.
+            locales[index]?.toLanguageTag()?.substringBefore('-')?.takeIf { it.isNotBlank() && it != "und" }
+        }
     return (device + POPULAR_LANGUAGES).distinct().take(SUGGESTED_LANGUAGES)
 }
