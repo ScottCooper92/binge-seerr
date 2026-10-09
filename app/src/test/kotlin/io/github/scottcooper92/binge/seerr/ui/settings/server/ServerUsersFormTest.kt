@@ -5,8 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
@@ -14,7 +12,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performSemanticsAction
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -32,7 +29,7 @@ private val SAVED = ServerUsersSettings(localLogin = true, mediaServerLogin = tr
 @Composable
 private fun Users(
     initial: ServerUsersSettings,
-    onSave: (ServerUsersSettings) -> Unit,
+    onEdit: (ServerUsersSettings) -> Unit,
     onOpenDefaultPermissions: () -> Unit,
 ) = BingeExpressiveTheme(dynamicColor = false) {
     var draft by remember { mutableStateOf(initial) }
@@ -44,7 +41,11 @@ private fun Users(
                 extras = ServerUsersExtras(mediaServer = SeerrMediaServer.Jellyfin),
             ),
         events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = { onSave(draft) }),
+        actions =
+            EditorActions(onBack = {}, onRetry = {}, onEdit = {
+                draft = it(draft)
+                onEdit(draft)
+            }, onSave = {}),
         onOpenDefaultPermissions = onOpenDefaultPermissions,
     )
 }
@@ -55,10 +56,10 @@ class ServerUsersFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private val saves = mutableListOf<ServerUsersSettings>()
+    private val edits = mutableListOf<ServerUsersSettings>()
     private var permissionsOpened = 0
 
-    private fun show() = rule.setContent { Users(SAVED, onSave = { saves += it }, onOpenDefaultPermissions = { permissionsOpened++ }) }
+    private fun show() = rule.setContent { Users(SAVED, onEdit = { edits += it }, onOpenDefaultPermissions = { permissionsOpened++ }) }
 
     @Test
     fun `the sign-in switches are named for the media server`() {
@@ -69,15 +70,14 @@ class ServerUsersFormTest {
     }
 
     @Test
-    fun `turning every way in off says so and does not save`() {
+    fun `turning every way in off says so, with no Save to press`() {
         show()
 
         rule.onNode(hasText("Local sign-in") and hasClickAction()).performClick()
         rule.onNode(hasText("Jellyfin sign-in") and hasClickAction()).performClick()
         rule.onNodeWithText("Keep at least one way to sign in turned on.").assertExists()
-        rule.onNodeWithText("Save").performClick()
-
-        assertEquals(emptyList<ServerUsersSettings>(), saves)
+        // The page saves as it changes, so there is no Save; the view model never writes a draft that fails this check.
+        rule.onNodeWithText("Save").assertDoesNotExist()
     }
 
     @Test
@@ -91,9 +91,8 @@ class ServerUsersFormTest {
         rule.onNode(hasText("Unlimited") and hasClickAction()).performClick()
 
         rule.onNodeWithText("Every 14 days").assertDoesNotExist()
-        // The scroll above tucked the top bar away, so Save is tapped by its action rather than at its off-screen centre.
-        rule.onNodeWithText("Save").assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals(SAVED.copy(movieLimit = 0), saves.single())
+        // The pick is the edit that saves.
+        assertEquals(SAVED.copy(movieLimit = 0), edits.last())
     }
 
     @Test
