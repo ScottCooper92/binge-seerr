@@ -15,16 +15,20 @@ class LanguagePickerTest {
     }
 
     @Test
-    fun `chosen languages lead, then the rest by name, and a saved code the list lacks stays`() {
-        val list = languageChecklist(entries, initial = listOf("ja", "xx"), filter = "")
+    fun `the checklist is by name, and a saved code the list lacks stays`() {
+        val list = languageChecklist(entries, initial = listOf("ja", "xx"))
 
-        assertEquals(listOf("ja", "xx", "fr", "de"), list.map { it.first })
+        assertEquals(listOf("fr", "de", "ja", "xx"), list.map { it.first })
     }
 
     @Test
-    fun `the filter matches a name or a whole code`() {
-        assertEquals(listOf("fr"), languageChecklist(entries, emptyList(), "fren").map { it.first })
-        assertEquals(listOf("de"), languageChecklist(entries, emptyList(), " DE ").map { it.first })
+    fun `done keeps the saved codes while the list is still loading`() {
+        assertEquals(listOf("en", "ja"), pickedInOrder(null, saved = listOf("en", "ja"), picked = setOf("en", "ja")))
+    }
+
+    @Test
+    fun `done saves the picks in the list's order`() {
+        assertEquals(listOf("fr", "ja"), pickedInOrder(listOf("fr", "de", "ja"), listOf("ja"), setOf("ja", "fr")))
     }
 
     @Test

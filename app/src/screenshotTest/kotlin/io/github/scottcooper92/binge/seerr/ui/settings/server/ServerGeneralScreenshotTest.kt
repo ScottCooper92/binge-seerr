@@ -122,25 +122,7 @@ class ServerGeneralPartsScreenshotTest {
                 actions = noActions(),
             )
         }
-
-    /** The discover language sheet: the chosen languages lead, checked, and a filter narrows the rest. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun discoverLanguageChecklist() =
-        PartFrame {
-            LanguageChecklist(LANGUAGES, initial = listOf("ja", "ko"), picked = listOf("ja", "ko"), onPicked = {})
-        }
 }
-
-private val LANGUAGES =
-    listOf(
-        ListEntry("en", "English"),
-        ListEntry("fr", "French"),
-        ListEntry("ja", "Japanese"),
-        ListEntry("ko", "Korean"),
-        ListEntry("es", "Spanish"),
-    )
 
 private const val API_KEY = "MTc1NzQ2MDk5MzEyNA1234abcd"
 
