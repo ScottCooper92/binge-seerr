@@ -23,6 +23,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.toHubQuota
 import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.toRequestMediaTypeOrNull
+import io.github.scottcooper92.binge.seerr.ui.users.settings.mayOpenSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -151,7 +152,7 @@ class UserDetailViewModel
                     watch = watch.await()?.let { UserWatch(playCount = it.playCount, recentlyWatched = recent.mapNotNull(cards::get)) },
                     watchlist = listed.mapNotNull(cards::get),
                     isSelf = viewerDto?.id == userId,
-                    canEditSettings = viewerDto?.id == userId || permissions.canManageUsers,
+                    canEditSettings = mayOpenSettings(userId, viewerDto?.id, permissions),
                     canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
                     serverUrl = connection.current().baseUrl,
                     webUrl = connection.current().baseUrl + "users/" + userId,

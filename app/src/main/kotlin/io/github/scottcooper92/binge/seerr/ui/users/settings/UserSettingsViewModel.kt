@@ -8,6 +8,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -64,10 +65,12 @@ class UserSettingsViewModel
     }
 
 /**
- * The web client's own menu rules, in its order. Everything needs the viewer to be the user or a manager. The
+ * The web client's own menu rules, in its order. Everything needs the viewer to be the user or a manager, and the
+ * owner's settings are the owner's alone: the server refuses every save to user 1 from anyone else (#1005). The
  * password page goes when local sign-in is off and the viewer cannot manage settings, or when the server would refuse
  * the change: an admin's password is set only by that admin or by the owner. Linked accounts are the user's alone, on a
- * server that has them. Permissions are a manager's, and never one's own unless the viewer is the owner.
+ * server that has them. Permissions are a manager's, and never one's own, the owner's included: the server refuses a
+ * permissions write to oneself or to user 1 (#1006).
  */
 internal fun settingsPagesFor(
     target: UserItem,
@@ -76,7 +79,7 @@ internal fun settingsPagesFor(
 ): List<UserSettingsPage> {
     val isSelf = viewer.id == target.id
     val permissions = viewer.toPermissions()
-    if (!isSelf && !permissions.canManageUsers) return emptyList()
+    if (!mayOpenSettings(target.id, viewer.id, permissions)) return emptyList()
     return buildList {
         add(UserSettingsPage.General)
         val localSignIn = profile.settings.localLogin || permissions.canManageSettings
@@ -84,6 +87,16 @@ internal fun settingsPagesFor(
         if (localSignIn && mayChangePassword) add(UserSettingsPage.Password)
         if (isSelf && profile.hasLinkedAccounts) add(UserSettingsPage.LinkedAccounts)
         add(UserSettingsPage.Notifications)
-        if (permissions.canManageUsers && (!isSelf || viewer.id == OWNER_USER_ID)) add(UserSettingsPage.Permissions)
+        if (permissions.canManageUsers && !isSelf) add(UserSettingsPage.Permissions)
     }
+}
+
+/** Whether [viewerId] may open user [targetId]'s settings at all: their own, or as a manager, and the owner's only as the owner. */
+internal fun mayOpenSettings(
+    targetId: Int,
+    viewerId: Int?,
+    permissions: SeerrPermissions,
+): Boolean {
+    if (targetId == OWNER_USER_ID && viewerId != OWNER_USER_ID) return false
+    return viewerId == targetId || permissions.canManageUsers
 }
