@@ -19,7 +19,7 @@ private const val API_KEY = "MTc0NDE1NzQ0MjQyMzFhYzY0"
 /**
  * The television setup's arms past the empty address step, which `TvSetupAddressStepScreenshotTest`
  * frames: an address typed, refused and inspected, and each sign-in the remote can finish, with the
- * focused control where the frame seeds one. The states come from `TvPreviews.kt`'s builders, so the
+ * focused control where the frame seeds one. The states come from `TvPreviewData.kt`'s builders, so the
  * IDE preview and the frame cannot drift.
  */
 class TvSetupScreenshotTest {
