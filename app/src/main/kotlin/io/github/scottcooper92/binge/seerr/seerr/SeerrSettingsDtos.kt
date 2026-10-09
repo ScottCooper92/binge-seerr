@@ -361,11 +361,6 @@ data class SeerrMetadataTestsDto(
     @SerialName("tvdb") val tvdb: String? = null,
 )
 
-@Serializable
-data class SeerrMessageDto(
-    @SerialName("message") val message: String? = null,
-)
-
 /** `POST settings/jobs/{id}/schedule`: a six-field cron expression, seconds first. */
 @Serializable
 data class SeerrJobScheduleBody(
