@@ -171,6 +171,7 @@ private fun fieldItem(
 ): ListItem {
     val value = draft.field(field)
     val problem = field.errorRes()?.let { stringResource(it) }
+    val blankRequired = stringResource(R.string.editor_field_required)
     return textSettingItem(
         icon = field.icon(),
         label = stringResource(field.labelRes()),
@@ -179,7 +180,14 @@ private fun fieldItem(
         onChange = { typed -> onEdit { it.set(field, typed) } },
         hint = field.hintRes()?.let { stringResource(it) },
         required = draft.required(field),
-        check = { typed -> problem.takeIf { !field.accepts(typed) } },
+        // Clearing an agent's last key turns it off, so whether a blank is refused is asked of the draft it would make.
+        check = { typed ->
+            when {
+                typed.isBlank() && draft.set(field, typed).required(field) -> blankRequired
+                !field.accepts(typed) -> problem
+                else -> null
+            }
+        },
         // Whether a hidden value is there is all its row needs to say.
         shown =
             if (field.hidden && value.isNotBlank()) {
