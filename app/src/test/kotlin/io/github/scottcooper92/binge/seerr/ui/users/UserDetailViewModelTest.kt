@@ -166,6 +166,33 @@ class UserDetailViewModelTest {
         }
 
     @Test
+    fun `a viewer who cannot be read is let through, in the section and in the list`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS)
+            val signIn = responses.getValue("GET /api/v1/auth/me")
+            var reads = 0
+            // Connecting reads auth/me once; every read after that, the page's own, fails.
+            responses["GET /api/v1/auth/me"] = {
+                if (reads++ == 0) {
+                    signIn()
+                } else {
+                    FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+                }
+            }
+            val vm = viewModel()
+
+            assertTrue(vm.awaitReady().detail.canViewRequests)
+            assertEquals(
+                "Heat",
+                vm.requests
+                    .asSnapshot()
+                    .single()
+                    .title,
+            )
+            assertTrue(received.any { it.url.encodedPath == "/api/v1/user/8/requests" })
+        }
+
+    @Test
     fun `the user themself, and a viewer of everyone's requests, are offered the list`() =
         runTest {
             server(viewerId = 8, permissions = REQUEST)

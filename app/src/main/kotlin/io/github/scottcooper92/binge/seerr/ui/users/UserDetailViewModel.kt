@@ -18,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
+import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -95,9 +96,12 @@ class UserDetailViewModel
          * so a failed read does not leave the list empty for good.
          */
         private suspend fun mayReadRequests(): Boolean {
-            val viewer = runCatching { connection.authenticatedUser() }.getOrNull() ?: return true
-            return viewer.id == userId || viewer.toPermissions().canViewRequests
+            val viewer = runCatching { connection.authenticatedUser() }.getOrNull()
+            return viewer.mayReadRequestsOf(userId)
         }
+
+        /** The one rule for both the pager and the screen's gate, so they cannot disagree about a viewer that cannot be read. */
+        private fun SeerrUserDto?.mayReadRequestsOf(userId: Int): Boolean = this == null || id == userId || toPermissions().canViewRequests
 
         init {
             reload()
@@ -184,7 +188,7 @@ class UserDetailViewModel
                     watch = watch.await()?.let { UserWatch(playCount = it.playCount, recentlyWatched = recent.mapNotNull(cards::get)) },
                     watchlist = listed.mapNotNull(cards::get),
                     isSelf = viewerDto?.id == userId,
-                    canViewRequests = viewerDto?.id == userId || permissions.canViewRequests,
+                    canViewRequests = viewerDto.mayReadRequestsOf(userId),
                     canEditSettings = viewerDto?.id == userId || permissions.canManageUsers,
                     canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
                     serverUrl = connection.current().baseUrl,
