@@ -13,6 +13,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
+import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingQueue
@@ -97,6 +98,19 @@ class FakeSeerrServer {
     /** A fresh dispatcher for one client, tracked for [awaitIdle]; see [OkHttpDrain.newDispatcher]. */
     fun newDispatcher(): Dispatcher = drain.newDispatcher()
 
+    /**
+     * A dispatcher that answers each call on the thread that enqueues it, so the call has finished when `enqueue`
+     * returns. For a test whose subject runs virtual-time timeouts on the test scheduler: with [newDispatcher], a call
+     * is answered on OkHttp's own thread, and while it is out `runTest` is free to skip the scheduler ahead, so a
+     * timeout can run out before the answer lands. Under a loaded machine that happens, and the test hangs on a state
+     * that never comes (#985). Inline, the answer lands in the test's own time.
+     *
+     * Not for a test that holds a response open behind a latch: inline, that blocks the test's own thread. A call that
+     * fails still resumes through Retrofit's hop on `Dispatchers.Default` (see [OkHttpDrain.awaitIdle]); that hop does no
+     * I/O, so it is far shorter than any timeout a subject runs.
+     */
+    fun newInlineDispatcher(): Dispatcher = Dispatcher(InlineExecutorService())
+
     /** Drains every client built against this server before Main is reset; see [OkHttpDrain.awaitIdle] and #177. */
     fun awaitIdle() = drain.awaitIdle()
 
@@ -141,4 +155,30 @@ class FakeSeerrServer {
         }
 
     private fun Request.bodyAsString(): String = body?.let { requestBody -> Buffer().also { requestBody.writeTo(it) }.readUtf8() }.orEmpty()
+}
+
+/**
+ * Runs each task on the calling thread. Shutting down only stops it reporting as live: `SeerrApiFactory` shuts down a
+ * throwaway client's executor on release, and that client's calls have finished by then.
+ */
+private class InlineExecutorService : AbstractExecutorService() {
+    @Volatile
+    private var shutdown = false
+
+    override fun execute(command: Runnable) = command.run()
+
+    override fun shutdown() {
+        shutdown = true
+    }
+
+    override fun shutdownNow(): List<Runnable> = emptyList<Runnable>().also { shutdown() }
+
+    override fun isShutdown(): Boolean = shutdown
+
+    override fun isTerminated(): Boolean = shutdown
+
+    override fun awaitTermination(
+        timeout: Long,
+        unit: TimeUnit,
+    ): Boolean = true
 }

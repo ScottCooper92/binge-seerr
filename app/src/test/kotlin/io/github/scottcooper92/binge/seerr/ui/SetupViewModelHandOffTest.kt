@@ -75,7 +75,12 @@ class SetupViewModelHandOffTest {
                         PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c${stores++}.preferences_pb") },
                         PlainCipher,
                     ),
-                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
+                apis =
+                    SeerrApiFactory(
+                        logRequests = false,
+                        testTransport = seerr::interceptor,
+                        testDispatcher = seerr::newInlineDispatcher,
+                    ),
                 quickConnectPollInterval = 10.milliseconds,
                 cleartext = cleartext,
             )
