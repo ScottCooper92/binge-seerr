@@ -18,6 +18,7 @@ import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.ModeChips
@@ -94,6 +95,7 @@ private fun SignInFormContent(
                             detail = stringResource(R.string.send_address_sign_in_shared),
                             loading = step.isSending && step.sendingSession,
                             disabled = step.isSending && !step.sendingSession,
+                            destination = ListItemDestination.Action,
                             onClick = actions.onSendSession,
                         ),
                     ),

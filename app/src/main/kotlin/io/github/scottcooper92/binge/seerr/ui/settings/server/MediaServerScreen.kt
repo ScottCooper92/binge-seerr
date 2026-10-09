@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -23,6 +25,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -224,6 +227,7 @@ private fun LibrariesGroup(
             detail = stringResource(R.string.server_settings_libraries_none).takeIf { extras.libraries.isEmpty() },
             loading = extras.syncingLibraries,
             clickable = !extras.syncingLibraries,
+            destination = ListItemDestination.Action,
             onClick = actions.onSyncLibraries,
         )
     ItemGroup(
@@ -273,20 +277,30 @@ private fun ScanGroup(
         title = stringResource(R.string.server_settings_scan),
         rows =
             listOfNotNull(
+                // One row: it starts the scan, and while the scan runs its trailing stop cancels it, the progress
+                // reading beneath, so there's no separate cancel row to find.
                 ListItem(
                     icon = Icons.Filled.Refresh,
                     label = stringResource(R.string.server_settings_scan_start),
                     detail = progress ?: stringResource(R.string.server_settings_scan_lead),
-                    loading = running,
                     clickable = !running,
+                    destination = ListItemDestination.Action,
                     onClick = actions.onStartScan,
+                    trailingContent =
+                        if (running) {
+                            {
+                                IconButton(onClick = actions.onCancelScan) {
+                                    Icon(
+                                        Icons.Filled.Stop,
+                                        contentDescription = stringResource(R.string.server_settings_scan_cancel),
+                                        tint = BingeSentiment.Negative.fill(),
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        },
                 ),
-                ListItem(
-                    icon = Icons.Filled.Stop,
-                    iconTint = BingeSentiment.Negative.fill(),
-                    label = stringResource(R.string.server_settings_scan_cancel),
-                    onClick = actions.onCancelScan,
-                ).takeIf { running },
             ),
         belowRows =
             scan?.takeIf { it.running }?.let {

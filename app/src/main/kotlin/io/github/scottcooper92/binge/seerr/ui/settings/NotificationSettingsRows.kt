@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
@@ -69,6 +70,8 @@ internal fun notificationRows(
                 label = stringResource(R.string.settings_notifications_blocked),
                 detail = stringResource(R.string.settings_notifications_blocked_caption),
                 detailColor = BingeSentiment.Negative.fill(),
+                // It leaves the app for Android's notification settings.
+                destination = ListItemDestination.External,
                 onClick = {
                     context.startActivity(
                         Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),

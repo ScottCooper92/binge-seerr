@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -79,6 +80,7 @@ fun NotificationAgentScreen(
                         loading = extras.testing,
                         clickable = enabled && draft.valid && !extras.testing,
                         disabled = !enabled || !draft.valid,
+                        destination = ListItemDestination.Action,
                         onClick = agentActions.onTest,
                     ),
                 ),

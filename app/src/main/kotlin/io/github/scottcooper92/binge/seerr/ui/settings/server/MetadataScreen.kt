@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -50,6 +51,7 @@ fun MetadataScreen(
                         loading = extras.testing,
                         clickable = enabled && !extras.testing,
                         disabled = !enabled,
+                        destination = ListItemDestination.Action,
                         onClick = onTest,
                     ),
                 ),
