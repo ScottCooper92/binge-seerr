@@ -116,6 +116,8 @@
     <string name="hub_section_settings">Settings</string>
     <string name="hub_section_settings_desc">Services, notifications and jobs</string>
     <string name="section_coming_soon">This section arrives with a later phase.</string>
+    <string name="three_pane_nothing_open_title">Nothing open</string>
+    <string name="three_pane_nothing_open_message">Pick something from the list to see it here.</string>
     <!-- The detail pane beside the hub, before any section is opened. -->
 
     <string name="requests_filter_all">All</string>

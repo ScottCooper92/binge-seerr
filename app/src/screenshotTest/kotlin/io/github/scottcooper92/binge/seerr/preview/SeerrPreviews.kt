@@ -101,6 +101,19 @@ annotation class SeerrListPanePreview
 annotation class SeerrLandscapePanesPreview
 
 /**
+ * A landscape tablet's window alone, for a frame that lays out the hub, a section and what it opened side by side
+ * itself: past the design system's expanded-rail line, where the app shows three panes (#1110).
+ */
+@PreviewWrapper(SeerrScreenshotThemeWrapper::class)
+@Preview(
+    name = "tablet-land",
+    device = "spec:width=1280dp,height=800dp,orientation=landscape",
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+annotation class SeerrTabletPanesPreview
+
+/**
  * A phone window at the two larger font scales, 1.5 and 2.0, for a row whose layout has to survive
  * a user's text size. The 1.0 cell is the screen's own frame.
  */
