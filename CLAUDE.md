@@ -170,6 +170,13 @@ is the signal to split a file by concern, and 400 is too long. Route entries liv
 files by area. There is no automated length gate here — the custom detekt rule that enforces one in
 Binge lives in an unpublished module (binge-companions#39) — so this one is held in review.
 
+**Navigation tests.** Two kinds, and they answer different questions. A stand-in `NavDisplay` with the real
+strategy and metadata (`DetailPaneStackTest`, `HomeRootSwapTest`) pins the pane logic on its own, and is cheap.
+`RealNavHostRule` hosts the real `SeerrNavHost` under Hilt on Robolectric, with the app's own entries, ViewModels
+and stores against a `ScriptedSeerr`; only `DeviceKeysModule` is replaced. Reach for it when the question is
+whether the real entries are wired the way the pane logic assumes: a journey across screens, a rotation, a
+retry. A rotation there is a real activity recreate, so the back stack comes back through saved state.
+
 **Where the code does not follow this**, it is an open issue rather than a line here: a list of
 departures in this file goes stale faster than it is read. The one standing exception is the DVR
 instance and override rule editors, which carry their pickers' choices in a second stream because

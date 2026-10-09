@@ -64,8 +64,8 @@ fun SeerrNavHost(
 
 /**
  * The [NavDisplay] and the pane locals around it, apart from the entries that fill it. [SeerrNavHost] passes the real
- * entries; [entries] is a parameter so a test can host this with stand-ins, because the real screens take Hilt
- * ViewModels.
+ * entries; [entries] is a parameter so a test can pin the panes with stand-ins,
+ * cheaply and on their own.
  *
  * [entries] is handed two providers rather than values. Navigation 3 builds an entry once for its key and keeps it,
  * content and metadata both, for as long as the key is on the stack. A value captured when it is built is the value

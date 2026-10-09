@@ -42,7 +42,8 @@ private const val REQUEST = "request 7"
 /**
  * The detail pane under a real [NavDisplay], with the strategy and metadata [SeerrNavHost] uses and
  * Back delivered the way a gesture or a key delivers it: through the navigation-event dispatcher the
- * scene registers with. The entries show stand-in text, because the real screens take Hilt ViewModels.
+ * scene registers with. The entries show stand-in text, so this pins the strategy on its own;
+ * `SeerrNavHostJourneysTest` drives the real entries.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @RunWith(RobolectricTestRunner::class)

@@ -16,6 +16,7 @@ import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
+import mockwebserver3.SocketEffect
 import okhttp3.Headers.Companion.headersOf
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
@@ -53,11 +54,18 @@ internal class ScriptedSeerr(
     private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
     private var stores = 0
 
+    /** While set, every request is held this long and then dropped; see [unreachable]. */
+    @Volatile private var dropAfterMillis: Long? = null
+
     fun start() {
         server.dispatcher =
             object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     received += request
+                    dropAfterMillis?.let { millis ->
+                        Thread.sleep(millis)
+                        return MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()
+                    }
                     return responses[request.method + " " + request.url.encodedPath]?.invoke(request) ?: MockResponse(code = 404)
                 }
             }
@@ -110,6 +118,14 @@ internal class ScriptedSeerr(
             val body = bodies.getOrElse(page) { EMPTY_PAGE }
             MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
         }
+    }
+
+    /**
+     * The server stops answering: each request is held for [afterMillis], then its connection is closed, which
+     * the client reads as unreachable. The hold is what lets a test watch a re-check while it is in flight.
+     */
+    fun unreachable(afterMillis: Long = 0) {
+        dropAfterMillis = afterMillis
     }
 
     fun remove(key: String) {
