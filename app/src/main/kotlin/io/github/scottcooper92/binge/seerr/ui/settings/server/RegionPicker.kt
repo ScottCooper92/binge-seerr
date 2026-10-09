@@ -19,13 +19,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeChoice
+import com.binge.designsystem.component.BingeChoiceList
+import com.binge.designsystem.component.BingeChoiceSheet
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.Regions
 import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
-import io.github.scottcooper92.binge.seerr.ui.users.settings.ChoiceRows
 import com.binge.designsystem.R as DesR
 
 /** A region code is two letters, ISO 3166-1 alpha-2, as the server keeps it. */
@@ -61,22 +63,32 @@ internal fun regionSettingItem(
             onSelect(code)
             open = false
         }
-        PeekingListSheet(title = title, onDismiss = { open = false }) {
-            when (choices) {
-                is ListChoices.Ready ->
-                    ChoiceRows(
-                        icon,
-                        Regions.choices(choices.entries.map { it.code }, value, allRegions, defaultLabel),
-                        value.trim(),
-                        pick,
-                    )
-                ListChoices.Failed -> RegionUnavailable(value, onRetry = onOpen, onUse = pick)
-                ListChoices.Loading, null -> ListLoading()
-            }
+        if (choices == ListChoices.Failed) {
+            PeekingListSheet(title = title, onDismiss = { open = false }) { RegionUnavailable(value, onRetry = onOpen, onUse = pick) }
+        } else {
+            val all = (choices as? ListChoices.Ready)?.entries?.map { it.code }
+            BingeChoiceSheet(
+                title = title,
+                choices =
+                    all?.let { codes ->
+                        BingeChoiceList.Ready(
+                            Regions.choices(codes, value, allRegions, defaultLabel).map { (code, label) ->
+                                BingeChoice(code, label, mark = flagOf(code))
+                            },
+                        )
+                    } ?: BingeChoiceList.Loading,
+                selected = value.trim(),
+                onSelect = pick,
+                onDismiss = { open = false },
+                // The server's default and "all regions" first, then the device's regions and popular ones.
+                suggested = listOf("", Regions.ALL) + suggestedRegions(),
+            )
         }
     }
     return ListItem(
         icon = icon,
+        // The chosen region's flag in the icon's place, or a globe for all regions and the server's default.
+        leadingContent = { RegionFlag(value.trim()) },
         label = title,
         detail =
             when (val code = value.trim()) {

@@ -2,11 +2,17 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Theaters
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -57,6 +63,13 @@ internal fun DestinationGroup(
                         icon = Icons.Filled.Event,
                         title = stringResource(R.string.server_settings_dvr_minimum_availability),
                         choices = MINIMUM_AVAILABILITIES.map { it to stringResource(it.availabilityRes()) },
+                        choiceIcon = { availability ->
+                            when (availability) {
+                                "announced" -> Icons.Filled.Campaign
+                                "inCinemas" -> Icons.Filled.Theaters
+                                else -> Icons.Filled.CheckCircle
+                            }
+                        },
                         selected = availability,
                         enabled = enabled,
                     ) { value -> actions.onEdit { it.copy(minimumAvailability = value) } }
@@ -133,7 +146,7 @@ private fun <T> testedChoiceItem(
     if (choices == null) {
         untestedItem(icon, title, savedLabel)
     } else {
-        choiceSettingItem(icon, title, choices, selected, enabled, onSelect)
+        choiceSettingItem(icon, title, choices, selected, enabled, onSelect = onSelect)
     }
 
 /** A row whose choices aren't known yet: it names [savedLabel], or what has to happen first, and can't be opened. */
@@ -170,7 +183,7 @@ private fun languageProfileItem(
                 choices.languageProfiles.map { it.id to it.label },
                 selected,
                 enabled,
-                onSelect,
+                onSelect = onSelect,
             )
     }
 
@@ -206,6 +219,13 @@ private fun seriesTypeItem(
     icon = Icons.Filled.Category,
     title = stringResource(R.string.server_settings_dvr_series_type),
     choices = SERIES_TYPES.map { it to stringResource(it.seriesTypeRes()) },
+    choiceIcon = { type ->
+        when (type) {
+            "daily" -> Icons.Filled.Today
+            "anime" -> Icons.Filled.Animation
+            else -> Icons.Filled.Tv
+        }
+    },
     selected = selected,
     enabled = enabled,
     onSelect = onSelect,

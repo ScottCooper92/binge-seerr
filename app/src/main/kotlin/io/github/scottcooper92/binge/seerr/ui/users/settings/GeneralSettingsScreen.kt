@@ -20,6 +20,7 @@ import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.DisplayLanguages
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerList
+import io.github.scottcooper92.binge.seerr.ui.settings.server.displayLanguageSettingItem
 import io.github.scottcooper92.binge.seerr.ui.settings.server.languageSettingItem
 import io.github.scottcooper92.binge.seerr.ui.settings.server.limitRows
 import io.github.scottcooper92.binge.seerr.ui.settings.server.regionSettingItem
@@ -99,7 +100,7 @@ private fun ProfileGroup(
                     check = { value -> emailError.takeIf { !draft.copy(email = value).emailValid } },
                     keyboard = EmailKeyboard,
                 ),
-                choiceSettingItem(
+                displayLanguageSettingItem(
                     icon = Icons.Filled.Translate,
                     title = stringResource(R.string.settings_display_language),
                     choices =

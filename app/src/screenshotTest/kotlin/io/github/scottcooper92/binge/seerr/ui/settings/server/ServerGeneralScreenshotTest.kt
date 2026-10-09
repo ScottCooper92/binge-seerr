@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -18,8 +16,6 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
-import io.github.scottcooper92.binge.seerr.ui.settings.DisplayLanguages
-import io.github.scottcooper92.binge.seerr.ui.users.settings.ChoiceRows
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import kotlinx.coroutines.flow.emptyFlow
@@ -127,15 +123,6 @@ class ServerGeneralPartsScreenshotTest {
             )
         }
 
-    /** The display language sheet: each language in its own name, the current one checked. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun displayLanguageChoices() =
-        PartFrame {
-            ChoiceRows(Icons.Filled.Translate, DisplayLanguages.choices(SeerrVariant.Seerr, "en").take(CHOICES_SHOWN), "en") {}
-        }
-
     /** The discover language sheet: the chosen languages lead, checked, and a filter narrows the rest. */
     @PreviewTest
     @SeerrComponentPreviews
@@ -145,8 +132,6 @@ class ServerGeneralPartsScreenshotTest {
             LanguageChecklist(LANGUAGES, initial = listOf("ja", "ko"), picked = listOf("ja", "ko"), onPicked = {})
         }
 }
-
-private const val CHOICES_SHOWN = 6
 
 private val LANGUAGES =
     listOf(

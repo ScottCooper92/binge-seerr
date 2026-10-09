@@ -8,10 +8,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
@@ -84,6 +86,8 @@ class ServerUsersFormTest {
         rule.onNodeWithText("Every 14 days").assertExists()
 
         rule.onNode(hasText("Movie requests") and hasClickAction()).performScrollTo().performClick()
+        // The shared choice sheet's long list is lazy: a row is composed once scrolled to.
+        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Unlimited"))
         rule.onNode(hasText("Unlimited") and hasClickAction()).performClick()
 
         rule.onNodeWithText("Every 14 days").assertDoesNotExist()
