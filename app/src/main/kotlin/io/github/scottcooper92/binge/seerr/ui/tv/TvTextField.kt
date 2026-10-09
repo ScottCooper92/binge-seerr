@@ -120,8 +120,9 @@ internal fun TvTextField(
                     .onFocusChanged { focused = it.isFocused }
                     .editOnSelect(enabled = enabled && !editing) { editing = true }
                     .focusable(enabled = enabled)
-                    // The label is a sibling, so the field names itself for a screen reader and a test.
-                    .semantics { contentDescription = label },
+                    // The label is a sibling, so the field names itself for a screen reader and a test. Merged with the input
+                    // inside, so editing reads the label with the value, not "edit box" and the value alone.
+                    .semantics(mergeDescendants = true) { contentDescription = label },
         ) {
             BasicTextField(
                 value = value,
