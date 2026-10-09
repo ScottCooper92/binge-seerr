@@ -63,7 +63,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /settings/notifications/email` | Get email notification settings | v1.0.0 | v1.0.0 | yes | Agent status on the hub, and the agent's page. |
 | `GET /settings/radarr` | Get Radarr settings | v1.0.0 | v1.0.0 | yes | The Settings summary, the services page and the instance editor. |
 | `GET /settings/sonarr` | Get Sonarr settings | v1.0.0 | v1.0.0 | yes | The Settings summary, the services page and the instance editor. |
-| `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub, and any user's on their page. |
+| `GET /user/{userId}/quota` | Get quotas for a specific user | v1.22.0 | v1.0.0 | yes | The signed-in user's quota on the hub, and another user's on their page. The server allows it for the user themselves, or for an account holding both `MANAGE_USERS` and `MANAGE_REQUESTS`. |
 
 ### Phase 2 — requests
 
@@ -107,7 +107,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /blacklist` | Returns blocklisted items | — | v2.0.0 | yes | The blocklist browser, paged and searched, on Jellyseerr 2.x. |
 | `POST /blacklist` | Add media to blocklist | — | v2.0.0 | yes | From the moderation sheet: decline or remove and block. |
 | `DELETE /blacklist/{tmdbId}` | Remove media from blocklist | — | v2.0.0 | yes | Unblock from the browser's row, behind a confirm. |
-| `GET /blacklist/{tmdbId}` | Get media from blocklist | — | v2.1.0 |  | Not needed: the list payload carries everything a row shows. |
+| `GET /blacklist/{tmdbId}` | Get media from blocklist | — | v2.0.0 |  | Not needed: the list payload carries everything a row shows. |
 | `GET /blocklist` | Returns blocklisted items | — | v3.0.0 | yes | The blocklist browser, paged, searched and filtered by source; the hub's count. |
 | `POST /blocklist` | Add media to blocklist | — | v3.0.0 | yes | From the moderation sheet: decline or remove and block. |
 | `DELETE /blocklist/collection/{collectionId}` | Remove collection from blocklist | — | v3.2.0 | yes | `BlocklistViewModel.setCollectionBlocked`; the collection page that calls it is Phase 7. |
@@ -150,15 +150,16 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /overrideRule` | Create override rule | — | v2.2.0 | yes | The rule editor. |
 | `DELETE /overrideRule/{ruleId}` | Delete override rule by ID | — | v2.2.0 | yes | The rule editor's delete. |
 | `PUT /overrideRule/{ruleId}` | Update override rule | — | v2.2.0 | yes | The rule editor. |
+| `POST /overrideRule/advancedRequest` | Match override rules for an advanced request | — | develop |  | In Seerr `develop` only, not in v3.4.0. Not planned: the app does not call it. |
 | `GET /settings/cache` | Get a list of active caches | v1.19.0 | v1.0.0 | yes | The Jobs & cache page. |
 | `POST /settings/cache/dns/{dnsEntry}/flush` | Flush a specific DNS cache entry | — | v3.0.0 | yes | Flush on a DNS entry, on the Jobs & cache page. |
 | `POST /settings/cache/{cacheId}/flush` | Flush a specific cache | v1.20.0 | v1.0.0 | yes | Flush on an API cache, on the Jobs & cache page. |
-| `GET /settings/discover` | Get all discover sliders | v1.32.0 | v1.4.0 | yes | The slider list. |
-| `POST /settings/discover` | Batch update all sliders. | v1.32.0 | v1.4.0 | yes | Save on the slider list: the order and each switch, as one batch. |
-| `POST /settings/discover/add` | Add a new slider | v1.32.0 | v1.4.0 | yes | Add a custom slider, on its own page. |
-| `GET /settings/discover/reset` | Reset all discover sliders | v1.32.0 | v1.4.0 | yes | Reset to defaults on the slider list, behind a confirmation. |
-| `DELETE /settings/discover/{sliderId}` | Delete slider by ID | v1.32.0 | v1.4.0 | yes | Delete on a custom slider's page. |
-| `PUT /settings/discover/{sliderId}` | Update a single slider | v1.32.0 | v1.4.0 | yes | Save on a custom slider's page. |
+| `GET /settings/discover` | Get all discover sliders | v1.32.0 | v1.0.0 | yes | The slider list. |
+| `POST /settings/discover` | Batch update all sliders. | v1.32.0 | v1.0.0 | yes | Save on the slider list: the order and each switch, as one batch. |
+| `POST /settings/discover/add` | Add a new slider | v1.32.0 | v1.0.0 | yes | Add a custom slider, on its own page. |
+| `GET /settings/discover/reset` | Reset all discover sliders | v1.32.0 | v1.0.0 | yes | Reset to defaults on the slider list, behind a confirmation. |
+| `DELETE /settings/discover/{sliderId}` | Delete slider by ID | v1.32.0 | v1.0.0 | yes | Delete on a custom slider's page. |
+| `PUT /settings/discover/{sliderId}` | Update a single slider | v1.32.0 | v1.0.0 | yes | Save on a custom slider's page. |
 | `GET /settings/jellyfin` | Get Jellyfin settings | — | v1.0.0 | yes | The media-server page on a Jellyfin or Emby server. |
 | `POST /settings/jellyfin` | Update Jellyfin settings | — | v1.0.0 | yes | The media-server page's save. |
 | `GET /settings/jellyfin/library` | Get Jellyfin libraries | — | v1.0.0 | yes | Library toggles (`enable=`) and re-read (`sync=`) on a released server. |
@@ -272,7 +273,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /studio/{studioId}` | Get movie studio details | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v3.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
+| `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /tv/{tvId}/similar` | Get similar TV series | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `POST /user/registerPushSubscription` | Register a web push /user/registerPushSubscription | v1.24.0 | v1.0.0 |  | Web push is the PWA's transport; this app polls (Phase 5). |
 | `DELETE /user/{userId}/pushSubscription/{endpoint}` | Delete user push subscription by key | v1.35.0 | v2.7.0 |  | Web push is the PWA's transport; this app polls (Phase 5). |
