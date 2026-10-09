@@ -38,8 +38,8 @@ private const val PLACEHOLDER = "placeholder"
  * Home under a real [NavDisplay] and list-detail strategy, as the connection resolves after the first
  * frame, which is what it does on every cold start.
  *
- * The entries show stand-in text. The real hub and setup take Hilt ViewModels, and this JVM suite has
- * no graph for them. What is under test is the shape [SeerrNavHost] is built on: a connection read
+ * The entries show stand-in text, so this pins the shape on its own; `SeerrNavHostJourneysTest` drives the
+ * real entries. What is under test is the shape [SeerrNavHost] is built on: a connection read
  * inside the content through a provider, the hub's list-pane metadata on a key of its own, and
  * [settleHome] swapping the root. The first test pins why that shape is needed at all.
  */

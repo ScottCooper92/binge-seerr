@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.google.android.gms.auth.blockstore.Blockstore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,7 +12,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.scottcooper92.binge.seerr.BuildConfig
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
-import io.github.scottcooper92.binge.seerr.auth.BlockStoreConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.CleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.ConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
@@ -21,7 +19,6 @@ import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.DataStoreCleartextConsent
 import io.github.scottcooper92.binge.seerr.auth.DeviceIdentityStore
-import io.github.scottcooper92.binge.seerr.auth.KeystoreSecretCipher
 import io.github.scottcooper92.binge.seerr.auth.PlexPinFlow
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
@@ -49,18 +46,14 @@ private val Context.bingeConnectionDataStore: DataStore<Preferences> by preferen
 private const val PLEX_PRODUCT_NAME = "Binge Seerr"
 
 /**
- * Everything that reaches the server: the saved connection, what encrypts it, what carries it to a
- * new device, and the clients that speak to it. The one connection is application-scoped because the
+ * Everything that reaches the server: the saved connection and the clients that speak to it. What
+ * encrypts the connection and what carries it to a new device are [DeviceKeysModule]'s. The one connection is application-scoped because the
  * exported Service and the app's own screens share it: what the user connects on one is what the
  * host is served from the other.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object AuthModule {
-    @Provides
-    @Singleton
-    fun secretCipher(): SecretCipher = KeystoreSecretCipher()
-
     @Provides
     @Singleton
     fun credentialStore(
@@ -130,16 +123,6 @@ object AuthModule {
                 )
             },
         )
-
-    /**
-     * The carrier is Block Store where Play Services has it. `getClient` hands one back on any
-     * device; a device without Play Services fails the calls instead, which the carrier absorbs.
-     */
-    @Provides
-    @Singleton
-    fun connectionCarrier(
-        @ApplicationContext context: Context,
-    ): ConnectionCarrier = BlockStoreConnectionCarrier(Blockstore.getClient(context))
 
     @Provides
     @Singleton
