@@ -54,6 +54,8 @@ fun OverrideRuleScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
+        commitLabel = (state as? ExtrasEditorUiState.Ready)?.takeIf { it.draft.id == null }?.let { stringResource(R.string.editor_create) },
     ) { draft, enabled ->
         RuleInstance(extras, draft, enabled, ruleActions.onSelectInstance)
         RuleConditions(extras, draft, enabled, actions, ruleActions.onToggleUser)

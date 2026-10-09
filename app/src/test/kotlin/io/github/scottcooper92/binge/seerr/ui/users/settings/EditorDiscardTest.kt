@@ -28,6 +28,7 @@ class EditorDiscardTest {
     private fun show(
         draft: String,
         saveAsMade: Boolean = false,
+        footerCommit: Boolean = false,
     ) = rule.setContent {
         dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
         BingeExpressiveTheme(dynamicColor = false) {
@@ -37,6 +38,8 @@ class EditorDiscardTest {
                 events = emptyFlow(),
                 actions = EditorActions(onBack = { left++ }, onRetry = {}, onEdit = {}, onSave = {}),
                 saveAsMade = saveAsMade,
+                footerCommit = footerCommit,
+                commitLabel = "Change password".takeIf { footerCommit },
             ) { value, _ -> Text(value) }
         }
     }
@@ -93,5 +96,16 @@ class EditorDiscardTest {
         back()
 
         assertEquals(1, left)
+    }
+
+    @Test
+    fun `a footer commit carries its own label, and Cancel beside it asks too`() {
+        show("edited", footerCommit = true)
+
+        rule.onNodeWithText("Change password").assertExists()
+        rule.onNodeWithText("Cancel").performClick()
+
+        rule.onNodeWithText("Discard changes?").assertExists()
+        assertEquals(0, left)
     }
 }

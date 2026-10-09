@@ -61,7 +61,7 @@ class OverrideRuleFormTest {
 
         rule.onNodeWithText("Add at least one condition: a user, genre, language or keyword.").assertExists()
         rule.onNodeWithText("Pick at least one override: a quality profile, root folder or tag.").performScrollTo().assertExists()
-        rule.onNodeWithText("Save").assertIsNotEnabled()
+        rule.onNodeWithText("Create").assertIsNotEnabled()
     }
 
     @Test
@@ -69,7 +69,7 @@ class OverrideRuleFormTest {
         show(OverrideRuleForm(genres = "16"), RULE_EXTRAS.copy(choices = null))
 
         assertEquals(3, rule.onAllNodesWithText("Pick an instance to see what it offers.").fetchSemanticsNodes().size)
-        rule.onNodeWithText("Save").assertIsNotEnabled()
+        rule.onNodeWithText("Create").assertIsNotEnabled()
     }
 
     @Test

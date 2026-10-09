@@ -31,6 +31,8 @@ fun PasswordSettingsScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
+        commitLabel = stringResource(R.string.user_settings_password_change),
     ) { draft, enabled ->
         val mismatch = draft.confirm.isNotEmpty() && draft.confirm != draft.new
         ItemGroup(

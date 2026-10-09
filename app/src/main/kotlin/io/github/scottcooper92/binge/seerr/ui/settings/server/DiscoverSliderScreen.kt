@@ -38,6 +38,8 @@ fun DiscoverSliderScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
+        commitLabel = (state as? EditorUiState.Ready)?.takeIf { it.draft.id == null }?.let { stringResource(R.string.editor_create) },
     ) { draft, enabled ->
         ChoiceRow(
             title = stringResource(R.string.server_settings_slider_type),

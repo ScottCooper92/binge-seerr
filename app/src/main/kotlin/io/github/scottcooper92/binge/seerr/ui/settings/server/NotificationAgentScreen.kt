@@ -56,6 +56,7 @@ fun NotificationAgentScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        footerCommit = true,
     ) { draft, enabled ->
         ItemGroup(
             title = null,
