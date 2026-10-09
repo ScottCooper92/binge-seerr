@@ -30,13 +30,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -76,11 +75,11 @@ class UsersViewModel
         private val listVersion = MutableStateFlow(0)
 
         val admission =
-            UserAdmission(scope = viewModelScope, dispatcher = dispatcher, connection = connection) {
+            UserAdmission(scope = viewModelScope, dispatcher = dispatcher, connection = connection, emit = eventFlow::emit) {
                 listVersion.update { it + 1 }
             }
 
-        val events: SharedFlow<UsersEvent> = merge(eventFlow, admission.events).shareIn(viewModelScope, SharingStarted.Lazily)
+        val events: SharedFlow<UsersEvent> = eventFlow.asSharedFlow()
 
         /** Bumped when the page becomes visible, so the scope is re-read rather than held from the first visit. */
         private val scopeRefresh = MutableStateFlow(0)
