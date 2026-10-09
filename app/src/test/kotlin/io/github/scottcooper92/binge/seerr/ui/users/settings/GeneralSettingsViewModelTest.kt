@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -209,13 +210,31 @@ class GeneralSettingsViewModelTest {
     fun `a required email cleared is never written`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
+            // A local account, whose email the web client requires; the fixture's Jellyfin account may go without one.
+            seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","permissions":$REQUEST,"userType":2}""")
             val vm = viewModel()
-            vm.awaitReady()
+            assertTrue(vm.awaitReady().draft.emailRequired)
 
             vm.edit { it.copy(email = "") }
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
             runCurrent()
 
-            assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/main"))
+            // A write goes out on OkHttp's threads, so a count taken at once can miss one on its way (#986).
+            assertFalse(seerr.awaitCountHoldingTime("POST", "/api/v1/user/8/settings/main", moreThan = 0))
+        }
+
+    @Test
+    fun `an email the account may go without is cleared and written`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            assertFalse(vm.awaitReady().draft.emailRequired)
+
+            vm.edit { it.copy(email = "") }
+            awaitWritten(vm)
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
+            // A blank address is sent as no address.
+            assertTrue(sent["email"].let { it == null || it is JsonNull })
         }
 }
