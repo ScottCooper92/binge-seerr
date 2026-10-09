@@ -12,7 +12,6 @@ import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import kotlinx.coroutines.flow.emptyFlow
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -85,21 +84,11 @@ class GeneralSettingsFormTest {
         rule.onNodeWithText("Movie requests").performScrollTo().assertExists()
     }
 
+    /** The page saves as it changes (#930): there is no Save, and the view model never writes a draft that fails its check. */
     @Test
-    fun `a required email cleared does not save`() {
-        show(MANAGED.copy(email = ""))
-
-        rule.onNodeWithText("Save").performClick()
-
-        assertEquals(0, saves)
-    }
-
-    @Test
-    fun `a changed draft with nothing wrong saves`() {
+    fun `there is no Save to press`() {
         show(MANAGED.copy(displayName = "Annie"))
 
-        rule.onNodeWithText("Save").performClick()
-
-        assertEquals(1, saves)
+        rule.onNodeWithText("Save").assertDoesNotExist()
     }
 }

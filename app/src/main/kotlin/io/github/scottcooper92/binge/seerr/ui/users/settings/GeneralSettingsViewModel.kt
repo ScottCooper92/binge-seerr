@@ -7,6 +7,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
@@ -19,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerListCatalog
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.toUserOrigin
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -37,8 +39,15 @@ class GeneralSettingsViewModel
         private val connection: SeerrConnection,
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
     ) : ExtrasEditorViewModel<GeneralSettings, UserGeneralExtras>(UserGeneralExtras(), dispatcher) {
+        /**
+         * A user's General saves as it changes (#930). Its endpoint assigns every field it is sent, so each write carries the
+         * whole record as saved plus the change, never the change alone.
+         */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         init {
             reload()
         }
