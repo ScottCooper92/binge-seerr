@@ -107,11 +107,18 @@ abstract class EditorViewModel<T>(
         }
     }
 
+    /**
+     * Reads the record again. On a page that saves as it changes, a change not yet on the server goes first ([SaveAsMade.settle]),
+     * and if it cannot, the draft is kept over what was read, with the failure showing.
+     */
     fun reload() {
+        val settling = saveAsMade?.settle()
         state.value = EditorUiState.Loading
         viewModelScope.launch(dispatcher) {
+            val kept = settling?.await()
+            saveAsMade?.reloaded(keptUnsent = kept != null)
             runCatching { load() }
-                .onSuccess { state.value = EditorUiState.Ready(draft = it, saved = it) }
+                .onSuccess { state.value = EditorUiState.Ready(draft = kept ?: it, saved = it, saveFailed = kept != null) }
                 .onFailure { state.value = EditorUiState.Error(it.toSeerrError()) }
         }
     }
@@ -252,12 +259,18 @@ abstract class ExtrasEditorViewModel<T, X>(
         }
     }
 
+    /** As [EditorViewModel.reload]: a change not yet on the server goes first, or is kept over what was read. */
     fun reload() {
+        val settling = saveAsMade?.settle()
         state.value = ExtrasEditorUiState.Loading
         viewModelScope.launch(dispatcher) {
+            val kept = settling?.await()
+            saveAsMade?.reloaded(keptUnsent = kept != null)
             runCatching { load() }
-                .onSuccess { state.value = ExtrasEditorUiState.Ready(draft = it, saved = it, extras = extrasState.value) }
-                .onFailure { state.value = ExtrasEditorUiState.Error(it.toSeerrError()) }
+                .onSuccess {
+                    state.value =
+                        ExtrasEditorUiState.Ready(draft = kept ?: it, saved = it, extras = extrasState.value, saveFailed = kept != null)
+                }.onFailure { state.value = ExtrasEditorUiState.Error(it.toSeerrError()) }
         }
     }
 
