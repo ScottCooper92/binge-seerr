@@ -3,9 +3,12 @@
 # opt-in `-PminifyDebug` build the device lane runs minifies against the same rules as release; a
 # per-variant copy is the one that goes stale.
 #
-# Retrofit, OkHttp, Room, Hilt, Coil and kotlinx.serialization ship their own consumer rules. Only
-# what this app genuinely needs on top of those belongs here: a rule copied from a library silently
-# diverges when the library is upgraded, and the copy is the one that goes stale.
+# Retrofit, OkHttp, Room, Hilt, Coil and kotlinx.serialization ship their own consumer rules, and so
+# does binge-companions' contracts module: its META-INF/proguard rule keeps the fields of every
+# contract message, which the lite protobuf runtime looks up by name. R8 reads it even though the
+# contracts arrive through the composite build. Only what this app genuinely needs on top of those
+# belongs here: a rule copied from a library silently diverges when the library is upgraded, and the
+# copy is the one that goes stale.
 
 # Line numbers and source file names, so a crash a user reports reads as a stack trace.
 -keepattributes SourceFile,LineNumberTable
@@ -22,10 +25,3 @@
 # generated serializer references the fields itself, and the bundled rules retain Companion and
 # serializer().
 -keep,allowobfuscation,allowoptimization @kotlinx.serialization.Serializable class **
-
-# The lite protobuf runtime resolves a message's fields by name the first time it is used
-# (MessageSchema reads the names newMessageInfo() recorded), and neither protobuf-javalite nor grpc
-# ships a consumer rule. Keeping the fields of every generated message is protobuf's own guidance for
-# the lite runtime under R8. The messages are the contract, and small; the classes themselves may
-# still go or be renamed, and the device lane is what proves the rest of the transport survives.
--keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite { <fields>; }
