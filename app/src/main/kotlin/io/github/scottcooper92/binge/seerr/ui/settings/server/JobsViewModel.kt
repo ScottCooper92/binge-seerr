@@ -28,10 +28,14 @@ import javax.inject.Inject
 private const val RUNNING_REFRESH_MILLIS = 5_000L
 private const val OUTCOME_MILLIS = 4_000L
 
+/** How long after a job's scheduled time the list is re-read, so the server has started it. */
+private const val DUE_GRACE_MILLIS = 5_000L
+
 /**
  * The Jobs & cache page's jobs: every scheduled job, run now, cancelled, or given a new
  * schedule. While any job is running the list is re-read on a short interval, so the running state
- * clears on its own.
+ * clears on its own. While none is, it is re-read once the earliest next run comes due, so a job the
+ * schedule starts while the page is open shows as running, and its next run moves on.
  */
 @HiltViewModel
 class JobsViewModel
@@ -48,6 +52,8 @@ class JobsViewModel
 
         internal var runningRefreshMillis = RUNNING_REFRESH_MILLIS
         private var refresh: Job? = null
+        private var dueCheck: Job? = null
+        internal var clock: () -> Long = System::currentTimeMillis
         internal var outcomeMillis = OUTCOME_MILLIS
         private var readyWait: Job? = null
         private val awaiting = mutableSetOf<String>()
@@ -153,7 +159,29 @@ class JobsViewModel
                     outcomes = (current as? JobsUiState.Ready)?.outcomes.orEmpty(),
                 )
             }
-            if (jobs.any { it.running }) followRunning() else refresh?.cancel()
+            if (jobs.any { it.running }) {
+                dueCheck?.cancel()
+                followRunning()
+            } else {
+                refresh?.cancel()
+                checkWhenDue()
+            }
+        }
+
+        /**
+         * Re-reads the list a moment after the earliest scheduled run that is still ahead, which is when the schedule will
+         * have started a job. A next run already past is the server's stale word, not a time to wait for, so it schedules
+         * nothing: the list would otherwise be re-read without end.
+         */
+        private fun checkWhenDue() {
+            dueCheck?.cancel()
+            val now = clock()
+            val next = jobs().mapNotNull { it.nextRunMillis }.filter { it > now }.minOrNull() ?: return
+            dueCheck =
+                viewModelScope.launch(dispatcher) {
+                    delay(next + DUE_GRACE_MILLIS - now)
+                    runCatching { connection.api().jobs().map { it.toServerJob() } }.onSuccess { setJobs(it) }
+                }
         }
 
         private fun showOutcome(
@@ -179,6 +207,8 @@ class JobsViewModel
                             jobs.filter { job -> !job.running && job.id in awaiting }.forEach { showOutcome(it.id, JobOutcome.Succeeded) }
                         }
                     }
+                    // Nothing running now: wait for the next scheduled one instead.
+                    checkWhenDue()
                 }
         }
     }
