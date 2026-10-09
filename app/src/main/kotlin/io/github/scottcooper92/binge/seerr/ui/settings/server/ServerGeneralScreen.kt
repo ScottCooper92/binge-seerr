@@ -56,6 +56,7 @@ fun ServerGeneralScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        saveAsMade = true,
     ) { draft, enabled ->
         ApplicationGroup(draft, extras, keyActions, enabled, actions)
         DiscoverGroup(draft, extras, enabled, onLoadList, actions)

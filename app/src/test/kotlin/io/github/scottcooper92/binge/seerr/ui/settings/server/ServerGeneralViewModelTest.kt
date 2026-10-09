@@ -7,13 +7,21 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -65,7 +73,7 @@ class ServerGeneralViewModelTest {
 
     private suspend fun TestScope.viewModel(): ServerGeneralViewModel {
         connection = seerr.connection(this)
-        val vm = ServerGeneralViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher)
+        val vm = ServerGeneralViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -77,6 +85,12 @@ class ServerGeneralViewModelTest {
         uiState.first {
             it is ExtrasEditorUiState.Ready && !it.saving && where(it)
         } as ExtrasEditorUiState.Ready<ServerGeneralSettings, ServerGeneralExtras>
+
+    /** General saves as it changes: the change goes out once the delay has passed, and the answer is adopted. */
+    private suspend fun TestScope.awaitWritten(vm: ServerGeneralViewModel) {
+        advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+        vm.awaitReady { !it.dirty }
+    }
 
     @Test
     fun `the server's variant is kept for the display languages it offers`() =
@@ -189,9 +203,7 @@ class ServerGeneralViewModelTest {
             seerr.serve("POST /api/v1/settings/main", LINEAGE_MAIN.replace("\"Home\"", "\"Cinema\""))
 
             vm.edit { it.copy(applicationTitle = "Cinema", hideAvailable = false) }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertEquals("Cinema", sent.getValue("applicationTitle").jsonPrimitive.content)
@@ -206,15 +218,78 @@ class ServerGeneralViewModelTest {
             assertFalse(ready.dirty)
         }
 
+    /** #930: General saves as it changes. A burst of edits is one write, with no Save pressed. */
     @Test
-    fun `an address that is not a web url blocks the save`() =
+    fun `a burst of edits is written once, a moment after the last`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+            vm.edit { it.copy(hideAvailable = false) }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS / 2)
+            vm.edit { it.copy(hideRequested = true) }
+            runCurrent()
+            assertEquals("nothing is written while the edits keep coming", 0, seerr.count("POST", "/api/v1/settings/main"))
+
+            awaitWritten(vm)
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/main"))
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
+            assertEquals("Cinema", sent.getValue("applicationTitle").jsonPrimitive.content)
+            assertEquals("true", sent.getValue("hideRequested").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a write that fails keeps the change, says so, and a retry sends it`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("POST /api/v1/settings/main", """{"message":"nope"}""", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            val failed = vm.awaitReady { it.saveFailed }
+            assertEquals("the change stays, unsent", "Cinema", failed.draft.applicationTitle)
+            assertTrue(failed.dirty)
+
+            seerr.serve("POST /api/v1/settings/main", LINEAGE_MAIN.replace("\"Home\"", "\"Cinema\""))
+            vm.save()
+            val saved = vm.awaitReady { !it.saveFailed && !it.dirty }
+            assertEquals("Cinema", saved.saved.applicationTitle)
+            assertEquals(2, seerr.count("POST", "/api/v1/settings/main"))
+        }
+
+    /** Leaving the page straight after a change: the change still goes out, on the application's scope. */
+    @Test
+    fun `a change still waiting when the page goes is sent then`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+            viewModels.clear()
+            advanceUntilIdle()
+            // The write is real I/O on the server's thread, so wait for it in real time.
+            withContext(Dispatchers.Default) { withTimeout(5_000) { while (seerr.count("POST", "/api/v1/settings/main") == 0) delay(10) } }
+
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/main"))
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
+            assertEquals("Cinema", sent.getValue("applicationTitle").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `an address that is not a web url is never written`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
             vm.awaitReady()
 
             vm.edit { it.copy(applicationUrl = "seerr.example") }
-            vm.save()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
 
             assertEquals(0, seerr.count("POST", "/api/v1/settings/main"))
         }
@@ -252,9 +327,7 @@ class ServerGeneralViewModelTest {
             assertEquals(BlocklistSettings(region = "", languages = "ja", tags = "9951,210024", tagsLimit = "50"), draft.blocklist)
 
             vm.edit { it.copy(hideBlocklisted = true, blocklist = it.blocklist?.copy(tagsLimit = "100")) }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertEquals("true", sent.getValue("hideBlocklisted").jsonPrimitive.content)
@@ -276,9 +349,7 @@ class ServerGeneralViewModelTest {
             assertEquals(BlocklistSettings(region = null, languages = null, tags = "9951", tagsLimit = "50"), draft.blocklist)
 
             vm.edit { it.copy(applicationTitle = "Cinema") }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertNull(sent["blocklistedTags"])
@@ -298,9 +369,7 @@ class ServerGeneralViewModelTest {
             assertNull(draft.hideBlocklisted)
 
             vm.edit { it.copy(applicationTitle = "Cinema") }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertNull(sent["blocklistedTags"])
@@ -337,9 +406,7 @@ class ServerGeneralViewModelTest {
                 "GET /api/v1/settings/main",
                 LINEAGE_MAIN.replace("\"blocklistedTags\":\"9951,210024\"", "\"blocklistedTags\":\"4344\""),
             )
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertEquals("Cinema", sent.getValue("applicationTitle").jsonPrimitive.content)
@@ -350,12 +417,14 @@ class ServerGeneralViewModelTest {
 
     /** The tags page saves them itself; back on General, the saved record and the draft both take what the server holds. */
     @Test
-    fun `tags saved elsewhere are re-read into the record without touching an unsaved edit`() =
+    fun `tags saved elsewhere are re-read into the record without touching the page's other settings`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
             vm.awaitReady()
+            seerr.serve("POST /api/v1/settings/main", LINEAGE_MAIN.replace("\"Home\"", "\"Cinema\""))
             vm.edit { it.copy(applicationTitle = "Cinema") }
+            awaitWritten(vm)
 
             seerr.serve(
                 "GET /api/v1/settings/main",

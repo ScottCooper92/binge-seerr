@@ -5,12 +5,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -29,7 +31,11 @@ class ServerGeneralViewModel
         private val connection: SeerrConnection,
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
     ) : ExtrasEditorViewModel<ServerGeneralSettings, ServerGeneralExtras>(ServerGeneralExtras(), dispatcher) {
+        /** General saves as it changes (#930): every setting on it stands alone, and `settings/main` merges what it is sent. */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         init {
             reload()
         }

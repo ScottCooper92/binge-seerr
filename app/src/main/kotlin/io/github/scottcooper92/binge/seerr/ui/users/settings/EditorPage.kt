@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -120,6 +122,7 @@ internal fun <T> EditorPage(
     canSave: (T) -> Boolean = { true },
     validation: EditorValidation<T>? = null,
     showSaveAction: Boolean = true,
+    saveAsMade: Boolean = false,
     scrolling: Boolean = true,
     bottomBar: @Composable () -> Unit = {},
     extraActions: @Composable RowScope.() -> Unit = {},
@@ -128,6 +131,7 @@ internal fun <T> EditorPage(
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
     val ready = state as? EditorUiState.Ready<T>
+    if (saveAsMade) SaveFailedSnackbar(ready?.saveFailed == true, snackbarHostState, actions.onSave)
     val form = rememberEditorFormState(validation?.formKey.orEmpty())
     val issues = remember(validation, ready?.draft) { ready?.draft?.let { validation?.issues?.invoke(it) }.orEmpty() }
     EditorRevealEffect(form)
@@ -147,7 +151,8 @@ internal fun <T> EditorPage(
                             enabled = draft.dirty && !draft.saving,
                             busy = draft.saving,
                         )
-                    showSaveAction ->
+                    // A page that saves as it changes has nothing to press.
+                    showSaveAction && !saveAsMade ->
                         FormAction(
                             label = stringResource(R.string.user_settings_save),
                             onClick = actions.onSave,
@@ -230,4 +235,28 @@ internal fun EditorSectionTitle(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = dimensionResource(DesR.dimen.padding_s)),
     )
+}
+
+/**
+ * A page that saves as it changes says a write failed in a snackbar that stays until it is answered: Retry sends the
+ * draft again. It goes by itself once a later write starts, which carries the failed change with it.
+ */
+@Composable
+private fun SaveFailedSnackbar(
+    failed: Boolean,
+    snackbarHostState: SnackbarHostState,
+    onRetry: () -> Unit,
+) {
+    val message = stringResource(R.string.editor_save_failed)
+    val retry = stringResource(R.string.action_try_again)
+    LaunchedEffect(failed) {
+        if (!failed) return@LaunchedEffect
+        // Shown again whenever it goes without the user answering it - an event's snackbar dismisses whatever is
+        // showing - and after a retry, since a retry that fails at once leaves `failed` true and this effect unrestarted.
+        // Leaving `failed` cancels the effect, and a cancelled snackbar clears itself.
+        while (true) {
+            val result = snackbarHostState.showSnackbar(message, actionLabel = retry, duration = SnackbarDuration.Indefinite)
+            if (result == SnackbarResult.ActionPerformed) onRetry()
+        }
+    }
 }

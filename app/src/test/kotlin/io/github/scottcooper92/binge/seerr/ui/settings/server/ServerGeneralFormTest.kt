@@ -22,11 +22,14 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.theme.BingeExpressiveTheme
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
+import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -38,11 +41,11 @@ import org.robolectric.annotation.Config
 private val SAVED =
     ServerGeneralSettings(applicationTitle = "Seerr", locale = "en", discoverRegion = "GB", cacheImages = true)
 
-/** The page over a draft it edits itself, as the ViewModel would, reporting each save and list request. */
+/** The page over a draft it edits itself, as the ViewModel would, reporting each edit (General saves as it changes) and list request. */
 @Composable
 private fun General(
     initial: ServerGeneralSettings,
-    onSave: (ServerGeneralSettings) -> Unit = {},
+    onEdit: (ServerGeneralSettings) -> Unit = {},
     onLoadList: (ServerList) -> Unit = {},
 ) = BingeExpressiveTheme(dynamicColor = false) {
     var draft by remember { mutableStateOf(initial) }
@@ -54,7 +57,11 @@ private fun General(
                 extras = ServerGeneralExtras(variant = SeerrVariant.Seerr),
             ),
         events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = { onSave(draft) }),
+        actions =
+            EditorActions(onBack = {}, onRetry = {}, onEdit = {
+                draft = it(draft)
+                onEdit(draft)
+            }, onSave = {}),
         keyActions = ApiKeyActions(onToggleReveal = {}, onCopy = {}, onRegenerate = {}),
         onLoadList = onLoadList,
     )
@@ -66,11 +73,11 @@ class ServerGeneralFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private val saves = mutableListOf<ServerGeneralSettings>()
+    private val edits = mutableListOf<ServerGeneralSettings>()
     private val lists = mutableListOf<ServerList>()
 
     private fun show(draft: ServerGeneralSettings = SAVED) =
-        rule.setContent { General(draft, onSave = { saves += it }, onLoadList = { lists += it }) }
+        rule.setContent { General(draft, onEdit = { edits += it }, onLoadList = { lists += it }) }
 
     @Test
     fun `every group starts open, and no list is read before its picker opens`() {
@@ -93,16 +100,17 @@ class ServerGeneralFormTest {
     }
 
     @Test
-    fun `a display language picked from the sheet is what saves`() {
+    fun `a display language picked from the sheet is the edit that saves, with no Save to press`() {
         show()
 
         rule.onNode(hasText("Display language") and hasClickAction()).performClick()
         // The shared choice sheet's long list is lazy: a row is composed once scrolled to.
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Deutsch"))
         rule.onNodeWithText("Deutsch").performClick()
-        rule.onNodeWithText("Save").performClick()
 
-        assertEquals("de", saves.single().locale)
+        // The pick is the edit that saves: there is no Save to press.
+        assertEquals("de", edits.last().locale)
+        rule.onNodeWithText("Save").assertDoesNotExist()
     }
 
     @Test
@@ -112,6 +120,58 @@ class ServerGeneralFormTest {
         rule.onNode(hasText("Discover region") and hasClickAction()).performScrollTo().performClick()
 
         assertEquals(listOf(ServerList.DiscoverRegions), lists)
+    }
+}
+
+/** The failed-write snackbar is the page's only retry, so nothing but the user's answer may take it away. */
+@RunWith(RobolectricTestRunner::class)
+class ServerGeneralSaveFailedTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    private val events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
+    private var retries = 0
+
+    private fun show() =
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                ServerGeneralScreen(
+                    state =
+                        ExtrasEditorUiState.Ready(
+                            draft = SAVED.copy(applicationTitle = "Edited"),
+                            saved = SAVED,
+                            extras = ServerGeneralExtras(variant = SeerrVariant.Seerr),
+                            saveFailed = true,
+                        ),
+                    events = events,
+                    actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { retries++ }),
+                    keyActions = ApiKeyActions(onToggleReveal = {}, onCopy = {}, onRegenerate = {}),
+                )
+            }
+        }
+
+    @Test
+    fun `an event's snackbar does not take the retry away for good`() {
+        show()
+        rule.onNodeWithText("Try again").assertExists()
+
+        events.tryEmit(EditorEvent.Failed(SeerrError.Unreachable))
+        rule.waitForIdle()
+        rule.mainClock.advanceTimeBy(10_000)
+        rule.waitForIdle()
+
+        rule.onNodeWithText("Try again").assertExists()
+    }
+
+    @Test
+    fun `a retry that fails again shows the snackbar again`() {
+        show()
+
+        rule.onNodeWithText("Try again").performClick()
+        rule.waitForIdle()
+
+        assertEquals(1, retries)
+        rule.onNodeWithText("Try again").assertExists()
     }
 }
 
