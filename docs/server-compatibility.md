@@ -72,7 +72,7 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | Delete media files from Radarr and Sonarr | never | Jellyseerr 1.5 |
 | Media-server watchlist add and remove | never | Jellyseerr 1.6 |
 | LunaSea notification agent | always | never |
-| Discover sliders, watch providers, keyword and company search | 1.32 | always |
+| Discover sliders, watch providers, keyword and company search | 1.32 | Jellyseerr 1.4 |
 | Combined RT and IMDb ratings | 1.34 | Jellyseerr 1.7 |
 | Pushover sounds, read by an admin only (`/settings` needs `ADMIN` on both) | 1.34 | Jellyseerr 1.8 |
 | Telegram topic, `messageThreadId`, on a user and on the Telegram agent | never | Jellyseerr 2.2 |
