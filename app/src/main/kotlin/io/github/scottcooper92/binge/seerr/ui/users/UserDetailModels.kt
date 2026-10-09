@@ -43,6 +43,8 @@ data class UserDetail(
     val webUrl: String,
     /** What the server calls itself: Overseerr, Jellyseerr or Seerr. */
     val serverName: String = "Seerr",
+    /** The server lists a user's requests to that user and to a viewer who may see everyone's; the section is hidden otherwise. */
+    val canViewRequests: Boolean = true,
 )
 
 sealed interface UserDetailUiState {
