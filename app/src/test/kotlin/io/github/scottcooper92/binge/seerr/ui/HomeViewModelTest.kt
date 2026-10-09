@@ -7,10 +7,14 @@ import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.NoConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.OkHttpDrain
+import io.github.scottcooper92.binge.seerr.util.enqueueProfile
+import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -18,6 +22,9 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -57,7 +64,7 @@ class HomeViewModelTest {
         val connection = SeerrConnection(store, SeerrApiFactory(logRequests = false))
         val vm = HomeViewModel(connection, restore)
         viewModels.put(vm.hashCode().toString(), vm)
-        backgroundScope.launch { vm.isConnected.collect {} }
+        backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
 
@@ -77,7 +84,9 @@ class HomeViewModelTest {
             // which a virtual clock cannot advance — and a test that checked too early would pass
             // against the very logic this pins.
             assertNull(store.credentials.first())
-            assertNull(withContext(Dispatchers.Default) { withTimeoutOrNull(SETTLE_MILLIS) { vm.isConnected.first { it != null } } })
+            assertNull(
+                withContext(Dispatchers.Default) { withTimeoutOrNull(SETTLE_MILLIS) { vm.uiState.first { it != HomeUiState.Resolving } } },
+            )
         }
 
     @Test
@@ -89,7 +98,7 @@ class HomeViewModelTest {
 
             restore.run()
 
-            assertEquals(false, withContext(Dispatchers.Default) { vm.isConnected.first { it != null } })
+            assertEquals(HomeUiState.Setup, withContext(Dispatchers.Default) { vm.uiState.first { it != HomeUiState.Resolving } })
         }
 
     @Test
@@ -100,8 +109,51 @@ class HomeViewModelTest {
 
             val vm = viewModel(store, restore(store))
 
-            assertEquals(true, withContext(Dispatchers.Default) { vm.isConnected.first { it != null } })
+            assertEquals(HomeUiState.Connected, withContext(Dispatchers.Default) { vm.uiState.first { it != HomeUiState.Resolving } })
         }
+
+    @Test
+    fun `a rejection auth me confirms is the sign-in again, and a new sign-in brings the hub back`() =
+        runTest {
+            val server = MockWebServer().routeProfiles().apply { start() }
+            val drain = OkHttpDrain()
+            try {
+                val monitor = SeerrConnectionHealthMonitor()
+                val store = store()
+                val connection =
+                    SeerrConnection(
+                        store = store,
+                        apis = SeerrApiFactory(logRequests = false, health = monitor, testDispatcher = drain::newDispatcher),
+                        healthMonitor = monitor,
+                    )
+                val baseUrl = server.url("/").toString()
+
+                suspend fun signIn() {
+                    server.enqueue(json("""{"id":1,"permissions":2}"""))
+                    server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+                    connection.connect(baseUrl, SeerrAuth.ApiKey("k3y")).getOrThrow()
+                }
+                signIn()
+                val vm = HomeViewModel(connection, restore(store))
+                viewModels.put("home", vm)
+                backgroundScope.launch { vm.uiState.collect {} }
+                withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Connected } }
+
+                server.enqueue(MockResponse(code = 401))
+                runCatching { connection.api().requests(take = 1) }
+                server.enqueue(MockResponse(code = 401))
+                withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Reconnect } }
+
+                signIn()
+                assertEquals(HomeUiState.Connected, withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Connected } })
+            } finally {
+                viewModels.clear()
+                drain.awaitIdle()
+                server.close()
+            }
+        }
+
+    private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 
     private object ReversingCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext.reversed()

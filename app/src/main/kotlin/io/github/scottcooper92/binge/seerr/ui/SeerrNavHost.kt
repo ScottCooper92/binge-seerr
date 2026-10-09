@@ -8,7 +8,9 @@ import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,13 +44,14 @@ fun SeerrNavHost(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val rejected by viewModel.sessionRejected.collectAsStateWithLifecycle()
-    if (rejected) {
+    val state = viewModel.uiState.collectAsStateWithLifecycle()
+    if (state.value == HomeUiState.Reconnect) {
         // Nothing behind it: the screens would only fail one by one. A new sign-in brings them back on its own (#810).
         ScopedViewModels("reconnect") { ReconnectEntry(onDisconnect = viewModel::disconnect, modifier = modifier) }
         return
     }
-    val connectedState = viewModel.isConnected.collectAsStateWithLifecycle()
+    // The layout below only asks whether a server is saved: null while that is unknown.
+    val connectedState = remember(state) { derivedStateOf { state.value.connected() } }
     val connected by connectedState
     // Keyed on the root as well as the connection: a notification's link replaces the stack with one
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
@@ -61,6 +64,13 @@ fun SeerrNavHost(
         serverSettingsEntries(backStack)
     }
 }
+
+private fun HomeUiState.connected(): Boolean? =
+    when (this) {
+        HomeUiState.Resolving -> null
+        HomeUiState.Setup -> false
+        HomeUiState.Connected, HomeUiState.Reconnect -> true
+    }
 
 /**
  * The [NavDisplay] and the pane locals around it, apart from the entries that fill it. [SeerrNavHost] passes the real
