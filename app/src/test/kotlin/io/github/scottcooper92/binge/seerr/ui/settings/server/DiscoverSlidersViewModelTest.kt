@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -124,5 +125,24 @@ class DiscoverSlidersViewModelTest {
             val ready = vm.uiState.first { it is EditorUiState.Ready && !it.dirty } as EditorUiState.Ready<List<DiscoverSlider>>
             assertEquals(listOf(1, 2, 3, 4), ready.draft.map { it.id })
             assertEquals(2, seerr.count("GET", "/api/v1/settings/discover"))
+        }
+
+    /** A move still waiting out its save delay when Reset is tapped is dropped, not written over the reset (#1019). */
+    @Test
+    fun `a change still waiting to save when reset is tapped is never written`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.toggle(2)
+            val notice = awaitEvent(vm.events)
+
+            vm.reset()
+            assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 2)
+            runCurrent()
+
+            // A write goes out on OkHttp's threads, so a count taken at once can miss one on its way (#986).
+            assertFalse(seerr.awaitCountHoldingTime("POST", "/api/v1/settings/discover", moreThan = 0))
+            assertFalse(vm.awaitReady().draft.single { it.id == 2 }.enabled)
         }
 }

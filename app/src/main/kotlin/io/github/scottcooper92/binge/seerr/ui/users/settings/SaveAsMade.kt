@@ -35,7 +35,7 @@ internal class SaveAsMade<T>(
     private var inFlight: Deferred<Result<T>>? = null
     private var unsent = false
 
-    // The latest write, never cleared: cancelling [scope] ends send()'s wait on it, but the write itself is still running.
+    // The latest write, cleared only by [discard]: cancelling [scope] ends send()'s wait on it, but the write itself is still running.
     private var lastWrite: Deferred<Result<T>>? = null
 
     /** The draft changed: write it once the changes stop. */
@@ -95,6 +95,17 @@ internal class SaveAsMade<T>(
             val left = kept?.takeIf { (owed || earlierFailed) && canSave(it) } ?: return@async null
             left.takeIf { attempt { write(it) }.isFailure }
         }
+    }
+
+    /**
+     * The record on the server was replaced from elsewhere, as the sliders' Reset replaces the list (#1019): a change still
+     * waiting, or one whose write failed, is dropped rather than written over it. A write already running is left to finish.
+     */
+    fun discard() {
+        pending?.cancel()
+        unsent = false
+        lastWrite = null
+        failed(false)
     }
 
     /** The page has read its record again; [keptUnsent] says whether it kept a change [settle] could not send. */
