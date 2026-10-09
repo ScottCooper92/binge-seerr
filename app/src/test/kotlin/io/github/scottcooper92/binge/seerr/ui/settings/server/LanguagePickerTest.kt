@@ -22,6 +22,16 @@ class LanguagePickerTest {
     }
 
     @Test
+    fun `done keeps the saved codes while the list is still loading`() {
+        assertEquals(listOf("en", "ja"), pickedInOrder(null, saved = listOf("en", "ja"), picked = setOf("en", "ja")))
+    }
+
+    @Test
+    fun `done saves the picks in the list's order`() {
+        assertEquals(listOf("fr", "ja"), pickedInOrder(listOf("fr", "de", "ja"), listOf("ja"), setOf("ja", "fr")))
+    }
+
+    @Test
     fun `a code the device cannot name falls back to tmdb's name, then the code`() {
         assertEquals("Klingon list", languageName("zzz", "Klingon list"))
         assertEquals("zzz", languageName("zzz"))

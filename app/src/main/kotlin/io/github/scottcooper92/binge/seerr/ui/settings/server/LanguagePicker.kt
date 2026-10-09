@@ -58,6 +58,16 @@ internal fun languageChecklist(
 }
 
 /**
+ * The codes Done saves: [picked], in the list's order when there is one so the saved filter reads the same however the
+ * ticks were made. With no list yet (it is still loading) the saved codes stand, so Done cannot wipe them.
+ */
+internal fun pickedInOrder(
+    listed: List<String>?,
+    saved: List<String>,
+    picked: Set<String>,
+): List<String> = (listed ?: saved).filter { it in picked }
+
+/**
  * A language filter as a list row: the languages chosen, named on the device, so the page needs no list to draw it.
  * The server's list is read only when the sheet opens ([onOpen]). The sheet is a [BingeMultiChoiceSheet]: the
  * chosen languages in a Selected section, the device's and popular ones in Suggested, the rest in All, each marked with
@@ -100,8 +110,7 @@ internal fun languageSettingItem(
                 title = title,
                 choices = listed?.let { BingeChoiceList.Ready(it) } ?: BingeChoiceList.Loading,
                 selected = chosen.toSet(),
-                // In the list's order, so the saved filter reads the same however the ticks were made.
-                onDone = { picked -> apply(listed.orEmpty().map { it.value }.filter { it in picked }) },
+                onDone = { picked -> apply(pickedInOrder(listed?.map { it.value }, chosen, picked)) },
                 onDismiss = { open = false },
                 doneLabel = stringResource(R.string.editor_done),
                 clearLabel = stringResource(R.string.server_settings_list_clear),
