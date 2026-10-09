@@ -103,7 +103,7 @@ app:handoff_page_store_name  50eee1301880
 app:handoff_page_title  0f4cbd63d401
 app:handoff_page_username  e3b89e9d33f8
 app:hub_binge_connect_hint  ac2c213c1567
-app:hub_binge_connected_hint  10f092bfe3a5
+app:hub_binge_connected_hint  9738f0f1708a
 app:hub_binge_get  d0d7d58e7428
 app:hub_binge_not_installed_detail  a8e52a9826f0
 app:hub_binge_not_installed_title  d7e27e16cd15
@@ -933,7 +933,7 @@ app:tv_detail_info_status  920e413c7d41
 app:tv_detail_remove  c3812fc4acb8
 app:tv_download_percent  0edb69de9be1
 app:tv_filter_with_count  f7da0939cc40
-app:tv_handoff_body  e5667a0cfbae
+app:tv_handoff_body  a05f82f7df9c
 app:tv_handoff_code_description  1d5d01b0c49b
 app:tv_handoff_could_not_listen  9b2ceb3a1d16
 app:tv_handoff_no_network  23bbba026c2f
