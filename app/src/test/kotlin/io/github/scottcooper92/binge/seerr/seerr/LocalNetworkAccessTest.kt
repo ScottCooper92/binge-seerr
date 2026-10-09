@@ -26,6 +26,32 @@ class LocalNetworkAccessTest {
     }
 
     @Test
+    fun `link-local, unique-local and the home network suffixes are asked for`() {
+        assertEquals("169.254.3.4", "169.254.3.4".localNetworkHostOrNull())
+        assertEquals("172.20.0.5", "172.20.0.5".localNetworkHostOrNull())
+        assertEquals("fe80::1", "http://[fe80::1]:5055".localNetworkHostOrNull())
+        assertEquals("fd12:3456::7", "http://[fd12:3456::7]:5055".localNetworkHostOrNull())
+        assertEquals("seerr.local", "seerr.local".localNetworkHostOrNull())
+        assertEquals("seerr.home.arpa", "seerr.home.arpa".localNetworkHostOrNull())
+        assertEquals("seerr.internal", "seerr.internal".localNetworkHostOrNull())
+    }
+
+    @Test
+    fun `a tailnet address goes out through the VPN, so it needs nothing`() {
+        assertNull("100.103.24.117:5055".localNetworkHostOrNull())
+        assertNull("https://seerr.tail1234.ts.net".localNetworkHostOrNull())
+        assertNull("http://[fd7a:115c:a1e0::1]:5055".localNetworkHostOrNull())
+    }
+
+    @Test
+    fun `loopback never leaves the device, so it needs nothing`() {
+        assertNull("http://localhost:5055".localNetworkHostOrNull())
+        assertNull("127.0.0.1:5055".localNetworkHostOrNull())
+        assertNull("http://[::1]:5055".localNetworkHostOrNull())
+        assertNull("seerr.localhost".localNetworkHostOrNull())
+    }
+
+    @Test
     fun `an address that does not parse needs nothing`() {
         assertNull("http://".localNetworkHostOrNull())
         assertNull("".localNetworkHostOrNull())
