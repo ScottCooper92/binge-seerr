@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -23,6 +24,8 @@ sealed interface EditorUiState<out T> {
         val draft: T,
         val saved: T,
         val saving: Boolean = false,
+        /** A page that saves as it changes could not write its last change, which is kept, unsent. */
+        val saveFailed: Boolean = false,
     ) : EditorUiState<T> {
         val dirty: Boolean get() = draft != saved
     }
@@ -73,6 +76,37 @@ abstract class EditorViewModel<T>(
     /** Whether [draft] may be sent; a page overrides this where a blank field is not a change but an error. */
     protected open fun canSave(draft: T): Boolean = true
 
+    /**
+     * A page that saves as it changes (#930) returns the application's scope here, which the writes run on; null keeps the
+     * page on its Save. See [SaveAsMade].
+     */
+    protected open val saveAsMadeScope: CoroutineScope? = null
+
+    private val saveAsMade: SaveAsMade<T>? by lazy {
+        saveAsMadeScope?.let { appScope ->
+            SaveAsMade(
+                scope = viewModelScope,
+                appScope = appScope,
+                dispatcher = dispatcher,
+                draft = { ready()?.draft },
+                canSave = ::canSave,
+                write = ::write,
+                adopt = { sent, adopted ->
+                    var moved = false
+                    state.update { current ->
+                        val ready = current as? EditorUiState.Ready<T> ?: return@update current
+                        moved = ready.draft != sent
+                        ready.copy(saved = adopted, draft = if (moved) ready.draft else adopted)
+                    }
+                    moved
+                },
+                failed = { failed ->
+                    state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveFailed = failed) ?: current }
+                },
+            )
+        }
+    }
+
     fun reload() {
         state.value = EditorUiState.Loading
         viewModelScope.launch(dispatcher) {
@@ -82,13 +116,21 @@ abstract class EditorViewModel<T>(
         }
     }
 
-    fun edit(transform: (T) -> T) =
+    fun edit(transform: (T) -> T) {
+        val before = ready()?.draft
         state.update { current ->
             val ready = current as? EditorUiState.Ready<T> ?: return@update current
             if (ready.saving) ready else ready.copy(draft = transform(ready.draft))
         }
+        if (ready()?.draft != before) saveAsMade?.changed()
+    }
 
+    /** Writes the draft; on a page that saves as it changes, this is the retry after a write that failed. */
     fun save() {
+        saveAsMade?.let {
+            it.now()
+            return
+        }
         val ready = state.value as? EditorUiState.Ready<T> ?: return
         if (ready.saving || !ready.dirty || !canSave(ready.draft)) return
         state.value = ready.copy(saving = true)
@@ -105,6 +147,10 @@ abstract class EditorViewModel<T>(
     }
 
     protected fun ready(): EditorUiState.Ready<T>? = state.value as? EditorUiState.Ready<T>
+
+    override fun onCleared() {
+        saveAsMade?.cleared()
+    }
 
     /** For a page's own actions beside the form, which report through the same snackbar as a save. */
     protected suspend fun notify(event: EditorEvent) = eventFlow.emit(event)
@@ -125,6 +171,7 @@ sealed interface ExtrasEditorUiState<out T, out X> {
         val saved: T,
         val extras: X,
         val saving: Boolean = false,
+        val saveFailed: Boolean = false,
     ) : ExtrasEditorUiState<T, X> {
         val dirty: Boolean get() = draft != saved
     }
@@ -138,7 +185,7 @@ sealed interface ExtrasEditorUiState<out T, out X> {
 internal fun <T, X> ExtrasEditorUiState<T, X>.toEditorUiState(): EditorUiState<T> =
     when (this) {
         ExtrasEditorUiState.Loading -> EditorUiState.Loading
-        is ExtrasEditorUiState.Ready -> EditorUiState.Ready(draft = draft, saved = saved, saving = saving)
+        is ExtrasEditorUiState.Ready -> EditorUiState.Ready(draft = draft, saved = saved, saving = saving, saveFailed = saveFailed)
         is ExtrasEditorUiState.Error -> EditorUiState.Error(error)
     }
 
@@ -177,6 +224,34 @@ abstract class ExtrasEditorViewModel<T, X>(
     /** Whether [draft] may be sent; a page overrides this where a blank field is not a change but an error. */
     protected open fun canSave(draft: T): Boolean = true
 
+    /** As [EditorViewModel.saveAsMadeScope]: the application's scope for a page that saves as it changes (#930). */
+    protected open val saveAsMadeScope: CoroutineScope? = null
+
+    private val saveAsMade: SaveAsMade<T>? by lazy {
+        saveAsMadeScope?.let { appScope ->
+            SaveAsMade(
+                scope = viewModelScope,
+                appScope = appScope,
+                dispatcher = dispatcher,
+                draft = { ready()?.draft },
+                canSave = ::canSave,
+                write = ::write,
+                adopt = { sent, adopted ->
+                    var moved = false
+                    state.update { current ->
+                        val ready = current as? ExtrasEditorUiState.Ready<T, X> ?: return@update current
+                        moved = ready.draft != sent
+                        ready.copy(saved = adopted, draft = if (moved) ready.draft else adopted, extras = extrasState.value)
+                    }
+                    moved
+                },
+                failed = { failed ->
+                    state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveFailed = failed) ?: current }
+                },
+            )
+        }
+    }
+
     fun reload() {
         state.value = ExtrasEditorUiState.Loading
         viewModelScope.launch(dispatcher) {
@@ -186,13 +261,21 @@ abstract class ExtrasEditorViewModel<T, X>(
         }
     }
 
-    fun edit(transform: (T) -> T) =
+    fun edit(transform: (T) -> T) {
+        val before = ready()?.draft
         state.update { current ->
             val ready = current as? ExtrasEditorUiState.Ready<T, X> ?: return@update current
             if (ready.saving) ready else ready.copy(draft = transform(ready.draft))
         }
+        if (ready()?.draft != before) saveAsMade?.changed()
+    }
 
+    /** Writes the draft; on a page that saves as it changes, this is the retry after a write that failed. */
     fun save() {
+        saveAsMade?.let {
+            it.now()
+            return
+        }
         val ready = state.value as? ExtrasEditorUiState.Ready<T, X> ?: return
         if (ready.saving || !ready.dirty || !canSave(ready.draft)) return
         state.value = ready.copy(saving = true)
@@ -209,6 +292,10 @@ abstract class ExtrasEditorViewModel<T, X>(
     }
 
     protected fun ready(): ExtrasEditorUiState.Ready<T, X>? = state.value as? ExtrasEditorUiState.Ready<T, X>
+
+    override fun onCleared() {
+        saveAsMade?.cleared()
+    }
 
     /** Changes the saved record and the draft together: a page whose record another page wrote part of. */
     protected fun editReady(transform: (ExtrasEditorUiState.Ready<T, X>) -> ExtrasEditorUiState.Ready<T, X>) =

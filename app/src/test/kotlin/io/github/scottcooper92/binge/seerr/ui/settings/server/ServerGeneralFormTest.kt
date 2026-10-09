@@ -38,11 +38,11 @@ import org.robolectric.annotation.Config
 private val SAVED =
     ServerGeneralSettings(applicationTitle = "Seerr", locale = "en", discoverRegion = "GB", cacheImages = true)
 
-/** The page over a draft it edits itself, as the ViewModel would, reporting each save and list request. */
+/** The page over a draft it edits itself, as the ViewModel would, reporting each edit (General saves as it changes) and list request. */
 @Composable
 private fun General(
     initial: ServerGeneralSettings,
-    onSave: (ServerGeneralSettings) -> Unit = {},
+    onEdit: (ServerGeneralSettings) -> Unit = {},
     onLoadList: (ServerList) -> Unit = {},
 ) = BingeExpressiveTheme(dynamicColor = false) {
     var draft by remember { mutableStateOf(initial) }
@@ -54,7 +54,11 @@ private fun General(
                 extras = ServerGeneralExtras(variant = SeerrVariant.Seerr),
             ),
         events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = { draft = it(draft) }, onSave = { onSave(draft) }),
+        actions =
+            EditorActions(onBack = {}, onRetry = {}, onEdit = {
+                draft = it(draft)
+                onEdit(draft)
+            }, onSave = {}),
         keyActions = ApiKeyActions(onToggleReveal = {}, onCopy = {}, onRegenerate = {}),
         onLoadList = onLoadList,
     )
@@ -66,11 +70,11 @@ class ServerGeneralFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private val saves = mutableListOf<ServerGeneralSettings>()
+    private val edits = mutableListOf<ServerGeneralSettings>()
     private val lists = mutableListOf<ServerList>()
 
     private fun show(draft: ServerGeneralSettings = SAVED) =
-        rule.setContent { General(draft, onSave = { saves += it }, onLoadList = { lists += it }) }
+        rule.setContent { General(draft, onEdit = { edits += it }, onLoadList = { lists += it }) }
 
     @Test
     fun `every group starts open, and no list is read before its picker opens`() {
@@ -93,16 +97,17 @@ class ServerGeneralFormTest {
     }
 
     @Test
-    fun `a display language picked from the sheet is what saves`() {
+    fun `a display language picked from the sheet is the edit that saves, with no Save to press`() {
         show()
 
         rule.onNode(hasText("Display language") and hasClickAction()).performClick()
         // The shared choice sheet's long list is lazy: a row is composed once scrolled to.
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Deutsch"))
         rule.onNodeWithText("Deutsch").performClick()
-        rule.onNodeWithText("Save").performClick()
 
-        assertEquals("de", saves.single().locale)
+        // The pick is the edit that saves: there is no Save to press.
+        assertEquals("de", edits.last().locale)
+        rule.onNodeWithText("Save").assertDoesNotExist()
     }
 
     @Test
