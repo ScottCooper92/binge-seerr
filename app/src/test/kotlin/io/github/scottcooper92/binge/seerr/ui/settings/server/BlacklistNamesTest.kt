@@ -28,7 +28,7 @@ class BlacklistNamesTest {
         val body = form.copy(blocklist = form.blocklist?.copy(tagsLimit = "30")).toBody()
 
         assertEquals(true, body.hideBlacklisted)
-        assertEquals("12,34", body.blacklistedTags)
+        assertNull(body.blacklistedTags)
         assertEquals(30, body.blacklistedTagsLimit)
         assertNull(body.hideBlocklisted)
         assertNull(body.blocklistedTags)
@@ -45,7 +45,7 @@ class BlacklistNamesTest {
         assertFalse(form.blacklistNames)
         assertEquals(false, form.hideBlocklisted)
         assertEquals(false, body.hideBlocklisted)
-        assertEquals("56", body.blocklistedTags)
+        assertNull(body.blocklistedTags)
         assertNull(body.hideBlacklisted)
         assertNull(body.blacklistedTags)
     }

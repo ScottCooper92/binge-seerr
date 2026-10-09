@@ -260,7 +260,7 @@ private fun TagSearch(
 
 /**
  * A failed save as a snackbar that stays until it is answered: Retry sends the tags as they stand. It goes by itself once
- * a later change starts the next save, which carries the failed changes with it.
+ * a later save succeeds; that save carries the failed changes with it.
  */
 @Composable
 private fun SaveFailedSnackbar(

@@ -126,18 +126,18 @@ data class ServerGeneralExtras(
     val variant: SeerrVariant = SeerrVariant.Unknown,
     /** The server's lists, each read only once its picker opens; absent until then. */
     val lists: Map<ServerList, ListChoices> = emptyMap(),
-    /** The blocklisted tags' names and the keyword search, read only while the tags picker is open. */
+    /** The blocklisted tags' names, read for the row that opens the tags page. */
     val keywords: KeywordSearch = KeywordSearch(),
 )
 
-/** One TMDB keyword, as the tags picker lists it. */
+/** One TMDB keyword, as the blocklisted tags page lists it. */
 data class Keyword(
     val id: Int,
     val name: String,
 )
 
 /**
- * The tags picker's keywords: [names] for the ids the server holds, read once the picker opens, and [results] for the
+ * The blocklisted tags page's keywords: [names] for the ids the server holds, and [results] for the
  * last search, null before one. [failed] is a search that could not be read.
  */
 data class KeywordSearch(
@@ -218,10 +218,8 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         hideBlocklisted = hideBlocklisted.takeUnless { blacklistNames },
         blocklistRegion = blocklist?.region?.trim(),
         blocklistLanguage = blocklist?.languages?.trim(),
-        blocklistedTags = blocklistTags.takeUnless { blacklistNames },
         blocklistedTagsLimit = blocklistTagsLimit.takeUnless { blacklistNames },
         hideBlacklisted = hideBlocklisted.takeIf { blacklistNames },
-        blacklistedTags = blocklistTags.takeIf { blacklistNames },
         blacklistedTagsLimit = blocklistTagsLimit.takeIf { blacklistNames },
         partialRequestsEnabled = partialRequests,
         enableSpecialEpisodes = specialEpisodes,
@@ -232,5 +230,4 @@ internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
         csrfProtection = csrfProtection,
     )
 
-private val ServerGeneralSettings.blocklistTags: String? get() = blocklist?.tagIds?.joinToString(",")
 private val ServerGeneralSettings.blocklistTagsLimit: Int? get() = blocklist?.tagsLimit?.trim()?.toIntOrNull()

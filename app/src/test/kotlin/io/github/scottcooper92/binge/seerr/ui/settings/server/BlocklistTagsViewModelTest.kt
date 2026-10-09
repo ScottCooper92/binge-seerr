@@ -57,7 +57,7 @@ class BlocklistTagsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): BlocklistTagsViewModel {
-        val vm = BlocklistTagsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+        val vm = BlocklistTagsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -97,6 +97,22 @@ class BlocklistTagsViewModelTest {
             vm.uiState.first { seerr.count("POST", "/api/v1/settings/main") == 1 }
 
             assertEquals(mapOf("blocklistedTags" to "4344,210024"), sent())
+        }
+
+    @Test
+    fun `leaving the page before the delay is up still sends the change, once`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.toggle(4344)
+            vm.awaitReady { it.tags == listOf(9951, 4344) }
+            viewModels.clear()
+            seerr.awaitCount("POST", "/api/v1/settings/main", moreThan = 0)
+            advanceTimeBy(TAGS_SAVE_DELAY_MILLIS * 2)
+
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/main"))
+            assertEquals(mapOf("blocklistedTags" to "9951,4344"), sent())
         }
 
     @Test

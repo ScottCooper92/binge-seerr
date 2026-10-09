@@ -251,14 +251,13 @@ class ServerGeneralViewModelTest {
             assertEquals(false, draft.hideBlocklisted)
             assertEquals(BlocklistSettings(region = "", languages = "ja", tags = "9951,210024", tagsLimit = "50"), draft.blocklist)
 
-            vm.edit { it.copy(hideBlocklisted = true, blocklist = it.blocklist?.copy(tags = "9951", tagsLimit = "100")) }
+            vm.edit { it.copy(hideBlocklisted = true, blocklist = it.blocklist?.copy(tagsLimit = "100")) }
             val saved = awaitEvent(vm.events)
             vm.save()
             assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
             assertEquals("true", sent.getValue("hideBlocklisted").jsonPrimitive.content)
-            assertEquals("9951", sent.getValue("blocklistedTags").jsonPrimitive.content)
             assertEquals("100", sent.getValue("blocklistedTagsLimit").jsonPrimitive.content)
             assertEquals("ja", sent.getValue("blocklistLanguage").jsonPrimitive.content)
         }
@@ -282,7 +281,7 @@ class ServerGeneralViewModelTest {
             assertEquals(EditorEvent.Saved, saved.await())
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
-            assertEquals("9951", sent.getValue("blocklistedTags").jsonPrimitive.content)
+            assertNull(sent["blocklistedTags"])
             assertNull(sent["blocklistRegion"])
             assertNull(sent["blocklistLanguage"])
         }
@@ -322,6 +321,31 @@ class ServerGeneralViewModelTest {
             vm.loadKeywordNames(listOf(9951, 210024))
             assertEquals(mapOf(9951 to "kaiju", 210024 to "anime"), named.extras.keywords.names)
             assertEquals(1, seerr.count("GET", "/api/v1/keyword/9951"))
+        }
+
+    /** The tags page owns the tags (#930): a Save here leaves them out, so it cannot overwrite what that page wrote. */
+    @Test
+    fun `saving the general page never sends the tags, under either name`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.edit { it.copy(applicationTitle = "Cinema") }
+
+            // The tags page saves a different set after General loaded.
+            seerr.serve(
+                "GET /api/v1/settings/main",
+                LINEAGE_MAIN.replace("\"blocklistedTags\":\"9951,210024\"", "\"blocklistedTags\":\"4344\""),
+            )
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/main")).jsonObject
+            assertEquals("Cinema", sent.getValue("applicationTitle").jsonPrimitive.content)
+            assertNull(sent["blocklistedTags"])
+            assertNull(sent["blacklistedTags"])
+            assertEquals("50", sent.getValue("blocklistedTagsLimit").jsonPrimitive.content)
         }
 
     /** The tags page saves them itself; back on General, the saved record and the draft both take what the server holds. */

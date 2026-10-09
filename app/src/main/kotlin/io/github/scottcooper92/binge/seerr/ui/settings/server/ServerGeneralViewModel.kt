@@ -142,5 +142,5 @@ class ServerGeneralViewModel
         }
     }
 
-/** How long the tags picker waits after the last keystroke before it searches. */
+/** How long the tags page waits after the last keystroke before it searches. */
 internal const val KEYWORD_SEARCH_DEBOUNCE_MILLIS = 300L

@@ -5,12 +5,15 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsUpdateBody
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +57,7 @@ class BlocklistTagsViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @ApplicationScope private val appScope: CoroutineScope,
     ) : ViewModel() {
         private val state = MutableStateFlow<BlocklistTagsUiState>(BlocklistTagsUiState.Loading)
         val uiState: StateFlow<BlocklistTagsUiState> = state.asStateFlow()
@@ -61,6 +65,9 @@ class BlocklistTagsViewModel
         private var blacklistNames = false
         private var search: Job? = null
         private var save: Job? = null
+
+        /** A change that has not been sent yet: the page leaving before its delay is up must still send it. */
+        private var unsent = false
 
         init {
             reload()
@@ -114,24 +121,36 @@ class BlocklistTagsViewModel
         fun retry() = saveSoon(0)
 
         private fun saveSoon(wait: Long) {
+            unsent = true
             save?.cancel()
             save =
                 viewModelScope.launch(dispatcher) {
                     delay(wait)
                     val tags = (state.value as? BlocklistTagsUiState.Ready)?.tags ?: return@launch
-                    val csv = tags.joinToString(",")
-                    val body =
-                        if (blacklistNames) {
-                            SeerrMainSettingsUpdateBody(
-                                blacklistedTags = csv,
-                            )
-                        } else {
-                            SeerrMainSettingsUpdateBody(blocklistedTags = csv)
-                        }
-                    attempt { connection.api().updateMainSettings(body) }
-                        .onSuccess { editReady { it.copy(saveFailed = false) } }
-                        .onFailure { editReady { it.copy(saveFailed = true) } }
+                    unsent = false
+                    // The write runs on the application's scope, so leaving the page cannot cancel it half-sent.
+                    val saved = appScope.async(dispatcher) { write(tags) }.await()
+                    editReady { it.copy(saveFailed = !saved) }
                 }
+        }
+
+        private suspend fun write(tags: List<Int>): Boolean {
+            val csv = tags.joinToString(",")
+            val body =
+                SeerrMainSettingsUpdateBody(
+                    blocklistedTags = csv.takeUnless { blacklistNames },
+                    blacklistedTags = csv.takeIf { blacklistNames },
+                )
+            return attempt { connection.api().updateMainSettings(body) }.isSuccess
+        }
+
+        /** Leaving the page with a change still waiting out its delay sends it now, on the application's scope. */
+        override fun onCleared() {
+            val tags = (state.value as? BlocklistTagsUiState.Ready)?.tags
+            if (unsent && tags != null) {
+                save?.cancel()
+                appScope.launch(dispatcher) { write(tags) }
+            }
         }
 
         private fun name(ids: List<Int>) {
