@@ -46,12 +46,16 @@ app:consent_title  916d330273e6
 app:download_eta_hours  02abf092ccd1
 app:download_eta_minutes  fc01feb5f7e5
 app:editor_cancel  19766ed6ccb2
+app:editor_discard  eb1a70e39274
+app:editor_discard_message  e783fee76b16
+app:editor_discard_title  85bcf41666a5
 app:editor_done  11a6767d5674
 app:editor_error_port  8d698cda62a0
 app:editor_error_web_url  e148371588c2
 app:editor_error_web_url_no_slash  9977eb7dc6a9
 app:editor_error_whole_number  e24f56c429cd
 app:editor_field_required  4850b174b713
+app:editor_keep_editing  e76fd2add010
 app:editor_save_failed  c3c267addddb
 app:editor_section_collapse_action  be6eb1fc3b05
 app:editor_section_collapsed  b322b65227bc
