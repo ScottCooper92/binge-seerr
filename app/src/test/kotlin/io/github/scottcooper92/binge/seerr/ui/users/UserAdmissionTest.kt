@@ -101,7 +101,7 @@ class UserAdmissionTest {
             vm.admission.create()
             assertEquals(UsersEvent.UserCreated("Ana"), created.await())
             assertEquals("""{"email":"ana@example.com","username":"ana","password":"longenough"}""", seerr.body("POST", "/api/v1/user"))
-            assertNull(vm.awaitReady().admission)
+            assertNull(vm.awaitReady { it.admission == null }.admission)
 
             flowOf(refreshed.await()).asSnapshot()
             seerr.awaitCount("GET", "/api/v1/user", moreThan = listReads)
@@ -145,7 +145,7 @@ class UserAdmissionTest {
             vm.admission.import()
             assertEquals(UsersEvent.UsersImported(2), imported.await())
             assertEquals("""{"jellyfinUserIds":["j-8","j-9"]}""", seerr.body("POST", "/api/v1/user/import-from-jellyfin"))
-            assertNull(vm.awaitReady().admission)
+            assertNull(vm.awaitReady { it.admission == null }.admission)
         }
 
     @Test

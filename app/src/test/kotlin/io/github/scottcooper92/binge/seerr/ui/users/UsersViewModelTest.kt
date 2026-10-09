@@ -333,13 +333,115 @@ class UsersViewModelTest {
             version.set("3.1.0")
             vm.setScreenVisible(true)
             vm.awaitReady { ManageablePermission.ManageBlocklist in it.offered }
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.touched?.isNotEmpty() == true }
 
             val permissionsSaved = awaitEvent(vm.events)
             vm.applyBulkEdit()
 
             assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
             val put = received.single { it.method == "PUT" }.body
-            assertTrue(put, put.contains("\"permissions\":${request or blocklist}"))
+            assertTrue(put, put.contains("\"permissions\":${request or blocklist or ManageablePermission.CreateIssues.bit}"))
+        }
+
+    /** Ida holds Request; Jo holds Request and Manage Issues. Their permissions differ, which is where the union seed widened them (#1007). */
+    private fun serveIdaAndJoWhoDiffer() {
+        val request = ManageablePermission.Request.bit
+        val manageIssues = ManageablePermission.ManageIssues.bit
+        seerr.dispatcher = { req ->
+            received += req
+            when (req.method + " " + req.url.encodedPath) {
+                "GET /api/v1/auth/me" -> json("""{"id":1,"displayName":"Admin","permissions":$ADMIN}""")
+                "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
+                "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                "GET /api/v1/user" ->
+                    json(
+                        """{"pageInfo":{"pages":1,"results":2},"results":[
+                           {"id":10,"displayName":"Ida","permissions":$request,"userType":3,"requestCount":0},
+                           {"id":11,"displayName":"Jo","permissions":${request or manageIssues},"userType":3,"requestCount":0}]}""",
+                    )
+                "PUT /api/v1/user" -> json("[]")
+                else -> FakeResponse(code = 404)
+            }
+        }
+    }
+
+    @Test
+    fun `a bulk edit over users who differ ticks only what they share, and an untouched save changes no one`() =
+        runTest {
+            serveIdaAndJoWhoDiffer()
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.users.asSnapshot()
+            vm.toggleSelected(10)
+            vm.toggleSelected(11)
+            vm.awaitReady { it.selection == setOf(10, 11) }
+
+            vm.startBulkEdit()
+            val edit = vm.awaitReady { it.edit?.saving == false }.edit
+            assertEquals(setOf(ManageablePermission.Request), edit?.selected)
+            assertEquals(setOf(ManageablePermission.ManageIssues), edit?.mixed)
+
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
+            assertTrue(received.none { it.method == "PUT" })
+            assertEquals(ManageablePermission.Request.bit, cache.rows.first { it.id == 10 }.permissions)
+        }
+
+    @Test
+    fun `a bulk edit over users who differ writes only what was toggled, and each keeps the rest of their own`() =
+        runTest {
+            serveIdaAndJoWhoDiffer()
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.users.asSnapshot()
+            vm.toggleSelected(10)
+            vm.toggleSelected(11)
+            vm.awaitReady { it.selection == setOf(10, 11) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.touched?.isNotEmpty() == true }
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
+            val puts = received.filter { it.method == "PUT" }
+            val idaExpected = ManageablePermission.Request.bit or ManageablePermission.CreateIssues.bit
+            val joExpected = idaExpected or ManageablePermission.ManageIssues.bit
+            assertTrue(puts.single { it.body.contains("\"ids\":[10]") }.body.contains("\"permissions\":$idaExpected"))
+            assertTrue(puts.single { it.body.contains("\"ids\":[11]") }.body.contains("\"permissions\":$joExpected"))
+        }
+
+    @Test
+    fun `a permission toggled on and back off is untouched again, so the user who had it keeps it`() =
+        runTest {
+            serveIdaAndJoWhoDiffer()
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.users.asSnapshot()
+            vm.toggleSelected(10)
+            vm.toggleSelected(11)
+            vm.awaitReady { it.selection == setOf(10, 11) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+
+            // Manage issues is Jo's alone, so it opens unticked: ticked and then unticked, the sheet is where it began.
+            vm.togglePermission(ManageablePermission.ManageIssues)
+            vm.awaitReady { ManageablePermission.ManageIssues in it.edit?.selected.orEmpty() }
+            vm.togglePermission(ManageablePermission.ManageIssues)
+            val back = vm.awaitReady { ManageablePermission.ManageIssues !in it.edit?.selected.orEmpty() }
+            assertEquals(emptySet<ManageablePermission>(), back.edit?.touched)
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
+            assertTrue(received.none { it.method == "PUT" })
+            val jo = ManageablePermission.decode(cache.rows.first { it.id == 11 }.permissions)
+            assertTrue(ManageablePermission.ManageIssues in jo)
         }
 
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

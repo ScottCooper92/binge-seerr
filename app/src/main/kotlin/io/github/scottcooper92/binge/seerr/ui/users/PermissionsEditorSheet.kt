@@ -22,8 +22,8 @@ import com.binge.designsystem.R as DesR
 
 /**
  * The permission toggles, grouped, with the umbrella rules: a permission another selected one
- * already covers reads on and locked. The set written is the whole new set, so the sheet says how
- * many users it lands on.
+ * already covers reads on and locked. A save writes only what was toggled, onto each user, so the sheet
+ * says how many users it lands on, and notes when they don't all share the same permissions (#1007).
  */
 @Composable
 internal fun PermissionsEditorSheet(
@@ -42,6 +42,7 @@ internal fun PermissionsEditorSheet(
             saving = edit.saving,
             onToggle = onToggle,
             onSave = onSave,
+            note = if (edit.mixed.isEmpty()) null else stringResource(R.string.users_edit_permissions_mixed),
         )
     }
 }
@@ -57,6 +58,8 @@ internal fun PermissionsEditorContent(
     modifier: Modifier = Modifier,
     /** Toggles shown but not flippable: what the viewer may not grant. */
     locked: Set<ManageablePermission> = emptySet(),
+    /** A line under the title, such as how a bulk edit treats permissions the selection doesn't share. */
+    note: String? = null,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -76,6 +79,17 @@ internal fun PermissionsEditorContent(
                         .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
                         .padding(bottom = dimensionResource(DesR.dimen.padding_s)),
             )
+            note?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier =
+                        Modifier
+                            .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                            .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
+                )
+            }
             permissionTree(offered, selected).forEach { (group, nodes) ->
                 EditorToggleGroup(
                     stringResource(group.labelRes()),

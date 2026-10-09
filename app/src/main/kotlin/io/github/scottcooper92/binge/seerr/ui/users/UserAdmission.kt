@@ -9,11 +9,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPlexUserDto
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -36,13 +33,12 @@ class UserAdmission(
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
+    /** Where this reports to: the owner's one events flow, so a subscriber to it never misses an admission's event. */
+    private val emit: suspend (UsersEvent) -> Unit,
     private val onAdmitted: () -> Unit,
 ) {
     private val stateFlow = MutableStateFlow<UserAdmissionState?>(null)
     val state: StateFlow<UserAdmissionState?> = stateFlow.asStateFlow()
-
-    private val eventFlow = MutableSharedFlow<UsersEvent>(extraBufferCapacity = 1)
-    val events: SharedFlow<UsersEvent> = eventFlow.asSharedFlow()
 
     fun start() {
         if (stateFlow.value == null) stateFlow.value = UserAdmissionState.Choosing()
@@ -79,10 +75,10 @@ class UserAdmission(
             }.onSuccess { created ->
                 stateFlow.value = null
                 onAdmitted()
-                eventFlow.emit(UsersEvent.UserCreated(created.toUserItem()?.name ?: draft.username.trim()))
+                emit(UsersEvent.UserCreated(created.toUserItem()?.name ?: draft.username.trim()))
             }.onFailure { failure ->
                 stateFlow.update { current -> (current as? UserAdmissionState.Creating)?.copy(saving = false) ?: current }
-                eventFlow.emit(UsersEvent.Failed(failure.toSeerrError()))
+                emit(UsersEvent.Failed(failure.toSeerrError()))
             }
         }
     }
@@ -149,10 +145,10 @@ class UserAdmission(
             }.onSuccess { count ->
                 stateFlow.value = null
                 onAdmitted()
-                eventFlow.emit(UsersEvent.UsersImported(count))
+                emit(UsersEvent.UsersImported(count))
             }.onFailure { failure ->
                 stateFlow.update { current -> (current as? UserAdmissionState.Importing)?.copy(saving = false) ?: current }
-                eventFlow.emit(UsersEvent.Failed(failure.toSeerrError()))
+                emit(UsersEvent.Failed(failure.toSeerrError()))
             }
         }
     }

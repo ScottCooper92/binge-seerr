@@ -21,12 +21,14 @@ sealed interface HandOffProgress {
     data object Failed : HandOffProgress
 
     /**
-     * The server answered and the TV is on its sign-in step, named [server], offering [modes] by name. [failed] is
-     * whether the last attempt was refused, and [attempt] is how many sets of credentials the TV has taken, so a phone
-     * can tell which attempt [failed] is about.
+     * The server answered and the TV is on its sign-in step, named [server] and reached at [address], offering [modes]
+     * by name. [failed] is whether the last attempt was refused, and [attempt] is how many sets of credentials the TV
+     * has taken, so a phone can tell which attempt [failed] is about. Credentials are sealed for [address] (#1029): the
+     * name is the server's own word for itself, which any server can claim.
      */
     data class SignIn(
         val server: String,
+        val address: String,
         val modes: List<String> = emptyList(),
         val failed: Boolean = false,
         val attempt: Int = 0,

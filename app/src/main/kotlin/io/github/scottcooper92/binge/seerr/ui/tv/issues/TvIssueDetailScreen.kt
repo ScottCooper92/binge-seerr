@@ -226,7 +226,7 @@ private fun TvCommentRow(
                 .clip(BingeShapes.TvListItem)
                 .tvFocusFill(isFocused = focused, shape = BingeShapes.TvListItem)
                 .tvClickable(enabled = false, onFocusChanged = { focused = it }, onClick = {})
-                // Merged so the node that carries focus is the one that reads, exactly as `TvIssueRow` does.
+                // Merged so the node that carries focus is the one that reads.
                 .semantics(mergeDescendants = true) {}
                 .padding(horizontal = dimensionResource(DesR.dimen.padding_m), vertical = dimensionResource(DesR.dimen.padding_s)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),

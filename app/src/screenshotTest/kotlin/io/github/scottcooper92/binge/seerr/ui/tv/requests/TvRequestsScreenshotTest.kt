@@ -43,7 +43,7 @@ private val FixedSampleRequests =
 /**
  * The television requests hub: the rows over the backdrop at rest, the empty arm, the loading and failed-load
  * pages, and the failed-scope pages. A request's own moderation is framed on `TvRequestDetailScreenshotTest`.
- * Mirrors the states sketched in `TvBoardPreviews.kt`.
+ * Mirrors the states sketched in `TvBoardPreviewData.kt`.
  */
 class TvRequestsScreenshotTest {
     @PreviewTest

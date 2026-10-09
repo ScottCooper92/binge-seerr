@@ -62,7 +62,7 @@ app:editor_section_collapse_action  be6eb1fc3b05
 app:editor_section_collapsed  b322b65227bc
 app:editor_section_expand_action  07548c2c6511
 app:editor_section_expanded  e72d5d8d0b16
-app:editor_section_issues  10da1c6f1248
+app:editor_section_issues  f44280ef062a
 app:editor_test_and_save  be8494fb38fe
 app:field_clear  a8ff550536c7
 app:field_secret_hide  ad5caeb74e49
@@ -94,6 +94,7 @@ app:handoff_page_send  f89f3b050177
 app:handoff_page_sent_body  7ac6c00d22fc
 app:handoff_page_sent_title  c16bc82bf1f0
 app:handoff_page_sign_in  bfd402b2f6f3
+app:handoff_page_signin_address  7bc0be86234f
 app:handoff_page_signin_body  49229059bc86
 app:handoff_page_signin_form_body  2b44677b214e
 app:handoff_page_signin_form_title  5657abe2920e
@@ -418,6 +419,7 @@ app:send_signin_continue_as_you  69d7ffc62e45
 app:send_signin_form  eed872434e62
 app:send_signin_lost  0b8b0899c90a
 app:send_signin_on_tv  b0724ebd3943
+app:send_signin_redirected  0da74fbf0f16
 app:send_signin_rejected  61c349dccc4a
 app:send_signin_sealed  964904c25126
 app:send_signin_session  c0acb129d393
@@ -1092,6 +1094,7 @@ app:users_create_title  6384ffa7712c
 app:users_create_username_placeholder  dc92703611d8
 app:users_created  a0a469896eec
 app:users_edit_permissions  68aa23038fe4
+app:users_edit_permissions_mixed  60c15cea4e67
 app:users_edit_permissions_save  31e392d1c037
 app:users_edit_permissions_title  8c7a912058f6
 app:users_empty  89c9757b7ee4

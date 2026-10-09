@@ -272,6 +272,7 @@
     <string name="users_clear_selection_cd">Quitar la selección</string>
     <string name="users_edit_permissions">Editar permisos</string>
     <string name="users_edit_permissions_save">Aplicar</string>
+    <string name="users_edit_permissions_mixed">Los permisos que solo tienen algunos de estos usuarios aparecen sin marcar. Cada usuario conserva los suyos salvo que los cambies.</string>
     <string name="users_add_cd">Añadir usuarios</string>
     <string name="users_add_create">Crear un usuario local</string>
     <string name="users_add_create_desc">Inicia sesión con correo y contraseña</string>
@@ -512,9 +513,9 @@
     <string name="editor_section_expand_action">Desplegar</string>
     <string name="editor_section_collapse_action">Contraer</string>
     <plurals name="editor_section_issues">
-        <item quantity="one">%d campo requiere atención</item>
-        <item quantity="many">%d de campos requieren atención</item>
-        <item quantity="other">%d campos requieren atención</item>
+        <item quantity="one">%1$d campo requiere atención</item>
+        <item quantity="many">%1$d campos requieren atención</item>
+        <item quantity="other">%1$d campos requieren atención</item>
     </plurals>
     <string name="editor_error_port">Introduce un puerto entre 1 y 65535.</string>
     <string name="editor_error_web_url">Introduce una dirección web que empiece por http:// o https://.</string>
@@ -949,6 +950,7 @@
     <string name="handoff_page_signin_body">Tu televisor encontró %1$s. Inicia sesión allí con el mando.</string>
     <string name="handoff_page_signin_form_title">Inicia sesión en %1$s</string>
     <string name="handoff_page_signin_form_body">Tu televisor también inicia sesión con estos datos. Se cifran para tu televisor antes de salir de esta página.</string>
+    <string name="handoff_page_signin_address">Dirección del servidor: %1$s</string>
     <string name="handoff_page_mode">Iniciar sesión con</string>
     <string name="handoff_page_mode_local">Cuenta local</string>
     <string name="handoff_page_mode_api_key">Clave de API</string>
@@ -979,6 +981,7 @@
     <string name="send_signin_on_tv">El televisor encontró %1$s. Termina de iniciar sesión con el mando del televisor.</string>
     <string name="send_signin_connected">Sesión iniciada. El televisor en %1$s está listo.</string>
     <string name="send_signin_lost">El televisor dejó de responder. Comprueba que está encendido y que sigue mostrando el código, y vuelve a escanearlo.</string>
+    <string name="send_signin_redirected">El televisor está iniciando sesión en una dirección de servidor distinta de la que enviaste, así que no se ha enviado nada más. Vuelve a empezar desde el televisor.</string>
     <string name="send_address_not_connected">Este móvil no está conectado a ningún servidor, así que no hay dirección que enviar. Escribe la dirección en la página que abrió el código.</string>
     <string name="send_address_refused">Este enlace no apunta a un televisor de tu red doméstica, así que no se ha enviado nada.</string>
     <string name="send_address_done">Hecho</string>

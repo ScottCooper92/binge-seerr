@@ -14,8 +14,9 @@ the raw facts behind it.
    `GET /status`, kept in `SeerrServerProfile`.
 2. **The signed-in user's permissions.** What the server would let this user do. Read from
    `GET /auth/me` as the permission bitmask, decoded by `SeerrPermissions`. `ADMIN` implies
-   everything. Jellyseerr and Seerr define three bits Overseerr does not: `MANAGE_SETTINGS`,
-   `MANAGE_BLOCKLIST` and `VIEW_BLOCKLIST`.
+   everything. Jellyseerr and Seerr define three bits Overseerr's current code does not:
+   `MANAGE_SETTINGS`, `MANAGE_BLOCKLIST` and `VIEW_BLOCKLIST`. Overseerr up to 1.29 did define
+   `MANAGE_SETTINGS` (bit 4), so an old grant of it can exist on any lineage.
 3. **The server's configuration.** What the administrator turned on. Read from
    `GET /settings/public`: `localLogin`, `mediaServerLogin`, `mediaServerType`, `movie4kEnabled`,
    `series4kEnabled`, `partialRequestsEnabled`, `enableSpecialEpisodes`, `hideAvailable`,
@@ -71,9 +72,9 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | Delete media files from Radarr and Sonarr | never | Jellyseerr 1.5 |
 | Media-server watchlist add and remove | never | Jellyseerr 1.6 |
 | LunaSea notification agent | always | never |
-| Discover sliders, watch providers, keyword and company search | 1.32 | always |
+| Discover sliders, watch providers, keyword and company search | 1.32 | Jellyseerr 1.4 |
 | Combined RT and IMDb ratings | 1.34 | Jellyseerr 1.7 |
-| Pushover sounds, read by an admin only (`/settings` needs `ADMIN` on both) | 1.34 | Jellyseerr 1.8 |
+| Pushover sounds, read by any signed-in user (the route sits ahead of the admin-only `/settings` router) | 1.34 | Jellyseerr 1.8 |
 | Telegram topic, `messageThreadId`, on a user and on the Telegram agent | never | Jellyseerr 2.2 |
 | Issues, comments | 1.28 | always |
 | Issue and request counts | 1.30 | always |
@@ -102,9 +103,13 @@ Three more are about where a value travels rather than what it is called:
 - `POST /media/{id}/{status}` takes `is4k` on the **body**, on both lineages. As a query parameter
   it is a plain-instance write on Overseerr and a 500 on the Jellyseerr lineage, whose Express 5
   leaves `req.body` undefined for a bodyless call.
-- `DELETE /blocklist/{tmdbId}` takes a `mediaType` query parameter, required from Seerr 3.2 and
-  ignored before it. Without it the server answers 400.
-- `GET /issue` narrows by `createdBy`, not the request list's `requestedBy`.
+- `DELETE /blocklist/{tmdbId}` takes a `mediaType` query parameter, which the app sends only from
+  Seerr 3.2. An earlier server rejects it as an unknown query parameter and answers 400. From 3.2
+  the server needs it, and answers 400 without it.
+- `GET /issue` accepts no reporter filter. The API spec declares only `requestedBy`, and the
+  server's request validator answers 400 to any parameter the spec does not declare, `createdBy`
+  included. The app sends neither: the server already narrows a user without `VIEW_ISSUES` or
+  `MANAGE_ISSUES` to their own issues.
 
 ## What the request page shows of its destination
 
@@ -134,8 +139,10 @@ other spelling would leave keys it never reads.
 
 ## Settings the administrator can turn off
 
-Two public settings narrow the REQUEST contract's capabilities, because the server refuses the
-write when they are off:
+Two public settings narrow the REQUEST contract's capabilities. The server's own code does not
+enforce them all (for example, it never reads `partialRequestsEnabled` when it takes a request, and
+it derives the 4K flags from the default 4K instances), so these gates mirror what the server's web
+client offers:
 
 - `CAPABILITY_REQUEST_4K` needs the user to hold the 4K permission for a media type the server has
   4K on for: `movie4kEnabled` for movies, `series4kEnabled` for series.
@@ -163,8 +170,9 @@ certificate). The app trusts user-installed CAs as well as the system's
 installed, the TLS handshake fails and the address step says the server could not be reached.
 
 Plain HTTP is still allowed, because a LAN Seerr at a private IP is usually served that way and the
-config file cannot express IP ranges. The setup screen warns when an `http://` address names a
-public host, since the key would then cross the internet in the clear.
+config file cannot express IP ranges. The app refuses an `http://` address that names a public host
+until the user ticks a consent in setup, since the key would otherwise cross the internet in the
+clear (`auth/CleartextConsent.kt`). Builds before that opt-in only warned.
 
 ## Where this lives
 

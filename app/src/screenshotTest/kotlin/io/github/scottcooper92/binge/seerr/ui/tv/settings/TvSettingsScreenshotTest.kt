@@ -13,7 +13,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettingsWithApp
 /**
  * The television settings board: the connection/server list, the disconnect confirmation focused,
  * and — admin only — the media server row's library scan option. Mirrors the states already sketched
- * in `TvBoardPreviews.kt`.
+ * in `TvBoardPreviewData.kt`.
  */
 class TvSettingsScreenshotTest {
     /** A non-admin sees the connection group only: no media server row, so no scan option either. */

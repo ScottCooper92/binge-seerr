@@ -57,15 +57,14 @@ class NotificationsViewModel
             }
 
         /**
-         * The sounds [token]'s application offers. The list is a server setting, which only an admin may read, so it is
-         * asked for only where the server has it and the viewer is one; a failure leaves the device's own sound.
+         * The sounds [token]'s application offers. The server registers this route ahead of its admin-only settings, so
+         * any signed-in user may read it; it is asked for only where the server has it, and a failure leaves the
+         * device's own sound.
          */
         private suspend fun pushoverSounds(token: String): List<PushoverSoundChoice> {
             if (!connection.profile().hasPushoverSounds) return emptyList()
-            return runCatching {
-                if (!connection.authenticatedUser().toPermissions().isAdmin) return emptyList()
-                connection.api().pushoverSounds(token)
-            }.getOrDefault(emptyList())
+            return runCatching { connection.api().pushoverSounds(token) }
+                .getOrDefault(emptyList())
                 .map { PushoverSoundChoice(name = it.name, description = it.description ?: it.name) }
         }
 

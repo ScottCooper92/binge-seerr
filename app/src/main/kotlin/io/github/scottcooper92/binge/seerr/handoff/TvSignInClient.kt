@@ -22,12 +22,14 @@ interface TvSignInClient {
     suspend fun status(target: TvHandOffTarget): HandOffStatus?
 
     /**
-     * Seals [credentials] for [target] and posts them; the number of the attempt the TV counted them as, or null if it
-     * did not take them. A TV that took them may still refuse the sign-in, which its status says once
+     * Seals [credentials] for [target] and the server [address] the TV is signing in to, and posts them; the number of
+     * the attempt the TV counted them as, or null if it did not take them. A TV signing in anywhere else cannot open
+     * them (#1029). A TV that took them may still refuse the sign-in, which its status says once
      * [HandOffStatus.attempt] has reached that number.
      */
     suspend fun send(
         target: TvHandOffTarget,
+        address: String,
         credentials: HandOffCredentials,
     ): Int?
 }
@@ -70,10 +72,12 @@ internal class OkHttpTvSignInClient(
 
     override suspend fun send(
         target: TvHandOffTarget,
+        address: String,
         credentials: HandOffCredentials,
     ): Int? {
         val key = target.key ?: return null
-        val sealed = key.seal(JSON.encodeToString(credentials).toByteArray(Charsets.UTF_8), context = target.token)
+        val sealed =
+            key.seal(JSON.encodeToString(credentials).toByteArray(Charsets.UTF_8), context = HandOffKey.context(target.token, address))
         return withContext(dispatcher) {
             val request =
                 Request

@@ -292,6 +292,7 @@
     <string name="users_clear_selection_cd">Clear selection</string>
     <string name="users_edit_permissions">Edit permissions</string>
     <string name="users_edit_permissions_save">Apply</string>
+    <string name="users_edit_permissions_mixed">Permissions only some of these users have start unticked. Each user keeps their own unless you change it.</string>
     <string name="users_add_cd">Add users</string>
     <string name="users_add_create">Create a local user</string>
     <string name="users_add_create_desc">Signs in with an email and password</string>
@@ -536,8 +537,8 @@
     <string name="editor_section_expand_action">Expand</string>
     <string name="editor_section_collapse_action">Collapse</string>
     <plurals name="editor_section_issues">
-        <item quantity="one">%d field needs attention</item>
-        <item quantity="other">%d fields need attention</item>
+        <item quantity="one">%1$d field needs attention</item>
+        <item quantity="other">%1$d fields need attention</item>
     </plurals>
     <string name="editor_error_port">Enter a port between 1 and 65535.</string>
     <string name="editor_error_web_url">Enter a web address that starts with http:// or https://.</string>
@@ -979,6 +980,7 @@
     <string name="handoff_page_signin_body">Your TV found %1$s. Sign in there with your remote.</string>
     <string name="handoff_page_signin_form_title">Sign in to %1$s</string>
     <string name="handoff_page_signin_form_body">Your TV signs in with these too. They\'re encrypted for your TV before they leave this page.</string>
+    <string name="handoff_page_signin_address">Server address: %1$s</string>
     <string name="handoff_page_mode">Sign in with</string>
     <string name="handoff_page_mode_local">Local account</string>
     <string name="handoff_page_mode_api_key">API key</string>
@@ -1011,6 +1013,7 @@
     <string name="send_signin_on_tv">The TV found %1$s. Finish signing in with the TV\'s remote.</string>
     <string name="send_signin_connected">Signed in. The TV at %1$s is ready.</string>
     <string name="send_signin_lost">The TV stopped answering. Check that it is on and still showing the code, then scan it again.</string>
+    <string name="send_signin_redirected">The TV is signing in to a different server address from the one you sent, so nothing more was sent. Start again from the TV.</string>
     <string name="send_address_not_connected">This phone isn\'t connected to a server, so there\'s no address to send. Type the address on the page the code opened instead.</string>
     <string name="send_address_refused">This link doesn\'t point to a TV on your home network, so nothing was sent.</string>
     <string name="send_address_done">Done</string>

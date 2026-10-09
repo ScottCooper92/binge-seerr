@@ -152,6 +152,9 @@ internal fun TvTextField(
                         .fillMaxSize()
                         .focusRequester(input)
                         .focusProperties { canFocus = editing }
+                        // The editable node names itself too: while editing, a screen reader is on this node and not the frame,
+                        // and would read the value as "edit box" with no label.
+                        .semantics { contentDescription = label }
                         .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier)
                         // Leaving the input, by Back past the keyboard or a move, ends editing: the frame takes over again.
                         .onFocusChanged { if (!it.isFocused && editing) editing = false }

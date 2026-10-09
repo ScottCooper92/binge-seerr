@@ -37,7 +37,7 @@ maintainer's decision; see the README.
 > metadata, job, cache and log pages, editable where your account may edit them.
 >
 > **Notifications.** New requests waiting for approval, new issues, and your own requests being
-> approved, declined or becoming available, checked in the background on a schedule you set. No
+> approved, declined or becoming available, checked in the background every fifteen minutes. No
 > third-party push service: the app asks your server directly.
 >
 > **Binge.** Install Binge alongside and this app becomes its request integration: a title page in
@@ -47,16 +47,16 @@ maintainer's decision; see the README.
 >
 > **Android TV.** A rail with the hub, requests, issues and settings, driven from the remote.
 >
-> **Your server, your data.** Sign in with an API key, a local account, Plex, or Jellyfin's Quick
-> Connect. The key or session is encrypted with an Android Keystore key. The app talks to the
-> server you entered and, if you choose to sign in with Plex, to plex.tv. Usage data goes to
-> PostHog only if you agree, and crash reports go to Firebase Crashlytics unless you turn them off in
-> Settings. Google Play's Block Store can carry your connection to a new device. No adverts, no
-> accounts of its own.
+> **Your server, your data.** Sign in with an API key, a local account, Plex, Jellyfin or Emby (with
+> Quick Connect where the server offers it). The key or session is encrypted with an Android
+> Keystore key. The app talks to the server you entered and, if you choose to sign in with Plex, to
+> plex.tv. Usage data goes to PostHog only if you agree, and crash reports go to Firebase
+> Crashlytics unless you turn them off in Settings. Google Play's Block Store can carry your
+> connection to a new device. No adverts, no accounts of its own.
 >
 > Open source, under the Apache 2.0 licence: github.com/ScottCooper92/binge-seerr.
 
-(2,042 characters)
+(2,079 characters)
 
 ## Category and contact
 

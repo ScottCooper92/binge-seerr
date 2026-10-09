@@ -59,7 +59,8 @@ complexity:
     # Above detekt's default (60): a screen composable's body is a flat tree of child composables
     # (one call per section/row/state arm), so line count tracks UI surface, not branching logic.
     # 90 clears the idiomatic screen bodies while still flagging the genuinely-overgrown method
-    # that should be decomposed by concern — the runtime mirror of the 400-line FileLength gate.
+    # that should be decomposed by concern. There is no file-length gate here: Binge's `binge:` FileLength
+    # was not carried across (binge-companions#39), so the 400-line signal is held in review.
     threshold: 90
   TooManyFunctions:
     # Above detekt's default (11): a feature screen file legitimately hosts the entry composable
@@ -107,12 +108,12 @@ coroutines:
   # detekt-default-active and already pass.
   InjectDispatcher:
     # A Hilt @Provides IS the injection point - naming a dispatcher there is what the rule wants,
-    # not what it is warning about - so the one production site, `applicationScope()`, is exempted
-    # by annotation rather than baselined. Note the issue's premise was wrong: this repository does
+    # not what it is warning about - so the two production sites in `di/SeerrModule.kt` (`Dispatchers.Default` and
+    # `Dispatchers.IO`) are exempted by annotation rather than baselined. Note the issue's premise was wrong: this repository does
     # name a dispatcher in production today.
     ignoreAnnotated: ['Provides']
-    # Preventive: nothing in production here hardcodes a dispatcher today, so this is a no-op on
-    # day one. It is on so that stays true — an SDK consumer that hardcodes Dispatchers.IO is one
+    # Preventive: the only dispatchers named outside a default argument are the two `@Provides` sites above, so this is a
+    # no-op today. It is on so that stays true — an SDK consumer that hardcodes Dispatchers.IO is one
     # its own tests cannot control.
     active: true
   RedundantSuspendModifier:

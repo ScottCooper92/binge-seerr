@@ -17,7 +17,7 @@ import org.gradle.work.DisableCachingByDefault
  * green. Checking the resolved graphs, not the two catalog files, catches that drift in either
  * direction, and anything else that drags one gRPC module away from the rest.
  *
- * grpc-kotlin is versioned separately (`grpcKotlin`), so its modules are not held to this.
+ * grpc-kotlin is versioned separately from grpc, so its modules are not held to this.
  */
 @DisableCachingByDefault(because = "Inspects resolved dependency graphs; cheap, and not worth caching.")
 abstract class CheckGrpcAlignmentTask : DefaultTask() {

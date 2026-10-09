@@ -9,7 +9,11 @@ import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 private const val PLAY_STORE_WEB_URL = "https://play.google.com/store/apps/details?id=${BingeHosts.RELEASE_PACKAGE_NAME}"
 private const val PLAY_STORE_MARKET_URI = "market://details?id=${BingeHosts.RELEASE_PACKAGE_NAME}"
 
-/** Whether release Binge is installed, per the `<queries>` visibility declared for its package. */
+/**
+ * Whether release Binge is installed, per the `<queries>` visibility declared for its package.
+ *
+ * The suppression is warranted: `getPackageInfo(String, Int)` is the only overload below API 33, and `minSdk` is 26.
+ */
 @Suppress("DEPRECATION")
 fun Context.isBingeInstalled(): Boolean = runCatching { packageManager.getPackageInfo(BingeHosts.RELEASE_PACKAGE_NAME, 0) }.isSuccess
 

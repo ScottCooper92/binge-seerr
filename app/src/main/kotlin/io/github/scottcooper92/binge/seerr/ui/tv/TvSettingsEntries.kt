@@ -25,7 +25,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SettingsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.JobsViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.MEDIA_SERVER_SCAN_JOB_ID
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
-import io.github.scottcooper92.binge.seerr.ui.tvActions
 
 @Composable
 internal fun TvSettingsEntry(

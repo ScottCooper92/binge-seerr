@@ -37,7 +37,7 @@ internal val HandOffSignInModes =
  * the browser's page. [modes] are the TV's own sign-in modes by name, and [failed] is whether the last attempt was
  * refused, so the app can show its form again with a message. [attempt] is how many sets of credentials the TV has
  * taken: [failed] is about the attempt with that number, so a phone that sent attempt N reads it only once this has
- * reached N.
+ * reached N. [address] is where the TV is signing in, which is what a phone seals credentials for (#1029).
  */
 @Serializable
 data class HandOffStatus(
@@ -46,6 +46,7 @@ data class HandOffStatus(
     val modes: List<String> = emptyList(),
     val failed: Boolean = false,
     val attempt: Int = 0,
+    val address: String? = null,
 ) {
     companion object {
         const val WAITING = "waiting"
@@ -78,6 +79,7 @@ internal fun HandOffProgress.toStatus(): HandOffStatus =
                 modes = modes,
                 failed = failed,
                 attempt = attempt,
+                address = address,
             )
         HandOffProgress.Connected -> HandOffStatus(HandOffStatus.CONNECTED)
     }

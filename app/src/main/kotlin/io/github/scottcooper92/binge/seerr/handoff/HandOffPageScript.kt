@@ -10,7 +10,8 @@ package io.github.scottcooper92.binge.seerr.handoff
  * - It puts the key into the "Open Seerr" link, so the app gets it without it crossing the LAN. Without the key, as
  *   on a page opened from the typed URL, the app could not send the PIN, so the PIN step hides the link.
  * - On the TV's sign-in step it shows the server's sign-in fields and seals what is typed exactly as the app does
- *   ([HandOffKey.seal]: AES-256-GCM under an HKDF-SHA256 key, the token as associated data), then follows the TV.
+ *   ([HandOffKey.seal]: AES-256-GCM under an HKDF-SHA256 key, with [HandOffKey.context] as associated data: the token
+ *   and the address the TV is signing in to, which the page shows above the form), then follows the TV.
  *
  * The sealing is written out here rather than taken from the browser: a page served over plain HTTP from a LAN
  * address is not a secure context, so the browser's own Web Crypto is not available to it.
@@ -111,7 +112,7 @@ busy=true;go.disabled=true;err.hidden=true;go.textContent=go.getAttribute("data-
 var md=mode(),person=md==="Jellyfin"||md==="Emby";
 var c={mode:md,apiKey:md==="ApiKey"?val("apikey"):"",email:md==="Local"?val("email"):"",
 username:person?val("username"):"",password:md==="ApiKey"?"":val("password")};
-var body="sealed="+encodeURIComponent(Seal.seal(K,T,JSON.stringify(c)));
+var body="sealed="+encodeURIComponent(Seal.seal(K,T+"\n"+f.getAttribute("data-address"),JSON.stringify(c)));
 fetch("/c/"+T,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body})
 .then(function(r){return r.ok?r.json():null;})
 .then(function(j){if(j&&j.attempt){sent=j.attempt;}else{fail();}},fail);});
