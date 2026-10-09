@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -69,7 +70,7 @@ class OverrideRuleViewModel
                 val instances =
                     radarrRecords.mapNotNull { it.toSummary(ServiceType.Radarr) } +
                         sonarrRecords.mapNotNull { it.toSummary(ServiceType.Sonarr) }
-                val userChoices = users.await().map { user -> Choice(user.id, user.displayName ?: user.username ?: user.id.toString()) }
+                val userChoices = users.await().map { user -> Choice(user.id, user.displayString() ?: user.id.toString()) }
                 editExtras { it.copy(instances = instances, users = userChoices) }
                 form.serviceId?.let { serviceId -> form.serviceType?.let { type -> loadChoices(type, serviceId) } }
                 form

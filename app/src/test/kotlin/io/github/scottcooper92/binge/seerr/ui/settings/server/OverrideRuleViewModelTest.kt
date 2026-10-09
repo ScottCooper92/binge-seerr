@@ -110,6 +110,18 @@ class OverrideRuleViewModelTest {
         }
 
     @Test
+    fun `the user picker masks an email-named user and falls back to the id for a blank one`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/user",
+                """{"results":[{"id":3,"displayName":"","email":"ann@example.com"},{"id":5,"displayName":" ","username":""}]}""",
+            )
+            val vm = viewModel(id = 11)
+            val extras = vm.awaitReady { it.extras.users.isNotEmpty() }.extras
+            assertEquals(listOf("ann", "5"), extras.users.map { it.label })
+        }
+
+    @Test
     fun `a new rule cannot be saved without an instance, and picking one clears the overrides`() =
         runTest {
             val vm = viewModel(id = null)
