@@ -125,6 +125,7 @@ private fun ColumnScope.TvSetupAddressFields(
                 label = stringResource(R.string.setup_allow_cleartext),
                 checked = state.cleartextAllowed,
                 onCheckedChange = actions.onAllowCleartext,
+                enabled = !state.isInspecting,
                 modifier = if (state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier,
             )
             TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)

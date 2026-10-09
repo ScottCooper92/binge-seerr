@@ -20,10 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +44,8 @@ import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.tv.R as TvR
+
+private const val DISABLED_ROW_ALPHA = 0.38f
 
 /**
  * A titled set of mutually exclusive options, stacked so a long root-folder path has the row's width to
@@ -211,7 +215,8 @@ private fun TvTab(
 /**
  * One yes-or-no setting as a row the remote can reach: a box that fills and takes a tick when [checked], and its
  * [label]. OK flips it. For a single agreement under a field, where the page's own button then goes on, so ticking
- * it commits nothing by itself.
+ * it commits nothing by itself. Not [enabled], it is dimmed and OK does nothing, but it keeps focus so the remote
+ * does not lose its place.
  */
 @Composable
 internal fun TvCheckboxRow(
@@ -219,20 +224,27 @@ internal fun TvCheckboxRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var focused by remember { mutableStateOf(false) }
     val contentColor = tvFocusContentColor(isFocused = focused, resting = MaterialTheme.colorScheme.onSurface)
     Row(
         modifier =
             modifier
+                .alpha(if (enabled) 1f else DISABLED_ROW_ALPHA)
                 .height(dimensionResource(R.dimen.tv_form_option_height))
                 .clip(BingeShapes.Pill)
                 .tvFocusFill(isFocused = focused, shape = BingeShapes.Pill)
-                .tvClickable(onFocusChanged = { focused = it }, onClick = { onCheckedChange(!checked) })
+                .tvClickable(
+                    onFocusChanged = { focused = it },
+                    enabled = enabled,
+                    onClick = { onCheckedChange(!checked) },
+                )
                 .padding(horizontal = dimensionResource(R.dimen.tv_form_option_padding_horizontal))
                 .semantics {
                     role = Role.Checkbox
                     toggleableState = ToggleableState(checked)
+                    if (!enabled) disabled()
                 },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_form_option_gap)),
