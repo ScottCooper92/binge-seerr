@@ -8,8 +8,8 @@
     as well as Seerr), not only the Seerr server. That is deliberate: the server's host is known only at runtime.
 
     Cleartext stays permitted for now: this file can name hosts and single addresses but not IP ranges,
-    so it cannot allow a LAN Seerr at 192.168.x.y while refusing a public host. The setup screen warns
-    when an http:// address names a public host.
+    so it cannot allow a LAN Seerr at 192.168.x.y while refusing a public host. Setup refuses an
+    http:// address that names a public host until the user consents.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">

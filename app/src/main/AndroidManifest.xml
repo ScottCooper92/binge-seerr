@@ -46,8 +46,9 @@
 
     <!--
         Cleartext is allowed because a self-hosted Seerr on a LAN or a tailnet is plain HTTP far
-        more often than not, and refusing it would refuse most real servers. The setup screen
-        warns when an http:// address names a PUBLIC host, which is the case that actually leaks.
+        more often than not, and refusing it would refuse most real servers. Setup refuses
+        an http:// address that names a PUBLIC host until the user consents, which is the case that
+        actually leaks.
     -->
     <application
         android:name=".SeerrApp"

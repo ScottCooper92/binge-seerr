@@ -52,7 +52,10 @@ data class SeerrPermissions(
     val canManageIssues: Boolean = false,
     val canViewIssues: Boolean = false,
     val canManageUsers: Boolean = false,
-    /** Jellyseerr's own bits; Overseerr never sets them, so there they read as false unless the user is an admin. */
+    /**
+     * Jellyseerr's own bits; Overseerr's current code never sets them, so there they read as false unless the user
+     * is an admin. Overseerr up to 1.29 defined `MANAGE_SETTINGS`, so an old grant of that one can exist.
+     */
     val canManageSettings: Boolean = false,
     val canViewBlocklist: Boolean = false,
 ) {
