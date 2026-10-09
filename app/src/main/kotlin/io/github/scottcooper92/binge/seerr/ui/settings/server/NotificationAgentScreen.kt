@@ -2,6 +2,9 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Tune
@@ -124,6 +127,7 @@ private fun optionItem(
                 icon = Icons.Filled.Tune,
                 title = label,
                 choices = EmailEncryption.entries.map { it to stringResource(it.labelRes()) },
+                choiceIcon = { if (it == EmailEncryption.None) Icons.Filled.LockOpen else Icons.Filled.Lock },
                 selected = EmailEncryption.of(draft),
                 enabled = editable,
                 onSelect = actions.onSetEncryption,
@@ -133,6 +137,7 @@ private fun optionItem(
                 icon = Icons.Filled.Tune,
                 title = label,
                 choices = extras.sounds.map { it.name to it.description },
+                choiceIcon = { Icons.Filled.MusicNote },
                 selected = draft.option(option).takeIf { it.isNotEmpty() },
                 enabled = editable,
             ) { name -> actions.onSetOption(option, name) }

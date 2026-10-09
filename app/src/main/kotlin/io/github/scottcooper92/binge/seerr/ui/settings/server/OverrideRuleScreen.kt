@@ -7,12 +7,15 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -76,6 +79,7 @@ internal fun RuleInstance(
                     icon = Icons.Filled.Storage,
                     title = stringResource(R.string.advanced_server),
                     choices = extras.instances.map { it to "${it.type.name}$separator${it.name}" },
+                    choiceIcon = { instance -> if (instance.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv },
                     selected = extras.instances.firstOrNull { it.type == draft.serviceType && it.id == draft.serviceId },
                     enabled = enabled,
                     onSelect = onSelectInstance,

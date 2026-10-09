@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -194,6 +195,7 @@ internal fun OptionsGroup(
                                 MONITOR_NEW_ITEMS_ALL to stringResource(R.string.server_settings_dvr_monitor_all),
                                 MONITOR_NEW_ITEMS_NONE to stringResource(R.string.server_settings_dvr_monitor_none),
                             ),
+                        choiceIcon = { if (it == MONITOR_NEW_ITEMS_NONE) Icons.Filled.VisibilityOff else Icons.Filled.Visibility },
                         selected = monitor,
                         enabled = enabled,
                     ) { value -> actions.onEdit { it.copy(monitorNewItems = value) } }

@@ -9,9 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +24,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeChoice
+import com.binge.designsystem.component.BingeChoiceList
+import com.binge.designsystem.component.BingeChoiceSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.CheckboxRow
-import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import com.binge.designsystem.component.TextEntrySurface
@@ -227,8 +226,8 @@ private fun SheetHint(text: String) =
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
 /**
- * A pick from a fixed list as a list row: the setting's name, and what it is set to now. A tap opens a peeking sheet
- * of the choices as list rows, the current one checked; picking one applies it and closes. The sheet closes if a save
+ * A pick from a fixed list as a list row: the setting's name, and what it is set to now. A tap opens the shared
+ * choice sheet, each choice with [choiceIcon]'s icon or else the setting's; picking one applies it and closes. The sheet closes if a save
  * starts, so a pick can't land in a draft that has already gone out.
  */
 @Composable
@@ -238,17 +237,20 @@ internal fun <T> choiceSettingItem(
     choices: List<Pair<T, String>>,
     selected: T?,
     enabled: Boolean,
+    choiceIcon: (T) -> ImageVector? = { null },
     onSelect: (T) -> Unit,
 ): ListItem {
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
     if (open) {
-        PeekingListSheet(title = title, onDismiss = { open = false }) {
-            ChoiceRows(icon, choices, selected) { choice ->
-                onSelect(choice)
-                open = false
-            }
-        }
+        BingeChoiceSheet(
+            title = title,
+            // Every choice carries an icon: its own where it has one, else the setting's.
+            choices = BingeChoiceList.Ready(choices.map { (value, label) -> BingeChoice(value, label, icon = choiceIcon(value) ?: icon) }),
+            selected = selected,
+            onSelect = onSelect,
+            onDismiss = { open = false },
+        )
     }
     return ListItem(
         icon = icon,
@@ -260,36 +262,6 @@ internal fun <T> choiceSettingItem(
         disabled = !enabled,
         onClick = { open = true },
     )
-}
-
-/** [choices] as list rows in a sheet, the [selected] one checked, for a picker built on [PeekingListSheet]. */
-@Composable
-internal fun <T> ChoiceRows(
-    icon: ImageVector,
-    choices: List<Pair<T, String>>,
-    selected: T?,
-    onSelect: (T) -> Unit,
-) {
-    ItemGroup(
-        title = null,
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        rows =
-            choices.map { (choice, label) ->
-                ListItem(
-                    icon = icon,
-                    label = label,
-                    selected = choice == selected,
-                    onClick = { onSelect(choice) },
-                    trailingContent =
-                        if (choice == selected) {
-                            { Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                        } else {
-                            {}
-                        },
-                )
-            },
-    )
-    Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
 }
 
 /**

@@ -28,7 +28,6 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.GroupMessage
-import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
@@ -96,7 +95,7 @@ private fun ApplicationGroup(
                     hint = stringResource(R.string.server_settings_application_url_hint),
                     check = { value -> urlError.takeIf { !draft.copy(applicationUrl = value).urlValid } },
                 ),
-                choiceSettingItem(
+                displayLanguageSettingItem(
                     icon = Icons.Filled.Translate,
                     title = stringResource(R.string.settings_display_language),
                     choices = DisplayLanguages.choices(extras.variant, draft.locale),

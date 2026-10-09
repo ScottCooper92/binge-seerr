@@ -9,6 +9,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
@@ -16,6 +17,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
@@ -95,7 +97,9 @@ class ServerGeneralFormTest {
         show()
 
         rule.onNode(hasText("Display language") and hasClickAction()).performClick()
-        rule.onNodeWithText("Deutsch").performScrollTo().performClick()
+        // The shared choice sheet's long list is lazy: a row is composed once scrolled to.
+        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Deutsch"))
+        rule.onNodeWithText("Deutsch").performClick()
         rule.onNodeWithText("Save").performClick()
 
         assertEquals("de", saves.single().locale)
