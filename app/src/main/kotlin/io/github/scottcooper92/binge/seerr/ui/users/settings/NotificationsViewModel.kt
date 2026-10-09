@@ -6,10 +6,12 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNotificationTypesDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserNotificationSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -26,8 +28,15 @@ class NotificationsViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
     ) : EditorViewModel<NotificationSettings>(dispatcher) {
+        /**
+         * A user's notifications save as they change (#930): the switches at once, an id or token on its sheet's Done. The
+         * endpoint assigns every field it is sent, so each write carries the whole record.
+         */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         init {
             reload()
         }

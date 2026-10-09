@@ -37,6 +37,7 @@ fun NotificationsSettingsScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
+        saveAsMade = true,
     ) { draft, enabled ->
         NotificationAgent.entries.filter { it.onPage }.forEach { agent ->
             AgentGroup(agent, draft, enabled, actions.onEdit)
