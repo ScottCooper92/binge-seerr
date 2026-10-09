@@ -110,10 +110,7 @@ class UsersViewModel
                                         SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown, null -> null
                                     },
                                 canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
-                                locked =
-                                    viewer?.let {
-                                        lockedFor(ManageablePermission.decode(it.permissions ?: 0), isOwner = it.id == OWNER_USER_ID)
-                                    } ?: setOf(ManageablePermission.Admin),
+                                locked = lockedFor(isOwner = viewer?.id == OWNER_USER_ID),
                                 isOwner = viewer?.id == OWNER_USER_ID,
                             ),
                         )

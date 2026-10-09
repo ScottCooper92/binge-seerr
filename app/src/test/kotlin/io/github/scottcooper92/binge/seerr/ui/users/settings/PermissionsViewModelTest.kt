@@ -56,7 +56,7 @@ class PermissionsViewModelTest {
         uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<PermissionSettings>
 
     @Test
-    fun `the owner may flip everything, another admin everything but Admin, and a manager only what they hold`() =
+    fun `the owner may flip everything, and anyone else everything but Admin, held or not`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val owner = viewModel().awaitReady().draft
@@ -67,10 +67,11 @@ class PermissionsViewModelTest {
             seerr.viewer(id = 2, permissions = ADMIN)
             assertEquals(setOf(ManageablePermission.Admin), viewModel().awaitReady().draft.locked)
 
+            // The server's one rule is Admin, owner-only: a manager may grant Manage issues without holding it (#1016).
             seerr.viewer(id = 2, permissions = MANAGE_USERS or REQUEST, version = "1.33.0", settings = "{}")
             val manager = viewModel().awaitReady().draft
-            assertTrue(ManageablePermission.Request4k in manager.locked)
-            assertTrue(ManageablePermission.ManageRequests in manager.locked)
+            assertEquals(setOf(ManageablePermission.Admin), manager.locked)
+            assertFalse(ManageablePermission.ManageIssues in manager.locked)
             assertFalse(ManageablePermission.ManageBlocklist in manager.offered)
         }
 

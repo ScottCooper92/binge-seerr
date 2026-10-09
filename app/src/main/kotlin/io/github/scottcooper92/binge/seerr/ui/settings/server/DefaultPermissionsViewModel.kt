@@ -42,7 +42,7 @@ class DefaultPermissionsViewModel
                     selected = ManageablePermission.decode(bits),
                     original = bits,
                     offered = ManageablePermission.offered(profile.await().permissionScope()),
-                    locked = lockedFor(ManageablePermission.decode(viewerDto.permissions ?: 0), isOwner = viewerDto.id == OWNER_USER_ID),
+                    locked = lockedFor(isOwner = viewerDto.id == OWNER_USER_ID),
                 )
             }
 
