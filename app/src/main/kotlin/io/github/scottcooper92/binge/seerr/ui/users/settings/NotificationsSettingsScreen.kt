@@ -23,7 +23,8 @@ import kotlinx.coroutines.flow.Flow
  * The notifications page in the web client's order: a group per agent with the values it sends with, and, while it is
  * on, the events it is sent as switch rows, the request ones and then the issue ones. Web push is not here: its
  * subscription is the browser's. A value is edited in a sheet that checks its shape, and one the agent can't send
- * without says so in its row while the agent is sent anything. Save stays off until nothing does.
+ * without says so in its row while the agent is sent anything. The page saves as it
+ * changes, and a draft that fails a row's check is not written.
  */
 @Composable
 fun NotificationsSettingsScreen(
