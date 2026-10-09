@@ -34,7 +34,7 @@
 >
 > **Notificaciones.** Peticiones nuevas esperando aprobación, incidencias nuevas, y tus propias
 > peticiones cuando se aprueban, se rechazan o pasan a estar disponibles, comprobadas en segundo
-> plano con la frecuencia que elijas. Sin servicios push de terceros: la app pregunta directamente
+> plano cada quince minutos. Sin servicios push de terceros: la app pregunta directamente
 > a tu servidor.
 >
 > **Binge.** Instala Binge al lado y esta app se convierte en su integración de peticiones: la
@@ -45,8 +45,8 @@
 > **Android TV.** Un carril con el inicio, las peticiones, las incidencias y los ajustes, manejado
 > desde el mando.
 >
-> **Tu servidor, tus datos.** Inicia sesión con una clave de API, una cuenta local, Plex o Quick
-> Connect de Jellyfin. La clave o la sesión se cifra con una clave del Keystore de Android. La app
+> **Tu servidor, tus datos.** Inicia sesión con una clave de API, una cuenta local, Plex, Jellyfin o
+> Emby (con Quick Connect si el servidor lo ofrece). La clave o la sesión se cifra con una clave del Keystore de Android. La app
 > habla con el servidor que introdujiste y, si eliges iniciar sesión con Plex, con plex.tv. Los
 > datos de uso van a PostHog solo si lo aceptas, y los informes de fallos van a Firebase Crashlytics
 > salvo que los desactives en Ajustes. El Block Store de Google Play puede llevar tu conexión a un
