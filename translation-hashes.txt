@@ -94,6 +94,7 @@ app:handoff_page_send  f89f3b050177
 app:handoff_page_sent_body  7ac6c00d22fc
 app:handoff_page_sent_title  c16bc82bf1f0
 app:handoff_page_sign_in  bfd402b2f6f3
+app:handoff_page_signin_address  7bc0be86234f
 app:handoff_page_signin_body  49229059bc86
 app:handoff_page_signin_form_body  2b44677b214e
 app:handoff_page_signin_form_title  5657abe2920e
@@ -418,6 +419,7 @@ app:send_signin_continue_as_you  69d7ffc62e45
 app:send_signin_form  eed872434e62
 app:send_signin_lost  0b8b0899c90a
 app:send_signin_on_tv  b0724ebd3943
+app:send_signin_redirected  0da74fbf0f16
 app:send_signin_rejected  61c349dccc4a
 app:send_signin_sealed  964904c25126
 app:send_signin_session  c0acb129d393

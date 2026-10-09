@@ -275,7 +275,16 @@ class SendAddressViewModel
                     lastReady?.let { _uiState.value = it.copy(failed = true) }
                     return false
                 }
-                HandOffStatus.SIGN_IN -> if (!showSignIn(status)) return false
+                HandOffStatus.SIGN_IN -> {
+                    // A TV signing in somewhere this phone did not send it, or not saying where, gets nothing more (#1029).
+                    val address = status.address?.takeIf { sent == null || it.sameServerAs(sent) }
+                    if (address == null) {
+                        _uiState.showStep(SignInStep.Redirected)
+                        return false
+                    }
+                    signingInTo = address
+                    showSignIn(status, address)
+                }
                 // Nothing to do here: the answer is the TV's, and the sheet follows whatever it is (#912).
                 HandOffStatus.CONFIRM ->
                     _uiState.update { state ->
@@ -298,14 +307,11 @@ class SendAddressViewModel
             return status.state != HandOffStatus.CONNECTED
         }
 
-        /** Shows the TV's sign-in step; false when the TV is signing in somewhere this phone did not send it, which ends the follow. */
-        private fun showSignIn(status: HandOffStatus): Boolean {
-            val address = status.address?.takeIf { sent == null || it.sameServerAs(sent) }
-            if (address == null) {
-                _uiState.showStep(SignInStep.Redirected)
-                return false
-            }
-            signingInTo = address
+        /** Shows the TV's sign-in step, for a TV signing in to [address]. */
+        private fun showSignIn(
+            status: HandOffStatus,
+            address: String,
+        ) {
             val server = status.server.orEmpty()
             // Only modes with fields to fill: the TV does not offer the others, and a listener that did would not be believed.
             val modes =
@@ -318,15 +324,9 @@ class SendAddressViewModel
             val current = step as? SignInStep.Session ?: held
             val turnedDown = current != null && status.failed && status.attempt >= current.awaiting
             // The TV turned the session down: what's left is typing, or finishing on the TV where it has no fields.
-            if (turnedDown) {
-                _uiState.showStep(fallbackFrom(server, modes))
-                return true
-            }
-            if (step is SignInStep.Session) return true
-            if (modes.isEmpty()) {
-                _uiState.showStep(SignInStep.OnTv(server))
-                return true
-            }
+            if (turnedDown) return _uiState.showStep(fallbackFrom(server, modes))
+            if (step is SignInStep.Session) return
+            if (modes.isEmpty()) return _uiState.showStep(SignInStep.OnTv(server))
             // One update, so the form it keeps is the latest one: a send finishing on another thread is not overwritten.
             _uiState.update { state ->
                 val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
@@ -349,7 +349,6 @@ class SendAddressViewModel
                         },
                 )
             }
-            return true
         }
 
         /**

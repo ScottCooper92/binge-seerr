@@ -383,8 +383,8 @@ class SendAddressViewModelTest {
                 listOf(HandOffCredentials(mode = "Local", email = "ana@example.com", password = "correct horse")),
                 tv.sentCredentials,
             )
-            // Sealed for the address the TV reported, which is the one this phone sent (#1029).
-            assertEquals(listOf(sender.sent.single().second), tv.sealedFor)
+            // A TV already checking needs no address from this phone, so what goes is sealed for the address it reports (#1029).
+            assertEquals(listOf("http://seerr.lan:5055/"), tv.sealedFor)
         }
 
     @Test
@@ -392,6 +392,7 @@ class SendAddressViewModelTest {
         runTest {
             tv.statuses =
                 mutableListOf(
+                    HandOffStatus(HandOffStatus.WAITING),
                     HandOffStatus(HandOffStatus.CHECKING),
                     HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = "http://192.168.1.66:5055/"),
                 )
@@ -400,6 +401,7 @@ class SendAddressViewModelTest {
 
             vm.send()
             vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step == SignInStep.Redirected }
+            assertEquals("http://seerr.lan:5055/", sender.sent.single().second)
             vm.sendSignIn()
             vm.sendSession()
 
@@ -411,6 +413,7 @@ class SendAddressViewModelTest {
         runTest {
             tv.statuses =
                 mutableListOf(
+                    HandOffStatus(HandOffStatus.WAITING),
                     HandOffStatus(HandOffStatus.CHECKING),
                     HandOffStatus(HandOffStatus.SIGN_IN, "Living room", listOf("Local"), address = "http://seerr.lan:5055"),
                 )
