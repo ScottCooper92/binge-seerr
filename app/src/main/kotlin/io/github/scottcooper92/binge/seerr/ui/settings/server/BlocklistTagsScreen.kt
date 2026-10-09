@@ -231,7 +231,7 @@ private fun TagSearch(
             leadingIcon = {
                 if (barState.currentValue == SearchBarValue.Expanded) {
                     IconButton(onClick = { scope.launch { barState.animateToCollapsed() } }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesR.string.cd_navigate_back))
                     }
                 } else {
                     Icon(Icons.Filled.Search, contentDescription = null)
@@ -239,7 +239,9 @@ private fun TagSearch(
             },
             trailingIcon = {
                 if (text.text.isNotEmpty()) {
-                    IconButton(onClick = { text.clearText() }) { Icon(Icons.Filled.Close, contentDescription = null) }
+                    IconButton(onClick = { text.clearText() }) {
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.field_clear))
+                    }
                 }
             },
         )
