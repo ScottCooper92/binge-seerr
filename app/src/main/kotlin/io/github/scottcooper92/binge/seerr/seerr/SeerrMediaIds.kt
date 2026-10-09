@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.seerr
 
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
+import com.binge.companion.sdk.MAX_SEASON_NUMBERS
 import io.grpc.Status
 import io.grpc.StatusException
 
@@ -33,6 +34,33 @@ fun MediaId.seerrMediaType(): String {
         MediaType.MEDIA_TYPE_TV -> SEERR_MEDIA_TYPE_TV
         MediaType.MEDIA_TYPE_UNSPECIFIED, MediaType.UNRECOGNIZED ->
             throw StatusException(Status.INVALID_ARGUMENT.withDescription("media_type must be movie or tv"))
+    }
+}
+
+/**
+ * The seasons a host named, checked before any of them reaches Seerr (#1002). Seerr takes whatever it is sent: it makes a
+ * season request row for a negative number, for a repeat and for a season the show never had, and Sonarr fails the
+ * request later, far from the cause. So a negative or repeated number, or more than the SDK's [MAX_SEASON_NUMBERS], is
+ * INVALID_ARGUMENT here, beside the check that stops an unusable [MediaId]. The SDK cleans the Activity hand-off's list the
+ * same way; this is the rpc path's.
+ */
+fun List<Int>.checkedSeasonNumbers(): List<Int> {
+    val problem =
+        when {
+            any { it < 0 } -> "season numbers are never negative"
+            size != toSet().size -> "a season is named more than once"
+            size > MAX_SEASON_NUMBERS -> "at most $MAX_SEASON_NUMBERS seasons, was $size"
+            else -> return this
+        }
+    throw StatusException(Status.INVALID_ARGUMENT.withDescription(problem))
+}
+
+/** [seasons], each one a season this show has, as its details list them; a season it does not have is INVALID_ARGUMENT. */
+fun SeerrMediaDetailsDto.checkHasSeasons(seasons: List<Int>) {
+    val known = this.seasons.mapTo(mutableSetOf()) { it.seasonNumber }
+    val unknown = seasons.filterNot { it in known }
+    if (unknown.isNotEmpty()) {
+        throw StatusException(Status.INVALID_ARGUMENT.withDescription("the show has no season ${unknown.joinToString()}"))
     }
 }
 

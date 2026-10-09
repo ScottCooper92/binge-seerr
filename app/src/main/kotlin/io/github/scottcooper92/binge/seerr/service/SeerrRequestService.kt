@@ -66,6 +66,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
+import io.github.scottcooper92.binge.seerr.seerr.checkHasSeasons
+import io.github.scottcooper92.binge.seerr.seerr.checkedSeasonNumbers
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
@@ -184,7 +186,7 @@ class SeerrRequestService(
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
+                    seasons = request.seasonNumbersList.checkedSeasonNumbers().takeIf { it.isNotEmpty() },
                     is4k = request.is4K,
                 )
             submitAndRespond(media, body)
@@ -239,7 +241,7 @@ class SeerrRequestService(
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
+                    seasons = request.seasonNumbersList.checkedSeasonNumbers().takeIf { it.isNotEmpty() },
                     is4k = destination.server.is4k,
                     serverId = destination.server.id,
                     profileId = destination.profileId,
@@ -323,13 +325,16 @@ class SeerrRequestService(
     override suspend fun editRequest(request: EditRequestRequest): EditRequestResponse =
         gated("edit_request", Capability.CAPABILITY_EDIT_SEASONS) {
             if (request.seasonNumbersList.isEmpty()) throw invalidArgument("a request covers at least one season")
+            val seasons = request.seasonNumbersList.checkedSeasonNumbers()
             val api = connection.api()
             val current = api.request(request.requestId)
             if (!current.media.mediaType.isSeerrTv()) throw invalidArgument("only a TV request has seasons to edit")
+            // The contract's INVALID_ARGUMENT for "a season the show does not have", which Seerr itself never checks.
+            api.tvDetails(current.media.tmdbId).checkHasSeasons(seasons)
             val body =
                 SeerrEditRequestBody(
                     mediaType = current.media.mediaType,
-                    seasons = request.seasonNumbersList,
+                    seasons = seasons,
                     is4k = current.is4k,
                     serverId = current.serverId,
                     profileId = current.profileId,
