@@ -18,8 +18,9 @@ const val HTTP_NOT_FOUND = 404
 /**
  * Why a call to the server failed, as the app's own screens classify it. The gRPC mapping below
  * and this one read the same facts, so the Service and a screen never disagree about a failure:
- * a 401 is the session, a 403 is a permission unless the body names a quota, a 404 is the title,
- * transport and 5xx are the server or the network, and anything else is a rejection on the merits.
+ * a 401 is the session unless the session still answers (#997), a 403 is a permission unless the
+ * body names a quota, a 404 is the title, transport and 5xx are the server or the network, and
+ * anything else is a rejection on the merits.
  */
 enum class SeerrError {
     NotConnected,
@@ -52,6 +53,7 @@ fun Throwable.toSeerrError(): SeerrError =
         is HttpException ->
             when {
                 rejectsSessionByAnswer() -> SeerrError.Unauthorized
+                refusedWithLiveSession() -> SeerrError.Forbidden
                 code() == HTTP_FORBIDDEN -> if (mentionsQuota()) SeerrError.Quota else SeerrError.Forbidden
                 code() == HTTP_NOT_FOUND -> SeerrError.NotFound
                 code() >= HTTP_SERVER_ERROR_MIN -> SeerrError.Server
@@ -66,7 +68,9 @@ fun Throwable.toSeerrError(): SeerrError =
  * because a response message never carries an error field.
  *
  * A 401 is our own session being rejected, which only this app can repair, so it is
- * `UNAUTHENTICATED` and the host sends the user here. A 403 is `PERMISSION_DENIED` unless the
+ * `UNAUTHENTICATED` and the host sends the user here. A 401 Seerr sent while the session still
+ * answers is a refusal instead, `PERMISSION_DENIED`, unless the Service knows that route means
+ * something else (#997). A 403 is `PERMISSION_DENIED` unless the
  * body names a quota, which is `RESOURCE_EXHAUSTED` — Seerr returns 403 for both, and the message
  * text is its only signal. Transport failures and 5xx are `UNAVAILABLE`; any other 4xx is a
  * rejection on the merits, `INVALID_ARGUMENT`.
@@ -90,6 +94,7 @@ fun Throwable.toStatusException(): StatusException =
 private fun HttpException.httpStatus(): Status =
     when {
         rejectsSessionByAnswer() -> Status.UNAUTHENTICATED
+        refusedWithLiveSession() -> Status.PERMISSION_DENIED
         code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> Status.FAILED_PRECONDITION
         code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
         code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
@@ -97,8 +102,15 @@ private fun HttpException.httpStatus(): Status =
         else -> Status.INVALID_ARGUMENT
     }
 
-/** A 401, or a 403 [SeerrSessionInterceptor] confirmed against `auth/me`: the session, not a permission. */
+/**
+ * A 401 the session was not found alive behind, or a 403 [SeerrSessionInterceptor] confirmed against `auth/me`:
+ * the session, not a permission.
+ */
 private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
+
+/** A 401 Seerr sent although `auth/me` still answers: a refusal, which a route may read more precisely (#997, #998). */
+internal fun HttpException.refusedWithLiveSession(): Boolean =
+    isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
 
 /**
  * The error body, peeked rather than consumed so reading it and classifying the same failure (a report,

@@ -11,7 +11,8 @@ import org.junit.Test
 import retrofit2.HttpException
 
 /**
- * A 403 is a permission or a dead session on every lineage, and only `auth/me` tells them apart (#676).
+ * A 403 is a permission or a dead session on every lineage, and only `auth/me` tells them apart (#676). A 401 is
+ * the session unless `auth/me` still answers, when it is a refusal (#997).
  * Driven through the interceptor on a real client, and classified the way every caller classifies it.
  */
 class SeerrSessionInterceptorTest {
@@ -64,6 +65,43 @@ class SeerrSessionInterceptorTest {
         server.enqueue(MockResponse(code = 403))
 
         assertEquals(SeerrError.Forbidden, classify("/api/v1/auth/me"))
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun `a 401 whose auth_me is refused too is the session`() {
+        server.enqueue(MockResponse(code = 401))
+        server.enqueue(MockResponse(code = 401))
+
+        assertEquals(SeerrError.Unauthorized, classify("/api/v1/request/4"))
+        assertEquals("/api/v1/auth/me", server.takeRequest().let { server.takeRequest().url.encodedPath })
+    }
+
+    /** Every lineage answers 401 to deleting a request the user may not delete, with the session fine (#997). */
+    @Test
+    fun `a 401 while auth_me still answers is a refusal, not the session`() {
+        server.enqueue(MockResponse(code = 401, body = """{"message":"You do not have permission to delete this request."}"""))
+        server.enqueue(MockResponse(code = 200, body = """{"id":1,"permissions":32}"""))
+
+        assertEquals(SeerrError.Forbidden, classify("/api/v1/request/4"))
+    }
+
+    @Test
+    fun `a 401 whose probe fails, at the transport or the server, is still the session`() {
+        server.enqueue(MockResponse(code = 401))
+        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.ShutdownConnection).build())
+        assertEquals(SeerrError.Unauthorized, classify("/api/v1/request/4"))
+
+        server.enqueue(MockResponse(code = 401))
+        server.enqueue(MockResponse(code = 500))
+        assertEquals(SeerrError.Unauthorized, classify("/api/v1/request/4"))
+    }
+
+    @Test
+    fun `a 401 from auth_me itself is not probed, and is the session`() {
+        server.enqueue(MockResponse(code = 401))
+
+        assertEquals(SeerrError.Unauthorized, classify("/api/v1/auth/me"))
         assertEquals(1, server.requestCount)
     }
 }

@@ -351,6 +351,22 @@ class SeerrRequestServiceTest {
             )
         }
 
+    /** Jellyseerr 2.x's blacklist answers 401 for a title it does not hold, with the session fine (#998). */
+    @Test
+    fun `unblocking a title jellyseerr 2 does not hold is not found, not a dead session`() =
+        runTest {
+            val stub = connected(version = "2.7.0")
+            seerr.enqueue(MockResponse(code = 401, body = """{"message":"Could not find any entity of type Blacklist"}"""))
+            seerr.enqueue(json("""{"id":1,"permissions":$ADMIN}"""))
+
+            assertEquals(
+                Status.Code.NOT_FOUND,
+                stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) },
+            )
+            assertEquals("/api/v1/blacklist/603", seerr.takeRequest().url.encodedPath)
+            assertEquals("/api/v1/auth/me", seerr.takeRequest().url.encodedPath)
+        }
+
     /** The Jellyseerr 2.x bug (#539) that only a device log showed: a 400 on one operation, one lineage and version. */
     @Test
     fun `a failed operation is reported with its status and server version and nothing that identifies the title or host`() =
@@ -1305,6 +1321,40 @@ class SeerrRequestServiceTest {
             val deleted = seerr.takeRequest()
             assertEquals("DELETE", deleted.method)
             assertEquals("/api/v1/request/4", deleted.url.encodedPath)
+        }
+
+    /** Every lineage's 401 for a request this user may not delete is not the session (#997), so the host is not sent to reconnect. */
+    @Test
+    fun `cancelling a request this user may not delete is PERMISSION_DENIED, or FAILED_PRECONDITION once it is past pending`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            val cancel = CancelRequestRequest.newBuilder().setRequestId(4).build()
+            val refused = """{"message":"You do not have permission to delete this request."}"""
+
+            // Someone else's pending request: the refusal, then auth/me still answering, then the request read.
+            seerr.enqueue(MockResponse(code = 401, body = refused))
+            seerr.enqueue(json("""{"id":1,"permissions":$REQUEST}"""))
+            seerr.enqueue(json("""{"id":4,"status":1,"media":{"tmdbId":603,"mediaType":"movie"}}"""))
+            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { cancelRequest(cancel) })
+
+            // Their own, approved between the host's last read and the tap.
+            seerr.enqueue(MockResponse(code = 401, body = refused))
+            seerr.enqueue(json("""{"id":1,"permissions":$REQUEST}"""))
+            seerr.enqueue(json("""{"id":4,"status":2,"media":{"tmdbId":603,"mediaType":"movie"}}"""))
+            assertEquals(Status.Code.FAILED_PRECONDITION, stub.code { cancelRequest(cancel) })
+        }
+
+    @Test
+    fun `a 401 on cancel while auth_me is refused too is still the session`() =
+        runTest {
+            val stub = connected(version = "1.33.0")
+            seerr.enqueue(MockResponse(code = 401))
+            seerr.enqueue(MockResponse(code = 401))
+
+            assertEquals(
+                Status.Code.UNAUTHENTICATED,
+                stub.code { cancelRequest(CancelRequestRequest.newBuilder().setRequestId(4).build()) },
+            )
         }
 
     @Test
