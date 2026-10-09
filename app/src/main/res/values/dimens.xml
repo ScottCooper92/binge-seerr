@@ -28,7 +28,6 @@
     <dimen name="tv_checkbox_size">28dp</dimen>
     <dimen name="tv_checkbox_border">2dp</dimen>
     <!-- The television shell: boards, list rows, the action sheet and the list/pane board. -->
-    <dimen name="tv_list_row_height">76dp</dimen>
     <dimen name="tv_list_row_padding_horizontal">16dp</dimen>
     <dimen name="tv_list_row_poster_width">40dp</dimen>
     <dimen name="tv_list_row_poster_height">60dp</dimen>
