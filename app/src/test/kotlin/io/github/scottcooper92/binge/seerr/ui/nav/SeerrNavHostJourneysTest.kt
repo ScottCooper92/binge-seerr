@@ -28,9 +28,9 @@ private const val FRAME_PAUSE_MILLIS = 5L
 
 /**
  * Journeys through the real [io.github.scottcooper92.binge.seerr.ui.SeerrNavHost], with the app's own
- * entries, ViewModels and stores, where the pane tests use stand-ins. These are the two that have
+ * entries, ViewModels and stores, where the pane tests use stand-ins. These are the ones that have
  * broken before: a rotation that lost the screen beside the hub (#815), and a retry that flashed the
- * dashboard (#873).
+ * dashboard (#873, #983).
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -89,32 +89,67 @@ class SeerrNavHostJourneysTest {
 
     /**
      * A cold start over a hub the app remembers, with the server gone: the problem page. Retry re-checks,
-     * and the server holds that re-check for [RECHECK_MILLIS] before dropping it. Every frame from the tap
-     * until the problem page offers Retry again is checked: none shows the dashboard, and some show the
-     * button busy (#873).
+     * and the server holds that re-check for [RECHECK_MILLIS] before dropping it (#873).
      */
     @Test
+    @Config(qualifiers = NARROW)
     fun `a retry holds the problem page, busy, and never shows the dashboard while it runs`() {
-        val retry = host.string(R.string.hub_retry)
-        val problem = host.string(R.string.hub_unreachable_headline)
         host.connect()
         host.launch(HomeRoute)
         host.awaitShowing(hub)
         host.seerr.unreachable()
         host.launch(HomeRoute)
+
+        assertRetryHolds(problem = host.string(R.string.hub_unreachable_headline)) {
+            host.seerr.unreachable(afterMillis = RECHECK_MILLIS)
+        }
+    }
+
+    /**
+     * The server answers, but the dashboard can't load: `auth/me` answers with nothing the app can read. The
+     * re-check's probe passes, and the reload re-emits the remembered overview before it fails again, held here for
+     * [RECHECK_MILLIS]. Neither is an answer, so the problem page stays (#983).
+     */
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `a retry from could-not-load holds the problem page while the reload runs`() {
+        host.connect()
+        host.launch(HomeRoute)
+        host.awaitShowing(hub)
+        host.seerr.serve("GET /api/v1/auth/me", "")
+        host.launch(HomeRoute)
+
+        assertRetryHolds(problem = host.string(R.string.hub_couldnt_load_headline)) {
+            host.seerr.serveFrom("GET /api/v1/auth/me", delayMillis = RECHECK_MILLIS) { "" }
+        }
+    }
+
+    /**
+     * From the problem page naming [problem], [slow] makes the next re-check take a while, then Retry is tapped. On a
+     * narrow window, where the hub is alone: beside it, the section's own Retry button and spinner would answer too.
+     * Every frame from the tap until the page offers Retry again is checked: each one shows the problem page and
+     * not the dashboard, and some show the button busy.
+     */
+    private fun assertRetryHolds(
+        problem: String,
+        slow: () -> Unit,
+    ) {
+        val retry = host.string(R.string.hub_retry)
+        host.awaitShowing(problem)
         host.awaitShowing(retry)
-        host.seerr.unreachable(afterMillis = RECHECK_MILLIS)
+        slow()
+        // The button's label exactly: the could-not-load body says it is "retrying automatically".
 
         host.compose.mainClock.autoAdvance = false
         host.compose.onNodeWithText(retry).performClick()
         var sawBusy = false
         val deadline = System.currentTimeMillis() + RECHECK_TIMEOUT_MILLIS
-        while (!(sawBusy && host.isShowing(retry))) {
-            check(System.currentTimeMillis() < deadline) { "the re-check never finished" }
+        while (!(sawBusy && host.isShowing(retry, exactly = true))) {
+            check(System.currentTimeMillis() < deadline) { "the re-check never finished (busy seen: $sawBusy)" }
             host.compose.mainClock.advanceTimeByFrame()
             assertFalse("the dashboard showed while the re-check ran", host.isShowing(hub))
             assertTrue("the problem page left while the re-check ran", host.isShowing(problem))
-            sawBusy = sawBusy || (!host.isShowing(retry) && isSpinning())
+            sawBusy = sawBusy || (!host.isShowing(retry, exactly = true) && isSpinning())
             Thread.sleep(FRAME_PAUSE_MILLIS)
         }
     }
