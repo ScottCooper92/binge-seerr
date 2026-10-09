@@ -1276,5 +1276,6 @@
     <string name="editor_discard">Discard</string>
     <string name="editor_keep_editing">Keep editing</string>
     <string name="editor_create">Create</string>
+    <string name="editor_test_and_save">Test and save</string>
     <string name="user_settings_password_change">Change password</string>
 </resources>

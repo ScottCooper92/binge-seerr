@@ -1222,5 +1222,6 @@
     <string name="editor_discard">Descartar</string>
     <string name="editor_keep_editing">Seguir editando</string>
     <string name="editor_create">Crear</string>
+    <string name="editor_test_and_save">Probar y guardar</string>
     <string name="user_settings_password_change">Cambiar contraseña</string>
 </resources>

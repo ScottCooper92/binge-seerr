@@ -74,6 +74,8 @@ fun MediaServerScreen(
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,
+        // The server tests the connection before it stores it, and refuses one it cannot reach.
+        commitLabel = stringResource(R.string.editor_test_and_save),
     ) { draft, enabled ->
         if (draft.kind == MediaServerKind.Plex) {
             SettingsGroup(draft, enabled, actions, serverActions)
