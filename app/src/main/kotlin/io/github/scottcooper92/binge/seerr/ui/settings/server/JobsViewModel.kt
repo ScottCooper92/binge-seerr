@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.EmptyCoroutineContext
 
 private const val RUNNING_REFRESH_MILLIS = 5_000L
 private const val OUTCOME_MILLIS = 4_000L
@@ -45,8 +46,17 @@ class JobsViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
-        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @IoDispatcher dispatcher: CoroutineDispatcher,
     ) : ViewModel() {
+        /**
+         * Where every coroutine here runs: the IO dispatcher, one at a time (#947). The jobs below and [awaiting] are plain
+         * fields that several coroutines check and replace, which on the multi-threaded IO pool would race. A network call
+         * suspends rather than holding the slot, so nothing waits behind a request, and nothing here touches the main thread.
+         * An unconfined dispatcher (a test's) runs each coroutine on its caller's thread and cannot be limited, so it is
+         * used as it is.
+         */
+        private val dispatcher = if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) dispatcher.limitedParallelism(1) else dispatcher
+
         private val state = MutableStateFlow<JobsUiState>(JobsUiState.Loading)
         val uiState: StateFlow<JobsUiState> = state.asStateFlow()
 
@@ -61,6 +71,8 @@ class JobsViewModel
         private var pendingDueMillis: Long? = null
         internal var clock: () -> Long = System::currentTimeMillis
         internal var outcomeMillis = OUTCOME_MILLIS
+
+        // Touched only by runWhenReady, on its caller's thread, not by the coroutines on [dispatcher].
         private var readyWait: Job? = null
         private val awaiting = mutableSetOf<String>()
 
@@ -123,7 +135,8 @@ class JobsViewModel
         }
 
         fun cancel(id: String) {
-            awaiting.remove(id)
+            // On [dispatcher], with the fields' other readers; queued ahead of the cancel itself.
+            viewModelScope.launch(dispatcher) { awaiting.remove(id) }
             act(id) { api -> api.cancelJob(id) }
         }
 
