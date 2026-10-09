@@ -32,7 +32,7 @@ import com.binge.designsystem.component.OverlaidHeaderContent
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.rememberFilterPagerState
 import com.binge.designsystem.component.showSnackbar
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenOuterPadding
@@ -154,7 +154,7 @@ private fun BlocklistPages(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = resolvedContentInset())
+                        .padding(resolvedContentPadding())
                         .padding(top = dimensionResource(DesR.dimen.padding_s)),
             )
             if (state.hasFilters) {

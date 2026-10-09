@@ -29,7 +29,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -72,19 +72,19 @@ private fun AboutContent(
     onOpenUrl: (String) -> Unit,
     contentPadding: PaddingValues,
 ) {
-    val inset = resolvedContentInset()
+    val sides = resolvedContentPadding()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.server_settings_about_title, info.variant.displayName),
             rows = versionRows(info, onOpenUrl) + serverRows(info),
-            modifier = Modifier.padding(horizontal = inset),
+            modifier = Modifier.padding(sides),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
             title = stringResource(R.string.server_settings_about_support),
             rows = supportRows(info, onOpenUrl),
-            modifier = Modifier.padding(horizontal = inset),
+            modifier = Modifier.padding(sides),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         ItemGroup(
@@ -100,7 +100,7 @@ private fun AboutContent(
                         onClick = { onOpenUrl(info.variant.contributeUrl()) },
                     ),
                 ),
-            modifier = Modifier.padding(horizontal = inset),
+            modifier = Modifier.padding(sides),
         )
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     }

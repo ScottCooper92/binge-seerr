@@ -21,7 +21,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -75,7 +75,7 @@ private fun ServicesContent(
             ItemGroup(
                 title = type.name,
                 rows = instanceRows(type, state.instances.filter { it.type == type }, actions),
-                modifier = Modifier.padding(horizontal = resolvedContentInset()),
+                modifier = Modifier.padding(resolvedContentPadding()),
             )
         }
         state.rules?.let { rules ->
@@ -83,7 +83,7 @@ private fun ServicesContent(
             ItemGroup(
                 title = stringResource(R.string.server_settings_rules),
                 rows = ruleRows(rules, actions),
-                modifier = Modifier.padding(horizontal = resolvedContentInset()),
+                modifier = Modifier.padding(resolvedContentPadding()),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

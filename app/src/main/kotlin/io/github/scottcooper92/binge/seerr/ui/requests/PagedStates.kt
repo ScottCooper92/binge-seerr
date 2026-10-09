@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.LoadState
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
@@ -47,10 +47,8 @@ internal fun RefreshFailedLine(
             Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onRetry)
-                .padding(
-                    horizontal = resolvedContentInset(),
-                    vertical = dimensionResource(DesR.dimen.padding_s),
-                ),
+                .padding(resolvedContentPadding())
+                .padding(vertical = dimensionResource(DesR.dimen.padding_s)),
     )
 }
 

@@ -27,11 +27,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import coil3.compose.SubcomposeAsyncImage
 import com.binge.designsystem.CARD_ASPECT_RATIO
 import com.binge.designsystem.component.ImagePlaceholder
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
@@ -43,11 +42,11 @@ internal fun DownloadingStrip(
     items: List<HubDownload>,
     onClick: (HubDownload) -> Unit,
     modifier: Modifier = Modifier,
-    inset: Dp = resolvedContentInset(),
+    sides: PaddingValues = resolvedContentPadding(),
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = inset),
+        contentPadding = sides,
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.hub_download_strip_spacing)),
     ) {
         items(items, key = { it.requestId }) { item -> DownloadingCard(item, onClick = { onClick(item) }) }

@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,10 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -67,10 +67,10 @@ fun CacheScreen(
     jobActions: JobsActions,
 ) {
     ServerActionPage(title = stringResource(R.string.server_settings_cache), events = events, onBack = actions.onBack) { contentPadding ->
-        val inset = resolvedContentInset()
+        val sides = resolvedContentPadding()
         var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-            JobsSection(jobs, jobActions, inset, actions.onRetryJobs) { scheduling = it }
+            JobsSection(jobs, jobActions, sides, actions.onRetryJobs) { scheduling = it }
             when (state) {
                 CacheUiState.Loading ->
                     Box(
@@ -82,11 +82,11 @@ fun CacheScreen(
                     SectionError(
                         error = state.error,
                         title = stringResource(R.string.server_settings_api_caches),
-                        inset = inset,
+                        sides = sides,
                         onRetry = actions.onRetry,
                     )
                 }
-                is CacheUiState.Ready -> CacheSections(state, actions, inset)
+                is CacheUiState.Ready -> CacheSections(state, actions, sides)
             }
             Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
         }
@@ -108,7 +108,7 @@ fun CacheScreen(
 private fun JobsSection(
     jobs: JobsUiState,
     jobActions: JobsActions,
-    inset: Dp,
+    sides: PaddingValues,
     onRetry: () -> Unit,
     onSchedule: (String) -> Unit,
 ) {
@@ -119,7 +119,7 @@ private fun JobsSection(
             SectionError(
                 error = jobs.error,
                 title = stringResource(R.string.server_settings_jobs),
-                inset = inset,
+                sides = sides,
                 onRetry = onRetry,
             )
         }
@@ -138,7 +138,7 @@ private fun JobsSection(
                                 jobs.now,
                             ) { onSchedule(job.id) }
                         },
-                    modifier = Modifier.padding(horizontal = inset),
+                    modifier = Modifier.padding(sides),
                 )
             }
     }
@@ -149,7 +149,7 @@ private fun JobsSection(
 private fun SectionError(
     error: SeerrError,
     title: String,
-    inset: Dp,
+    sides: PaddingValues,
     onRetry: () -> Unit,
 ) {
     ItemGroup(
@@ -169,7 +169,7 @@ private fun SectionError(
                     clickable = false,
                 ),
             ),
-        modifier = Modifier.padding(horizontal = inset),
+        modifier = Modifier.padding(sides),
     )
 }
 
@@ -177,13 +177,13 @@ private fun SectionError(
 private fun CacheSections(
     state: CacheUiState.Ready,
     actions: CacheActions,
-    inset: Dp,
+    sides: PaddingValues,
 ) {
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     ItemGroup(
         title = stringResource(R.string.server_settings_api_caches),
         rows = state.apiCaches.map { cache -> apiCacheRow(cache, busy = cache.id in state.busyIds, actions.onFlush) },
-        modifier = Modifier.padding(horizontal = inset),
+        modifier = Modifier.padding(sides),
     )
     state.dns?.let { dns ->
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
@@ -194,7 +194,7 @@ private fun CacheSections(
                     dns.entries.map { entry ->
                         dnsEntryRow(entry, busy = "dns:${entry.hostname}" in state.busyIds, actions.onFlushDnsEntry)
                     },
-            modifier = Modifier.padding(horizontal = inset),
+            modifier = Modifier.padding(sides),
         )
     }
     if (state.imageCaches.isNotEmpty()) {
@@ -202,7 +202,7 @@ private fun CacheSections(
         ItemGroup(
             title = stringResource(R.string.server_settings_image_caches),
             rows = state.imageCaches.map { imageCacheRow(it) },
-            modifier = Modifier.padding(horizontal = inset),
+            modifier = Modifier.padding(sides),
         )
     }
 }

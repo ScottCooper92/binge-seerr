@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -83,7 +84,7 @@ private fun PageList(
         ItemGroup(
             title = stringResource(R.string.user_settings_title),
             rows = rows,
-            modifier = Modifier.padding(resolvedContentInset()),
+            modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())),
         )
     }
 }

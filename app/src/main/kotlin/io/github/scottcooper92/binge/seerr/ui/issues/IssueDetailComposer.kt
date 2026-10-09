@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
@@ -34,14 +34,14 @@ internal fun ActionBar(
     action: IssueAction,
     onAddComment: () -> Unit,
     onToggleStatus: () -> Unit,
-    inset: Dp,
+    sides: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val idle = action == IssueAction.None
     Column(modifier.fillMaxWidth()) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = inset, vertical = dimensionResource(DesR.dimen.padding_s)),
+            modifier = Modifier.fillMaxWidth().padding(sides).padding(vertical = dimensionResource(DesR.dimen.padding_s)),
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_gap)),
             verticalAlignment = Alignment.CenterVertically,
         ) {

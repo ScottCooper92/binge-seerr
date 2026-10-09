@@ -22,6 +22,7 @@ import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
 import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
@@ -57,9 +58,10 @@ private const val REPORT_LAST_LINE_FRACTION = 0.6f
 @Composable
 internal fun IssueDetailSkeleton(modifier: Modifier = Modifier) {
     val inset = resolvedContentInset()
+    val sides = resolvedContentPadding()
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        HeaderSkeleton(modifier = Modifier.padding(inset))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
+        HeaderSkeleton(modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
         IssueBodySkeleton()
     }
 }
@@ -82,7 +84,7 @@ private fun ReportSkeleton(modifier: Modifier = Modifier) {
         repeat(REPORT_LINE_COUNT) { index ->
             SkeletonPlate(
                 Modifier
-                    .padding(horizontal = resolvedContentInset())
+                    .padding(resolvedContentPadding())
                     .fillMaxWidth(if (index == REPORT_LINE_COUNT - 1) REPORT_LAST_LINE_FRACTION else 1f)
                     .height(lineHeightOf(MaterialTheme.typography.bodyLarge)),
             )

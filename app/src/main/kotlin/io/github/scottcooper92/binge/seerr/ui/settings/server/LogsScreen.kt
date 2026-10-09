@@ -60,7 +60,7 @@ import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.PagedPhase
 import com.binge.designsystem.template.screenListPadding
@@ -115,7 +115,7 @@ fun LogsScreen(
                 placeholder = stringResource(R.string.server_settings_logs_search),
                 // The list filters as it is typed, so Search has nothing left to run: it puts the keyboard away.
                 onSubmit = { focusManager.clearFocus() },
-                modifier = Modifier.padding(horizontal = resolvedContentInset()),
+                modifier = Modifier.padding(resolvedContentPadding()),
             )
         },
     ) { page, contentPadding ->
