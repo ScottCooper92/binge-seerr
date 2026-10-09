@@ -121,7 +121,7 @@ internal fun serverSectionRows(
 private fun GeneralSettings.sectionSummary(): String =
     listOfNotNull(applicationTitle, applicationUrl)
         .filter(String::isNotBlank)
-        .joinToString(" · ")
+        .joinToString(stringResource(R.string.hub_meta_separator))
         .ifEmpty { stringResource(R.string.settings_section_general_detail) }
 
 /** Which of the agents this app can read are on, or what the page is for when neither is: it never claims none are. */
