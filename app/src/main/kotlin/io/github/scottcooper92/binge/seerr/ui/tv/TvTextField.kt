@@ -120,9 +120,8 @@ internal fun TvTextField(
                     .onFocusChanged { focused = it.isFocused }
                     .editOnSelect(enabled = enabled && !editing) { editing = true }
                     .focusable(enabled = enabled)
-                    // The label is a sibling, so the field names itself for a screen reader and a test. Merged with the input
-                    // inside, so editing reads the label with the value, not "edit box" and the value alone.
-                    .semantics(mergeDescendants = true) { contentDescription = label },
+                    // The label is a sibling, so the field names itself for a screen reader and a test.
+                    .semantics { contentDescription = label },
         ) {
             BasicTextField(
                 value = value,
@@ -153,6 +152,9 @@ internal fun TvTextField(
                         .fillMaxSize()
                         .focusRequester(input)
                         .focusProperties { canFocus = editing }
+                        // The editable node names itself too: while editing, a screen reader is on this node and not the frame,
+                        // and would read the value as "edit box" with no label.
+                        .semantics { contentDescription = label }
                         .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier)
                         // Leaving the input, by Back past the keyboard or a move, ends editing: the frame takes over again.
                         .onFocusChanged { if (!it.isFocused && editing) editing = false }

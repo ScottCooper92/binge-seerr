@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
@@ -138,6 +139,14 @@ class TvSetupFocusTest {
         pressBack()
 
         button(R.string.tv_setup_enter_manually).assertIsDisplayed()
+    }
+
+    /** A screen reader on the editable node reads the label with the value, not "edit box" and the value alone (#1040). */
+    @Test
+    fun theEditableNodeCarriesTheFieldsLabel() {
+        setScreen(address("http://seerr.lan:5055"))
+
+        textInput().assert(hasContentDescription(string(R.string.setup_server_url)))
     }
 
     @Test
@@ -359,8 +368,11 @@ class TvSetupFocusTest {
 
     private fun addressField() = field(R.string.setup_server_url)
 
-    /** The field's frame, which the remote lands on and which names the field; the text input inside edits only on OK. */
-    private fun field(label: Int) = composeTestRule.onNode(hasContentDescription(string(label)) and isFocusable())
+    /**
+     * The field's frame, which the remote lands on and which names the field; the text input inside edits only on OK, and
+     * names the field too, so the frame is the one that cannot take text.
+     */
+    private fun field(label: Int) = composeTestRule.onNode(hasContentDescription(string(label)) and isFocusable() and !hasSetTextAction())
 
     private fun textInput() = composeTestRule.onNode(hasSetTextAction())
 
