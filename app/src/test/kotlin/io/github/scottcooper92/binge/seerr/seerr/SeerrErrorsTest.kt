@@ -45,6 +45,8 @@ class SeerrErrorsTest {
     fun `other rejections are on the merits`() {
         assertEquals(Status.Code.NOT_FOUND, codeOf(http(404)))
         assertEquals(Status.Code.INVALID_ARGUMENT, codeOf(http(422)))
+        // A target in the wrong state for the action: the host refreshes and re-offers (#999).
+        assertEquals(Status.Code.FAILED_PRECONDITION, codeOf(http(409, """{"message":"Only pending requests can be approved or declined."}""")))
         assertEquals(Status.Code.INTERNAL, codeOf(IllegalStateException("bug")))
     }
 
