@@ -157,13 +157,15 @@ class RequestsViewModelTest {
         }
 
     @Test
-    fun `a plain requester's list is scoped to their own requests`() =
+    fun `a plain requester's list is scoped to their own requests, and its chips carry no server-wide counts`() =
         runTest {
             server(REQUEST)
             val vm = viewModel()
-            vm.awaitReady { it.counts != null }
+            // request/count counts the whole server, so a list of their own requests would not match it (#977).
+            assertEquals(null, vm.awaitReady { true }.counts)
 
             vm.requests(RequestFilter.Pending).asSnapshot()
+            assertTrue(received.none { it.url.encodedPath == "/api/v1/request/count" })
 
             val list = received.last { it.url.encodedPath == "/api/v1/request" }.url
             assertEquals("7", list.queryParameter("requestedBy"))
@@ -182,7 +184,7 @@ class RequestsViewModelTest {
             val vm = viewModel()
             assertFalse(
                 vm
-                    .awaitReady { it.counts != null }
+                    .awaitReady { true }
                     .scope.permissions.canManageRequests,
             )
 
@@ -190,11 +192,8 @@ class RequestsViewModelTest {
             viewerPermissions.set(ADMIN)
             vm.setScreenVisible(true)
 
-            assertTrue(
-                vm
-                    .awaitReady { it.scope.permissions.canManageRequests }
-                    .scope.permissions.canManageRequests,
-            )
+            // Now seeing every request, the chips count them.
+            assertTrue(vm.awaitReady { it.scope.permissions.canManageRequests && it.counts != null }.counts != null)
         }
 
     @Test
@@ -246,7 +245,7 @@ class RequestsViewModelTest {
             authShouldFail.set(false)
             vm.setScreenVisible(true)
 
-            val ready = vm.awaitReady { it.counts != null }
+            val ready = vm.awaitReady { true }
             assertFalse(ready.scope.permissions.canManageRequests)
             // The timing-free half: a guessed scope is the all-permissive one, and this user has
             // only REQUEST, so a Ready carrying moderation could only have come from a guess.
@@ -294,7 +293,7 @@ class RequestsViewModelTest {
             vm.retry()
             assertFalse(
                 vm
-                    .awaitReady { it.counts != null }
+                    .awaitReady { true }
                     .scope.permissions.canManageRequests,
             )
         }
