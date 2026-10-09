@@ -301,7 +301,10 @@ interface SeerrApi {
         @Body body: SeerrCreateUserBody,
     ): SeerrUserDto
 
-    /** The media server's accounts to offer for import. `MANAGE_USERS`. */
+    /**
+     * The media server's accounts to offer for import. `ADMIN`: they live under `/settings`, which every lineage mounts
+     * behind it, whatever the route itself checks. The import that follows needs only `MANAGE_USERS` (#1009).
+     */
     @GET("api/v1/settings/plex/users")
     suspend fun plexUsers(): List<SeerrPlexUserDto>
 
