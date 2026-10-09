@@ -294,6 +294,40 @@ class JobsViewModelTest {
             returned.cancel()
         }
 
+    /** #946: a due read cut off by the page leaving must leave the missed run for the page's return to catch. */
+    @Test
+    fun `a due read cancelled in flight by the page leaving is read again on its return`() =
+        runTest {
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            // An hour before the download sync's next run (05:01 UTC).
+            var now = 1_789_275_660_000L - 60 * 60_000L
+            vm.clock = { now }
+            val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            vm.awaitReady()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 0)
+            testScheduler.runCurrent()
+            val beforeDue = seerr.count("GET", "/api/v1/settings/jobs")
+
+            val held = seerr.serveHeld("GET /api/v1/settings/jobs")
+            now += 2 * 60 * 60_000L
+            testScheduler.advanceTimeBy(2 * 60 * 60_000L)
+            testScheduler.runCurrent()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = beforeDue)
+
+            collector.cancel()
+            testScheduler.runCurrent()
+            held.release(code = 503)
+            testScheduler.runCurrent()
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+            val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            testScheduler.runCurrent()
+            // Holding time: otherwise the plex scan's run, a day ahead, comes due during the wait and reads the list too.
+            assertTrue(seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = reads))
+            returned.cancel()
+        }
+
     @Test
     fun `a next run already past schedules no re-read`() =
         runTest {

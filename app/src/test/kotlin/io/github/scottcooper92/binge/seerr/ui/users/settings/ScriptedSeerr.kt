@@ -19,6 +19,7 @@ import mockwebserver3.RecordedRequest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -30,6 +31,9 @@ internal const val REQUEST = 1 shl 5
 
 private const val REQUEST_WAIT_MILLIS = 2_000L
 private const val POLL_MILLIS = 10L
+
+/** How long a held answer waits for its release before giving up on its own, so a stuck test still ends. */
+private const val HOLD_TIMEOUT_MILLIS = 30_000L
 
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
 
@@ -51,6 +55,7 @@ internal class ScriptedSeerr(
     fun newDispatcher(): okhttp3.Dispatcher = drain.newDispatcher()
 
     private val responses = mutableMapOf<String, (RecordedRequest) -> MockResponse>()
+    private val holds = CopyOnWriteArrayList<HeldResponse>()
     private var stores = 0
 
     fun start() {
@@ -65,6 +70,8 @@ internal class ScriptedSeerr(
     }
 
     fun close() {
+        // A hold the test never released would keep its call, and so the drain, waiting for ever.
+        holds.forEach { it.release(code = 503) }
         drain.awaitIdle()
         server.close()
     }
@@ -98,6 +105,17 @@ internal class ScriptedSeerr(
                 .build()
         }
     }
+
+    /**
+     * Holds [key]'s answers until the test calls [HeldResponse.release], so it can act while a call is in flight and pin
+     * the moment that call ends; a fixed delay races `runTest`'s virtual time and cannot (#950). [count] and [awaitCount]
+     * see a held request as soon as it arrives. Requests after the release are answered at once with what it gave.
+     */
+    fun serveHeld(key: String): HeldResponse =
+        HeldResponse().also { held ->
+            holds += held
+            responses[key] = { held.answer() }
+        }
 
     /** Answers an offset-paged endpoint: the body for the page the request's `skip` lands in. */
     fun servePages(
@@ -155,6 +173,21 @@ internal class ScriptedSeerr(
         withTimeout(REQUEST_WAIT_MILLIS) { while (count(method, path) <= moreThan) delay(POLL_MILLIS) }
     }
 
+    /**
+     * [awaitCount] without letting time pass: it blocks the test's thread, so `runTest` cannot move virtual time on while
+     * it waits and a later scheduled call cannot stand in for the one awaited. Returns whether the count got past
+     * [moreThan], so a test can assert that a call is made, or that none is.
+     */
+    fun awaitCountHoldingTime(
+        method: String,
+        path: String,
+        moreThan: Int,
+    ): Boolean {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(REQUEST_WAIT_MILLIS)
+        while (count(method, path) <= moreThan && System.nanoTime() < deadline) Thread.sleep(POLL_MILLIS)
+        return count(method, path) > moreThan
+    }
+
     suspend fun connection(
         scope: TestScope,
         quickConnectPollInterval: Duration = 10.milliseconds,
@@ -180,5 +213,31 @@ internal class ScriptedSeerr(
         override fun encrypt(plaintext: String): String = plaintext
 
         override fun decrypt(ciphertext: String): String = ciphertext
+    }
+}
+
+/** An answer [ScriptedSeerr.serveHeld] keeps back until [release]. */
+internal class HeldResponse {
+    private val released = CountDownLatch(1)
+
+    @Volatile private var code = 200
+
+    @Volatile private var body = "{}"
+
+    /** Lets every held request, and any later one, through with [body] and [code]; a 5xx [code] fails the call. */
+    fun release(
+        body: String = "{}",
+        code: Int = 200,
+    ) {
+        if (released.count == 0L) return
+        this.body = body
+        this.code = code
+        released.countDown()
+    }
+
+    /** Runs on MockWebServer's thread for the request's connection, so blocking here holds only that call. */
+    internal fun answer(): MockResponse {
+        released.await(HOLD_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+        return MockResponse(code = code, headers = headersOf("Content-Type", "application/json"), body = body)
     }
 }
