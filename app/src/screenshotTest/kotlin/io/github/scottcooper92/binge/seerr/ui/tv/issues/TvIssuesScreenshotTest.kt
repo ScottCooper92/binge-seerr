@@ -31,7 +31,7 @@ private val FixedSampleIssues =
 /**
  * The television issues board as the design system's immersive hub: the open and resolved issues as rows over the
  * backdrop, the actions sheet open on a card, the empty arm and the failed-load page. Mirrors the states sketched
- * in `TvBoardPreviews.kt`.
+ * in `TvBoardPreviewData.kt`.
  */
 class TvIssuesScreenshotTest {
     @PreviewTest

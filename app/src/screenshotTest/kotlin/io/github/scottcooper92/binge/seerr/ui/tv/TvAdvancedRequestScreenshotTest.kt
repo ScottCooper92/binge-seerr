@@ -11,7 +11,7 @@ private val NoAdvancedActions = TvAdvancedRequestActions({}, {}, {}, {}, {}, {})
 /**
  * Every arm of the television hand-off: the options form with the focus where a remote can put it, the
  * form while its choices load, refused and submitting, and the three whole-screen plates. The states
- * come from `TvPreviews.kt`'s builders, so the IDE preview and the frame cannot drift.
+ * come from `TvPreviewData.kt`'s builders, so the IDE preview and the frame cannot drift.
  */
 class TvAdvancedRequestScreenshotTest {
     @PreviewTest

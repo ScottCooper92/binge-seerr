@@ -541,6 +541,8 @@ kover {
                     "io.github.scottcooper92.binge.seerr.MainActivity*",
                     "io.github.scottcooper92.binge.seerr.AdvancedRequestActivity*",
                     "io.github.scottcooper92.binge.seerr.SendAddressActivity*",
+                    "io.github.scottcooper92.binge.seerr.ScannedSendAddressActivity*",
+                    "io.github.scottcooper92.binge.seerr.SettingsHandOffActivity*",
                     "io.github.scottcooper92.binge.seerr.SeerrApp",
                 )
                 annotatedBy("androidx.compose.runtime.Composable")
