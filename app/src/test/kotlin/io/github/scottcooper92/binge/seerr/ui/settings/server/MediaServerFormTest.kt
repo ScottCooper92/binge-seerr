@@ -159,7 +159,7 @@ class MediaServerFormTest {
     fun `a clean change saves`() {
         show(JELLYFIN.copy(useSsl = true))
 
-        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
+        rule.onNodeWithText("Test and save").performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, saves)
     }

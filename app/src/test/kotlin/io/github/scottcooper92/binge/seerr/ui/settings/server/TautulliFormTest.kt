@@ -66,7 +66,7 @@ class TautulliFormTest {
     @Test
     fun `a form without its port or key can't be saved`() {
         show(TautulliForm(host = "tautulli.lan"))
-        rule.onNodeWithText("Save").assertIsNotEnabled()
+        rule.onNodeWithText("Test and save").assertIsNotEnabled()
     }
 
     @Test
@@ -81,7 +81,7 @@ class TautulliFormTest {
         show(TautulliForm(), saved = CONFIGURED)
 
         rule.onNodeWithText("Required").assertDoesNotExist()
-        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
+        rule.onNodeWithText("Test and save").performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, saves)
     }
@@ -90,7 +90,7 @@ class TautulliFormTest {
     fun `a complete form saves`() {
         show(CONFIGURED)
 
-        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
+        rule.onNodeWithText("Test and save").performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, saves)
     }

@@ -38,6 +38,8 @@ fun TautulliScreen(
         actions = actions,
         canSave = { it.valid },
         footerCommit = true,
+        // The server tests the connection before it stores it, and refuses one it cannot reach.
+        commitLabel = stringResource(R.string.editor_test_and_save),
     ) { draft, enabled ->
         val hostLabel = stringResource(R.string.server_settings_host)
         val keyLabel = stringResource(R.string.server_settings_api_key)
