@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -144,6 +146,7 @@ class BlocklistTagsViewModelTest {
             seerr.serve("POST /api/v1/settings/main", MAIN)
             vm.toggle(210024)
             val saved = vm.awaitReady { !it.saveFailed }
+            seerr.awaitCount("POST", "/api/v1/settings/main", moreThan = 1)
             assertEquals(listOf(9951, 4344, 210024), saved.tags)
             assertEquals(mapOf("blocklistedTags" to "9951,4344,210024"), sent())
         }
@@ -160,6 +163,7 @@ class BlocklistTagsViewModelTest {
             seerr.serve("POST /api/v1/settings/main", MAIN)
             vm.retry()
             vm.awaitReady { !it.saveFailed }
+            seerr.awaitCount("POST", "/api/v1/settings/main", moreThan = 1)
             assertEquals(mapOf("blocklistedTags" to "9951,4344"), sent())
             assertEquals(2, seerr.count("POST", "/api/v1/settings/main"))
         }
@@ -174,7 +178,10 @@ class BlocklistTagsViewModelTest {
             vm.awaitReady { it.saveFailed }
             val seen = mutableListOf<Boolean>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                vm.uiState.collect { state -> if (state is BlocklistTagsUiState.Ready) seen += state.saveFailed }
+                vm.uiState
+                    .mapNotNull { (it as? BlocklistTagsUiState.Ready)?.saveFailed }
+                    .distinctUntilChanged()
+                    .collect { seen += it }
             }
 
             vm.retry()
