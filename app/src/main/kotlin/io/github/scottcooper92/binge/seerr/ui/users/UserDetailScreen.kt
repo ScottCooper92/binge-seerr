@@ -59,6 +59,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -159,6 +160,7 @@ private fun UserDetailContent(
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
+    val sides = resolvedContentPadding()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = dimensionResource(DesR.dimen.padding_l)) + contentPadding,
@@ -167,7 +169,11 @@ private fun UserDetailContent(
         item {
             ProfileHeader(
                 item,
-                modifier = Modifier.padding(inset).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)),
+                modifier =
+                    Modifier
+                        .padding(
+                            resolvedContentPadding(top = inset, bottom = inset),
+                        ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)),
             )
         }
         // A failed refresh says so under the profile, which stays; the requests below are their own stream.
@@ -180,14 +186,14 @@ private fun UserDetailContent(
                 )
             }
         }
-        detail?.quota?.let { quota -> item { Box(Modifier.padding(horizontal = inset)) { QuotaSection(quota) } } }
+        detail?.quota?.let { quota -> item { Box(Modifier.padding(sides)) { QuotaSection(quota) } } }
         // The bitmask is on the row, so a seeded page names the permissions as the loaded one will.
         val permissions = detail?.permissions ?: ManageablePermission.decode(item.permissions)
         if (permissions.isNotEmpty()) {
             item {
                 SectionHeader(title = stringResource(R.string.user_permissions_title))
                 FlowRow(
-                    modifier = Modifier.padding(horizontal = inset),
+                    modifier = Modifier.padding(sides),
                     horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
                     verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
                 ) {
@@ -218,7 +224,7 @@ private fun UserDetailContent(
                 RequestRow(
                     item = item,
                     onClick = { actions.onOpenRequest(item) },
-                    modifier = Modifier.padding(horizontal = inset).padding(bottom = dimensionResource(DesR.dimen.list_row_spacing)),
+                    modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.list_row_spacing)),
                 )
             }
         }

@@ -21,6 +21,7 @@ import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
 import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
@@ -47,17 +48,24 @@ private const val REQUEST_ROW_COUNT = 3
 @Composable
 internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {
     val inset = resolvedContentInset()
+    val sides = resolvedContentPadding()
     Column(
         modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         // UserDetailContent's LazyColumn spaces every top-level item this way, request rows
         // included — unmatched, the section header and rows would sit closer than the resolved page.
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        ProfileSkeleton(modifier = Modifier.padding(inset).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)))
+        ProfileSkeleton(
+            modifier =
+                Modifier
+                    .padding(
+                        resolvedContentPadding(top = inset, bottom = inset),
+                    ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)),
+        )
         SectionHeaderSkeleton()
         repeat(REQUEST_ROW_COUNT) {
             ListRowSkeleton(
-                modifier = Modifier.padding(horizontal = inset).padding(bottom = dimensionResource(DesR.dimen.list_row_spacing)),
+                modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.list_row_spacing)),
             )
         }
     }

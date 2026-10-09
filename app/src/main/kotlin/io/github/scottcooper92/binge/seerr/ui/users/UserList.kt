@@ -32,6 +32,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.PagedPhase
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.data.ListRefresh
@@ -67,7 +68,7 @@ internal fun UsersBody(
             }
         PagedPhase.Skeleton ->
             ListRowSkeletonColumn(
-                contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+                contentPadding = resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()) + contentPadding,
                 height = dimensionResource(R.dimen.users_row_skeleton_height),
                 modifier = modifier,
             )
@@ -96,7 +97,7 @@ private fun UserList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(resolvedContentInset()) + contentPadding,
+        contentPadding = resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

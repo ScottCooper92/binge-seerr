@@ -14,7 +14,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -55,7 +55,7 @@ fun NotificationAgentsScreen(
                         ItemGroup(
                             title = stringResource(R.string.settings_group_notifications),
                             rows = state.agents.map { agentRow(it, actions) },
-                            modifier = Modifier.padding(horizontal = resolvedContentInset()),
+                            modifier = Modifier.padding(resolvedContentPadding()),
                         )
                         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
                     }

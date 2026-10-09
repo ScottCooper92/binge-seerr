@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.HintCard
@@ -29,6 +28,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.MessageScreen
 import com.binge.designsystem.template.ScreenBar
@@ -127,26 +127,28 @@ private fun Dashboard(
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
+    // Each side from the pane it sits in: the edge shared with the section beside it takes the narrow inner inset (#819).
+    val sides = resolvedContentPadding()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
         if (admitsUnverifiedCallers) {
             HintCard(
                 text = stringResource(R.string.hub_unverified_callers),
                 icon = Icons.Filled.Warning,
-                modifier = Modifier.padding(start = inset, end = inset, bottom = dimensionResource(DesR.dimen.padding_m)),
+                modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_m)),
             )
         }
-        ServerCard(server = state.server, overview = state.overview, inset = inset)
+        ServerCard(server = state.server, overview = state.overview, sides = sides)
         state.overview.account?.let { account ->
             AccountCard(
                 account = account,
                 quota = state.overview.quota,
-                inset = inset,
+                sides = sides,
                 onClick = { actions.onOpenAccount(account.id) },
             )
         }
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
-            DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, inset = inset)
+            DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, sides = sides)
         }
         SectionHeader(title = stringResource(R.string.hub_manage))
         ItemGroup(
@@ -164,16 +166,16 @@ private fun Dashboard(
                         onClick = { actions.onOpenSection(section) },
                     )
                 },
-            modifier = Modifier.padding(horizontal = inset),
+            modifier = Modifier.padding(sides),
         )
         Column(
-            modifier = Modifier.padding(inset),
+            modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             BingeTile(state.bingeStatus, state.bingeHintDismissed, actions.onDismissBingeHint)
             DisconnectButton(actions.onDisconnect)
         }
-        if (actions.developerRows.isNotEmpty()) DeveloperGroup(actions.developerRows, inset)
+        if (actions.developerRows.isNotEmpty()) DeveloperGroup(actions.developerRows, resolvedContentPadding(bottom = inset))
     }
 }
 
@@ -223,7 +225,7 @@ internal fun BingeTile(
 @Composable
 private fun DeveloperGroup(
     developerRows: List<DeveloperRow>,
-    inset: Dp,
+    padding: PaddingValues,
 ) {
     SectionHeader(title = stringResource(R.string.debug_group_developer))
     ItemGroup(
@@ -237,7 +239,7 @@ private fun DeveloperGroup(
                     onClick = row.onClick,
                 )
             },
-        modifier = Modifier.padding(start = inset, end = inset, bottom = inset),
+        modifier = Modifier.padding(padding),
     )
 }
 

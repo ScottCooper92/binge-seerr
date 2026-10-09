@@ -20,7 +20,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -98,7 +98,7 @@ private fun SettingsContent(
                         onClick = rememberScanTvCode(),
                     ),
                 ),
-            modifier = Modifier.padding(horizontal = resolvedContentInset()),
+            modifier = Modifier.padding(resolvedContentPadding()),
         )
         if (state.pending) PendingGroups()
         // The server's settings as the web client's Settings menu lists them, one row per section; then this app's own.
@@ -121,7 +121,7 @@ private fun SettingsContent(
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-        DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(horizontal = resolvedContentInset()))
+        DisconnectButton(actions.onDisconnect, modifier = Modifier.padding(resolvedContentPadding()))
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
     }
 }
@@ -133,9 +133,8 @@ private fun PendingGroups() {
     SkeletonPlate(
         modifier =
             Modifier
-                .padding(
-                    horizontal = resolvedContentInset(),
-                ).fillMaxWidth()
+                .padding(resolvedContentPadding())
+                .fillMaxWidth()
                 .height(dimensionResource(R.dimen.settings_pending_groups_height)),
         shape = BingeShapes.Large,
     )
@@ -149,5 +148,5 @@ private fun Group(
 ) {
     if (rows.isEmpty()) return
     Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
-    ItemGroup(title = title, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
+    ItemGroup(title = title, rows = rows, modifier = Modifier.padding(resolvedContentPadding()))
 }

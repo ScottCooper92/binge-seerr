@@ -23,6 +23,7 @@ import com.binge.designsystem.component.IconButtonTone
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
@@ -301,7 +302,10 @@ internal fun RequestDetailPage(
         body = {
             RequestHeadline(
                 detail,
-                Modifier.padding(resolvedContentInset()).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
+                Modifier
+                    .padding(
+                        resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()),
+                    ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
                 initiallyOverflowing,
             )
             RequestStats(detail)

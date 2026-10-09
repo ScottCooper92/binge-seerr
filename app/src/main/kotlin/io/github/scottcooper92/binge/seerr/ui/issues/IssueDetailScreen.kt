@@ -45,6 +45,7 @@ import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.openInBrowser
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
@@ -168,9 +169,10 @@ private fun Seeded(
     contentPadding: PaddingValues,
 ) {
     val inset = resolvedContentInset()
+    val sides = resolvedContentPadding()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        IssueHeader(state.item, onOpen = null, modifier = Modifier.padding(inset))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
+        IssueHeader(state.item, onOpen = null, modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
         if (state.error != null) {
             ErrorScreen(error = state.error, onRetry = actions.onRetry)
         } else {
@@ -191,6 +193,7 @@ private fun Ready(
     val detail = state.detail
     val context = LocalContext.current
     val inset = resolvedContentInset()
+    val sides = resolvedContentPadding()
     // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
     // the thread's scroll where there is not.
     val pinnedBar = detail.canComment || detail.canResolve
@@ -202,8 +205,12 @@ private fun Ready(
                     .verticalScroll(rememberScrollState())
                     .padding(if (pinnedBar) PaddingValues(top = contentPadding.calculateTopPadding()) else contentPadding),
         ) {
-            IssueHeader(detail.item, onOpen = { context.openInBrowser(detail.webUrl) }, modifier = Modifier.padding(inset))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(horizontal = inset))
+            IssueHeader(
+                detail.item,
+                onOpen = { context.openInBrowser(detail.webUrl) },
+                modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)),
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
             detail.report?.let { report ->
                 Column(modifier = Modifier.layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW))) {
                     SectionHeader(title = stringResource(R.string.issue_problem))
@@ -223,7 +230,7 @@ private fun Ready(
                                     } else {
                                         Modifier
                                     },
-                                ).padding(horizontal = inset),
+                                ).padding(sides),
                     )
                 }
             }
@@ -235,7 +242,7 @@ private fun Ready(
                 now = System.currentTimeMillis(),
                 onActOn = { comment -> modals.actingOnCommentId = comment.id },
                 onTapOutbox = { entry -> modals.outboxActionId = entry.localId },
-                modifier = Modifier.padding(horizontal = inset).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+                modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
             )
         }
         if (pinnedBar) {
@@ -244,7 +251,7 @@ private fun Ready(
                 action = state.action,
                 onAddComment = { modals.composing = true },
                 onToggleStatus = { modals.confirmingStatus = true },
-                inset = inset,
+                sides = sides,
                 modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding()),
             )
         }

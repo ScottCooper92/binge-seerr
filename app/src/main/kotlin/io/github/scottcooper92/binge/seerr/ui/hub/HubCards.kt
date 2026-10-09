@@ -39,7 +39,7 @@ import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ItemRows
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
@@ -48,11 +48,11 @@ import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
 import com.binge.designsystem.R as DesR
 
-/** A dashboard block: a tonal surface with the screen inset around it and the medium spacing inside. */
+/** A dashboard block: a tonal surface with the pane's [sides] around it and the medium spacing inside. */
 @Composable
 internal fun HubCard(
     modifier: Modifier = Modifier,
-    inset: Dp = resolvedContentInset(),
+    sides: PaddingValues = resolvedContentPadding(),
     contentPadding: PaddingValues = PaddingValues(dimensionResource(DesR.dimen.padding_m)),
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -60,10 +60,8 @@ internal fun HubCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = inset,
-                    vertical = dimensionResource(DesR.dimen.padding_s),
-                ),
+                .padding(sides)
+                .padding(vertical = dimensionResource(DesR.dimen.padding_s)),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
@@ -81,9 +79,9 @@ internal fun ServerCard(
     server: HubServer,
     overview: HubOverview,
     modifier: Modifier = Modifier,
-    inset: Dp = resolvedContentInset(),
+    sides: PaddingValues = resolvedContentPadding(),
 ) {
-    HubCard(modifier, inset) {
+    HubCard(modifier, sides) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(R.drawable.ic_companion),
@@ -163,11 +161,11 @@ internal fun AccountCard(
     account: HubAccount,
     quota: HubQuota?,
     modifier: Modifier = Modifier,
-    inset: Dp = resolvedContentInset(),
+    sides: PaddingValues = resolvedContentPadding(),
     onClick: (() -> Unit)? = null,
 ) {
     // The card carries no padding of its own: the name row and the quota rows each bring their row padding, so none is doubled.
-    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, inset, contentPadding = PaddingValues()) {
+    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, sides, contentPadding = PaddingValues()) {
         val rowPadding = dimensionResource(DesR.dimen.item_group_row_padding_h)
         Row(
             modifier =

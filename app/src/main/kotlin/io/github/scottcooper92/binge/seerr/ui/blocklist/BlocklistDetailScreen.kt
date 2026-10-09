@@ -36,6 +36,7 @@ import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
@@ -143,7 +144,12 @@ internal fun BlocklistDetailPage(
         },
         footer = footer,
         body = {
-            state.overview?.let { overview -> ExpandableOverview(text = overview, modifier = Modifier.padding(resolvedContentInset())) }
+            state.overview?.let { overview ->
+                ExpandableOverview(
+                    text = overview,
+                    modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())),
+                )
+            }
             BlocklistDetailFacts(item)
         },
     )
@@ -172,12 +178,12 @@ private fun BlocklistDetailFacts(item: BlocklistItem) {
             },
         )
     if (rows.isNotEmpty()) {
-        ItemGroup(title = null, rows = rows, modifier = Modifier.padding(horizontal = resolvedContentInset()))
+        ItemGroup(title = null, rows = rows, modifier = Modifier.padding(resolvedContentPadding()))
     }
     if (item.tags.isNotEmpty()) {
         SectionHeader(title = stringResource(R.string.request_tags))
         FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = resolvedContentInset()),
+            modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding()),
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
         ) {

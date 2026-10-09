@@ -40,7 +40,7 @@ import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
@@ -105,7 +105,7 @@ internal fun RequestCardSection(
     modifier: Modifier = Modifier,
     isActing: Boolean = false,
 ) {
-    Column(modifier = modifier.padding(horizontal = resolvedContentInset())) {
+    Column(modifier = modifier.padding(resolvedContentPadding())) {
         RequestCard(
             detail = detail,
             onClick = { onOpenRequest(detail.item.id) }.takeIf { detail.hasPrimaryAction },

@@ -28,6 +28,7 @@ import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.labelSmallEmphasis
 import io.github.scottcooper92.binge.seerr.R
@@ -74,10 +75,10 @@ internal fun RequestDetailSkeleton(modifier: Modifier = Modifier) {
             HeadlineSkeleton(
                 modifier =
                     Modifier
-                        .padding(resolvedContentInset())
+                        .padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()))
                         .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
             )
-            RequestCardSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
+            RequestCardSkeleton(modifier = Modifier.padding(resolvedContentPadding()))
         }
     }
 }
@@ -91,8 +92,8 @@ internal fun RequestDetailSeededBody(
     if (error != null) {
         ErrorScreen(error = error, onRetry = onRetry)
     } else {
-        HeadlineSkeleton(modifier = Modifier.padding(resolvedContentInset()))
-        RequestCardSkeleton(modifier = Modifier.padding(horizontal = resolvedContentInset()))
+        HeadlineSkeleton(modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())))
+        RequestCardSkeleton(modifier = Modifier.padding(resolvedContentPadding()))
     }
 }
 

@@ -29,7 +29,7 @@ import androidx.compose.ui.semantics.Role
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.formatRelativeOrAbsolute
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 
@@ -117,7 +117,7 @@ internal fun requestDestinationFacts(detail: RequestDetail): List<Fact> =
 private fun FactList(facts: List<Fact>) {
     if (facts.isEmpty()) return
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = resolvedContentInset()),
+        modifier = Modifier.fillMaxWidth().padding(resolvedContentPadding()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
         facts.forEach { FactRow(it) }

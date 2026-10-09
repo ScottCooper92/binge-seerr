@@ -39,6 +39,7 @@ import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
@@ -130,7 +131,7 @@ private fun LinkedAccountsContent(
         ItemGroup(
             title = stringResource(R.string.user_settings_linked_group),
             rows = rows,
-            modifier = Modifier.padding(resolvedContentInset()),
+            modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())),
             belowRows = { GroupMessage(stringResource(R.string.user_settings_linked_hint), error = false) },
         )
     }
