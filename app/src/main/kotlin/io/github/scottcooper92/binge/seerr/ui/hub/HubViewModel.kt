@@ -58,9 +58,17 @@ class HubViewModel
         /** Re-read on every arrival: installing Binge while this screen is backgrounded should flip the tile unprompted. */
         private val installedTrigger = MutableStateFlow(installCheck.isInstalled())
 
-        /** Bumped by a manual/auto re-check and by the connection itself changing underneath this instance. */
-        private val reloadTrigger: Flow<SeerrCredentials?> =
-            combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { _, credentials -> credentials }
+        /**
+         * The last re-check the overview has been read again for. A re-check runs until this catches up with
+         * [recheckTrigger]: the reload re-emits the remembered overview first, and that is not the server's answer (#983).
+         */
+        private val overviewReadFor = MutableStateFlow(0)
+
+        /** Bumped by a manual/auto re-check and by the connection itself changing underneath this instance, with the re-check it is for. */
+        private val reloads: Flow<Pair<Int, SeerrCredentials?>> =
+            combine(recheckTrigger, connection.credentials.distinctUntilChanged()) { recheck, credentials -> recheck to credentials }
+
+        private val reloadTrigger: Flow<SeerrCredentials?> = reloads.map { (_, credentials) -> credentials }
 
         /**
          * `flowOn(dispatcher)` per #177/#370: without it, [HubOverviewLoader.server]'s suspend call resumes on Main.
@@ -83,8 +91,12 @@ class HubViewModel
                     }
                 }.flowOn(dispatcher)
 
+        /** A re-check is still running: its probe has not answered, or the overview has not been read again for it. */
+        private val rechecking: Flow<Boolean> =
+            combine(isProbing, recheckTrigger, overviewReadFor) { probing, recheck, read -> probing || read < recheck }
+
         private val health: Flow<ConnectionHealth> =
-            combine(connection.health, isProbing, connection.credentials) { health, probing, credentials ->
+            combine(connection.health, rechecking, connection.credentials) { health, probing, credentials ->
                 if (probing) {
                     ConnectionHealth.Checking
                 } else {
@@ -94,12 +106,13 @@ class HubViewModel
 
         /** Same `flowOn(dispatcher)` reason as [server]: [HubOverviewLoader.load] suspends too. */
         private val overview: Flow<HubOverview> =
-            reloadTrigger
-                .flatMapLatest { credentials ->
+            reloads
+                .flatMapLatest { (recheck, credentials) ->
                     flow {
                         val remembered = cache.overviewFor(credentials)
                         emit(remembered ?: HubOverview())
                         emit(refreshed(credentials, remembered, loader.load()))
+                        overviewReadFor.value = recheck
                     }
                 }.flowOn(dispatcher)
 

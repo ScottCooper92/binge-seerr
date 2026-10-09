@@ -79,8 +79,14 @@ internal class RealNavHostRule(
         @StringRes id: Int,
     ): String = ApplicationProvider.getApplicationContext<Context>().getString(id)
 
-    /** Whether a node reading [text], or a merged node whose text includes it, is on screen now. */
-    fun isShowing(text: String): Boolean = compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty()
+    /**
+     * Whether a node reading [text] is on screen now. By default a merged node whose text only includes it counts too, as
+     * a list row's title does; [exactly] asks for a text that is [text] and nothing more, as a button's label is.
+     */
+    fun isShowing(
+        text: String,
+        exactly: Boolean = false,
+    ): Boolean = compose.onAllNodes(hasText(text, substring = !exactly)).fetchSemanticsNodes().isNotEmpty()
 
     /** Waits, in real time, for [text]: what the screens show next comes from the server, over real sockets. */
     fun awaitShowing(text: String) = compose.waitUntil("\"$text\" on screen", AWAIT_MILLIS) { isShowing(text) }

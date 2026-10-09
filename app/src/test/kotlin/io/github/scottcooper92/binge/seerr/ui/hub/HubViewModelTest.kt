@@ -355,6 +355,29 @@ class HubViewModelTest {
             assertTrue(states.filterIsInstance<HubUiState.Ready>().all { it.health.isProblem() })
         }
 
+    /**
+     * The server answers, so the re-check's probe passes and the monitor reads Healthy, but the dashboard still can't load:
+     * `auth/me` answers with nothing the client can read. The reload re-emits the remembered overview first, and until it
+     * has finished that is no answer, so the problem stays named through it (#983).
+     */
+    @Test
+    fun `retrying a hub that could not load never shows the dashboard while the reload runs`() =
+        runTest {
+            healthyServer()
+            viewModel().awaitReady { it.overview.account != null }
+            serve("/api/v1/auth/me", "")
+            val vm = returnToHub()
+            vm.awaitReady { it.health == ConnectionHealth.CouldNotLoad }
+            val states = mutableListOf<HubUiState>()
+            backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect { states += it } }
+
+            vm.recheck()
+            vm.uiState.first { (it as? HubUiState.Ready)?.rechecking == true }
+            vm.awaitReady { !it.rechecking && it.health == ConnectionHealth.CouldNotLoad }
+
+            assertTrue("$states", states.filterIsInstance<HubUiState.Ready>().all { it.health.isProblem() })
+        }
+
     @Test
     fun `disconnecting forgets the server`() =
         runTest {
