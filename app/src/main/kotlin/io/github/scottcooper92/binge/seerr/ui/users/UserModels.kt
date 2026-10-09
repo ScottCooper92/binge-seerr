@@ -37,8 +37,13 @@ data class UserItem(
 
 /** The bulk editor while it is open: one permission set to write to every selected user. */
 data class BulkEdit(
+    /** What the sheet shows ticked: at first, only what every selected user already has. */
     val selected: Set<ManageablePermission> = emptySet(),
     val saving: Boolean = false,
+    /** Permissions some selected users have and others don't. They start unticked, and each user keeps their own until one is changed. */
+    val mixed: Set<ManageablePermission> = emptySet(),
+    /** What the user has toggled. A save writes these and nothing else (#1007). */
+    val touched: Set<ManageablePermission> = emptySet(),
 )
 
 sealed interface UsersUiState {
