@@ -62,7 +62,7 @@ app:editor_section_collapse_action  be6eb1fc3b05
 app:editor_section_collapsed  b322b65227bc
 app:editor_section_expand_action  07548c2c6511
 app:editor_section_expanded  e72d5d8d0b16
-app:editor_section_issues  10da1c6f1248
+app:editor_section_issues  f44280ef062a
 app:editor_test_and_save  be8494fb38fe
 app:field_clear  a8ff550536c7
 app:field_secret_hide  ad5caeb74e49

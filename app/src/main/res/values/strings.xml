@@ -536,8 +536,8 @@
     <string name="editor_section_expand_action">Expand</string>
     <string name="editor_section_collapse_action">Collapse</string>
     <plurals name="editor_section_issues">
-        <item quantity="one">%d field needs attention</item>
-        <item quantity="other">%d fields need attention</item>
+        <item quantity="one">%1$d field needs attention</item>
+        <item quantity="other">%1$d fields need attention</item>
     </plurals>
     <string name="editor_error_port">Enter a port between 1 and 65535.</string>
     <string name="editor_error_web_url">Enter a web address that starts with http:// or https://.</string>
