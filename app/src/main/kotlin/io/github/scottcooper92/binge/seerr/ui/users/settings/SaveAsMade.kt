@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -29,7 +30,9 @@ internal class SaveAsMade<T>(
     private val adopt: (sent: T, adopted: T) -> Boolean,
     private val failed: (Boolean) -> Unit,
 ) {
+    // All of this is touched on [scope]'s thread only (the main thread for a ViewModel); just the write itself leaves it.
     private var pending: Job? = null
+    private var inFlight: Deferred<Result<T>>? = null
     private var unsent = false
 
     /** The draft changed: write it once the changes stop. */
@@ -40,22 +43,34 @@ internal class SaveAsMade<T>(
 
     private fun schedule(wait: Long) {
         unsent = true
+        // A write in flight is never cancelled or overlapped: its answer is adopted, and what changed meanwhile goes next.
+        if (inFlight != null) return
         pending?.cancel()
         pending =
-            scope.launch(dispatcher) {
+            scope.launch {
                 delay(wait)
-                val sent = draft()?.takeIf(canSave) ?: return@launch
-                unsent = false
-                failed(false)
-                // Caught inside the write, so a failure stays this save's and does not reach the application's scope.
-                appScope
-                    .async(dispatcher) { attempt { write(sent) } }
-                    .await()
-                    .onSuccess { adopted -> if (adopt(sent, adopted)) changed() }
-                    .onFailure {
-                        unsent = true
-                        failed(true)
-                    }
+                send()
+            }
+    }
+
+    private suspend fun send() {
+        val sent = draft()?.takeIf(canSave) ?: return
+        unsent = false
+        failed(false)
+        // Caught inside the write, so a failure stays this save's and does not reach the application's scope.
+        val write = appScope.async(dispatcher) { attempt { write(sent) } }
+        inFlight = write
+        val result =
+            try {
+                write.await()
+            } finally {
+                inFlight = null
+            }
+        result
+            .onSuccess { adopted -> if (adopt(sent, adopted) || unsent) changed() }
+            .onFailure {
+                unsent = true
+                failed(true)
             }
     }
 
@@ -64,6 +79,10 @@ internal class SaveAsMade<T>(
         val left = draft()?.takeIf(canSave) ?: return
         if (!unsent) return
         pending?.cancel()
-        appScope.launch(dispatcher) { attempt { write(left) } }
+        val earlier = inFlight
+        appScope.launch(dispatcher) {
+            earlier?.await()
+            attempt { write(left) }
+        }
     }
 }
