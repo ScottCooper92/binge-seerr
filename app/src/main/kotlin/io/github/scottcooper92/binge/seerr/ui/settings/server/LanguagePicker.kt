@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -10,20 +9,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeSearchField
+import androidx.core.os.LocaleListCompat
+import com.binge.designsystem.component.BingeChoice
+import com.binge.designsystem.component.BingeChoiceList
+import com.binge.designsystem.component.BingeMultiChoiceSheet
 import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.LanguageCodeShapes
 import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
 import java.util.Locale
-import com.binge.designsystem.R as DesR
 
 /** The server keeps a discover-language filter as codes joined by `|`: `en|ja`. Blank is no filter. */
 internal fun String.languageCodes(): List<String> =
@@ -92,13 +90,28 @@ internal fun languageSettingItem(
             onSelect(if (codes.isEmpty() && user) ALL_LANGUAGES else codes.joinToString("|"))
             open = false
         }
-        // Held here, not in the list, so the header's Clear and Done act on it at either height.
-        var picked by rememberSaveable { mutableStateOf(chosen) }
-        PeekingListSheet(
-            title = title,
-            onDismiss = { open = false },
-            actions = {
-                if (choices is ListChoices.Ready) {
+        if (choices == ListChoices.Failed) {
+            PeekingListSheet(title = title, onDismiss = { open = false }) {
+                LanguagesUnavailable(value, onRetry = onOpen, onUse = { apply(it.languageCodes()) })
+            }
+        } else {
+            val listed =
+                (choices as? ListChoices.Ready)?.let { ready ->
+                    languageChecklist(ready.entries, chosen, filter = "")
+                        .sortedBy { it.second.lowercase() }
+                        .map { (code, name) -> BingeChoice(code, name, mark = code.uppercase()) }
+                }
+            BingeMultiChoiceSheet(
+                title = title,
+                choices = listed?.let { BingeChoiceList.Ready(it) } ?: BingeChoiceList.Loading,
+                selected = chosen.toSet(),
+                // In the list's order, so the saved filter reads the same however the ticks were made.
+                onDone = { picked -> apply(listed.orEmpty().map { it.value }.filter { it in picked }) },
+                onDismiss = { open = false },
+                doneLabel = stringResource(R.string.editor_done),
+                clearLabel = stringResource(R.string.server_settings_list_clear),
+                suggested = remember { suggestedLanguages() },
+                actions = {
                     if (user) {
                         BingeTextButton(
                             label = stringResource(R.string.settings_use_server_default),
@@ -108,16 +121,8 @@ internal fun languageSettingItem(
                             },
                         )
                     }
-                    BingeTextButton(label = stringResource(R.string.server_settings_list_clear), onClick = { picked = emptyList() })
-                    BingeTextButton(label = stringResource(R.string.editor_done), onClick = { apply(picked) })
-                }
-            },
-        ) {
-            when (choices) {
-                is ListChoices.Ready -> LanguageChecklist(choices.entries, chosen, picked, onPicked = { picked = it })
-                ListChoices.Failed -> LanguagesUnavailable(value, onRetry = onOpen, onUse = { apply(it.languageCodes()) })
-                ListChoices.Loading, null -> ListLoading()
-            }
+                },
+            )
         }
     }
     return ListItem(
@@ -131,32 +136,6 @@ internal fun languageSettingItem(
             onOpen()
         },
     )
-}
-
-@Composable
-internal fun LanguageChecklist(
-    entries: List<ListEntry>,
-    initial: List<String>,
-    picked: List<String>,
-    onPicked: (List<String>) -> Unit,
-) {
-    var filter by rememberSaveable { mutableStateOf("") }
-    val shown = remember(entries, initial, filter) { languageChecklist(entries, initial, filter) }
-    BingeSearchField(
-        query = filter,
-        onQueryChange = { filter = it },
-        onClear = { filter = "" },
-        placeholder = stringResource(R.string.server_settings_filter_languages),
-        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-    )
-    shown.forEachIndexed { index, (code, name) ->
-        CheckboxRow(
-            label = name,
-            checked = code in picked,
-            onToggle = { on -> onPicked(if (on) picked + code else picked - code) },
-            showDivider = index < shown.lastIndex,
-        )
-    }
 }
 
 /** The server couldn't send its languages: try again, or type codes joined by `|` as the field used to take them. */
@@ -211,4 +190,17 @@ private fun languageDetail(
         chosen.isEmpty() -> all
         else -> names(chosen)
     }
+}
+
+/** Languages people most often filter Discover to, after the device's own. */
+private val POPULAR_LANGUAGES = listOf("en", "es", "fr", "de", "ja", "ko", "hi", "pt", "it", "zh")
+
+/** How many languages the picker suggests. */
+private const val SUGGESTED_LANGUAGES = 6
+
+/** The languages a picker suggests: the device's own, in its order of preference, then popular ones, up to a handful. */
+private fun suggestedLanguages(): List<String> {
+    val locales = LocaleListCompat.getAdjustedDefault()
+    val device = (0 until locales.size()).mapNotNull { locales[it]?.language?.takeIf { l -> l.isNotBlank() } }
+    return (device + POPULAR_LANGUAGES).distinct().take(SUGGESTED_LANGUAGES)
 }
