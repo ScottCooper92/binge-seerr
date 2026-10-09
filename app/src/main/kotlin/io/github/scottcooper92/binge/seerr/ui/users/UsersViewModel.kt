@@ -176,10 +176,10 @@ class UsersViewModel
         }
 
         /**
-         * Opens the editor seeded from what the selection already has — the union of every selected
-         * user's decoded permissions — so a save that re-ticks nothing still preserves them, rather
-         * than opening blank and writing an empty set over whatever they had. Only the bits the server
-         * offers are seeded: a managed bit the editor hides can't be unticked, so it isn't pooled.
+         * Opens the editor ticked with what every selected user already has: the intersection, never the union, which would
+         * offer each user's permissions to all the others (#1007). A permission only some of them have is [BulkEdit.mixed]: it
+         * starts unticked, and the save leaves it as each user has it unless it is toggled. Only the bits the server offers are
+         * read: a managed bit the editor hides can't be changed, so it never counts.
          */
         fun startBulkEdit() {
             val ids = selection.value.toList()
@@ -187,27 +187,20 @@ class UsersViewModel
             edit.value = BulkEdit(saving = true)
             val offered = offeredNow().also { offeredAtStart = it }
             viewModelScope.launch(dispatcher) {
-                val selected =
-                    store.permissionsFor(ids).values.fold(emptySet<ManageablePermission>()) { acc, bitmask ->
-                        acc + ManageablePermission.decode(bitmask).filter { it in offered }
+                val held =
+                    store.permissionsFor(ids).values.map { bitmask ->
+                        ManageablePermission.decode(bitmask).filter { it in offered }.toSet()
                     }
-                edit.value = BulkEdit(selected = selected)
+                val shared = held.reduceOrNull { acc, permissions -> acc intersect permissions }.orEmpty()
+                val any = held.fold(emptySet<ManageablePermission>()) { acc, permissions -> acc + permissions }
+                edit.value = BulkEdit(selected = shared, mixed = any - shared)
             }
         }
 
         fun togglePermission(permission: ManageablePermission) =
             edit.update { current ->
                 current?.takeUnless { it.saving }?.let {
-                    it.copy(
-                        selected =
-                            if (permission in
-                                it.selected
-                            ) {
-                                it.selected - permission
-                            } else {
-                                it.selected + permission
-                            },
-                    )
+                    it.copy(selected = if (permission in it.selected) it.selected - permission else it.selected + permission)
                 }
                     ?: current
             }
@@ -234,17 +227,20 @@ class UsersViewModel
             val offered = offeredAtStart
             viewModelScope.launch(dispatcher) {
                 runCatching {
-                    // Each id's own cached bitmask is the baseline for that id alone, so an unmanaged
-                    // bit only some of the selection holds is never carried onto the rest. The same goes
-                    // for a managed bit the editor doesn't offer: it keeps each user's own value. Ids whose
-                    // resulting bitmask agrees are still written together in one PUT.
+                    // Each id's own cached bitmask is its baseline, and only the permissions the user toggled change it:
+                    // every other bit, managed or not, offered or not, keeps that user's own value. So a save that
+                    // toggles nothing writes nothing (#1007). Ids whose resulting bitmask agrees are written in one PUT.
                     val baselines = store.permissionsFor(ids)
+                    val touched = current.touched.filter { it in offered }.toSet()
                     val idsByResult =
-                        ids.groupBy { id ->
-                            val baseline = baselines[id] ?: 0
-                            val hidden = ManageablePermission.decode(baseline).filterNot { it in offered }
-                            ManageablePermission.apply(baseline, current.selected.filter { it in offered }.toSet() + hidden)
-                        }
+                        ids
+                            .associateWith { id ->
+                                val baseline = baselines[id] ?: 0
+                                val kept = ManageablePermission.decode(baseline) - touched
+                                ManageablePermission.apply(baseline, kept + current.selected.filter { it in touched })
+                            }.filter { (id, permissions) -> permissions != (baselines[id] ?: 0) }
+                            .entries
+                            .groupBy({ it.value }, { it.key })
                     idsByResult.forEach { (permissions, groupIds) ->
                         connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = groupIds, permissions = permissions))
                         store.updatePermissions(groupIds, permissions)
