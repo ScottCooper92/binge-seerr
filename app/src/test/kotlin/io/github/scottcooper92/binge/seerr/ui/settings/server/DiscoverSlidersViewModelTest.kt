@@ -5,12 +5,14 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -57,7 +59,7 @@ class DiscoverSlidersViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): DiscoverSlidersViewModel {
-        val vm = DiscoverSlidersViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+        val vm = DiscoverSlidersViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.reload()
@@ -80,7 +82,7 @@ class DiscoverSlidersViewModelTest {
         }
 
     @Test
-    fun `moving and switching sliders saves the whole list in the new order, every field carried`() =
+    fun `moving and switching sliders writes the whole list once, in the new order, every field carried`() =
         runTest {
             val vm = viewModel()
             vm.awaitReady()
@@ -88,9 +90,10 @@ class DiscoverSlidersViewModelTest {
             vm.move(from = 1, to = 0)
             vm.move(from = 1, to = 2)
             vm.toggle(2)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            // The list saves as it changes: the moves and the switch go out together, once they stop.
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/discover"))
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/discover")).jsonArray.map { it.jsonObject }
             assertEquals(

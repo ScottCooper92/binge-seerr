@@ -92,6 +92,7 @@ fun DiscoverSlidersScreen(
         events = events,
         actions = actions,
         scrolling = false,
+        saveAsMade = true,
         bottomBar = {
             if (ready != null) {
                 EditorPageActionBar(
