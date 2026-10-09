@@ -35,7 +35,7 @@ private val Indigo900 = Color(0xFF312E81)
 private val IndigoInk = Color(0xFF1E1B4B)
 
 /**
- * Tertiary accent — rose, indigo's complement. Teal was amber's contrast hue (#33); an indigo primary
+ * Tertiary accent — rose, indigo's complement. Teal was amber's contrast hue (binge-design-system#33); an indigo primary
  * (~hue 235) sits close enough to `BingeSentiment.Info`'s blue (~hue 206) that a second cool accent
  * would read as a third blue, so this picks a warm hue instead, clear of both `Info` and the amber
  * `BingeSentiment.Caution` frees up by moving off brand.

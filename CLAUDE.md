@@ -130,8 +130,9 @@ its own type, and its data variant is named `Ready`. There is no shared generic 
 unlike Binge.
 
 A flat data class is allowed for a screen whose top level is always interactive, with loading kept
-elsewhere — and it carries a KDoc saying so. `LogsUiState` is the one: it holds only the query,
-while loading and failure belong to the paging flow.
+elsewhere — and it carries a KDoc saying so. `LogsUiState` and `BlocklistDetailUiState` are the two. `LogsUiState` holds only the query, while
+loading and failure belong to the paging flow. `BlocklistDetailUiState` starts from a row the user
+already has, so the page is interactive at once and the best-effort lookup fills in after.
 
 **Streams.** A ViewModel exposes **one** `StateFlow` for its state. Two other public flows are
 allowed and no more: `Flow<PagingData<T>>`, which has to stay separate because `PagingData` is a
@@ -178,9 +179,9 @@ whether the real entries are wired the way the pane logic assumes: a journey acr
 retry. A rotation there is a real activity recreate, so the back stack comes back through saved state.
 
 **Where the code does not follow this**, it is an open issue rather than a line here: a list of
-departures in this file goes stale faster than it is read. The one standing exception is the DVR
-instance and override rule editors, which carry their pickers' choices in a second stream because
-`EditorUiState<T>` has nowhere to put them; #188 is where that is being decided.
+departures in this file goes stale faster than it is read. There is no standing exception to the
+stream rule: the DVR instance and override rule editors fold their pickers' choices into `uiState`
+through `ExtrasEditorUiState`.
 
 ## Gates
 
@@ -252,7 +253,7 @@ the `!!` ban, loads and silently never fires, so leave that wiring alone.
 
 `detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or
-argued with in review. Paying it down is #165.
+argued with in review. The baseline should only shrink.
 
 ### Coverage
 
@@ -262,7 +263,7 @@ ViewModels, the Seerr client, the stores and the exported service together.
 
 What is excluded is generated code and Android entry points: Hilt's graph and the whole `di`
 package, Room's `*_Impl*` including the inner classes it emits, `*ComposableSingletons*`,
-`*PreviewData*`, the Activities and the Application class, and every `@Composable` by
+`*PreviewData*`, `MainActivity`, `AdvancedRequestActivity`, `SendAddressActivity` and the Application class, and every `@Composable` by
 annotation — UI appearance is not a line-coverage question. Nothing is excluded for merely lacking
 tests, and the patterns match fully-qualified names, so each needs its leading `*`.
 
@@ -303,7 +304,7 @@ repository already has rather than inventing new ones.
 
 ## Agent workflows
 
-`.github/workflows/` holds a review bot and three author bots, adapted from
+`.github/workflows/` holds a review bot and four author bots, adapted from
 binge-companions for this repository. They act only on PRs carrying the `agent`
 label.
 

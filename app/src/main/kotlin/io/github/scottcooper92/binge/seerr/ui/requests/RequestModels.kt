@@ -131,7 +131,6 @@ sealed interface RequestsUiState {
         val listVersion: Int,
         /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
         val refreshes: Map<RequestFilter, ListRefresh> = emptyMap(),
-        /** The request whose actions sheet is open; held here so it survives rotation. */
     ) : RequestsUiState
 
     /** The signed-in user could not be read, so what the list may show is unknown; retrying re-reads it. */
