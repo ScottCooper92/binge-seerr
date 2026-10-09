@@ -26,6 +26,8 @@ import com.binge.designsystem.LocalIsSinglePaneNav
 import com.binge.designsystem.LocalPaneDepth
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.binge.designsystem.component.BingeNavPresentation
+import com.binge.designsystem.component.rememberBingeNavPresentation
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
@@ -54,11 +56,16 @@ fun SeerrNavHost(
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
     LaunchedEffect(connected, root) { backStack.settleHome(connected) }
-    SeerrPaneHost(backStack, connected, modifier) { hubBeside, showBack ->
-        homeEntries(backStack, connected = { connectedState.value }, hubBeside = hubBeside)
-        sectionEntries(backStack, showBack = showBack)
-        detailEntries(backStack, showBack = showBack)
-        serverSettingsEntries(backStack)
+    // PROTOTYPE: on a landscape tablet the hub, the open section and what it opens sit side by side.
+    val threePane = connected == true && rememberBingeNavPresentation() == BingeNavPresentation.CustomRail
+    val defaultSection: @Composable () -> Unit = {
+        DetailPaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
+    }
+    SeerrPaneHost(backStack, connected, modifier, threePane, defaultSection) { hubBeside, showBack ->
+        homeEntries(backStack, connected = { connectedState.value }, hubBeside = hubBeside, threePane = threePane)
+        sectionEntries(backStack, showBack = showBack, threePane = threePane)
+        detailEntries(backStack, showBack = showBack, threePane = threePane)
+        serverSettingsEntries(backStack, threePane)
     }
 }
 
@@ -77,6 +84,8 @@ internal fun SeerrPaneHost(
     backStack: NavBackStack<NavKey>,
     connected: Boolean?,
     modifier: Modifier = Modifier,
+    threePane: Boolean = false,
+    defaultSection: @Composable () -> Unit = {},
     entries: EntryProviderScope<NavKey>.(hubBeside: () -> Boolean, showBack: () -> Boolean) -> Unit,
 ) {
     // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
@@ -86,20 +95,22 @@ internal fun SeerrPaneHost(
     // The one back-arrow rule (paneShowsBack), fed the stack's own shape (paneDepth) alongside
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
-    val showBack = { paneShowsBack(hubBeside.value, backStack.paneDepth()) }
+    // PROTOTYPE: in three panes the section and what it opens are both on screen, so neither has a Back arrow.
+    val depth = { if (threePane) backStack.paneDepth() - 1 else backStack.paneDepth() }
+    val showBack = { paneShowsBack(hubBeside.value, depth()) }
     // The design system's PaneContent only shares an edge while this is false, and it defaults to true. Read here
     // from the same hubBeside as the back arrow, so the two agree about whether the hub is beside a section.
     // Its paneBackOrNull reads the depth beside it, so that is provided from the same stack showBack reads:
     // left at its default of 1, a stacked screen beside the hub would lose its Back arrow.
     CompositionLocalProvider(
         LocalIsSinglePaneNav provides !hubBeside.value,
-        LocalPaneDepth provides backStack.paneDepth(),
+        LocalPaneDepth provides depth(),
     ) {
         NavDisplay(
             backStack = backStack,
             modifier = modifier,
             onBack = { backStack.removeLastOrNull() },
-            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack)),
+            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack, threePane, defaultSection)),
             entryDecorators =
                 listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
@@ -121,6 +132,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     backStack: NavBackStack<NavKey>,
     connected: () -> Boolean?,
     hubBeside: () -> Boolean,
+    threePane: Boolean = false,
 ) {
     entry<HomeRoute> {
         // Connected shows the spinner for a frame at most, while settleHome swaps the hub in.
@@ -139,7 +151,7 @@ private fun EntryProviderScope<NavKey>.homeEntries(
                 detailPlaceholder = {
                     DetailPaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
                 },
-            ),
+            ) + ThreePaneHubTag,
     ) {
         PaneContent(innerEdge = PaneEdge.End) {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.
@@ -160,20 +172,44 @@ private fun EntryProviderScope<NavKey>.homeEntries(
 }
 
 /** The hub's manage sections: the detail pane beside it, or the whole window on a narrow one. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 private fun EntryProviderScope<NavKey>.sectionEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
+    threePane: Boolean = false,
 ) {
-    entry<RequestsRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Requests, backStack, showBack()) } }
-    entry<IssuesRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Issues, backStack, showBack()) } }
-    entry<BlocklistRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Blocklist, backStack, showBack()) } }
-    entry<UsersRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Users, backStack, showBack()) } }
-    entry<SettingsRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, showBack()) } }
+    val sectionPane = DetailPane + ThreePaneSectionTag
+    entry<RequestsRoute>(metadata = sectionPane) { SectionPane(HubSection.Requests, backStack, showBack(), threePane) }
+    entry<IssuesRoute>(metadata = sectionPane) { SectionPane(HubSection.Issues, backStack, showBack(), threePane) }
+    entry<BlocklistRoute>(metadata = sectionPane) { SectionPane(HubSection.Blocklist, backStack, showBack(), threePane) }
+    entry<UsersRoute>(metadata = sectionPane) { SectionPane(HubSection.Users, backStack, showBack(), threePane) }
+    entry<SettingsRoute>(metadata = sectionPane) { SectionPane(HubSection.Settings, backStack, showBack(), threePane) }
     entry<SectionRoute>(metadata = DetailPane) { route ->
         DetailPaneContent {
             EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
         }
     }
+}
+
+/** PROTOTYPE: in three panes, what a section opens replaces whatever it had open beside it rather than stacking. */
+@Composable
+private fun SectionPane(
+    section: HubSection,
+    backStack: NavBackStack<NavKey>,
+    showBack: Boolean,
+    threePane: Boolean,
+) {
+    val route = section.route()
+    val open: (NavKey) -> Unit =
+        if (threePane) {
+            { next ->
+                while (backStack.size > 1 && backStack.last() != route) backStack.removeLastOrNull()
+                backStack.add(next)
+            }
+        } else {
+            backStack::add
+        }
+    DetailPaneContent { SectionContent(section, backStack, showBack, open) }
 }
 
 /**
@@ -221,9 +257,11 @@ private fun SectionContent(
 private fun EntryProviderScope<NavKey>.detailEntries(
     backStack: NavBackStack<NavKey>,
     showBack: () -> Boolean,
+    threePane: Boolean = false,
 ) {
+    val itemPane = DetailPane
     debugDetailEntries(backStack, showBack)
-    entry<RequestDetailRoute>(metadata = DetailPane) { route ->
+    entry<RequestDetailRoute>(metadata = itemPane) { route ->
         DetailPaneContent {
             // No showBack: the hero's DetailOverlayTopBar renders its back arrow unconditionally, which a
             // request page never notices in practice — it is only ever stacked above a section or above
@@ -236,17 +274,17 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
-    entry<IssueDetailRoute>(metadata = DetailPane) { route ->
+    entry<IssueDetailRoute>(metadata = itemPane) { route ->
         DetailPaneContent { IssueDetailEntry(route.issueId, onBack = { backStack.removeLastOrNull() }, showBack = showBack()) }
     }
-    entry<BlocklistDetailRoute>(metadata = DetailPane) { route ->
+    entry<BlocklistDetailRoute>(metadata = itemPane) { route ->
         DetailPaneContent {
             // No showBack: like RequestDetailRoute, this is only ever stacked above BlocklistRoute, so
             // its pane depth is always > 1 and the hero's DetailOverlayTopBar back arrow is never redundant.
             BlocklistDetailEntry(route.item, route.canManage, onBack = { backStack.removeLastOrNull() })
         }
     }
-    entry<UserDetailRoute>(metadata = DetailPane) { route ->
+    entry<UserDetailRoute>(metadata = itemPane) { route ->
         DetailPaneContent {
             UserDetailEntry(
                 route.userId,
@@ -257,7 +295,7 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
-    entry<UserSettingsRoute>(metadata = DetailPane) { route ->
+    entry<UserSettingsRoute>(metadata = itemPane) { route ->
         DetailPaneContent {
             UserSettingsEntry(
                 route.userId,
@@ -267,14 +305,14 @@ private fun EntryProviderScope<NavKey>.detailEntries(
             )
         }
     }
-    entry<UserSettingsPageRoute>(metadata = DetailPane) { route ->
+    entry<UserSettingsPageRoute>(metadata = itemPane) { route ->
         DetailPaneContent {
             // No showBack: every page here is stacked above UserSettingsRoute, which is itself never
             // pushed straight onto [HubRoute] (only from UserDetailEntry), so pane depth is always > 1.
             UserSettingsPageEntry(route.userId, route.page, onBack = { backStack.removeLastOrNull() })
         }
     }
-    entry<EditConnectionRoute>(metadata = DetailPane) {
+    entry<EditConnectionRoute>(metadata = itemPane) {
         DetailPaneContent { EditConnectionEntry(onDone = { backStack.removeLastOrNull() }, showBack = showBack()) }
     }
 }
@@ -285,8 +323,12 @@ private fun EntryProviderScope<NavKey>.detailEntries(
  * none of them take [showBack] — unlike [detailEntries], where two routes are reachable straight off
  * the hub. Wire a future route in here the same way [detailEntries] wires those two, if it changes that.
  */
-private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackStack<NavKey>) {
-    entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
+private fun EntryProviderScope<NavKey>.serverSettingsEntries(
+    backStack: NavBackStack<NavKey>,
+    threePane: Boolean = false,
+) {
+    val itemPane = DetailPane
+    entry<ServerSettingsPageRoute>(metadata = itemPane) { route ->
         DetailPaneContent {
             ServerSettingsPageEntry(
                 page = route.page,
@@ -299,16 +341,16 @@ private fun EntryProviderScope<NavKey>.serverSettingsEntries(backStack: NavBackS
             )
         }
     }
-    entry<DiscoverSliderRoute>(metadata = DetailPane) { route ->
+    entry<DiscoverSliderRoute>(metadata = itemPane) { route ->
         DetailPaneContent { DiscoverSliderEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
     }
-    entry<NotificationAgentRoute>(metadata = DetailPane) { route ->
+    entry<NotificationAgentRoute>(metadata = itemPane) { route ->
         DetailPaneContent { NotificationAgentEntry(route.agent, onBack = { backStack.removeLastOrNull() }) }
     }
-    entry<DvrInstanceRoute>(metadata = DetailPane) { route ->
+    entry<DvrInstanceRoute>(metadata = itemPane) { route ->
         DetailPaneContent { DvrInstanceEntry(route.type, route.id, onBack = { backStack.removeLastOrNull() }) }
     }
-    entry<OverrideRuleRoute>(metadata = DetailPane) { route ->
+    entry<OverrideRuleRoute>(metadata = itemPane) { route ->
         DetailPaneContent { OverrideRuleEntry(route.id, onBack = { backStack.removeLastOrNull() }) }
     }
 }

@@ -63,6 +63,8 @@ internal val DefaultSection: HubSection = HubSection.Requests
 internal fun rememberSeerrPaneStrategy(
     directive: PaneScaffoldDirective,
     backStack: List<NavKey>,
+    threePane: Boolean = false,
+    defaultSection: @Composable () -> Unit = {},
 ): SceneStrategy<NavKey> {
     // The design system's gap between the panes in place of Material adaptive's own 24dp (#814), as Binge's is.
     val spaced = directive.copy(horizontalPartitionSpacerSize = dimensionResource(DesR.dimen.pane_spacer))
@@ -71,7 +73,8 @@ internal fun rememberSeerrPaneStrategy(
             backNavigationBehavior = PaneBackNavigationBehavior,
             directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced)),
         )
-    return remember(listDetail, backStack) { SeerrPaneStrategy(listDetail, backStack) }
+    val threePaneStrategy = if (threePane) ThreePaneStrategy(defaultSection) else null
+    return remember(listDetail, backStack, threePane) { SeerrPaneStrategy(listDetail, backStack, threePaneStrategy) }
 }
 
 /**
@@ -82,9 +85,10 @@ internal fun rememberSeerrPaneStrategy(
 private class SeerrPaneStrategy(
     private val listDetail: SceneStrategy<NavKey>,
     private val backStack: List<NavKey>,
+    private val threePane: ThreePaneStrategy? = null,
 ) : SceneStrategy<NavKey> {
     override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
-        val scene = with(listDetail) { calculateScene(entries) } ?: return null
+        val scene = threePane?.calculateScene(entries) ?: with(listDetail) { calculateScene(entries) } ?: return null
         // toList(): a NavBackStack is a list by delegation, without a list's equality.
         val defaultBesideHub = scene.entries.size > 1 && backStack.toList() == listOf(HubRoute, DefaultSection.route())
         return SeerrPaneScene(scene, claimsBack = !defaultBesideHub)
