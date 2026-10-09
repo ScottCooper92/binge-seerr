@@ -16,7 +16,8 @@ the raw facts behind it.
    `GET /auth/me` as the permission bitmask, decoded by `SeerrPermissions`. `ADMIN` implies
    everything. Jellyseerr and Seerr define three bits Overseerr's current code does not:
    `MANAGE_SETTINGS`, `MANAGE_BLOCKLIST` and `VIEW_BLOCKLIST`. Overseerr up to 1.29 did define
-   `MANAGE_SETTINGS` (bit 4), so an old grant of it can exist on any lineage.
+   `MANAGE_SETTINGS` (bit 4), so an old grant of it can exist on any lineage. No route honours
+   `MANAGE_SETTINGS`: every `/settings` route needs `ADMIN`, so the app gates Settings on that.
 3. **The server's configuration.** What the administrator turned on. Read from
    `GET /settings/public`: `localLogin`, `mediaServerLogin`, `mediaServerType`, `movie4kEnabled`,
    `series4kEnabled`, `partialRequestsEnabled`, `enableSpecialEpisodes`, `hideAvailable`,

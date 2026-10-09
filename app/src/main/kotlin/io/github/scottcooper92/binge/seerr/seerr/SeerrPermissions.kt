@@ -53,10 +53,10 @@ data class SeerrPermissions(
     val canViewIssues: Boolean = false,
     val canManageUsers: Boolean = false,
     /**
-     * Jellyseerr's own bits; Overseerr's current code never sets them, so there they read as false unless the user
-     * is an admin. Overseerr up to 1.29 defined `MANAGE_SETTINGS`, so an old grant of that one can exist.
+     * Jellyseerr's own bit; Overseerr's current code never sets it, so there it reads as false unless the user is an
+     * admin. There is no flag for `MANAGE_SETTINGS`: the bit exists on the Jellyseerr lineage, and Overseerr up to 1.29
+     * defined it too, but no route honours it. Every `/settings` route needs `ADMIN`, so that is the settings gate (#1004).
      */
-    val canManageSettings: Boolean = false,
     val canViewBlocklist: Boolean = false,
 ) {
     /** Whether the user may request something; the server checks the media type it is asked for. */
@@ -96,7 +96,6 @@ data class SeerrPermissions(
                 canManageIssues = granted(PERMISSION_MANAGE_ISSUES),
                 canViewIssues = granted(PERMISSION_VIEW_ISSUES),
                 canManageUsers = granted(PERMISSION_MANAGE_USERS),
-                canManageSettings = granted(PERMISSION_MANAGE_SETTINGS),
                 canViewBlocklist = granted(PERMISSION_VIEW_BLOCKLIST) || granted(PERMISSION_MANAGE_BLOCKLIST),
             )
         }

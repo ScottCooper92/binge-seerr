@@ -195,6 +195,16 @@ class HubViewModelTest {
             assertEquals(12, download.etaMinutes)
         }
 
+    /** No route honours `MANAGE_SETTINGS`; every `/settings` route needs `ADMIN` (#1004). */
+    @Test
+    fun `manage settings without admin does not open the settings section`() =
+        runTest {
+            healthyServer(permissions = REQUEST or (1 shl 2))
+            val vm = viewModel()
+
+            assertFalse(HubSection.Settings in vm.awaitReady().overview.visibleSections())
+        }
+
     @Test
     fun `a plain requester sees only the requests row, and no count the server would refuse`() =
         runTest {
