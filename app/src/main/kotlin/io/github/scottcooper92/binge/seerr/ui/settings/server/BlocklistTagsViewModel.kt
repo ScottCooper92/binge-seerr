@@ -66,7 +66,7 @@ class BlocklistTagsViewModel
         private var search: Job? = null
         private var save: Job? = null
 
-        /** A change that has not been sent yet: the page leaving before its delay is up must still send it. */
+        /** A change that has not reached the server yet, waiting out its delay or refused: leaving the page sends it. */
         private var unsent = false
 
         init {
@@ -128,8 +128,12 @@ class BlocklistTagsViewModel
                     delay(wait)
                     val tags = (state.value as? BlocklistTagsUiState.Ready)?.tags ?: return@launch
                     unsent = false
+                    // Clearing the flag first makes a failure of this save a new signal, even after one that failed before it.
+                    editReady { it.copy(saveFailed = false) }
                     // The write runs on the application's scope, so leaving the page cannot cancel it half-sent.
                     val saved = appScope.async(dispatcher) { write(tags) }.await()
+                    // A failed write is still unsent: leaving the page tries it once more.
+                    unsent = !saved
                     editReady { it.copy(saveFailed = !saved) }
                 }
         }

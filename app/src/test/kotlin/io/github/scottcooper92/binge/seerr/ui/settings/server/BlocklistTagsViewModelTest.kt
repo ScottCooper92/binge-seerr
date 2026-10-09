@@ -165,6 +165,26 @@ class BlocklistTagsViewModelTest {
         }
 
     @Test
+    fun `a retry that fails again reports the failure again`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/main", """{"message":"nope"}""", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.toggle(4344)
+            vm.awaitReady { it.saveFailed }
+            val seen = mutableListOf<Boolean>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                vm.uiState.collect { state -> if (state is BlocklistTagsUiState.Ready) seen += state.saveFailed }
+            }
+
+            vm.retry()
+            vm.uiState.first { seerr.count("POST", "/api/v1/settings/main") == 2 }
+            vm.awaitReady { it.saveFailed }
+
+            assertEquals("cleared when the retry starts, set again when it fails", listOf(true, false, true), seen)
+        }
+
+    @Test
     fun `a search lists what tmdb matches, names it, and blank clears it`() =
         runTest {
             seerr.serve("GET /api/v1/search/keyword", """{"results":[{"id":4344,"name":"musical"},{"id":5,"name":null}]}""")
