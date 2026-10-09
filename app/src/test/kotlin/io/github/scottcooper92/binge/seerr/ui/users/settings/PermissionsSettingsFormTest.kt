@@ -34,7 +34,6 @@ class PermissionsSettingsFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private var saves = 0
     private val toggled = mutableListOf<ManageablePermission>()
 
     private fun show(
@@ -45,7 +44,7 @@ class PermissionsSettingsFormTest {
             PermissionsSettingsScreen(
                 state = EditorUiState.Ready(draft = draft, saved = saved),
                 events = emptyFlow(),
-                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
+                actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
                 onToggle = { toggled += it },
             )
         }
@@ -86,7 +85,7 @@ class PermissionsSettingsFormTest {
     }
 
     @Test
-    fun `a row flips its permission and a changed draft saves`() {
+    fun `a row flips its permission, with no Save to press`() {
         show(REQUESTER.copy(selected = setOf(ManageablePermission.Request4k)), saved = REQUESTER)
 
         rule
@@ -94,10 +93,10 @@ class PermissionsSettingsFormTest {
             .performScrollTo()
             .assertIsOff()
             .performClick()
-        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
 
+        // The flip is the change that saves: there is no Save to press.
         assertEquals(listOf(ManageablePermission.Request), toggled)
-        assertEquals(1, saves)
+        rule.onNodeWithText("Save").assertDoesNotExist()
     }
 }
 

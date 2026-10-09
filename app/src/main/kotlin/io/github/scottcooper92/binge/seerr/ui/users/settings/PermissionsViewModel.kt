@@ -7,11 +7,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserPermissionsBody
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -27,8 +29,12 @@ class PermissionsViewModel
         private val connection: SeerrConnection,
         private val store: UserStore,
         @IoDispatcher dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
         @Assisted private val userId: Int,
     ) : EditorViewModel<PermissionSettings>(dispatcher) {
+        /** A user's permissions save as they change (#930): each switch is small and can be flipped back. */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         init {
             reload()
         }

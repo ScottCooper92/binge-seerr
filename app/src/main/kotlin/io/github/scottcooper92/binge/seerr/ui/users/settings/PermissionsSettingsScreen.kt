@@ -30,6 +30,7 @@ fun PermissionsSettingsScreen(
         state = state,
         events = events,
         actions = actions,
+        saveAsMade = true,
     ) { draft, enabled ->
         GroupMessage(stringResource(leadRes), error = false)
         permissionTree(draft.offered, draft.selected).forEach { (group, nodes) ->
