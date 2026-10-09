@@ -35,6 +35,9 @@ internal class SaveAsMade<T>(
     private var inFlight: Deferred<Result<T>>? = null
     private var unsent = false
 
+    // The latest write, never cleared: cancelling [scope] ends send()'s wait on it, but the write itself is still running.
+    private var lastWrite: Deferred<Result<T>>? = null
+
     /** The draft changed: write it once the changes stop. */
     fun changed() = schedule(SAVE_AS_MADE_DELAY_MILLIS)
 
@@ -60,6 +63,7 @@ internal class SaveAsMade<T>(
         // Caught inside the write, so a failure stays this save's and does not reach the application's scope.
         val write = appScope.async(dispatcher) { attempt { write(sent) } }
         inFlight = write
+        lastWrite = write
         val result =
             try {
                 write.await()
@@ -74,12 +78,16 @@ internal class SaveAsMade<T>(
             }
     }
 
-    /** The page is going: a change still waiting is sent now, where the page's own scope can no longer cancel it. */
+    /**
+     * The page is going: a change still waiting is sent now, where the page's own scope can no longer cancel it, after
+     * any write already running. That includes a change whose write failed, so leaving with the failure showing retries
+     * it once, and a second failure is not reported.
+     */
     fun cleared() {
         val left = draft()?.takeIf(canSave) ?: return
         if (!unsent) return
         pending?.cancel()
-        val earlier = inFlight
+        val earlier = lastWrite
         appScope.launch(dispatcher) {
             earlier?.await()
             attempt { write(left) }

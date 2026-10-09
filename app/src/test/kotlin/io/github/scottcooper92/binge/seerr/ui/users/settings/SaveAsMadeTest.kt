@@ -1,6 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -15,9 +17,9 @@ class SaveAsMadeTest {
     private var draft = 0
     private var saved = 0
 
-    private fun TestScope.saveAsMade() =
+    private fun TestScope.saveAsMade(scope: CoroutineScope = this) =
         SaveAsMade(
-            scope = this,
+            scope = scope,
             appScope = this,
             dispatcher = StandardTestDispatcher(testScheduler),
             draft = { draft },
@@ -59,5 +61,30 @@ class SaveAsMadeTest {
             gates[1].complete(2)
             runCurrent()
             assertEquals(2, gates.size)
+        }
+
+    @Test
+    fun `leaving after the scope is cancelled still waits for the write in flight`() =
+        runTest {
+            val viewModelScope = CoroutineScope(StandardTestDispatcher(testScheduler))
+            val mode = saveAsMade(scope = viewModelScope)
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            draft = 2
+            mode.changed()
+
+            viewModelScope.cancel()
+            runCurrent()
+            mode.cleared()
+            runCurrent()
+            assertEquals("the leftover change waits for the write in flight", listOf(1), sent)
+
+            gates[0].complete(1)
+            runCurrent()
+            assertEquals(listOf(1, 2), sent)
+            gates[1].complete(2)
+            runCurrent()
         }
 }
