@@ -250,11 +250,13 @@ private fun SaveFailedSnackbar(
     val message = stringResource(R.string.editor_save_failed)
     val retry = stringResource(R.string.action_try_again)
     LaunchedEffect(failed) {
-        if (!failed) {
-            snackbarHostState.currentSnackbarData?.dismiss()
-            return@LaunchedEffect
+        if (!failed) return@LaunchedEffect
+        // Shown again whenever it goes without the user answering it - an event's snackbar dismisses whatever is
+        // showing - and after a retry, since a retry that fails at once leaves `failed` true and this effect unrestarted.
+        // Leaving `failed` cancels the effect, and a cancelled snackbar clears itself.
+        while (true) {
+            val result = snackbarHostState.showSnackbar(message, actionLabel = retry, duration = SnackbarDuration.Indefinite)
+            if (result == SnackbarResult.ActionPerformed) onRetry()
         }
-        val result = snackbarHostState.showSnackbar(message, actionLabel = retry, duration = SnackbarDuration.Indefinite)
-        if (result == SnackbarResult.ActionPerformed) onRetry()
     }
 }
