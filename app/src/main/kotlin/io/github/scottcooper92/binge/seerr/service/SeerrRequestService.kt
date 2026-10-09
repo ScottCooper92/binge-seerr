@@ -82,6 +82,7 @@ import io.github.scottcooper92.binge.seerr.seerr.toRequestInfo
 import io.github.scottcooper92.binge.seerr.seerr.toRequestStatus
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toStatusException
+import io.github.scottcooper92.binge.seerr.seerr.updateRequest
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
@@ -336,7 +337,7 @@ class SeerrRequestService(
                     rootFolder = current.rootFolder,
                     tags = current.tags,
                 )
-            api.editRequest(request.requestId, body)
+            api.updateRequest(request.requestId, body)
             EditRequestResponse.getDefaultInstance()
         }
 

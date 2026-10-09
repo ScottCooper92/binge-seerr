@@ -612,12 +612,15 @@ interface SeerrApi {
         @Query("token") token: String,
     ): List<SeerrPushoverSoundDto>
 
-    /** Re-targets a request: the seasons of a show, and the destination for one not yet sent to the client. */
+    /**
+     * Re-targets a request: the seasons of a show, and the destination for one not yet sent to the client. The raw
+     * [Response], because a 202 is a refusal whose body is not a request; call it through [updateRequest].
+     */
     @PUT("api/v1/request/{requestId}")
     suspend fun editRequest(
         @Path("requestId") requestId: Int,
         @Body body: SeerrEditRequestBody,
-    ): SeerrRequestDto
+    ): Response<Unit>
 
     @DELETE("api/v1/request/{requestId}")
     suspend fun deleteRequest(
