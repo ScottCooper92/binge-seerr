@@ -46,6 +46,7 @@ app:consent_title  916d330273e6
 app:download_eta_hours  02abf092ccd1
 app:download_eta_minutes  fc01feb5f7e5
 app:editor_cancel  19766ed6ccb2
+app:editor_create  4759498ac2a7
 app:editor_discard  eb1a70e39274
 app:editor_discard_message  e783fee76b16
 app:editor_discard_title  85bcf41666a5
@@ -1033,6 +1034,7 @@ app:user_settings_page_linked  feda46a46abb
 app:user_settings_page_linked_desc  471cb09e9d9f
 app:user_settings_page_notifications  788011833a5a
 app:user_settings_page_password  e7cf3ef4f17c
+app:user_settings_password_change  3f9c991f63a9
 app:user_settings_password_confirm  5ac265f396a2
 app:user_settings_password_current  72ed2bd767ce
 app:user_settings_password_description  d0cf0e8d0957
