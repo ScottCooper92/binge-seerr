@@ -5,10 +5,10 @@ import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.data.UserEntity
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
-import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -46,7 +46,7 @@ class PermissionsViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(): PermissionsViewModel {
-        val vm = PermissionsViewModel(seerr.connection(this), cache, mainDispatcherRule.dispatcher, 8)
+        val vm = PermissionsViewModel(seerr.connection(this), cache, mainDispatcherRule.dispatcher, backgroundScope, 8)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -88,9 +88,9 @@ class PermissionsViewModelTest {
             vm.toggle(ManageablePermission.ManageIssues)
             val expected = REQUEST or UNMANAGED_BIT or ManageablePermission.ManageIssues.bit
             seerr.serve("POST /api/v1/user/8/settings/permissions", """{"permissions":$expected}""")
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            // Permissions save as they change: the switch goes out once the delay has passed.
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
 
             assertEquals("""{"permissions":$expected}""", seerr.body("POST", "/api/v1/user/8/settings/permissions"))
             assertEquals(expected, vm.awaitReady().saved.original)
