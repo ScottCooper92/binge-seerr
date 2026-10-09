@@ -64,6 +64,85 @@ class SaveAsMadeTest {
         }
 
     @Test
+    fun `settling sends a change still waiting out its delay at once, and only once`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+
+            val settled = mode.settle()
+            runCurrent()
+            assertEquals(listOf(1), sent)
+            gates[0].complete(1)
+            runCurrent()
+            assertEquals("the change landed, so nothing is kept", null, settled.await())
+
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 3)
+            runCurrent()
+            assertEquals("the cancelled wait sends nothing more", listOf(1), sent)
+        }
+
+    @Test
+    fun `settling waits for the write in flight, then sends the change made during it`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            draft = 2
+            mode.changed()
+
+            val settled = mode.settle()
+            runCurrent()
+            assertEquals("nothing overlaps the write in flight", listOf(1), sent)
+            gates[0].complete(1)
+            runCurrent()
+            assertEquals(listOf(1, 2), sent)
+            gates[1].complete(2)
+            assertEquals(null, settled.await())
+
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 3)
+            runCurrent()
+            assertEquals("the first write's answer schedules no third", listOf(1, 2), sent)
+        }
+
+    @Test
+    fun `settling with nothing owed waits for the write in flight and sends nothing`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            val settled = mode.settle()
+            runCurrent()
+            assertEquals(false, settled.isCompleted)
+            gates[0].complete(1)
+            assertEquals(null, settled.await())
+            assertEquals(listOf(1), sent)
+        }
+
+    @Test
+    fun `settling retries a write that failed, and answers the draft if it fails again`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            gates[0].completeExceptionally(IllegalStateException("offline"))
+            runCurrent()
+
+            val settled = mode.settle()
+            runCurrent()
+            assertEquals(listOf(1, 1), sent)
+            gates[1].completeExceptionally(IllegalStateException("still offline"))
+            assertEquals("the page keeps the unsent draft", 1, settled.await())
+        }
+
+    @Test
     fun `leaving after the scope is cancelled still waits for the write in flight`() =
         runTest {
             val viewModelScope = CoroutineScope(StandardTestDispatcher(testScheduler))

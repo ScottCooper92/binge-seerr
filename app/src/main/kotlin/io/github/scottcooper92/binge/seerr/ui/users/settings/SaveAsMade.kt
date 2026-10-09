@@ -79,6 +79,30 @@ internal class SaveAsMade<T>(
     }
 
     /**
+     * The page is about to read its record again (#958): a change still waiting, or one whose write failed, is sent first,
+     * after any write already running, so the read sees it. Called before the page drops its draft, which is captured
+     * here. Answers the draft if its write failed, so the page can keep it on top of what it reads, and null otherwise.
+     */
+    fun settle(): Deferred<T?> {
+        pending?.cancel()
+        val owed = unsent
+        // Owed here now, so the running write's answer does not schedule another send of the draft about to be replaced.
+        unsent = false
+        val kept = draft()
+        val earlier = lastWrite
+        return appScope.async(dispatcher) {
+            val earlierFailed = earlier?.await()?.isFailure == true
+            val left = kept?.takeIf { (owed || earlierFailed) && canSave(it) } ?: return@async null
+            left.takeIf { attempt { write(it) }.isFailure }
+        }
+    }
+
+    /** The page has read its record again; [keptUnsent] says whether it kept a change [settle] could not send. */
+    fun reloaded(keptUnsent: Boolean) {
+        scope.launch { unsent = keptUnsent }
+    }
+
+    /**
      * The page is going: a change still waiting is sent now, where the page's own scope can no longer cancel it, after
      * any write already running. That includes a change whose write failed, so leaving with the failure showing retries
      * it once, and a second failure is not reported.
