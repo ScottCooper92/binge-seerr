@@ -151,9 +151,15 @@ class JobsViewModel
             trackRun: Boolean = false,
             call: suspend (SeerrApi) -> SeerrJobDto,
         ) {
-            val ready = state.value as? JobsUiState.Ready ?: return
-            if (id in ready.busyIds) return
-            state.value = ready.copy(busyIds = ready.busyIds + id)
+            // One compare-and-set, so a poll or an outcome-clear landing from the dispatcher meanwhile is kept, not
+            // overwritten with a stale copy (#973). The block can run more than once; only the attempt that lands counts.
+            var claimed = false
+            state.update { current ->
+                val ready = current as? JobsUiState.Ready
+                claimed = ready != null && id !in ready.busyIds
+                if (ready != null && claimed) ready.copy(busyIds = ready.busyIds + id) else current
+            }
+            if (!claimed) return
             viewModelScope.launch(dispatcher) {
                 val outcome = runCatching { call(connection.api()).toServerJob() }
                 outcome.onSuccess { updated ->
