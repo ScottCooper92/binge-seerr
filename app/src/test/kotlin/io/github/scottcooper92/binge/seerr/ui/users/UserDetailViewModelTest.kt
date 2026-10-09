@@ -41,6 +41,7 @@ import java.util.concurrent.CountDownLatch
 private const val ADMIN = 2
 private const val MANAGE_USERS = 1 shl 3
 private const val REQUEST = 1 shl 5
+private const val REQUEST_VIEW = 1 shl 14
 
 /** The user page over an in-memory connection into a path-scripted Seerr. */
 class UserDetailViewModelTest {
@@ -150,6 +151,36 @@ class UserDetailViewModelTest {
             val requests = vm.requests.asSnapshot()
             assertEquals("Heat", requests.single().title)
             assertEquals("20", received.first { it.url.encodedPath == "/api/v1/user/8/requests" }.url.queryParameter("take"))
+        }
+
+    /** The server lists a user's requests to that user and to who may see everyone's, so nobody else is shown a failing list (#1015). */
+    @Test
+    fun `a manager of users who may not see requests is not offered the list, and the server is not asked`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS)
+            val vm = viewModel()
+
+            assertFalse(vm.awaitReady().detail.canViewRequests)
+            assertTrue(vm.requests.asSnapshot().isEmpty())
+            assertTrue(received.none { it.url.encodedPath == "/api/v1/user/8/requests" })
+        }
+
+    @Test
+    fun `the user themself, and a viewer of everyone's requests, are offered the list`() =
+        runTest {
+            server(viewerId = 8, permissions = REQUEST)
+            assertTrue(viewModel().awaitReady().detail.canViewRequests)
+
+            server(viewerId = 1, permissions = REQUEST or REQUEST_VIEW)
+            val vm = viewModel()
+            assertTrue(vm.awaitReady().detail.canViewRequests)
+            assertEquals(
+                "Heat",
+                vm.requests
+                    .asSnapshot()
+                    .single()
+                    .title,
+            )
         }
 
     @Test
