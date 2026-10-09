@@ -97,7 +97,9 @@ class HandOffSignInEndToEndTest {
             serve()
             progress = HandOffProgress.SignIn("Home", SIGNING_IN_TO, modes = listOf("Local"))
 
-            assertNull(client.send(target.copy(key = null), SIGNING_IN_TO, HandOffCredentials(mode = "Local", email = "a@b.c", password = "x")))
+            assertNull(
+                client.send(target.copy(key = null), SIGNING_IN_TO, HandOffCredentials(mode = "Local", email = "a@b.c", password = "x")),
+            )
             assertTrue(received.isEmpty)
         }
 }

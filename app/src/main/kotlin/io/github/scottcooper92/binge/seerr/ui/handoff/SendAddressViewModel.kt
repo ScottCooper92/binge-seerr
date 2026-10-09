@@ -240,7 +240,14 @@ class SendAddressViewModel
             val address = signingInTo ?: return
             _uiState.updateForm { it.copy(isSending = true, sendingSession = true, rejected = false, awaiting = null) }
             viewModelScope.launch(dispatcher) {
-                val attempt = sharedSession()?.let { tv.send(target, address, HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = it)) }
+                val attempt =
+                    sharedSession()?.let {
+                        tv.send(
+                            target,
+                            address,
+                            HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = it),
+                        )
+                    }
                 if (attempt == null) {
                     _uiState.updateForm { it.copy(isSending = false, sendingSession = false, rejected = true, sessionOffer = null) }
                 } else {

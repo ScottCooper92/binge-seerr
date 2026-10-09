@@ -405,7 +405,12 @@ class AddressHandOffListenerTest {
             assertTrue(post("/c/$TOKEN", sealedFor(local, context = "other000")).startsWith("HTTP/1.1 400 "))
             // Sealed for the token alone, as before #1029, or for an address other than the one the TV signs in to.
             assertTrue(post("/c/$TOKEN", sealedFor(local, context = TOKEN)).startsWith("HTTP/1.1 400 "))
-            assertTrue(post("/c/$TOKEN", sealedFor(local, context = HandOffKey.context(TOKEN, "http://192.168.1.66:5055"))).startsWith("HTTP/1.1 400 "))
+            assertTrue(
+                post(
+                    "/c/$TOKEN",
+                    sealedFor(local, context = HandOffKey.context(TOKEN, "http://192.168.1.66:5055")),
+                ).startsWith("HTTP/1.1 400 "),
+            )
             assertTrue(post("/c/$TOKEN", "sealed=garbage").startsWith("HTTP/1.1 400 "))
             assertTrue(post("/c/$TOKEN", "password=correct+horse&email=ana%40example.com&mode=Local").startsWith("HTTP/1.1 400 "))
             assertTrue(post("/c/abcdefghjkmnpqrstuvw", sealedFor(local)).startsWith("HTTP/1.1 404 "))
