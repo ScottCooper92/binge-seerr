@@ -79,8 +79,8 @@ internal object DisplayLanguages {
 /** Countries for a region picker, named in the device's language, as the web client names them in its own. */
 internal object Regions {
     /**
-     * [codes] as choices, with "All regions" (blank, the server's "no filter") first. A [current] value the list lacks
-     * stays, under its code, so opening the picker never changes it. A user's region passes [defaultLabel]: there, blank
+     * [codes] as choices, less the [RETIRED] ones, with "All regions" (blank, the server's "no filter") first. A [current]
+     * value the list lacks stays, under its name, so opening the picker never changes it. A user's region passes [defaultLabel]: there, blank
      * is "the server's region" and [ALL] is no filter, so both lead.
      */
     fun choices(
@@ -91,14 +91,42 @@ internal object Regions {
     ): List<Pair<String, String>> {
         val known =
             codes
-                .filter { it.isNotBlank() }
+                .filter { it.isNotBlank() && it !in RETIRED }
                 .distinct()
                 .map { it to name(it) }
                 .sortedBy { it.second.lowercase() }
         val kept = current.trim().takeIf { it.isNotEmpty() && it != ALL && known.none { (code) -> code == it } }
         val lead = if (defaultLabel == null) listOf("" to allLabel) else listOf("" to defaultLabel, ALL to allLabel)
-        return lead + listOfNotNull(kept?.let { it to it }) + known
+        return lead + listOfNotNull(kept?.let { it to name(it) }) + known
     }
+
+    /**
+     * Codes TMDB's country list still carries for countries that no longer exist (#932): those ISO 3166-1 has withdrawn,
+     * and TMDB's own `XC` and `XG`. The picker leaves them out. Android names several after the country that replaced
+     * them, so Yugoslavia and Serbia and Montenegro read as a second and third "Serbia", with no flag. A user whose
+     * setting is one of them still sees it, as [choices] keeps a current value the list lacks.
+     */
+    private val RETIRED =
+        setOf(
+            // Netherlands Antilles
+            "AN",
+            // Burma
+            "BU",
+            // Serbia and Montenegro
+            "CS",
+            // Soviet Union
+            "SU",
+            // East Timor
+            "TP",
+            // Czechoslovakia
+            "XC",
+            // East Germany
+            "XG",
+            // Yugoslavia
+            "YU",
+            // Zaire
+            "ZR",
+        )
 
     /** A user's "no filter", which both lineages keep as `all` because a blank user region means the server's. */
     const val ALL = "all"
