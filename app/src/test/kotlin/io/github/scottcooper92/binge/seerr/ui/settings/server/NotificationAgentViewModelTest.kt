@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -28,6 +29,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.Base64
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 
 private const val EMAIL =
     """{"enabled":true,"types":6,"options":{"emailFrom":"seerr@example.com","senderName":"Seerr","smtpHost":"smtp.example.com",
@@ -44,6 +47,9 @@ private const val PUSHOVER = """{"enabled":false,"types":0,"options":{"accessTok
 private const val TELEGRAM = """{"enabled":true,"types":0,"options":{"botAPI":"t","chatId":"1","messageThreadId":""}}"""
 
 private const val SOUNDS = """[{"name":"pushover","description":"Pushover (default)"},{"name":"bike","description":"Bike"}]"""
+
+/** Long enough for a keystroke to land while a sounds fetch is still out. */
+private const val SLOW_SOUNDS_MILLIS = 400L
 
 class NotificationAgentViewModelTest {
     @get:Rule
@@ -296,6 +302,30 @@ class NotificationAgentViewModelTest {
                     .url
                     .queryParameter("token"),
             )
+        }
+
+    /** A keystroke cancels the sounds fetch in flight; the cancellation must not empty the picker on its way out (#1025). */
+    @Test
+    fun `a token edited while its sounds load keeps the picker full until the next answer`() =
+        runTest {
+            val vm = viewModel(ServerAgent.Pushover)
+            vm.awaitReady()
+            vm.setOption(AgentOption.PushoverAccessToken, "app-token")
+            vm.awaitReady { it.extras.sounds.isNotEmpty() }
+            val seen = mutableListOf<Int>()
+            backgroundScope.launch {
+                vm.uiState.collect { state -> (state as? ExtrasEditorUiState.Ready)?.let { seen += it.extras.sounds.size } }
+            }
+            seerr.serveFrom("GET /api/v1/settings/notifications/pushover/sounds", delayMillis = SLOW_SOUNDS_MILLIS) { SOUNDS }
+
+            vm.setOption(AgentOption.PushoverAccessToken, "app-token-2")
+            seerr.awaitCount("GET", "/api/v1/settings/notifications/pushover/sounds", moreThan = 1)
+            vm.setOption(AgentOption.PushoverAccessToken, "app-token-3")
+            seerr.awaitCount("GET", "/api/v1/settings/notifications/pushover/sounds", moreThan = 2)
+            withContext(Dispatchers.IO) { delay(SLOW_SOUNDS_MILLIS * 2) }
+            vm.awaitReady { it.draft.option(AgentOption.PushoverAccessToken) == "app-token-3" }
+
+            assertFalse("the picker emptied mid-fetch: $seen", 0 in seen)
         }
 
     @Test
