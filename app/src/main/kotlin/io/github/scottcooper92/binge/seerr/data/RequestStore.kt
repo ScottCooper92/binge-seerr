@@ -47,8 +47,9 @@ class RoomRequestStore(
 ) : RequestStore {
     private val requests get() = db.requestDao()
     private val keys get() = db.requestRemoteKeyDao()
+    private val sources = OpenPagingSources<Int, RequestEntity>()
 
-    override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = requests.pagingSource(listKey)
+    override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = sources.track(requests.pagingSource(listKey))
 
     override suspend fun nextSkip(listKey: String): Int? = keys.nextSkip(listKey)
 
@@ -58,32 +59,38 @@ class RoomRequestStore(
         listKey: String,
         requests: List<RequestEntity>,
         nextSkip: Int?,
-    ) = db.withTransaction {
-        this.requests.clear(listKey)
-        this.requests.upsertAll(requests)
-        keys.upsert(RequestRemoteKeyEntity(listKey, nextSkip))
+    ) = sources.afterWrite {
+        db.withTransaction {
+            this.requests.clear(listKey)
+            this.requests.upsertAll(requests)
+            keys.upsert(RequestRemoteKeyEntity(listKey, nextSkip))
+        }
     }
 
     override suspend fun append(
         listKey: String,
         requests: List<RequestEntity>,
         nextSkip: Int?,
-    ) = db.withTransaction {
-        this.requests.upsertAll(requests)
-        keys.upsert(RequestRemoteKeyEntity(listKey, nextSkip))
+    ) = sources.afterWrite {
+        db.withTransaction {
+            this.requests.upsertAll(requests)
+            keys.upsert(RequestRemoteKeyEntity(listKey, nextSkip))
+        }
     }
 
     override suspend fun updateStatus(
         requestId: Int,
         status: Int,
-    ) = requests.updateStatus(requestId, status)
+    ) = sources.afterWrite { requests.updateStatus(requestId, status) }
 
-    override suspend fun delete(requestId: Int) = requests.delete(requestId)
+    override suspend fun delete(requestId: Int) = sources.afterWrite { requests.delete(requestId) }
 
     override suspend fun clearAll() =
-        db.withTransaction {
-            requests.clearAll()
-            keys.clearAll()
+        sources.afterWrite {
+            db.withTransaction {
+                requests.clearAll()
+                keys.clearAll()
+            }
         }
 }
 
