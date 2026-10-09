@@ -328,6 +328,65 @@ class JobsViewModelTest {
             returned.cancel()
         }
 
+    /** #935: "in 20 minutes" counts down between reads while the list shows, and nothing ticks while it is away. */
+    @Test
+    fun `the rows' clock moves on each minute while the list is showing, and not while it is away`() =
+        runTest {
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            val start = 1_789_275_600_000L + 30_000L
+            vm.clock = { start + testScheduler.currentTime }
+            // A ticker left running would keep the scheduler busy and hang the test rather than fail it.
+            try {
+                val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+                val first = vm.awaitReady().now
+
+                testScheduler.advanceTimeBy(60_000L)
+                testScheduler.runCurrent()
+                val ticked = (vm.uiState.value as JobsUiState.Ready).now
+                assertTrue(ticked > first)
+
+                collector.cancel()
+                testScheduler.runCurrent()
+                testScheduler.advanceTimeBy(5 * 60_000L)
+                testScheduler.runCurrent()
+                assertEquals(ticked, (vm.uiState.value as JobsUiState.Ready).now)
+            } finally {
+                viewModels.clear()
+            }
+        }
+
+    /** #935: the running poll serves a page showing the list; a page back on screen may have missed the job stopping. */
+    @Test
+    fun `a running job's poll stops while the page is away and reads at once on its return`() =
+        runTest {
+            seerr.serve("GET /api/v1/settings/jobs", "[${job("plex-full-scan", running = true)}]")
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            vm.runningRefreshMillis = 10
+            // The job never stops, so a poll left running would keep the scheduler busy and hang the test, not fail it.
+            try {
+                val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+                vm.awaitReady()
+                collector.cancel()
+                testScheduler.runCurrent()
+                // Let a read the poll had in flight as the page left land before counting.
+                seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = Int.MAX_VALUE)
+                val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+                testScheduler.advanceTimeBy(100 * vm.runningRefreshMillis)
+                testScheduler.runCurrent()
+                assertFalse(seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = reads))
+
+                val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+                testScheduler.runCurrent()
+                assertTrue(seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = reads))
+                returned.cancel()
+            } finally {
+                viewModels.clear()
+            }
+        }
+
     @Test
     fun `a next run already past schedules no re-read`() =
         runTest {

@@ -59,6 +59,7 @@ internal fun jobRow(
     busy: Boolean,
     outcome: JobOutcome?,
     actions: JobsActions,
+    now: Long = System.currentTimeMillis(),
     onSchedule: () -> Unit,
 ): ListItem =
     ListItem(
@@ -76,7 +77,7 @@ internal fun jobRow(
                 outcome == JobOutcome.Failed -> stringResource(R.string.server_settings_job_failed)
                 job.running -> stringResource(R.string.settings_job_running)
                 else ->
-                    formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
+                    formatRelativeOrAbsolute(job.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) }
                         ?: stringResource(R.string.settings_value_unknown)
             },
         detailColor = if (outcome == JobOutcome.Failed) BingeSentiment.Negative.accent() else null,

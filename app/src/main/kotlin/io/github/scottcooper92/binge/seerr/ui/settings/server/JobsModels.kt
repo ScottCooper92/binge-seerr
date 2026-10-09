@@ -66,11 +66,15 @@ sealed interface JobsUiState {
         val error: SeerrError,
     ) : JobsUiState
 
-    /** [busyIds] are the jobs with a run, cancel or schedule in flight; [outcomes] each job's last run, shown briefly. */
+    /**
+     * [busyIds] are the jobs with a run, cancel or schedule in flight; [outcomes] each job's last run, shown briefly.
+     * [now] is the instant the rows word their times against, moved on each minute while the list is showing.
+     */
     data class Ready(
         val jobs: List<ServerJob>,
         val busyIds: Set<String> = emptySet(),
         val outcomes: Map<String, JobOutcome> = emptyMap(),
+        val now: Long = System.currentTimeMillis(),
     ) : JobsUiState
 }
 

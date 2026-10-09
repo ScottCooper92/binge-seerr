@@ -34,12 +34,16 @@ private const val OUTCOME_MILLIS = 4_000L
 /** How long after a job's scheduled time the list is re-read, so the server has started it. */
 private const val DUE_GRACE_MILLIS = 5_000L
 
+/** How often the rows' "in 20 minutes" is worded again: on each minute, while the list is showing. */
+private const val TICK_MILLIS = 60_000L
+
 /**
  * The Jobs & cache page's jobs: every scheduled job, run now, cancelled, or given a new
- * schedule. While any job is running the list is re-read on a short interval, so the running state
- * clears on its own. While none is, and something is showing the list, it is re-read once the earliest
- * next run comes due, so a job the schedule starts while the page is open shows as running, and its
- * next run moves on.
+ * schedule. While something is showing the list, a running job is re-read on a short interval, so the
+ * running state clears on its own, and otherwise the list is re-read once the earliest next run comes
+ * due, so a job the schedule starts while the page is open shows as running, and its next run moves on.
+ * The rows' relative times are worded against a clock moved on each minute. All three stop while
+ * nothing is showing the list (#935), and a page coming back re-reads what may have moved meanwhile.
  */
 @HiltViewModel
 class JobsViewModel
@@ -66,6 +70,7 @@ class JobsViewModel
         internal var runningRefreshMillis = RUNNING_REFRESH_MILLIS
         private var refresh: Job? = null
         private var dueCheck: Job? = null
+        private var ticker: Job? = null
 
         /** The run [dueCheck] is waiting for, kept while it is paused so a run that falls due meanwhile is noticed. */
         private var pendingDueMillis: Long? = null
@@ -84,7 +89,16 @@ class JobsViewModel
             // state.first {} in runWhenReady counts as a watcher for a moment, which costs at most one extra read.
             viewModelScope.launch(dispatcher) {
                 state.subscriptionCount.map { it > 0 }.distinctUntilChanged().collect { watched ->
-                    if (watched) resumeDueCheck() else dueCheck?.cancel()
+                    if (watched) {
+                        // Back on screen: the clock moves again, and a running job or a missed run is re-read at once.
+                        ticker = viewModelScope.launch(dispatcher) { tick() }
+                        if (jobs().any { it.running }) followRunning(readFirst = true) else resumeDueCheck()
+                    } else {
+                        // Nothing showing the list: no re-reads and no ticks until something shows it again.
+                        dueCheck?.cancel()
+                        refresh?.cancel()
+                        ticker?.cancel()
+                    }
                 }
             }
         }
@@ -191,14 +205,25 @@ class JobsViewModel
                     jobs,
                     busyIds = (current as? JobsUiState.Ready)?.busyIds.orEmpty(),
                     outcomes = (current as? JobsUiState.Ready)?.outcomes.orEmpty(),
+                    now = clock(),
                 )
             }
             if (jobs.any { it.running }) {
                 dueCheck?.cancel()
-                followRunning()
+                // The poll serves a page showing the list; a page coming back starts it again (resume).
+                if (state.subscriptionCount.value > 0) followRunning()
             } else {
                 refresh?.cancel()
                 checkWhenDue()
+            }
+        }
+
+        /** Moves the rows' clock on at each minute, for as long as the list is showing. */
+        private suspend fun tick() {
+            while (true) {
+                val now = clock()
+                state.update { current -> (current as? JobsUiState.Ready)?.copy(now = now) ?: current }
+                delay(TICK_MILLIS - now % TICK_MILLIS)
             }
         }
 
@@ -254,12 +279,18 @@ class JobsViewModel
             }
         }
 
-        private fun followRunning() {
+        /**
+         * Re-reads the list while a job runs. [readFirst] reads at once, for a page back on screen that may have missed
+         * the job stopping.
+         */
+        private fun followRunning(readFirst: Boolean = false) {
             if (refresh?.isActive == true) return
             refresh =
                 viewModelScope.launch(dispatcher) {
+                    var wait = !readFirst
                     while (jobs().any { it.running }) {
-                        delay(runningRefreshMillis)
+                        if (wait) delay(runningRefreshMillis)
+                        wait = true
                         runCatching { connection.api().jobs().map { it.toServerJob() } }.onSuccess { jobs ->
                             state.update { current -> (current as? JobsUiState.Ready)?.copy(jobs = jobs) ?: current }
                             jobs.filter { job -> !job.running && job.id in awaiting }.forEach { showOutcome(it.id, JobOutcome.Succeeded) }
