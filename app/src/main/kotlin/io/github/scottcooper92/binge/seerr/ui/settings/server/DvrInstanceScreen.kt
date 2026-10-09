@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -162,6 +163,7 @@ private fun ServerGroup(
                     loading = extras.testing,
                     clickable = enabled && draft.connectionValid && !extras.testing,
                     disabled = !enabled || !draft.connectionValid,
+                    destination = ListItemDestination.Action,
                     onClick = onTest,
                 ),
             ),
@@ -241,6 +243,7 @@ internal fun DeleteGroup(onDelete: () -> Unit) {
                     icon = Icons.Filled.Delete,
                     iconTint = BingeSentiment.Negative.fill(),
                     label = stringResource(R.string.server_settings_delete),
+                    destination = ListItemDestination.Action,
                     onClick = { confirming = true },
                 ),
             ),

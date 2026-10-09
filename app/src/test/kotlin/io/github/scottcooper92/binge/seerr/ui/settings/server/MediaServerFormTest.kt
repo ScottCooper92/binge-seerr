@@ -10,6 +10,8 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
@@ -98,7 +100,8 @@ class MediaServerFormTest {
         show(JELLYFIN, MediaServerExtras(scan = LibraryScan(running = true, progress = 1, total = 2, currentLibrary = null)))
 
         rule.onNodeWithText("Scanning… 1 of 2").assertExists()
-        rule.onNodeWithText("Cancel the scan").assertExists()
+        // The scan row's own stop button, not a second row.
+        rule.onNodeWithContentDescription("Cancel the scan").assertExists().assertHasClickAction()
     }
 
     @Test

@@ -32,6 +32,7 @@ import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -309,6 +310,7 @@ private fun requestRows(
                     label = stringResource(if (blockTitle) R.string.request_remove_and_block else R.string.request_remove),
                     detail = stringResource(if (blockTitle) R.string.request_remove_block_detail else R.string.request_remove_detail),
                     trailingContent = {},
+                    destination = ListItemDestination.Action,
                     onClick = callbacks.onRemove,
                 ),
             )
@@ -338,6 +340,7 @@ private fun mediaRows(
                         label = stringResource(if (instance.is4k) R.string.media_delete_4k_files else R.string.media_delete_files),
                         detail = stringResource(R.string.media_delete_files_detail, client),
                         trailingContent = {},
+                        destination = ListItemDestination.Action,
                         onClick = { callbacks.onDeleteFiles(instance.is4k) },
                     ),
                 )
@@ -351,6 +354,7 @@ private fun mediaRows(
                     label = stringResource(R.string.media_clear_data),
                     detail = stringResource(R.string.media_clear_detail),
                     trailingContent = {},
+                    destination = ListItemDestination.Action,
                     onClick = callbacks.onClearData,
                 ),
             )
@@ -370,6 +374,7 @@ private fun instanceRow(
         detail = stringResource(R.string.media_mark_as).takeIf { canSetStatus },
         clickable = canSetStatus,
         trailingContent = instance.status?.let { status -> { MediaStateChip(status = status) } },
+        destination = ListItemDestination.Action,
         onClick = onMarkStatus,
     )
 

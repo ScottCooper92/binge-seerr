@@ -21,6 +21,7 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.ExpressiveIconButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
@@ -110,6 +111,7 @@ internal fun ApiKeyRows(
                     icon = Icons.Filled.ContentCopy,
                     label = stringResource(R.string.server_settings_api_key_copy),
                     disabled = apiKey.key.isEmpty(),
+                    destination = ListItemDestination.Action,
                     onClick = { actions.onCopy(apiKey.key) },
                 ),
                 ListItem(
@@ -118,6 +120,7 @@ internal fun ApiKeyRows(
                     label = stringResource(R.string.server_settings_api_key_regenerate),
                     detail = stringResource(R.string.server_settings_api_key_regenerate_detail),
                     loading = apiKey.regenerating,
+                    destination = ListItemDestination.Action,
                     onClick = onRegenerate,
                 ),
             ),
