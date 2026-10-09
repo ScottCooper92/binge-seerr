@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -67,6 +68,9 @@ internal fun pickedInOrder(
     picked: Set<String>,
 ): List<String> = (listed ?: saved).filter { it in picked }
 
+/** The language sheet's unsaved ticks, as the codes they are. */
+private val LanguageCodesSaver = Saver<Set<String>, ArrayList<String>>(save = { ArrayList(it) }, restore = { it.toSet() })
+
 /**
  * A language filter as a list row: the languages chosen, named on the device, so the page needs no list to draw it.
  * The server's list is read only when the sheet opens ([onOpen]). The sheet is a [BingeMultiChoiceSheet]: the
@@ -115,6 +119,8 @@ internal fun languageSettingItem(
                 doneLabel = stringResource(R.string.editor_done),
                 clearLabel = stringResource(R.string.server_settings_list_clear),
                 suggested = remember { suggestedLanguages() },
+                // The ticks survive a rotation with the sheet, which is restored open (#949).
+                draftSaver = LanguageCodesSaver,
                 actions = {
                     if (user) {
                         BingeTextButton(
