@@ -41,6 +41,15 @@ class DisplayLanguagesTest {
     }
 
     @Test
+    fun `codes for countries that no longer exist are left out, unless one is the current value`() {
+        // As TMDB lists them: Serbia beside Serbia and Montenegro, and Yugoslavia, which Android names "Serbia" too (#932).
+        val codes = listOf("RS", "CS", "YU", "ME", "ZR", "CD")
+
+        assertEquals(listOf("CD", "ME", "RS"), Regions.choices(codes, current = "", allLabel = "All").drop(1).map { it.first })
+        assertEquals("CS" to Regions.name("CS"), Regions.choices(codes, current = "CS", allLabel = "All")[1])
+    }
+
+    @Test
     fun `a code the device cannot name falls back to itself`() {
         assertEquals("United Kingdom", Regions.name("GB"))
         assertEquals("not-a-region", Regions.name("not-a-region"))
