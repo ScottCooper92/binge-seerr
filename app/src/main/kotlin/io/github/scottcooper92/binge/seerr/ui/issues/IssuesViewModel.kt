@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -73,16 +74,17 @@ class IssuesViewModel
         val events: Flow<IssueListEvent> = eventFlow.asSharedFlow()
 
         /**
-         * The user's permissions decide whether the list is theirs alone. Re-read from the server on
-         * becoming visible, since the cached `auth/me` would not show a permission changed in the web
-         * client. The profile is not re-read: `hasCounts` follows the server's version.
+         * The user's permissions decide whether the list is theirs alone, and the server's version whether it has
+         * counts. Both are re-read from the server on becoming visible, since the cached `auth/me` would not show a
+         * permission changed in the web client, and the cached profile would not show a server upgraded in place (#1074).
          */
         private val scope: Flow<IssueListScope> =
             scopeRefresh
                 .flatMapLatest {
                     flow {
+                        val hasCounts = runCatching { connection.refreshProfile().hasCounts }.getOrDefault(false)
                         val user = runCatching { connection.refreshAuthenticatedUser() }.getOrNull()
-                        emit(IssueListScope(permissions = user.toPermissions(), currentUserId = user?.id))
+                        emit(IssueListScope(permissions = user.toPermissions(), currentUserId = user?.id, hasCounts = hasCounts))
                     }
                 }.flowOn(dispatcher)
                 .stateIn(viewModelScope, SharingStarted.Lazily, IssueListScope())
@@ -113,12 +115,11 @@ class IssuesViewModel
 
         /** Null where the server has no counts endpoint, or it failed; the previous totals hold while a fetch is in flight. */
         private val counts: Flow<IssueCounts?> =
-            combine(selectedFilter, countsRefresh) { _, _ -> }
-                .flatMapLatest {
+            combine(selectedFilter, countsRefresh, scope.map { it.hasCounts }.distinctUntilChanged()) { _, _, hasCounts -> hasCounts }
+                .flatMapLatest { hasCounts ->
                     flow {
-                        val profile = runCatching { connection.profile() }.getOrNull()
                         emit(
-                            if (profile?.hasCounts == true) {
+                            if (hasCounts) {
                                 runCatching { connection.api().issueCount() }.getOrNull()?.let { IssueCounts(it.total, it.open, it.closed) }
                             } else {
                                 null
