@@ -197,6 +197,43 @@ class JobsViewModelTest {
             assertEquals(JobOutcome.Succeeded, succeeded.outcomes["plex-full-scan"])
         }
 
+    /** A job the schedule starts while the page is open shows as running, and its next run moves on once it stops. */
+    @Test
+    fun `the list is re-read when the earliest next run comes due, and follows the job it started`() =
+        runTest {
+            val vm = viewModel()
+            // An hour before the download sync's next run (05:01 UTC).
+            vm.clock = { 1_789_275_660_000L - 60 * 60_000L }
+            vm.reload()
+            vm.awaitReady()
+            val before = seerr.count("GET", "/api/v1/settings/jobs")
+
+            seerr.serve(
+                "GET /api/v1/settings/jobs",
+                JOBS.replace(
+                    """"download-sync","name":"Download Sync","type":"command","interval":"short","nextExecutionTime":"2026-09-13T05:01:00.000Z","running":false""",
+                    """"download-sync","name":"Download Sync","type":"command","interval":"short","nextExecutionTime":"2026-09-13T05:02:00.000Z","running":true""",
+                ),
+            )
+            val running = vm.uiState.first { it is JobsUiState.Ready && it.jobs[1].running } as JobsUiState.Ready
+            assertTrue(running.jobs[1].running)
+            assertTrue(seerr.count("GET", "/api/v1/settings/jobs") > before)
+
+            seerr.serve("GET /api/v1/settings/jobs", JOBS)
+            vm.uiState.first { it is JobsUiState.Ready && !it.jobs[1].running }
+        }
+
+    @Test
+    fun `a next run already past schedules no re-read`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+            testScheduler.advanceTimeBy(24 * 60 * 60_000L)
+            testScheduler.runCurrent()
+            assertEquals(reads, seerr.count("GET", "/api/v1/settings/jobs"))
+        }
+
     @Test
     fun `a preset encodes as the six-field cron the server takes, and a failure is reported`() =
         runTest {
