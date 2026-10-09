@@ -82,6 +82,13 @@ abstract class EditorViewModel<T>(
      */
     protected open val saveAsMadeScope: CoroutineScope? = null
 
+    /**
+     * What a page that saves as it changes may send (#957). A write is the saved record with the user's change in it, so a
+     * record the server sent that already fails [canSave] (a required email it left blank, say) goes back as it came rather
+     * than holding every change on the page. Only a change that turns a valid record invalid is held.
+     */
+    private fun canSaveAsMade(draft: T): Boolean = canSave(draft) || ready()?.saved?.let(::canSave) == false
+
     private val saveAsMade: SaveAsMade<T>? by lazy {
         saveAsMadeScope?.let { appScope ->
             SaveAsMade(
@@ -89,7 +96,7 @@ abstract class EditorViewModel<T>(
                 appScope = appScope,
                 dispatcher = dispatcher,
                 draft = { ready()?.draft },
-                canSave = ::canSave,
+                canSave = ::canSaveAsMade,
                 write = ::write,
                 adopt = { sent, adopted ->
                     var moved = false
@@ -234,6 +241,13 @@ abstract class ExtrasEditorViewModel<T, X>(
     /** As [EditorViewModel.saveAsMadeScope]: the application's scope for a page that saves as it changes (#930). */
     protected open val saveAsMadeScope: CoroutineScope? = null
 
+    /**
+     * What a page that saves as it changes may send (#957). A write is the saved record with the user's change in it, so a
+     * record the server sent that already fails [canSave] (a required email it left blank, say) goes back as it came rather
+     * than holding every change on the page. Only a change that turns a valid record invalid is held.
+     */
+    private fun canSaveAsMade(draft: T): Boolean = canSave(draft) || ready()?.saved?.let(::canSave) == false
+
     private val saveAsMade: SaveAsMade<T>? by lazy {
         saveAsMadeScope?.let { appScope ->
             SaveAsMade(
@@ -241,7 +255,7 @@ abstract class ExtrasEditorViewModel<T, X>(
                 appScope = appScope,
                 dispatcher = dispatcher,
                 draft = { ready()?.draft },
-                canSave = ::canSave,
+                canSave = ::canSaveAsMade,
                 write = ::write,
                 adopt = { sent, adopted ->
                     var moved = false
