@@ -1,8 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeLoadingIndicator
@@ -90,14 +93,24 @@ internal fun regionSettingItem(
     )
 }
 
-/** The wait while a list is read, in the sheet that will show it. */
+/**
+ * The wait while a list is read, in the sheet that will show it. It is a window tall, as the list will be: a sheet holding
+ * only a spinner fits whole, so it would settle fully open and then fill the screen when the list arrived. This tall, it
+ * peeks at half height like the list, and the list arrives into a sheet that stays where it is.
+ */
 @Composable
 internal fun ListLoading() {
+    val windowHeight =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.height
+                .toDp()
+        }
     BingeLoadingIndicator(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .wrapContentWidth(Alignment.CenterHorizontally)
+                .heightIn(min = windowHeight)
+                .wrapContentSize(Alignment.TopCenter)
                 .padding(dimensionResource(DesR.dimen.padding_l)),
     )
 }
