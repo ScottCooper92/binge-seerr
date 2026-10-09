@@ -4,8 +4,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +35,8 @@ fun PeekingListSheet(
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss, skipPartiallyExpanded = false, dockable = true) {
+    // Edge to edge: the list runs under the navigation bar and pads its own end, as a long list does.
+    BingeBottomSheet(onDismissRequest = onDismiss, skipPartiallyExpanded = false, dockable = true, edgeToEdge = true) {
         BingeSheetDockingHeader(
             header = {
                 Row(
@@ -49,6 +54,9 @@ fun PeekingListSheet(
             dockedTopBar = { onClose -> BingeSheetTopBar(title = title, onClose = onClose, actions = actions) },
         )
         // Its own scroll, so a list of hundreds is reachable at either height without a lazy list inside the sheet.
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()), content = content)
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            content()
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+        }
     }
 }
