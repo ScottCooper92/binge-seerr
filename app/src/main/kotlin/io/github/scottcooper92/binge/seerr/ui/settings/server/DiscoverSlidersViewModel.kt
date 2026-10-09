@@ -5,10 +5,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -24,7 +26,11 @@ class DiscoverSlidersViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
     ) : EditorViewModel<List<DiscoverSlider>>(dispatcher) {
+        /** The slider list saves as it changes (#930): order and on/off are small and easy to undo, and a drag is one write once it settles. */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
         override suspend fun load(): List<DiscoverSlider> = connection.api().discoverSliders().mapNotNull { it.toSlider() }
 
         override suspend fun write(draft: List<DiscoverSlider>): List<DiscoverSlider> =
