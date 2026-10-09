@@ -68,6 +68,8 @@ class JobsViewModel
             reload()
             // The due-run wait serves a page showing the list. A holder that only runs a job (the TV settings board)
             // never collects the state, and a page off screen stops collecting it, so neither re-reads the list (#936).
+            // This is a looser signal than the setScreenVisible hook other list roots use: the view model's own
+            // state.first {} in runWhenReady counts as a watcher for a moment, which costs at most one extra read.
             viewModelScope.launch(dispatcher) {
                 state.subscriptionCount.map { it > 0 }.distinctUntilChanged().collect { watched ->
                     if (watched) resumeDueCheck() else dueCheck?.cancel()
@@ -188,7 +190,7 @@ class JobsViewModel
         private fun resumeDueCheck() {
             val missed = pendingDueMillis?.let { it <= clock() } == true
             if (missed) {
-                pendingDueMillis = null
+                // Left in place: a read that is cancelled or fails keeps the missed run, and a landed one resets it.
                 dueCheck?.cancel()
                 dueCheck = viewModelScope.launch(dispatcher) { readDue() }
             } else {
@@ -217,7 +219,6 @@ class JobsViewModel
             dueCheck =
                 viewModelScope.launch(dispatcher) {
                     delay(next + DUE_GRACE_MILLIS - now)
-                    pendingDueMillis = null
                     readDue()
                 }
         }
