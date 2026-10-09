@@ -269,6 +269,32 @@ class JobsViewModelTest {
         }
 
     @Test
+    fun `a list read while the page is away still lets it catch a run that came due`() =
+        runTest {
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            var now = 1_789_275_660_000L - 60 * 60_000L
+            vm.clock = { now }
+            val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            vm.awaitReady()
+            collector.cancel()
+            testScheduler.runCurrent()
+
+            // A read that lands with nothing collecting must keep the run it found, not drop it.
+            vm.reload()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            testScheduler.runCurrent()
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+            now += 2 * 60 * 60_000L
+            val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            testScheduler.runCurrent()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = reads)
+            assertTrue(seerr.count("GET", "/api/v1/settings/jobs") > reads)
+            returned.cancel()
+        }
+
+    @Test
     fun `a next run already past schedules no re-read`() =
         runTest {
             val vm = viewModel()

@@ -208,10 +208,12 @@ class JobsViewModel
         private fun checkWhenDue() {
             dueCheck?.cancel()
             pendingDueMillis = null
-            if (state.subscriptionCount.value == 0 || jobs().any { it.running }) return
+            if (jobs().any { it.running }) return
             val now = clock()
             val next = jobs().mapNotNull { it.nextRunMillis }.filter { it > now }.minOrNull() ?: return
+            // Recorded even with nothing watching, so a page coming back can tell the run was missed.
             pendingDueMillis = next
+            if (state.subscriptionCount.value == 0) return
             dueCheck =
                 viewModelScope.launch(dispatcher) {
                     delay(next + DUE_GRACE_MILLIS - now)
