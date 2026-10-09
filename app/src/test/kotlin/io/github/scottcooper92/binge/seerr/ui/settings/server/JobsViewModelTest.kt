@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -221,6 +222,76 @@ class JobsViewModelTest {
 
             seerr.serve("GET /api/v1/settings/jobs", JOBS)
             vm.uiState.first { it is JobsUiState.Ready && !it.jobs[1].running }
+        }
+
+    /** #936: the TV settings board holds this view model only to run a scan, and never shows the list. */
+    @Test
+    fun `a holder that never shows the list does not re-read it when a run comes due`() =
+        runTest {
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            vm.clock = { 1_789_275_660_000L - 60 * 60_000L }
+            vm.reload()
+            vm.uiState.first { it is JobsUiState.Ready }
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+            testScheduler.advanceTimeBy(2 * 60 * 60_000L)
+            testScheduler.runCurrent()
+            assertEquals(reads, seerr.count("GET", "/api/v1/settings/jobs"))
+        }
+
+    @Test
+    fun `a page back on screen re-reads the list when a run came due while it was away`() =
+        runTest {
+            // Not viewModel(): its background collector would keep the page on screen the whole time.
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            var now = 1_789_275_660_000L - 60 * 60_000L
+            vm.clock = { now }
+            vm.reload()
+            val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            vm.awaitReady()
+            testScheduler.runCurrent()
+            // The view model's own first read and the reload above: wait for both to land before counting.
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            testScheduler.runCurrent()
+            collector.cancel()
+            testScheduler.runCurrent()
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+            now += 2 * 60 * 60_000L
+            val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            testScheduler.runCurrent()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = reads)
+            // runTest moves virtual time on while awaitCount waits in real time, so a later run coming due can add a read.
+            assertTrue(seerr.count("GET", "/api/v1/settings/jobs") > reads)
+            returned.cancel()
+        }
+
+    @Test
+    fun `a list read while the page is away still lets it catch a run that came due`() =
+        runTest {
+            val vm = JobsViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+            viewModels.put(vm.hashCode().toString(), vm)
+            var now = 1_789_275_660_000L - 60 * 60_000L
+            vm.clock = { now }
+            val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            vm.awaitReady()
+            collector.cancel()
+            testScheduler.runCurrent()
+
+            // A read that lands with nothing collecting must keep the run it found, not drop it.
+            vm.reload()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            testScheduler.runCurrent()
+            val reads = seerr.count("GET", "/api/v1/settings/jobs")
+
+            now += 2 * 60 * 60_000L
+            val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
+            testScheduler.runCurrent()
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = reads)
+            assertTrue(seerr.count("GET", "/api/v1/settings/jobs") > reads)
+            returned.cancel()
         }
 
     @Test
