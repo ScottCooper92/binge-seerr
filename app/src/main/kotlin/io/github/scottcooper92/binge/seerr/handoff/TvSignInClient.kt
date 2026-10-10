@@ -58,7 +58,7 @@ internal class OkHttpTvSignInClient(
                     .build()
             try {
                 client.newCall(request).execute().use { response ->
-                    if (response.code != HTTP_OK) {
+                    if (response.code != HttpStatus.Ok.code) {
                         warn("The TV answered ${response.code} for its status")
                         null
                     } else {
@@ -95,7 +95,7 @@ internal class OkHttpTvSignInClient(
             try {
                 client.newCall(request).execute().use { response ->
                     // The status code only: the body says nothing a failure's reason would help with, and logging it is never worth the risk.
-                    if (response.code != HTTP_OK) {
+                    if (response.code != HttpStatus.Ok.code) {
                         warn("The TV answered ${response.code} to the credentials")
                         null
                     } else {
@@ -111,7 +111,6 @@ internal class OkHttpTvSignInClient(
 
     private companion object {
         const val TAG = "TvSignInClient"
-        const val HTTP_OK = 200
         val JSON = Json { ignoreUnknownKeys = true }
     }
 }

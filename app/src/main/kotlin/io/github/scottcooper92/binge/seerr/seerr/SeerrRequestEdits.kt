@@ -3,9 +3,6 @@ package io.github.scottcooper92.binge.seerr.seerr
 import retrofit2.HttpException
 import retrofit2.Response
 
-/** Seerr's status for a request write that went through and created or changed nothing. */
-private const val HTTP_ACCEPTED = 202
-
 /**
  * Seerr's answer to an edit that leaves nothing to request: the seasons named are all on the server already, or another
  * request holds them. It is a 202 with `{"message":"No seasons available to request"}`, and nothing changed (#1001). A

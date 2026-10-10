@@ -57,6 +57,7 @@ import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoRequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestStore
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_ACCEPTED
 import io.github.scottcooper92.binge.seerr.seerr.HTTP_CONFLICT
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
@@ -105,9 +106,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import retrofit2.HttpException
-
-/** Seerr returns 202 Accepted when there was nothing left to request, and created nothing. */
-private const val HTTP_ACCEPTED = 202
 
 /** Seerr's blocklist answers 412 when the title is already on it (#1000). */
 private const val HTTP_PRECONDITION_FAILED = 412

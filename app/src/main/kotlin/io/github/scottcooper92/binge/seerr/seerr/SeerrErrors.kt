@@ -11,6 +11,9 @@ import java.io.IOException
 
 private const val HTTP_SERVER_ERROR_MIN = 500
 
+/** Seerr's status for a request write that went through and created nothing: there was nothing left to request. */
+const val HTTP_ACCEPTED = 202
+
 /** The session is gone: Seerr answers 401 to a cookie or key it no longer knows. */
 const val HTTP_UNAUTHORIZED = 401
 
