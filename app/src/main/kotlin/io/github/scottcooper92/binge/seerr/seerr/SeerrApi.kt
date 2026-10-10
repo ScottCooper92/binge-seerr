@@ -537,6 +537,13 @@ interface SeerrApi {
         @Body body: SeerrMetadataSettingsDto,
     ): SeerrMetadataSettingsDto
 
+    /** TMDB's genres for [type] (`movie` or `tv`), named in [language], for an override rule's genre condition. */
+    @GET("api/v1/genres/{type}")
+    suspend fun genres(
+        @Path("type") type: String,
+        @Query("language") language: String,
+    ): List<SeerrGenreDto>
+
     /** TMDB's keywords matching [query], for the blocklisted tags picker. */
     @GET("api/v1/search/keyword")
     suspend fun searchKeywords(

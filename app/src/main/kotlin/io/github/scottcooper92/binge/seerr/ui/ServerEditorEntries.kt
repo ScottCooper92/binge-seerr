@@ -102,6 +102,12 @@ internal fun OverrideRuleEntry(
                 onSelectInstance = viewModel::selectInstance,
                 onToggleUser = viewModel::toggleUser,
                 onToggleTag = viewModel::toggleTag,
+                onToggleGenre = viewModel::toggleGenre,
+                onLoadLanguages = viewModel::loadLanguages,
+                onSelectLanguages = viewModel::selectLanguages,
+                onToggleKeyword = viewModel::toggleKeyword,
+                onSearchKeywords = viewModel::searchKeywords,
+                onLoadKeywordNames = viewModel::loadKeywordNames,
                 onDelete = viewModel::delete,
             ),
     )

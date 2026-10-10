@@ -565,9 +565,9 @@
     <string name="server_settings_rule_genres">Genres</string>
     <string name="server_settings_rule_genres_hint">TMDB genre ids, comma-separated; blank for any.</string>
     <string name="server_settings_rule_languages">Original languages</string>
-    <string name="server_settings_rule_languages_hint">Language codes such as en, ja, comma-separated; blank for any.</string>
     <string name="server_settings_rule_keywords">Keywords</string>
-    <string name="server_settings_rule_keywords_hint">TMDB keyword ids, comma-separated; blank for any.</string>
+    <string name="server_settings_rule_keywords_empty_title">No keywords</string>
+    <string name="server_settings_rule_keywords_empty">Search for a keyword to match the requests that have it.</string>
     <string name="server_settings_rule_overrides_title">Send it with</string>
     <string name="server_settings_rule_pick_instance">Pick an instance to see what it offers.</string>
     <string name="server_settings_rule_needs_condition">Add at least one condition: a user, genre, language or keyword.</string>

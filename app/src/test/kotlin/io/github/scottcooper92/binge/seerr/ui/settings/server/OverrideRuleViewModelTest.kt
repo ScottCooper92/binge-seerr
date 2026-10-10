@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
+import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -69,7 +70,10 @@ class OverrideRuleViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(id: Int?): OverrideRuleViewModel {
-        val vm = OverrideRuleViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, id, analytics)
+        val vm =
+            seerr.connection(this).let { connection ->
+                OverrideRuleViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, id, analytics)
+            }
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -108,6 +112,89 @@ class OverrideRuleViewModelTest {
                     .jsonPrimitive.content,
             )
         }
+
+    @Test
+    fun `an instance's kind decides which genres are read, named in the device's language`() =
+        runTest {
+            seerr.serve("GET /api/v1/genres/movie", """[{"id":28,"name":"Action"},{"id":12,"name":"Adventure"}]""")
+            seerr.serve("GET /api/v1/genres/tv", """[{"id":10759,"name":"Action & Adventure"}]""")
+            seerr.serve(
+                "GET /api/v1/settings/sonarr",
+                """[{"id":7,"name":"Shows","hostname":"sonarr.local","port":8989,"apiKey":"s-key"}]""",
+            )
+
+            val vm = viewModel(id = 11)
+            val movie = vm.awaitReady { it.extras.genres is GenreChoices.Ready }.extras.genres as GenreChoices.Ready
+            assertEquals(listOf("Action", "Adventure"), movie.genres.map { it.label })
+            assertEquals(
+                "en-US",
+                seerr.received
+                    .first { it.url.encodedPath == "/api/v1/genres/movie" }
+                    .url
+                    .queryParameter("language"),
+            )
+
+            vm.selectInstance(
+                vm
+                    .awaitReady()
+                    .extras.instances
+                    .first { it.type == ServiceType.Sonarr },
+            )
+            val tv = vm.awaitReady { (it.extras.genres as? GenreChoices.Ready)?.genres?.size == 1 }.extras.genres as GenreChoices.Ready
+            assertEquals("Action & Adventure", tv.genres.single().label)
+        }
+
+    @Test
+    fun `a server that cannot send the genres leaves the condition typed`() =
+        runTest {
+            seerr.serve("GET /api/v1/genres/movie", "{}", code = 500)
+
+            val vm = viewModel(id = 11)
+
+            assertEquals(GenreChoices.Failed, vm.awaitReady { it.extras.genres != GenreChoices.Loading }.extras.genres)
+            assertEquals("28,12", vm.awaitReady().draft.genres)
+        }
+
+    @Test
+    fun `genres, languages and keywords are picked into the draft as the rule keeps them`() =
+        runTest {
+            seerr.serve("GET /api/v1/keyword/9951", """{"id":9951,"name":"kaiju"}""")
+            val vm = viewModel(id = 11)
+            vm.awaitReady()
+
+            vm.toggleGenre(16)
+            vm.toggleGenre(28)
+            assertEquals("12,16", vm.awaitReady().draft.genres)
+
+            vm.selectLanguages("ja|es")
+            assertEquals("ja, es", vm.awaitReady().draft.languages)
+
+            vm.toggleKeyword(9951)
+            // The page names what it shows, as its row does through keywordSettingItem.
+            vm.loadKeywordNames(
+                vm
+                    .awaitReady()
+                    .draft.keywords
+                    .tagIds(),
+            )
+            val ready =
+                vm.awaitReady {
+                    it.extras.keywords.names
+                        .isNotEmpty()
+                }
+            assertEquals("9951", ready.draft.keywords)
+            assertEquals("kaiju", ready.extras.keywords.names[9951])
+
+            assertEquals("ja|es", ready.draft.toDto().language)
+        }
+
+    @Test
+    fun `a saved genre the list lacks is still offered, so Done keeps it`() {
+        val listed = listOf(Choice(28, "Action"), Choice(12, "Adventure"))
+
+        assertEquals(listOf("99", "Action", "Adventure"), genreChecklist(listed, setOf(28, 99)).map { it.label })
+        assertEquals(listOf("Action", "Adventure"), genreChecklist(listed, emptySet()).map { it.label })
+    }
 
     @Test
     fun `a new rule cannot be saved without an instance, and picking one clears the overrides`() =
