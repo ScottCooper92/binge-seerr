@@ -1650,6 +1650,29 @@ class SeerrRequestServiceTest {
             assertEquals("/api/v1/tv/1399", seerr.takeRequest().url.encodedPath)
         }
 
+    /** Seerr's 202 for an edit that leaves nothing to request is final, not the transient UNAVAILABLE (#1001). */
+    @Test
+    fun `an edit that leaves seerr nothing to request is FAILED_PRECONDITION`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
+            seerr.enqueue(MockResponse(code = 202, body = """{"message":"No seasons available to request"}"""))
+
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code {
+                    editRequest(
+                        EditRequestRequest
+                            .newBuilder()
+                            .setRequestId(7)
+                            .addSeasonNumbers(1)
+                            .build(),
+                    )
+                },
+            )
+        }
+
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.status(media: MediaId): Status.Code =
         code { getStatus(GetStatusRequest.newBuilder().setMedia(media).build()) }
 

@@ -89,6 +89,7 @@ fun Throwable.toStatusException(): StatusException =
     when (this) {
         is StatusException -> this
         is NotConnectedException -> StatusException(Status.UNAUTHENTICATED.withDescription(message))
+        is NothingLeftToRequestException -> StatusException(Status.FAILED_PRECONDITION.withDescription(NOTHING_LEFT_TO_REQUEST))
         is HttpException -> StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
         is IOException -> StatusException(Status.UNAVAILABLE.withDescription("Seerr could not be reached").withCause(this))
         is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
@@ -166,3 +167,4 @@ internal inline fun <T> attempt(block: () -> T): Result<T> =
 
 private const val UNREADABLE = "Seerr returned something this companion could not read"
 private const val UNHANDLED = "The companion failed to handle this request"
+private const val NOTHING_LEFT_TO_REQUEST = "Seerr has nothing left to request for those seasons"
