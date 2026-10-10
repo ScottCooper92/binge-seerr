@@ -1,23 +1,20 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.state.ActionRow
-import com.binge.designsystem.R as DesR
+import io.github.scottcooper92.binge.seerr.ui.state.ActionSheetGroup
+import io.github.scottcooper92.binge.seerr.ui.state.actionItem
+import io.github.scottcooper92.binge.seerr.ui.state.openItem
 
 /** The composer: submitting hands the draft over and closes, since the pending row is the feedback. */
 @Composable
@@ -88,15 +85,14 @@ internal fun CommentActionsContent(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
-        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onClick = onEdit)
-        ActionRow(
-            Icons.Filled.Delete,
-            stringResource(R.string.issue_delete_comment),
-            tint = MaterialTheme.colorScheme.error,
-            onClick = onDelete,
-        )
-    }
+    ActionSheetGroup(
+        rows =
+            listOf(
+                openItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onClick = onEdit),
+                actionItem(Icons.Filled.Delete, stringResource(R.string.issue_delete_comment), destructive = true, onClick = onDelete),
+            ),
+        modifier = modifier,
+    )
 }
 
 /**
@@ -132,17 +128,21 @@ internal fun OutboxActionsContent(
     modifier: Modifier = Modifier,
     sending: Boolean = false,
 ) {
-    Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
-        if (retryable) ActionRow(Icons.Filled.Refresh, stringResource(R.string.issue_comment_retry), onClick = onRetry)
-        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), enabled = !sending, onClick = onEdit)
-        ActionRow(
-            Icons.Filled.Delete,
-            stringResource(R.string.issue_comment_discard),
-            tint = MaterialTheme.colorScheme.error,
-            enabled = !sending,
-            onClick = onDrop,
-        )
-    }
+    ActionSheetGroup(
+        rows =
+            listOfNotNull(
+                actionItem(Icons.Filled.Refresh, stringResource(R.string.issue_comment_retry), onClick = onRetry).takeIf { retryable },
+                openItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), enabled = !sending, onClick = onEdit),
+                actionItem(
+                    Icons.Filled.Delete,
+                    stringResource(R.string.issue_comment_discard),
+                    destructive = true,
+                    enabled = !sending,
+                    onClick = onDrop,
+                ),
+            ),
+        modifier = modifier,
+    )
 }
 
 @Composable

@@ -1,7 +1,14 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
@@ -53,6 +60,19 @@ class DiscoverSlidersScreenshotTest {
     @Composable
     fun failed() = SlidersFrame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
 }
+
+/** The slider list's overflow sheet, as the stateless body a modal window will not capture: reset, in the error colour. */
+class DiscoverSlidersSheetScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun overflow() =
+        Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            SlidersOverflowContent(onReset = {})
+        }
+}
+
+private val SHEET_WIDTH = 411.dp
 
 class DiscoverSliderFormScreenshotTest {
     /** A new slider: the first custom kind, with nothing picked, so Save stays off. */

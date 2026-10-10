@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +32,7 @@ class DownloadsPoller(
     scope: CoroutineScope,
     healthy: Flow<Boolean>,
     private val dispatcher: CoroutineDispatcher,
-    private val ticker: DownloadsPollerTicker = DownloadsPollerTicker(),
+    private val ticker: Ticker = Ticker(),
     private val fetch: suspend () -> Result<List<HubDownload>>,
 ) {
     private val screenVisible = MutableStateFlow(false)

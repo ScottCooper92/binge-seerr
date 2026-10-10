@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobScheduleBody
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.CoroutineDispatcher
@@ -50,6 +51,7 @@ class JobsViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
+        private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
         /**
          * Where every coroutine here runs: the IO dispatcher, one at a time (#947). The jobs below and [awaiting] are plain
@@ -219,7 +221,12 @@ class JobsViewModel
 
         /** Moves the rows' clock on at each minute, for as long as the list is showing. */
         private suspend fun tick() =
-            minuteClock(clock).collect { now -> state.update { current -> (current as? JobsUiState.Ready)?.copy(now = now) ?: current } }
+            minuteClock(clock, minuteTicker).collect { now ->
+                state.update { current ->
+                    (current as? JobsUiState.Ready)?.copy(now = now)
+                        ?: current
+                }
+            }
 
         /**
          * A page back on screen re-reads the list at once if a scheduled run came due while nothing was

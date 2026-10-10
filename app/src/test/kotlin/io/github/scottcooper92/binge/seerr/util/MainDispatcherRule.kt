@@ -25,7 +25,7 @@ import org.junit.runner.Description
  * Every file in the module takes this rule now (#337). The ten that used to be exempted - the
  * ones driving a real `MockWebServer` - moved to an in-memory transport ([FakeSeerrServer])
  * instead: `HubViewModelTest`'s hang on `DownloadsPoller`'s unbounded loop is gone (it takes a
- * test-visible `DownloadsPollerTicker` now), and the other nine no longer resume a Retrofit call
+ * test-visible `Ticker` now), and the other nine no longer resume a Retrofit call
  * on a real socket's thread after teardown. OkHttp still answers each call on its own thread even
  * against the in-memory fake, though, so a call a test never awaits directly - a fire-and-forget
  * `launch` - could still be resuming when this rule reset Main. Each of the ten files' teardown

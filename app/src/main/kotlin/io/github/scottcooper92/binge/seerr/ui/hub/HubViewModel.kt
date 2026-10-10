@@ -13,6 +13,7 @@ import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
@@ -48,7 +49,7 @@ class HubViewModel
         private val loader: HubOverviewLoader,
         private val cache: HubOverviewCache,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
-        private val pollerTicker: DownloadsPollerTicker = DownloadsPollerTicker(),
+        private val pollerTicker: Ticker = Ticker(),
         private val installCheck: BingeInstallCheck = NoBingeInstallCheck,
         private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         private val localNetwork: LocalNetworkPermission = LocalNetworkPermission.AlwaysGranted,

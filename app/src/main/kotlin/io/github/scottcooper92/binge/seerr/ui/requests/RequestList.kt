@@ -39,6 +39,7 @@ import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
+import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.template.PagedPhase
@@ -50,7 +51,6 @@ import io.github.scottcooper92.binge.seerr.ui.state.PagedPullToRefresh
 import io.github.scottcooper92.binge.seerr.ui.state.PullableMessage
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
-import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
 

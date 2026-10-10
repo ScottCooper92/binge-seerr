@@ -43,8 +43,6 @@ app:consent_point_shared_detail  271db93ff1bb
 app:consent_point_shared_title  6fa969fe2654
 app:consent_subtitle  fc7be86a848d
 app:consent_title  916d330273e6
-app:download_eta_hours  02abf092ccd1
-app:download_eta_minutes  fc01feb5f7e5
 app:editor_cancel  19766ed6ccb2
 app:editor_create  4759498ac2a7
 app:editor_discard  eb1a70e39274
