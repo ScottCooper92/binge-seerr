@@ -54,6 +54,18 @@ class DiscoverSliderViewModelTest {
         seerr.serve("GET /api/v1/keyword/9882", """{"id":9882,"name":"bank robbery"}""")
         seerr.serve("GET /api/v1/genres/movie", """[{"id":28,"name":"Action"},{"id":12,"name":"Adventure"}]""")
         seerr.serve("GET /api/v1/genres/tv", """[{"id":10759,"name":"Action & Adventure"}]""")
+        seerr.serve(
+            "GET /api/v1/search/company",
+            """{"results":[{"id":420,"name":"Marvel Studios"},{"id":2,"name":"Walt Disney Pictures"}]}""",
+        )
+        seerr.serve("GET /api/v1/studio/420", """{"id":420,"name":"Marvel Studios"}""")
+        seerr.serve("GET /api/v1/network/49", """{"id":49,"name":"HBO"}""")
+        seerr.serve(
+            "GET /api/v1/watchproviders/regions",
+            """[{"iso_3166_1":"GB","english_name":"United Kingdom"},{"iso_3166_1":"US","english_name":"United States"}]""",
+        )
+        seerr.serve("GET /api/v1/watchproviders/movies", """[{"id":337,"name":"Disney Plus"},{"id":8,"name":"Netflix"}]""")
+        seerr.serve("GET /api/v1/watchproviders/tv", """[{"id":9,"name":"Prime Video"}]""")
     }
 
     @After
@@ -63,7 +75,8 @@ class DiscoverSliderViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(id: Int?): DiscoverSliderViewModel {
-        val vm = DiscoverSliderViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, id)
+        val connection = seerr.connection(this)
+        val vm = DiscoverSliderViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, id)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -195,4 +208,128 @@ class DiscoverSliderViewModelTest {
             vm.selectType(SliderType.MovieGenre)
             assertEquals(GenreChoices.Failed, vm.awaitReady { it.extras.genres != GenreChoices.Loading }.extras.genres)
         }
+
+    @Test
+    fun `a studio is found by search, picked as its id, and named on the row`() =
+        runTest {
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.Studio)
+
+            vm.searchStudios("marvel")
+            val found = vm.awaitReady { it.extras.studios.results != null }.extras.studios
+            assertEquals(listOf("Marvel Studios", "Walt Disney Pictures"), found.results?.map { it.name })
+            assertEquals(
+                "marvel",
+                seerr.received
+                    .last { it.url.encodedPath == "/api/v1/search/company" }
+                    .url
+                    .queryParameter("query"),
+            )
+
+            vm.selectStudio(Company(420, "Marvel Studios"))
+            val picked = vm.awaitReady { it.draft.data == "420" }
+            assertEquals("Marvel Studios", picked.extras.studios.names[420])
+        }
+
+    @Test
+    fun `a saved studio and a typed network are named by their ids`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/discover",
+                """[{"id":8,"type":17,"title":"Marvel","isBuiltIn":false,"enabled":true,"data":"420"}]""",
+            )
+            val vm = viewModel(id = 8)
+            assertEquals(
+                "Marvel Studios",
+                vm
+                    .awaitReady {
+                        it.extras.studios.names
+                            .isNotEmpty()
+                    }.extras.studios.names[420],
+            )
+
+            vm.nameNetwork(49)
+            assertEquals("HBO", vm.awaitReady { it.extras.networkNames.isNotEmpty() }.extras.networkNames[49])
+        }
+
+    @Test
+    fun `a streaming slider picks a region, then that region's providers for its kind, saved as the web client stores them`() =
+        runTest {
+            seerr.serve(
+                "POST /api/v1/settings/discover/add",
+                """{"id":9,"type":20,"title":"Streaming","isBuiltIn":false,"enabled":true,"data":"GB,337|8"}""",
+            )
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.MovieStreamingServices)
+            vm.edit { it.copy(title = "Streaming") }
+            assertFalse(vm.awaitReady().draft.valid)
+
+            vm.loadRegions()
+            val regions = vm.awaitReady { it.extras.regions is ListChoices.Ready }.extras.regions as ListChoices.Ready
+            assertEquals(listOf("GB", "US"), regions.entries.map { it.code })
+
+            vm.selectRegion("GB")
+            val providers = vm.awaitReady { it.extras.providers is ProviderChoices.Ready }.extras.providers as ProviderChoices.Ready
+            assertEquals(listOf("Disney Plus", "Netflix"), providers.providers.map { it.label })
+            assertEquals(
+                "GB",
+                seerr.received
+                    .last { it.url.encodedPath == "/api/v1/watchproviders/movies" }
+                    .url
+                    .queryParameter("watchRegion"),
+            )
+            // A region alone is not enough to query.
+            assertFalse(vm.awaitReady().draft.valid)
+
+            vm.toggleProvider(337)
+            vm.toggleProvider(8)
+            assertEquals("GB,337|8", vm.awaitReady().draft.data)
+            assertTrue(vm.awaitReady().draft.valid)
+
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/discover/add")).jsonObject
+            assertEquals("20", sent.getValue("type").jsonPrimitive.content)
+            assertEquals("GB,337|8", sent.getValue("data").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a new region drops the providers picked for the last, and a TV kind reads TV's list`() =
+        runTest {
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.MovieStreamingServices)
+            vm.selectRegion("GB")
+            vm.awaitReady { it.extras.providers is ProviderChoices.Ready }
+            vm.toggleProvider(337)
+            assertEquals("GB,337", vm.awaitReady().draft.data)
+
+            vm.selectRegion("US")
+            assertEquals("US,", vm.awaitReady().draft.data)
+
+            // Movie providers are not TV's, so the kind change drops the pick, and TV's list is read.
+            vm.selectType(SliderType.TvStreamingServices)
+            assertEquals("", vm.awaitReady().draft.data)
+            vm.selectRegion("GB")
+            val tv =
+                vm.awaitReady {
+                    (it.extras.providers as? ProviderChoices.Ready)?.providers?.map { c -> c.label } ==
+                        listOf("Prime Video")
+                }
+            assertEquals(listOf("Prime Video"), (tv.extras.providers as ProviderChoices.Ready).providers.map { it.label })
+        }
+
+    @Test
+    fun `the streaming data is read and written as a region and ids`() {
+        assertEquals(StreamingPick("GB", listOf(8, 337)), "GB,8|337".toStreamingPick())
+        assertEquals(StreamingPick("US", emptyList()), "US".toStreamingPick())
+        assertEquals(StreamingPick("", emptyList()), "".toStreamingPick())
+        assertEquals(StreamingPick("GB", listOf(8)), "GB,8|x".toStreamingPick())
+        assertEquals("GB,8|337", StreamingPick("GB", listOf(8, 337)).encode())
+        assertEquals("", StreamingPick().encode())
+        assertEquals(listOf(337), StreamingPick("GB", listOf(8, 337)).withProviderToggled(8).providerIds)
+    }
 }

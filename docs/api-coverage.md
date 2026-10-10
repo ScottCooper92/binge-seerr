@@ -262,15 +262,15 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /movie/{movieId}/ratingscombined` | Get RT and IMDB movie ratings combined | v1.34.0 | v1.7.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /movie/{movieId}/recommendations` | Get recommended movies | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /movie/{movieId}/similar` | Get similar movies | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
-| `GET /network/{networkId}` | Get TV network details | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
+| `GET /network/{networkId}` | Get TV network details | v1.21.0 | v1.0.0 | yes | Names the network a Discover slider holds as an id. |
 | `GET /person/{personId}` | Get person details | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /person/{personId}/combined_credits` | Get combined credits | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /regions` | Regions supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's region pickers: discover region and blocklisted regions. |
 | `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
+| `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 | yes | Finds the studio of a Discover slider. |
 | `GET /search/keyword` | Search for keywords | v1.32.0 | v1.4.0 | yes | Finds tags to blocklist on the General settings page, and keywords for an override rule's condition. |
 | `POST /settings/initialize` | Initialize application | v1.20.0 | v1.0.0 |  | The first-run wizard stays the web client's. |
-| `GET /studio/{studioId}` | Get movie studio details | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
+| `GET /studio/{studioId}` | Get movie studio details | v1.21.0 | v1.0.0 | yes | Names the studio a Discover slider holds as an id. |
 | `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /tv/{tvId}/recommendations` | Get recommended TV series | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
 | `GET /tv/{tvId}/season/{seasonNumber}` | Get season details and episode list | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
@@ -281,6 +281,6 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /user/{userId}/pushSubscriptions` | Get all web push notification settings for a user | v1.34.0 | v2.5.2 |  | Web push is the PWA's transport; this app polls (Phase 5). |
 | `POST /watchlist` | Add media to watchlist | — | v1.6.0 |  | A title-page action; title pages are Binge's. |
 | `DELETE /watchlist/{tmdbId}` | Delete watchlist item | — | v1.6.0 |  | A title-page action; title pages are Binge's. |
-| `GET /watchproviders/movies` | Get watch provider movies | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
+| `GET /watchproviders/movies` | Get watch provider movies | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover movie slider picks from. |
 | `GET /watchproviders/regions` | Get watch provider regions | v1.32.0 | v1.4.0 | yes | The General settings page's streaming region picker. |
-| `GET /watchproviders/tv` | Get watch provider series | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
+| `GET /watchproviders/tv` | Get watch provider series | v1.32.0 | v1.4.0 | yes | The streaming providers a Discover TV slider picks from. |

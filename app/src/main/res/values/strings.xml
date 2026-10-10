@@ -779,6 +779,16 @@
     <string name="server_settings_slider_title">Title</string>
     <string name="server_settings_slider_data">Data</string>
     <string name="server_settings_slider_genre">Genre</string>
+    <string name="server_settings_slider_studio_row">Studio</string>
+    <string name="server_settings_slider_network_row">Network</string>
+    <string name="server_settings_slider_studio_search">Search TMDB studios</string>
+    <string name="server_settings_slider_studio_type">Type a studio\'s name to find it on TMDB.</string>
+    <string name="server_settings_slider_studio_no_match">No studio matches that.</string>
+    <string name="server_settings_slider_studio_failed">Couldn\'t search the studios. Try again in a moment.</string>
+    <string name="server_settings_slider_network_invalid">Enter the network\'s TMDB id, a whole number.</string>
+    <string name="server_settings_slider_providers">Streaming services</string>
+    <string name="server_settings_slider_pick_region">Pick a region first</string>
+    <string name="server_settings_slider_providers_failed">Couldn\'t be read. Pick the region again to retry.</string>
     <string name="server_settings_slider_data_genre">A TMDB genre id</string>
     <string name="server_settings_slider_data_company">A TMDB company or network id</string>
     <string name="server_settings_slider_data_search">The search the slider runs</string>
