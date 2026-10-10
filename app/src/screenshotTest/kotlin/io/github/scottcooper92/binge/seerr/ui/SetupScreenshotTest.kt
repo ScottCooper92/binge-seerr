@@ -207,7 +207,7 @@ class SetupScreenshotTest {
             actions = NoSetupActions,
         )
 
-    /** Edit connection keeps its bar above the flow: its title, and Back out of the pane. */
+    /** Edit connection's title sits in the flow's own bar, with the one Back: on the sign-in it steps back to the address. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable

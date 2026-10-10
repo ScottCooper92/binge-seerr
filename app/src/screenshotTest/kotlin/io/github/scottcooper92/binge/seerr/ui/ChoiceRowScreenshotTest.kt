@@ -10,6 +10,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrTallComponentPreviews
 import io.github.scottcooper92.binge.seerr.ui.state.SortContent
 import com.binge.designsystem.R as DesR
 
@@ -23,7 +24,7 @@ private val QUALITY_PROFILES = (1..12).map { it to "Profile $it" }
  * count; this shape does not.
  *
  * The sheet itself does not capture (modal windows don't), so [sheetContent] frames [SortContent]
- * directly — the stateless body `ChoiceRow` opens — carrying the same twelve profiles the row hides.
+ * directly — the design system's stateless choice content — carrying the same twelve profiles the row hides.
  */
 class ChoiceRowScreenshotTest {
     /** A set choice, an unset one, and a disabled row — the state a save in flight puts every row in. */
@@ -54,8 +55,9 @@ class ChoiceRowScreenshotTest {
         }
     }
 
+    /** Tall, because twelve choices section into a list that scrolls itself and needs a bounded height to measure. */
     @PreviewTest
-    @SeerrComponentPreviews
+    @SeerrTallComponentPreviews
     @Composable
     fun sheetContent() {
         SortContent(
