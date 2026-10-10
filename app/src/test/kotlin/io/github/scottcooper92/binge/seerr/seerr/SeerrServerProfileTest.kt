@@ -38,6 +38,17 @@ class SeerrServerProfileTest {
         assertTrue(current.hasWatchData)
     }
 
+    /** Jellyseerr 1.0 to 1.3 have no discover routes: every call 404s (#1017). */
+    @Test
+    fun `discover sliders arrive with overseerr 1_32 and with jellyseerr 1_4`() {
+        val jellyfin = SeerrPublicSettings(mediaServerType = MEDIA_SERVER_JELLYFIN)
+
+        assertFalse(profile("1.3.0", jellyfin).hasDiscoverSliders)
+        assertTrue(profile("1.4.0", jellyfin).hasDiscoverSliders)
+        assertFalse(profile("1.31.0").hasDiscoverSliders)
+        assertTrue(profile("1.32.0").hasDiscoverSliders)
+    }
+
     @Test
     fun `the jellyseerr lineage grows features by version, and the blocklist path renames at 3`() {
         val jellyseerr = profile("2.1.0")

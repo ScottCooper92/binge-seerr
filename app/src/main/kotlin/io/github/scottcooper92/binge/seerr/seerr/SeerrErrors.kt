@@ -16,6 +16,12 @@ private const val HTTP_SERVER_ERROR_MIN = 500
 const val HTTP_NOT_FOUND = 404
 
 /**
+ * Seerr's answer for a target in the wrong state: a request already moderated, retried or no longer pending (#999), and
+ * a title someone has already requested, which a submit reads as `already_requested` before anything maps it.
+ */
+const val HTTP_CONFLICT = 409
+
+/**
  * Why a call to the server failed, as the app's own screens classify it. The gRPC mapping below
  * and this one read the same facts, so the Service and a screen never disagree about a failure:
  * a 401 is the session, a 403 is a permission unless the body names a quota, a 404 is the title,
@@ -68,8 +74,10 @@ fun Throwable.toSeerrError(): SeerrError =
  * A 401 is our own session being rejected, which only this app can repair, so it is
  * `UNAUTHENTICATED` and the host sends the user here. A 403 is `PERMISSION_DENIED` unless the
  * body names a quota, which is `RESOURCE_EXHAUSTED` — Seerr returns 403 for both, and the message
- * text is its only signal. Transport failures and 5xx are `UNAVAILABLE`; any other 4xx is a
- * rejection on the merits, `INVALID_ARGUMENT`.
+ * text is its only signal. A 409 is a target in the wrong state for the action, such as approving a
+ * request someone has already approved: `FAILED_PRECONDITION`, so the host refreshes and re-offers (#999).
+ * Transport failures and 5xx are `UNAVAILABLE`; any other 4xx is a rejection on the merits,
+ * `INVALID_ARGUMENT`.
  *
  * A body this app cannot parse ([SerializationException]) is `UNAVAILABLE` too: the server speaking a shape
  * this app does not expect, which a retry after a server update may fix. Every description here is a fixed
@@ -94,6 +102,7 @@ private fun HttpException.httpStatus(): Status =
         code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> Status.FAILED_PRECONDITION
         code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
         code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
+        code() == HTTP_CONFLICT -> Status.FAILED_PRECONDITION
         code() >= HTTP_SERVER_ERROR_MIN -> Status.UNAVAILABLE
         else -> Status.INVALID_ARGUMENT
     }

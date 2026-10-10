@@ -1,6 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.tv.settings
 
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
@@ -76,6 +80,23 @@ class TvSettingsBoardFocusTest {
 
         assertEquals(1, scans)
         composeTestRule.onNodeWithText(string(R.string.tv_settings_scan_started)).assertExists()
+    }
+
+    /** The scan's outcome is announced, but the static "change this on the phone" note is not (#1039). */
+    @Test
+    fun theScanOutcomeIsALiveRegionAndTheStaticNoteIsNot() {
+        setBoard(config = ServerConfig(), initialFocusedKey = KEY_MEDIA_SERVER)
+        val readOnly = string(R.string.tv_settings_read_only_note)
+        composeTestRule.onNodeWithText(readOnly).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion))
+        plexRow().requestFocus()
+        composeTestRule.waitForIdle()
+
+        pressRight()
+        pressOk()
+
+        composeTestRule
+            .onNodeWithText(string(R.string.tv_settings_scan_started))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
     }
 
     /** Seerr doesn't make instance names unique, so two "Sonarr" rows must still describe their own instance (#865). */

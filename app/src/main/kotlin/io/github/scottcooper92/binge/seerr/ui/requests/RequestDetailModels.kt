@@ -64,7 +64,7 @@ data class EditState(
     val saving: Boolean = false,
     /** The show's season list failed to load, so [seasons] is empty for lack of data, not because there is none. */
     val seasonsUnknown: Boolean = false,
-    /** False where the server takes a whole show, so [seasons] is empty by rule and the save sends none. */
+    /** False where the server takes a whole show, so [seasons] is empty by rule and the save sends back the request's own. */
     val seasonsEditable: Boolean = true,
 ) {
     /** The seasons the editor may change: those the server does not already hold. */

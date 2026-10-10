@@ -184,6 +184,20 @@ class NotificationsViewModelTest {
             assertEquals("bike", draft.field(AgentField.PushoverSound))
         }
 
+    /** The server serves the list to any signed-in user, so a plain user with a token gets the picker too (#1011). */
+    @Test
+    fun `a user who is not an admin reads the Pushover sounds as well`() =
+        runTest {
+            seerr.viewer(id = 8, permissions = REQUEST)
+            seerr.serve(
+                "GET /api/v1/user/8/settings/notifications",
+                """{"pushoverApplicationToken":"azGDORePK8gMaC0QOYAMyEEuzJnyUi","pushoverSound":"bike","notificationTypes":{}}""",
+            )
+            seerr.serve("GET /api/v1/settings/notifications/pushover/sounds", """[{"name":"bike","description":"Bike"}]""")
+
+            assertEquals(listOf(PushoverSoundChoice("bike", "Bike")), viewModel().awaitReady().draft.pushoverSounds)
+        }
+
     @Test
     fun `sounds the server will not list leave the page to load without them`() =
         runTest {
@@ -199,25 +213,6 @@ class NotificationsViewModelTest {
                     .draft.pushoverSounds
                     .isEmpty(),
             )
-        }
-
-    @Test
-    fun `the sounds are not asked for by a viewer who is not an admin`() =
-        runTest {
-            seerr.viewer(id = 8, permissions = REQUEST)
-            seerr.serve(
-                "GET /api/v1/user/8/settings/notifications",
-                """{"pushoverApplicationToken":"azGDORePK8gMaC0QOYAMyEEuzJnyUi","notificationTypes":{}}""",
-            )
-            seerr.serve("GET /api/v1/settings/notifications/pushover/sounds", """[{"name":"bike"}]""")
-
-            assertTrue(
-                viewModel()
-                    .awaitReady()
-                    .draft.pushoverSounds
-                    .isEmpty(),
-            )
-            assertEquals(0, seerr.count("GET", "/api/v1/settings/notifications/pushover/sounds"))
         }
 
     @Test

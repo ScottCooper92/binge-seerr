@@ -102,6 +102,18 @@ class GeneralSettingsViewModelTest {
             assertFalse(draft.canEditEmail)
         }
 
+    /** The server keeps the old quota for a manager's own record or another manager's, so the editor is not offered (#1014). */
+    @Test
+    fun `a manager may not edit the quotas of themself or of another manager`() =
+        runTest {
+            seerr.viewer(id = 8, permissions = ADMIN)
+            assertFalse(viewModel().awaitReady().draft.canEditQuotas)
+
+            seerr.viewer(id = 1, permissions = MANAGE_USERS)
+            seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","permissions":$MANAGE_USERS,"userType":3}""")
+            assertFalse(viewModel().awaitReady().draft.canEditQuotas)
+        }
+
     @Test
     fun `the placeholder name is what the server would fall back to, never the display name being cleared`() =
         runTest {
