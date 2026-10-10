@@ -1065,6 +1065,8 @@ app:user_settings_password_hint  3383529c8a7d
 app:user_settings_password_mismatch  f694aaa8da2c
 app:user_settings_password_new  3dd9df4441fb
 app:user_settings_password_none  d2e03582d927
+app:user_settings_permission_off  14852108804a
+app:user_settings_permission_on  c7dc3bb74950
 app:user_settings_permissions_lead  47985b21f369
 app:user_settings_permissions_owner_only  a6c04ee41c9c
 app:user_settings_pgp_error  414cf512c517
@@ -1095,6 +1097,7 @@ app:user_settings_type_media_available  6fbb1fb4fc9b
 app:user_settings_type_media_declined  1df48b2da038
 app:user_settings_type_media_failed  cfce761befa8
 app:user_settings_type_media_pending  1dd991961f09
+app:user_settings_undo  a8283ade3185
 app:user_settings_unlink  b90108da0bd2
 app:user_settings_unlink_message  344fb73cd02f
 app:user_settings_unlink_title  5ad31591bf4f

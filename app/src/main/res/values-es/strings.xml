@@ -372,6 +372,9 @@
     <string name="user_settings_none">Aquí no hay nada que puedas cambiar.</string>
     <string name="user_settings_save">Guardar</string>
     <string name="user_settings_saved">Guardado</string>
+    <string name="user_settings_permission_on">%1$s activado</string>
+    <string name="user_settings_permission_off">%1$s desactivado</string>
+    <string name="user_settings_undo">Deshacer</string>
     <string name="user_settings_page_general">General</string>
     <string name="user_settings_page_general_desc">Nombre, contacto y cuotas</string>
     <string name="user_settings_page_password">Contraseña</string>
