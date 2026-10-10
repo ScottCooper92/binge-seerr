@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -19,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SavedDraft
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 
@@ -38,7 +40,17 @@ class DvrInstanceViewModel
         @Assisted private val id: Int?,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<DvrForm, DvrExtras>(DvrExtras(), dispatcher) {
+        /** A long form, kept across the process being killed (#1026). The API key is not kept: the record's goes back in. */
+        override val savedDraft =
+            SavedDraft(
+                savedState,
+                DvrForm.serializer(),
+                scrub = { it.copy(apiKey = "") },
+                restore = { kept, loaded -> kept.copy(apiKey = loaded.apiKey) },
+            )
+
         init {
             reload()
         }

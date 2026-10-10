@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrNotificationAgentDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPushoverSoundDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.attempt
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -96,6 +97,20 @@ enum class AgentOption(
     ;
 
     val secret: Boolean get() = kind == OptionKind.Secret
+
+    /**
+     * A credential in all but name, kept out of a saved draft (#1026): a secret, a webhook address, which carries its own
+     * token, the PGP private key and the auth header.
+     */
+    val credential: Boolean
+        get() =
+            secret ||
+                this == DiscordWebhookUrl ||
+                this == SlackWebhookUrl ||
+                this == LunaSeaWebhookUrl ||
+                this == WebhookUrl ||
+                this == WebhookAuthHeader ||
+                this == EmailPgpPrivateKey
 
     /** A password, whose edge spaces are part of it: sent as typed, where a token or a key is trimmed. */
     val password: Boolean get() = this == EmailAuthPass || this == EmailPgpPassword || this == NtfyPassword
@@ -209,6 +224,7 @@ enum class NtfyPriorityLevel(
  * One agent's form: on or off, the events it is sent, and its options as typed. [raw] is the
  * option object the server sent, so a key this form does not show goes back unchanged.
  */
+@Serializable
 data class AgentForm(
     val agent: ServerAgent,
     val enabled: Boolean = false,

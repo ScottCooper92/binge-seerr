@@ -1,9 +1,11 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
+import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.UserStore
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
@@ -12,11 +14,13 @@ import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserPermissionsBody
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
+import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import io.github.scottcooper92.binge.seerr.ui.users.mayChangeAsNonOwner
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * The permissions page for one user: the same toggles as the browser's bulk edit, over the
@@ -64,7 +68,24 @@ class PermissionsViewModel
             return draft.copy(selected = ManageablePermission.decode(record.permissions), original = record.permissions)
         }
 
-        fun toggle(permission: ManageablePermission) = edit { it.toggled(permission) }
+        /** Flips [permission], which saves on its own, and offers to flip it back (#940). */
+        fun toggle(permission: ManageablePermission) {
+            val before = ready()?.draft ?: return
+            edit { it.toggled(permission) }
+            val after = ready()?.draft ?: return
+            if (after == before) return
+            val wasOn = permission in before.selected
+            val on = permission in after.selected
+            val undoable =
+                EditorEvent.Undoable(
+                    messageRes = if (on) R.string.user_settings_permission_on else R.string.user_settings_permission_off,
+                    argRes = permission.labelRes(),
+                    undo = {
+                        edit { it.copy(selected = if (wasOn) it.selected + permission else it.selected - permission) }
+                    },
+                )
+            viewModelScope.launch { notify(undoable) }
+        }
 
         @AssistedFactory
         interface Factory {

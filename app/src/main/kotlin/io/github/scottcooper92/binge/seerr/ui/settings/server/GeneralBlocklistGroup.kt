@@ -6,12 +6,14 @@ import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.bingeNumberItem
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
-import io.github.scottcooper92.binge.seerr.ui.users.settings.NumberKeyboard
-import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
 
 /** What the tags row asks of the page: the saved tags' names, and the way into the blocklisted tags page. */
 class KeywordActions(
@@ -33,7 +35,6 @@ internal fun BlocklistGroup(
     actions: EditorActions<ServerGeneralSettings>,
 ) {
     val edit = { change: (BlocklistSettings) -> BlocklistSettings -> actions.onEdit { it.copy(blocklist = it.blocklist?.let(change)) } }
-    val limitError = stringResource(R.string.server_settings_blocklist_limit_error, MAX_TAGS_LIMIT)
     ItemGroup(
         title = stringResource(R.string.server_settings_blocklist),
         rows =
@@ -69,20 +70,34 @@ internal fun BlocklistGroup(
                     onLoadNames = keywordActions.onLoadNames,
                     onOpen = keywordActions.onOpen,
                 ),
-                textSettingItem(
-                    icon = Icons.Filled.Numbers,
-                    label = stringResource(R.string.server_settings_blocklist_limit),
-                    value = blocklist.tagsLimit,
-                    enabled = enabled,
-                    onChange = { value -> edit { it.copy(tagsLimit = value) } },
-                    keyboard = NumberKeyboard,
-                    hint = stringResource(R.string.server_settings_blocklist_limit_hint),
-                    required = true,
-                    check = { value -> limitError.takeIf { !blocklist.copy(tagsLimit = value).tagsLimitValid } },
-                ),
+                tagsLimitItem(blocklist, enabled, edit),
             ),
     )
 }
 
 /** [id] added at the end if it is not there, else taken out, keeping the order the server holds the rest in. */
 internal fun List<Int>.toggledIn(id: Int): List<Int> = if (id in this) this - id else this + id
+
+/**
+ * How many pages the job takes per tag, as a slider row, as the quota limits are. A stored value past the usual top
+ * widens the slider to reach it, so the row reads what is stored and not the slider's clamp.
+ */
+@Composable
+private fun tagsLimitItem(
+    blocklist: BlocklistSettings,
+    enabled: Boolean,
+    edit: ((BlocklistSettings) -> BlocklistSettings) -> Unit,
+): ListItem {
+    val resources = LocalResources.current
+    val current = blocklist.tagsLimit.trim().toIntOrNull()
+    val top = remember { maxOf(MAX_TAGS_LIMIT, current ?: 0) }
+    return bingeNumberItem(
+        icon = Icons.Filled.Numbers,
+        title = stringResource(R.string.server_settings_blocklist_limit),
+        value = current,
+        range = 0..top,
+        format = { resources.getQuantityString(R.plurals.server_settings_blocklist_limit_value, it, it) },
+        enabled = enabled,
+        onChange = { value -> edit { it.copy(tagsLimit = (value ?: current ?: DEFAULT_TAGS_LIMIT).toString()) } },
+    )
+}

@@ -223,7 +223,7 @@ private fun EditorEvent?.tvNoteOrNull(): String? =
         null -> null
         is EditorEvent.Notice -> stringResource(messageRes)
         is EditorEvent.Failed -> stringResource(error.messageRes())
-        EditorEvent.Saved, EditorEvent.Deleted -> null
+        EditorEvent.Saved, EditorEvent.Deleted, is EditorEvent.Undoable -> null
     }
 
 /**

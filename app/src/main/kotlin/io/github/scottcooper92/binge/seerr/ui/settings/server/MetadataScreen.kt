@@ -10,9 +10,9 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemDestination
-import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -83,7 +83,7 @@ fun MetadataScreen(
     }
 }
 
-/** One provider and what its last test said, tinted as the web client tints its badge. */
+/** One provider and what its last test said, as a status chip tinted as the web client tints its badge. */
 @Composable
 private fun statusItem(
     provider: MetadataProvider,
@@ -92,20 +92,24 @@ private fun statusItem(
     ListItem(
         icon = Icons.Filled.Cloud,
         label = stringResource(provider.labelRes()),
-        detail =
-            stringResource(
-                when (check) {
-                    ProviderCheck.NotTested -> R.string.server_settings_metadata_not_tested
-                    ProviderCheck.Operational -> R.string.server_settings_metadata_operational
-                    ProviderCheck.Failed -> R.string.server_settings_metadata_failed
-                },
-            ),
-        detailColor =
-            when (check) {
-                ProviderCheck.NotTested -> null
-                ProviderCheck.Operational -> BingeSentiment.Positive.fill()
-                ProviderCheck.Failed -> BingeSentiment.Negative.fill()
-            },
+        trailingContent = {
+            RequestStateChip(
+                label =
+                    stringResource(
+                        when (check) {
+                            ProviderCheck.NotTested -> R.string.server_settings_metadata_not_tested
+                            ProviderCheck.Operational -> R.string.server_settings_metadata_operational
+                            ProviderCheck.Failed -> R.string.server_settings_metadata_failed
+                        },
+                    ),
+                tone =
+                    when (check) {
+                        ProviderCheck.NotTested -> RequestStateTone.Blocked
+                        ProviderCheck.Operational -> RequestStateTone.Success
+                        ProviderCheck.Failed -> RequestStateTone.Declined
+                    },
+            )
+        },
         clickable = false,
     )
 

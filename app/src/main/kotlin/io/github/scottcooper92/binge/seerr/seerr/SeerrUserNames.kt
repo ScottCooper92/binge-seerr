@@ -14,8 +14,9 @@ internal fun SeerrRequestUserDto.contractName(): String? =
     }
 
 /**
- * For the app's own screens: email is a last resort, masked to its local part. The host never gets this; it gets
- * [contractName], which has no email fallback at all.
+ * For the app's own screens: email is a last resort, masked to its local part. A `displayName` or `username` that is
+ * the email (Seerr fills `displayName` with it for a user created by email), or holds an `@`, is the email too, and is
+ * masked the same way (#1216). The host never gets this; it gets [contractName], which has no email fallback at all.
  */
 internal fun SeerrRequestUserDto.displayString(): String? = screenName(displayName, username, email)
 
@@ -33,5 +34,7 @@ private fun screenName(
     username: String?,
     email: String?,
 ): String? =
-    listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() }
-        ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
+    listOfNotNull(displayName, username).filter { it.isNotBlank() }.let { names ->
+        names.firstOrNull { '@' !in it && !it.equals(email, ignoreCase = true) }
+            ?: (email ?: names.firstOrNull())?.substringBefore('@')?.takeIf { it.isNotBlank() }
+    }

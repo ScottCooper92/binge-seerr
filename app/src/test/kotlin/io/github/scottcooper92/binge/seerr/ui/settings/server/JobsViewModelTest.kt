@@ -283,6 +283,8 @@ class JobsViewModelTest {
             // A read that lands with nothing collecting must keep the run it found, not drop it.
             vm.reload()
             seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            // As below: the read's schedule is worked out on OkHttp's thread, so let it land before the clock moves (#1226).
+            seerr.awaitCallbacks()
             testScheduler.runCurrent()
             val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
@@ -306,6 +308,8 @@ class JobsViewModelTest {
             val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
             vm.awaitReady()
             seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 0)
+            // The load's schedule is worked out on OkHttp's thread after Ready lands: wait for it before moving the clock (#1226).
+            seerr.awaitCallbacks()
             testScheduler.runCurrent()
             val beforeDue = seerr.count("GET", "/api/v1/settings/jobs")
 

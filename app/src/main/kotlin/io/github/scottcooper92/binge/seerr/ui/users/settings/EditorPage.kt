@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -269,6 +270,15 @@ internal fun EditorEventSnackbarEffect(
                     snackbarHostState.showSnackbar(resources.getString(event.error.messageRes()), SnackbarMessageKind.Error)
                 is EditorEvent.Notice ->
                     snackbarHostState.showSnackbar(resources.getString(event.messageRes), SnackbarMessageKind.Confirmation)
+                is EditorEvent.Undoable -> {
+                    val result =
+                        snackbarHostState.showSnackbar(
+                            resources.getString(event.messageRes, resources.getString(event.argRes)),
+                            SnackbarMessageKind.Confirmation,
+                            actionLabel = resources.getString(R.string.user_settings_undo),
+                        )
+                    if (result == SnackbarResult.ActionPerformed) event.undo()
+                }
                 // The page is leaving on this one; a snackbar on a screen being popped is not seen.
                 EditorEvent.Deleted -> Unit
             }
