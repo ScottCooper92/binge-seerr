@@ -185,6 +185,17 @@ class TvSetupFocusTest {
         assertEquals(listOf("h"), edits)
     }
 
+    /** Selecting into a field that already holds text puts the caret at its end, so typing appends rather than prepends. */
+    @Test
+    fun okOnAFilledFieldPutsTheCaretAtTheEndSoTypingAppends() {
+        setScreen(address("http://seerr.lan"))
+
+        pressOk()
+        textInput().performTextInput("e")
+
+        assertEquals(listOf("http://seerr.lane"), edits)
+    }
+
     @Test
     fun rightFromTheFieldReachesContinueAndOkInspects() {
         setScreen(address("http://seerr.lan:5055"))
