@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.HTTP_NOT_FOUND
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLibraryEnabledBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanCommandBody
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
@@ -66,7 +67,7 @@ class MediaServerViewModel
                     MediaServerKind.Plex -> api.plexSettings().let { it.toForm().also { _ -> setLibraries(it.libraries) } }
                     else -> api.jellyfinSettings().let { it.toForm(kind).also { _ -> setLibraries(it.libraries) } }
                 }
-            runCatching { api.scanStatus(kind.apiSegment) }.getOrNull()?.let { applyScan(it.toScan()) }
+            attempt { api.scanStatus(kind.apiSegment) }.getOrNull()?.let { applyScan(it.toScan()) }
             return form
         }
 
@@ -94,7 +95,7 @@ class MediaServerViewModel
             editExtras { it.copy(busyLibraryIds = it.busyLibraryIds + id) }
             viewModelScope.launch(dispatcher) {
                 val result =
-                    runCatching {
+                    attempt {
                         val api = connection.api()
                         orOnNotFound(
                             newer = {
@@ -150,7 +151,7 @@ class MediaServerViewModel
             if (currentExtras().syncingLibraries) return
             editExtras { it.copy(syncingLibraries = true) }
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     val api = connection.api()
                     orOnNotFound(
                         newer = { api.syncLibraries(kind.apiSegment) },
@@ -186,7 +187,7 @@ class MediaServerViewModel
 
         private fun command(body: SeerrScanCommandBody) {
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().scan(kind.apiSegment, body).toScan() }
+                attempt { connection.api().scan(kind.apiSegment, body).toScan() }
                     .onSuccess { applyScan(it) }
                     .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
@@ -207,7 +208,7 @@ class MediaServerViewModel
                     while (running) {
                         delay(scanPollMillis)
                         // A failed poll is not an answer: the last state stands and the next tick asks again.
-                        val latest = runCatching { connection.api().scanStatus(kind.apiSegment).toScan() }.getOrNull()
+                        val latest = attempt { connection.api().scanStatus(kind.apiSegment).toScan() }.getOrNull()
                         if (latest != null) {
                             editExtras { it.copy(scan = latest) }
                             running = latest.running
@@ -220,7 +221,7 @@ class MediaServerViewModel
             editExtras { it.copy(picker = PlexServerPicker.Loading) }
             viewModelScope.launch(dispatcher) {
                 val picker =
-                    runCatching { connection.api().plexServers().toChoices() }
+                    attempt { connection.api().plexServers().toChoices() }
                         .fold(onSuccess = { PlexServerPicker.Ready(it) }, onFailure = { PlexServerPicker.Failed(it.toSeerrError()) })
                 editExtras { current -> if (current.picker == null) current else current.copy(picker = picker) }
             }

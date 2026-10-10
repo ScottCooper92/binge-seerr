@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import java.security.MessageDigest
 import java.util.Base64
 import java.util.Locale
@@ -106,7 +107,7 @@ internal fun pickLanguage(
     acceptLanguage: String?,
     supported: List<String> = HAND_OFF_PAGE_LANGUAGES,
 ): String {
-    val ranges = acceptLanguage?.let { runCatching { Locale.LanguageRange.parse(it) }.getOrNull() }.orEmpty()
+    val ranges = acceptLanguage?.let { attempt { Locale.LanguageRange.parse(it) }.getOrNull() }.orEmpty()
     return Locale.lookupTag(ranges, supported) ?: supported.first()
 }
 

@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserMainSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ListChoicesLoader
@@ -58,7 +59,7 @@ class GeneralSettingsViewModel
                 val target = async { api.user(userId) }
                 val profile = async { connection.profile() }
                 // The defaults only label the blank choices, so a server that can't send them still loads the page.
-                val public = async { runCatching { api.publicSettings() }.getOrNull() }
+                val public = async { attempt { api.publicSettings() }.getOrNull() }
                 val settings = api.userMainSettings(userId)
                 val viewerUser = viewer.await()
                 val permissions = viewerUser.toPermissions()

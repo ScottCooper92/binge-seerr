@@ -10,5 +10,5 @@ import java.time.OffsetDateTime
  * carry a local time with an offset, which [Instant.parse] refuses.
  */
 fun String.toEpochMillisOrNull(): Long? =
-    runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
-        ?: runCatching { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()
+    attempt { Instant.parse(this).toEpochMilli() }.getOrNull()
+        ?: attempt { OffsetDateTime.parse(this).toInstant().toEpochMilli() }.getOrNull()

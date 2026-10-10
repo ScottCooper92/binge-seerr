@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -132,7 +133,7 @@ abstract class EditorViewModel<T>(
         viewModelScope.launch(dispatcher) {
             val kept = settling?.await()
             saveAsMade?.reloaded(keptUnsent = kept != null)
-            runCatching { load() }
+            attempt { load() }
                 .onSuccess { state.value = EditorUiState.Ready(draft = kept ?: it, saved = it, saveFailed = kept != null) }
                 .onFailure { state.value = EditorUiState.Error(it.toSeerrError()) }
         }
@@ -157,7 +158,7 @@ abstract class EditorViewModel<T>(
         if (ready.saving || !ready.dirty || !canSave(ready.draft)) return
         state.value = ready.copy(saving = true)
         viewModelScope.launch(dispatcher) {
-            runCatching { write(ready.draft) }
+            attempt { write(ready.draft) }
                 .onSuccess { adopted ->
                     state.value = EditorUiState.Ready(draft = adopted, saved = adopted)
                     eventFlow.emit(EditorEvent.Saved)
@@ -288,7 +289,7 @@ abstract class ExtrasEditorViewModel<T, X>(
         viewModelScope.launch(dispatcher) {
             val kept = settling?.await()
             saveAsMade?.reloaded(keptUnsent = kept != null)
-            runCatching { load() }
+            attempt { load() }
                 .onSuccess {
                     state.value =
                         ExtrasEditorUiState.Ready(draft = kept ?: it, saved = it, extras = extrasState.value, saveFailed = kept != null)
@@ -315,7 +316,7 @@ abstract class ExtrasEditorViewModel<T, X>(
         if (ready.saving || !ready.dirty || !canSave(ready.draft)) return
         state.value = ready.copy(saving = true)
         viewModelScope.launch(dispatcher) {
-            runCatching { write(ready.draft) }
+            attempt { write(ready.draft) }
                 .onSuccess { adopted ->
                     state.value = ExtrasEditorUiState.Ready(draft = adopted, saved = adopted, extras = extrasState.value)
                     eventFlow.emit(EditorEvent.Saved)

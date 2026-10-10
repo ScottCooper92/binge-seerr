@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -71,7 +72,7 @@ class OverrideRuleViewModel
                 val api = connection.api()
                 val radarr = async { api.radarrSettings() }
                 val sonarr = async { api.sonarrSettings() }
-                val users = async { runCatching { api.users(take = USERS_PAGE).results }.getOrDefault(emptyList()) }
+                val users = async { attempt { api.users(take = USERS_PAGE).results }.getOrDefault(emptyList()) }
                 val form =
                     if (id ==
                         null
@@ -149,7 +150,7 @@ class OverrideRuleViewModel
             crashBreadcrumbs.key("override_rule_id", existing.toString())
             crashBreadcrumbs.log("deleting override rule")
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().deleteOverrideRule(existing) }
+                attempt { connection.api().deleteOverrideRule(existing) }
                     .onSuccess {
                         analytics.event(AnalyticsEvents.OVERRIDE_RULE_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                         notify(EditorEvent.Deleted)
@@ -165,7 +166,7 @@ class OverrideRuleViewModel
                 viewModelScope.launch(dispatcher) {
                     val segment = if (type == ServiceType.Radarr) "movie" else "tv"
                     val genres =
-                        runCatching { connection.api().genres(segment, Locale.getDefault().toLanguageTag()) }
+                        attempt { connection.api().genres(segment, Locale.getDefault().toLanguageTag()) }
                             .fold(
                                 { list -> GenreChoices.Ready(list.mapNotNull { dto -> dto.name?.let { Choice(dto.id, it) } }) },
                                 { GenreChoices.Failed },
@@ -182,7 +183,7 @@ class OverrideRuleViewModel
             editExtras { it.copy(choices = null, loadingChoices = true) }
             val records = if (type == ServiceType.Radarr) radarrRecords else sonarrRecords
             val choices =
-                runCatching {
+                attempt {
                     val record = records.firstOrNull { it.id == serviceId } ?: throw NoSuchElementException("instance $serviceId")
                     connection.api().testDvr(type.apiSegment, record.toForm(type).toTestBody()).toChoices()
                 }.getOrNull()

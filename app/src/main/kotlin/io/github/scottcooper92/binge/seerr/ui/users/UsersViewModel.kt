@@ -19,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.PermissionScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBulkUsersBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
@@ -96,8 +97,8 @@ class UsersViewModel
                     flow {
                         // The refreshing reads, not the cached ones: both caches live as long as the
                         // connection, so re-running this over them would re-read nothing.
-                        val profile = runCatching { connection.refreshProfile() }.getOrNull()
-                        val viewer = runCatching { connection.refreshAuthenticatedUser() }.getOrNull()
+                        val profile = attempt { connection.refreshProfile() }.getOrNull()
+                        val viewer = attempt { connection.refreshAuthenticatedUser() }.getOrNull()
                         val settings = profile?.settings
                         emit(
                             UsersScope(
@@ -237,7 +238,7 @@ class UsersViewModel
             val offered = offeredAtStart
             val isOwner = scope.value.isOwner
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     // Each id's own cached bitmask is its baseline, and only the permissions the user toggled change it:
                     // every other bit, managed or not, offered or not, keeps that user's own value. So a save that
                     // toggles nothing writes nothing (#1007). Ids whose resulting bitmask agrees are written in one PUT.

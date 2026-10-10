@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataTestResultDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.peekedBody
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -41,14 +42,14 @@ class MetadataViewModel
 
         /** The results a failed test still carries in its body, or null where it carries none. */
         private fun HttpException.testResult(): SeerrMetadataTestResultDto? =
-            runCatching { RESULT_JSON.decodeFromString<SeerrMetadataTestResultDto>(peekedBody()) }.getOrNull()
+            attempt { RESULT_JSON.decodeFromString<SeerrMetadataTestResultDto>(peekedBody()) }.getOrNull()
 
         fun test() {
             val draft = ready()?.draft ?: return
             if (currentExtras().testing) return
             editExtras { it.copy(testing = true) }
             viewModelScope.launch(dispatcher) {
-                val outcome = runCatching { connection.api().testMetadataProviders(draft.testBody()) }
+                val outcome = attempt { connection.api().testMetadataProviders(draft.testBody()) }
                 val result = outcome.getOrNull() ?: (outcome.exceptionOrNull() as? HttpException)?.testResult()
                 editExtras {
                     it.copy(

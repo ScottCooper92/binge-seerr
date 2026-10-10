@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrOverrideRuleDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,7 +35,7 @@ class ServicesViewModel
         fun reload() {
             state.value = ServicesUiState.Loading
             viewModelScope.launch(dispatcher) {
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { state.value = it }
                     .onFailure { state.value = ServicesUiState.Error(it.toSeerrError()) }
             }
