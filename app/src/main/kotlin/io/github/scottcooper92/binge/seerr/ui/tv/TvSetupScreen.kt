@@ -54,8 +54,8 @@ internal fun TvSetupScreen(
     initialFocus: TvSetupFocus? = null,
     offerHandOff: Boolean = false,
 ) {
-    // An address from a phone that needs the plain-HTTP opt-in waits on this screen's form, not the code page (#907).
-    val awaitingConsent = (state as? SetupUiState.Address)?.awaitingCleartextConsent == true
+    // An address from a phone waits on this screen's form for the user to go on, not on the code page (#907, #1084).
+    val awaitingConsent = (state as? SetupUiState.Address)?.let { it.awaitingConfirm || it.awaitingCleartextConsent } == true
     // The phone does the setup; typing with the remote is the fallback, chosen on purpose and left on purpose.
     var manual by rememberSaveable { mutableStateOf(!offerHandOff || awaitingConsent) }
     val scanInstead = {

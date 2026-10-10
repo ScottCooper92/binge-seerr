@@ -952,6 +952,7 @@
     <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
     <string name="tv_setup_send_from_phone">Scan a QR</string>
     <string name="tv_handoff_body">Use the QR or URL to connect from another device on the same network, or use the Seerr mobile app to sign in with your existing details.</string>
+    <string name="tv_setup_confirm_sent_address">A phone sent this address. Check it is your server, then continue.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
     <string name="tv_handoff_pin">PIN  %1$s</string>
     <string name="tv_handoff_pin_description">PIN on this TV: %1$s</string>
@@ -971,7 +972,7 @@
     <string name="handoff_page_sent_title">Sent</string>
     <string name="handoff_page_sent_body">Your TV has the address and is checking the server. This page keeps up with it.</string>
     <string name="handoff_page_confirm_title">Confirm on your TV</string>
-    <string name="handoff_page_confirm_body">That address uses plain HTTP over the internet, so your TV is asking whether to connect anyway. Answer on the TV.</string>
+    <string name="handoff_page_confirm_body">Your TV is showing the address you sent, and waits for you to check it. Answer on the TV.</string>
     <string name="handoff_page_pin_title">Enter the PIN on your TV</string>
     <string name="handoff_page_pin_body">Type the 4-digit PIN shown under the code on your TV. It shows this is the TV you are looking at.</string>
     <string name="handoff_page_pin_field">PIN</string>
@@ -1006,7 +1007,7 @@
     <string name="send_signin_continue_as_you">Continue as you</string>
     <string name="send_signin_session">Signing in the TV at %1$s…</string>
     <string name="send_signin_waiting">The TV at %1$s has the address and is checking the server…</string>
-    <string name="send_signin_confirm">That address uses plain HTTP over the internet, so the TV at %1$s is asking whether to connect anyway. Answer on the TV.</string>
+    <string name="send_signin_confirm">The TV at %1$s is showing the address, and waits for you to check it. Answer on the TV.</string>
     <string name="send_signin_form">The TV found %1$s. Sign in here, and the TV is signed in too.</string>
     <string name="send_signin_sealed">What you type here is encrypted for the TV showing that PIN, then sent over your Wi-Fi. It is not kept on this phone.</string>
     <string name="send_pin_body">Type the PIN shown under the code on the TV at %1$s.</string>

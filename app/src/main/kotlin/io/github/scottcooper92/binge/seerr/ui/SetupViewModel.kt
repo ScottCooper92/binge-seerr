@@ -72,12 +72,15 @@ class SetupViewModel
                 // An address a phone sent, already checked as a base URL, goes exactly where a typed
                 // one does - into the field, then inspect() - so the plain-HTTP opt-in and the sign-in
                 // after it are the same as for an address entered on the remote.
+                // On its own it waits there for the TV's user to go on (#1084): anyone who saw the PIN cross the network
+                // could have sent it. A session sealed for it proves the sender had the code's key, and is bound to this
+                // address (#1029), so that one is read at once.
                 // A session sent with the address is held in memory only, for the one inspect() it rides on.
                 onAddress = { address, session ->
                     draft.update {
                         it.copy(serverUrl = address, handOff = null, error = null, received = true, handedSession = session)
                     }
-                    inspect()
+                    if (session != null) inspect()
                 },
                 // Credentials a phone app sealed for this TV, already opened by the listener. They go into the form and
                 // through connect() exactly as if typed, so a refusal or a failure reads the same on both screens. Taken

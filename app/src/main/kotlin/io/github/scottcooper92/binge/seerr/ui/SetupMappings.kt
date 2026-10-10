@@ -53,7 +53,7 @@ internal fun SetupUiState.toHandOffProgress(
         is SetupUiState.Address ->
             when {
                 isInspecting -> HandOffProgress.Checking
-                awaitingCleartextConsent -> HandOffProgress.ConfirmOnTv
+                awaitingConfirm || awaitingCleartextConsent -> HandOffProgress.ConfirmOnTv
                 received && failed -> HandOffProgress.Failed
                 else -> HandOffProgress.Waiting
             }
