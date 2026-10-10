@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 
 private val ROW_WIDTH = 411.dp
 
@@ -40,6 +41,6 @@ class RequestListScreenshotTest {
 @Composable
 private fun Frame(item: RequestItem) {
     Box(Modifier.width(ROW_WIDTH).background(MaterialTheme.colorScheme.background)) {
-        RequestRow(item = item, onClick = {}, onManage = {}, now = ROW_NOW_MILLIS)
+        RequestRow(item = item, onClick = {}, onManage = {}, now = FIXED_NOW_MILLIS)
     }
 }

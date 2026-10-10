@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDownload
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestFilter
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
@@ -16,18 +17,11 @@ import io.github.scottcooper92.binge.seerr.ui.tv.request
 import io.github.scottcooper92.binge.seerr.ui.tv.requestsReady
 import io.github.scottcooper92.binge.seerr.ui.tv.rows
 
-/**
- * A fixed, far-in-the-past render instant for the requests below. The sample requests' own dates are `id` hours
- * before whichever instant the suite runs at; anchoring both the items and the render instant here keeps the
- * rendered date text invariant rather than merely lucky.
- */
-private const val REQUESTS_NOW_MILLIS = 1_770_000_000_000L
-
 private const val SYNOPSIS = "A crew, a cop, and a city that does not remember either of them, until the pressure of the job moves on."
 
 private val FixedSampleRequests =
     listOf(
-        request(1, "Heat", SeerrRequestStatusCode.Pending, now = REQUESTS_NOW_MILLIS).copy(overview = SYNOPSIS, certification = "15"),
+        request(1, "Heat", SeerrRequestStatusCode.Pending, now = FIXED_NOW_MILLIS).copy(overview = SYNOPSIS, certification = "15"),
         request(
             2,
             "The Bear",
@@ -35,9 +29,9 @@ private val FixedSampleRequests =
             seasons = listOf(1, 2),
             mediaStatus = SeerrMediaStatusCode.Processing,
             download = RequestDownload(0.4f, 12, true),
-            now = REQUESTS_NOW_MILLIS,
+            now = FIXED_NOW_MILLIS,
         ).copy(overview = SYNOPSIS, certification = "18"),
-        request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined, now = REQUESTS_NOW_MILLIS),
+        request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined, now = FIXED_NOW_MILLIS),
     )
 
 /**
