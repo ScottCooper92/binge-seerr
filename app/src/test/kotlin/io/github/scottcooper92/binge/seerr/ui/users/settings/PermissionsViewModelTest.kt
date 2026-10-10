@@ -98,6 +98,28 @@ class PermissionsViewModelTest {
             assertEquals(expected, cache.rows.single().permissions)
         }
 
+    /** The server refuses any change to an admin's mask from anyone but the owner, so the page is read-only to them (#1134). */
+    @Test
+    fun `an admin's page is read-only to anyone but the owner, and sends nothing`() =
+        runTest {
+            seerr.serve("GET /api/v1/user/8/settings/permissions", """{"permissions":${ADMIN or REQUEST}}""")
+            seerr.viewer(id = 7, permissions = ADMIN)
+            val vm = viewModel()
+            val draft = vm.awaitReady().draft
+            assertTrue(draft.ownerOnly)
+            assertEquals(ManageablePermission.entries.toSet(), draft.locked)
+
+            vm.toggle(ManageablePermission.ManageIssues)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            assertFalse(vm.awaitReady().dirty)
+            assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/permissions"))
+
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val owner = viewModel().awaitReady().draft
+            assertFalse(owner.ownerOnly)
+            assertTrue(owner.locked.isEmpty())
+        }
+
     private fun cachedUser(id: Int) =
         UserEntity(
             listKey = "created",

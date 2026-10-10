@@ -432,6 +432,7 @@
     <string name="user_settings_type_issue_reopened">Incidencia reabierta</string>
     <string name="user_settings_type_media_auto_requested">Solicitado automáticamente desde la lista de seguimiento</string>
     <string name="user_settings_permissions_lead">Solo el propietario puede conceder Administrador.</string>
+    <string name="user_settings_permissions_owner_only">Este usuario es administrador. Solo el propietario puede cambiar sus permisos.</string>
     <string name="user_settings_linked_as">Vinculada como %1$s</string>
     <string name="server_settings_general_title">Ajustes generales</string>
     <string name="server_settings_application_title">Título de la aplicación</string>
