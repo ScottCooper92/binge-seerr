@@ -6,6 +6,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.state.MediaHeroDetailPlaceholder
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestDetail
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,44 +50,12 @@ class RequestDetailSkeletonGeometryTest {
     }
 
     private fun detail(): RequestDetail =
-        RequestDetail(
-            item =
-                RequestItem(
-                    id = 2,
-                    tmdbId = 2,
-                    mediaType = RequestMediaType.Movie,
-                    title = "Heat",
-                    posterUrl = null,
-                    year = "1995",
-                    requestedBy = "ana",
-                    requestedById = 3,
-                    requestedAtMillis = null,
-                    status = SeerrRequestStatusCode.Approved,
-                    mediaStatus = null,
-                    download = null,
-                    seasonNumbers = emptyList(),
-                    is4k = false,
-                ),
+        requestDetail(
+            item = requestItem(id = 2),
             // The common shape: a viewer who can act on it.
             actions = RequestActions(canApprove = true, canDecline = true),
-            canEdit = false,
-            canEditDestination = false,
-            backdropUrl = null,
             overview = "A group of professional thieves and the detective who hunts them.",
-            modifiedBy = null,
-            modifiedById = null,
             viewerId = null,
-            canManageUsers = false,
-            updatedAtMillis = null,
-            seasons = emptyList(),
-            destination = null,
-            downloads = emptyList(),
-            mediaId = 9,
-            canReportIssue = false,
-            webUrl = "https://seerr.example/movie/2",
-            mediaServerUrl = null,
-            serviceUrl = null,
-            media = null,
             // ...and a sibling request, the taller state a skeleton sized for the bare page would miss.
             siblings =
                 listOf(

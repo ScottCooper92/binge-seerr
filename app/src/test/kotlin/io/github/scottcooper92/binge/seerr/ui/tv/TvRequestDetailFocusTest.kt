@@ -29,11 +29,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationScope
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActions
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestFilter
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSort
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
@@ -41,6 +38,8 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsRowsBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestDetail
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import io.github.scottcooper92.binge.seerr.util.string
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
@@ -279,47 +278,7 @@ class TvRequestDetailFocusTest {
 
     @Test
     fun arrivalFallsBackToTheContentColumnWhenNothingElseIsFocusable() {
-        val item =
-            RequestItem(
-                id = 2,
-                tmdbId = 2,
-                mediaType = RequestMediaType.Movie,
-                title = HEAT,
-                posterUrl = null,
-                year = "1995",
-                requestedBy = "ana",
-                requestedById = 3,
-                requestedAtMillis = null,
-                status = SeerrRequestStatusCode.Approved,
-                mediaStatus = null,
-                download = null,
-                seasonNumbers = emptyList(),
-                is4k = false,
-            )
-        val detail =
-            RequestDetail(
-                item = item,
-                actions = RequestActions(),
-                canEdit = false,
-                canEditDestination = false,
-                backdropUrl = null,
-                overview = null,
-                modifiedBy = null,
-                modifiedById = null,
-                viewerId = null,
-                canManageUsers = false,
-                updatedAtMillis = null,
-                seasons = emptyList(),
-                destination = null,
-                downloads = emptyList(),
-                mediaId = 9,
-                canReportIssue = false,
-                webUrl = "https://seerr.example/movie/2",
-                mediaServerUrl = null,
-                serviceUrl = null,
-                media = null,
-                siblings = emptyList(),
-            )
+        val detail = requestDetail(item = requestItem(id = 2), viewerId = null)
         composeTestRule.setContent {
             BingeTvTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -355,47 +314,8 @@ class TvRequestDetailFocusTest {
         afterDecline: RequestActions? = null,
     ) {
         offered = allowed
-        val item =
-            RequestItem(
-                id = 1,
-                tmdbId = 1,
-                mediaType = RequestMediaType.Movie,
-                title = HEAT,
-                posterUrl = null,
-                year = "1995",
-                requestedBy = "ana",
-                requestedById = 3,
-                requestedAtMillis = null,
-                status = SeerrRequestStatusCode.Pending,
-                mediaStatus = null,
-                download = null,
-                seasonNumbers = emptyList(),
-                is4k = false,
-            )
-        val detail =
-            RequestDetail(
-                item = item,
-                actions = RequestActions(),
-                canEdit = true,
-                canEditDestination = false,
-                backdropUrl = null,
-                overview = null,
-                modifiedBy = null,
-                modifiedById = null,
-                viewerId = 7,
-                canManageUsers = true,
-                updatedAtMillis = null,
-                seasons = emptyList(),
-                destination = null,
-                downloads = emptyList(),
-                mediaId = 9,
-                canReportIssue = false,
-                webUrl = "https://seerr.example/movie/1",
-                mediaServerUrl = null,
-                serviceUrl = null,
-                media = null,
-                siblings = emptyList(),
-            )
+        val item = requestItem(status = SeerrRequestStatusCode.Pending, title = HEAT)
+        val detail = requestDetail(item = item, canEdit = true, canManageUsers = true)
         composeTestRule.setContent {
             var openId by remember { mutableStateOf<Int?>(null) }
             val scope =

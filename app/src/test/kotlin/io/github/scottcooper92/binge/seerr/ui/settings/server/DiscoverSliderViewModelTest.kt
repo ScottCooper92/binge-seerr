@@ -228,6 +228,25 @@ class DiscoverSliderViewModelTest {
         }
 
     @Test
+    fun `a failed genre read is tried again when the kind is picked again, and a good one is not read twice`() =
+        runTest {
+            seerr.serve("GET /api/v1/genres/movie", "{}", code = 500)
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.MovieGenre)
+            vm.awaitReady { it.extras.genres == GenreChoices.Failed }
+
+            seerr.serve("GET /api/v1/genres/movie", """[{"id":28,"name":"Action"}]""")
+            vm.selectType(SliderType.MovieGenre)
+            vm.awaitReady { it.extras.genres is GenreChoices.Ready }
+            assertEquals(2, seerr.count("GET", "/api/v1/genres/movie"))
+
+            vm.selectType(SliderType.MovieGenre)
+            vm.awaitReady { it.extras.genres is GenreChoices.Ready }
+            assertEquals(2, seerr.count("GET", "/api/v1/genres/movie"))
+        }
+
+    @Test
     fun `a studio is found by search, picked as its id, and named on the row`() =
         runTest {
             val vm = viewModel(id = null)
@@ -312,6 +331,21 @@ class DiscoverSliderViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/discover/add")).jsonObject
             assertEquals("20", sent.getValue("type").jsonPrimitive.content)
             assertEquals("GB,337|8", sent.getValue("data").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `picking the streaming kind again leaves its providers alone`() =
+        runTest {
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.MovieStreamingServices)
+            vm.selectRegion("GB")
+            vm.awaitReady { it.extras.providers is ProviderChoices.Ready }
+            assertEquals(1, seerr.count("GET", "/api/v1/watchproviders/movies"))
+
+            vm.selectType(SliderType.MovieStreamingServices)
+            assertTrue(vm.awaitReady().extras.providers is ProviderChoices.Ready)
+            assertEquals(1, seerr.count("GET", "/api/v1/watchproviders/movies"))
         }
 
     @Test

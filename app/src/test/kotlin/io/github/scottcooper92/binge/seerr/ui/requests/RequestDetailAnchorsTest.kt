@@ -3,9 +3,10 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import com.binge.designsystem.layout.LayoutAnchors
-import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestDetail
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -53,43 +54,9 @@ class RequestDetailAnchorsTest {
     }
 
     private fun detail(): RequestDetail =
-        RequestDetail(
-            item =
-                RequestItem(
-                    id = 2,
-                    tmdbId = 2,
-                    mediaType = RequestMediaType.Movie,
-                    title = "Heat",
-                    posterUrl = null,
-                    year = "1995",
-                    requestedBy = "ana",
-                    requestedById = 3,
-                    requestedAtMillis = null,
-                    status = SeerrRequestStatusCode.Approved,
-                    mediaStatus = null,
-                    download = null,
-                    seasonNumbers = emptyList(),
-                    is4k = false,
-                ),
-            actions = RequestActions(),
-            canEdit = false,
-            canEditDestination = false,
-            backdropUrl = null,
+        requestDetail(
+            item = requestItem(id = 2),
             overview = "A group of professional thieves and the detective who hunts them.",
-            modifiedBy = null,
-            modifiedById = null,
             viewerId = null,
-            canManageUsers = false,
-            updatedAtMillis = null,
-            seasons = emptyList(),
-            destination = null,
-            downloads = emptyList(),
-            mediaId = 9,
-            canReportIssue = false,
-            webUrl = "https://seerr.example/movie/2",
-            mediaServerUrl = null,
-            serviceUrl = null,
-            media = null,
-            siblings = emptyList(),
         )
 }
