@@ -29,10 +29,12 @@ fun SeerrServerProfile.permissionScope(): PermissionScope =
     )
 
 /**
- * The permissions an editor can flip, each with its server bit (`server/lib/permissions.ts`), as the web client's
- * `PermissionEdit` lays them out. [Admin] implies every other one, so the editor shows the rest as granted and locked
- * while it is on; a parent does the same for its children, and Manage Requests for every auto-approve. Bits the server
- * has that are not listed here are preserved untouched on save: the editor only ever changes these.
+ * The permissions an editor can flip, each with its server bit (`server/lib/permissions.ts`), laid out close to the web
+ * client's `PermissionEdit` but not exactly as it does. [ManageSettings] is the one row the web client does not offer: no
+ * server route honours its bit, so the editor lists it only for a user who already holds it (`permissionTree`), to let
+ * an administrator take a legacy grant off. [Admin] implies every other one, so the editor shows the rest as granted and
+ * locked while it is on; a parent does the same for its children, and Manage Requests for every auto-approve. Bits the
+ * server has that are not listed here are preserved untouched on save: the editor only ever changes these.
  */
 enum class ManageablePermission(
     val bit: Int,
