@@ -22,6 +22,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.users.settings.lockedFor
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +49,10 @@ private data class UsersScope(
     val canAdmit: Boolean = false,
     val importSource: UserOrigin? = null,
     val canGeneratePassword: Boolean = false,
+    /** The toggles this viewer may not flip. Until the viewer is read, Admin, which only the owner may grant or revoke. */
+    val locked: Set<ManageablePermission> = setOf(ManageablePermission.Admin),
+    /** Whether the viewer is the server's owner, user 1: the only one whose bulk save may carry Admin or reach user 1 (#1008). */
+    val isOwner: Boolean = false,
 )
 
 /**
@@ -84,7 +89,7 @@ class UsersViewModel
         /** Bumped when the page becomes visible, so the scope is re-read rather than held from the first visit. */
         private val scopeRefresh = MutableStateFlow(0)
 
-        private val scope: Flow<UsersScope> =
+        private val scope: StateFlow<UsersScope> =
             scopeRefresh
                 .flatMapLatest {
                     flow {
@@ -105,6 +110,11 @@ class UsersViewModel
                                         SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown, null -> null
                                     },
                                 canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
+                                locked =
+                                    viewer?.let {
+                                        lockedFor(ManageablePermission.decode(it.permissions ?: 0), isOwner = it.id == OWNER_USER_ID)
+                                    } ?: setOf(ManageablePermission.Admin),
+                                isOwner = viewer?.id == OWNER_USER_ID,
                             ),
                         )
                     }
@@ -147,6 +157,7 @@ class UsersViewModel
                     canAdmit = scope.canAdmit,
                     importSource = scope.importSource,
                     canGeneratePassword = scope.canGeneratePassword,
+                    locked = scope.locked,
                     admission = admission,
                     refresh = refresh,
                 )
@@ -198,7 +209,7 @@ class UsersViewModel
 
         fun togglePermission(permission: ManageablePermission) =
             edit.update { current ->
-                current?.takeUnless { it.saving }?.let {
+                current?.takeUnless { it.saving || permission in scope.value.locked }?.let {
                     it.copy(selected = if (permission in it.selected) it.selected - permission else it.selected + permission)
                 }
                     ?: current
@@ -224,6 +235,7 @@ class UsersViewModel
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
             val offered = offeredAtStart
+            val isOwner = scope.value.isOwner
             viewModelScope.launch(dispatcher) {
                 runCatching {
                     // Each id's own cached bitmask is its baseline, and only the permissions the user toggled change it:
@@ -231,23 +243,26 @@ class UsersViewModel
                     // toggles nothing writes nothing (#1007). Ids whose resulting bitmask agrees are written in one PUT.
                     val baselines = store.permissionsFor(ids)
                     val touched = current.touched.filter { it in offered }.toSet()
-                    val idsByResult =
+                    val results =
                         ids
                             .associateWith { id ->
                                 val baseline = baselines[id] ?: 0
                                 val kept = ManageablePermission.decode(baseline) - touched
                                 ManageablePermission.apply(baseline, kept + current.selected.filter { it in touched })
-                            }.filter { (id, permissions) -> permissions != (baselines[id] ?: 0) }
-                            .entries
-                            .groupBy({ it.value }, { it.key })
-                    idsByResult.forEach { (permissions, groupIds) ->
-                        connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = groupIds, permissions = permissions))
-                        store.updatePermissions(groupIds, permissions)
-                    }
-                }.onSuccess {
+                            }.filter { (id, permissions) -> isOwner || mayChangeAsNonOwner(id, permissions) }
+                    results
+                        .filter { (id, permissions) -> permissions != (baselines[id] ?: 0) }
+                        .entries
+                        .groupBy({ it.value }, { it.key })
+                        .forEach { (permissions, groupIds) ->
+                            connection.api().bulkUpdateUsers(SeerrBulkUsersBody(ids = groupIds, permissions = permissions))
+                            store.updatePermissions(groupIds, permissions)
+                        }
+                    results.size
+                }.onSuccess { saved ->
                     edit.value = null
                     selection.value = emptySet()
-                    eventFlow.emit(UsersEvent.PermissionsSaved(ids.size))
+                    eventFlow.emit(UsersEvent.PermissionsSaved(saved))
                 }.onFailure { failure ->
                     edit.update { it?.copy(saving = false) }
                     eventFlow.emit(UsersEvent.Failed(failure.toSeerrError()))
@@ -255,3 +270,13 @@ class UsersViewModel
             }
         }
     }
+
+/**
+ * Whether a viewer who is not the owner may give user [id] the bitmask [permissions] (#1008). The server answers 403 to a whole
+ * `PUT /user` whose mask carries Admin from anyone but the owner, and drops user 1 from it without a word, so neither is sent:
+ * the rest of the selection still saves, and no cached row claims a change the server never made.
+ */
+private fun mayChangeAsNonOwner(
+    id: Int,
+    permissions: Int,
+): Boolean = id != OWNER_USER_ID && ManageablePermission.Admin !in ManageablePermission.decode(permissions)

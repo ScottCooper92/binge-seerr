@@ -66,6 +66,8 @@ sealed interface UsersUiState {
         val canAdmit: Boolean = false,
         val importSource: UserOrigin? = null,
         val canGeneratePassword: Boolean = false,
+        /** The toggles the bulk editor shows but won't flip: what this viewer may not grant (#1008). */
+        val locked: Set<ManageablePermission> = setOf(ManageablePermission.Admin),
         val admission: UserAdmissionState? = null,
         /** The list's latest finished network refresh, for [sort]; missing while its refresh runs. */
         val refresh: ListRefresh? = null,
