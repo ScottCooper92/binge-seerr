@@ -1049,6 +1049,23 @@
     <string name="tv_filter_with_count">%1$s (%2$d)</string>
     <string name="tv_settings_group_server">Server status</string>
     <string name="tv_settings_status">Status</string>
+    <!-- The TV settings Requests row: each count with its own words, so a translator can reorder or pluralise them (#1042). -->
+    <plurals name="tv_settings_requests_pending">
+        <item quantity="one">%1$d Pending</item>
+        <item quantity="other">%1$d Pending</item>
+    </plurals>
+    <plurals name="tv_settings_requests_movies">
+        <item quantity="one">%1$d Movie</item>
+        <item quantity="other">%1$d Movies</item>
+    </plurals>
+    <plurals name="tv_settings_requests_tv">
+        <item quantity="one">%1$d TV</item>
+        <item quantity="other">%1$d TV</item>
+    </plurals>
+    <!-- The same, for a count the hub could not read; %1$s is the placeholder dash. -->
+    <string name="tv_settings_requests_pending_unknown">%1$s Pending</string>
+    <string name="tv_settings_requests_movies_unknown">%1$s Movies</string>
+    <string name="tv_settings_requests_tv_unknown">%1$s TV</string>
     <string name="tv_settings_binge">Binge</string>
     <string name="tv_settings_binge_install">Open the Play Store</string>
     <string name="tv_see_all">See all</string>

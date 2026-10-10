@@ -972,6 +972,12 @@ app:tv_settings_report_bug_close  7d9eb7acb13e
 app:tv_settings_report_bug_code_description  f9ec3a4be5c3
 app:tv_settings_report_bug_scan  788e6d3aaded
 app:tv_settings_report_bug_show_code  c9eab29c97b9
+app:tv_settings_requests_movies  3b46aa3a047f
+app:tv_settings_requests_movies_unknown  cbd1605bde46
+app:tv_settings_requests_pending  0bf8158c0e75
+app:tv_settings_requests_pending_unknown  d7091b18bb45
+app:tv_settings_requests_tv  af995fe5392d
+app:tv_settings_requests_tv_unknown  21e5a28544be
 app:tv_settings_scan_started  69b83dfae9a6
 app:tv_settings_start_library_scan  c29ac31b6000
 app:tv_settings_status  920e413c7d41

@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.settings
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.preview.SeerrTvSpanishScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.previewAdminOverview
 import io.github.scottcooper92.binge.seerr.ui.hub.previewReady
@@ -56,6 +57,20 @@ class TvSettingsScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun ServerStatus() {
+        TvSettingsBoard(
+            state = SampleSettings,
+            onEditConnection = {},
+            onDisconnect = {},
+            hub = previewReady(overview = previewAdminOverview()),
+            initialFocusedKey = KEY_ACTIVITY,
+        )
+    }
+
+    /** The status rows in Spanish: each count carries its own words, in the translator's order (#1042). */
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun ServerStatusSpanish() {
         TvSettingsBoard(
             state = SampleSettings,
             onEditConnection = {},
