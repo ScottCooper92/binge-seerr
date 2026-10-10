@@ -16,6 +16,7 @@ class RequestEntityMappingsTest {
             year = "1995",
             requestedBy = "scott",
             requestedById = 3,
+            requestedByAvatarUrl = "https://gravatar.com/avatar/abc",
             requestedAtMillis = 1L,
             status = SeerrRequestStatusCode.Approved,
             mediaStatus = SeerrMediaStatusCode.Processing,
@@ -29,7 +30,7 @@ class RequestEntityMappingsTest {
 
     /** The backdrop, synopsis and age rating ride the cached row, or a list read back from the cache would lose them. */
     @Test
-    fun `a request keeps its backdrop, synopsis and age rating through the cache`() {
+    fun `a request keeps its backdrop, synopsis, age rating and requester's photo through the cache`() {
         assertEquals(item, item.toEntity(listKey = "all:added", orderIndex = 0).toRequestItem())
     }
 }

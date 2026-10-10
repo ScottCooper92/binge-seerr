@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.binge.designsystem.component.BingeFilledButton
+import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -236,6 +237,13 @@ private fun requesterRow(
     val requester = item.requestedBy ?: stringResource(R.string.requests_requester_unknown)
     return ListItem(
         icon = Icons.Filled.Person,
+        leadingContent = {
+            BingeInitialsAvatar(
+                name = requester,
+                avatarUrl = item.requestedByAvatarUrl,
+                size = dimensionResource(DesR.dimen.avatar_size_md),
+            )
+        },
         label = stringResource(R.string.request_sheet_requested_by, requester),
         detail = formatRelativeOrAbsolute(item.requestedAtMillis),
         onClick = onClick,

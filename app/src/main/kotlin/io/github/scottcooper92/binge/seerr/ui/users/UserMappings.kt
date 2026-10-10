@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.data.UserEntity
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.PermissionGroup
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
+import io.github.scottcooper92.binge.seerr.seerr.toAvatarUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 
 private const val USER_TYPE_PLEX = 1
@@ -112,7 +113,7 @@ private fun SeerrUserDto.toUserItem(
         name = name,
         email = email?.takeIf { it.isNotBlank() },
         handle = handle,
-        avatarUrl = avatar?.takeIf { it.startsWith("http") },
+        avatarUrl = avatar.toAvatarUrl(),
         origin = userType.toUserOrigin(),
         permissions = permissions ?: 0,
         requestCount = requestCount ?: 0,

@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.displayLanguageSet
 import io.github.scottcooper92.binge.seerr.ui.settings.server.languageSettingItem
 import io.github.scottcooper92.binge.seerr.ui.settings.server.limitRows
 import io.github.scottcooper92.binge.seerr.ui.settings.server.regionSettingItem
+import io.github.scottcooper92.binge.seerr.ui.state.labelRes
 import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import kotlinx.coroutines.flow.Flow
 
@@ -260,13 +261,6 @@ private fun readOut(
     label: String,
     value: String,
 ) = ListItem(icon = icon, label = label, detail = value, clickable = false)
-
-private fun UserRole.labelRes(): Int =
-    when (this) {
-        UserRole.Owner -> R.string.user_role_owner
-        UserRole.Admin -> R.string.hub_role_admin
-        UserRole.User -> R.string.hub_role_user
-    }
 
 @Composable
 private fun QuotaDefault?.label(): String =

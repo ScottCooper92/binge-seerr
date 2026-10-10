@@ -1,6 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.ui.users.settings.UserRole
+import io.github.scottcooper92.binge.seerr.ui.users.userRole
 
 /** One comment as the server holds it; [isMine] is the connected user's, which is what gates its actions. */
 data class IssueComment(
@@ -11,7 +13,9 @@ data class IssueComment(
     val message: String,
     val createdAtMillis: Long?,
     val isMine: Boolean,
-)
+) {
+    val role: UserRole get() = userRole(authorId, isAdmin)
+}
 
 /**
  * One issue as a page. The report is the thread's first comment; [comments] are the rest. The

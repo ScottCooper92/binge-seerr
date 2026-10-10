@@ -27,9 +27,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.formatRelativeOrAbsolute
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.RoleTag
+import io.github.scottcooper92.binge.seerr.ui.users.settings.UserRole
 import com.binge.designsystem.R as DesR
 
 /** A bubble stops short of the full width so it stays on its side: the user's own right, everyone else's left. */
@@ -88,7 +89,7 @@ private fun CommentRow(
 ) {
     CommentColumn(
         isMine = comment.isMine,
-        header = { CommentHeader(comment.author, comment.isAdmin, formatRelativeOrAbsolute(comment.createdAtMillis, now)) },
+        header = { CommentHeader(comment.author, comment.role, formatRelativeOrAbsolute(comment.createdAtMillis, now)) },
     ) {
         Bubble(
             message = comment.message,
@@ -115,7 +116,7 @@ private fun OutboxRow(
 ) {
     CommentColumn(
         isMine = true,
-        header = { CommentHeader(entry.author, isAdmin = false, dateLabel = stringResource(R.string.issue_comment_just_now)) },
+        header = { CommentHeader(entry.author, role = UserRole.User, dateLabel = stringResource(R.string.issue_comment_just_now)) },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -196,7 +197,7 @@ private fun Bubble(
 @Composable
 private fun CommentHeader(
     author: String?,
-    isAdmin: Boolean,
+    role: UserRole,
     dateLabel: String?,
 ) {
     Row(
@@ -209,7 +210,7 @@ private fun CommentHeader(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (isAdmin) BingeTag(label = stringResource(R.string.issue_admin_tag))
+        if (role != UserRole.User) RoleTag(role)
         dateLabel?.let {
             Text(
                 it,
