@@ -56,9 +56,11 @@ import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadingPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPoster
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
+import io.github.scottcooper92.binge.seerr.ui.users.settings.UserRole
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes as mediaTypeLabelRes
+import io.github.scottcooper92.binge.seerr.ui.state.labelRes as roleLabelRes
 
 /** Everything the TV issue detail page can ask of its host, in one place so the overlay stays a wiring. */
 internal class TvIssueDetailActions(
@@ -243,7 +245,7 @@ private fun TvCommentRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (comment.isAdmin) TvTag(stringResource(R.string.issue_admin_tag))
+            if (comment.role != UserRole.User) TvTag(stringResource(comment.role.roleLabelRes()))
             formatRelativeOrAbsolute(comment.createdAtMillis, now)?.let {
                 Text(text = it, style = MaterialTheme.typography.bodySmall, color = muted, maxLines = 1)
             }
@@ -256,7 +258,7 @@ private fun TvCommentRow(
     }
 }
 
-/** A compact tag mirroring the phone thread's admin badge, built tv-native since `BingeTag` is Material 3. */
+/** A compact tag mirroring the phone thread's role tag, built tv-native since `BingeTag` is Material 3. */
 @Composable
 private fun TvTag(label: String) {
     Box(

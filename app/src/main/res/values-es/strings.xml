@@ -252,7 +252,6 @@
     <string name="issue_comment_send_blocked">El servidor rechazó este comentario.</string>
     <string name="issue_comment_edited">Comentario actualizado</string>
     <string name="issue_comment_deleted">Comentario eliminado</string>
-    <string name="issue_admin_tag">Administrador</string>
     <string name="issue_manage_cd">Acciones de la incidencia</string>
     <string name="issue_action_resolve">Resolver</string>
     <string name="issue_action_reopen">Reabrir</string>

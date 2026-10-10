@@ -54,6 +54,8 @@ private val ShortThread =
     listOf(
         comment(101, "ana", isAdmin = false, message = "Also happens on episode 5.", daysAgo = 1),
         comment(102, "mod", isAdmin = true, message = "Thanks — looking into it now.", daysAgo = 0),
+        // User 1 is the server's owner, so the tag reads Owner rather than Admin (#1236).
+        comment(1, "scott", isAdmin = true, message = "Fixed in the next release.", daysAgo = 0),
     )
 
 private val LongThread =
@@ -85,8 +87,8 @@ private fun detail(comments: List<IssueComment>) =
 private fun actions() = TvIssueDetailActions(onBack = {}, onRetry = {})
 
 /**
- * The television issue detail page: an empty thread, a short one, and a long one that exercises the
- * scroll the focus test drives.
+ * The television issue detail page: an empty thread, a short one with an admin's and the owner's replies tagged by
+ * role, and a long one that exercises the scroll the focus test drives.
  */
 class TvIssueDetailScreenshotTest {
     @PreviewTest
