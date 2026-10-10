@@ -3,7 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -50,6 +50,10 @@ class DiscoverSliderViewModelTest {
         )
         // The server answers a delete 204 with no body at all, which is why nothing is decoded from it.
         seerr.serve("DELETE /api/v1/settings/discover/3", body = "", code = 204)
+        seerr.serve("GET /api/v1/keyword/10051", """{"id":10051,"name":"heist"}""")
+        seerr.serve("GET /api/v1/keyword/9882", """{"id":9882,"name":"bank robbery"}""")
+        seerr.serve("GET /api/v1/genres/movie", """[{"id":28,"name":"Action"},{"id":12,"name":"Adventure"}]""")
+        seerr.serve("GET /api/v1/genres/tv", """[{"id":10759,"name":"Action & Adventure"}]""")
     }
 
     @After
@@ -65,8 +69,10 @@ class DiscoverSliderViewModelTest {
         return vm
     }
 
-    private suspend fun DiscoverSliderViewModel.awaitReady(): EditorUiState.Ready<SliderForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<SliderForm>
+    private suspend fun DiscoverSliderViewModel.awaitReady(
+        where: (ExtrasEditorUiState.Ready<SliderForm, SliderExtras>) -> Boolean = { true },
+    ): ExtrasEditorUiState.Ready<SliderForm, SliderExtras> =
+        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving && where(it) } as ExtrasEditorUiState.Ready<SliderForm, SliderExtras>
 
     @Test
     fun `a new slider needs a title and data, and posts its kind's number with them`() =
@@ -116,8 +122,8 @@ class DiscoverSliderViewModelTest {
                 """[{"id":6,"type":99,"title":"Newer kind","isBuiltIn":false,"enabled":true,"data":"1"}]""",
             )
             val vm = viewModel(id = 6)
-            val state = vm.uiState.first { it !is EditorUiState.Loading }
-            assertTrue(state is EditorUiState.Error)
+            val state = vm.uiState.first { it !is ExtrasEditorUiState.Loading }
+            assertTrue(state is ExtrasEditorUiState.Error)
         }
 
     @Test
@@ -129,5 +135,64 @@ class DiscoverSliderViewModelTest {
             vm.delete()
             assertEquals(EditorEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/settings/discover/3"))
+        }
+
+    @Test
+    fun `keywords are named, and picked into the data as the web client stores them`() =
+        runTest {
+            val vm = viewModel(id = 3)
+            vm.awaitReady()
+            vm.loadKeywordNames(listOf(10051, 9882))
+            val named = vm.awaitReady { it.extras.keywords.names.size == 2 }
+            assertEquals("heist", named.extras.keywords.names[10051])
+            assertEquals("bank robbery", named.extras.keywords.names[9882])
+
+            vm.toggleKeyword(9882)
+            assertEquals("10051", vm.awaitReady().draft.data)
+            vm.toggleKeyword(777)
+            assertEquals("10051,777", vm.awaitReady().draft.data)
+        }
+
+    @Test
+    fun `a genre slider reads the genres of its kind, and a pick is the id alone`() =
+        runTest {
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+
+            vm.selectType(SliderType.MovieGenre)
+            val movie = vm.awaitReady { it.extras.genres is GenreChoices.Ready }.extras.genres as GenreChoices.Ready
+            assertEquals(listOf("Action", "Adventure"), movie.genres.map { it.label })
+            vm.selectGenre(12)
+            assertEquals("12", vm.awaitReady().draft.data)
+
+            vm.selectType(SliderType.TvGenre)
+            val tv = vm.awaitReady { (it.extras.genres as? GenreChoices.Ready)?.genres?.size == 1 }.extras.genres as GenreChoices.Ready
+            assertEquals("Action & Adventure", tv.genres.single().label)
+            // A movie genre id means nothing against TV's list, so the pick is dropped with the kind.
+            assertEquals("", vm.awaitReady().draft.data)
+        }
+
+    @Test
+    fun `changing to a kind that keeps its data differently drops the data`() =
+        runTest {
+            val vm = viewModel(id = 3)
+            assertEquals("10051,9882", vm.awaitReady().draft.data)
+
+            // Keyword to keyword keeps the ids.
+            vm.selectType(SliderType.TvKeyword)
+            assertEquals("10051,9882", vm.awaitReady().draft.data)
+            // Keyword ids are not a genre, a company or a search.
+            vm.selectType(SliderType.MovieGenre)
+            assertEquals("", vm.awaitReady().draft.data)
+        }
+
+    @Test
+    fun `a server that cannot send the genres leaves the genre typed`() =
+        runTest {
+            seerr.serve("GET /api/v1/genres/movie", "{}", code = 500)
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.MovieGenre)
+            assertEquals(GenreChoices.Failed, vm.awaitReady { it.extras.genres != GenreChoices.Loading }.extras.genres)
         }
 }

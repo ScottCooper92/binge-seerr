@@ -409,7 +409,6 @@ class TvRequestDetailFocusTest {
                                 sort = RequestSort.Added,
                                 counts = null,
                                 scope = scope,
-                                actingIds = emptySet(),
                                 listVersion = 0,
                             ),
                         rowsFor = { filter ->

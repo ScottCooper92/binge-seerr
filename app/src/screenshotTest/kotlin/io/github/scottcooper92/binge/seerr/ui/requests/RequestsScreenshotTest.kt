@@ -66,7 +66,6 @@ private fun ready(counts: RequestCounts?) =
         sort = RequestSort.Added,
         counts = counts,
         scope = ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 1),
-        actingIds = emptySet(),
         listVersion = 1,
     )
 

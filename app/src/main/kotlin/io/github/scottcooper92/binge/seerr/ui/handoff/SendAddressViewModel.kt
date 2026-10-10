@@ -14,7 +14,6 @@ import io.github.scottcooper92.binge.seerr.handoff.ApplicationUrlReader
 import io.github.scottcooper92.binge.seerr.handoff.HAND_OFF_SESSION_MODE
 import io.github.scottcooper92.binge.seerr.handoff.HandOffAddressMemory
 import io.github.scottcooper92.binge.seerr.handoff.HandOffCredentials
-import io.github.scottcooper92.binge.seerr.handoff.HandOffKey
 import io.github.scottcooper92.binge.seerr.handoff.HandOffSignInModes
 import io.github.scottcooper92.binge.seerr.handoff.HandOffStatus
 import io.github.scottcooper92.binge.seerr.handoff.TvHandOffLinks
@@ -36,8 +35,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.security.MessageDigest
 
 /**
@@ -341,29 +338,7 @@ class SendAddressViewModel
             _uiState.update { state ->
                 val signingIn = state as? SendAddressUiState.SigningIn ?: return@update state
                 val current = signingIn.step as? SignInStep.Form
-                signingIn.copy(
-                    step =
-                        when {
-                            current == null ->
-                                SignInStep.Form(
-                                    server,
-                                    modes,
-                                    SignInForm(mode = modes.first()),
-                                    sessionOffer = sessionOfferFor(address),
-                                    address = shown,
-                                )
-                            current.refusedBy(status) ->
-                                current.copy(
-                                    isSending = false,
-                                    rejected = true,
-                                    awaiting = null,
-                                    sendingSession = false,
-                                    // A session the TV turned down won't do better a second time.
-                                    sessionOffer = current.sessionOffer.takeUnless { current.sendingSession },
-                                )
-                            else -> current
-                        },
-                )
+                signingIn.copy(step = current.followedTo(status, server, modes, sessionOfferFor(address), shown))
             }
         }
 
@@ -388,36 +363,6 @@ class SendAddressViewModel
             ): SendAddressViewModel
         }
     }
-
-/** What a form holds, as the TV's own sign-in reads it. */
-internal fun SignInForm.toCredentials(): HandOffCredentials =
-    HandOffCredentials(mode = mode.name, apiKey = apiKey, email = email, username = username, password = password)
-
-/** A `failed` counts only once the TV has reached the attempt this phone sent; before that it is the last attempt's. */
-private fun SignInStep.Form.refusedBy(status: HandOffStatus): Boolean =
-    isSending && status.failed && awaiting?.let { status.attempt >= it } == true
-
-/** Where the sheet goes when the TV turns the session down: typing, or finishing on the TV where it has no fields. */
-private fun fallbackFrom(
-    server: String,
-    modes: List<SeerrSignInMode>,
-    address: String?,
-): SignInStep =
-    if (modes.isEmpty()) {
-        SignInStep.OnTv(server)
-    } else {
-        SignInStep.Form(server, modes, SignInForm(mode = modes.first()), rejected = true, address = address)
-    }
-
-/** [session], sealed for this TV's code and [address] as credentials of the session mode; null for a target without a key. */
-private fun TvHandOffTarget.sealSession(
-    session: String,
-    address: String,
-): String? =
-    key?.seal(
-        Json.encodeToString(HandOffCredentials(mode = HAND_OFF_SESSION_MODE, session = session)).toByteArray(Charsets.UTF_8),
-        context = HandOffKey.context(token, address),
-    )
 
 /** Whether two addresses name the same server, however each was written. */
 private fun String.sameServerAs(other: String?): Boolean = other != null && normaliseServerAddress(this) == normaliseServerAddress(other)

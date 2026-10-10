@@ -152,7 +152,6 @@ internal fun requestsReady() =
         sort = RequestSort.Added,
         counts = RequestCounts(total = 3, pending = 1, approved = 1, processing = 1, available = 0),
         scope = ManagerScope,
-        actingIds = emptySet(),
         listVersion = 0,
     )
 

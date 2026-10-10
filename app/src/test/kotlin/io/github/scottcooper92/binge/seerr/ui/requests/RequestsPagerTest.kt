@@ -154,7 +154,6 @@ class RequestsPagerTest {
             sort = RequestSort.Added,
             counts = null,
             scope = ModerationScope(),
-            actingIds = emptySet(),
             listVersion = 1,
         )
 

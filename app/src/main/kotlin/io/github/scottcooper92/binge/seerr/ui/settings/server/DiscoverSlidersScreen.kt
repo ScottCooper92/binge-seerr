@@ -6,10 +6,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,7 +24,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -41,6 +36,8 @@ import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ReorderableHandleRow
 import com.binge.designsystem.component.bingeSwitchColors
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.ActionSheetGroup
+import io.github.scottcooper92.binge.seerr.ui.state.actionItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -151,9 +148,7 @@ fun DiscoverSlidersScreen(
 
     if (showOverflow) {
         BingeBottomSheet(onDismissRequest = { showOverflow = false }) {
-            SlidersOverflowRow(
-                onClick = { confirmingReset = true },
-            )
+            SlidersOverflowContent(onReset = { confirmingReset = true })
         }
     }
     if (confirmingReset) {
@@ -172,20 +167,22 @@ fun DiscoverSlidersScreen(
 }
 
 @Composable
-private fun SlidersOverflowRow(onClick: () -> Unit) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .clickable(onClick = onClick)
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Icon(Icons.Filled.RestartAlt, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-        Text(stringResource(R.string.server_settings_sliders_reset), color = MaterialTheme.colorScheme.error)
-    }
+internal fun SlidersOverflowContent(
+    onReset: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ActionSheetGroup(
+        rows =
+            listOf(
+                actionItem(
+                    Icons.Filled.RestartAlt,
+                    stringResource(R.string.server_settings_sliders_reset),
+                    destructive = true,
+                    onClick = onReset,
+                ),
+            ),
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -276,7 +273,6 @@ internal fun SliderType.labelRes(): Int =
 @StringRes
 internal fun SliderType.dataHintRes(): Int =
     when (this) {
-        SliderType.MovieKeyword, SliderType.TvKeyword -> R.string.server_settings_slider_data_keywords
         SliderType.MovieGenre, SliderType.TvGenre -> R.string.server_settings_slider_data_genre
         SliderType.Studio, SliderType.Network -> R.string.server_settings_slider_data_company
         SliderType.Search -> R.string.server_settings_slider_data_search

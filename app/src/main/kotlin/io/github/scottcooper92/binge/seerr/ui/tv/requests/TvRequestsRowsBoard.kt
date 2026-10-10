@@ -116,7 +116,7 @@ internal fun TvRequestsRowsBoard(
             posterUrl = item.posterUrl,
             isFocused = isFocused,
             onFocusChanged = onFocusChanged,
-            enabled = item.id !in ready.actingIds,
+            enabled = true,
             onClick = onClick,
             modifier = restore.rowModifier(item.id, cellModifier),
         )

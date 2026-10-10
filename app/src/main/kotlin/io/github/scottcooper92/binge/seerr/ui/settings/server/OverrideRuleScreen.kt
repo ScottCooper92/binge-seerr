@@ -12,10 +12,7 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeChoice
@@ -209,28 +206,16 @@ private fun keywordItem(
     ruleActions: OverrideRuleActions,
     any: String,
 ): ListItem {
-    var open by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(enabled) { if (!enabled) open = false }
     val title = stringResource(R.string.server_settings_rule_keywords)
-    val chosen = draft.keywords.tagIds()
-    if (open) {
-        KeywordPickerDialog(
-            title = title,
-            chosen = chosen,
-            search = extras.keywords,
-            onSearch = ruleActions.onSearchKeywords,
-            onToggle = ruleActions.onToggleKeyword,
-            onDismiss = { open = false },
-        )
-    }
-    return keywordSettingItem(
+    return keywordPickerItem(
         icon = Icons.Filled.Key,
         title = title,
-        chosen = chosen,
-        names = extras.keywords.names,
+        chosen = draft.keywords.tagIds(),
+        search = extras.keywords,
         enabled = enabled,
+        onSearch = ruleActions.onSearchKeywords,
+        onToggle = ruleActions.onToggleKeyword,
         onLoadNames = ruleActions.onLoadKeywordNames,
-        onOpen = { open = true },
         emptyLabel = any,
     )
 }

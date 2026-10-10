@@ -127,7 +127,6 @@ sealed interface RequestsUiState {
         val sort: RequestSort,
         val counts: RequestCounts?,
         val scope: ModerationScope,
-        val actingIds: Set<Int>,
         /** Bumped after each successful moderation; the visible list reconciles in place, keeping its scroll. */
         val listVersion: Int,
         /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
