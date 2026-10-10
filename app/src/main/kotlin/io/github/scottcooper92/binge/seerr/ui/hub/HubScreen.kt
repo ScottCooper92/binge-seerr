@@ -78,7 +78,16 @@ fun HubScreen(
     val health = if (state is HubUiState.Error) state.health else ready?.health
     val rechecking = (state as? HubUiState.Error)?.rechecking ?: ready?.rechecking ?: false
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
-    BingeScreenScaffold(bar = ScreenBar.Small, title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
+        title = ready?.server?.title ?: stringResource(R.string.companion_name),
+        // PROTOTYPE: the account lives in the bar, not as a card in the dashboard.
+        actions = {
+            ready?.overview?.account?.let { account ->
+                HubAccountAction(account, ready.overview.quota, onClick = { actions.onOpenAccount(account.id) })
+            }
+        },
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when {
@@ -147,7 +156,7 @@ private fun Dashboard(
             )
         }
         ServerCard(server = state.server, overview = state.overview, sides = sides)
-        state.overview.account?.let { account ->
+        if (false) state.overview.account?.let { account ->
             AccountCard(
                 account = account,
                 quota = state.overview.quota,
