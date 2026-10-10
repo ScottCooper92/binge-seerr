@@ -91,6 +91,8 @@ sealed interface IssuesUiState {
         val actionItem: IssueItem? = null,
         /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
         val refreshes: Map<IssueFilter, ListRefresh> = emptyMap(),
+        /** What the rows' relative times are worded against: moved on each minute while the list shows (#1239). */
+        val now: Long = System.currentTimeMillis(),
     ) : IssuesUiState
 
     /** The signed-in user could not be read, so who the list is for is unknown. */

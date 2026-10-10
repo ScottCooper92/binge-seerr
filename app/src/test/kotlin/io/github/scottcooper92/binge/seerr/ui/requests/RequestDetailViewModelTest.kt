@@ -153,6 +153,28 @@ class RequestDetailViewModelTest {
             orderIndex = id,
         )
 
+    /** #1239: the page's "2 minutes ago" ages while it shows, and the clock stops when it leaves. */
+    @Test
+    fun `the page's clock moves on each minute while it is showing, and stops when it leaves`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            vm.setScreenVisible(true)
+            vm.uiState.first { (it as? RequestDetailUiState.Ready)?.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.uiState.first { (it as? RequestDetailUiState.Ready)?.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, (vm.uiState.value as RequestDetailUiState.Ready).now)
+        }
+
     @Test
     fun `a cached row seeds the hero at once, and the fetch then fills the page in behind it`() =
         runTest {

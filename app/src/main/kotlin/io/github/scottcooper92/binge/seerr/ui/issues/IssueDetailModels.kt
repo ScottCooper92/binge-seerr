@@ -120,6 +120,8 @@ sealed interface IssueDetailUiState {
         val outbox: List<OutboxComment> = emptyList(),
         val commentAction: CommentAction = CommentAction.None,
         val action: IssueAction = IssueAction.None,
+        /** What the thread's relative times are worded against: moved on each minute while the page shows (#1239). */
+        val now: Long = System.currentTimeMillis(),
     ) : IssueDetailUiState {
         val thread: List<ThreadEntry>
             get() = detail.comments.map { ThreadEntry.Server(it) } + outbox.map { ThreadEntry.Pending(it) }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
@@ -42,6 +43,7 @@ internal fun TvIssuesEntry(
         events = viewModel.events,
         openIssueId = openIssueId,
         seeAllOpen = seeAllOpen,
+        now = ready?.now ?: System.currentTimeMillis(),
         actions =
             TvIssuesActions(
                 onOpenActions = viewModel::openActions,
@@ -88,6 +90,7 @@ internal fun TvIssuesGridOverlay(
         onOpenDetail = { onOpenIssue(it.id) },
         onRetryLoad = { lazyItems.retry() },
         onBack = onDone,
+        now = ready?.now ?: System.currentTimeMillis(),
     )
 }
 
@@ -104,8 +107,13 @@ internal fun TvIssueDetailOverlay(
         hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
     TvIssueDetailScreen(
         state = state,
         actions = TvIssueDetailActions(onBack = onDone, onRetry = viewModel::reload),
+        now = (state as? IssueDetailUiState.Ready)?.now ?: System.currentTimeMillis(),
     )
 }

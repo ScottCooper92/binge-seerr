@@ -19,7 +19,10 @@ import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.ui.Ticker
+import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -49,7 +52,14 @@ class IssueDetailViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val savedState: SavedStateHandle = SavedStateHandle(),
+        private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
+        internal var clock: () -> Long = System::currentTimeMillis
+
+        /** The thread's "2 minutes ago" is worded against this, moved on each minute while the page shows (#1239). */
+        private val now = MutableStateFlow(clock())
+        private var ticker: Job? = null
+
         private val state = MutableStateFlow<IssueDetailUiState>(IssueDetailUiState.Loading)
         val uiState: StateFlow<IssueDetailUiState> = state.asStateFlow()
 
@@ -61,6 +71,20 @@ class IssueDetailViewModel
 
         init {
             reload()
+        }
+
+        /** The thread's relative times count down while the page shows, and no longer. */
+        fun setScreenVisible(visible: Boolean) {
+            ticker?.cancel()
+            ticker = null
+            if (!visible) return
+            ticker =
+                viewModelScope.launch(dispatcher) {
+                    minuteClock(clock, minuteTicker).collect { time ->
+                        now.value = time
+                        state.updateReady { it.copy(now = time) }
+                    }
+                }
         }
 
         fun reload() {
@@ -82,6 +106,7 @@ class IssueDetailViewModel
                                 // A comment half typed when the process was killed comes back in the composer (#1026).
                                 draft = ready?.draft ?: savedState.get<String>(COMMENT_DRAFT_KEY).orEmpty(),
                                 outbox = ready?.outbox.orEmpty(),
+                                now = now.value,
                             )
                         }
                     }.onFailure { failure ->
@@ -105,7 +130,7 @@ class IssueDetailViewModel
         }
 
         fun setDraft(text: String) {
-            updateReady { it.copy(draft = text) }
+            state.updateReady { it.copy(draft = text) }
             savedState[COMMENT_DRAFT_KEY] = text
         }
 
@@ -146,7 +171,7 @@ class IssueDetailViewModel
                             reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentEdited,
                         )
                     }.onFailure { failure ->
-                        updateReady { it.copy(commentAction = CommentAction.None) }
+                        state.updateReady { it.copy(commentAction = CommentAction.None) }
                         eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
                     }
             }
@@ -175,7 +200,7 @@ class IssueDetailViewModel
                             ?: (if (resolving) IssueDetailEvent.IssueResolved else IssueDetailEvent.IssueReopened),
                     )
                 }.onFailure { failure ->
-                    updateReady { it.copy(action = IssueAction.None) }
+                    state.updateReady { it.copy(action = IssueAction.None) }
                     eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
                 }
             }
@@ -196,7 +221,7 @@ class IssueDetailViewModel
                     analytics.event(AnalyticsEvents.ISSUE_MODERATED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                     eventFlow.emit(IssueDetailEvent.IssueDeleted)
                 }.onFailure { failure ->
-                    updateReady { it.copy(action = IssueAction.None) }
+                    state.updateReady { it.copy(action = IssueAction.None) }
                     eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
                 }
             }
@@ -220,7 +245,7 @@ class IssueDetailViewModel
                             reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentDeleted,
                         )
                     }.onFailure { failure ->
-                        updateReady { it.copy(commentAction = CommentAction.None) }
+                        state.updateReady { it.copy(commentAction = CommentAction.None) }
                         eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
                     }
             }
@@ -232,7 +257,7 @@ class IssueDetailViewModel
          */
         private suspend fun reloadAfterWrite(): Throwable? {
             val result = attempt { load() }
-            updateReady { ready ->
+            state.updateReady { ready ->
                 result
                     .getOrNull()
                     ?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None, action = IssueAction.None) }
@@ -251,8 +276,6 @@ class IssueDetailViewModel
             }
 
         private fun ready(): IssueDetailUiState.Ready? = state.value as? IssueDetailUiState.Ready
-
-        private fun updateReady(transform: (IssueDetailUiState.Ready) -> IssueDetailUiState.Ready) = state.updateReady(transform)
 
         @AssistedFactory
         interface Factory {

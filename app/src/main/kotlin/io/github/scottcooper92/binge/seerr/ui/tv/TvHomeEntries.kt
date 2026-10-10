@@ -176,6 +176,10 @@ internal fun TvRequestDetailOverlay(
         hiltViewModel<RequestDetailViewModel, RequestDetailViewModel.Factory>(creationCallback = { factory -> factory.create(requestId) }),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
     val context = LocalContext.current
     val detail = (state as? RequestDetailUiState.Ready)?.detail
     val onOpenInBinge =

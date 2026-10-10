@@ -57,6 +57,10 @@ internal fun IssueDetailEntry(
         hiltViewModel<IssueDetailViewModel, IssueDetailViewModel.Factory>(creationCallback = { factory -> factory.create(issueId) }),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
     IssueDetailScreen(
         state = state,
         events = viewModel.events,
