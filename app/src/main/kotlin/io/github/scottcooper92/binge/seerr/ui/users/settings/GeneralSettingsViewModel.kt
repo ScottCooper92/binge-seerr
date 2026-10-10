@@ -12,9 +12,8 @@ import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserMainSettingsDto
-import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
-import io.github.scottcooper92.binge.seerr.ui.settings.server.ListChoices
+import io.github.scottcooper92.binge.seerr.ui.settings.server.ListChoicesLoader
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerList
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerListCatalog
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
@@ -23,7 +22,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * The general page: how the account signs in and its role, the display name and email, the display language and
@@ -64,7 +62,8 @@ class GeneralSettingsViewModel
                 val viewerUser = viewer.await()
                 val permissions = viewerUser.toPermissions()
                 val user = target.await()
-                val variant = profile.await().variant
+                val server = profile.await()
+                val variant = server.variant
                 val defaults = public.await().toDiscoverDefaults()
                 editExtras { it.copy(variant = variant, serverDefaults = defaults) }
                 settings
@@ -74,8 +73,8 @@ class GeneralSettingsViewModel
                         canEditQuotas = permissions.canManageUsers && viewerUser?.id != userId && !user.toPermissions().canManageUsers,
                         canEditEmail = permissions.canManageUsers || user.userType.toUserOrigin() == UserOrigin.Local,
                         fallbackName = user.fallbackName(),
-                        // Only Overseerr lacks the streaming region; an unrecognised server is read as the newer lineage.
-                        streamingRegions = variant != SeerrVariant.Overseerr,
+                        // The profile's capability, not the lineage: Jellyseerr before 2.2 has one region too (#1012).
+                        streamingRegions = server.hasStreamingRegion,
                     ).withAccount(user)
             }
 
@@ -86,16 +85,17 @@ class GeneralSettingsViewModel
 
         override fun canSave(draft: GeneralSettings): Boolean = draft.valid
 
+        private val lists =
+            ListChoicesLoader(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                catalog = listCatalog,
+                held = { currentExtras().lists[it] },
+                set = { kind, choices -> editExtras { it.copy(lists = it.lists + (kind to choices)) } },
+            )
+
         /** Reads [kind]'s list for its picker, once; a failed read can be asked for again. */
-        fun loadList(kind: ServerList) {
-            val held = currentExtras().lists[kind]
-            if (held is ListChoices.Ready || held == ListChoices.Loading) return
-            editExtras { it.copy(lists = it.lists + (kind to ListChoices.Loading)) }
-            viewModelScope.launch(dispatcher) {
-                val choices = runCatching { listCatalog.entries(kind) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed })
-                editExtras { it.copy(lists = it.lists + (kind to choices)) }
-            }
-        }
+        fun loadList(kind: ServerList) = lists.load(kind)
 
         @AssistedFactory
         interface Factory {

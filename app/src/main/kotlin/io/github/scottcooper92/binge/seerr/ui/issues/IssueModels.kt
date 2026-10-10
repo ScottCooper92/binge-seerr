@@ -69,6 +69,8 @@ data class IssueItem(
 data class IssueListScope(
     val permissions: SeerrPermissions = SeerrPermissions(),
     val currentUserId: Int? = null,
+    /** Whether the server has the issue counts endpoint, from the profile as it was re-read on arrival (#1074). */
+    val hasCounts: Boolean = false,
 ) {
     /** The `createdBy` the list is narrowed to, or null for a user who may see everyone's. */
     val createdBy: Int? get() = currentUserId?.takeUnless { permissions.canManageIssues || permissions.canViewIssues }

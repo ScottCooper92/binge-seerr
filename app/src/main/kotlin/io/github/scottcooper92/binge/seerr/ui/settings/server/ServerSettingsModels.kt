@@ -147,7 +147,11 @@ data class KeywordSearch(
     val failed: Boolean = false,
 )
 
-internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): ServerGeneralSettings {
+/** [hasStreamingRegion] is [io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile.hasStreamingRegion]. */
+internal fun SeerrMainSettingsDto.toServerGeneral(
+    variant: SeerrVariant,
+    hasStreamingRegion: Boolean,
+): ServerGeneralSettings {
     val lineage = variant.isJellyseerrLineage
     val overseerr = variant == SeerrVariant.Overseerr
     return ServerGeneralSettings(
@@ -155,7 +159,7 @@ internal fun SeerrMainSettingsDto.toServerGeneral(variant: SeerrVariant): Server
         applicationUrl = applicationUrl.orEmpty(),
         locale = locale.orEmpty(),
         discoverRegion = (discoverRegion ?: region).orEmpty(),
-        streamingRegion = streamingRegion.orEmpty().takeIf { lineage },
+        streamingRegion = streamingRegion.orEmpty().takeIf { hasStreamingRegion },
         originalLanguage = originalLanguage.orEmpty(),
         hideAvailable = hideAvailable ?: false,
         hideRequested = (hideRequested ?: false).takeIf { lineage },

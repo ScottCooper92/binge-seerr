@@ -270,7 +270,9 @@ internal fun HttpUrl.sharesOriginWith(base: HttpUrl): Boolean = scheme == base.s
 
 /**
  * Replays one `connect.sid` cookie, scoped to the saved server's host. [loadForRequest] filters on
- * [Cookie.matches], so a cross-host redirect never receives the session.
+ * [Cookie.matches], so a cross-host redirect never receives the session. For an `https` server the
+ * cookie is `Secure` too (#1034): [Cookie.matches] ignores the scheme otherwise, so a redirect down to
+ * `http` on the same host would carry the session in the clear.
  */
 internal class SessionCookieJar(
     baseUrl: String,
@@ -287,6 +289,7 @@ internal class SessionCookieJar(
                         .value(cookieValue)
                         .hostOnlyDomain(url.host)
                         .path("/")
+                        .apply { if (url.isHttps) secure() }
                         .build(),
                 )
             }.orEmpty()

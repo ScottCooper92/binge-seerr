@@ -98,9 +98,13 @@ class MediaServerViewModel
                         val api = connection.api()
                         orOnNotFound(
                             newer = {
-                                api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).let { updated ->
-                                    replace(updated)
+                                // A change to apply to the list as it stands when the answer lands, not a list built
+                                // from a snapshot: another toggle may have landed in between (#1024).
+                                val updated = api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).toLibrary()
+                                val change: (List<MediaLibrary>) -> List<MediaLibrary> = { libraries ->
+                                    libraries.map { if (it.id == updated.id) updated else it }
                                 }
+                                change
                             },
                             released = {
                                 libraryWriteMutex.withLock {
@@ -113,13 +117,11 @@ class MediaServerViewModel
                                     // Folded into local state before the lock is released, so the next
                                     // waiting toggle computes its enabled set from this one's result
                                     // rather than the snapshot from before it landed.
-                                    editExtras {
-                                        it.copy(
-                                            libraries = libraries.map { dto -> dto.toLibrary() },
-                                            busyLibraryIds = it.busyLibraryIds - id,
-                                        )
-                                    }
-                                    libraries
+                                    val fresh = libraries.map { dto -> dto.toLibrary() }
+                                    editExtras { it.copy(libraries = fresh, busyLibraryIds = it.busyLibraryIds - id) }
+                                    // Already folded in above, so the change after the lock keeps the list as it then stands.
+                                    val change: (List<MediaLibrary>) -> List<MediaLibrary> = { it }
+                                    change
                                 }
                             },
                         )
@@ -129,7 +131,7 @@ class MediaServerViewModel
                 // libraries updated but the id still busy (or vice versa) is an inconsistent state.
                 editExtras {
                     it.copy(
-                        libraries = result.getOrNull()?.map { dto -> dto.toLibrary() } ?: it.libraries,
+                        libraries = result.getOrNull()?.invoke(it.libraries) ?: it.libraries,
                         busyLibraryIds = it.busyLibraryIds - id,
                     )
                 }
@@ -238,17 +240,6 @@ class MediaServerViewModel
         private fun setLibraries(libraries: List<SeerrLibraryDto>) =
             editExtras {
                 it.copy(libraries = libraries.map { dto -> dto.toLibrary() })
-            }
-
-        private fun replace(updated: SeerrLibraryDto): List<SeerrLibraryDto> =
-            currentExtras().libraries.map { library ->
-                if (library.id ==
-                    updated.id
-                ) {
-                    updated
-                } else {
-                    SeerrLibraryDto(library.id, library.name, library.enabled, library.type.toSeerrType(), library.lastScanMillis)
-                }
             }
 
         private suspend fun <T> orOnNotFound(

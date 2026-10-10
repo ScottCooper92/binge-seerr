@@ -16,7 +16,10 @@ the raw facts behind it.
    `GET /auth/me` as the permission bitmask, decoded by `SeerrPermissions`. `ADMIN` implies
    everything. Jellyseerr and Seerr define three bits Overseerr's current code does not:
    `MANAGE_SETTINGS`, `MANAGE_BLOCKLIST` and `VIEW_BLOCKLIST`. Overseerr up to 1.29 did define
-   `MANAGE_SETTINGS` (bit 4), so an old grant of it can exist on any lineage.
+   `MANAGE_SETTINGS` (bit 4), so an old grant of it can exist on any lineage. No route honours
+   `MANAGE_SETTINGS`. Every route on the admin `/settings` router needs `ADMIN`, so the app gates
+   Settings on that. Only `/settings/public`, `GET /settings/discover` and the Pushover sounds
+   lookup sit outside that router.
 3. **The server's configuration.** What the administrator turned on. Read from
    `GET /settings/public`: `localLogin`, `mediaServerLogin`, `mediaServerType`, `movie4kEnabled`,
    `series4kEnabled`, `partialRequestsEnabled`, `enableSpecialEpisodes`, `hideAvailable`,
@@ -91,7 +94,7 @@ know.
 
 | Write | Overseerr | Jellyseerr / Seerr |
 |---|---|---|
-| `POST /user/{id}/settings/main` | `region`, `discordId` | `discoverRegion` and `streamingRegion`; `discordId` was dropped after Seerr 3.2 |
+| `POST /user/{id}/settings/main` | `region`, `discordId` | `region` up to Jellyseerr 2.1; `discoverRegion` and `streamingRegion` from 2.2; `discordId` was dropped after Seerr 3.2 |
 | `POST /user/{id}/settings/notifications` | `discordId` | `discordId` up to Seerr 3.2, the list `discordIds` from 3.3; `telegramMessageThreadId` throughout |
 | `GET`/`PUT /settings/metadatas` | never | `{tv, anime}` at the top level, with no wrapper |
 

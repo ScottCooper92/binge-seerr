@@ -168,7 +168,8 @@ class RequestEditor(
             seasons =
                 when {
                     !request.isTv -> null
-                    seasonsEditable && !seasonsUnknown -> seasons.filter { it.selected && !it.locked }.map { it.number }
+                    // Every season ticked, held ones included: the server keeps only the seasons the body names (#1022).
+                    seasonsEditable && !seasonsUnknown -> seasons.filter { it.selected }.map { it.number }
                     else -> request.seasons.map { it.seasonNumber }
                 },
             is4k = request.is4k,

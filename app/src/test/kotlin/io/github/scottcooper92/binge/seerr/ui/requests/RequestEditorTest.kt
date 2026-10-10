@@ -68,6 +68,9 @@ class RequestEditorTest {
     /** Paths the dispatcher should answer 500 for, so a failed load can be driven. */
     private val failing = mutableSetOf<String>()
 
+    /** When set, the edit's `PUT` gets Seerr's 202 for an edit that leaves nothing to request. */
+    @Volatile private var nothingLeftToRequest = false
+
     @After
     fun tearDown() = seerr.close()
 
@@ -78,6 +81,9 @@ class RequestEditorTest {
                     received += request
                     val path = request.url.encodedPath
                     if (path in failing) return MockResponse(code = 500)
+                    if (nothingLeftToRequest && request.method == "PUT") {
+                        return MockResponse(code = 202, body = """{"message":"No seasons available to request"}""")
+                    }
                     val body =
                         when {
                             path == "/api/v1/auth/me" -> """{"id":1,"permissions":2}"""
@@ -292,6 +298,62 @@ class RequestEditorTest {
             assertEquals(6, body.getValue("profileId").jsonPrimitive.int)
             assertEquals("/tv", body.getValue("rootFolder").jsonPrimitive.content)
             assertEquals(listOf(4), body.getValue("tags").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `an edit seerr answers with nothing left to request stays open, unlocked, as a failure`() =
+        runTest {
+            nothingLeftToRequest = true
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.toggleSeason(2)
+            editor.save()
+
+            // The 202 is a refusal (#1001): the sheet does not close as though the edit had gone through.
+            val after = editor.state.first { it != null && !it.saving }
+            val seasons = after?.seasons.orEmpty()
+            assertTrue(seasons.single { it.number == 2 }.selected)
+        }
+
+    @Test
+    fun `a held season the request already covers stays in the body, or the server would drop it`() =
+        runTest {
+            val editor = editor()
+            // Season 3 is on the server now, so it is locked; the request still covers it.
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            assertTrue(
+                editor
+                    .awaitLoaded()
+                    .seasons
+                    .single { it.number == 3 }
+                    .let { it.locked && it.selected },
+            )
+
+            editor.toggleSeason(2)
+            editor.save()
+            editor.awaitClosed()
+
+            assertEquals(listOf(1, 2, 3), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `a request whose seasons are all held can still change where it goes`() =
+        runTest {
+            val editor = editor()
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = true))
+
+            assertTrue(editor.awaitLoaded().canSave)
+            editor.selectProfile(8)
+            editor.save()
+            editor.awaitClosed()
+
+            val body = editBody()
+            assertEquals(listOf(3), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+            assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
         }
 
     private fun movieRequest(tags: List<Int> = emptyList()) =

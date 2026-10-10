@@ -152,7 +152,7 @@ class OverrideRuleScreenshotTest {
         RuleFrame(
             ruleReady(
                 savedRule(),
-                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)),
+                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)).named(),
             ),
         )
 
@@ -164,7 +164,7 @@ class OverrideRuleScreenshotTest {
         RuleFrame(
             ruleReady(
                 savedRule().copy(profileId = null, rootFolder = null),
-                extras = OverrideRuleExtras(instances = instances(), users = users(), loadingChoices = true),
+                extras = OverrideRuleExtras(instances = instances(), users = users(), loadingChoices = true).named(),
             ),
         )
 
@@ -188,7 +188,7 @@ class OverrideRuleScreenshotTest {
         RuleFrame(
             ruleReady(
                 savedRule(),
-                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)),
+                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)).named(),
             ),
         )
 
@@ -200,7 +200,22 @@ class OverrideRuleScreenshotTest {
         RuleFrame(
             ruleReady(
                 savedRule(),
-                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)),
+                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)).named(),
+            ),
+        )
+
+    /** A server that cannot send its genres: the condition is typed ids again. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun genresUnavailable() =
+        RuleFrame(
+            ruleReady(
+                savedRule(),
+                extras =
+                    OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false))
+                        .named()
+                        .copy(genres = GenreChoices.Failed),
             ),
         )
 
@@ -240,7 +255,7 @@ class OverrideRulePartsScreenshotTest {
         PartFrame {
             val draft = OverrideRuleForm(serviceType = ServiceType.Radarr, serviceId = 1)
             val extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false))
-            RuleConditions(extras, draft, enabled = true, actions = noActions(), onToggleUser = {})
+            RuleConditions(extras, draft, enabled = true, actions = noActions(), ruleActions = noRuleActions())
             RuleOverrides(extras, draft, enabled = true, actions = noActions(), onToggleTag = {})
         }
 }
@@ -300,14 +315,22 @@ private fun sonarrForm() =
         animeLanguageProfileId = 1,
     )
 
+/** The genres and keywords a saved rule's ids resolve to, so its conditions read as names. */
+private fun OverrideRuleExtras.named() =
+    copy(
+        genres = GenreChoices.Ready(listOf(Choice(16, "Animation"), Choice(28, "Action"), Choice(12, "Adventure"))),
+        keywords = KeywordSearch(names = mapOf(9951 to "kaiju", 210024 to "anime")),
+    )
+
 private fun savedRule() =
     OverrideRuleForm(
         id = 1,
         serviceType = ServiceType.Radarr,
         serviceId = 1,
         userIds = setOf(2),
-        genres = "16, 28",
+        genres = "16,28",
         languages = "ja",
+        keywords = "9951,210024",
         profileId = 4,
         rootFolder = "/anime",
     )
@@ -350,5 +373,19 @@ private fun RuleFrame(state: ExtrasEditorUiState<OverrideRuleForm, OverrideRuleE
         state = state,
         events = emptyFlow(),
         actions = noActions(),
-        ruleActions = OverrideRuleActions(onSelectInstance = {}, onToggleUser = {}, onToggleTag = {}, onDelete = {}),
+        ruleActions = noRuleActions(),
+    )
+
+private fun noRuleActions() =
+    OverrideRuleActions(
+        onSelectInstance = {},
+        onToggleUser = {},
+        onToggleTag = {},
+        onToggleGenre = {},
+        onLoadLanguages = {},
+        onSelectLanguages = {},
+        onToggleKeyword = {},
+        onSearchKeywords = {},
+        onLoadKeywordNames = {},
+        onDelete = {},
     )

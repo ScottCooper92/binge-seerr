@@ -13,8 +13,6 @@ import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.SaveAsMade
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,12 +25,11 @@ sealed interface BlocklistTagsUiState {
     data object Loading : BlocklistTagsUiState
 
     /**
-     * [tags] are the TMDB keyword ids as the user has left them, saved or about to be; [names] names them and the search
-     * results. [saveFailed] is a save the server refused: the tags stay as they are, unsaved, until the next save.
+     * [tags] are the TMDB keyword ids as the user has left them, saved or about to be; [search] names them and holds the
+     * search results. [saveFailed] is a save the server refused: the tags stay as they are, unsaved, until the next save.
      */
     data class Ready(
         val tags: List<Int>,
-        val names: Map<Int, String> = emptyMap(),
         val search: KeywordSearch = KeywordSearch(),
         val saveFailed: Boolean = false,
     ) : BlocklistTagsUiState
@@ -61,7 +58,14 @@ class BlocklistTagsViewModel
         val uiState: StateFlow<BlocklistTagsUiState> = state.asStateFlow()
 
         private var blacklistNames = false
-        private var search: Job? = null
+        private val keywords =
+            KeywordLookup(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = { (state.value as? BlocklistTagsUiState.Ready)?.search },
+                edit = { change -> editReady { it.copy(search = change(it.search)) } },
+            )
 
         private val saveAsMade =
             SaveAsMade(
@@ -88,35 +92,13 @@ class BlocklistTagsViewModel
                         blacklistNames = main.usesBlacklistNames
                         val tags = main.tags.orEmpty().tagIds()
                         state.value = BlocklistTagsUiState.Ready(tags)
-                        name(tags)
+                        keywords.name(tags)
                     }.onFailure { state.value = BlocklistTagsUiState.Error(it.toSeerrError()) }
             }
         }
 
-        /** Searches TMDB's keywords as the user types; a newer query cancels the one before, and blank clears the results. */
-        fun search(query: String) {
-            search?.cancel()
-            if (query.isBlank()) {
-                editReady { it.copy(search = KeywordSearch()) }
-                return
-            }
-            search =
-                viewModelScope.launch(dispatcher) {
-                    delay(KEYWORD_SEARCH_DEBOUNCE_MILLIS)
-                    editReady { it.copy(search = it.search.copy(searching = true, failed = false)) }
-                    val found =
-                        attempt { connection.api().searchKeywords(query.trim()).results }
-                            .getOrNull()
-                            ?.mapNotNull { dto -> dto.name?.let { Keyword(dto.id, it) } }
-                    editReady {
-                        it.copy(
-                            // A keyword added from the results is named without another read.
-                            names = it.names + found.orEmpty().associate { k -> k.id to k.name },
-                            search = it.search.copy(results = found ?: it.search.results, searching = false, failed = found == null),
-                        )
-                    }
-                }
-        }
+        /** Searches TMDB's keywords as the user types: see [KeywordLookup.search]. */
+        fun search(query: String) = keywords.search(query)
 
         /** Adds [id] to the tags or takes it out, and saves the tags a moment after the last change. */
         fun toggle(id: Int) {
@@ -141,16 +123,6 @@ class BlocklistTagsViewModel
 
         /** Leaving the page with a change not yet sent sends it now, on the application's scope. */
         override fun onCleared() = saveAsMade.cleared()
-
-        private fun name(ids: List<Int>) {
-            val missing = ids.filter { it !in ((state.value as? BlocklistTagsUiState.Ready)?.names ?: emptyMap()) }
-            if (missing.isEmpty()) return
-            viewModelScope.launch(dispatcher) {
-                val api = connection.api()
-                val named = missing.mapNotNull { id -> attempt { api.keyword(id) }.getOrNull()?.name?.let { id to it } }.toMap()
-                editReady { it.copy(names = it.names + named) }
-            }
-        }
 
         private fun editReady(transform: (BlocklistTagsUiState.Ready) -> BlocklistTagsUiState.Ready) =
             state.update { current -> (current as? BlocklistTagsUiState.Ready)?.let(transform) ?: current }

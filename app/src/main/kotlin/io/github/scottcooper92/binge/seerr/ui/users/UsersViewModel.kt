@@ -102,8 +102,10 @@ class UsersViewModel
                             UsersScope(
                                 permissions = profile?.permissionScope() ?: PermissionScope(blocklist = false),
                                 canAdmit = viewer.toPermissions().canManageUsers,
+                                // The import lists live under /settings, which needs ADMIN; adding one account needs only
+                                // MANAGE_USERS (#1009).
                                 importSource =
-                                    when (profile?.mediaServer) {
+                                    when (profile?.mediaServer.takeIf { viewer.toPermissions().isAdmin }) {
                                         SeerrMediaServer.Plex -> UserOrigin.Plex
                                         SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
                                         SeerrMediaServer.Emby -> UserOrigin.Emby

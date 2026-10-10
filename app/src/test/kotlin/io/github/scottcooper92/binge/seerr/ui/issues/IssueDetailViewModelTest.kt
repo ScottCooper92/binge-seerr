@@ -568,7 +568,8 @@ class IssueDetailViewModelTest {
             assertTrue(detail.canComment)
             assertFalse(detail.canManage)
             assertTrue(detail.canResolve)
-            assertTrue(detail.canDelete)
+            // Someone has replied, so the server would refuse the reporter's delete (#1010).
+            assertFalse(detail.canDelete)
             assertTrue(detail.report?.isMine == true)
             assertTrue(detail.canActOn(checkNotNull(detail.report)))
             assertFalse(detail.canActOn(detail.comments.single()))
@@ -578,6 +579,20 @@ class IssueDetailViewModelTest {
             assertFalse(stranger.canComment)
             assertFalse(stranger.canResolve)
             assertFalse(stranger.canDelete)
+        }
+
+    /** The server lets a reporter delete their own issue only while nobody has replied (#1010). */
+    @Test
+    fun `a reporter may delete their own issue only before anyone replies, and a manager may whenever`() =
+        runTest {
+            server(CREATE_ISSUES, userId = 8)
+            val reportOnly = """[{"id":1,"message":"Audio out of sync","user":{"id":8,"displayName":"ana"}}]"""
+            serve("GET /api/v1/issue/31", issueJson(comments = reportOnly))
+            assertTrue(viewModel().awaitReady().detail.canDelete)
+
+            // A manager may delete it with the replies there too.
+            server(ADMIN, userId = 7)
+            assertTrue(viewModel().awaitReady().detail.canDelete)
         }
 
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

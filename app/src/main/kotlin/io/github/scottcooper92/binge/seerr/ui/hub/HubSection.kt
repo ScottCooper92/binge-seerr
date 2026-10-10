@@ -60,7 +60,8 @@ enum class HubSection(
         titleRes = R.string.hub_section_settings,
         descriptionRes = R.string.hub_section_settings_desc,
         icon = Icons.Filled.Settings,
-        isVisible = { it.permissions.canManageSettings },
+        // The admin settings router needs ADMIN on every lineage; MANAGE_SETTINGS opens none of its routes (#1004).
+        isVisible = { it.permissions.isAdmin },
     ),
 }
 

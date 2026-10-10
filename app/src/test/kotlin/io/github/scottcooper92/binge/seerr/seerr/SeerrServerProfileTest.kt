@@ -36,6 +36,7 @@ class SeerrServerProfileTest {
         assertFalse(current.hasDeleteMediaFiles)
         assertFalse(profile("1.28.0").hasWatchData)
         assertTrue(current.hasWatchData)
+        assertFalse(current.hasStreamingRegion)
     }
 
     /** Jellyseerr 1.0 to 1.3 have no discover routes: every call 404s (#1017). */
@@ -68,6 +69,10 @@ class SeerrServerProfileTest {
         assertFalse(profile("1.4.0").hasDeleteMediaFiles)
         assertTrue(jellyseerr.hasDeleteMediaFiles)
         assertTrue(jellyseerr.hasWatchData)
+        // The one region split in two at 2.2, not at Jellyseerr's first release (#1012).
+        assertFalse(jellyseerr.hasStreamingRegion)
+        assertTrue(profile("2.2.0").hasStreamingRegion)
+        assertTrue(seerr.hasStreamingRegion)
     }
 
     @Test
