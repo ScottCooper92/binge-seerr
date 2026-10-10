@@ -1,16 +1,11 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SheetFrame
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -67,12 +62,10 @@ class DiscoverSlidersSheetScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun overflow() =
-        Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        SheetFrame {
             SlidersOverflowContent(onReset = {})
         }
 }
-
-private val SHEET_WIDTH = 411.dp
 
 class DiscoverSliderFormScreenshotTest {
     /** A new slider: the first custom kind, with nothing picked, so Save stays off. */

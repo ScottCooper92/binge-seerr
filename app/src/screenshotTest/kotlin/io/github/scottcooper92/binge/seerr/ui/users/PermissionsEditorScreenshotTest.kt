@@ -1,19 +1,12 @@
 package io.github.scottcooper92.binge.seerr.ui.users
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SheetFrame
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
-
-private val SHEET_WIDTH = 411.dp
 
 /**
  * The permissions editor's three row states side by side: flippable, implied by a grant above it,
@@ -28,7 +21,7 @@ class PermissionsEditorScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun rowStates() {
-        Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        SheetFrame {
             PermissionsEditorContent(
                 offered =
                     listOf(
@@ -56,7 +49,7 @@ class PermissionsEditorScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun bulkMixed() {
-        Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        SheetFrame {
             PermissionsEditorContent(
                 offered = listOf(ManageablePermission.Request, ManageablePermission.CreateIssues, ManageablePermission.ManageIssues),
                 selected = setOf(ManageablePermission.Request),

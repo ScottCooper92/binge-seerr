@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrPlexSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrScanStatusDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrTautulliSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
+import kotlinx.serialization.Serializable
 
 private const val CONNECTION_OK = 200
 
@@ -25,6 +26,7 @@ val MediaServerKind.apiSegment: String get() = if (this == MediaServerKind.Plex)
  * nothing else beside the address; Jellyfin and Emby add the URL base, the external host, the
  * forgot-password link and the API key.
  */
+@Serializable
 data class MediaServerForm(
     val kind: MediaServerKind,
     val serverName: String = "",
@@ -104,6 +106,7 @@ data class MediaServerExtras(
 )
 
 /** The Tautulli form; the port and the SSL switch stay blank and off until an address is given. */
+@Serializable
 data class TautulliForm(
     val host: String = "",
     val port: String = "",

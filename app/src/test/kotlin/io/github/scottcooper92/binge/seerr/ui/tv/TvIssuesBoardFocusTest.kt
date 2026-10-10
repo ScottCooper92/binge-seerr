@@ -29,6 +29,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -36,7 +37,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val SEVERANCE = "Severance"
@@ -270,8 +270,6 @@ class TvIssuesBoardFocusTest {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }
         composeTestRule.waitForIdle()
     }
-
-    private fun string(id: Int): String = RuntimeEnvironment.getApplication().getString(id)
 
     private fun issue(
         id: Int,

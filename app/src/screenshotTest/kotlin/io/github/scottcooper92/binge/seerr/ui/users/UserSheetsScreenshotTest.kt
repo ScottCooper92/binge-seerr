@@ -1,16 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.users
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
-
-private val SHEET_WIDTH = 411.dp
+import io.github.scottcooper92.binge.seerr.preview.SheetFrame
 
 /**
  * The action and picker sheets on the users pages, as the stateless bodies a modal window will not capture: each is an
@@ -77,10 +70,3 @@ private fun noActions() =
         onSelectAllCandidates = {},
         onImport = {},
     )
-
-@Composable
-private fun SheetFrame(content: @Composable () -> Unit) {
-    Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
-        content()
-    }
-}
