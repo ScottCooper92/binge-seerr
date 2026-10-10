@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
@@ -57,6 +58,7 @@ class TvSetupFocusTest {
     private var cancelledLink = 0
     private var startedHandOff = 0
     private var cancelledHandOff = 0
+    private var resetRequests = 0
 
     private val actions =
         SetupActions(
@@ -67,7 +69,7 @@ class TvSetupFocusTest {
             onConnect = { connected++ },
             onPlexLaunched = {},
             onCancelLink = { cancelledLink++ },
-            onRequestPasswordReset = {},
+            onRequestPasswordReset = { resetRequests++ },
             onStartHandOff = { startedHandOff++ },
             onCancelHandOff = { cancelledHandOff++ },
         )
@@ -294,6 +296,36 @@ class TvSetupFocusTest {
         assertEquals(1, connected)
     }
 
+    /** A server that can mail a reset link offers it under the password, as the phone does (#1037). */
+    @Test
+    fun aLocalSignInOffersForgotPasswordUnderThePasswordAndOkRequestsIt() {
+        setScreen(
+            signIn(
+                modes = listOf(SeerrSignInMode.Local),
+                form = SignInForm(mode = SeerrSignInMode.Local),
+                canResetPassword = true,
+            ),
+        )
+
+        modeRow(R.string.setup_mode_local).assertIsFocused()
+        pressDown()
+        field(R.string.setup_email).assertIsFocused()
+        pressDown()
+        field(R.string.setup_password).assertIsFocused()
+        pressDown()
+        button(R.string.setup_forgot_password).assertIsFocused()
+        pressOk()
+
+        assertEquals(1, resetRequests)
+    }
+
+    @Test
+    fun aServerThatCannotMailAResetOffersNone() {
+        setScreen(signIn(modes = listOf(SeerrSignInMode.Local)))
+
+        composeTestRule.onAllNodes(hasText(string(R.string.setup_forgot_password))).assertCountEquals(0)
+    }
+
     /** Tabs select on focus, as they do on a television: moving onto one is choosing it. */
     @Test
     fun movingAcrossTheTabsChangesTheMode() {
@@ -427,6 +459,7 @@ class TvSetupFocusTest {
         modes: List<SeerrSignInMode>,
         form: SignInForm = SignInForm(mode = modes.first()),
         link: LinkFlow? = null,
+        canResetPassword: Boolean = false,
     ) = SetupUiState.SignIn(
         server =
             SetupServer(
@@ -436,7 +469,7 @@ class TvSetupFocusTest {
                 versionLabel = "2.7.2",
                 mediaServerName = null,
                 modes = modes,
-                canResetPassword = false,
+                canResetPassword = canResetPassword,
                 backdropUrl = null,
             ),
         form = form,

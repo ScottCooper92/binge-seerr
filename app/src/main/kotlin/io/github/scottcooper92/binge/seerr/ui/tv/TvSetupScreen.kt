@@ -165,9 +165,24 @@ private fun TvSetupSignInStep(
                 // Where the page lands: the first thing to choose is how to sign in.
                 arrival = arrival,
             )
-            TvModeFields(state.form, state.server, actions.onEditForm, initialFocus == TvSetupFocus.Credential, onDone = actions.onConnect)
+            TvModeFields(
+                form = state.form,
+                server = state.server,
+                onEdit = actions.onEditForm,
+                credentialFocused = initialFocus == TvSetupFocus.Credential,
+                onDone = actions.onConnect,
+            )
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
             state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone) }
+            // As on the phone: the server mails the reset link, so it is offered only where it can (#1037). Below the
+            // notes, so a rejected password reads straight under the field it is about.
+            if (state.form.mode == SeerrSignInMode.Local && state.server.canResetPassword) {
+                TvButton(
+                    label = stringResource(R.string.setup_forgot_password),
+                    onClick = actions.onRequestPasswordReset,
+                    style = TvButtonStyle.Secondary,
+                )
+            }
         }
     }
 }
