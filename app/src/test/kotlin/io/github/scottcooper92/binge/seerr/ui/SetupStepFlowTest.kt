@@ -2,9 +2,11 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -93,6 +95,20 @@ class SetupStepFlowTest {
         rule.runOnIdle {
             assertEquals(1, left)
             assertEquals(0, changedServer)
+        }
+    }
+
+    /** #1185: the title sits in the flow's own bar, so the sign-in has one Back, and it steps back rather than leaving. */
+    @Test
+    fun `edit connection's sign-in has one back, and it returns to the address`() {
+        show(signIn(), title = "Edit connection")
+
+        rule.onAllNodesWithContentDescription("Back").assertCountEquals(1)
+        rule.onNodeWithContentDescription("Back").performClick()
+
+        rule.runOnIdle {
+            assertEquals(1, changedServer)
+            assertEquals(0, left)
         }
     }
 

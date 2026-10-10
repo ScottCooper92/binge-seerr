@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Tag
@@ -42,7 +41,14 @@ fun NotificationsSettingsScreen(
     ) { draft, enabled ->
         NotificationAgent.entries.filter { it.onPage }.forEach { agent ->
             AgentGroup(agent, draft, enabled, actions.onEdit)
-            if (draft.isOn(agent)) TypeGroups(agent, draft, enabled, actions.onEdit)
+            if (draft.isOn(agent)) {
+                NotificationTypeGroups(
+                    offered = NotificationType.entries.filter { draft.isModerator || !it.moderatorOnly },
+                    types = draft.agent(agent).types,
+                    enabled = enabled,
+                    onToggle = { bit -> actions.onEdit { it.update(agent) { settings -> settings.copy(types = settings.types xor bit) } } },
+                )
+            }
         }
     }
 }
@@ -218,32 +224,6 @@ private fun soundItem(
         listed = draft.pushoverSounds.map { it.name to it.description },
         enabled = enabled,
     ) { name -> onEdit { it.set(AgentField.PushoverSound, name) } }
-
-/** The events [agent] is sent, as the web client's checklist: the request ones, then the issue ones. */
-@Composable
-private fun TypeGroups(
-    agent: NotificationAgent,
-    draft: NotificationSettings,
-    enabled: Boolean,
-    onEdit: ((NotificationSettings) -> NotificationSettings) -> Unit,
-) {
-    val types = draft.agent(agent).types
-    val offered = NotificationType.entries.filter { draft.isModerator || !it.moderatorOnly }
-    listOf(false, true).forEach { issues ->
-        ItemGroup(
-            title =
-                stringResource(
-                    if (issues) R.string.server_settings_agent_types_issues else R.string.server_settings_agent_types_requests,
-                ),
-            rows =
-                offered.filter { it.issue == issues }.map { type ->
-                    editorToggle(Icons.Filled.Notifications, stringResource(type.labelRes()), types and type.bit != 0, enabled) {
-                        onEdit { it.update(agent) { settings -> settings.copy(types = settings.types xor type.bit) } }
-                    }
-                },
-        )
-    }
-}
 
 /** A value the row does not spell out: a secret, or a PGP key's many lines. */
 private val AgentField.hidden: Boolean get() = secret || this == AgentField.PgpKey

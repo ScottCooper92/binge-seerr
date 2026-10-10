@@ -246,7 +246,8 @@ private fun <T> DestinationPickerPanel(
     onSelect: (T) -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+    // No scroll of its own: the list scrolls itself, and a scroll around it would hand it an unbounded height.
+    Column {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesR.string.cd_navigate_back))
         }
@@ -256,6 +257,7 @@ private fun <T> DestinationPickerPanel(
             selected = selected,
             label = { id -> choices.first { it.first == id }.second },
             onSelect = onSelect,
+            modifier = Modifier.weight(1f, fill = false),
         )
     }
 }

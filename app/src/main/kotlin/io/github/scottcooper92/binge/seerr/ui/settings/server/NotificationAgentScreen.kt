@@ -20,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
+import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationTypeGroups
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.defaultFirstChoiceItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
@@ -74,7 +75,7 @@ fun NotificationAgentScreen(
         )
         OptionGroup(required = true, draft, extras, enabled, agentActions)
         OptionGroup(required = false, draft, extras, enabled, agentActions)
-        TypeGroups(draft, enabled, agentActions.onToggleType)
+        NotificationTypeGroups(NotificationType.entries, draft.types, enabled, agentActions.onToggleType)
         ItemGroup(
             title = null,
             rows =
@@ -191,29 +192,6 @@ private fun textOptionItem(
         multiline = option.kind == OptionKind.Multiline,
         keyboard = option.keyboard(),
     )
-}
-
-/** The events the agent is sent, as the web client's checklist: the request ones, then the issue ones. */
-@Composable
-private fun TypeGroups(
-    draft: AgentForm,
-    enabled: Boolean,
-    onToggle: (Int) -> Unit,
-) {
-    listOf(false, true).forEach { issues ->
-        ItemGroup(
-            title =
-                stringResource(
-                    if (issues) R.string.server_settings_agent_types_issues else R.string.server_settings_agent_types_requests,
-                ),
-            rows =
-                NotificationType.entries.filter { it.issue == issues }.map { type ->
-                    editorToggle(Icons.Filled.Notifications, stringResource(type.labelRes()), draft.types and type.bit != 0, enabled) {
-                        onToggle(type.bit)
-                    }
-                },
-        )
-    }
 }
 
 /** The keyboard an option's sheet asks for, from its kind; an option the server matches exactly is not autocorrected. */
