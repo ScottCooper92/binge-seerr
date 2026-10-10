@@ -28,9 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarValue
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
@@ -51,6 +49,7 @@ import com.binge.designsystem.template.MessageScreen
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.SaveFailedSnackbar
 import io.github.scottcooper92.binge.seerr.ui.state.SearchResultRow
 import kotlinx.coroutines.launch
 import com.binge.designsystem.R as DesR
@@ -77,7 +76,13 @@ fun BlocklistTagsScreen(
 ) {
     val snackbar = remember { SnackbarHostState() }
     val ready = state as? BlocklistTagsUiState.Ready
-    SaveFailedSnackbar(ready?.saveFailed == true, snackbar, actions.onRetry)
+    SaveFailedSnackbar(
+        failed = ready?.saveFailed == true,
+        snackbarHostState = snackbar,
+        message = stringResource(R.string.server_settings_blocklist_tags_save_failed),
+        retryLabel = stringResource(R.string.server_settings_blocklist_tags_retry),
+        onRetry = actions.onRetry,
+    )
     FormScreen(
         title = stringResource(R.string.server_settings_blocklist_tags),
         onBack = actions.onBack,
@@ -92,25 +97,34 @@ fun BlocklistTagsScreen(
     ) { inner ->
         ready?.let {
             Column(modifier = Modifier.fillMaxSize().padding(inner)) {
-                val search = it.search.copy(names = it.names)
-                TagSearch(it.tags, search, actions.onSearch, actions.onToggle)
-                ChosenTags(it.tags, search, actions.onToggle, Modifier.weight(1f))
+                TagSearch(it.tags, it.search, actions.onSearch, actions.onToggle)
+                ChosenTags(
+                    chosen = it.tags,
+                    search = it.search,
+                    onRemove = actions.onToggle,
+                    emptyTitle = stringResource(R.string.server_settings_blocklist_tags_empty_title),
+                    emptyBody = stringResource(R.string.server_settings_blocklist_tags_empty),
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
 }
 
+/** The keywords chosen, each a chip that removes it, or [emptyTitle] and [emptyBody] when there are none. */
 @Composable
-private fun ChosenTags(
+internal fun ChosenTags(
     chosen: List<Int>,
     search: KeywordSearch,
     onRemove: (Int) -> Unit,
+    emptyTitle: String,
+    emptyBody: String,
     modifier: Modifier,
 ) {
     if (chosen.isEmpty()) {
         MessageScreen(
-            headline = stringResource(R.string.server_settings_blocklist_tags_empty_title),
-            body = stringResource(R.string.server_settings_blocklist_tags_empty),
+            headline = emptyTitle,
+            body = emptyBody,
             icon = Icons.Filled.Sell,
             modifier = modifier,
         )
@@ -212,7 +226,7 @@ private fun Note(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TagSearch(
+internal fun TagSearch(
     chosen: List<Int>,
     search: KeywordSearch,
     onQuery: (String) -> Unit,
@@ -257,27 +271,5 @@ private fun TagSearch(
         } else {
             SearchResults(chosen, search, onToggle, Modifier.fillMaxSize())
         }
-    }
-}
-
-/**
- * A failed save as a snackbar that stays until it is answered: Retry sends the tags as they stand. It goes by itself once
- * a later save succeeds; that save carries the failed changes with it.
- */
-@Composable
-private fun SaveFailedSnackbar(
-    failed: Boolean,
-    snackbar: SnackbarHostState,
-    onRetry: () -> Unit,
-) {
-    val message = stringResource(R.string.server_settings_blocklist_tags_save_failed)
-    val retry = stringResource(R.string.server_settings_blocklist_tags_retry)
-    LaunchedEffect(failed) {
-        if (!failed) {
-            snackbar.currentSnackbarData?.dismiss()
-            return@LaunchedEffect
-        }
-        val result = snackbar.showSnackbar(message, actionLabel = retry, duration = SnackbarDuration.Indefinite)
-        if (result == SnackbarResult.ActionPerformed) onRetry()
     }
 }

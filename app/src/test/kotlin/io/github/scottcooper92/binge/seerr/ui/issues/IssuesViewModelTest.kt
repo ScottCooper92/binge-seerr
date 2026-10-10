@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -32,6 +33,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 private const val ADMIN = 2
 private const val CREATE_ISSUES = 1 shl 22
@@ -52,6 +54,10 @@ class IssuesViewModelTest {
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
 
+    /** The server's version and public settings, which a test can change mid-run, as an upgrade in place would. */
+    private val serverVersion = AtomicReference("3.1.0")
+    private val publicSettings = AtomicReference("""{"mediaServerType":2}""")
+
     @After
     fun tearDown() {
         viewModels.clear()
@@ -64,8 +70,8 @@ class IssuesViewModelTest {
             received += request
             when (request.url.encodedPath) {
                 "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
-                "/api/v1/status" -> json("""{"version":"3.1.0"}""")
-                "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                "/api/v1/status" -> json("""{"version":"${serverVersion.get()}"}""")
+                "/api/v1/settings/public" -> json(publicSettings.get())
                 "/api/v1/issue/count" -> json("""{"total":3,"open":2,"closed":1}""")
                 "/api/v1/issue" ->
                     json(
@@ -127,6 +133,24 @@ class IssuesViewModelTest {
             vm.awaitReady { it.sort == IssueSort.Modified }
             vm.issues(IssueFilter.Open).asSnapshot()
             assertTrue(received.any { it.url.encodedPath == "/api/v1/issue" && it.url.queryParameter("sort") == "modified" })
+        }
+
+    /** An Overseerr upgraded in place to 1.30 has counts on the next arrival, with no reconnect (#1074). */
+    @Test
+    fun `becoming visible re-reads the profile, so a server upgraded in place shows its counts`() =
+        runTest {
+            serverVersion.set("1.29.0")
+            publicSettings.set("{}")
+            server(ADMIN)
+            val vm = viewModel()
+            val before = vm.awaitReady { it.scope.permissions.canManageIssues }
+            assertFalse(before.scope.hasCounts)
+            assertNull(before.counts)
+
+            serverVersion.set("1.30.0")
+            vm.setScreenVisible(true)
+
+            assertEquals(IssueCounts(total = 3, open = 2, resolved = 1), vm.awaitReady { it.counts != null }.counts)
         }
 
     @Test

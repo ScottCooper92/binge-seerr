@@ -26,6 +26,7 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -193,6 +194,16 @@ class HubViewModelTest {
             assertEquals("https://image.tmdb.org/t/p/w342/fc.jpg", download.posterUrl)
             assertEquals(0.75f, download.fraction)
             assertEquals(12, download.etaMinutes)
+        }
+
+    /** No route honours `MANAGE_SETTINGS`; every route on the admin `/settings` router needs `ADMIN` (#1004). */
+    @Test
+    fun `manage settings without admin does not open the settings section`() =
+        runTest {
+            healthyServer(permissions = REQUEST or (1 shl 2))
+            val vm = viewModel()
+
+            assertFalse(HubSection.Settings in vm.awaitReady().overview.visibleSections())
         }
 
     @Test

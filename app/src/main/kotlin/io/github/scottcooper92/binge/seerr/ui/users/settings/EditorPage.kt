@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +35,7 @@ import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import io.github.scottcooper92.binge.seerr.ui.state.SaveFailedSnackbar
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -143,7 +142,15 @@ internal fun <T> EditorPage(
     val snackbarHostState = remember { SnackbarHostState() }
     EditorEventSnackbarEffect(events, snackbarHostState)
     val ready = state as? EditorUiState.Ready<T>
-    if (saveAsMade) SaveFailedSnackbar(ready?.saveFailed == true, snackbarHostState, actions.onSave)
+    if (saveAsMade) {
+        SaveFailedSnackbar(
+            failed = ready?.saveFailed == true,
+            snackbarHostState = snackbarHostState,
+            message = stringResource(R.string.editor_save_failed),
+            retryLabel = stringResource(R.string.action_try_again),
+            onRetry = actions.onSave,
+        )
+    }
     val form = rememberEditorFormState(validation?.formKey.orEmpty())
     val issues = remember(validation, ready?.draft) { ready?.draft?.let { validation?.issues?.invoke(it) }.orEmpty() }
     EditorRevealEffect(form)
@@ -279,27 +286,3 @@ internal fun rowLabelColor(
     enabled: Boolean,
     color: Color = MaterialTheme.colorScheme.onSurface,
 ): Color = if (enabled) color else color.copy(alpha = DISABLED_CONTENT_ALPHA)
-
-/**
- * A page that saves as it changes says a write failed in a snackbar that stays until it is answered: Retry sends the
- * draft again. It goes by itself once a later write starts, which carries the failed change with it.
- */
-@Composable
-private fun SaveFailedSnackbar(
-    failed: Boolean,
-    snackbarHostState: SnackbarHostState,
-    onRetry: () -> Unit,
-) {
-    val message = stringResource(R.string.editor_save_failed)
-    val retry = stringResource(R.string.action_try_again)
-    LaunchedEffect(failed) {
-        if (!failed) return@LaunchedEffect
-        // Shown again whenever it goes without the user answering it - an event's snackbar dismisses whatever is
-        // showing - and after a retry, since a retry that fails at once leaves `failed` true and this effect unrestarted.
-        // Leaving `failed` cancels the effect, and a cancelled snackbar clears itself.
-        while (true) {
-            val result = snackbarHostState.showSnackbar(message, actionLabel = retry, duration = SnackbarDuration.Indefinite)
-            if (result == SnackbarResult.ActionPerformed) onRetry()
-        }
-    }
-}

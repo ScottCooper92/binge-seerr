@@ -81,9 +81,9 @@ class BlocklistTagsViewModelTest {
     @Test
     fun `the tags are read and named`() =
         runTest {
-            val ready = viewModel().awaitReady { it.names.isNotEmpty() }
+            val ready = viewModel().awaitReady { it.search.names.isNotEmpty() }
             assertEquals(listOf(9951), ready.tags)
-            assertEquals(mapOf(9951 to "kaiju"), ready.names)
+            assertEquals(mapOf(9951 to "kaiju"), ready.search.names)
         }
 
     @Test
@@ -202,7 +202,7 @@ class BlocklistTagsViewModelTest {
             vm.search("mus")
             val found = vm.awaitReady { it.search.results != null }
             assertEquals(listOf(Keyword(4344, "musical")), found.search.results)
-            assertEquals("musical", found.names[4344])
+            assertEquals("musical", found.search.names[4344])
 
             vm.search("")
             assertEquals(null, vm.awaitReady { it.search.results == null }.search.results)

@@ -69,6 +69,10 @@ internal class DetailSources(
     val seasonsEditable: Boolean
         get() = dto.media.mediaType != SEERR_MEDIA_TYPE_TV || profile.settings.partialRequestsEnabled
 
+    /** A movie has no seasons, so its destination is all there is to edit: the editor would otherwise open empty. */
+    private val hasSeasonsToEdit: Boolean
+        get() = dto.media.mediaType == SEERR_MEDIA_TYPE_TV && seasonsEditable
+
     suspend fun toDetail(): RequestDetail {
         val hydrated =
             details?.let {
@@ -89,7 +93,7 @@ internal class DetailSources(
         return RequestDetail(
             item = item,
             actions = item.actions(scope),
-            canEdit = pending && (permissions.canManageRequests || own) && (seasonsEditable || canEditDestination),
+            canEdit = pending && (permissions.canManageRequests || own) && (hasSeasonsToEdit || canEditDestination),
             canEditDestination = canEditDestination,
             backdropUrl = details?.backdropPath?.toTmdbBackdropUrl(),
             overview = details?.overview?.takeIf { it.isNotBlank() },

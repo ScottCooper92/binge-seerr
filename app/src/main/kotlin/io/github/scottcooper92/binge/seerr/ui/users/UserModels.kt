@@ -62,10 +62,15 @@ sealed interface UsersUiState {
         val edit: BulkEdit?,
         /** The toggles the editor offers: the blocklist ones only on the Jellyseerr lineage. */
         val offered: List<ManageablePermission>,
-        /** Adding users is a manager's; [importSource] is the media server whose accounts can be imported, if any. */
+        /**
+         * Adding users is a manager's. [importSource] is the media server whose accounts can be imported, if any, and
+         * only for an admin: the lists to import from live under `/settings`, which needs `ADMIN` (#1009).
+         */
         val canAdmit: Boolean = false,
         val importSource: UserOrigin? = null,
         val canGeneratePassword: Boolean = false,
+        /** The toggles the bulk editor shows but won't flip: what this viewer may not grant (#1008). */
+        val locked: Set<ManageablePermission> = setOf(ManageablePermission.Admin),
         val admission: UserAdmissionState? = null,
         /** The list's latest finished network refresh, for [sort]; missing while its refresh runs. */
         val refresh: ListRefresh? = null,

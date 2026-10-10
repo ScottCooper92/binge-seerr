@@ -21,7 +21,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -69,6 +68,9 @@ class RequestEditorTest {
     /** Paths the dispatcher should answer 500 for, so a failed load can be driven. */
     private val failing = mutableSetOf<String>()
 
+    /** When set, the edit's `PUT` gets Seerr's 202 for an edit that leaves nothing to request. */
+    @Volatile private var nothingLeftToRequest = false
+
     @After
     fun tearDown() = seerr.close()
 
@@ -79,6 +81,9 @@ class RequestEditorTest {
                     received += request
                     val path = request.url.encodedPath
                     if (path in failing) return MockResponse(code = 500)
+                    if (nothingLeftToRequest && request.method == "PUT") {
+                        return MockResponse(code = 202, body = """{"message":"No seasons available to request"}""")
+                    }
                     val body =
                         when {
                             path == "/api/v1/auth/me" -> """{"id":1,"permissions":2}"""
@@ -225,10 +230,11 @@ class RequestEditorTest {
         }
 
     @Test
-    fun `a show on a server with partial requests off offers no seasons and saves none, only its destination`() =
+    fun `a show on a server with partial requests off offers no seasons, and its save sends back the ones it has`() =
         runTest {
             val editor = editor()
-            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = true, seasonsEditable = false))
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 2)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = true, seasonsEditable = false))
 
             val loaded = editor.awaitLoaded()
             // The season list is absent by rule, not because it failed to load, so the editor can still save.
@@ -241,9 +247,9 @@ class RequestEditorTest {
             editor.save()
             editor.awaitClosed()
 
-            // A PUT without seasons leaves the request's own alone; one with an empty list would drop every season.
+            // Both lineages answer a show's PUT without seasons with a 500 (#1003), so the request's own go back.
             val body = editBody()
-            assertTrue(body["seasons"] == null || body["seasons"] is JsonNull)
+            assertEquals(listOf(1, 2), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
             assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
         }
 
@@ -292,6 +298,23 @@ class RequestEditorTest {
             assertEquals(6, body.getValue("profileId").jsonPrimitive.int)
             assertEquals("/tv", body.getValue("rootFolder").jsonPrimitive.content)
             assertEquals(listOf(4), body.getValue("tags").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `an edit seerr answers with nothing left to request stays open, unlocked, as a failure`() =
+        runTest {
+            nothingLeftToRequest = true
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.toggleSeason(2)
+            editor.save()
+
+            // The 202 is a refusal (#1001): the sheet does not close as though the edit had gone through.
+            val after = editor.state.first { it != null && !it.saving }
+            val seasons = after?.seasons.orEmpty()
+            assertTrue(seasons.single { it.number == 2 }.selected)
         }
 
     private fun movieRequest(tags: List<Int> = emptyList()) =

@@ -102,6 +102,18 @@ class GeneralSettingsViewModelTest {
             assertFalse(draft.canEditEmail)
         }
 
+    /** The server keeps the old quota for a manager's own record or another manager's, so the editor is not offered (#1014). */
+    @Test
+    fun `a manager may not edit the quotas of themself or of another manager`() =
+        runTest {
+            seerr.viewer(id = 8, permissions = ADMIN)
+            assertFalse(viewModel().awaitReady().draft.canEditQuotas)
+
+            seerr.viewer(id = 1, permissions = MANAGE_USERS)
+            seerr.serve("GET /api/v1/user/8", """{"id":8,"displayName":"Ana","permissions":$MANAGE_USERS,"userType":3}""")
+            assertFalse(viewModel().awaitReady().draft.canEditQuotas)
+        }
+
     @Test
     fun `the placeholder name is what the server would fall back to, never the display name being cleared`() =
         runTest {
@@ -204,6 +216,15 @@ class GeneralSettingsViewModelTest {
             vm.edit { it.copy(displayName = "Ana B") }
             awaitWritten(vm)
             assertNull(Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject["streamingRegion"])
+        }
+
+    /** Jellyseerr split its one region in two at 2.2, not at its first release (#1012). */
+    @Test
+    fun `Jellyseerr before 2_2 has one region too, so the page shows no streaming region`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "2.1.0")
+
+            assertNull(viewModel().awaitReady().draft.streamingRegion)
         }
 
     @Test

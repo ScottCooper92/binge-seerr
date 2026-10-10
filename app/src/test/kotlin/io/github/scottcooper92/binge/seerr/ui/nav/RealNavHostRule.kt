@@ -88,6 +88,15 @@ internal class RealNavHostRule(
         exactly: Boolean = false,
     ): Boolean = compose.onAllNodes(hasText(text, substring = !exactly)).fetchSemanticsNodes().isNotEmpty()
 
+    /** How many nodes read [text] now, counting a merged node whose text only includes it, as [isShowing] does. */
+    fun count(text: String): Int = compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().size
+
+    /** System Back, as a gesture or the key delivers it: through the activity's dispatcher. */
+    fun back() {
+        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+    }
+
     /** Waits, in real time, for [text]: what the screens show next comes from the server, over real sockets. */
     fun awaitShowing(text: String) = compose.waitUntil("\"$text\" on screen", AWAIT_MILLIS) { isShowing(text) }
 

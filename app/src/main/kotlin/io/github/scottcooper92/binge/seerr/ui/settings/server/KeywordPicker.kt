@@ -10,7 +10,8 @@ import io.github.scottcooper92.binge.seerr.R
 
 /**
  * TMDB keywords as a list row: the ones chosen, named once their names are read ([onLoadNames]), else counted. A tap
- * opens the blocklisted tags page ([onOpen]), which edits and saves them itself.
+ * opens the picker ([onOpen]): the blocklisted tags page, which saves them itself, or the rule's own search, which hands
+ * them back to the rule. [emptyLabel] is what none chosen reads.
  */
 @Composable
 internal fun keywordSettingItem(
@@ -21,6 +22,7 @@ internal fun keywordSettingItem(
     enabled: Boolean,
     onLoadNames: (List<Int>) -> Unit,
     onOpen: () -> Unit,
+    emptyLabel: String = stringResource(R.string.server_settings_blocklist_tags_none),
 ): ListItem {
     LaunchedEffect(chosen) { onLoadNames(chosen) }
     val named = chosen.mapNotNull { names[it] }
@@ -29,7 +31,7 @@ internal fun keywordSettingItem(
         label = title,
         detail =
             when {
-                chosen.isEmpty() -> stringResource(R.string.server_settings_blocklist_tags_none)
+                chosen.isEmpty() -> emptyLabel
                 named.size == chosen.size -> named.joinToString(", ")
                 else -> pluralStringResource(R.plurals.server_settings_blocklist_tags_count, chosen.size, chosen.size)
             },

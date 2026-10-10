@@ -16,6 +16,12 @@ private const val HTTP_SERVER_ERROR_MIN = 500
 const val HTTP_NOT_FOUND = 404
 
 /**
+ * Seerr's answer for a target in the wrong state: a request already moderated, retried or no longer pending (#999), and
+ * a title someone has already requested, which a submit reads as `already_requested` before anything maps it.
+ */
+const val HTTP_CONFLICT = 409
+
+/**
  * Why a call to the server failed, as the app's own screens classify it. The gRPC mapping below
  * and this one read the same facts, so the Service and a screen never disagree about a failure:
  * a 401 is the session unless the session still answers (#997), a 403 is a permission unless the
@@ -72,8 +78,10 @@ fun Throwable.toSeerrError(): SeerrError =
  * answers is a refusal instead, `PERMISSION_DENIED`, unless the Service knows that route means
  * something else (#997). A 403 is `PERMISSION_DENIED` unless the
  * body names a quota, which is `RESOURCE_EXHAUSTED` — Seerr returns 403 for both, and the message
- * text is its only signal. Transport failures and 5xx are `UNAVAILABLE`; any other 4xx is a
- * rejection on the merits, `INVALID_ARGUMENT`.
+ * text is its only signal. A 409 is a target in the wrong state for the action, such as approving a
+ * request someone has already approved: `FAILED_PRECONDITION`, so the host refreshes and re-offers (#999).
+ * Transport failures and 5xx are `UNAVAILABLE`; any other 4xx is a rejection on the merits,
+ * `INVALID_ARGUMENT`.
  *
  * A body this app cannot parse ([SerializationException]) is `UNAVAILABLE` too: the server speaking a shape
  * this app does not expect, which a retry after a server update may fix. Every description here is a fixed
@@ -85,6 +93,7 @@ fun Throwable.toStatusException(): StatusException =
     when (this) {
         is StatusException -> this
         is NotConnectedException -> StatusException(Status.UNAUTHENTICATED.withDescription(message))
+        is NothingLeftToRequestException -> StatusException(Status.FAILED_PRECONDITION.withDescription(NOTHING_LEFT_TO_REQUEST))
         is HttpException -> StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
         is IOException -> StatusException(Status.UNAVAILABLE.withDescription("Seerr could not be reached").withCause(this))
         is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
@@ -98,6 +107,7 @@ private fun HttpException.httpStatus(): Status =
         code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> Status.FAILED_PRECONDITION
         code() == HTTP_FORBIDDEN -> if (mentionsQuota()) Status.RESOURCE_EXHAUSTED else Status.PERMISSION_DENIED
         code() == HTTP_NOT_FOUND -> Status.NOT_FOUND
+        code() == HTTP_CONFLICT -> Status.FAILED_PRECONDITION
         code() >= HTTP_SERVER_ERROR_MIN -> Status.UNAVAILABLE
         else -> Status.INVALID_ARGUMENT
     }
@@ -168,3 +178,4 @@ internal inline fun <T> attempt(block: () -> T): Result<T> =
 
 private const val UNREADABLE = "Seerr returned something this companion could not read"
 private const val UNHANDLED = "The companion failed to handle this request"
+private const val NOTHING_LEFT_TO_REQUEST = "Seerr has nothing left to request for those seasons"
