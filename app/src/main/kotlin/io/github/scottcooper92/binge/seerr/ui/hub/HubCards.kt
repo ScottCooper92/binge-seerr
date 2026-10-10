@@ -33,7 +33,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import com.binge.designsystem.R as DesR
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
@@ -48,6 +47,7 @@ import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
+import com.binge.designsystem.R as DesR
 
 /** A dashboard block: a tonal surface with the pane's [sides] around it and the medium spacing inside. */
 @Composable

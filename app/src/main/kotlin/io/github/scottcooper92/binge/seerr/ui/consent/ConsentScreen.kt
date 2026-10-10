@@ -23,13 +23,13 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.binge.designsystem.R as DesR
 import com.binge.designsystem.centredReadingColumn
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.isLandscape
 import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
+import com.binge.designsystem.R as DesR
 
 /** Landscape's two panes: the hero, heading and answers against the points card. */
 private const val LANDSCAPE_HEADER_WEIGHT = 2f

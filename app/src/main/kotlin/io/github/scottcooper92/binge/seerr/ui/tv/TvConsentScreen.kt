@@ -22,9 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.binge.designsystem.R as DesR
 import com.binge.designsystem.theme.BingeShapes
-import com.binge.designsystem.tv.R as TvR
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -36,6 +34,8 @@ import io.github.scottcooper92.binge.seerr.ui.consent.ConsentPoint
 import io.github.scottcooper92.binge.seerr.ui.consent.ConsentPoints
 import io.github.scottcooper92.binge.seerr.ui.consent.ConsentUiState
 import io.github.scottcooper92.binge.seerr.ui.consent.ConsentViewModel
+import com.binge.designsystem.R as DesR
+import com.binge.designsystem.tv.R as TvR
 
 /** The phone's consent gate on a television: the same question, before setup and the rail. */
 @Composable

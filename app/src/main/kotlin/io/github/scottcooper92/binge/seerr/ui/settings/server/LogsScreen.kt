@@ -57,7 +57,6 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.binge.designsystem.R as DesR
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -76,6 +75,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import kotlinx.coroutines.flow.Flow
+import com.binge.designsystem.R as DesR
 
 class LogsActions(
     val onBack: () -> Unit,

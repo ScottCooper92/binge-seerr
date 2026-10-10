@@ -38,9 +38,7 @@ import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.ListItemScale
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.binge.designsystem.R as DesR
 import com.binge.designsystem.theme.BingeShapes
-import com.binge.designsystem.tv.R as TvR
 import com.binge.designsystem.tv.component.TvIllustration
 import com.binge.designsystem.tv.component.TvVerticalDivider
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
@@ -49,6 +47,8 @@ import com.binge.designsystem.tv.focus.tvFocusGroup
 import com.binge.designsystem.tv.template.TvBoard
 import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
+import com.binge.designsystem.R as DesR
+import com.binge.designsystem.tv.R as TvR
 
 private const val LIST_WEIGHT = 0.34f
 private const val PANE_WEIGHT = 0.66f
