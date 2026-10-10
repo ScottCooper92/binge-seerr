@@ -33,7 +33,9 @@ enum class HubSection(
         titleRes = R.string.hub_section_requests,
         descriptionRes = R.string.hub_section_requests_desc,
         icon = Icons.Filled.Inbox,
-        badgeCount = { it.pendingRequestCount },
+        // `request/count` counts the whole server. A viewer whose list is theirs alone would see a badge their Pending list
+        // does not show, so the badge reads the same gate as the Requests screen's chips (#977, #980).
+        badgeCount = { overview -> overview.pendingRequestCount?.takeIf { overview.permissions.canViewRequests } },
     ),
     Issues(
         titleRes = R.string.hub_section_issues,
