@@ -1,11 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -17,6 +19,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -46,8 +49,8 @@ class TautulliViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(): TautulliViewModel {
-        val vm = TautulliViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+    private suspend fun TestScope.viewModel(savedState: SavedStateHandle = SavedStateHandle()): TautulliViewModel {
+        val vm = TautulliViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, savedState)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -108,5 +111,22 @@ class TautulliViewModelTest {
             val ready = vm.awaitReady()
             assertFalse(ready.draft.configured)
             assertEquals("", ready.draft.port)
+        }
+
+    @Test
+    fun `an unsaved draft survives the process being killed, without the api key`() =
+        runTest {
+            val savedState = SavedStateHandle()
+            val vm = viewModel(savedState)
+            vm.awaitReady()
+            vm.edit { it.copy(host = "tautulli.lan", port = "8181", apiKey = "s3cret") }
+            vm.awaitReady()
+            assertTrue(savedState.keys().none { savedState.get<Any?>(it).toString().contains("s3cret") })
+
+            val back = viewModel(savedState.afterProcessDeath()).awaitReady()
+
+            assertEquals("tautulli.lan", back.draft.host)
+            assertEquals("", back.draft.apiKey)
+            assertTrue(back.dirty)
         }
 }

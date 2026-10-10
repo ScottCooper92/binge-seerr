@@ -11,6 +11,7 @@ import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,8 +50,6 @@ class TvConsentFocusTest {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }
         composeTestRule.waitForIdle()
     }
-
-    private fun string(id: Int): String = RuntimeEnvironment.getApplication().getString(id)
 
     private companion object {
         const val LARGE_FONT = 1.5f

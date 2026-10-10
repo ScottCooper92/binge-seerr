@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -11,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SavedDraft
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 
@@ -26,7 +28,11 @@ class DiscoverSliderViewModel
         private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
+        savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<SliderForm, SliderExtras>(SliderExtras(), dispatcher) {
+        /** A short form, kept across the process being killed (#1246). It holds no credential. */
+        override val savedDraft = SavedDraft(savedState, SliderForm.serializer())
+
         private val keywords =
             KeywordLookup(
                 scope = viewModelScope,
@@ -80,7 +86,8 @@ class DiscoverSliderViewModel
                         .firstOrNull { it.id == id }
                         ?.toForm() ?: throw NoSuchElementException("slider $id")
                 }
-            readers.readFor(form)
+            // What the page will show is the kept draft where there is one, so it is the draft that is named and offered.
+            readers.readFor(savedDraft.restoreOver(form) ?: form)
             return form
         }
 

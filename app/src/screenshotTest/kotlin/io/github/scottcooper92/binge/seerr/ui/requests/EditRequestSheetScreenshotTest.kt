@@ -1,18 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
-
-private val SHEET_WIDTH = 411.dp
+import io.github.scottcooper92.binge.seerr.preview.SheetFrame
 
 /** A phone-height sheet: a lazy list under an unbounded height would not measure, so the frame bounds it as the real sheet does. */
 private val SHEET_HEIGHT = 640.dp
@@ -49,7 +44,7 @@ private fun EditFrame(
     edit: EditState,
     height: Dp = SHEET_HEIGHT,
 ) {
-    Box(Modifier.width(SHEET_WIDTH).height(height).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+    SheetFrame(Modifier.height(height)) {
         EditRequestContent(
             item = pendingDetail().item,
             edit = edit,

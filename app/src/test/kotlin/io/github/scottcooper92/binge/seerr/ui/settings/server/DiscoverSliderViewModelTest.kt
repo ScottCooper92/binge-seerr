@@ -1,11 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -74,9 +76,12 @@ class DiscoverSliderViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(id: Int?): DiscoverSliderViewModel {
+    private suspend fun TestScope.viewModel(
+        id: Int?,
+        savedState: SavedStateHandle = SavedStateHandle(),
+    ): DiscoverSliderViewModel {
         val connection = seerr.connection(this)
-        val vm = DiscoverSliderViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, id)
+        val vm = DiscoverSliderViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, id, savedState)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -366,4 +371,28 @@ class DiscoverSliderViewModelTest {
         assertEquals("", StreamingPick().encode())
         assertEquals(listOf(337), StreamingPick("GB", listOf(8, 337)).withProviderToggled(8).providerIds)
     }
+
+    @Test
+    fun `an unsaved draft survives the process being killed, and its keywords are named again`() =
+        runTest {
+            val savedState = SavedStateHandle()
+            val vm = viewModel(id = null, savedState = savedState)
+            vm.awaitReady()
+            vm.edit { it.copy(title = "Heists", data = "10051") }
+            vm.awaitReady()
+
+            val back = viewModel(id = null, savedState = savedState.afterProcessDeath())
+            val draft = back.awaitReady().draft
+
+            assertEquals("Heists", draft.title)
+            assertEquals("10051", draft.data)
+            assertEquals(
+                "heist",
+                back
+                    .awaitReady {
+                        it.extras.keywords.names
+                            .isNotEmpty()
+                    }.extras.keywords.names[10051],
+            )
+        }
 }
