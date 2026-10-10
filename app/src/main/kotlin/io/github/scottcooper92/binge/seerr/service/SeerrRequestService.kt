@@ -310,8 +310,8 @@ class SeerrRequestService(
             .map { ObserveStatusResponse.newBuilder().setStatus(it).build() }
 
     /**
-     * Every lineage answers 401 when this user may not delete the request: it is not theirs, or it is no longer
-     * pending. That is not the session, which the interceptor confirms against `auth/me` (#997). The request is read
+     * The server answers 401 when this user may not delete the request. Seerr and Jellyseerr refuse a request that is
+     * not theirs or is no longer pending; Overseerr refuses only one that is both. That is not the session, which the interceptor confirms against `auth/me` (#997). The request is read
      * only then, to tell the contract's two answers apart: FAILED_PRECONDITION for a request past pending, and
      * PERMISSION_DENIED for one that is pending and someone else's.
      */

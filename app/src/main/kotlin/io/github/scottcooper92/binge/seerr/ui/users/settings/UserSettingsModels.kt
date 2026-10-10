@@ -61,7 +61,7 @@ data class GeneralSettings(
     val discordId: String = "",
     val locale: String = "",
     val region: String = "",
-    /** Null where the lineage has no streaming region: Overseerr. */
+    /** Null where the server keeps one region: without `SeerrServerProfile.hasStreamingRegion` (Overseerr, Jellyseerr before 2.2). */
     val streamingRegion: String? = null,
     val originalLanguage: String = "",
     /** While an override is off its limit and window are the server's default, which turning it on starts from. */

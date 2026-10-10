@@ -46,8 +46,9 @@ enum class ServerSettingsPage {
 
 /**
  * The main settings form. A null field is one this server's lineage does not have, and the form
- * leaves it out: Overseerr has one region and the proxy switches; the Jellyseerr lineage split the
- * region in two and added the streaming, hide-requested, special-episode and YouTube ones.
+ * leaves it out: Overseerr has one region and the proxy switches; the Jellyseerr lineage added the
+ * hide-requested, special-episode and YouTube ones, and split the region in two at 2.2
+ * ([io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile.hasStreamingRegion]).
  */
 data class ServerGeneralSettings(
     val applicationTitle: String = "",
@@ -205,8 +206,9 @@ internal val SeerrMainSettingsDto.tags: String? get() = blocklistedTags ?: black
 private val SeerrMainSettingsDto.tagsLimit: Int? get() = blocklistedTagsLimit ?: blacklistedTagsLimit
 
 /**
- * Only what the form holds; a field the lineage lacks stays null and is left out. The region goes
- * under both names, since Jellyseerr 1.x still read `region` before the split.
+ * Only what the form holds; a field the lineage lacks stays null and is left out. The region always goes
+ * as `region`, which a server without the split reads. It also goes as `discoverRegion` exactly where the
+ * server has the split, which is where the form carries a streaming region (`hasStreamingRegion`, Jellyseerr 2.2 on).
  */
 internal fun ServerGeneralSettings.toBody(): SeerrMainSettingsUpdateBody =
     SeerrMainSettingsUpdateBody(
