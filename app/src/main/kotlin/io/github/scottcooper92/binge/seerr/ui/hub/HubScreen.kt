@@ -6,23 +6,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeOutlinedButton
+import com.binge.designsystem.component.BingePullToRefresh
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -30,12 +29,10 @@ import com.binge.designsystem.component.SectionHeader
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.MessageScreen
 import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.AllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.rememberAllowLocalNetwork
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
@@ -50,6 +47,8 @@ class HubActions(
     val onReconnect: () -> Unit,
     val onDisconnect: () -> Unit,
     val onDismissBingeHint: () -> Unit,
+    /** The dashboard's pull: re-reads the counts and the downloads. */
+    val onRefresh: () -> Unit,
     /** Debug builds only: the rows of the hub's last section. Empty hides the section. */
     val developerRows: List<DeveloperRow> = emptyList(),
 )
@@ -63,13 +62,16 @@ class HubActions(
  * @param admitsUnverifiedCallers whether this build admits Binge's package names under any certificate.
  * True only on a debug build, where it puts a banner at the top of the dashboard so a tester knows what
  * they are running (#679).
+ * @param pullState a still frame's resting pull; null remembers M3's own.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HubScreen(
     state: HubUiState,
     actions: HubActions,
     selectedSection: HubSection? = null,
     admitsUnverifiedCallers: Boolean = false,
+    pullState: PullToRefreshState? = null,
 ) {
     val ready = state as? HubUiState.Ready
     // The view model holds a problem through the re-check meant to clear it (#873), so this is the problem to name.
@@ -103,7 +105,14 @@ fun HubScreen(
                         actions.onDisconnect,
                         Modifier.padding(inner),
                     )
-                else -> Dashboard(ready, actions, selectedSection, admitsUnverifiedCallers, contentPadding = inner)
+                // Only the dashboard pulls: a problem page has its own retry, which re-checks the server as a whole.
+                else ->
+                    BingePullToRefresh(
+                        isRefreshing = ready.refreshing,
+                        onRefresh = actions.onRefresh,
+                        indicatorTopInset = inner.calculateTopPadding(),
+                        state = pullState ?: rememberPullToRefreshState(),
+                    ) { Dashboard(ready, actions, selectedSection, admitsUnverifiedCallers, contentPadding = inner) }
             }
         }
     }
@@ -250,63 +259,3 @@ class DeveloperRow(
     @StringRes val detail: Int,
     val onClick: () -> Unit,
 )
-
-/**
- * Server gone or the dashboard not loaded: retry, or edit the connection. A session the server rejected never reaches
- * here, since the app goes to sign-in instead (#810). [rechecking] is a retry in flight, which the primary button shows.
- */
-@Composable
-private fun ConnectionProblem(
-    health: ConnectionHealth,
-    allow: AllowLocalNetwork,
-    onRetry: () -> Unit,
-    rechecking: Boolean,
-    onReconnect: () -> Unit,
-    onDisconnect: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    // Three ways out, one destructive, so the design system's stacked actions rather than its two-button row (#777).
-    MessageScreen(
-        modifier = modifier,
-        headline =
-            stringResource(
-                when (health) {
-                    ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
-                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_headline
-                    else -> R.string.hub_unreachable_headline
-                },
-            ),
-        body =
-            stringResource(
-                when (health) {
-                    ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
-                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
-                    else -> R.string.hub_unreachable_body
-                },
-            ),
-        icon =
-            when (health) {
-                ConnectionHealth.CouldNotLoad -> Icons.Filled.HourglassEmpty
-                else -> Icons.Filled.CloudOff
-            },
-        actions = {
-            if (health == ConnectionHealth.LocalNetworkDenied) {
-                BingeFilledButton(label = stringResource(allow.label), onClick = allow.run, modifier = Modifier.fillMaxWidth())
-            } else {
-                // While a retry is in flight it says so, and can't be pressed again; the other ways out stay open.
-                BingeFilledButton(
-                    label = stringResource(if (rechecking) R.string.hub_rechecking else R.string.hub_retry),
-                    onClick = onRetry,
-                    loading = rechecking,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            BingeOutlinedButton(
-                label = stringResource(R.string.settings_edit_connection),
-                onClick = onReconnect,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            DisconnectButton(onDisconnect)
-        },
-    )
-}

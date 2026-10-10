@@ -48,6 +48,7 @@ internal fun HubEntry(
                 onReconnect = onReconnect,
                 onDisconnect = viewModel::disconnect,
                 onDismissBingeHint = viewModel::dismissBingeHint,
+                onRefresh = viewModel::refresh,
                 developerRows = developerRows,
             ),
     )

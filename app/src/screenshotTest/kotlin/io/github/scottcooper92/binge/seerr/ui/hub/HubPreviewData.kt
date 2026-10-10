@@ -97,6 +97,7 @@ internal fun previewActions() =
         onReconnect = {},
         onDisconnect = {},
         onDismissBingeHint = {},
+        onRefresh = {},
     )
 
 internal fun previewReady(

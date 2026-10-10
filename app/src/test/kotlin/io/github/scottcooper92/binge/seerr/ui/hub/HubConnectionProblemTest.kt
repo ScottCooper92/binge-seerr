@@ -41,6 +41,7 @@ class HubConnectionProblemTest {
                         onReconnect = onReconnect,
                         onDisconnect = {},
                         onDismissBingeHint = {},
+                        onRefresh = {},
                     ),
             )
         }
@@ -92,6 +93,7 @@ class HubConnectionProblemTest {
                             onReconnect = {},
                             onDisconnect = {},
                             onDismissBingeHint = {},
+                            onRefresh = {},
                         ),
                 )
             }

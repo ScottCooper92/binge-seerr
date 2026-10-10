@@ -51,6 +51,7 @@ class HubUnverifiedCallersBannerTest {
                             onReconnect = {},
                             onDisconnect = {},
                             onDismissBingeHint = {},
+                            onRefresh = {},
                         ),
                     admitsUnverifiedCallers = admitsUnverifiedCallers,
                 )

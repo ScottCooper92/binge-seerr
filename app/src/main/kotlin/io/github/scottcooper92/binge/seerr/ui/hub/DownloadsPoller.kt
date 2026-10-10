@@ -50,6 +50,9 @@ class DownloadsPoller(
         screenVisible.value = visible
     }
 
+    /** Reads the strip now, for a pull, without waiting on the poll; the poll keeps its own interval. */
+    suspend fun refreshNow() = refresh()
+
     private suspend fun poll() {
         while (true) {
             refresh()
