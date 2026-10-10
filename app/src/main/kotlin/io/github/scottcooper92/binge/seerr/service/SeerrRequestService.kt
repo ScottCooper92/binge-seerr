@@ -57,6 +57,7 @@ import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoRequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestStore
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_CONFLICT
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
@@ -102,9 +103,6 @@ import retrofit2.HttpException
 
 /** Seerr returns 202 Accepted when there was nothing left to request, and created nothing. */
 private const val HTTP_ACCEPTED = 202
-
-/** Seerr returns 409 Conflict when the media has already been requested. */
-private const val HTTP_CONFLICT = 409
 
 /**
  * REQUEST v1, served against the connected Seerr server.
