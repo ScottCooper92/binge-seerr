@@ -55,9 +55,15 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
 - Traffic goes to the server the user entered; plex.tv when the user chooses to sign in with Plex;
   PostHog only after the user agrees to usage data; Firebase Crashlytics for crash reports unless
   the user turns them off; and GitHub only when the user submits the bug report form.
+- The phone-to-TV hand-off (`handoff/`, `ui/handoff/`) sends the server address, and a sealed session
+  only if the user switches it on, to a television on the same network, only on the Send button; an
+  API key is never sent. The scanner is Google Play services', so the app holds no camera permission.
+  The addresses it remembers (`handoff/HandOffAddressMemory.kt`) survive a disconnect.
+- A crash report carries the ids of the record in hand (`telemetry/CrashReporting.kt`), a fixed action
+  line, the device model and the Android version. Never a title, a name, a message or an address.
 - There is an analytics SDK (PostHog) and a crash reporting SDK (Firebase Crashlytics), both gated
   as above, and no advertising SDK. Check `app/build.gradle.kts` and `telemetry/` before changing
   this claim in either direction.
 - `android:allowBackup="false"`: Android's own backup does not copy the app's data, and uninstalling
-  removes it. Block Store is a separate mechanism and the one path by which the connection can
-  leave the device.
+  removes it. Block Store is a separate mechanism, and with the phone-to-TV hand-off (above) one of
+  the two ways the connection can leave the device.

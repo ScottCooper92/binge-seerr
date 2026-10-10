@@ -26,7 +26,8 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvDestination
 
 /**
  * The name a screen is reported under. Written out rather than taken from the class, because R8
- * renames classes in a release build, and a route's ids are the server's and never leave the app.
+ * renames classes in a release build, and a route's ids are the server's, so none is in a screen name. (A crash report
+ * can carry the id of the record in hand, as a Crashlytics key; `privacy.md` says so.)
  *
  * [SeerrRoute]'s debug-only members (`ManageSheetPrototypeRoute`, `RequestCardsPrototypeRoute`) live in
  * `src/debug` (#467) and so cannot be named here, a file common to every variant — [debugScreenName]
