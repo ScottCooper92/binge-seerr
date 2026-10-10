@@ -4,21 +4,18 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationEvent
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActions
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_VERSION
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestDetail
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -138,46 +135,7 @@ class TvReadOutsTest {
             onDismissReport = {},
         )
 
-    private fun detail() =
-        RequestDetail(
-            item =
-                RequestItem(
-                    id = 1,
-                    tmdbId = 1,
-                    mediaType = RequestMediaType.Movie,
-                    title = "Heat",
-                    posterUrl = null,
-                    year = "1995",
-                    requestedBy = "ana",
-                    requestedById = 3,
-                    requestedAtMillis = null,
-                    status = SeerrRequestStatusCode.Approved,
-                    mediaStatus = null,
-                    download = null,
-                    seasonNumbers = emptyList(),
-                    is4k = false,
-                ),
-            actions = RequestActions(canRemove = true),
-            canEdit = false,
-            canEditDestination = false,
-            backdropUrl = null,
-            overview = null,
-            modifiedBy = null,
-            modifiedById = null,
-            viewerId = 7,
-            canManageUsers = false,
-            updatedAtMillis = null,
-            seasons = emptyList(),
-            destination = null,
-            downloads = emptyList(),
-            mediaId = null,
-            canReportIssue = false,
-            webUrl = "https://seerr.example/movie/1",
-            mediaServerUrl = null,
-            serviceUrl = null,
-            media = null,
-            siblings = emptyList(),
-        )
+    private fun detail() = requestDetail(actions = RequestActions(canRemove = true), mediaId = null)
 
     private companion object {
         val NoActions =

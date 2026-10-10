@@ -18,7 +18,6 @@ import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
-import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueReport
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.MediaInstance
@@ -27,11 +26,10 @@ import io.github.scottcooper92.binge.seerr.ui.requests.MediaStatusChoice
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestDetail
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -141,45 +139,7 @@ class TvRequestDetailSheetsTest {
         media: MediaRecord? = null,
         canReportIssue: Boolean = false,
         actions: RequestActions = RequestActions(),
-    ) = RequestDetail(
-        item =
-            RequestItem(
-                id = 1,
-                tmdbId = 1,
-                mediaType = RequestMediaType.Movie,
-                title = "Heat",
-                posterUrl = null,
-                year = "1995",
-                requestedBy = "ana",
-                requestedById = 3,
-                requestedAtMillis = null,
-                status = SeerrRequestStatusCode.Approved,
-                mediaStatus = null,
-                download = null,
-                seasonNumbers = emptyList(),
-                is4k = false,
-            ),
-        actions = actions,
-        canEdit = false,
-        canEditDestination = false,
-        backdropUrl = null,
-        overview = null,
-        modifiedBy = null,
-        modifiedById = null,
-        viewerId = 7,
-        canManageUsers = false,
-        updatedAtMillis = null,
-        seasons = emptyList(),
-        destination = null,
-        downloads = emptyList(),
-        mediaId = MEDIA_ID,
-        canReportIssue = canReportIssue,
-        webUrl = "https://seerr.example/movie/1",
-        mediaServerUrl = null,
-        serviceUrl = null,
-        media = media,
-        siblings = emptyList(),
-    )
+    ) = requestDetail(actions = actions, mediaId = MEDIA_ID, canReportIssue = canReportIssue, media = media)
 
     private fun setContent(
         detail: RequestDetail,
