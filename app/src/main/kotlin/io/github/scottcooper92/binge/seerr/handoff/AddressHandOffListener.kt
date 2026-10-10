@@ -77,8 +77,9 @@ private const val MAX_DRAIN_BYTES = 64 * 1024
  *   short linger), or after the sign-in timeout. A code nobody uses lapses after a timeout, and the
  *   owner replaces it with a new listener, a new port and a new token, rather than ending.
  * - **Address only.** What it accepts is a server address, checked with [isValidBaseUrl], and
- *   nothing else. The TV then reads that server exactly as if the address had been typed, so the
- *   plain-HTTP opt-in and sign-in that follow are unchanged.
+ *   nothing else. Without a sealed session the address waits for the TV's user to go on before
+ *   the TV reads that server (#1084); a plain-HTTP public address waits on the opt-in instead (#907). The sign-in
+ *   that follows is unchanged.
  *
  * One connection at a time, each bounded by [HandOffLimits]: request size, header count, a read
  * timeout and an overall deadline. Plain HTTP because there is no certificate a TV could present

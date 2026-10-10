@@ -12,8 +12,9 @@ sealed interface HandOffProgress {
     data object Checking : HandOffProgress
 
     /**
-     * The address sent uses plain HTTP to a public host, which the TV only connects to once the user agrees on its screen
-     * (#907). The page says so and follows the TV, which moves on to [Checking] once they do.
+     * An address a phone sent without a sealed session waits for the TV's user to go on before the TV reads that server
+     * (#1084). A plain-HTTP address to a public host waits on the opt-in instead (#907). Either way the page says so
+     * and follows the TV, which moves on to [Checking] once they do.
      */
     data object ConfirmOnTv : HandOffProgress
 
