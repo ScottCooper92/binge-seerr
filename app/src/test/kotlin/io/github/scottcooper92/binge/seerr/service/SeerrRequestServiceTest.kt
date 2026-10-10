@@ -30,6 +30,7 @@ import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
+import com.binge.companion.sdk.MAX_SEASON_NUMBERS
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
@@ -95,6 +96,10 @@ private const val DOWNLOADING_ONLY_IN_4K =
     """{"mediaInfo":{"id":9,"status":1,"status4k":3,"downloadStatus4k":[{"title":"UHD","size":3000,"sizeLeft":1500}]}}"""
 
 private const val MOVIE_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true}"""
+
+/** Seasons 1 to 3 as the server's show details list them, which an edit's seasons are checked against (#1002). */
+private const val SHOW_WITH_THREE_SEASONS =
+    """{"seasons":[{"seasonNumber":1,"episodeCount":10},{"seasonNumber":2,"episodeCount":10},{"seasonNumber":3,"episodeCount":10}]}"""
 
 /**
  * The whole contract end to end, on the JVM: a host's generated stub over an in-process channel
@@ -1450,6 +1455,7 @@ class SeerrRequestServiceTest {
                         "media":{"tmdbId":1399,"mediaType":"tv"}}""",
                 ),
             )
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
             seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
 
             stub.editRequest(
@@ -1463,6 +1469,8 @@ class SeerrRequestServiceTest {
             val read = seerr.takeRequest()
             assertEquals("GET", read.method)
             assertEquals("/api/v1/request/7", read.url.encodedPath)
+            // The show's own seasons, which the edit is checked against before it goes (#1002).
+            assertEquals("/api/v1/tv/1399", seerr.takeRequest().url.encodedPath)
             val update = seerr.takeRequest()
             assertEquals("PUT", update.method)
             assertEquals("/api/v1/request/7", update.url.encodedPath)
@@ -1503,6 +1511,99 @@ class SeerrRequestServiceTest {
                 },
             )
             assertEquals(before + 1, seerr.requestCount)
+        }
+
+    @Test
+    fun `an edit naming a negative or repeated season is INVALID_ARGUMENT before anything is read`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+
+            listOf(listOf(1, 1), listOf(-1), (1..MAX_SEASON_NUMBERS + 1).toList()).forEach { seasons ->
+                assertEquals(
+                    Status.Code.INVALID_ARGUMENT,
+                    stub.code {
+                        editRequest(
+                            EditRequestRequest
+                                .newBuilder()
+                                .setRequestId(7)
+                                .addAllSeasonNumbers(seasons)
+                                .build(),
+                        )
+                    },
+                )
+            }
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `an edit naming a season the show does not have is INVALID_ARGUMENT, and nothing is written`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+            seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
+
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code {
+                    editRequest(
+                        EditRequestRequest
+                            .newBuilder()
+                            .setRequestId(7)
+                            .addAllSeasonNumbers(listOf(2, 99))
+                            .build(),
+                    )
+                },
+            )
+            // The request and the show were read; no PUT followed.
+            assertEquals(before + 2, seerr.requestCount)
+        }
+
+    @Test
+    fun `a submit naming a repeated or negative season is INVALID_ARGUMENT, and nothing is posted`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+
+            listOf(listOf(2, 2), listOf(-3, 1)).forEach { seasons ->
+                assertEquals(
+                    Status.Code.INVALID_ARGUMENT,
+                    stub.code {
+                        submitRequest(
+                            SubmitRequestRequest
+                                .newBuilder()
+                                .setMedia(show)
+                                .addAllSeasonNumbers(seasons)
+                                .build(),
+                        )
+                    },
+                )
+            }
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a submit naming a season the show does not have is INVALID_ARGUMENT, and only the details are read`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
+
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code {
+                    submitRequest(
+                        SubmitRequestRequest
+                            .newBuilder()
+                            .setMedia(show)
+                            .addAllSeasonNumbers(listOf(2, 99))
+                            .build(),
+                    )
+                },
+            )
+            assertEquals(before + 1, seerr.requestCount)
+            assertEquals("/api/v1/tv/1399", seerr.takeRequest().url.encodedPath)
         }
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.status(media: MediaId): Status.Code =
