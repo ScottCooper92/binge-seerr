@@ -749,9 +749,6 @@
     <string name="server_settings_sliders_caption">Las filas de la página Descubrir del cliente web, y su orden</string>
     <string name="server_settings_slider_add">Añadir una fila</string>
     <string name="server_settings_slider_edit">Editar la fila</string>
-    <string name="server_settings_slider_move_up">Subir</string>
-    <string name="server_settings_slider_move_down">Bajar</string>
-    <string name="server_settings_slider_reorder">Arrastrar para reordenar</string>
     <string name="server_settings_slider_built_in">Integrada</string>
     <string name="server_settings_slider_unknown_type">Fila de tipo %1$d</string>
     <string name="server_settings_slider_type">Tipo</string>
@@ -1240,8 +1237,11 @@
     <string name="server_settings_blocklist_tags_no_match">Ninguna palabra clave coincide.</string>
     <string name="server_settings_blocklist_tags_failed">No se pudieron buscar las palabras clave. Vuelve a intentarlo en un momento.</string>
     <string name="server_settings_blocklist_limit">Páginas por etiqueta</string>
-    <string name="server_settings_blocklist_limit_hint">Cuántas páginas toma por etiqueta la tarea de procesar etiquetas bloqueadas. Más es una lista más completa y ocupa más espacio.</string>
-    <string name="server_settings_blocklist_limit_error">Introduce un número entero de 0 a %1$d.</string>
+    <plurals name="server_settings_blocklist_limit_value">
+        <item quantity="one">%1$d página</item>
+        <item quantity="many">%1$d páginas</item>
+        <item quantity="other">%1$d páginas</item>
+    </plurals>
     <string name="server_settings_api_timeout">Tiempo de espera de las API</string>
     <string name="server_settings_api_timeout_hint">Cuánto espera el servidor a que respondan Radarr, Sonarr y otros servicios. 0 espera indefinidamente.</string>
     <string name="server_settings_api_timeout_error">Introduce un número de segundos, 0 o más.</string>

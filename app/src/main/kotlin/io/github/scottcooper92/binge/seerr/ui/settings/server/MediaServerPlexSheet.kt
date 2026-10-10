@@ -12,11 +12,11 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
-import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
+import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
+import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
 import com.binge.designsystem.R as DesR
 
 /** The admin's own Plex servers in a peeking sheet, a group of connection rows each: picking one fills the address. */
@@ -64,7 +64,7 @@ private fun connectionRow(
     val reachable =
         connection.reachable?.let { ok ->
             stringResource(if (ok) R.string.server_settings_plex_reachable else R.string.server_settings_plex_unreachable) to
-                (if (ok) BingeSentiment.Positive else BingeSentiment.Negative)
+                (if (ok) RequestStateTone.Success else RequestStateTone.Declined)
         }
     return ListItem(
         icon = if (connection.local) Icons.Filled.Home else Icons.Filled.Cloud,
@@ -76,8 +76,8 @@ private fun connectionRow(
             ).joinToString(stringResource(R.string.hub_meta_separator)),
         onClick = { actions.onChooseConnection(server, connection) },
         trailingContent =
-            reachable?.let { (label, sentiment) ->
-                { Text(label, style = MaterialTheme.typography.labelMedium, color = sentiment.fill()) }
+            reachable?.let { (label, tone) ->
+                { RequestStateChip(label = label, tone = tone) }
             },
     )
 }

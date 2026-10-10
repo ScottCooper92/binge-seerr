@@ -771,9 +771,6 @@
     <string name="server_settings_sliders_caption">The rows of the web client\'s Discover page, and their order</string>
     <string name="server_settings_slider_add">Add a slider</string>
     <string name="server_settings_slider_edit">Edit slider</string>
-    <string name="server_settings_slider_move_up">Move up</string>
-    <string name="server_settings_slider_move_down">Move down</string>
-    <string name="server_settings_slider_reorder">Drag to reorder</string>
     <string name="server_settings_slider_built_in">Built in</string>
     <string name="server_settings_slider_unknown_type">Slider type %1$d</string>
     <string name="server_settings_slider_type">Kind</string>
@@ -1293,8 +1290,10 @@
     <string name="server_settings_blocklist_tags_no_match">No keyword matches that.</string>
     <string name="server_settings_blocklist_tags_failed">Couldn\'t search the keywords. Try again in a moment.</string>
     <string name="server_settings_blocklist_limit">Pages per tag</string>
-    <string name="server_settings_blocklist_limit_hint">How many pages the Process Blocklisted Tags job takes for each tag. More is a fuller blocklist and more space.</string>
-    <string name="server_settings_blocklist_limit_error">Enter a whole number from 0 to %1$d.</string>
+    <plurals name="server_settings_blocklist_limit_value">
+        <item quantity="one">%1$d page</item>
+        <item quantity="other">%1$d pages</item>
+    </plurals>
     <string name="server_settings_api_timeout">API request timeout</string>
     <string name="server_settings_api_timeout_hint">How long the server waits for Radarr, Sonarr and other services to answer. 0 waits for ever.</string>
     <string name="server_settings_api_timeout_error">Enter a number of seconds, 0 or more.</string>

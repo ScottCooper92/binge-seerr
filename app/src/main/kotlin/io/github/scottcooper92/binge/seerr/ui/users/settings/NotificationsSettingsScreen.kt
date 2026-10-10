@@ -231,7 +231,10 @@ private fun TypeGroups(
     val offered = NotificationType.entries.filter { draft.isModerator || !it.moderatorOnly }
     listOf(false, true).forEach { issues ->
         ItemGroup(
-            title = null,
+            title =
+                stringResource(
+                    if (issues) R.string.server_settings_agent_types_issues else R.string.server_settings_agent_types_requests,
+                ),
             rows =
                 offered.filter { it.issue == issues }.map { type ->
                     editorToggle(Icons.Filled.Notifications, stringResource(type.labelRes()), types and type.bit != 0, enabled) {
