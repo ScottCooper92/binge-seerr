@@ -143,6 +143,12 @@ class DiscoverSlidersViewModelTest {
 
             // A write goes out on OkHttp's threads, so a count taken at once can miss one on its way (#986).
             assertFalse(seerr.awaitCountHoldingTime("POST", "/api/v1/settings/discover", moreThan = 0))
-            assertFalse(vm.awaitReady().draft.single { it.id == 2 }.enabled)
+            assertFalse(
+                vm
+                    .awaitReady()
+                    .draft
+                    .single { it.id == 2 }
+                    .enabled,
+            )
         }
 }
