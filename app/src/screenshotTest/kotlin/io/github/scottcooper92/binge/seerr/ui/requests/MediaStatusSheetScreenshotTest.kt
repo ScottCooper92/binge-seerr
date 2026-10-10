@@ -1,17 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.requests
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SheetFrame
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
-
-private val SHEET_WIDTH = 411.dp
 
 /**
  * The first sheet body in this suite. The modal window does not capture, so the frame renders the
@@ -37,7 +30,7 @@ private fun Frame(
     is4k: Boolean,
     status: SeerrMediaStatusCode,
 ) {
-    Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+    SheetFrame {
         MediaStatusSheetContent(
             instance =
                 MediaInstance(
