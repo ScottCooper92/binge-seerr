@@ -44,7 +44,6 @@ internal class TvRequestsActions(
 /** The filters that get a row; "All" would only repeat the others, so the rows are the tabs. */
 internal val RequestRowFilters = RequestFilter.entries.filter { it != RequestFilter.All }
 
-/** A row shows its first requests; past that the row's see-all tile opens the paged grid. */
 private const val PERCENT = 100
 
 /**
