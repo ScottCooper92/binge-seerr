@@ -64,6 +64,14 @@ class TvIssuesGridFocusTest {
         assertEquals(emptyList<Int>(), opened)
     }
 
+    /** A see-all grid is an overlay: nothing offers it focus, so it takes it itself, with no `requestFocus()` from outside. */
+    @Test
+    fun anOpenedGridTakesFocusItself() {
+        setGrid(SeerrPermissions())
+
+        card().assertIsFocused()
+    }
+
     @Test
     fun okOnACardTheViewerMayNotActOnOpensItsPage() {
         setGrid(SeerrPermissions())
