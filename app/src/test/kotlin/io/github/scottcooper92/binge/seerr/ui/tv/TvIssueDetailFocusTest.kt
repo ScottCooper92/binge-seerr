@@ -92,6 +92,7 @@ class TvIssueDetailFocusTest {
                                 onDelete = {},
                                 onSeeAll = {},
                                 onRetryLoad = {},
+                                onRetryScope = {},
                             ),
                     )
                     if (openId != null) {

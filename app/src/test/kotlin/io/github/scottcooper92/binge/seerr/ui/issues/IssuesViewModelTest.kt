@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeIssueStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
@@ -37,6 +38,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 private const val ADMIN = 2
 private const val CREATE_ISSUES = 1 shl 22
+private const val HTTP_OK = 200
+private const val HTTP_SERVER_ERROR = 500
 
 /** The browser over an in-memory connection into a path-scripted Seerr, paging through the fake cache. */
 class IssuesViewModelTest {
@@ -54,6 +57,9 @@ class IssuesViewModelTest {
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
 
+    /** What `auth/me` answers once connected; anything but 200 fails the ViewModel's own read. */
+    private val authStatus = AtomicInteger(HTTP_OK)
+
     /** The server's version and public settings, which a test can change mid-run, as an upgrade in place would. */
     private val serverVersion = AtomicReference("3.1.0")
     private val publicSettings = AtomicReference("""{"mediaServerType":2}""")
@@ -69,7 +75,12 @@ class IssuesViewModelTest {
         seerr.dispatcher = { request ->
             received += request
             when (request.url.encodedPath) {
-                "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                "/api/v1/auth/me" ->
+                    if (authStatus.get() == HTTP_OK) {
+                        json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                    } else {
+                        FakeResponse(code = authStatus.get())
+                    }
                 "/api/v1/status" -> json("""{"version":"${serverVersion.get()}"}""")
                 "/api/v1/settings/public" -> json(publicSettings.get())
                 "/api/v1/issue/count" -> json("""{"total":3,"open":2,"closed":1}""")
@@ -86,7 +97,8 @@ class IssuesViewModelTest {
         }
     }
 
-    private suspend fun TestScope.viewModel(): IssuesViewModel {
+    /** [authAfterConnect] is what `auth/me` answers once the `connect()` probe has passed. */
+    private suspend fun TestScope.viewModel(authAfterConnect: Int = HTTP_OK): IssuesViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -97,6 +109,7 @@ class IssuesViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        authStatus.set(authAfterConnect)
         val vm = IssuesViewModel(connection, TitleCache(FakeTitleDao()), FakeIssueStore(), mainDispatcherRule.dispatcher, analytics)
         viewModels.put("issues", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -151,6 +164,28 @@ class IssuesViewModelTest {
             vm.setScreenVisible(true)
 
             assertEquals(IssueCounts(total = 3, open = 2, resolved = 1), vm.awaitReady { it.counts != null }.counts)
+        }
+
+    /** Not a list scoped to a viewer with no permissions, which reads as an empty server (#1073). */
+    @Test
+    fun `a failed auth me is an error the screen can show, and retry recovers from it`() =
+        runTest {
+            server(ADMIN)
+            val seen = CopyOnWriteArrayList<IssuesUiState>()
+            val vm = viewModel(authAfterConnect = HTTP_SERVER_ERROR)
+            backgroundScope.launch { vm.uiState.collect { seen += it } }
+
+            assertEquals(IssuesUiState.Error(SeerrError.Server), vm.uiState.first { it is IssuesUiState.Error })
+            assertTrue(seen.none { it is IssuesUiState.Ready })
+
+            authStatus.set(HTTP_OK)
+            vm.retry()
+
+            assertTrue(
+                vm
+                    .awaitReady { true }
+                    .scope.permissions.canManageIssues,
+            )
         }
 
     @Test

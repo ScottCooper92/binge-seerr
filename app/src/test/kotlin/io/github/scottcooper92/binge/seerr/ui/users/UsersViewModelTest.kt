@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.PERMISSION_MANAGE_USERS
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
@@ -35,6 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 private const val ADMIN = 2
+private const val HTTP_OK = 200
+private const val HTTP_SERVER_ERROR = 500
 
 /** A real bit the editor does not manage (`VOTE`, which no editor offers), to prove a save preserves it. */
 private const val UNMANAGED_VOTE_BIT = 1 shl 6
@@ -59,12 +62,20 @@ class UsersViewModelTest {
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(ADMIN)
 
+    /** What `auth/me` answers once connected; anything but 200 fails the ViewModel's own read. */
+    private val authStatus = AtomicInteger(HTTP_OK)
+
     @Before
     fun setUp() {
         seerr.dispatcher = { request ->
             received += request
             when (request.method + " " + request.url.encodedPath) {
-                "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                "GET /api/v1/auth/me" ->
+                    if (authStatus.get() == HTTP_OK) {
+                        json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                    } else {
+                        FakeResponse(code = authStatus.get())
+                    }
                 "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
                 "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
                 "GET /api/v1/user" ->
@@ -85,7 +96,8 @@ class UsersViewModelTest {
         seerr.awaitIdle()
     }
 
-    private suspend fun TestScope.viewModel(): UsersViewModel {
+    /** [authAfterConnect] is what `auth/me` answers once the `connect()` probe has passed. */
+    private suspend fun TestScope.viewModel(authAfterConnect: Int = HTTP_OK): UsersViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -96,6 +108,7 @@ class UsersViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        authStatus.set(authAfterConnect)
         val vm = UsersViewModel(connection, cache, mainDispatcherRule.dispatcher)
         viewModels.put("users", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -117,6 +130,23 @@ class UsersViewModelTest {
             viewerPermissions.set(ADMIN)
             vm.setScreenVisible(true)
             assertEquals(UserOrigin.Jellyfin, vm.awaitReady { it.importSource != null }.importSource)
+        }
+
+    /** Not a list whose viewer may add no one, which hides the add action without a word (#1073). */
+    @Test
+    fun `a failed auth me is an error the screen can show, and retry recovers from it`() =
+        runTest {
+            val seen = CopyOnWriteArrayList<UsersUiState>()
+            val vm = viewModel(authAfterConnect = HTTP_SERVER_ERROR)
+            backgroundScope.launch { vm.uiState.collect { seen += it } }
+
+            assertEquals(UsersUiState.Error(SeerrError.Server), vm.uiState.first { it is UsersUiState.Error })
+            assertTrue(seen.none { it is UsersUiState.Ready })
+
+            authStatus.set(HTTP_OK)
+            vm.retry()
+
+            assertTrue(vm.awaitReady().canAdmit)
         }
 
     @Test

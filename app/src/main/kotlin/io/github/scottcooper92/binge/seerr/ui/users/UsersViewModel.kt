@@ -18,7 +18,10 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.PermissionScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBulkUsersBody
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
+import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
+import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
@@ -57,11 +60,49 @@ private data class UsersScope(
     val isOwner: Boolean = false,
 )
 
+/** Where resolving the [UsersScope] stands: in flight, done, or failed with why, so a failure is a state rather than a guessed scope. */
+private sealed interface ScopeState {
+    data object Resolving : ScopeState
+
+    data class Resolved(
+        val scope: UsersScope,
+    ) : ScopeState
+
+    data class Failed(
+        val error: SeerrError,
+    ) : ScopeState
+}
+
+/** The scope for [viewer], with what the server offers read from [profile] where it could be read. */
+private fun usersScope(
+    viewer: SeerrUserDto,
+    profile: SeerrServerProfile?,
+): UsersScope {
+    val permissions = viewer.toPermissions()
+    val settings = profile?.settings
+    return UsersScope(
+        permissions = profile?.permissionScope() ?: PermissionScope(blocklist = false),
+        canAdmit = permissions.canManageUsers,
+        // The import lists live under /settings, which needs ADMIN; adding one account needs only MANAGE_USERS (#1009).
+        importSource =
+            when (profile?.mediaServer.takeIf { permissions.isAdmin }) {
+                SeerrMediaServer.Plex -> UserOrigin.Plex
+                SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
+                SeerrMediaServer.Emby -> UserOrigin.Emby
+                SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown, null -> null
+            },
+        canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
+        locked = lockedFor(isOwner = viewer.id == OWNER_USER_ID),
+        isOwner = viewer.id == OWNER_USER_ID,
+    )
+}
+
 /**
  * The users browser: one cached, sorted list read from the cache and refreshed through the
  * mediator, and the bulk edit, which re-applies the chosen toggles onto each selected user's own
  * cached bitmask — never onto a value shared across the selection — and moves their cached rows
- * with it.
+ * with it. A failed `auth/me` read is a [UsersUiState.Error] the user can retry, and it also self-corrects the next
+ * time the screen becomes visible.
  */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalPagingApi::class)
 @HiltViewModel
@@ -91,36 +132,34 @@ class UsersViewModel
         /** Bumped when the page becomes visible, so the scope is re-read rather than held from the first visit. */
         private val scopeRefresh = MutableStateFlow(0)
 
-        private val scope: StateFlow<UsersScope> =
+        /**
+         * Who is looking and what the server offers. A failed `auth/me` is [ScopeState.Failed] rather than a viewer with
+         * no permissions, so the screen says so instead of hiding the add action without a word (#1073). A retry from a
+         * failure shows [ScopeState.Resolving] again. The profile stays best-effort: a failed read only hides what it
+         * would have offered.
+         */
+        private val scope: StateFlow<ScopeState> =
             scopeRefresh
                 .flatMapLatest {
                     flow {
+                        if (scope.value is ScopeState.Failed) emit(ScopeState.Resolving)
                         // The refreshing reads, not the cached ones: both caches live as long as the
                         // connection, so re-running this over them would re-read nothing.
-                        val profile = attempt { connection.refreshProfile() }.getOrNull()
-                        val viewer = attempt { connection.refreshAuthenticatedUser() }.getOrNull()
-                        val settings = profile?.settings
                         emit(
-                            UsersScope(
-                                permissions = profile?.permissionScope() ?: PermissionScope(blocklist = false),
-                                canAdmit = viewer.toPermissions().canManageUsers,
-                                // The import lists live under /settings, which needs ADMIN; adding one account needs only
-                                // MANAGE_USERS (#1009).
-                                importSource =
-                                    when (profile?.mediaServer.takeIf { viewer.toPermissions().isAdmin }) {
-                                        SeerrMediaServer.Plex -> UserOrigin.Plex
-                                        SeerrMediaServer.Jellyfin -> UserOrigin.Jellyfin
-                                        SeerrMediaServer.Emby -> UserOrigin.Emby
-                                        SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown, null -> null
-                                    },
-                                canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
-                                locked = lockedFor(isOwner = viewer?.id == OWNER_USER_ID),
-                                isOwner = viewer?.id == OWNER_USER_ID,
+                            attempt { connection.refreshAuthenticatedUser() }.fold(
+                                onSuccess = { viewer ->
+                                    val profile = attempt { connection.refreshProfile() }.getOrNull()
+                                    ScopeState.Resolved(usersScope(viewer, profile))
+                                },
+                                onFailure = { ScopeState.Failed(it.toSeerrError()) },
                             ),
                         )
                     }
                 }.flowOn(dispatcher)
-                .stateIn(viewModelScope, SharingStarted.Lazily, UsersScope())
+                .stateIn(viewModelScope, SharingStarted.Lazily, ScopeState.Resolving)
+
+        /** The resolved scope, or the defaults while there is none; only a ready screen offers the actions that read it. */
+        private val currentScope: UsersScope get() = (scope.value as? ScopeState.Resolved)?.scope ?: UsersScope()
 
         private val refreshes = ListRefreshes<UserSort>()
 
@@ -150,18 +189,23 @@ class UsersViewModel
                 scope,
                 admission.state,
             ) { (sort, refresh), selection, edit, scope, admission ->
-                UsersUiState.Ready(
-                    sort = sort,
-                    selection = selection,
-                    edit = edit,
-                    offered = ManageablePermission.offered(scope.permissions),
-                    canAdmit = scope.canAdmit,
-                    importSource = scope.importSource,
-                    canGeneratePassword = scope.canGeneratePassword,
-                    locked = scope.locked,
-                    admission = admission,
-                    refresh = refresh,
-                )
+                when (scope) {
+                    ScopeState.Resolving -> UsersUiState.Loading
+                    is ScopeState.Failed -> UsersUiState.Error(scope.error)
+                    is ScopeState.Resolved ->
+                        UsersUiState.Ready(
+                            sort = sort,
+                            selection = selection,
+                            edit = edit,
+                            offered = ManageablePermission.offered(scope.scope.permissions),
+                            canAdmit = scope.scope.canAdmit,
+                            importSource = scope.scope.importSource,
+                            canGeneratePassword = scope.scope.canGeneratePassword,
+                            locked = scope.scope.locked,
+                            admission = admission,
+                            refresh = refresh,
+                        )
+                }
             }.stateIn(viewModelScope, SharingStarted.Lazily, UsersUiState.Loading)
 
         /**
@@ -174,6 +218,11 @@ class UsersViewModel
          */
         fun setScreenVisible(visible: Boolean) {
             if (visible) scopeRefresh.update { it + 1 }
+        }
+
+        /** Re-reads the signed-in user after [UsersUiState.Error]. */
+        fun retry() {
+            scopeRefresh.update { it + 1 }
         }
 
         fun setSort(sort: UserSort) {
@@ -210,7 +259,7 @@ class UsersViewModel
 
         fun togglePermission(permission: ManageablePermission) =
             edit.update { current ->
-                current?.takeUnless { it.saving || permission in scope.value.locked }?.let {
+                current?.takeUnless { it.saving || permission in currentScope.locked }?.let {
                     it.copy(selected = if (permission in it.selected) it.selected - permission else it.selected + permission)
                 }
                     ?: current
@@ -236,7 +285,7 @@ class UsersViewModel
             if (current.saving || ids.isEmpty()) return
             edit.value = current.copy(saving = true)
             val offered = offeredAtStart
-            val isOwner = scope.value.isOwner
+            val isOwner = currentScope.isOwner
             viewModelScope.launch(dispatcher) {
                 attempt {
                     // Each id's own cached bitmask is its baseline, and only the permissions the user toggled change it:

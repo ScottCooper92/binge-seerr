@@ -43,6 +43,7 @@ internal fun UsersEntry(
                 onTogglePermission = viewModel::togglePermission,
                 onApplyBulkEdit = viewModel::applyBulkEdit,
                 onCancelBulkEdit = viewModel::cancelBulkEdit,
+                onRetryLoad = viewModel::retry,
                 admission =
                     UserAdmissionActions(
                         onStart = viewModel.admission::start,

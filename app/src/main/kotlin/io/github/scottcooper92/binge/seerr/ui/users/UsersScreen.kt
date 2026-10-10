@@ -32,6 +32,7 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -48,6 +49,7 @@ class UsersActions(
     val onTogglePermission: (ManageablePermission) -> Unit,
     val onApplyBulkEdit: () -> Unit,
     val onCancelBulkEdit: () -> Unit,
+    val onRetryLoad: () -> Unit,
     val admission: UserAdmissionActions,
 )
 
@@ -89,7 +91,9 @@ fun UsersScreen(
         snackbarHostState = snackbarHostState,
         actions = { UsersBarActions(ready, actions, onSort = { showSort = true }) },
     ) { padding ->
-        if (ready == null) {
+        if (state is UsersUiState.Error) {
+            ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetryLoad)
+        } else if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
             Column(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
