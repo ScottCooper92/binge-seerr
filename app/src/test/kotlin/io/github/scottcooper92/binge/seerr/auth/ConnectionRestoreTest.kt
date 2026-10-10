@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
+import io.github.scottcooper92.binge.seerr.util.ReversingCipher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -289,11 +290,5 @@ class ConnectionRestoreTest {
 
     private companion object {
         const val PUBLIC_HOST = "seerr.example.com"
-    }
-
-    private object ReversingCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext.reversed()
-
-        override fun decrypt(ciphertext: String): String = ciphertext.reversed()
     }
 }

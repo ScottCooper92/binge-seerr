@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVersion
+import io.github.scottcooper92.binge.seerr.util.ReversingCipher
 import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.CoroutineScope
@@ -613,10 +614,4 @@ class SeerrConnectionTest {
         body: String,
         headers: okhttp3.Headers = headersOf(),
     ): MockResponse = MockResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body)
-
-    private object ReversingCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext.reversed()
-
-        override fun decrypt(ciphertext: String): String = ciphertext.reversed()
-    }
 }

@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.ConnectionRestore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.NoConnectionCarrier
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
@@ -13,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.OkHttpDrain
+import io.github.scottcooper92.binge.seerr.util.ReversingCipher
 import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.Dispatchers
@@ -156,10 +156,4 @@ class HomeViewModelTest {
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
-
-    private object ReversingCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext.reversed()
-
-        override fun decrypt(ciphertext: String): String = ciphertext.reversed()
-    }
 }
