@@ -106,7 +106,6 @@ internal fun TvAccountRequestsGridOverlay(
         heading = if (count != null) stringResource(R.string.tv_filter_with_count, heading, count) else heading,
         emptyBody = stringResource(R.string.tv_account_requests_empty),
         rows = requests.toRows(null) { it.id },
-        actingIds = emptySet(),
         detailOpen = detailOpen,
         onOpenDetail = { onOpenRequest(it.id) },
         onRetryLoad = { requests.retry() },

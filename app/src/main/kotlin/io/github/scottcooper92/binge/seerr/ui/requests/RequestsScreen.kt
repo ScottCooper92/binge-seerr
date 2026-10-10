@@ -174,7 +174,6 @@ private fun RequestsPage(
         lazyItems = lazyItems,
         lastRefresh = state.refreshes[filter],
         scope = state.scope,
-        actingIds = state.actingIds,
         onOpen = actions.onOpen,
         onManage = onManage,
         onPull = actions.onRefreshCounts,

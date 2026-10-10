@@ -69,7 +69,6 @@ internal fun RequestsBody(
     /** This list's latest finished network refresh; see [rememberPagedPhase]. */
     lastRefresh: ListRefresh?,
     scope: ModerationScope,
-    actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
     /** A pull, beside the list's own refresh: what else on the page it refreshes. */
@@ -96,10 +95,10 @@ internal fun RequestsBody(
                     // The failed line is pinned below the top bar and the header; the rows start below it while it shows.
                     Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                         RefreshFailedLine(R.string.requests_refresh_failed, onRetry = lazyItems::retry)
-                        RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding.belowPinnedLine())
+                        RequestList(lazyItems, scope, onOpen, onManage, contentPadding.belowPinnedLine())
                     }
                 } else {
-                    RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding)
+                    RequestList(lazyItems, scope, onOpen, onManage, contentPadding)
                 }
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
@@ -128,7 +127,6 @@ internal fun RequestsBody(
 private fun RequestList(
     lazyItems: LazyPagingItems<RequestItem>,
     scope: ModerationScope,
-    actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
     contentPadding: PaddingValues,
@@ -144,7 +142,6 @@ private fun RequestList(
                     item = item,
                     onClick = { onOpen(item) },
                     onManage = { onManage(item) }.takeIf { item.actions(scope).any },
-                    isActing = item.id in actingIds,
                 )
             }
         }
@@ -161,7 +158,6 @@ internal fun RequestRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onManage: (() -> Unit)? = null,
-    isActing: Boolean = false,
     now: Long = System.currentTimeMillis(),
 ) {
     // Only a transferring grab earns a bar; a queued one stops at its chip.
@@ -169,13 +165,12 @@ internal fun RequestRow(
     ListRow(
         modifier = modifier,
         onClick = onClick,
-        enabled = !isActing,
         verticalAlignment = Alignment.CenterVertically,
-        leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null, dimmed = isActing) },
+        leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null) },
         trailing =
             onManage?.let {
                 {
-                    IconButton(onClick = it, enabled = !isActing) {
+                    IconButton(onClick = it) {
                         Icon(Icons.Filled.ThumbsUpDown, contentDescription = stringResource(R.string.request_primary_manage))
                     }
                 }
