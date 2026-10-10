@@ -74,12 +74,15 @@ class PermissionsViewModel
             edit { it.toggled(permission) }
             val after = ready()?.draft ?: return
             if (after == before) return
+            val wasOn = permission in before.selected
             val on = permission in after.selected
             val undoable =
                 EditorEvent.Undoable(
                     messageRes = if (on) R.string.user_settings_permission_on else R.string.user_settings_permission_off,
                     argRes = permission.labelRes(),
-                    undo = { edit { it.toggled(permission) } },
+                    undo = {
+                        edit { it.copy(selected = if (wasOn) it.selected + permission else it.selected - permission) }
+                    },
                 )
             viewModelScope.launch { notify(undoable) }
         }

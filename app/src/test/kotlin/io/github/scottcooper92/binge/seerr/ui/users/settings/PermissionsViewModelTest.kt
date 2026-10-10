@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -121,6 +122,7 @@ class PermissionsViewModelTest {
 
             val none = awaitEvent(vm.events)
             vm.toggle(ManageablePermission.Admin)
+            runCurrent()
             assertFalse(none.isCompleted)
             none.cancel()
         }
