@@ -18,8 +18,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.toInitials
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -119,7 +121,7 @@ internal fun RuleConditions(
                 multiChoiceSettingItem(
                     icon = Icons.Filled.Group,
                     title = stringResource(R.string.server_settings_rule_users),
-                    choices = extras.users.map { it.id to it.label },
+                    choices = extras.users.map { BingeChoice(it.id, it.label, mark = it.label.toInitials()) },
                     selected = draft.userIds,
                     enabled = enabled,
                     emptyLabel = any,
@@ -174,7 +176,10 @@ private fun genreItem(
             multiChoiceSettingItem(
                 icon = Icons.Filled.Category,
                 title = title,
-                choices = genreChecklist(genres.genres, draft.genres.tagIds().toSet()).map { it.id to it.label },
+                choices =
+                    genreChecklist(genres.genres, draft.genres.tagIds().toSet()).map {
+                        BingeChoice(it.id, it.label, icon = Icons.Filled.Category)
+                    },
                 selected = draft.genres.tagIds().toSet(),
                 enabled = enabled,
                 emptyLabel = any,
@@ -283,7 +288,7 @@ internal fun RuleOverrides(
                 multiChoiceSettingItem(
                     icon = Icons.AutoMirrored.Filled.Label,
                     title = tagsTitle,
-                    choices = choices.tags.map { it.id to it.label },
+                    choices = choices.tags.map { BingeChoice(it.id, it.label, icon = Icons.AutoMirrored.Filled.Label) },
                     selected = draft.tagIds,
                     enabled = enabled,
                     emptyLabel = unchanged,

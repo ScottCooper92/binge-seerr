@@ -1137,6 +1137,7 @@
     <string name="server_settings_language_codes">Códigos de idioma</string>
     <string name="server_settings_list_use">Usar</string>
     <string name="server_settings_list_clear">Borrar</string>
+    <string name="settings_choices_filter">Filtrar</string>
     <string name="server_settings_regions_unavailable">El servidor no ha enviado su lista de regiones. Vuelve a intentarlo o escribe un código de país de dos letras.</string>
     <string name="server_settings_languages_unavailable">El servidor no ha enviado su lista de idiomas. Vuelve a intentarlo o escribe los códigos separados por |, como en|ja.</string>
     <string name="server_settings_api_key_hidden">•••• %1$s</string>
