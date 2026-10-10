@@ -131,9 +131,9 @@ internal fun ServerCard(
  * The server's totals as the design system's stat row, the same row Binge's title pages use: an icon,
  * the count, and what it counts. The card already pads its content, so the row adds none of its own.
  *
- * The figures are the server's, and every viewer sees them, including one who sees only their own requests (#980). The
- * card is about the server, not about the viewer's list. What the viewer may open is gated where it opens, as the
- * Requests badge is by `canViewRequests`.
+ * The request figures (movies, TV, pending) are the server's, and every viewer sees them, including one who sees only
+ * their own requests (#980). The card is about the server, not about the viewer's list. What the viewer may open is
+ * gated where it opens, as the Requests badge is by `canViewRequests`.
  */
 @Composable
 private fun ServerStatStrip(overview: HubOverview) {
