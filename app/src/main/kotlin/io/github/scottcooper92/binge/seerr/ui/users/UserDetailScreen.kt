@@ -92,7 +92,7 @@ class UserDetailActions(
  * request page's does.
  *
  * @param showBack false when this user is the only thing in the detail pane beside the hub — opened
- * from the hub's own account card — where a back arrow to the hub is redundant.
+ * from the hub's bar account action — where a back arrow to the hub is redundant.
  */
 @Composable
 fun UserDetailScreen(

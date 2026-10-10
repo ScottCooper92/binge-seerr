@@ -27,7 +27,7 @@ data class HubServer(
     val commitsBehind: Int,
 )
 
-/** The connected user for the account card: their name, whether they administer the server, and their quota. */
+/** The connected user for the bar's account action: their name, whether they administer the server, and their quota. */
 data class HubAccount(
     val id: Int,
     val name: String,

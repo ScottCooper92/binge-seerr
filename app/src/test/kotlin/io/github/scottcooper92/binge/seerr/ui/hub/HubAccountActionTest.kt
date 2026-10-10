@@ -4,6 +4,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.binge.designsystem.theme.BingeSentiment
+import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -66,6 +67,48 @@ class HubAccountActionTest {
     fun `a bucket with no limit to give reads as spent`() {
         assertEquals(1f, HubQuotaBucket(limit = 0, remaining = 0, days = null).usedFraction)
         assertEquals(0.6f, HubQuotaBucket(limit = 10, remaining = 4, days = null).usedFraction)
+    }
+
+    @Test
+    fun `a healthy dashboard carries the account in the bar`() {
+        showHub(ConnectionHealth.Healthy)
+
+        rule.onNodeWithContentDescription("Ana").assertExists()
+    }
+
+    @Test
+    fun `a rejected session's loading page carries no account`() {
+        showHub(ConnectionHealth.Unauthorized)
+
+        rule.onNodeWithContentDescription("Ana").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a problem page carries no account`() {
+        showHub(ConnectionHealth.Unreachable)
+
+        rule.onNodeWithContentDescription("Ana").assertDoesNotExist()
+    }
+
+    private fun showHub(health: ConnectionHealth) {
+        rule.setContent {
+            SeerrTheme {
+                HubScreen(
+                    state = readyHub(HubOverview(account = ana)).copy(health = health),
+                    actions =
+                        HubActions(
+                            onOpenSection = {},
+                            onOpenAccount = {},
+                            onOpenRequest = {},
+                            onRetry = {},
+                            onReconnect = {},
+                            onDisconnect = {},
+                            onDismissBingeHint = {},
+                            onRefresh = {},
+                        ),
+                )
+            }
+        }
     }
 
     private fun set(

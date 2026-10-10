@@ -79,7 +79,7 @@ fun HubScreen(
     val rechecking = (state as? HubUiState.Error)?.rechecking ?: ready?.rechecking ?: false
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
     // The account sits in the bar while the dashboard is up (#1325): the photo or initials, ringed by what is left of the quota.
-    val account = ready?.overview?.account?.takeUnless { ready.health.isProblem() }
+    val account = ready?.overview?.account?.takeIf { ready.health.showsDashboard() }
     BingeScreenScaffold(
         bar = ScreenBar.Small,
         title = ready?.server?.title ?: stringResource(R.string.companion_name),
@@ -136,6 +136,9 @@ internal fun ConnectionHealth.isProblem(): Boolean =
     this == ConnectionHealth.Unreachable ||
         this == ConnectionHealth.LocalNetworkDenied ||
         this == ConnectionHealth.CouldNotLoad
+
+/** Whether the hub's body is the dashboard: neither a problem page nor the loading page a rejected session waits on. */
+internal fun ConnectionHealth.showsDashboard(): Boolean = !isProblem() && this != ConnectionHealth.Unauthorized
 
 @Composable
 private fun Dashboard(

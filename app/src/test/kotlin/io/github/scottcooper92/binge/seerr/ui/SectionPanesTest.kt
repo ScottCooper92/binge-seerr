@@ -88,7 +88,7 @@ class SectionPanesTest {
         assertNull(backStack(HubRoute).selectedSection(defaultShowing = false))
         // Chosen, it is marked from the stack, whichever window.
         assertEquals(DefaultSection, backStack(HubRoute, RequestsRoute).selectedSection(defaultShowing = false))
-        // The account card opens a user with no section under it: the pane shows that, not the default.
+        // The bar's account action opens a user with no section under it: the pane shows that, not the default.
         assertNull(backStack(HubRoute, UserDetailRoute(1)).selectedSection(defaultShowing = true))
     }
 
