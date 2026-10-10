@@ -325,7 +325,9 @@ class DiscoverSliderViewModelTest {
 
             // Movie providers are not TV's, so the kind change drops the pick, and TV's list is read.
             vm.selectType(SliderType.TvStreamingServices)
-            assertEquals("", vm.awaitReady().draft.data)
+            val changed = vm.awaitReady()
+            assertEquals("", changed.draft.data)
+            assertEquals(ProviderChoices.Idle, changed.extras.providers)
             vm.selectRegion("GB")
             val tv =
                 vm.awaitReady {

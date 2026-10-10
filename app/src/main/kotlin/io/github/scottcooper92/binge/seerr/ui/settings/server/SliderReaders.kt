@@ -34,12 +34,10 @@ internal class SliderReaders(
             SliderDataKind.Genre -> genres(form.type)
             SliderDataKind.Studio -> id?.let(nameStudio)
             SliderDataKind.Network -> id?.let(::network)
-            SliderDataKind.Streaming ->
-                form.data
-                    .toStreamingPick()
-                    .region
-                    .takeIf { it.isNotBlank() }
-                    ?.let { providers(form.type, it) }
+            SliderDataKind.Streaming -> {
+                val region = form.data.toStreamingPick().region
+                if (region.isBlank()) clearProviders() else providers(form.type, region)
+            }
             SliderDataKind.Text -> Unit
         }
     }
@@ -59,6 +57,12 @@ internal class SliderReaders(
                         )
                 edit { it.copy(genres = genres) }
             }
+    }
+
+    /** Forgets the provider list and any read of it in flight: with no region there is no list to offer. */
+    fun clearProviders() {
+        providersJob?.cancel()
+        edit { it.copy(providers = ProviderChoices.Idle) }
     }
 
     /** The providers TMDB lists in [region] for the kind's movies or TV. */

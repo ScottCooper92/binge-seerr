@@ -254,10 +254,8 @@ private fun streamingItems(
                 untestedItem(
                     Icons.Filled.Subscriptions,
                     providersTitle,
-                    savedLabel =
-                        pick.providerIds.joinToString(", ").ifBlank {
-                            null
-                        },
+                    savedLabel = pick.providerIds.joinToString(", ").ifBlank { null },
+                    waitingFor = stringResource(R.string.tv_loading),
                 ).copy(loading = true)
             ProviderChoices.Idle ->
                 untestedItem(
