@@ -243,7 +243,6 @@ class SetupViewModelTest {
 
             vm.editAddress("192.168.1.10:5055")
             assertTrue(vm.awaitAddress { it.serverUrl == "192.168.1.10:5055" }.needsLocalNetwork)
-            assertTrue("Continue is never held back by the ask", vm.awaitAddress { it.serverUrl == "192.168.1.10:5055" }.canContinue)
 
             vm.editAddress("https://seerr.example.com")
             assertFalse(vm.awaitAddress { it.serverUrl.endsWith("example.com") }.needsLocalNetwork)
@@ -267,11 +266,43 @@ class SetupViewModelTest {
             vm.inspect()
             assertEquals(SetupError.LocalNetworkDenied, vm.awaitAddress { it.error != null }.error)
 
+            // The grant reads the server again by itself, and now it is simply down.
             granted = true
             vm.localNetworkResult()
-            assertNull(vm.awaitAddress { it.error == null && !it.isInspecting }.error)
-            vm.inspect()
             assertEquals(SetupError.Unreachable, vm.awaitAddress { it.error != null }.error)
+        }
+
+    /** Allowing access and continuing are one tap: the grant reads the server without a second press (#1099). */
+    @Test
+    fun `a grant while the address waits on the local network reads the server at once`() =
+        runTest {
+            var granted = false
+            val vm = viewModel(localNetwork = { granted })
+            vm.awaitAddress()
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.editAddress(seerr.url("/"))
+            assertTrue(vm.awaitAddress { it.serverUrl == seerr.url("/") }.needsLocalNetwork)
+
+            granted = true
+            vm.localNetworkResult()
+
+            vm.awaitSignIn()
+        }
+
+    @Test
+    fun `a refusal leaves the address waiting, and reads nothing`() =
+        runTest {
+            val vm = viewModel(localNetwork = { false })
+            vm.awaitAddress()
+            vm.editAddress(seerr.url("/"))
+
+            vm.localNetworkResult()
+
+            val address = vm.awaitAddress { it.serverUrl == seerr.url("/") }
+            assertTrue(address.needsLocalNetwork)
+            assertFalse(address.isInspecting)
+            assertEquals(0, seerr.requestCount)
         }
 
     @Test

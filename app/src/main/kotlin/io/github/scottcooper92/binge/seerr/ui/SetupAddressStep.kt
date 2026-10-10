@@ -18,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
-import com.binge.designsystem.component.BingeOutlinedButton
 import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.resolvedContentInset
@@ -39,6 +38,8 @@ internal fun SetupAddressStep(
     onLocalNetworkChanged: () -> Unit,
     contentPadding: PaddingValues,
 ) {
+    // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
+    val allow = if (state.needsLocalNetwork) rememberAllowLocalNetwork(onLocalNetworkChanged) else null
     Column(
         modifier =
             Modifier
@@ -59,7 +60,13 @@ internal fun SetupAddressStep(
             keyboardType = KeyboardType.Uri,
             autoCorrect = false,
             imeAction = ImeAction.Done,
-            onDone = { if (state.canContinue) onInspect() },
+            onDone = {
+                if (allow != null) {
+                    allow.run()
+                } else if (state.canContinue) {
+                    onInspect()
+                }
+            },
             onValueChange = onEditAddress,
         )
         if (state.insecure) {
@@ -78,23 +85,16 @@ internal fun SetupAddressStep(
         state.error?.let { error ->
             Text(stringResource(error.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
         }
-        if (state.needsLocalNetwork) LocalNetworkAsk(onLocalNetworkChanged)
+        if (allow != null) {
+            // Said before the system prompt, so a permission dialog is never the first the user hears of it.
+            Text(stringResource(R.string.setup_local_network_explanation), style = MaterialTheme.typography.bodyMedium)
+        }
         BingeFilledButton(
-            label = stringResource(R.string.setup_continue),
-            onClick = onInspect,
-            enabled = state.canContinue,
+            label = stringResource(allow?.label ?: R.string.setup_continue),
+            onClick = allow?.run ?: onInspect,
+            enabled = allow != null || state.canContinue,
             loading = state.isInspecting,
             modifier = Modifier.fillMaxWidth(),
         )
-    }
-}
-
-/** Said before the system prompt, so a permission dialog is never the first the user hears of it. */
-@Composable
-private fun LocalNetworkAsk(onChanged: () -> Unit) {
-    val allow = rememberAllowLocalNetwork(onChanged)
-    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-        Text(stringResource(R.string.setup_local_network_explanation), style = MaterialTheme.typography.bodyMedium)
-        BingeOutlinedButton(label = stringResource(allow.label), onClick = allow.run, modifier = Modifier.fillMaxWidth())
     }
 }

@@ -75,6 +75,8 @@ private fun ColumnScope.TvSetupAddressFields(
     initialFocus: TvSetupFocus?,
     arrival: TvArrivalFocus,
 ) {
+    // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
+    val allow = if (state.needsLocalNetwork) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
     // The way on sits beside the field, as tall as it, so the address and what to do with it read as one row.
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -94,24 +96,58 @@ private fun ColumnScope.TvSetupAddressFields(
             // Where the page lands: the remote came here to type, and the keyboard waits for select. An address a phone sent
             // that waits on the opt-in lands on the opt-in instead (#907).
             arrival = arrival.takeUnless { state.awaitingCleartextConsent },
-            onDone = { if (state.canContinue) actions.onInspect() },
+            onDone = {
+                if (allow != null) {
+                    allow.run()
+                } else if (state.canContinue) {
+                    actions.onInspect()
+                }
+            },
         )
-        TvIconButton(
-            icon = Icons.AutoMirrored.Filled.ArrowForward,
-            label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
-            onClick = actions.onInspect,
-            style = TvButtonStyle.Primary,
-            enabled = state.canContinue,
-            initiallyFocused = initialFocus == TvSetupFocus.Continue,
-            // Disabled, it is not a stop: the remote skips it until there is an address to continue with.
-            modifier =
-                Modifier
-                    .focusProperties { canFocus = state.canContinue }
-                    .height(
-                        dimensionResource(R.dimen.tv_form_field_height),
-                    ).widthIn(min = dimensionResource(R.dimen.tv_form_field_height)),
-        )
+        if (allow != null) {
+            TvButton(
+                label = stringResource(allow.shortLabel),
+                onClick = allow.run,
+                style = TvButtonStyle.Primary,
+                initiallyFocused = initialFocus == TvSetupFocus.Continue,
+            )
+        } else {
+            TvContinueButton(state, actions, initialFocus)
+        }
     }
+    TvSetupAddressNotes(state, actions, arrival)
+}
+
+/** Continue, beside the field and as tall as it. */
+@Composable
+private fun TvContinueButton(
+    state: SetupUiState.Address,
+    actions: SetupActions,
+    initialFocus: TvSetupFocus?,
+) {
+    TvIconButton(
+        icon = Icons.AutoMirrored.Filled.ArrowForward,
+        label = stringResource(if (state.isInspecting) R.string.tv_setup_checking else R.string.setup_continue),
+        onClick = actions.onInspect,
+        style = TvButtonStyle.Primary,
+        enabled = state.canContinue,
+        initiallyFocused = initialFocus == TvSetupFocus.Continue,
+        // Disabled, it is not a stop: the remote skips it until there is an address to continue with.
+        modifier =
+            Modifier
+                .focusProperties { canFocus = state.canContinue }
+                .height(
+                    dimensionResource(R.dimen.tv_form_field_height),
+                ).widthIn(min = dimensionResource(R.dimen.tv_form_field_height)),
+    )
+}
+
+@Composable
+private fun TvSetupAddressNotes(
+    state: SetupUiState.Address,
+    actions: SetupActions,
+    arrival: TvArrivalFocus,
+) {
     // What appears under the field takes no height in the pane, so the field stays where it is as a note comes and goes.
     Column(
         modifier = Modifier.fillMaxWidth().belowWithoutHeight(),
@@ -131,11 +167,8 @@ private fun ColumnScope.TvSetupAddressFields(
             TvFormNote(stringResource(R.string.setup_insecure_warning), tone = TvFormNoteTone.Error)
         }
         state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
-        if (state.needsLocalNetwork) {
-            val allow = rememberAllowLocalNetwork(actions.onLocalNetworkChanged)
-            TvFormNote(stringResource(R.string.setup_local_network_explanation))
-            TvButton(label = stringResource(allow.label), onClick = allow.run, style = TvButtonStyle.Secondary)
-        }
+        // Said before the system prompt, so a permission dialog is never the first the user hears of it.
+        if (state.needsLocalNetwork) TvFormNote(stringResource(R.string.setup_local_network_explanation))
     }
 }
 
