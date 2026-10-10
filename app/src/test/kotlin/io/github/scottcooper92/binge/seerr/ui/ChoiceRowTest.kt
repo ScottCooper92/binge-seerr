@@ -29,7 +29,7 @@ private val CHOICES = (1..5).map { it to "Profile $it" }
 /**
  * The row+sheet shape #336 asks for: the row names one choice and stays one line regardless of how
  * many [CHOICES] carries; the sheet, opened on tap, is where the rest live. The last two cover the
- * constraint [ChoicePicker]'s KDoc carried over from #172 — a pick made mid-save must not land, and
+ * constraint the old chip picker's KDoc carried over from #172 — a pick made mid-save must not land, and
  * an already-open sheet must stop taking picks the moment a save starts.
  */
 @RunWith(RobolectricTestRunner::class)
