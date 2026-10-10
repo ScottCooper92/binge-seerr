@@ -31,6 +31,9 @@ internal const val KEY_BINGE = "binge"
  * What the home board used to carry at its head: whether the server is answering, the counts it keeps, and how
  * Binge stands with this app. Read-outs, except Binge when it is missing, which opens its Play Store listing.
  * Null until the hub has read the server, so Settings never shows a status it has not checked.
+ *
+ * The request counts are the server's, and every viewer sees them, as on the phone's server card (#980): this group is
+ * about the server, not about the viewer's list.
  */
 @Composable
 internal fun serverStatusGroup(
