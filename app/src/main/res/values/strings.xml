@@ -1130,7 +1130,7 @@
     <string name="consent_point_shared_title">Shapes what gets fixed</string>
     <string name="consent_point_shared_detail">We see which screens get used, so the work goes where it matters.</string>
     <string name="consent_point_never_title">Private by design</string>
-    <string name="consent_point_never_detail">Screen names only. Never your server\'s address, your requests, its titles or anyone\'s name.</string>
+    <string name="consent_point_never_detail">Screens you open, actions you take and whether they worked. Never your server\'s address, your requests, its titles or anyone\'s name.</string>
     <string name="consent_point_change_title">Off with one tap</string>
     <string name="consent_point_change_detail">Change your mind any time in Settings, under This app.</string>
     <string name="consent_accept">Share usage data</string>

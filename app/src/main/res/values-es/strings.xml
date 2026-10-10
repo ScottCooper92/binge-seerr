@@ -1078,7 +1078,7 @@
     <string name="consent_point_shared_title">Decide qué se arregla</string>
     <string name="consent_point_shared_detail">Vemos qué pantallas se usan, para dedicar el trabajo a lo que importa.</string>
     <string name="consent_point_never_title">Privado por diseño</string>
-    <string name="consent_point_never_detail">Solo nombres de pantallas. Nunca la dirección de tu servidor, tus peticiones, sus títulos ni el nombre de nadie.</string>
+    <string name="consent_point_never_detail">Pantallas que abres, acciones que haces y si funcionaron. Nunca la dirección de tu servidor, tus peticiones, sus títulos ni el nombre de nadie.</string>
     <string name="consent_point_change_title">Se desactiva con un toque</string>
     <string name="consent_point_change_detail">Cambia de opinión cuando quieras en Ajustes, en Esta aplicación.</string>
     <string name="consent_accept">Compartir datos de uso</string>
