@@ -313,7 +313,8 @@ class RequestEditorTest {
 
             // The 202 is a refusal (#1001): the sheet does not close as though the edit had gone through.
             val after = editor.state.first { it != null && !it.saving }
-            assertTrue(after?.seasons.orEmpty().single { it.number == 2 }.selected)
+            val seasons = after?.seasons.orEmpty()
+            assertTrue(seasons.single { it.number == 2 }.selected)
         }
 
     private fun movieRequest(tags: List<Int> = emptyList()) =
