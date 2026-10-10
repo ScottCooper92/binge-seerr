@@ -40,9 +40,10 @@ fun MediaId.seerrMediaType(): String {
 /**
  * The seasons a host named, checked before any of them reaches Seerr (#1002). Seerr takes whatever it is sent: it makes a
  * season request row for a negative number, for a repeat and for a season the show never had, and Sonarr fails the
- * request later, far from the cause. So a negative or repeated number, or more than the SDK's [MAX_SEASON_NUMBERS], is
+ * request later, far from the cause. So a negative or repeated number, or more than [MAX_SEASON_NUMBERS], is
  * INVALID_ARGUMENT here, beside the check that stops an unusable [MediaId]. The SDK cleans the Activity hand-off's list the
- * same way; this is the rpc path's.
+ * same way; this is the rpc path's. The contract sets no cap on the rpc's `season_numbers`: the limit is this companion's
+ * own choice, borrowed from the SDK's hand-off cap (where extra picks are dropped, not refused).
  */
 fun List<Int>.checkedSeasonNumbers(): List<Int> {
     val problem =

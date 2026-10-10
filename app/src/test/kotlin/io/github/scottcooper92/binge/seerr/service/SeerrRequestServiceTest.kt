@@ -1582,6 +1582,29 @@ class SeerrRequestServiceTest {
             assertEquals(before, seerr.requestCount)
         }
 
+    @Test
+    fun `a submit naming a season the show does not have is INVALID_ARGUMENT, and only the details are read`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
+
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code {
+                    submitRequest(
+                        SubmitRequestRequest
+                            .newBuilder()
+                            .setMedia(show)
+                            .addAllSeasonNumbers(listOf(2, 99))
+                            .build(),
+                    )
+                },
+            )
+            assertEquals(before + 1, seerr.requestCount)
+            assertEquals("/api/v1/tv/1399", seerr.takeRequest().url.encodedPath)
+        }
+
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.status(media: MediaId): Status.Code =
         code { getStatus(GetStatusRequest.newBuilder().setMedia(media).build()) }
 

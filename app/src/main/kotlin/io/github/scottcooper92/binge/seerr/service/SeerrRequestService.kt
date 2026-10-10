@@ -182,11 +182,12 @@ class SeerrRequestService(
             }
             val media = request.media
             refuseIfKnownBlocklisted(media)
+            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.checkedSeasonNumbers().takeIf { it.isNotEmpty() },
+                    seasons = seasons.takeIf { it.isNotEmpty() },
                     is4k = request.is4K,
                 )
             submitAndRespond(media, body)
@@ -227,6 +228,7 @@ class SeerrRequestService(
             val media = request.media
             refuseIfKnownBlocklisted(media)
             val isTv = media.seerrMediaType().isSeerrTv()
+            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
             // 4K here is a property of the server the caller named. A user who may not request 4K is
             // never offered a 4K server, so naming one is INVALID_ARGUMENT, like any server not offered.
             val destination =
@@ -241,7 +243,7 @@ class SeerrRequestService(
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.checkedSeasonNumbers().takeIf { it.isNotEmpty() },
+                    seasons = seasons.takeIf { it.isNotEmpty() },
                     is4k = destination.server.is4k,
                     serverId = destination.server.id,
                     profileId = destination.profileId,
@@ -249,6 +251,21 @@ class SeerrRequestService(
                 )
             SubmitAdvancedRequestResponse.newBuilder().setResult(submitAndRespond(media, body)).build()
         }
+
+    /**
+     * A submit's seasons, refused as INVALID_ARGUMENT before anything is posted if they are malformed or name a season the
+     * show does not have (#1002), the same rule [editRequest] applies. No seasons means the whole show, so nothing is looked up.
+     */
+    private suspend fun checkedSubmitSeasons(
+        media: MediaId,
+        numbers: List<Int>,
+    ): List<Int> {
+        val seasons = numbers.checkedSeasonNumbers()
+        if (seasons.isNotEmpty() && media.seerrMediaType().isSeerrTv()) {
+            connection.api().tvDetails(media.tmdbId).checkHasSeasons(seasons)
+        }
+        return seasons
+    }
 
     /** The part of a submit that does not depend on where the body came from: post, read the outcome off the status code, attach the fresh status. */
     private suspend fun submitAndRespond(
