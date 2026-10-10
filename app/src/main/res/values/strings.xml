@@ -1008,6 +1008,7 @@
     <string name="send_signin_waiting">The TV at %1$s has the address and is checking the server…</string>
     <string name="send_signin_confirm">That address uses plain HTTP over the internet, so the TV at %1$s is asking whether to connect anyway. Answer on the TV.</string>
     <string name="send_signin_form">The TV found %1$s. Sign in here, and the TV is signed in too.</string>
+    <string name="send_signin_address">Signing in at %1$s</string>
     <string name="send_signin_sealed">What you type here is encrypted for the TV showing that PIN, then sent over your Wi-Fi. It is not kept on this phone.</string>
     <string name="send_pin_body">Type the PIN shown under the code on the TV at %1$s.</string>
     <string name="send_pin_label">PIN shown on the TV</string>

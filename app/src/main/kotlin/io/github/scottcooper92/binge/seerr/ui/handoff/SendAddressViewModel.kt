@@ -332,7 +332,9 @@ class SendAddressViewModel
             val current = step as? SignInStep.Session ?: held
             val turnedDown = current != null && status.failed && status.attempt >= current.awaiting
             // The TV turned the session down: what's left is typing, or finishing on the TV where it has no fields.
-            if (turnedDown) return _uiState.showStep(fallbackFrom(server, modes))
+            // A phone that sent the address has checked the TV's against it; one carrying on shows it instead (#1085).
+            val shown = address.takeIf { sent == null }
+            if (turnedDown) return _uiState.showStep(fallbackFrom(server, modes, shown))
             if (step is SignInStep.Session) return
             if (modes.isEmpty()) return _uiState.showStep(SignInStep.OnTv(server))
             // One update, so the form it keeps is the latest one: a send finishing on another thread is not overwritten.
@@ -343,7 +345,13 @@ class SendAddressViewModel
                     step =
                         when {
                             current == null ->
-                                SignInStep.Form(server, modes, SignInForm(mode = modes.first()), sessionOffer = sessionOfferFor(address))
+                                SignInStep.Form(
+                                    server,
+                                    modes,
+                                    SignInForm(mode = modes.first()),
+                                    sessionOffer = sessionOfferFor(address),
+                                    address = shown,
+                                )
                             current.refusedBy(status) ->
                                 current.copy(
                                     isSending = false,
@@ -393,11 +401,12 @@ private fun SignInStep.Form.refusedBy(status: HandOffStatus): Boolean =
 private fun fallbackFrom(
     server: String,
     modes: List<SeerrSignInMode>,
+    address: String?,
 ): SignInStep =
     if (modes.isEmpty()) {
         SignInStep.OnTv(server)
     } else {
-        SignInStep.Form(server, modes, SignInForm(mode = modes.first()), rejected = true)
+        SignInStep.Form(server, modes, SignInForm(mode = modes.first()), rejected = true, address = address)
     }
 
 /** [session], sealed for this TV's code and [address] as credentials of the session mode; null for a target without a key. */

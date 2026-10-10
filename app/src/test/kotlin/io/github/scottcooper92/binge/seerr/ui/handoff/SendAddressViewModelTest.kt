@@ -415,7 +415,9 @@ class SendAddressViewModelTest {
             vm.settled()
 
             vm.send()
-            vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.Form }
+            val form = vm.uiState.first { (it as? SendAddressUiState.SigningIn)?.step is SignInStep.Form } as SendAddressUiState.SigningIn
+            // This phone sent the address and checked the TV's against it, so the form does not repeat it (#1085).
+            assertNull((form.step as SignInStep.Form).address)
             vm.editSignIn { copy(email = "ana@example.com", password = "correct horse") }
             vm.sendSignIn()
 
@@ -520,6 +522,8 @@ class SendAddressViewModelTest {
             val form = vm.uiState.first { it is SendAddressUiState.SigningIn && it.step is SignInStep.Form } as SendAddressUiState.SigningIn
             // The phone sent no address here, so the TV's is the only one there is: it can type for it, but not hand it the session.
             assertNull((form.step as SignInStep.Form).sessionOffer)
+            // So the form names where typed credentials would go, which the server's own title does not (#1085).
+            assertEquals("http://192.168.1.66:5055/", (form.step as SignInStep.Form).address)
             vm.sendSession()
             assertTrue(tv.sentCredentials.isEmpty())
         }
