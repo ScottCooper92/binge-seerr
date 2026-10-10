@@ -517,7 +517,8 @@ class SeerrRequestServiceTest {
             val analytics = RecordingAnalytics()
             val stub = connected(permissions = ADMIN, analytics = analytics)
 
-            // A 401 is the session outright: nothing asks `auth/me` again.
+            // A dead session: the 401, then auth/me refusing the interceptor's probe too (#997).
+            seerr.enqueue(MockResponse(code = 401))
             seerr.enqueue(MockResponse(code = 401))
             assertTrue(stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention.needsReconnect)
             assertEquals(emptyList<Any>(), analytics.events)
@@ -1040,6 +1041,8 @@ class SeerrRequestServiceTest {
         runTest {
             val stub = connected()
 
+            // A dead session: the 401, then auth/me refusing the interceptor's probe too (#997).
+            seerr.enqueue(MockResponse(code = 401))
             seerr.enqueue(MockResponse(code = 401))
             assertEquals(Status.Code.UNAUTHENTICATED, stub.status(movie))
 

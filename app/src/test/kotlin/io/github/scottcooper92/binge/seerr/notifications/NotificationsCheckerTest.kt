@@ -162,7 +162,9 @@ class NotificationsCheckerTest {
             assertEquals(CheckResult.TransientFailure, checker.check())
             assertEquals(9, prefs.cursor(NotificationSignal.OpenIssues))
 
+            // A dead session: auth/me refuses the same credentials, so the 401 is the session, not a refusal (#997).
             seerr.serve("GET /api/v1/issue", "", code = 401)
+            seerr.serve("GET /api/v1/auth/me", "", code = 401)
             assertEquals(CheckResult.AuthFailure, checker.check())
         }
 

@@ -87,13 +87,20 @@ class SeerrSessionInterceptorTest {
     }
 
     @Test
-    fun `a 401 whose probe fails, at the transport or the server, is still the session`() {
+    fun `a 401 whose probe fails at the transport is still the session`() {
+        // OkHttp retries a dropped connection once, so the probe is refused twice over.
         server.enqueue(MockResponse(code = 401))
         server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.ShutdownConnection).build())
-        assertEquals(SeerrError.Unauthorized, classify("/api/v1/request/4"))
+        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.ShutdownConnection).build())
 
+        assertEquals(SeerrError.Unauthorized, classify("/api/v1/request/4"))
+    }
+
+    @Test
+    fun `a 401 whose probe fails at the server is still the session`() {
         server.enqueue(MockResponse(code = 401))
         server.enqueue(MockResponse(code = 500))
+
         assertEquals(SeerrError.Unauthorized, classify("/api/v1/request/4"))
     }
 
