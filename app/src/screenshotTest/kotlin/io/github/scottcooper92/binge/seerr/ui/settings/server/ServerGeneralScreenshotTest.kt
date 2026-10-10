@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.PHONE_WIDTH
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
@@ -126,7 +127,6 @@ class ServerGeneralPartsScreenshotTest {
 
 private const val API_KEY = "MTc1NzQ2MDk5MzEyNA1234abcd"
 
-private val PART_WIDTH = 411.dp
 private val PART_PADDING = 16.dp
 private val PART_SPACING = 12.dp
 
@@ -178,7 +178,7 @@ private fun noKeyActions() = ApiKeyActions(onToggleReveal = {}, onCopy = {}, onR
 @Composable
 private fun PartFrame(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = Modifier.width(PART_WIDTH).padding(PART_PADDING),
+        modifier = Modifier.width(PHONE_WIDTH).padding(PART_PADDING),
         verticalArrangement = Arrangement.spacedBy(PART_SPACING),
         content = content,
     )
