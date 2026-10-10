@@ -847,6 +847,12 @@
     <string name="server_settings_agent_topic">Topic</string>
     <string name="server_settings_agent_tags">Tags</string>
     <string name="server_settings_agent_priority">Priority</string>
+    <string name="server_settings_agent_priority_unset">Not set (ntfy sends at 3)</string>
+    <string name="server_settings_agent_priority_min">Min (1)</string>
+    <string name="server_settings_agent_priority_low">Low (2)</string>
+    <string name="server_settings_agent_priority_default">Default (3)</string>
+    <string name="server_settings_agent_priority_high">High (4)</string>
+    <string name="server_settings_agent_priority_max">Max (5)</string>
     <string name="server_settings_agent_auth_by_password">Sign in with a username and password</string>
     <string name="server_settings_agent_username">Username</string>
     <string name="server_settings_agent_password">Password</string>
@@ -1113,7 +1119,6 @@
     <string name="server_settings_agent_application_token_hint">Register an application with Pushover and use the API token it gives you.</string>
     <string name="server_settings_agent_pushbullet_token_hint">Create a token in your Pushbullet account settings.</string>
     <string name="server_settings_agent_topic_hint">Anyone who knows the topic can read what is sent to it, so pick one that is hard to guess.</string>
-    <string name="server_settings_agent_priority_hint">1 (min) to 5 (max). Blank sends at the default, 3.</string>
     <string name="server_settings_agent_profile_name_hint">Only needed where the server does not use the default profile.</string>
     <string name="settings_group_app">This app</string>
     <string name="settings_report_bug">Report a bug</string>

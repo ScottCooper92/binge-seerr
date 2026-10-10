@@ -825,6 +825,12 @@
     <string name="server_settings_agent_topic">Tema</string>
     <string name="server_settings_agent_tags">Etiquetas</string>
     <string name="server_settings_agent_priority">Prioridad</string>
+    <string name="server_settings_agent_priority_unset">Sin definir (ntfy envía con 3)</string>
+    <string name="server_settings_agent_priority_min">Mínima (1)</string>
+    <string name="server_settings_agent_priority_low">Baja (2)</string>
+    <string name="server_settings_agent_priority_default">Predeterminada (3)</string>
+    <string name="server_settings_agent_priority_high">Alta (4)</string>
+    <string name="server_settings_agent_priority_max">Máxima (5)</string>
     <string name="server_settings_agent_auth_by_password">Iniciar sesión con usuario y contraseña</string>
     <string name="server_settings_agent_username">Nombre de usuario</string>
     <string name="server_settings_agent_password">Contraseña</string>
@@ -1062,7 +1068,6 @@
     <string name="server_settings_agent_application_token_hint">Registra una aplicación en Pushover y usa el token de API que te dé.</string>
     <string name="server_settings_agent_pushbullet_token_hint">Crea un token en los ajustes de tu cuenta de Pushbullet.</string>
     <string name="server_settings_agent_topic_hint">Cualquiera que conozca el tema puede leer lo que se envía, así que elige uno difícil de adivinar.</string>
-    <string name="server_settings_agent_priority_hint">De 1 (mínima) a 5 (máxima). En blanco, se envía con la predeterminada, 3.</string>
     <string name="server_settings_agent_profile_name_hint">Solo hace falta si el servidor no usa el perfil predeterminado.</string>
     <string name="settings_group_app">Esta aplicación</string>
     <string name="settings_report_bug">Informar de un error</string>

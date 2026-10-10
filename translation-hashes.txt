@@ -473,7 +473,12 @@ app:server_settings_agent_pgp_hint  7f2c4504cf67
 app:server_settings_agent_pgp_password  2fe70fd35184
 app:server_settings_agent_pgp_private_key  d48d2d0edf80
 app:server_settings_agent_priority  d60dbba07922
-app:server_settings_agent_priority_hint  aa72403203e7
+app:server_settings_agent_priority_default  bc618f612d64
+app:server_settings_agent_priority_high  d5ba108bf118
+app:server_settings_agent_priority_low  e7b8214a69ce
+app:server_settings_agent_priority_max  f09680984266
+app:server_settings_agent_priority_min  7e01954283cc
+app:server_settings_agent_priority_unset  a2fbacbb0000
 app:server_settings_agent_profile_name  d3663280e101
 app:server_settings_agent_profile_name_hint  827382aff3aa
 app:server_settings_agent_pushbullet_token_hint  038d29175b87

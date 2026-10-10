@@ -95,7 +95,6 @@ internal fun AgentOption.hintRes(): Int? =
         AgentOption.PushoverAccessToken -> R.string.server_settings_agent_application_token_hint
         AgentOption.PushbulletAccessToken -> R.string.server_settings_agent_pushbullet_token_hint
         AgentOption.NtfyTopic -> R.string.server_settings_agent_topic_hint
-        AgentOption.NtfyPriority -> R.string.server_settings_agent_priority_hint
         AgentOption.LunaSeaProfileName -> R.string.server_settings_agent_profile_name_hint
         AgentOption.WebhookJsonPayload -> R.string.server_settings_agent_json_payload_hint
         else -> null
@@ -109,6 +108,15 @@ internal fun AgentOption.placeholderRes(): Int? =
         AgentOption.NtfyUrl -> R.string.placeholder_ntfy_url
         AgentOption.NtfyTags -> R.string.placeholder_ntfy_tags
         else -> null
+    }
+
+internal fun NtfyPriorityLevel.labelRes(): Int =
+    when (this) {
+        NtfyPriorityLevel.Min -> R.string.server_settings_agent_priority_min
+        NtfyPriorityLevel.Low -> R.string.server_settings_agent_priority_low
+        NtfyPriorityLevel.Default -> R.string.server_settings_agent_priority_default
+        NtfyPriorityLevel.High -> R.string.server_settings_agent_priority_high
+        NtfyPriorityLevel.Max -> R.string.server_settings_agent_priority_max
     }
 
 internal fun EmailEncryption.labelRes(): Int =

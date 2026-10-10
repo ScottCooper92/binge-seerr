@@ -252,6 +252,34 @@ internal fun <T> choiceSettingItem(
         enabled = enabled,
     )
 
+/**
+ * A [choiceSettingItem] over a text setting where blank means "leave it to the default": [default] leads the list and
+ * stands for blank, and a saved [current] the [listed] choices lack stays as a choice of its own rather than reading
+ * "Unknown". The notification pages' Pushover sound and ntfy's priority are both this.
+ */
+@Composable
+internal fun defaultFirstChoiceItem(
+    icon: ImageVector,
+    title: String,
+    default: String,
+    current: String,
+    listed: List<Pair<String, String>>,
+    enabled: Boolean,
+    choiceIcon: (String) -> ImageVector? = { null },
+    onSelect: (String) -> Unit,
+): ListItem {
+    val kept = listOf(current to current).filter { (value, _) -> value.isNotBlank() && listed.none { it.first == value } }
+    return choiceSettingItem(
+        icon = icon,
+        title = title,
+        choices = listOf("" to default) + kept + listed,
+        selected = current,
+        enabled = enabled,
+        choiceIcon = choiceIcon,
+        onSelect = onSelect,
+    )
+}
+
 /** From this many choices a pick-several sheet gets its filter field, the length the design system sections a list at. */
 private const val FILTERED_CHOICES = 8
 
