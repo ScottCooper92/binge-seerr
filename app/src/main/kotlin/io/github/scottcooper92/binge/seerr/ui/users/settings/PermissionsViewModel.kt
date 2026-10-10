@@ -64,11 +64,7 @@ class PermissionsViewModel
             return draft.copy(selected = ManageablePermission.decode(record.permissions), original = record.permissions)
         }
 
-        fun toggle(permission: ManageablePermission) =
-            edit { draft ->
-                if (permission in draft.locked) return@edit draft
-                draft.copy(selected = if (permission in draft.selected) draft.selected - permission else draft.selected + permission)
-            }
+        fun toggle(permission: ManageablePermission) = edit { it.toggled(permission) }
 
         @AssistedFactory
         interface Factory {

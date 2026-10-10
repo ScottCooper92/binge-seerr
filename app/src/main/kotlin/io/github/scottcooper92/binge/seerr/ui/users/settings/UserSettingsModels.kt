@@ -309,7 +309,15 @@ data class PermissionSettings(
      * but the owner, so every toggle is locked and the page says why (#1134).
      */
     val ownerOnly: Boolean = false,
-)
+) {
+    /** These settings with [permission] ticked or unticked; a locked one is left as it is. */
+    fun toggled(permission: ManageablePermission): PermissionSettings =
+        when {
+            permission in locked -> this
+            permission in selected -> copy(selected = selected - permission)
+            else -> copy(selected = selected + permission)
+        }
+}
 
 /** One media-server account a user may link: what it is called, whether it is linked, and as whom where the server says. */
 data class LinkedAccount(
