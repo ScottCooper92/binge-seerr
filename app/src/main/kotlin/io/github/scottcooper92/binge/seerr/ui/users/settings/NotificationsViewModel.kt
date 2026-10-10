@@ -126,14 +126,18 @@ internal fun SeerrUserNotificationSettingsDto.toNotificationSettings(isModerator
     )
 }
 
+/**
+ * Every field goes out, a cleared one as `""` as the web client sends it. The server assigns each key from the body, and a
+ * missing one is `undefined`, which its database layer skips on save, so a cleared token would come back (#1020).
+ */
 internal fun NotificationSettings.toDto(): SeerrUserNotificationSettingsDto {
-    fun sent(of: AgentField): String? = field(of).trim().takeIf { it.isNotEmpty() }
+    fun sent(of: AgentField): String = field(of).trim()
     val ids = discordIds.map { it.trim() }.filter { it.isNotEmpty() }
     return SeerrUserNotificationSettingsDto(
         emailEnabled = agent(NotificationAgent.Email).enabled,
         pgpKey = sent(AgentField.PgpKey),
         discordEnabled = agent(NotificationAgent.Discord).enabled,
-        discordId = ids.firstOrNull(),
+        discordId = ids.firstOrNull().orEmpty(),
         discordIds = ids,
         pushbulletAccessToken = sent(AgentField.PushbulletToken),
         pushoverApplicationToken = sent(AgentField.PushoverAppToken),

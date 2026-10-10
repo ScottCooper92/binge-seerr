@@ -56,4 +56,12 @@ class EmailShapeTest {
         assertEquals(true, GeneralSettings(email = "", emailRequired = true, canEditEmail = false).valid)
         assertEquals(true, GeneralSettings(email = "", emailRequired = false, canEditEmail = true).valid)
     }
+
+    /** The server keeps an address it has for a blank, so clearing one would save and then come back (#1020). */
+    @Test
+    fun `a saved address may not be blanked, since the server never clears one`() {
+        val saved = GeneralSettings(email = "", loadedEmail = "a@b.com", emailRequired = false, canEditEmail = true)
+        assertFalse(saved.emailValid)
+        assertTrue(saved.copy(canEditEmail = false).emailValid)
+    }
 }
