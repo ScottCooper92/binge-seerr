@@ -40,17 +40,6 @@ internal const val LOCAL_NETWORK_PERMISSION: String = Manifest.permission.ACCESS
 /** `.local` is mDNS; `.lan`, `.home.arpa` and `.internal` are what home routers hand out. */
 private val LOCAL_NETWORK_SUFFIXES = listOf(".local", ".lan", ".home.arpa", ".internal")
 
-private val LOCAL_NETWORK_ADDRESSES =
-    listOf(
-        // Link-local, and the RFC 1918 ranges.
-        Regex("""169\.254(\.\d{1,3}){2}"""),
-        Regex("""10(\.\d{1,3}){3}"""),
-        Regex("""192\.168(\.\d{1,3}){2}"""),
-        Regex("""172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}"""),
-        // IPv6 link-local and unique-local, bar Tailscale's own unique-local prefix.
-        Regex("""(fe80|f[cd](?!7a:115c:a1e0:))[0-9a-f]*:.*"""),
-    )
-
 /**
  * Whether reaching [this] host needs the local-network permission: link-local, the RFC 1918 ranges,
  * IPv6 unique-local, the home-network suffixes and single-label names. Narrower than
@@ -60,7 +49,7 @@ private val LOCAL_NETWORK_ADDRESSES =
  */
 internal fun String.isLocalNetworkHost(): Boolean =
     LOCAL_NETWORK_SUFFIXES.any { endsWith(it) } ||
-        LOCAL_NETWORK_ADDRESSES.any { it.matches(this) } ||
+        ipLiteralBytes(this)?.isLocalNetworkAddress() == true ||
         (this != "localhost" && !contains('.') && !contains(':'))
 
 /**
@@ -69,6 +58,10 @@ internal fun String.isLocalNetworkHost(): Boolean =
  * address that does not parse.
  */
 fun String.localNetworkHostOrNull(): String? = normaliseBaseUrl().toHttpUrlOrNull()?.host?.takeIf { it.isLocalNetworkHost() }
+
+/** Link-local, the RFC 1918 ranges and IPv6 unique-local, bar Tailscale's own block. */
+private fun ByteArray.isLocalNetworkAddress(): Boolean =
+    isIn(AddressRange.LinkLocal, AddressRange.Private, AddressRange.UniqueLocal) && !isIn(AddressRange.Tailscale)
 
 /** Whether [this] address needs the permission and [permission] does not hold it. */
 fun String.isBlockedByLocalNetwork(permission: LocalNetworkPermission): Boolean =

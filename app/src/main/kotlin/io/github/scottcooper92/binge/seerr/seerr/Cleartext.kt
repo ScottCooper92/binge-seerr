@@ -18,24 +18,10 @@ fun String.insecurePublicHostOrNull(): String? = trim().toHttpUrlOrNull()?.takeI
 /** Plain `http` to a host that is not loopback, private, LAN or tailnet: what needs the user's opt-in. */
 internal fun HttpUrl.isCleartextToPublicHost(): Boolean = !isHttps && !host.isLocalOrPrivateHost()
 
-private val LOCAL_NAMES = setOf("localhost", "::1")
+private const val LOCAL_NAME = "localhost"
 
 /** `.localhost` and `.home.arpa` are reserved for this; `.local` is mDNS; `.lan` and `.internal` are what routers hand out. */
 private val LOCAL_SUFFIXES = listOf(".localhost", ".local", ".lan", ".home.arpa", ".internal", ".ts.net")
-
-private val LOCAL_ADDRESSES =
-    listOf(
-        // Loopback, link-local, and the RFC 1918 ranges.
-        Regex("""127(\.\d{1,3}){3}"""),
-        Regex("""169\.254(\.\d{1,3}){2}"""),
-        Regex("""10(\.\d{1,3}){3}"""),
-        Regex("""192\.168(\.\d{1,3}){2}"""),
-        Regex("""172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}"""),
-        // The CGNAT range Tailscale assigns from.
-        Regex("""100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])(\.\d{1,3}){2}"""),
-        // IPv6 unique-local (Tailscale's too) and link-local.
-        Regex("""(f[cd]|fe80)[0-9a-f]*:.*"""),
-    )
 
 /**
  * Loopback, link-local, the RFC 1918 ranges, single-label names and the suffixes reserved or used
@@ -50,9 +36,15 @@ private val LOCAL_ADDRESSES =
  * and the two disagree on purpose.
  */
 internal fun String.isLocalOrPrivateHost(): Boolean =
-    this in LOCAL_NAMES ||
+    this == LOCAL_NAME ||
         LOCAL_SUFFIXES.any { endsWith(it) } ||
-        LOCAL_ADDRESSES.any { it.matches(this) } ||
+        ipLiteralBytes(this)?.isIn(
+            AddressRange.Loopback,
+            AddressRange.LinkLocal,
+            AddressRange.Private,
+            AddressRange.Cgnat,
+            AddressRange.UniqueLocal,
+        ) == true ||
         (!contains('.') && !contains(':'))
 
 /** A request this app refused to send: plain HTTP to a public host the user has not opted in for. */
