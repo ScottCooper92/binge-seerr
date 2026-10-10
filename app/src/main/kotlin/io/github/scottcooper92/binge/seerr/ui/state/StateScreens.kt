@@ -1,31 +1,25 @@
 package io.github.scottcooper92.binge.seerr.ui.state
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PowerOff
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.binge.designsystem.ErrorKind
 import com.binge.designsystem.template.LoadingMessageScreen
-import com.binge.designsystem.template.MessageScreen
-import com.binge.designsystem.template.ScreenAction
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
+import com.binge.designsystem.template.EmptyScreen as DesignEmptyScreen
+import com.binge.designsystem.template.ErrorScreen as DesignErrorScreen
 
 /**
  * The three whole-screen states every screen renders around its content, drawn by the design system's
- * [MessageScreen] so they read as Binge's do. What is this app's own is the copy, and the mapping from
- * a [SeerrError] to it.
+ * message screens so they read as Binge's do. What is this app's own is the copy, and the mapping from a
+ * [SeerrError] to the design system's [ErrorKind] for its icon.
  */
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier) {
@@ -40,7 +34,7 @@ fun EmptyScreen(
     title: String = stringResource(R.string.state_empty_title),
     icon: ImageVector = Icons.Filled.SearchOff,
 ) {
-    MessageScreen(body = message, headline = title, icon = icon, modifier = modifier)
+    DesignEmptyScreen(message = message, modifier = modifier, title = title, icon = icon)
 }
 
 /** The failure classified once in `SeerrErrors.kt`, with a retry where the caller offers one. */
@@ -50,29 +44,32 @@ fun ErrorScreen(
     modifier: Modifier = Modifier,
     onRetry: (() -> Unit)? = null,
 ) {
-    MessageScreen(
-        body = stringResource(error.messageRes()),
-        headline = stringResource(error.titleRes()),
-        icon = error.icon(),
-        primary = onRetry?.let { ScreenAction(stringResource(R.string.action_try_again), it, Icons.Filled.Refresh) },
-        // The whole message is announced, not just the headline: it replaced what the user was reading.
-        announce = true,
+    DesignErrorScreen(
+        kind = error.toErrorKind(),
+        onRetry = onRetry,
         modifier = modifier,
+        title = stringResource(error.titleRes()),
+        message = stringResource(error.messageRes()),
     )
 }
 
-private fun SeerrError.icon(): ImageVector =
+/**
+ * The design system's kind for a failure, which picks the icon. The words stay this app's own, in [titleRes] and
+ * [messageRes]: they name the server, the saved sign-in and the request quota, which the kind's copy does not.
+ * The kind has no icon for a missing connection, so that one reads as a generic failure.
+ */
+internal fun SeerrError.toErrorKind(): ErrorKind =
     when (this) {
-        SeerrError.NotConnected -> Icons.Filled.PowerOff
-        SeerrError.Unauthorized -> Icons.Filled.Lock
-        SeerrError.Forbidden -> Icons.Filled.Block
-        SeerrError.Quota -> Icons.Filled.HourglassEmpty
-        SeerrError.NotFound -> Icons.Filled.SearchOff
-        SeerrError.Unreachable -> Icons.Filled.WifiOff
-        SeerrError.Server -> Icons.Filled.CloudOff
-        SeerrError.Rejected, SeerrError.Unknown -> Icons.Filled.ErrorOutline
+        SeerrError.Unauthorized -> ErrorKind.Auth
+        SeerrError.Forbidden -> ErrorKind.Forbidden
+        SeerrError.Quota -> ErrorKind.RateLimited
+        SeerrError.NotFound -> ErrorKind.NotFound
+        SeerrError.Unreachable -> ErrorKind.Network
+        SeerrError.Server -> ErrorKind.Server
+        SeerrError.NotConnected, SeerrError.Rejected, SeerrError.Unknown -> ErrorKind.Generic
     }
 
+@StringRes
 internal fun SeerrError.titleRes(): Int =
     when (this) {
         SeerrError.NotConnected -> R.string.state_error_not_connected_title
@@ -86,6 +83,7 @@ internal fun SeerrError.titleRes(): Int =
         SeerrError.Unknown -> R.string.state_error_unknown_title
     }
 
+@StringRes
 internal fun SeerrError.messageRes(): Int =
     when (this) {
         SeerrError.NotConnected -> R.string.state_error_not_connected_message
