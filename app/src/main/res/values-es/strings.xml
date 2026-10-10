@@ -545,9 +545,9 @@
     <string name="server_settings_rule_genres">Géneros</string>
     <string name="server_settings_rule_genres_hint">IDs de género de TMDB separados por comas; en blanco para cualquiera.</string>
     <string name="server_settings_rule_languages">Idiomas originales</string>
-    <string name="server_settings_rule_languages_hint">Códigos de idioma como es, ja, separados por comas; en blanco para cualquiera.</string>
     <string name="server_settings_rule_keywords">Palabras clave</string>
-    <string name="server_settings_rule_keywords_hint">IDs de palabra clave de TMDB separados por comas; en blanco para cualquiera.</string>
+    <string name="server_settings_rule_keywords_empty_title">Sin palabras clave</string>
+    <string name="server_settings_rule_keywords_empty">Busca una palabra clave para que la regla se aplique a las solicitudes que la tengan.</string>
     <string name="server_settings_rule_overrides_title">Enviarla con</string>
     <string name="server_settings_rule_pick_instance">Elige una instancia para ver lo que ofrece.</string>
     <string name="server_settings_rule_needs_condition">Añade al menos una condición: un usuario, género, idioma o palabra clave.</string>

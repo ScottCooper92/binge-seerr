@@ -168,7 +168,43 @@ data class OverrideRuleExtras(
     val users: List<Choice> = emptyList(),
     val choices: DvrChoices? = null,
     val loadingChoices: Boolean = false,
+    val lists: Map<ServerList, ListChoices> = emptyMap(),
+    val genres: GenreChoices = GenreChoices.Loading,
+    val keywords: KeywordSearch = KeywordSearch(),
 )
+
+/**
+ * The genres the rule's instance type offers: Radarr's rules match movie genres and Sonarr's TV ones. [Failed] puts the
+ * row back to typed ids, so a server that cannot send the list does not leave the condition out of reach.
+ */
+sealed interface GenreChoices {
+    data object Loading : GenreChoices
+
+    data class Ready(
+        val genres: List<Choice>,
+    ) : GenreChoices
+
+    data object Failed : GenreChoices
+}
+
+/**
+ * What the genre sheet offers: the server's genres by name, plus any saved id the list lacks (shown as its number), so
+ * Done never quietly drops a genre the rule already holds.
+ */
+internal fun genreChecklist(
+    listed: List<Choice>,
+    saved: Set<Int>,
+): List<Choice> =
+    (
+        listed +
+            saved
+                .filter { id ->
+                    listed.none { it.id == id }
+                }.map { Choice(it, it.toString()) }
+    ).sortedBy { it.label.lowercase() }
+
+/** The comma-separated ids with [id] added, or taken out when it is there: how a rule keeps genres and keywords. */
+internal fun String.withIdToggled(id: Int): String = tagIds().let { if (id in it) it - id else it + id }.joinToString(",")
 
 internal fun SeerrServiceSettingsDto.toSummary(type: ServiceType): DvrSummary? {
     val id = id ?: return null

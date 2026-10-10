@@ -75,23 +75,17 @@ class ServerGeneralViewModel
             }
         }
 
+        private val keywords =
+            KeywordLookup(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = { currentExtras().keywords },
+                edit = { change -> editExtras { it.copy(keywords = change(it.keywords)) } },
+            )
+
         /** Names the blocklisted tags the draft holds, once each: the server keeps them as TMDB ids. */
-        fun loadKeywordNames(ids: List<Int>) {
-            val missing = ids.filter { it !in currentExtras().keywords.names }
-            if (missing.isEmpty()) return
-            viewModelScope.launch(dispatcher) {
-                val api = connection.api()
-                val named =
-                    missing
-                        .mapNotNull { id ->
-                            attempt { api.keyword(id) }
-                                .getOrNull()
-                                ?.name
-                                ?.let { id to it }
-                        }.toMap()
-                editExtras { it.copy(keywords = it.keywords.copy(names = it.keywords.names + named)) }
-            }
-        }
+        fun loadKeywordNames(ids: List<Int>) = keywords.name(ids)
 
         /**
          * Re-reads the blocklisted tags after the tags page has saved them, into the saved record and the draft alike, so

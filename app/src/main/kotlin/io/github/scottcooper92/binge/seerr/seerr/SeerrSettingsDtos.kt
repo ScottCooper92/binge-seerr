@@ -455,6 +455,13 @@ data class SeerrLanguageDto(
     @SerialName("english_name") val englishName: String? = null,
 )
 
+/** One TMDB genre: the id an override rule keeps, and its name in the language asked for. */
+@Serializable
+data class SeerrGenreDto(
+    @SerialName("id") val id: Int = 0,
+    @SerialName("name") val name: String? = null,
+)
+
 /** One TMDB keyword: what a blocklisted tag is. */
 @Serializable
 data class SeerrKeywordDto(

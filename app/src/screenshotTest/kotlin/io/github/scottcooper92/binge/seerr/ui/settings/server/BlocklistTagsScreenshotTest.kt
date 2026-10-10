@@ -27,7 +27,10 @@ class BlocklistTagsScreenshotTest {
 private fun tagged() =
     BlocklistTagsUiState.Ready(
         tags = listOf(9951, 210024, 4344, 818, 6075),
-        names = mapOf(9951 to "kaiju", 210024 to "anime", 4344 to "musical", 818 to "based on novel or book", 6075 to "sport"),
+        search =
+            KeywordSearch(
+                names = mapOf(9951 to "kaiju", 210024 to "anime", 4344 to "musical", 818 to "based on novel or book", 6075 to "sport"),
+            ),
     )
 
 @Composable

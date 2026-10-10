@@ -97,25 +97,34 @@ fun BlocklistTagsScreen(
     ) { inner ->
         ready?.let {
             Column(modifier = Modifier.fillMaxSize().padding(inner)) {
-                val search = it.search.copy(names = it.names)
-                TagSearch(it.tags, search, actions.onSearch, actions.onToggle)
-                ChosenTags(it.tags, search, actions.onToggle, Modifier.weight(1f))
+                TagSearch(it.tags, it.search, actions.onSearch, actions.onToggle)
+                ChosenTags(
+                    chosen = it.tags,
+                    search = it.search,
+                    onRemove = actions.onToggle,
+                    emptyTitle = stringResource(R.string.server_settings_blocklist_tags_empty_title),
+                    emptyBody = stringResource(R.string.server_settings_blocklist_tags_empty),
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
 }
 
+/** The keywords chosen, each a chip that removes it, or [emptyTitle] and [emptyBody] when there are none. */
 @Composable
-private fun ChosenTags(
+internal fun ChosenTags(
     chosen: List<Int>,
     search: KeywordSearch,
     onRemove: (Int) -> Unit,
+    emptyTitle: String,
+    emptyBody: String,
     modifier: Modifier,
 ) {
     if (chosen.isEmpty()) {
         MessageScreen(
-            headline = stringResource(R.string.server_settings_blocklist_tags_empty_title),
-            body = stringResource(R.string.server_settings_blocklist_tags_empty),
+            headline = emptyTitle,
+            body = emptyBody,
             icon = Icons.Filled.Sell,
             modifier = modifier,
         )
@@ -217,7 +226,7 @@ private fun Note(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TagSearch(
+internal fun TagSearch(
     chosen: List<Int>,
     search: KeywordSearch,
     onQuery: (String) -> Unit,
