@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.PHONE_WIDTH
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
-
-private val ROW_WIDTH = 411.dp
 
 /**
  * The phone request list row (`RequestRow`/`RequestRowMeta` in `RequestList.kt`), which had no frame
@@ -40,7 +38,7 @@ class RequestListScreenshotTest {
 
 @Composable
 private fun Frame(item: RequestItem) {
-    Box(Modifier.width(ROW_WIDTH).background(MaterialTheme.colorScheme.background)) {
+    Box(Modifier.width(PHONE_WIDTH).background(MaterialTheme.colorScheme.background)) {
         RequestRow(item = item, onClick = {}, onManage = {}, now = FIXED_NOW_MILLIS)
     }
 }

@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.PHONE_WIDTH
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
-
-private val ROW_WIDTH = 411.dp
 
 /**
  * The phone issue row (`IssueRow`/`IssueRowMeta` in `IssueList.kt`), which had no frame exercising
@@ -34,7 +32,7 @@ class IssueListScreenshotTest {
 
 @Composable
 private fun Frame(item: IssueItem) {
-    Box(Modifier.width(ROW_WIDTH).background(MaterialTheme.colorScheme.background)) {
+    Box(Modifier.width(PHONE_WIDTH).background(MaterialTheme.colorScheme.background)) {
         IssueRow(item = item, onClick = {}, now = FIXED_NOW_MILLIS)
     }
 }
