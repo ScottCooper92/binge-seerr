@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.issues
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueComment
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetail
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetailUiState
@@ -11,11 +12,6 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 
-/**
- * A fixed, far-in-the-past render instant, exactly as `TvIssuesScreenshotTest` anchors its rows: a
- * relative-date string that drifted a day stale on every CI run after the day it was recorded.
- */
-private const val NOW_MILLIS = 1_770_000_000_000L
 private const val DAY_MILLIS = 24 * 3_600_000L
 
 private val Item =
@@ -31,8 +27,8 @@ private val Item =
         reportedBy = "ana",
         reportedById = 3,
         commentCount = 2,
-        createdAtMillis = NOW_MILLIS - 2 * DAY_MILLIS,
-        updatedAtMillis = NOW_MILLIS - DAY_MILLIS,
+        createdAtMillis = FIXED_NOW_MILLIS - 2 * DAY_MILLIS,
+        updatedAtMillis = FIXED_NOW_MILLIS - DAY_MILLIS,
         problem = "The subtitles run about two seconds late from episode 4 onward.",
         problemSeason = 1,
         problemEpisode = 4,
@@ -50,7 +46,7 @@ private fun comment(
     authorId = id,
     isAdmin = isAdmin,
     message = message,
-    createdAtMillis = NOW_MILLIS - daysAgo * DAY_MILLIS,
+    createdAtMillis = FIXED_NOW_MILLIS - daysAgo * DAY_MILLIS,
     isMine = false,
 )
 
@@ -97,20 +93,20 @@ class TvIssueDetailScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun EmptyThread() {
-        TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(emptyList())), actions = actions(), now = NOW_MILLIS)
+        TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(emptyList())), actions = actions(), now = FIXED_NOW_MILLIS)
     }
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun ShortThread() {
-        TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(ShortThread)), actions = actions(), now = NOW_MILLIS)
+        TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(ShortThread)), actions = actions(), now = FIXED_NOW_MILLIS)
     }
 
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun LongThread() {
-        TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(LongThread)), actions = actions(), now = NOW_MILLIS)
+        TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(LongThread)), actions = actions(), now = FIXED_NOW_MILLIS)
     }
 }

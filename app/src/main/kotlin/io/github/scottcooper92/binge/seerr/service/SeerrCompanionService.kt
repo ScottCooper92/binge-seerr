@@ -6,13 +6,12 @@ import com.binge.companion.sdk.HostPolicy
 import com.binge.companion.sdk.IntegrationService
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.scottcooper92.binge.seerr.ADMITS_UNVERIFIED_CALLERS
-import io.github.scottcooper92.binge.seerr.BingeOnlyHostPolicy
 import io.github.scottcooper92.binge.seerr.BuildConfig
+import io.github.scottcooper92.binge.seerr.SelfOrPolicy
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.RequestStore
-import io.github.scottcooper92.binge.seerr.logWarning
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.grpc.BindableService
 import io.grpc.binder.SecurityPolicy
@@ -61,11 +60,7 @@ class SeerrCompanionService : IntegrationService() {
      */
     override fun hostPolicy(): SecurityPolicy =
         if (ADMITS_UNVERIFIED_CALLERS) {
-            BingeOnlyHostPolicy(
-                selfUid = Process.myUid(),
-                packagesForUid = { uid -> packageManager.getPackagesForUid(uid).orEmpty().toList() },
-                warn = logWarning(TAG),
-            )
+            SelfOrPolicy(selfUid = Process.myUid(), policy = HostPolicy.anyCertificateOf(this, tag = TAG))
         } else {
             HostPolicy.pinned(this, listOf(BingeHosts.release))
         }
