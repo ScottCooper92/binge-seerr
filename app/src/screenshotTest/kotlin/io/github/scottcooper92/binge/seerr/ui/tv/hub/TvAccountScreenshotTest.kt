@@ -43,32 +43,34 @@ private val SampleRequests =
         request(4, "Severance", SeerrRequestStatusCode.Approved, mediaStatus = SeerrMediaStatusCode.Available, now = FIXED_NOW_MILLIS),
     )
 
-private fun detail(quota: HubQuota?) =
-    UserDetailUiState.Ready(
-        UserDetail(
-            item =
-                UserItem(
-                    id = 7,
-                    name = "Scott",
-                    email = "scott@example.com",
-                    handle = "scott",
-                    avatarUrl = null,
-                    origin = UserOrigin.Jellyfin,
-                    permissions = ADMIN_PERMISSIONS,
-                    requestCount = SampleRequests.size,
-                    createdAtMillis = JOINED_MILLIS,
-                ),
-            permissions = emptySet(),
-            quota = quota,
-            watch = null,
-            watchlist = emptyList(),
-            isSelf = true,
-            canEditSettings = true,
-            canDelete = false,
-            serverUrl = "http://seerr.lan:5055",
-            webUrl = "http://seerr.lan:5055/users/7",
-        ),
-    )
+private fun detail(
+    quota: HubQuota?,
+    requestCount: Int = SampleRequests.size,
+) = UserDetailUiState.Ready(
+    UserDetail(
+        item =
+            UserItem(
+                id = 7,
+                name = "Scott",
+                email = "scott@example.com",
+                handle = "scott",
+                avatarUrl = null,
+                origin = UserOrigin.Jellyfin,
+                permissions = ADMIN_PERMISSIONS,
+                requestCount = requestCount,
+                createdAtMillis = JOINED_MILLIS,
+            ),
+        permissions = emptySet(),
+        quota = quota,
+        watch = null,
+        watchlist = emptyList(),
+        isSelf = true,
+        canEditSettings = true,
+        canDelete = false,
+        serverUrl = "http://seerr.lan:5055",
+        webUrl = "http://seerr.lan:5055/users/7",
+    ),
+)
 
 /**
  * The television account page: the profile as the phone's user page shows it, a tile per request quota (one spent,
@@ -103,6 +105,22 @@ class TvAccountScreenshotTest {
     fun UnlimitedQuota() {
         TvAccountBoard(
             detail = detail(HubQuota(movie = null, tv = null)),
+            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
+            onOpenRequest = {},
+            onRetry = {},
+            onRetryRequests = {},
+            overlayOpen = false,
+            now = FIXED_NOW_MILLIS,
+        )
+    }
+
+    /** More requests than the row holds: the heading carries the whole count and the row ends in a See all tile (#1043). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun SeeAll() {
+        TvAccountBoard(
+            detail = detail(HubQuota(movie = null, tv = null), requestCount = 57),
             requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
             onOpenRequest = {},
             onRetry = {},
