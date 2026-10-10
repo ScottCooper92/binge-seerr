@@ -26,6 +26,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.Locale
 
 private const val RADARR =
     """[{"id":1,"name":"Movies","hostname":"radarr.local","port":7878,"apiKey":"r-key","activeProfileId":4,"activeDirectory":"/movies"},
@@ -127,7 +128,7 @@ class OverrideRuleViewModelTest {
             val movie = vm.awaitReady { it.extras.genres is GenreChoices.Ready }.extras.genres as GenreChoices.Ready
             assertEquals(listOf("Action", "Adventure"), movie.genres.map { it.label })
             assertEquals(
-                "en-US",
+                Locale.getDefault().toLanguageTag(),
                 seerr.received
                     .first { it.url.encodedPath == "/api/v1/genres/movie" }
                     .url
