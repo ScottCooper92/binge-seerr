@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -110,6 +111,19 @@ class TvIssuesBoardFocusTest {
         assertEquals(listOf(12), opened)
     }
 
+    /** The server refuses a reporter's delete once someone has replied, so the sheet does not offer it (#1151). */
+    @Test
+    fun aReporterIsNotOfferedDeleteOnceSomeoneHasReplied() {
+        setBoard(reporter, items = listOf(issue(11, SEVERANCE, reportedById = 3, commentCount = 2)))
+        focusFirstRow()
+
+        pressOk()
+        sheetRow(R.string.tv_issue_resolve).assertIsFocused()
+        composeTestRule.onAllNodes(hasText(string(R.string.issue_delete))).assertCountEquals(0)
+        pressDown()
+        sheetRow(R.string.tv_issue_read_comments).assertIsFocused()
+    }
+
     @Test
     fun theSheetsReadCommentsRowOpensTheDetailPage() {
         setBoard(manager)
@@ -125,8 +139,10 @@ class TvIssuesBoardFocusTest {
         assertTrue(resolved.isEmpty())
     }
 
-    private fun setBoard(scope: IssueListScope) {
-        val items = listOf(issue(11, SEVERANCE, reportedById = 3), issue(12, HORSES, reportedById = 5))
+    private fun setBoard(
+        scope: IssueListScope,
+        items: List<IssueItem> = listOf(issue(11, SEVERANCE, reportedById = 3), issue(12, HORSES, reportedById = 5)),
+    ) {
         composeTestRule.setContent {
             var state by remember {
                 mutableStateOf(IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = null, scope = scope))
@@ -202,6 +218,7 @@ class TvIssuesBoardFocusTest {
         id: Int,
         title: String,
         reportedById: Int,
+        commentCount: Int = 0,
     ) = IssueItem(
         id = id,
         tmdbId = id,
@@ -213,7 +230,7 @@ class TvIssuesBoardFocusTest {
         status = IssueStatus.Open,
         reportedBy = "ana",
         reportedById = reportedById,
-        commentCount = 0,
+        commentCount = commentCount,
         createdAtMillis = null,
         updatedAtMillis = null,
         problem = null,

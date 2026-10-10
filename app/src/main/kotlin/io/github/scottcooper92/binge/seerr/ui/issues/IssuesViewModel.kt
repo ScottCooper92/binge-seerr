@@ -215,12 +215,18 @@ class IssuesViewModel
                 store.updateStatus(item.id, IssueStatus.Open.name)
             }
 
-        /** Removes the report and its whole thread from the server and the cache. */
-        fun delete(item: IssueItem) =
+        /**
+         * Removes the report and its whole thread from the server and the cache. Nothing is sent for an issue the server
+         * would refuse to let this user delete (#1151): it would answer 401, which reads as a dead session.
+         */
+        fun delete(item: IssueItem) {
+            val resolved = (scope.value as? ScopeState.Resolved)?.scope ?: return
+            if (!item.canBeDeleted(resolved)) return
             act(item, IssueListEvent.Deleted, "deleted") {
                 connection.api().deleteIssue(item.id)
                 store.delete(item.id)
             }
+        }
 
         private fun act(
             item: IssueItem,
