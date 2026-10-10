@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 /**
  * What the slider editor reads from the server for the kind it is editing: the genres of a genre slider, the providers of a
@@ -23,7 +22,14 @@ internal class SliderReaders(
     private val nameKeywords: (List<Int>) -> Unit,
     private val nameStudio: (Int) -> Unit,
 ) {
-    private var genresJob: Job? = null
+    private val genreLookup =
+        GenreLookup(
+            scope = scope,
+            dispatcher = dispatcher,
+            api = api,
+            current = { current().genres },
+            set = { choices -> edit { it.copy(genres = choices) } },
+        )
     private var providersJob: Job? = null
 
     /** Reads what [form]'s kind needs to name or offer its data: the names it holds, or the list it picks from. */
@@ -31,7 +37,7 @@ internal class SliderReaders(
         val id = form.data.trim().toIntOrNull()
         when (form.type.dataKind) {
             SliderDataKind.Keywords -> nameKeywords(form.data.tagIds())
-            SliderDataKind.Genre -> genres(form.type)
+            SliderDataKind.Genre -> form.type.genreSegment?.let(genreLookup::ensure)
             SliderDataKind.Studio -> id?.let(nameStudio)
             SliderDataKind.Network -> id?.let(::network)
             SliderDataKind.Streaming -> {
@@ -42,21 +48,9 @@ internal class SliderReaders(
         }
     }
 
-    /** The genres of a genre slider's kind, named in the device's language. */
-    fun genres(type: SliderType) {
-        val segment = type.genreSegment ?: return
-        genresJob?.cancel()
-        edit { it.copy(genres = GenreChoices.Loading) }
-        genresJob =
-            scope.launch(dispatcher) {
-                val genres =
-                    attempt { api().genres(segment, Locale.getDefault().toLanguageTag()) }
-                        .fold(
-                            { list -> GenreChoices.Ready(list.mapNotNull { dto -> dto.name?.let { Choice(dto.id, it) } }) },
-                            { GenreChoices.Failed },
-                        )
-                edit { it.copy(genres = genres) }
-            }
+    /** Makes the genres of [type] available: left alone where they have been read, read again where they have not. */
+    fun ensureGenres(type: SliderType) {
+        type.genreSegment?.let(genreLookup::ensure)
     }
 
     /** Forgets the provider list and any read of it in flight: with no region there is no list to offer. */
