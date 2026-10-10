@@ -1,11 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -52,8 +54,8 @@ class NetworkViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(): NetworkViewModel {
-        val vm = NetworkViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+    private suspend fun TestScope.viewModel(savedState: SavedStateHandle = SavedStateHandle()): NetworkViewModel {
+        val vm = NetworkViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, savedState)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -61,6 +63,39 @@ class NetworkViewModelTest {
 
     private suspend fun NetworkViewModel.awaitReady(): EditorUiState.Ready<NetworkForm> =
         uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<NetworkForm>
+
+    /** #1026: a draft outlives the process; the proxy's password is not kept, and comes back from the record. */
+    @Test
+    fun `an unsaved draft survives the process being killed, without the proxy password`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val savedState = SavedStateHandle()
+            val vm = viewModel(savedState)
+            vm.awaitReady()
+            vm.edit {
+                it.copy(
+                    trustProxy = false,
+                    proxy = it.proxy?.copy(enabled = true, host = "proxy.lan", port = "3128", user = "ana", password = "s3cret"),
+                )
+            }
+            vm.awaitReady()
+            assertTrue(savedState.keys().none { savedState.get<Any?>(it).toString().contains("s3cret") })
+
+            val back = viewModel(savedState.afterProcessDeath()).awaitReady()
+
+            assertFalse(back.draft.trustProxy)
+            assertEquals("ana", back.draft.proxy?.user)
+            assertEquals("", back.draft.proxy?.password)
+            assertTrue(back.dirty)
+
+            // Saved, there is nothing left to keep, and the next start reads the server alone.
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+            assertFalse(viewModel(savedState.afterProcessDeath()).awaitReady().dirty)
+        }
 
     @Test
     fun `a ttl the dns cache is not using does not block saving the rest of the page`() =

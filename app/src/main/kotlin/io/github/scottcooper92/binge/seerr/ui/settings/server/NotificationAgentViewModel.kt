@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -18,12 +19,14 @@ import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SavedDraft
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
 import retrofit2.HttpException
 
 private const val SOUNDS_DEBOUNCE_MILLIS = 600L
@@ -42,8 +45,23 @@ class NotificationAgentViewModel
         @Assisted val agent: ServerAgent,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher) {
         internal var soundsDebounceMillis = SOUNDS_DEBOUNCE_MILLIS
+
+        /**
+         * A long form, kept across the process being killed (#1026). Its credentials are not kept, nor the record the server
+         * sent, which holds them too: both go back in from the record read on return.
+         */
+        override val savedDraft =
+            SavedDraft(
+                savedState,
+                AgentForm.serializer(),
+                scrub = { form -> form.copy(options = form.options.filterKeys { !it.credential }, raw = JsonObject(emptyMap())) },
+                restore = { kept, loaded ->
+                    kept.copy(options = kept.options + loaded.options.filterKeys { it.credential }, raw = loaded.raw)
+                },
+            )
 
         init {
             reload()

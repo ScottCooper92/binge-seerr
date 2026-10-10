@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
@@ -19,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.RecordingCrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
@@ -100,7 +102,7 @@ class IssueDetailViewModelTest {
         serve("* /api/v1/movie/100", """{"title":"Heat","posterPath":"/heat.jpg","releaseDate":"1995-12-15"}""")
     }
 
-    private suspend fun TestScope.viewModel(): IssueDetailViewModel {
+    private suspend fun TestScope.viewModel(savedState: SavedStateHandle = SavedStateHandle()): IssueDetailViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -120,6 +122,7 @@ class IssueDetailViewModelTest {
                 31,
                 analytics,
                 crashBreadcrumbs,
+                savedState,
             )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -128,6 +131,21 @@ class IssueDetailViewModelTest {
 
     private suspend fun IssueDetailViewModel.awaitReady(match: (IssueDetailUiState.Ready) -> Boolean = { true }): IssueDetailUiState.Ready =
         uiState.first { it is IssueDetailUiState.Ready && match(it) } as IssueDetailUiState.Ready
+
+    /** #1026: a comment half typed when the process is killed comes back in the composer. */
+    @Test
+    fun `a half-typed comment survives the process being killed`() =
+        runTest {
+            server(ADMIN)
+            val savedState = SavedStateHandle()
+            val vm = viewModel(savedState)
+            vm.awaitReady()
+            vm.setDraft("Still no audio on")
+
+            val back = viewModel(savedState.afterProcessDeath())
+
+            assertEquals("Still no audio on", back.awaitReady().draft)
+        }
 
     @Test
     fun `the page reads as the title, the report, the thread with its authors, and what a manager may do`() =
