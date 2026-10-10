@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import io.github.scottcooper92.binge.seerr.util.ReversingCipher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -862,12 +863,5 @@ class SetupViewModelTest {
         override fun encrypt(plaintext: String): String = throw GeneralSecurityException("keymaster")
 
         override fun decrypt(ciphertext: String): String? = null
-    }
-
-    /** Distinct from [PlainCipher] so a test can tell the stored blob apart from the plaintext. */
-    private object ReversingCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext.reversed()
-
-        override fun decrypt(ciphertext: String): String = ciphertext.reversed()
     }
 }
