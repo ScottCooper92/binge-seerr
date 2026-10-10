@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * The connected hub: the server and account cards, the counts, the downloading strip and the
+ * The connected hub: the server card, the account in the bar, the counts, the downloading strip and the
  * manage rows, over the connection's live health. The overview loads once per connect or re-check
  * and never on the poll; the pending-request badge also refreshes on becoming visible, so returning
  * from a sub-screen picks up an approval without waiting on anything. A pull on the dashboard re-reads

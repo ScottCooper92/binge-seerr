@@ -104,6 +104,9 @@ app:handoff_page_signing_in  8b9d3de8ae00
 app:handoff_page_store_name  50eee1301880
 app:handoff_page_title  0f4cbd63d401
 app:handoff_page_username  e3b89e9d33f8
+app:hub_account_movies_left  c2a2e1ee3345
+app:hub_account_tv_left  2740326b3eac
+app:hub_account_unlimited  ec2e57f9cc2d
 app:hub_binge_connect_hint  ac2c213c1567
 app:hub_binge_connected_hint  9738f0f1708a
 app:hub_binge_get  d0d7d58e7428

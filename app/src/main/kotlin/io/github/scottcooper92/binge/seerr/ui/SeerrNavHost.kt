@@ -179,8 +179,8 @@ private fun SectionContent(
 /**
  * What a section's rows open: one request, one issue, one user and their settings. Most of these
  * stack above a section, where pane depth is always > 1 and the arrow is always right — but
- * [UserDetailRoute] and [EditConnectionRoute] are also opened straight off the hub itself (an
- * account card, a reconnect prompt), so they take [showBack] too. The rest accept it where wiring it
+ * [UserDetailRoute] and [EditConnectionRoute] are also opened straight off the hub itself (the
+ * bar's account action, a reconnect prompt), so they take [showBack] too. The rest accept it where wiring it
  * is a one-line forward to an existing [com.binge.designsystem.template.BingeScreenScaffold];
  * see [UserSettingsPageEntry] below for the one that does not.
  */
