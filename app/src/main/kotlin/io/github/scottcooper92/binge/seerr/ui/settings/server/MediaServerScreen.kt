@@ -256,6 +256,7 @@ private fun MediaLibrary.detail(): String {
             LibraryType.Shows -> stringResource(R.string.server_settings_library_shows)
             null -> null
         }
+    // The last scan does not tick: scans run hours apart, and a scan started here reloads the page (#1239).
     val scanned = formatRelativeOrAbsolute(lastScanMillis)?.let { stringResource(R.string.server_settings_library_scanned, it) }
     return listOfNotNull(kind, scanned).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty {
         stringResource(R.string.server_settings_library_never_scanned)

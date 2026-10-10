@@ -275,6 +275,7 @@ private fun LogRowHeader(
             modifier = Modifier.size(dimensionResource(R.dimen.log_row_level_icon_size)),
         )
         Text(stringResource(entry.level.labelRes()).uppercaseLocalised(), style = MaterialTheme.typography.labelMedium, color = tone)
+        // An entry's time does not tick: a refresh re-reads the log, and an old line's age is not what a reader scans for (#1239).
         val meta =
             listOfNotNull(
                 entry.label,

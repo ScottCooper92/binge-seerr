@@ -64,6 +64,8 @@ sealed interface UserDetailUiState {
     data class Ready(
         val detail: UserDetail,
         val deleting: Boolean = false,
+        /** What the page's relative times are worded against: moved on each minute while the page shows (#1239). */
+        val now: Long = System.currentTimeMillis(),
     ) : UserDetailUiState
 
     data class Error(
