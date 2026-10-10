@@ -2,13 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,8 +13,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.CheckboxRow
-import com.binge.designsystem.component.HintCard
-import com.binge.designsystem.resolvedContentInset
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
@@ -28,29 +20,18 @@ import com.binge.designsystem.R as DesR
 /**
  * Step one: the address alone. The server is read before any credential is asked for, and an
  * address in plain HTTP to a public host is not read at all until the user ticks the opt-in under it.
+ * [allow] is set while the address waits on the local-network permission: asking for it is then the way on.
  */
 @Composable
-internal fun SetupAddressStep(
+internal fun SetupAddressContent(
     state: SetupUiState.Address,
-    onEditAddress: (String) -> Unit,
-    onInspect: () -> Unit,
-    onAllowCleartext: (Boolean) -> Unit,
-    onLocalNetworkChanged: () -> Unit,
-    contentPadding: PaddingValues,
+    allow: AllowLocalNetwork?,
+    actions: SetupActions,
 ) {
-    // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
-    val allow = if (state.needsLocalNetwork) rememberAllowLocalNetwork(onLocalNetworkChanged) else null
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(contentPadding)
-                .padding(resolvedContentInset()),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        HintCard(text = stringResource(R.string.setup_intro))
         // Done submits, as Continue does: the address is the step's only field.
         EditorTextField(
             state.serverUrl,
@@ -64,10 +45,10 @@ internal fun SetupAddressStep(
                 if (allow != null) {
                     allow.run()
                 } else if (state.canContinue) {
-                    onInspect()
+                    actions.onInspect()
                 }
             },
-            onValueChange = onEditAddress,
+            onValueChange = actions.onEditAddress,
         )
         if (state.insecure) {
             Text(
@@ -78,7 +59,7 @@ internal fun SetupAddressStep(
             CheckboxRow(
                 label = stringResource(R.string.setup_allow_cleartext),
                 checked = state.cleartextAllowed,
-                onToggle = onAllowCleartext,
+                onToggle = actions.onAllowCleartext,
                 enabled = !state.isInspecting,
             )
         }
@@ -89,12 +70,21 @@ internal fun SetupAddressStep(
             // Said before the system prompt, so a permission dialog is never the first the user hears of it.
             Text(stringResource(R.string.setup_local_network_explanation), style = MaterialTheme.typography.bodyMedium)
         }
-        BingeFilledButton(
-            label = stringResource(allow?.label ?: R.string.setup_continue),
-            onClick = allow?.run ?: onInspect,
-            enabled = allow != null || state.canContinue,
-            loading = state.isInspecting,
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
+}
+
+/** The address step's one commit: Continue, or the local-network ask while that is the only way on (#1099). */
+@Composable
+internal fun SetupAddressFooter(
+    state: SetupUiState.Address,
+    allow: AllowLocalNetwork?,
+    onInspect: () -> Unit,
+) {
+    BingeFilledButton(
+        label = stringResource(allow?.label ?: R.string.setup_continue),
+        onClick = allow?.run ?: onInspect,
+        enabled = allow != null || state.canContinue,
+        loading = state.isInspecting,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
