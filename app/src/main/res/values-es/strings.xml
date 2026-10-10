@@ -99,6 +99,8 @@
     <string name="hub_section_settings">Ajustes</string>
     <string name="hub_section_settings_desc">Servicios, notificaciones y tareas</string>
     <string name="section_coming_soon">Esta sección llegará en una fase posterior.</string>
+    <string name="three_pane_nothing_open_title">Nada abierto</string>
+    <string name="three_pane_nothing_open_message">Elige algo de la lista para verlo aquí.</string>
     <string name="requests_filter_all">Todas</string>
     <string name="requests_filter_pending">Pendientes</string>
     <string name="requests_filter_approved">Aprobadas</string>
