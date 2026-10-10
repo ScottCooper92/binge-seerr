@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.HAND_OFF_SESSION_MODE
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -121,7 +122,7 @@ class SetupViewModel
             if (draft.value.editing != null) return
             crashBreadcrumbs.log("editing server connection")
             viewModelScope.launch(dispatcher) {
-                val saved = runCatching { connection.current() }.getOrNull() ?: return@launch
+                val saved = attempt { connection.current() }.getOrNull() ?: return@launch
                 // A connection already opted in to plain HTTP keeps its tick, or Edit would stall on it.
                 val consented = saved.baseUrl.insecurePublicHostOrNull()?.takeIf { connection.allowsCleartextTo(it) }
                 draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl, cleartextHost = consented, notice = notice) }
@@ -308,7 +309,7 @@ class SetupViewModel
             // Before the server is read, not after: while `editing` is unset the saved credentials
             // read as connected, and the screen would leave for the hub mid-resume.
             if (pending.editing) {
-                val editing = runCatching { connection.current() }.getOrNull()
+                val editing = attempt { connection.current() }.getOrNull()
                 draft.update { it.copy(editing = editing) }
             }
             val server =

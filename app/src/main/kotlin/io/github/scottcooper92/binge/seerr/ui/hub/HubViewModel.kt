@@ -242,7 +242,7 @@ class HubViewModel
                 isProbing.value = true
                 try {
                     // The probe's outcome reaches health through the cached client's interceptor.
-                    runCatching { connection.api().authenticatedUser() }
+                    attempt { connection.api().authenticatedUser() }
                 } finally {
                     isProbing.value = false
                 }

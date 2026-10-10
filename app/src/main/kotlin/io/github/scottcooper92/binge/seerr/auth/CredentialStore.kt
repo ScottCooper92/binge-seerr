@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -44,7 +45,7 @@ class CredentialStore(
                 is SeerrAuth.ApiKey -> auth.key
                 is SeerrAuth.Session -> auth.cookie
             }
-        val secret = runCatching { cipher.encrypt(plaintext) }.getOrElse { return false }
+        val secret = attempt { cipher.encrypt(plaintext) }.getOrElse { return false }
         dataStore.edit { prefs ->
             prefs[Keys.BASE_URL] = credentials.baseUrl
             prefs[Keys.VARIANT] = credentials.variant.name
@@ -69,7 +70,7 @@ class CredentialStore(
     }
 
     private fun Preferences.toVariant(): SeerrVariant =
-        this[Keys.VARIANT]?.let { stored -> runCatching { SeerrVariant.valueOf(stored) }.getOrNull() } ?: SeerrVariant.Unknown
+        this[Keys.VARIANT]?.let { stored -> attempt { SeerrVariant.valueOf(stored) }.getOrNull() } ?: SeerrVariant.Unknown
 
     private fun Preferences.toAuth(): SeerrAuth? =
         when (this[Keys.AUTH_TYPE]) {

@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNotificationTypesDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserNotificationSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -63,7 +64,7 @@ class NotificationsViewModel
          */
         private suspend fun pushoverSounds(token: String): List<PushoverSoundChoice> {
             if (!connection.profile().hasPushoverSounds) return emptyList()
-            return runCatching { connection.api().pushoverSounds(token) }
+            return attempt { connection.api().pushoverSounds(token) }
                 .getOrDefault(emptyList())
                 .map { PushoverSoundChoice(name = it.name, description = it.description ?: it.name) }
         }

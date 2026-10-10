@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
@@ -310,7 +311,7 @@ class BlocklistViewModel
             crashBreadcrumbs.key("tmdb_id", item.tmdbId.toString())
             crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection.api().removeFromBlocklist(
                         connection.profile().blocklistPath,
                         item.tmdbId,
@@ -338,9 +339,9 @@ class BlocklistViewModel
             crashBreadcrumbs.log(if (blocked) "blocking collection" else "unblocking collection")
             viewModelScope.launch(dispatcher) {
                 val profile = connection.profile()
-                val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
+                val permissions = attempt { connection.authenticatedUser() }.getOrNull().toPermissions()
                 if (!profile.canBlockCollections || !permissions.canManageBlocklist) return@launch
-                runCatching {
+                attempt {
                     val api = connection.api()
                     if (blocked) api.blockCollection(collectionId) else api.unblockCollection(collectionId)
                 }.onSuccess {
@@ -356,12 +357,12 @@ class BlocklistViewModel
             }
         }
 
-        private suspend fun seeded(): BlocklistReadCache = cache.also { it.adopt(runCatching { connection.current() }.getOrNull()) }
+        private suspend fun seeded(): BlocklistReadCache = cache.also { it.adopt(attempt { connection.current() }.getOrNull()) }
 
         private suspend fun readScope(): ScopeRead {
-            val viewer = runCatching { connection.refreshAuthenticatedUser() }
+            val viewer = attempt { connection.refreshAuthenticatedUser() }
             return ScopeRead(
-                profile = runCatching { connection.refreshProfile() }.getOrNull(),
+                profile = attempt { connection.refreshProfile() }.getOrNull(),
                 viewer = viewer.getOrNull(),
                 viewerError = viewer.exceptionOrNull()?.toSeerrError(),
             )
@@ -371,7 +372,7 @@ class BlocklistViewModel
             coroutineScope {
                 val api = connection.api()
 
-                suspend fun probe(filter: BlocklistFilter): Int? = runCatching { api.blocklistCount(path, filter) }.getOrNull()
+                suspend fun probe(filter: BlocklistFilter): Int? = attempt { api.blocklistCount(path, filter) }.getOrNull()
                 val all = async { probe(BlocklistFilter.All) }
                 val manual = async { probe(BlocklistFilter.Manual) }
                 val tagged = async { probe(BlocklistFilter.Tagged) }

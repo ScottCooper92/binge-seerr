@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.telemetry
 
 import android.util.Log
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -92,7 +93,7 @@ class AnalyticsConsentGate
          * it would end the collector and leave every caller of [awaitRead] waiting for good.
          */
         private fun ((Boolean) -> Unit).runIsolated(granted: Boolean) {
-            runCatching { this(granted) }
+            attempt { this(granted) }
                 .onFailure { Log.e(TAG, "An analytics backend failed to react to consent=$granted", it) }
         }
     }

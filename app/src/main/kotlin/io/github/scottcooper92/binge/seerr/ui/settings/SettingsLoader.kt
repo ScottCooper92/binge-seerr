@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrDefaultQuotaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMainSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import kotlinx.coroutines.async
@@ -35,12 +36,12 @@ class SettingsLoader
          * so an unreachable server leaves the last answer rather than emptying the screen.
          */
         suspend fun refreshViewer() {
-            runCatching { connection.refreshAuthenticatedUser() }
+            attempt { connection.refreshAuthenticatedUser() }
         }
 
         suspend fun connection(): ConnectionSummary {
             val saved = connection.current()
-            val user = runCatching { connection.authenticatedUser() }.getOrNull()
+            val user = attempt { connection.authenticatedUser() }.getOrNull()
             return ConnectionSummary(
                 baseUrl = saved.baseUrl,
                 signInKind = if (saved.auth is SeerrAuth.ApiKey) SignInKind.ApiKey else SignInKind.Session,
@@ -65,8 +66,8 @@ class SettingsLoader
 
         /** The signals this viewer may turn on: the feeds follow the moderator permissions, the user's own are everyone's. */
         suspend fun notificationSignals(): List<NotificationSignal> {
-            val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
-            val hasIssues = runCatching { connection.profile().hasIssues }.getOrDefault(false)
+            val permissions = attempt { connection.authenticatedUser() }.getOrNull().toPermissions()
+            val hasIssues = attempt { connection.profile().hasIssues }.getOrDefault(false)
             return NotificationSignal.entries.filter { signal ->
                 when (signal) {
                     NotificationSignal.PendingRequests -> permissions.canManageRequests
@@ -78,22 +79,22 @@ class SettingsLoader
 
         /** Null for a user who is not an admin, which the admin settings router needs (#1004); otherwise every section that answered. */
         suspend fun config(): ServerConfig? {
-            val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
+            val permissions = attempt { connection.authenticatedUser() }.getOrNull().toPermissions()
             if (!permissions.isAdmin) return null
-            val api = runCatching { connection.api() }.getOrNull() ?: return null
+            val api = attempt { connection.api() }.getOrNull() ?: return null
             return coroutineScope {
-                val main = async { runCatching { api.mainSettings() }.getOrNull() }
-                val jobs = async { runCatching { api.jobs() }.getOrNull() }
-                val email = async { runCatching { api.notificationAgent("email").enabled }.getOrNull() }
-                val discord = async { runCatching { api.notificationAgent("discord").enabled }.getOrNull() }
-                val radarr = async { runCatching { api.radarrServices() }.getOrNull() }
-                val sonarr = async { runCatching { api.sonarrServices() }.getOrNull() }
+                val main = async { attempt { api.mainSettings() }.getOrNull() }
+                val jobs = async { attempt { api.jobs() }.getOrNull() }
+                val email = async { attempt { api.notificationAgent("email").enabled }.getOrNull() }
+                val discord = async { attempt { api.notificationAgent("discord").enabled }.getOrNull() }
+                val radarr = async { attempt { api.radarrServices() }.getOrNull() }
+                val sonarr = async { attempt { api.sonarrServices() }.getOrNull() }
                 val mainDto = main.await()
                 ServerConfig(
                     general =
                         mainDto?.toGeneral()?.let { general ->
                             // Best-effort like the reads around it: a connection dropped mid-load has no profile to ask.
-                            val profile = runCatching { connection.profile() }.getOrNull()
+                            val profile = attempt { connection.profile() }.getOrNull()
                             profile?.let {
                                 general.copy(
                                     discoverSliders = it.hasDiscoverSliders,

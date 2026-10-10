@@ -20,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.hub.toHubQuota
@@ -97,7 +98,7 @@ class UserDetailViewModel
          * so a failed read does not leave the list empty for good.
          */
         private suspend fun mayReadRequests(): Boolean {
-            val viewer = runCatching { connection.authenticatedUser() }.getOrNull()
+            val viewer = attempt { connection.authenticatedUser() }.getOrNull()
             return viewer.mayReadRequestsOf(userId)
         }
 
@@ -118,7 +119,7 @@ class UserDetailViewModel
             }
             viewModelScope.launch(dispatcher) {
                 seedFromCache()
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { detail -> state.value = UserDetailUiState.Ready(detail) }
                     .onFailure { failure ->
                         state.update { current ->
@@ -135,7 +136,7 @@ class UserDetailViewModel
         /** Shows the cached row's profile in place of the skeleton, if a list has the user and nothing has landed yet. */
         private suspend fun seedFromCache() {
             if (state.value !is UserDetailUiState.Loading) return
-            val item = runCatching { store.byId(userId)?.toUserItem() }.getOrNull() ?: return
+            val item = attempt { store.byId(userId)?.toUserItem() }.getOrNull() ?: return
             state.update { current -> if (current is UserDetailUiState.Loading) UserDetailUiState.Seeded(item) else current }
         }
 
@@ -145,7 +146,7 @@ class UserDetailViewModel
             if (ready.deleting || !ready.detail.canDelete) return
             state.value = ready.copy(deleting = true)
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection.api().deleteUser(userId)
                     store.delete(userId)
                 }.onSuccess { eventFlow.emit(UserDetailEvent.UserDeleted) }
@@ -159,10 +160,10 @@ class UserDetailViewModel
         private suspend fun load(): UserDetail =
             coroutineScope {
                 val api = connection.api()
-                val viewer = async { runCatching { connection.authenticatedUser() }.getOrNull() }
-                val quota = async { runCatching { api.userQuota(userId).toHubQuota() }.getOrNull() }
-                val watch = async { runCatching { api.userWatchData(userId) }.getOrNull() }
-                val watchlist = async { runCatching { api.userWatchlist(userId) }.getOrNull() }
+                val viewer = async { attempt { connection.authenticatedUser() }.getOrNull() }
+                val quota = async { attempt { api.userQuota(userId).toHubQuota() }.getOrNull() }
+                val watch = async { attempt { api.userWatchData(userId) }.getOrNull() }
+                val watchlist = async { attempt { api.userWatchlist(userId) }.getOrNull() }
                 val dto = api.user(userId)
                 val item = dto.toUserItemOrFallback()
                 val recent =

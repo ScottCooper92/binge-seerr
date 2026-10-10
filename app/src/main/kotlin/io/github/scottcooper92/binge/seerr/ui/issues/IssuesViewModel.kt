@@ -18,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.data.ListRefreshes
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
@@ -103,9 +104,9 @@ class IssuesViewModel
                     flow {
                         if (scope.value is ScopeState.Failed) emit(ScopeState.Resolving)
                         emit(
-                            runCatching { connection.refreshAuthenticatedUser() }.fold(
+                            attempt { connection.refreshAuthenticatedUser() }.fold(
                                 onSuccess = { user ->
-                                    val hasCounts = runCatching { connection.refreshProfile().hasCounts }.getOrDefault(false)
+                                    val hasCounts = attempt { connection.refreshProfile().hasCounts }.getOrDefault(false)
                                     ScopeState.Resolved(
                                         IssueListScope(permissions = user.toPermissions(), currentUserId = user.id, hasCounts = hasCounts),
                                     )
@@ -153,7 +154,7 @@ class IssuesViewModel
                     flow {
                         emit(
                             if (hasCounts) {
-                                runCatching { connection.api().issueCount() }.getOrNull()?.let { IssueCounts(it.total, it.open, it.closed) }
+                                attempt { connection.api().issueCount() }.getOrNull()?.let { IssueCounts(it.total, it.open, it.closed) }
                             } else {
                                 null
                             },
@@ -225,7 +226,7 @@ class IssuesViewModel
             crashBreadcrumbs.key("issue_id", item.id.toString())
             crashBreadcrumbs.log("$action issue")
             viewModelScope.launch(dispatcher) {
-                val result = runCatching { write() }
+                val result = attempt { write() }
                 actingState.update { it - item.id }
                 result
                     .onSuccess {

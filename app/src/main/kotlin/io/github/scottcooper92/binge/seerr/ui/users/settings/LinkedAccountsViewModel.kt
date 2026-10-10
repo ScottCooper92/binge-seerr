@@ -60,7 +60,7 @@ class LinkedAccountsViewModel
         fun reload() {
             state.value = LinkedAccountsUiState.Loading
             viewModelScope.launch(dispatcher) {
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { state.value = it }
                     .onFailure { state.value = LinkedAccountsUiState.Error(it.toSeerrError()) }
             }
@@ -121,7 +121,7 @@ class LinkedAccountsViewModel
                 linkJob = null
                 outcome
                     .onSuccess {
-                        runCatching { load() }.onSuccess { state.value = it }
+                        attempt { load() }.onSuccess { state.value = it }
                         eventFlow.emit(done)
                     }.onFailure { failure ->
                         state.update { current -> (current as? LinkedAccountsUiState.Ready)?.copy(busy = false, link = null) ?: current }

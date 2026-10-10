@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.data
 import com.binge.companion.contracts.request.v1.DownloadProgress
 import com.binge.companion.contracts.request.v1.RequestStatus
 import com.binge.companion.contracts.v1.MediaId
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import java.util.Base64
 
 /**
@@ -78,7 +79,7 @@ internal fun encodeStatus(status: RequestStatus): String = Base64.getEncoder().e
  * throw into the host's call.
  */
 internal fun decodeStatus(encoded: String): RequestStatus? =
-    runCatching { RequestStatus.parseFrom(Base64.getDecoder().decode(encoded)) }.getOrNull()
+    attempt { RequestStatus.parseFrom(Base64.getDecoder().decode(encoded)) }.getOrNull()
 
 /** No download is the empty string, so the column needs no null. */
 internal fun encodeDownload(download: DownloadProgress?): String =
@@ -86,7 +87,7 @@ internal fun encodeDownload(download: DownloadProgress?): String =
 
 /** As [decodeStatus], a value that does not parse reads as none: the standard user is shown no download rather than a 4K one. */
 internal fun decodeDownload(encoded: String): DownloadProgress? =
-    encoded.takeIf { it.isNotEmpty() }?.let { runCatching { DownloadProgress.parseFrom(Base64.getDecoder().decode(it)) }.getOrNull() }
+    encoded.takeIf { it.isNotEmpty() }?.let { attempt { DownloadProgress.parseFrom(Base64.getDecoder().decode(it)) }.getOrNull() }
 
 internal fun encodeRequesterIds(ids: Map<Int, Int>): String = ids.entries.joinToString(",") { (request, user) -> "$request:$user" }
 

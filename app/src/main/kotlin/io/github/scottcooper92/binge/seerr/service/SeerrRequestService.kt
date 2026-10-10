@@ -67,6 +67,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.checkHasSeasons
 import io.github.scottcooper92.binge.seerr.seerr.checkedSeasonNumbers
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
@@ -322,7 +323,7 @@ class SeerrRequestService(
             } catch (e: HttpException) {
                 if (!e.refusedWithLiveSession()) throw e
                 // A request with no status is pending, as everywhere else; one that will not read is taken as pending too.
-                val status = runCatching { api.request(request.requestId).status }.getOrNull()
+                val status = attempt { api.request(request.requestId).status }.getOrNull()
                 val pending = status == null || status == SeerrRequestStatusCode.Pending
                 throw StatusException(
                     if (pending) {

@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.seerr.HTTP_NOT_FOUND
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.PlexPinDto
 import io.github.scottcooper92.binge.seerr.seerr.PlexTvApi
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.plexTvApi
 import kotlinx.coroutines.delay
 import retrofit2.HttpException
@@ -83,7 +84,7 @@ class PlexPinFlow(
             id = id,
             code = code,
             authUrl = identity.authUrl(code),
-            expiresAt = expiresAt?.let { raw -> runCatching { Instant.parse(raw) }.getOrNull() },
+            expiresAt = expiresAt?.let { raw -> attempt { Instant.parse(raw) }.getOrNull() },
             identity = identity,
         )
 }
