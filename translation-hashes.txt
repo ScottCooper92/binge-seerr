@@ -541,7 +541,6 @@ app:server_settings_blocklist_tags_remove  46a5cb51849c
 app:server_settings_blocklist_tags_retry  942087cc2d41
 app:server_settings_blocklist_tags_save_failed  0d8304b193f0
 app:server_settings_blocklist_tags_search  4b44b486ff10
-app:server_settings_blocklist_tags_type  311a5bd9b1d6
 app:server_settings_cache  6ca3d5a6a53f
 app:server_settings_cache_caption  cb399557f7dd
 app:server_settings_cache_flush  1278166f1434

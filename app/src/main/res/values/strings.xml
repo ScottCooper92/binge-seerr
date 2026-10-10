@@ -1289,7 +1289,6 @@
     <string name="server_settings_blocklist_tags_empty">No tags yet. Search for a keyword to blocklist what has it.</string>
     <string name="server_settings_blocklist_tags_empty_title">No blocklisted tags</string>
     <string name="server_settings_blocklist_tags_remove">Remove %1$s</string>
-    <string name="server_settings_blocklist_tags_type">Type a keyword to find it on TMDB.</string>
     <string name="server_settings_blocklist_tags_save_failed">Couldn\'t save the tags.</string>
     <string name="server_settings_blocklist_tags_retry">Retry</string>
     <string name="server_settings_blocklist_tags_no_match">No keyword matches that.</string>
