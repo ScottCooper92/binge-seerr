@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.component.BingeActionFooter
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.SnackbarMessageKind
@@ -41,9 +42,6 @@ import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
-
-/** M3's disabled content alpha, which it exposes no token for. */
-internal const val DISABLED_CONTENT_ALPHA = 0.38f
 
 /**
  * The top-bar/bottom-bar insets a `scrolling = false` [EditorPage] does not itself apply. A
@@ -295,4 +293,4 @@ internal fun EditorEventSnackbarEffect(
 internal fun rowLabelColor(
     enabled: Boolean,
     color: Color = MaterialTheme.colorScheme.onSurface,
-): Color = if (enabled) color else color.copy(alpha = DISABLED_CONTENT_ALPHA)
+): Color = if (enabled) color else color.copy(alpha = DISABLED_ALPHA)

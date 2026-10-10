@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.BingeFilledButton
@@ -193,7 +194,7 @@ private fun accountRow(
                 icon = if (account.linked) Icons.Filled.LinkOff else Icons.Filled.Link,
                 contentDescription = stringResource(if (account.linked) R.string.user_settings_unlink else R.string.user_settings_link),
                 enabled = !busy,
-                tint = if (busy) tone.copy(alpha = DISABLED_CONTENT_ALPHA) else tone,
+                tint = if (busy) tone.copy(alpha = DISABLED_ALPHA) else tone,
             )
         },
     )
