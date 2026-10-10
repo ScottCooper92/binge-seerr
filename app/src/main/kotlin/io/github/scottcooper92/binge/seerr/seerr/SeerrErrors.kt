@@ -109,8 +109,7 @@ private fun HttpException.httpStatus(): Status =
 private fun HttpException.rejectsSessionByAnswer(): Boolean = isSessionRejection(code(), response()?.headers() ?: Headers.headersOf())
 
 /** A 401 Seerr sent although `auth/me` still answers: a refusal, which a route may read more precisely (#997, #998). */
-internal fun HttpException.refusedWithLiveSession(): Boolean =
-    isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
+internal fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefusal(code(), response()?.headers() ?: Headers.headersOf())
 
 /**
  * The error body, peeked rather than consumed so reading it and classifying the same failure (a report,
