@@ -45,6 +45,7 @@ import com.binge.designsystem.tv.template.TvImmersiveGrid
 import com.binge.designsystem.tv.template.TvImmersiveHubSkeleton
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageAction
+import com.binge.designsystem.tv.template.TvPageHosting
 import io.github.scottcooper92.binge.seerr.R
 
 private const val POSTER_ASPECT_RATIO = 2f / 3f
@@ -228,6 +229,9 @@ internal fun <T : Any> TvPagedGridScreen(
                 artwork = artwork,
                 copy = copy,
                 rememberedCellModifier = Modifier.focusRequester(restoreFocus),
+                // A see-all grid is shown above the rail, so it claims focus itself and takes the full overscan margin.
+                // Said here rather than read from the shell, so the frames and the tests host it the way it is shown.
+                hosting = TvPageHosting.Overlay,
                 cell = cell,
             )
         }
