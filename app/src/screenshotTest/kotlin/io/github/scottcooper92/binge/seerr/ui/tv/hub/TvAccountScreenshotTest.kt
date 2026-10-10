@@ -152,7 +152,7 @@ class TvAccountScreenshotTest {
             onRetry = {},
             onRetryRequests = {},
             overlayOpen = false,
-            now = ACCOUNT_NOW_MILLIS,
+            now = FIXED_NOW_MILLIS,
         )
     }
 
