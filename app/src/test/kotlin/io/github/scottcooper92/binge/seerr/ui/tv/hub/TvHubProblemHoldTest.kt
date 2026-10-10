@@ -48,6 +48,18 @@ class TvHubProblemHoldTest {
         rule.onNode(hasText(string(R.string.hub_couldnt_load_headline))).assertExists()
     }
 
+    /** A refused local network is fixed by the permission, not a retry, so the board leads with it (#1054). */
+    @Test
+    fun `a refused local network leads with the permission rather than a retry`() {
+        rule.setContent {
+            BingeTvTheme { TvHubBoard(state = HubUiState.Error(ConnectionHealth.LocalNetworkDenied), actions = TvHubActions({}, {}, {})) }
+        }
+
+        rule.onNode(hasText(string(R.string.local_network_allow_short))).assertExists()
+        rule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
+        rule.onNode(hasText(string(R.string.hub_disconnect))).assertExists()
+    }
+
     private fun ready(health: ConnectionHealth) =
         HubUiState.Ready(
             server = HubServer("https://seerr.test", "Seerr", SeerrVariant.Seerr, null, false, 0),
