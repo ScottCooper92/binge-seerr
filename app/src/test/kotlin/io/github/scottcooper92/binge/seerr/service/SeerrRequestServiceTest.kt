@@ -76,6 +76,7 @@ private const val REQUEST_4K_MOVIE = 1 shl 11
 private const val REQUEST_ADVANCED = 1 shl 13
 private const val REQUEST_4K_PERMISSION = 1 shl 10
 private const val CREATE_ISSUES = 1 shl 22
+private const val MANAGE_ISSUES = 1 shl 20
 
 private const val ALL_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true,"series4kEnabled":true}"""
 
@@ -257,6 +258,15 @@ class SeerrRequestServiceTest {
                     Capability.CAPABILITY_MEDIA_FILE_INFO,
                 response.capabilitiesList.toSet(),
             )
+        }
+
+    /** `POST /issue` takes either bit, so an issue manager without the create bit is offered the report (#1018). */
+    @Test
+    fun `an issue manager without the create bit is offered the report capability`() =
+        runTest {
+            val response = connected(permissions = MANAGE_ISSUES).handshakeAs(MANAGE_ISSUES)
+
+            assertTrue(Capability.CAPABILITY_REPORT_ISSUE in response.capabilitiesList)
         }
 
     @Test

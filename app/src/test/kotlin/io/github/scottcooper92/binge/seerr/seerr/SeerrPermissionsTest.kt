@@ -43,6 +43,14 @@ class SeerrPermissionsTest {
         assertFalse(movieOnly.canRequest4kTv)
     }
 
+    /** `POST /issue` takes either bit, so either one lets the user report; a plain requester may not (#1018). */
+    @Test
+    fun `creating or managing issues lets the user report one`() {
+        assertTrue(SeerrPermissions.fromBits(PERMISSION_CREATE_ISSUES).canReportIssues)
+        assertTrue(SeerrPermissions.fromBits(PERMISSION_MANAGE_ISSUES).canReportIssues)
+        assertFalse(SeerrPermissions.fromBits(1 shl 5).canReportIssues)
+    }
+
     @Test
     fun `an unresolved user may do nothing`() {
         assertEquals(SeerrPermissions(), SeerrPermissions.fromBits(null))

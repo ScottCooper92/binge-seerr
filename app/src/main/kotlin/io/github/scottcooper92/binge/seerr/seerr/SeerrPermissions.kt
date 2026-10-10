@@ -75,6 +75,12 @@ data class SeerrPermissions(
     /** The server's issue list admits any of the three; `CREATE_ISSUES` alone sees only the user's own. */
     val canSeeIssues: Boolean get() = canManageIssues || canViewIssues || canCreateIssues
 
+    /**
+     * Whether the user may report an issue. `POST /issue` takes `MANAGE_ISSUES` or `CREATE_ISSUES` on both lineages
+     * (`server/routes/issue.ts`), so an issue manager without the create bit may report too (#1018).
+     */
+    val canReportIssues: Boolean get() = canCreateIssues || canManageIssues
+
     companion object {
         /**
          * `ADMIN` short-circuits every flag, the `REQUEST_4K` umbrella grants both 4K media types,
