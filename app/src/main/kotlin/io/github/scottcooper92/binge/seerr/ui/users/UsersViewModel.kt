@@ -19,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.PermissionScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBulkUsersBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
+import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -281,4 +282,4 @@ class UsersViewModel
 private fun mayChangeAsNonOwner(
     id: Int,
     permissions: Int,
-): Boolean = id != OWNER_USER_ID && ManageablePermission.Admin !in ManageablePermission.decode(permissions)
+): Boolean = id != OWNER_USER_ID && !isAdminBitmask(permissions)

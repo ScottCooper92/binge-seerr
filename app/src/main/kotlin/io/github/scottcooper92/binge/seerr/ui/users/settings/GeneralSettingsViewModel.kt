@@ -8,14 +8,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
-import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPublicSettings
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserMainSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ListChoicesLoader
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerList
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerListCatalog
+import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.toUserOrigin
 import kotlinx.coroutines.CoroutineDispatcher
@@ -111,13 +112,10 @@ private fun SeerrPublicSettings?.toDiscoverDefaults(): ServerDiscoverDefaults =
         originalLanguage = this?.originalLanguage.orEmpty(),
     )
 
-/** The owner is the server's first account, as the web client reads it. */
-private const val OWNER_ID = 1
-
 internal fun SeerrUserDto.role(): UserRole =
     when {
-        id == OWNER_ID -> UserRole.Owner
-        ManageablePermission.Admin in ManageablePermission.decode(permissions ?: 0) -> UserRole.Admin
+        id == OWNER_USER_ID -> UserRole.Owner
+        isAdminBitmask(permissions ?: 0) -> UserRole.Admin
         else -> UserRole.User
     }
 
@@ -165,7 +163,7 @@ internal fun GeneralSettings.withAccount(user: SeerrUserDto): GeneralSettings {
     return copy(
         accountType = origin,
         role = user.role(),
-        emailRequired = user.id == OWNER_ID || origin !in MEDIA_SERVER_ORIGINS,
+        emailRequired = user.id == OWNER_USER_ID || origin !in MEDIA_SERVER_ORIGINS,
     )
 }
 

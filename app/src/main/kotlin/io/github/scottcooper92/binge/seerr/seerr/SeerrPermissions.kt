@@ -30,6 +30,9 @@ internal const val PERMISSION_WATCHLIST_VIEW = 1 shl 27
 internal const val PERMISSION_MANAGE_BLOCKLIST = 1 shl 28
 internal const val PERMISSION_VIEW_BLOCKLIST = 1 shl 30
 
+/** Whether [bitmask] carries `ADMIN`, which the server reads as every other permission: the one test for it. */
+internal fun isAdminBitmask(bitmask: Int): Boolean = bitmask and PERMISSION_ADMIN != 0
+
 /**
  * What the connected user may do, decoded from their permission bitmask. This is what the
  * handshake's capability set is derived from, so a restricted user is offered only what the server
@@ -79,7 +82,7 @@ data class SeerrPermissions(
          */
         fun fromBits(permissions: Int?): SeerrPermissions {
             val bits = permissions ?: 0
-            val isAdmin = bits and PERMISSION_ADMIN != 0
+            val isAdmin = isAdminBitmask(bits)
 
             fun granted(bit: Int) = isAdmin || bits and bit != 0
             val request4k = granted(PERMISSION_REQUEST_4K)
@@ -142,7 +145,7 @@ enum class SeerrDefaultAccess {
     companion object {
         fun fromBits(bits: Int?): SeerrDefaultAccess {
             val value = bits ?: 0
-            val isAdmin = value and PERMISSION_ADMIN != 0
+            val isAdmin = isAdminBitmask(value)
 
             fun granted(bit: Int) = isAdmin || value and bit != 0
             return when {

@@ -15,8 +15,6 @@ internal const val SESSION_REJECTED_HEADER = "X-Binge-Session-Rejected"
 internal const val SESSION_ALIVE_HEADER = "X-Binge-Session-Alive"
 
 private const val AUTH_ME_PATH = "api/v1/auth/me"
-private const val HTTP_UNAUTHORIZED = 401
-private const val HTTP_FORBIDDEN = 403
 
 /** `GET /auth/me` on the server at [baseUrl]: the one call whose 403 means no user ([rejectsSession]). */
 internal fun authMeUrl(baseUrl: String): HttpUrl? = baseUrl.toHttpUrl().resolve(AUTH_ME_PATH)
