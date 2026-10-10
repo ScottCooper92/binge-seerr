@@ -115,6 +115,14 @@ abstract class EditorViewModel<T>(
     }
 
     /**
+     * On a page that saves as it changes, drops a change not yet on the server instead of sending it ([SaveAsMade.discard]):
+     * the page is about to replace the record from elsewhere (#1019). Call it on the main thread, before the replacement.
+     */
+    protected fun discardUnsent() {
+        saveAsMade?.discard()
+    }
+
+    /**
      * Reads the record again. On a page that saves as it changes, a change not yet on the server goes first ([SaveAsMade.settle]),
      * and if it cannot, the draft is kept over what was read, with the failure showing.
      */
