@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvExitFocusGroup
@@ -45,7 +46,6 @@ import io.github.scottcooper92.binge.seerr.seerr.attempt
 import com.binge.designsystem.R as DesR
 
 private const val SCRIM_ALPHA = 0.6f
-private const val DISABLED_ROW_ALPHA = 0.5f
 
 /**
  * An end-edge, focus-trapped action sheet over a scrim: the ten-foot counterpart of the phone's bottom
@@ -152,7 +152,7 @@ internal fun TvActionSheetRow(
     var focused by remember { mutableStateOf(initiallyFocused) }
     val resting =
         when {
-            !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ROW_ALPHA)
+            !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
             destructive -> MaterialTheme.colorScheme.error
             else -> MaterialTheme.colorScheme.onSurface
         }
