@@ -24,7 +24,7 @@ import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
-import com.binge.designsystem.theme.labelSmallEmphasis
+import io.github.scottcooper92.binge.seerr.ui.state.ChipSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
@@ -119,19 +119,8 @@ private fun HeaderSkeleton(modifier: Modifier = Modifier) {
                 SkeletonPlate(
                     Modifier.fillMaxWidth(TYPE_LABEL_FRACTION).height(lineHeightOf(MaterialTheme.typography.labelMedium)),
                 )
-                ChipSkeleton()
+                ChipSkeleton(dimensionResource(DesR.dimen.info_row_label_min_width))
             }
         }
     }
-}
-
-/** [com.binge.designsystem.component.BingeTag]'s own height and corner — the status chip's shape. */
-@Composable
-private fun ChipSkeleton(modifier: Modifier = Modifier) {
-    SkeletonPlate(
-        modifier
-            .width(dimensionResource(DesR.dimen.info_row_label_min_width))
-            .height(lineHeightOf(MaterialTheme.typography.labelSmallEmphasis) + dimensionResource(DesR.dimen.tag_padding_v) * 2),
-        shape = BingeShapes.Tag,
-    )
 }

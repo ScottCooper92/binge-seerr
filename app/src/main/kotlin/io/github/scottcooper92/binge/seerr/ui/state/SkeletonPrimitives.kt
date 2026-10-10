@@ -11,10 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.modifier.skeleton
 import com.binge.designsystem.navOverlayStart
 import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.theme.labelSmallEmphasis
 import com.binge.designsystem.R as DesR
 
 /**
@@ -58,4 +60,18 @@ internal fun SectionHeaderSkeleton(modifier: Modifier = Modifier) {
                 ).height(lineHeightOf(MaterialTheme.typography.headlineSmall)),
         )
     }
+}
+
+/** [com.binge.designsystem.component.BingeTag]'s own height and corner, on a plausible fixed [width]: the real tag sizes to its label. */
+@Composable
+internal fun ChipSkeleton(
+    width: Dp,
+    modifier: Modifier = Modifier,
+) {
+    SkeletonPlate(
+        modifier
+            .width(width)
+            .height(lineHeightOf(MaterialTheme.typography.labelSmallEmphasis) + dimensionResource(DesR.dimen.tag_padding_v) * 2),
+        shape = BingeShapes.Tag,
+    )
 }
