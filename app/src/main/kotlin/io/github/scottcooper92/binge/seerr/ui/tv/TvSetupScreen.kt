@@ -181,6 +181,7 @@ private fun TvSetupSignInStep(
                     label = stringResource(R.string.setup_forgot_password),
                     onClick = actions.onRequestPasswordReset,
                     style = TvButtonStyle.Secondary,
+                    enabled = state.form.canRequestReset && !state.isConnecting,
                 )
             }
         }

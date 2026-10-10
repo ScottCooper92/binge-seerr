@@ -302,7 +302,7 @@ class TvSetupFocusTest {
         setScreen(
             signIn(
                 modes = listOf(SeerrSignInMode.Local),
-                form = SignInForm(mode = SeerrSignInMode.Local),
+                form = SignInForm(mode = SeerrSignInMode.Local, email = "a@example.com"),
                 canResetPassword = true,
             ),
         )
@@ -317,6 +317,25 @@ class TvSetupFocusTest {
         pressOk()
 
         assertEquals(1, resetRequests)
+    }
+
+    @Test
+    fun forgotPasswordWithoutAnEmailIsInert() {
+        setScreen(
+            signIn(
+                modes = listOf(SeerrSignInMode.Local),
+                form = SignInForm(mode = SeerrSignInMode.Local),
+                canResetPassword = true,
+            ),
+        )
+
+        pressDown()
+        pressDown()
+        pressDown()
+        button(R.string.setup_forgot_password).assertIsFocused()
+        pressOk()
+
+        assertEquals(0, resetRequests)
     }
 
     @Test
