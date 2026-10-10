@@ -25,12 +25,12 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsActions
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestsRowsBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val HEAT = "Heat"
@@ -228,6 +228,4 @@ class TvRequestsRowsBoardFocusTest {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }
         composeTestRule.waitForIdle()
     }
-
-    private fun string(res: Int) = RuntimeEnvironment.getApplication().getString(res)
 }
