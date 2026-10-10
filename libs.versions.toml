@@ -11,7 +11,7 @@
 [versions]
 agp = "9.4.1"
 kotlin = "2.4.10"
-coreKtx = "1.19.0"
+coreKtx = "1.19.1"
 junit = "4.13.2"
 # The version binge-design-system pins; the TV focus tests drive a real D-pad on the JVM with it.
 robolectric = "4.16.1"
@@ -67,7 +67,7 @@ room = "2.8.4"
 workManager = "2.11.2"
 # The version binge-design-system pins: its components load their artwork with it, and a consumer
 # that includes that build has to agree with it or resolution silently picks one of the two.
-coil = "3.6.1"
+coil = "3.6.3"
 # Drag-to-reorder for LazyColumn, built on Modifier.animateItem() rather than a hand-rolled
 # animation. Published as a Kotlin Multiplatform artifact; this module resolves its Android variant.
 reorderable = "2.5.1"
