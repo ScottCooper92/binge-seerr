@@ -1,5 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.tv.settings
 
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Group
@@ -8,10 +10,12 @@ import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
+import io.github.scottcooper92.binge.seerr.ui.hub.HubOverview
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneOption
@@ -65,12 +69,7 @@ internal fun serverStatusGroup(
                 TvPaneRow(
                     key = KEY_ACTIVITY,
                     label = stringResource(R.string.hub_section_requests),
-                    body =
-                        listOf(
-                            "${overview.pendingRequestCount ?: placeholder} ${stringResource(R.string.hub_stat_pending)}",
-                            "${overview.movieRequestCount ?: placeholder} ${stringResource(R.string.hub_quota_movies)}",
-                            "${overview.tvRequestCount ?: placeholder} ${stringResource(R.string.hub_quota_tv)}",
-                        ).joinToString(separator),
+                    body = requestCounts(overview, placeholder, separator),
                     icon = Icons.Filled.Inbox,
                 ),
                 TvPaneRow(
@@ -107,3 +106,38 @@ internal fun serverStatusGroup(
             ),
     )
 }
+
+/** The Requests row: pending, then movies, then TV, each a count with its own words. */
+@Composable
+private fun requestCounts(
+    overview: HubOverview,
+    placeholder: String,
+    separator: String,
+): String =
+    listOf(
+        countOf(
+            overview.pendingRequestCount,
+            R.plurals.tv_settings_requests_pending,
+            R.string.tv_settings_requests_pending_unknown,
+            placeholder,
+        ),
+        countOf(
+            overview.movieRequestCount,
+            R.plurals.tv_settings_requests_movies,
+            R.string.tv_settings_requests_movies_unknown,
+            placeholder,
+        ),
+        countOf(overview.tvRequestCount, R.plurals.tv_settings_requests_tv, R.string.tv_settings_requests_tv_unknown, placeholder),
+    ).joinToString(separator)
+
+/**
+ * A count with its words, from one resource, so a translator controls the order and the plural (#1042). A count the
+ * hub could not read is [placeholder] in the same words.
+ */
+@Composable
+private fun countOf(
+    count: Int?,
+    @PluralsRes known: Int,
+    @StringRes unknown: Int,
+    placeholder: String,
+): String = if (count != null) pluralStringResource(known, count, count) else stringResource(unknown, placeholder)
