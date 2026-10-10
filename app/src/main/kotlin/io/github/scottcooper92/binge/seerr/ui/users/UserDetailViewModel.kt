@@ -105,6 +105,13 @@ class UserDetailViewModel
         /** The one rule for both the pager and the screen's gate, so they cannot disagree about a viewer that cannot be read. */
         private fun SeerrUserDto?.mayReadRequestsOf(userId: Int): Boolean = this == null || id == userId || toPermissions().canViewRequests
 
+        /**
+         * The server reads another user's quota only for a viewer with both `MANAGE_USERS` and `MANAGE_REQUESTS` (#1093), so a
+         * viewer with one of them is not sent to be refused. An unknown viewer is tried, as [mayReadRequestsOf] does.
+         */
+        private fun SeerrUserDto?.mayReadQuotaOf(userId: Int): Boolean =
+            this == null || id == userId || toPermissions().let { it.canManageUsers && it.canManageRequests }
+
         init {
             reload()
         }
@@ -161,7 +168,10 @@ class UserDetailViewModel
             coroutineScope {
                 val api = connection.api()
                 val viewer = async { attempt { connection.authenticatedUser() }.getOrNull() }
-                val quota = async { attempt { api.userQuota(userId).toHubQuota() }.getOrNull() }
+                val quota =
+                    async {
+                        if (viewer.await().mayReadQuotaOf(userId)) attempt { api.userQuota(userId).toHubQuota() }.getOrNull() else null
+                    }
                 val watch = async { attempt { api.userWatchData(userId) }.getOrNull() }
                 val watchlist = async { attempt { api.userWatchlist(userId) }.getOrNull() }
                 val dto = api.user(userId)
