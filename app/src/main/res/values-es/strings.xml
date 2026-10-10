@@ -1106,14 +1106,14 @@
     <string name="settings_users_summary_unlimited">%1$s · sin límites</string>
     <string name="settings_users_summary_limited">%1$s · con límites</string>
     <plurals name="settings_jobs_running">
-        <item quantity="one">%d tarea en curso</item>
-        <item quantity="many">%d tareas en curso</item>
-        <item quantity="other">%d tareas en curso</item>
+        <item quantity="one">%1$d tarea en curso</item>
+        <item quantity="many">%1$d tareas en curso</item>
+        <item quantity="other">%1$d tareas en curso</item>
     </plurals>
     <plurals name="settings_jobs_scheduled">
-        <item quantity="one">%d tarea programada y las cachés</item>
-        <item quantity="many">%d tareas programadas y las cachés</item>
-        <item quantity="other">%d tareas programadas y las cachés</item>
+        <item quantity="one">%1$d tarea programada y las cachés</item>
+        <item quantity="many">%1$d tareas programadas y las cachés</item>
+        <item quantity="other">%1$d tareas programadas y las cachés</item>
     </plurals>
     <string name="settings_value_not_set">Sin definir</string>
     <string name="editor_done">Hecho</string>

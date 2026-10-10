@@ -1163,12 +1163,12 @@
     <string name="settings_users_summary_unlimited">%1$s · no limits</string>
     <string name="settings_users_summary_limited">%1$s · limits set</string>
     <plurals name="settings_jobs_running">
-        <item quantity="one">%d job running</item>
-        <item quantity="other">%d jobs running</item>
+        <item quantity="one">%1$d job running</item>
+        <item quantity="other">%1$d jobs running</item>
     </plurals>
     <plurals name="settings_jobs_scheduled">
-        <item quantity="one">%d scheduled job and the caches</item>
-        <item quantity="other">%d scheduled jobs and the caches</item>
+        <item quantity="one">%1$d scheduled job and the caches</item>
+        <item quantity="other">%1$d scheduled jobs and the caches</item>
     </plurals>
     <string name="settings_value_not_set">Not set</string>
     <string name="editor_done">Done</string>

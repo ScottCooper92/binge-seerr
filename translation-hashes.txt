@@ -808,8 +808,8 @@ app:settings_group_system  6725e7bbcd28
 app:settings_hide_available  ec89abf511a0
 app:settings_job_next_run  7e7327eed643
 app:settings_job_running  cb9581b3d253
-app:settings_jobs_running  f770b37839fc
-app:settings_jobs_scheduled  95c152403e5b
+app:settings_jobs_running  40b9722ed3fa
+app:settings_jobs_scheduled  f2f73ac9d26f
 app:settings_notifications_blocked  8276fc8f3d9a
 app:settings_notifications_blocked_caption  1d84fd334ac3
 app:settings_notifications_last_run  c2fbf9a33a20
