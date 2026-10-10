@@ -44,6 +44,9 @@ import java.util.concurrent.CountDownLatch
 private const val ADMIN = 2
 private const val REQUEST = 32
 
+/** `MANAGE_SETTINGS`, which no `/settings` route honours: the admin `/settings` router needs `ADMIN` (#1004). */
+private const val MANAGE_SETTINGS = 4
+
 /** Settings over an in-memory connection into a Seerr scripted by path. */
 class SettingsViewModelTest {
     @get:Rule
@@ -309,6 +312,16 @@ class SettingsViewModelTest {
             assertNull(ready.config)
             responses["/api/v1/settings/main"] = { error("A restricted user must not read the settings") }
             vm.setScreenVisible(true)
+            assertNull(vm.awaitReady { it.connection.userName != null }.config)
+        }
+
+    @Test
+    fun `manage settings without admin reads no configuration, since the server would refuse every call`() =
+        runTest {
+            server(MANAGE_SETTINGS)
+            responses["/api/v1/settings/main"] = { error("The admin /settings router needs ADMIN") }
+            val vm = viewModel(session = true)
+
             assertNull(vm.awaitReady { it.connection.userName != null }.config)
         }
 

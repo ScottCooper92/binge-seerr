@@ -16,7 +16,6 @@ class SeerrPermissionsTest {
         assertTrue(permissions.canManageBlocklist)
         assertTrue(permissions.canCreateIssues)
         assertTrue(permissions.canRequestAdvanced)
-        assertTrue(permissions.canManageSettings)
         assertTrue(permissions.canViewBlocklist)
     }
 

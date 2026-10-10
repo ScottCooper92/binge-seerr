@@ -39,7 +39,6 @@ internal fun previewAdminOverview() =
                 canManageRequests = true,
                 canViewRequests = true,
                 canManageUsers = true,
-                canManageSettings = true,
                 canManageIssues = true,
                 canViewIssues = true,
                 canManageBlocklist = true,

@@ -76,10 +76,10 @@ class SettingsLoader
             }
         }
 
-        /** Null for a user who may not manage settings; otherwise every section that answered. */
+        /** Null for a user who is not an admin, which the admin settings router needs (#1004); otherwise every section that answered. */
         suspend fun config(): ServerConfig? {
             val permissions = runCatching { connection.authenticatedUser() }.getOrNull().toPermissions()
-            if (!permissions.canManageSettings) return null
+            if (!permissions.isAdmin) return null
             val api = runCatching { connection.api() }.getOrNull() ?: return null
             return coroutineScope {
                 val main = async { runCatching { api.mainSettings() }.getOrNull() }

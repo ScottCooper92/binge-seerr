@@ -338,7 +338,7 @@ interface SeerrApi {
         @Query("take") take: Int = 1,
     ): SeerrCountProbeDto
 
-    /** The admin-only settings reads; `ADMIN`, or `MANAGE_SETTINGS` on the Jellyseerr lineage. */
+    /** The admin-only settings reads: the admin settings router needs `ADMIN`, on every lineage (#1004). */
     @GET("api/v1/settings/main")
     suspend fun mainSettings(): SeerrMainSettingsDto
 

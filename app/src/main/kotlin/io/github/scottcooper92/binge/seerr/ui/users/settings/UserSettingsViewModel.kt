@@ -67,7 +67,7 @@ class UserSettingsViewModel
 /**
  * The web client's own menu rules, in its order. Everything needs the viewer to be the user or a manager, and the
  * owner's settings are the owner's alone: the server refuses every save to user 1 from anyone else (#1005). The
- * password page goes when local sign-in is off and the viewer cannot manage settings, or when the server would refuse
+ * password page goes when local sign-in is off and the viewer is not an admin, or when the server would refuse
  * the change: an admin's password is set only by that admin or by the owner. Linked accounts are the user's alone, on a
  * server that has them. Permissions are a manager's, and never one's own, the owner's included: the server refuses a
  * permissions write to oneself or to user 1 (#1006).
@@ -82,7 +82,7 @@ internal fun settingsPagesFor(
     if (!mayOpenSettings(target.id, viewer.id, permissions)) return emptyList()
     return buildList {
         add(UserSettingsPage.General)
-        val localSignIn = profile.settings.localLogin || permissions.canManageSettings
+        val localSignIn = profile.settings.localLogin || permissions.isAdmin
         val mayChangePassword = isSelf || viewer.id == OWNER_USER_ID || !target.isAdmin
         if (localSignIn && mayChangePassword) add(UserSettingsPage.Password)
         if (isSelf && profile.hasLinkedAccounts) add(UserSettingsPage.LinkedAccounts)
