@@ -1309,4 +1309,5 @@
     <string name="user_settings_password_change">Change password</string>
     <string name="companion_refusal_quota">You\'ve reached your request limit on this server. Try again once it resets.</string>
     <string name="companion_refusal_blocklisted">This title is on the server\'s blocklist, so it can\'t be requested.</string>
+    <string name="companion_refusal_locale">en</string>
 </resources>

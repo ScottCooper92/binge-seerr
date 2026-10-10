@@ -13,7 +13,8 @@ data class UserSentence(
 /**
  * Where the exported Service finds the sentence for a [UserFacingRefusal]. The contracts say it is in the device's
  * locale (binge-companions#177): host and integration share a device, and only the handshake carries
- * `HostInfo.locale`, which an integration does not keep. So the sentence is resolved as every other string here is.
+ * `HostInfo.locale`, which an integration does not keep. So the sentence is resolved as every other string here is,
+ * and tagged with the locale it resolved in (`companion_refusal_locale`), which is not the device's when the device speaks a language this app does not ship.
  */
 fun interface UserMessages {
     fun sentence(refusal: UserFacingRefusal): UserSentence?
@@ -36,8 +37,7 @@ class AndroidUserMessages(
             }
         return UserSentence(
             context.getString(res),
-            context.resources.configuration.locales[0]
-                .toLanguageTag(),
+            context.getString(R.string.companion_refusal_locale),
         )
     }
 }

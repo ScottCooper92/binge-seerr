@@ -16,9 +16,9 @@ class AndroidUserMessagesTest {
 
     @Test
     @Config(qualifiers = "en-rGB")
-    fun `a sentence is in the device's language and names its locale`() {
+    fun `a sentence is in the device's language and names the locale it is in`() {
         val quota = messages.sentence(UserFacingRefusal.QuotaSpent)
-        assertEquals("en-GB", quota.locale)
+        assertEquals("en", quota.locale)
         assertTrue(quota.message.contains("request limit"))
     }
 
@@ -28,5 +28,13 @@ class AndroidUserMessagesTest {
         val blocklisted = messages.sentence(UserFacingRefusal.Blocklisted)
         assertEquals("es", blocklisted.locale)
         assertTrue(blocklisted.message.contains("lista de bloqueo"))
+    }
+
+    @Test
+    @Config(qualifiers = "fr-rFR")
+    fun `a device in an unshipped language gets English, tagged as English`() {
+        val quota = messages.sentence(UserFacingRefusal.QuotaSpent)
+        assertEquals("en", quota.locale)
+        assertTrue(quota.message.contains("request limit"))
     }
 }
