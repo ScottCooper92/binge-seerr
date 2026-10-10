@@ -61,7 +61,7 @@
     <string name="hub_binge_not_installed_detail">Check out Binge, it works with this app.</string>
     <string name="hub_binge_get">Get Binge</string>
     <string name="hub_binge_connect_hint">Connect Binge to this app to send and manage requests directly from Binge</string>
-    <string name="hub_binge_connected_hint">Connected to Binge, request titles and manage requests directly from there</string>
+    <string name="hub_binge_connected_hint">Connected to Binge: request titles and manage requests directly from there</string>
     <string name="hub_binge_open">Open Binge</string>
     <string name="hub_unverified_callers">Debug build: accepts Binge\'s package names under any certificate.</string>
 
@@ -948,7 +948,7 @@
 
     <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
     <string name="tv_setup_send_from_phone">Scan a QR</string>
-    <string name="tv_handoff_body">Use the QR or URL to connect using another device on the same network, or use the Seerr mobile app to sign in using your existing details.</string>
+    <string name="tv_handoff_body">Use the QR or URL to connect from another device on the same network, or use the Seerr mobile app to sign in with your existing details.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
     <string name="tv_handoff_pin">PIN  %1$s</string>
     <string name="tv_handoff_pin_description">PIN on this TV: %1$s</string>

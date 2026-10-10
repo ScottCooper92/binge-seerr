@@ -61,14 +61,17 @@ class GeneralSettingsViewModel
                 // The defaults only label the blank choices, so a server that can't send them still loads the page.
                 val public = async { runCatching { api.publicSettings() }.getOrNull() }
                 val settings = api.userMainSettings(userId)
-                val permissions = viewer.await().toPermissions()
+                val viewerUser = viewer.await()
+                val permissions = viewerUser.toPermissions()
                 val user = target.await()
                 val variant = profile.await().variant
                 val defaults = public.await().toDiscoverDefaults()
                 editExtras { it.copy(variant = variant, serverDefaults = defaults) }
                 settings
                     .toGeneralSettings(
-                        canEditQuotas = permissions.canManageUsers,
+                        // The server assigns the quota fields only when the target is neither the viewer nor a manager, and
+                        // silently keeps the old values otherwise, so the editor is offered under the same rule.
+                        canEditQuotas = permissions.canManageUsers && viewerUser?.id != userId && !user.toPermissions().canManageUsers,
                         canEditEmail = permissions.canManageUsers || user.userType.toUserOrigin() == UserOrigin.Local,
                         fallbackName = user.fallbackName(),
                         // Only Overseerr lacks the streaming region; an unrecognised server is read as the newer lineage.
