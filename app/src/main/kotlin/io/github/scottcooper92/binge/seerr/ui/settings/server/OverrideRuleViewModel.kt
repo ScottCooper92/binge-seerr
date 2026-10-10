@@ -126,17 +126,17 @@ class OverrideRuleViewModel
 
         fun loadKeywordNames(ids: List<Int>) = keywords.name(ids)
 
+        private val lists =
+            ListChoicesLoader(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                catalog = listCatalog,
+                held = { currentExtras().lists[it] },
+                set = { kind, choices -> editExtras { it.copy(lists = it.lists + (kind to choices)) } },
+            )
+
         /** Reads the language list for its sheet, once; a failed read can be asked for again. */
-        fun loadLanguages() {
-            val held = currentExtras().lists[ServerList.Languages]
-            if (held is ListChoices.Ready || held == ListChoices.Loading) return
-            editExtras { it.copy(lists = it.lists + (ServerList.Languages to ListChoices.Loading)) }
-            viewModelScope.launch(dispatcher) {
-                val choices =
-                    runCatching { listCatalog.entries(ServerList.Languages) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed })
-                editExtras { it.copy(lists = it.lists + (ServerList.Languages to choices)) }
-            }
-        }
+        fun loadLanguages() = lists.load(ServerList.Languages)
 
         fun toggleTag(tagId: Int) = edit { it.copy(tagIds = it.tagIds.toggled(tagId)) }
 

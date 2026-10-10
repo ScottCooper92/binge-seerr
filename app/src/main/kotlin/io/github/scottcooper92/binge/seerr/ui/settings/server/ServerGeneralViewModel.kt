@@ -64,16 +64,17 @@ class ServerGeneralViewModel
 
         override fun canSave(draft: ServerGeneralSettings): Boolean = draft.valid
 
+        private val lists =
+            ListChoicesLoader(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                catalog = listCatalog,
+                held = { currentExtras().lists[it] },
+                set = { kind, choices -> editExtras { it.copy(lists = it.lists + (kind to choices)) } },
+            )
+
         /** Reads [kind]'s list for its picker, once; a failed read can be asked for again. */
-        fun loadList(kind: ServerList) {
-            val held = currentExtras().lists[kind]
-            if (held is ListChoices.Ready || held == ListChoices.Loading) return
-            editExtras { it.copy(lists = it.lists + (kind to ListChoices.Loading)) }
-            viewModelScope.launch(dispatcher) {
-                val choices = runCatching { listCatalog.entries(kind) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed })
-                editExtras { it.copy(lists = it.lists + (kind to choices)) }
-            }
-        }
+        fun loadList(kind: ServerList) = lists.load(kind)
 
         private val keywords =
             KeywordLookup(
