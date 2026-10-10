@@ -27,8 +27,11 @@ import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.ui.Ticker
+import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,7 +83,14 @@ class IssuesViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
+        internal var clock: () -> Long = System::currentTimeMillis
+
+        /** The rows' "2 minutes ago" is worded against this, moved on each minute while the list shows (#1239). */
+        private val now = MutableStateFlow(clock())
+        private var ticker: Job? = null
+
         private val selectedFilter = MutableStateFlow(IssueFilter.Open)
         private val selectedSort = MutableStateFlow(IssueSort.Added)
         private val countsRefresh = MutableStateFlow(0)
@@ -192,7 +202,8 @@ class IssuesViewModel
                             refreshes = refreshes,
                         )
                 }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, IssuesUiState.Loading)
+            }.combine(now) { state, now -> (state as? IssuesUiState.Ready)?.copy(now = now) ?: state }
+                .stateIn(viewModelScope, SharingStarted.Lazily, IssuesUiState.Loading)
 
         fun openActions(item: IssueItem) {
             actionItem.value = item
@@ -268,10 +279,13 @@ class IssuesViewModel
             if (!countsInFlight.get()) countsRefresh.value++
         }
 
-        /** The counts and the viewer's permissions are both refetched on entry, and neither is polled. */
+        /** The counts and the viewer's permissions are both refetched on entry, and neither is polled. The rows' clock runs only while shown. */
         fun setScreenVisible(visible: Boolean) {
+            ticker?.cancel()
+            ticker = null
             if (!visible) return
             countsRefresh.value++
             scopeRefresh.value++
+            ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
         }
     }

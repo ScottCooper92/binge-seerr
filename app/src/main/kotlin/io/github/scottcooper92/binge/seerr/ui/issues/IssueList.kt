@@ -65,6 +65,8 @@ internal fun IssuesBody(
     lazyItems: LazyPagingItems<IssueItem>,
     /** This list's latest finished network refresh; see [rememberPagedPhase]. */
     lastRefresh: ListRefresh?,
+    /** What the rows' relative times are worded against; see [IssuesUiState.Ready.now]. */
+    now: Long,
     onOpen: (IssueItem) -> Unit,
     /** A pull, beside the list's own refresh: what else on the page it refreshes. */
     onPull: () -> Unit,
@@ -90,10 +92,10 @@ internal fun IssuesBody(
                     // The failed line is pinned below the top bar and the header; the rows start below it while it shows.
                     Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                         RefreshFailedLine(R.string.issues_refresh_failed, onRetry = lazyItems::retry)
-                        IssueList(lazyItems, onOpen, contentPadding.belowPinnedLine())
+                        IssueList(lazyItems, now, onOpen, contentPadding.belowPinnedLine())
                     }
                 } else {
-                    IssueList(lazyItems, onOpen, contentPadding)
+                    IssueList(lazyItems, now, onOpen, contentPadding)
                 }
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
@@ -121,6 +123,7 @@ internal fun IssuesBody(
 @Composable
 private fun IssueList(
     lazyItems: LazyPagingItems<IssueItem>,
+    now: Long,
     onOpen: (IssueItem) -> Unit,
     contentPadding: PaddingValues,
 ) {
@@ -130,7 +133,7 @@ private fun IssueList(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
-            lazyItems[index]?.let { item -> IssueRow(item = item, onClick = { onOpen(item) }) }
+            lazyItems[index]?.let { item -> IssueRow(item = item, onClick = { onOpen(item) }, now = now) }
         }
         item {
             val append = lazyItems.loadState.mediator?.append ?: lazyItems.loadState.append

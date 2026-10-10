@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
@@ -20,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -114,8 +116,17 @@ class IssuesViewModelTest {
         }
     }
 
+    /** The rows' clock read once and never again, so a virtual clock does not spin its minute loop (#337). */
+    private val boundedTicker =
+        object : Ticker() {
+            override suspend fun await(millis: Long) = awaitCancellation()
+        }
+
     /** [authAfterConnect] is what `auth/me` answers once the `connect()` probe has passed. */
-    private suspend fun TestScope.viewModel(authAfterConnect: Int = HTTP_OK): IssuesViewModel {
+    private suspend fun TestScope.viewModel(
+        authAfterConnect: Int = HTTP_OK,
+        ticker: Ticker = boundedTicker,
+    ): IssuesViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -127,7 +138,15 @@ class IssuesViewModelTest {
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
         authStatus.set(authAfterConnect)
-        val vm = IssuesViewModel(connection, TitleCache(FakeTitleDao()), FakeIssueStore(), mainDispatcherRule.dispatcher, analytics)
+        val vm =
+            IssuesViewModel(
+                connection,
+                TitleCache(FakeTitleDao()),
+                FakeIssueStore(),
+                mainDispatcherRule.dispatcher,
+                analytics,
+                minuteTicker = ticker,
+            )
         viewModels.put("issues", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -136,6 +155,28 @@ class IssuesViewModelTest {
 
     private suspend fun IssuesViewModel.awaitReady(match: (IssuesUiState.Ready) -> Boolean): IssuesUiState.Ready =
         uiState.first { it is IssuesUiState.Ready && match(it) } as IssuesUiState.Ready
+
+    /** #1239: the rows' "2 minutes ago" ages while the list shows, and the clock stops when it leaves. */
+    @Test
+    fun `the rows' clock moves on each minute while the list is showing, and stops when it leaves`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel(ticker = Ticker())
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.awaitReady { it.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, (vm.uiState.value as IssuesUiState.Ready).now)
+        }
 
     @Test
     fun `a manager sees everyone's issues with the chip counts, titled through the cache, and the sort re-queries`() =

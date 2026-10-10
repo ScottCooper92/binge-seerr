@@ -239,7 +239,7 @@ private fun Ready(
                 thread = state.thread,
                 detail = detail,
                 commentAction = state.commentAction,
-                now = System.currentTimeMillis(),
+                now = state.now,
                 onActOn = { comment -> modals.actingOnCommentId = comment.id },
                 onTapOutbox = { entry -> modals.outboxActionId = entry.localId },
                 modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.padding_l)),
