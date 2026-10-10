@@ -61,7 +61,7 @@
     <string name="hub_binge_not_installed_detail">Check out Binge, it works with this app.</string>
     <string name="hub_binge_get">Get Binge</string>
     <string name="hub_binge_connect_hint">Connect Binge to this app to send and manage requests directly from Binge</string>
-    <string name="hub_binge_connected_hint">Connected to Binge, request titles and manage requests directly from there</string>
+    <string name="hub_binge_connected_hint">Connected to Binge: request titles and manage requests directly from there</string>
     <string name="hub_binge_open">Open Binge</string>
     <string name="hub_unverified_callers">Debug build: accepts Binge\'s package names under any certificate.</string>
 
@@ -948,7 +948,7 @@
 
     <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
     <string name="tv_setup_send_from_phone">Scan a QR</string>
-    <string name="tv_handoff_body">Use the QR or URL to connect using another device on the same network, or use the Seerr mobile app to sign in using your existing details.</string>
+    <string name="tv_handoff_body">Use the QR or URL to connect from another device on the same network, or use the Seerr mobile app to sign in with your existing details.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
     <string name="tv_handoff_pin">PIN  %1$s</string>
     <string name="tv_handoff_pin_description">PIN on this TV: %1$s</string>
@@ -980,6 +980,7 @@
     <string name="handoff_page_signin_body">Your TV found %1$s. Sign in there with your remote.</string>
     <string name="handoff_page_signin_form_title">Sign in to %1$s</string>
     <string name="handoff_page_signin_form_body">Your TV signs in with these too. They\'re encrypted for your TV before they leave this page.</string>
+    <string name="handoff_page_signin_address">Server address: %1$s</string>
     <string name="handoff_page_mode">Sign in with</string>
     <string name="handoff_page_mode_local">Local account</string>
     <string name="handoff_page_mode_api_key">API key</string>
@@ -1012,6 +1013,7 @@
     <string name="send_signin_on_tv">The TV found %1$s. Finish signing in with the TV\'s remote.</string>
     <string name="send_signin_connected">Signed in. The TV at %1$s is ready.</string>
     <string name="send_signin_lost">The TV stopped answering. Check that it is on and still showing the code, then scan it again.</string>
+    <string name="send_signin_redirected">The TV is signing in to a different server address from the one you sent, so nothing more was sent. Start again from the TV.</string>
     <string name="send_address_not_connected">This phone isn\'t connected to a server, so there\'s no address to send. Type the address on the page the code opened instead.</string>
     <string name="send_address_refused">This link doesn\'t point to a TV on your home network, so nothing was sent.</string>
     <string name="send_address_done">Done</string>

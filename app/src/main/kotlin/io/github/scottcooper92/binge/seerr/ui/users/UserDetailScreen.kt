@@ -207,39 +207,42 @@ private fun UserDetailContent(
         if (detail != null && detail.watchlist.isNotEmpty()) {
             item { TitleCarousel(stringResource(R.string.user_watchlist), detail.watchlist, detail.serverUrl) }
         }
-        item {
-            SectionHeader(
-                title = stringResource(R.string.hub_section_requests),
-                trailingContent = {
-                    Text(
-                        item.requestCount.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                },
-            )
-        }
-        items(count = requests.itemCount, key = requests.itemKey { it.id }) { index ->
-            requests[index]?.let { item ->
-                RequestRow(
-                    item = item,
-                    onClick = { actions.onOpenRequest(item) },
-                    modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.list_row_spacing)),
+        // Shown while the page is only seeded, and hidden once it has loaded for a viewer the server would refuse the list.
+        if (detail?.canViewRequests != false) {
+            item {
+                SectionHeader(
+                    title = stringResource(R.string.hub_section_requests),
+                    trailingContent = {
+                        Text(
+                            item.requestCount.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
                 )
             }
-        }
-        item {
-            val refresh = requests.loadState.refresh
-            when {
-                refresh is LoadState.NotLoading && requests.itemCount == 0 ->
-                    EmptyScreen(
-                        message = stringResource(R.string.user_no_requests),
-                        modifier = Modifier.padding(vertical = dimensionResource(DesR.dimen.padding_l)),
-                        icon = Icons.Filled.Inbox,
+            items(count = requests.itemCount, key = requests.itemKey { it.id }) { index ->
+                requests[index]?.let { item ->
+                    RequestRow(
+                        item = item,
+                        onClick = { actions.onOpenRequest(item) },
+                        modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.list_row_spacing)),
                     )
-                refresh is LoadState.Loading || refresh is LoadState.Error ->
-                    PagedAppendState(refresh, onRetry = requests::retry)
-                else -> PagedAppendState(requests.loadState.append, onRetry = requests::retry)
+                }
+            }
+            item {
+                val refresh = requests.loadState.refresh
+                when {
+                    refresh is LoadState.NotLoading && requests.itemCount == 0 ->
+                        EmptyScreen(
+                            message = stringResource(R.string.user_no_requests),
+                            modifier = Modifier.padding(vertical = dimensionResource(DesR.dimen.padding_l)),
+                            icon = Icons.Filled.Inbox,
+                        )
+                    refresh is LoadState.Loading || refresh is LoadState.Error ->
+                        PagedAppendState(refresh, onRetry = requests::retry)
+                    else -> PagedAppendState(requests.loadState.append, onRetry = requests::retry)
+                }
             }
         }
     }

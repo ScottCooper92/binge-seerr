@@ -26,8 +26,9 @@ private const val FIRST_SEASON = 1
 
 /**
  * What the editor opens on: the request as the server returned it, and its title as the server lists it.
- * [seasonsEditable] is false for a show on a server with partial requests off, which takes the whole
- * show: the editor then offers no season list and sends no seasons.
+ * [seasonsEditable] is false for a show on a server with partial requests off: the editor then offers
+ * no season list. Its save still sends the request's own seasons, because the server refuses a show's
+ * edit without them (#1003).
  */
 class EditSource(
     val request: SeerrRequestDto,
@@ -156,17 +157,19 @@ class RequestEditor(
     /**
      * The server assigns the whole destination from the body, so a `PUT` that leaves one of its
      * fields out clears it. A user who may not change the destination still edits seasons through
-     * here, and their request's own destination is what goes back with it.
+     * here, and their request's own destination is what goes back with it. Seasons are the same the
+     * other way round: both lineages answer a show's `PUT` without them with a 500, so where the
+     * editor offers no season list, the request's own seasons go back.
      */
     private fun EditState.toBody(request: SeerrRequestDto): SeerrEditRequestBody {
         val destination = destination ?: request.destination()
         return SeerrEditRequestBody(
             mediaType = request.media.mediaType,
             seasons =
-                if (request.isTv && seasonsEditable && !seasonsUnknown) {
-                    seasons.filter { it.selected && !it.locked }.map { it.number }
-                } else {
-                    null
+                when {
+                    !request.isTv -> null
+                    seasonsEditable && !seasonsUnknown -> seasons.filter { it.selected && !it.locked }.map { it.number }
+                    else -> request.seasons.map { it.seasonNumber }
                 },
             is4k = request.is4k,
             serverId = destination.serverId,

@@ -57,6 +57,7 @@ import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoRequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestStore
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_CONFLICT
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
@@ -66,6 +67,8 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
+import io.github.scottcooper92.binge.seerr.seerr.checkHasSeasons
+import io.github.scottcooper92.binge.seerr.seerr.checkedSeasonNumbers
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
@@ -103,8 +106,8 @@ import retrofit2.HttpException
 /** Seerr returns 202 Accepted when there was nothing left to request, and created nothing. */
 private const val HTTP_ACCEPTED = 202
 
-/** Seerr returns 409 Conflict when the media has already been requested. */
-private const val HTTP_CONFLICT = 409
+/** Seerr's blocklist answers 412 when the title is already on it (#1000). */
+private const val HTTP_PRECONDITION_FAILED = 412
 
 /**
  * REQUEST v1, served against the connected Seerr server.
@@ -180,11 +183,12 @@ class SeerrRequestService(
             }
             val media = request.media
             refuseIfKnownBlocklisted(media)
+            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
+                    seasons = seasons.takeIf { it.isNotEmpty() },
                     is4k = request.is4K,
                 )
             submitAndRespond(media, body)
@@ -225,6 +229,7 @@ class SeerrRequestService(
             val media = request.media
             refuseIfKnownBlocklisted(media)
             val isTv = media.seerrMediaType().isSeerrTv()
+            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
             // 4K here is a property of the server the caller named. A user who may not request 4K is
             // never offered a 4K server, so naming one is INVALID_ARGUMENT, like any server not offered.
             val destination =
@@ -239,7 +244,7 @@ class SeerrRequestService(
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
+                    seasons = seasons.takeIf { it.isNotEmpty() },
                     is4k = destination.server.is4k,
                     serverId = destination.server.id,
                     profileId = destination.profileId,
@@ -247,6 +252,21 @@ class SeerrRequestService(
                 )
             SubmitAdvancedRequestResponse.newBuilder().setResult(submitAndRespond(media, body)).build()
         }
+
+    /**
+     * A submit's seasons, refused as INVALID_ARGUMENT before anything is posted if they are malformed or name a season the
+     * show does not have (#1002), the same rule [editRequest] applies. No seasons means the whole show, so nothing is looked up.
+     */
+    private suspend fun checkedSubmitSeasons(
+        media: MediaId,
+        numbers: List<Int>,
+    ): List<Int> {
+        val seasons = numbers.checkedSeasonNumbers()
+        if (seasons.isNotEmpty() && media.seerrMediaType().isSeerrTv()) {
+            connection.api().tvDetails(media.tmdbId).checkHasSeasons(seasons)
+        }
+        return seasons
+    }
 
     /** The part of a submit that does not depend on where the body came from: post, read the outcome off the status code, attach the fresh status. */
     private suspend fun submitAndRespond(
@@ -323,13 +343,16 @@ class SeerrRequestService(
     override suspend fun editRequest(request: EditRequestRequest): EditRequestResponse =
         gated("edit_request", Capability.CAPABILITY_EDIT_SEASONS) {
             if (request.seasonNumbersList.isEmpty()) throw invalidArgument("a request covers at least one season")
+            val seasons = request.seasonNumbersList.checkedSeasonNumbers()
             val api = connection.api()
             val current = api.request(request.requestId)
             if (!current.media.mediaType.isSeerrTv()) throw invalidArgument("only a TV request has seasons to edit")
+            // The contract's INVALID_ARGUMENT for "a season the show does not have", which Seerr itself never checks.
+            api.tvDetails(current.media.tmdbId).checkHasSeasons(seasons)
             val body =
                 SeerrEditRequestBody(
                     mediaType = current.media.mediaType,
-                    seasons = request.seasonNumbersList,
+                    seasons = seasons,
                     is4k = current.is4k,
                     serverId = current.serverId,
                     profileId = current.profileId,
@@ -391,6 +414,12 @@ class SeerrRequestService(
         }
     }
 
+    /**
+     * A title already on the blocklist is OK and changes nothing, as the contract says (#1000). Seerr refuses the
+     * second add instead: 412 "Item already blocklisted" where its database is SQLite, and 409 where it is Postgres,
+     * which reports the same unique-key clash as a generic conflict. Both are read as done. A cached status could
+     * not decide this up front: a cold cache knows nothing, and the console may have blocked the title a moment ago.
+     */
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated("block_title", Capability.CAPABILITY_BLOCK) {
             val body =
@@ -400,7 +429,11 @@ class SeerrRequestService(
                     title = request.title,
                     user = connection.authenticatedUser().id,
                 )
-            connection.api().addToBlocklist(connection.profile().blocklistPath, body)
+            try {
+                connection.api().addToBlocklist(connection.profile().blocklistPath, body)
+            } catch (e: HttpException) {
+                if (e.code() != HTTP_PRECONDITION_FAILED && e.code() != HTTP_CONFLICT) throw e
+            }
             BlockTitleResponse.getDefaultInstance()
         }
 

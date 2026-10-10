@@ -94,6 +94,7 @@ app:handoff_page_send  f89f3b050177
 app:handoff_page_sent_body  7ac6c00d22fc
 app:handoff_page_sent_title  c16bc82bf1f0
 app:handoff_page_sign_in  bfd402b2f6f3
+app:handoff_page_signin_address  7bc0be86234f
 app:handoff_page_signin_body  49229059bc86
 app:handoff_page_signin_form_body  2b44677b214e
 app:handoff_page_signin_form_title  5657abe2920e
@@ -103,7 +104,7 @@ app:handoff_page_store_name  50eee1301880
 app:handoff_page_title  0f4cbd63d401
 app:handoff_page_username  e3b89e9d33f8
 app:hub_binge_connect_hint  ac2c213c1567
-app:hub_binge_connected_hint  10f092bfe3a5
+app:hub_binge_connected_hint  9738f0f1708a
 app:hub_binge_get  d0d7d58e7428
 app:hub_binge_not_installed_detail  a8e52a9826f0
 app:hub_binge_not_installed_title  d7e27e16cd15
@@ -418,6 +419,7 @@ app:send_signin_continue_as_you  69d7ffc62e45
 app:send_signin_form  eed872434e62
 app:send_signin_lost  0b8b0899c90a
 app:send_signin_on_tv  b0724ebd3943
+app:send_signin_redirected  0da74fbf0f16
 app:send_signin_rejected  61c349dccc4a
 app:send_signin_sealed  964904c25126
 app:send_signin_session  c0acb129d393
@@ -933,7 +935,7 @@ app:tv_detail_info_status  920e413c7d41
 app:tv_detail_remove  c3812fc4acb8
 app:tv_download_percent  0edb69de9be1
 app:tv_filter_with_count  f7da0939cc40
-app:tv_handoff_body  e5667a0cfbae
+app:tv_handoff_body  a05f82f7df9c
 app:tv_handoff_code_description  1d5d01b0c49b
 app:tv_handoff_could_not_listen  9b2ceb3a1d16
 app:tv_handoff_no_network  23bbba026c2f

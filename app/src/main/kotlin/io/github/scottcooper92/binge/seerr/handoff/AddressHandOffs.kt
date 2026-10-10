@@ -114,6 +114,7 @@ internal class LanAddressHandOffs
                 connectedBody = resources.getString(R.string.handoff_page_connected_body),
                 signInFormTitle = { server -> resources.getString(R.string.handoff_page_signin_form_title, server) },
                 signInFormBody = resources.getString(R.string.handoff_page_signin_form_body),
+                signInAddress = { address -> resources.getString(R.string.handoff_page_signin_address, address) },
                 modeField = resources.getString(R.string.handoff_page_mode),
                 modeLabel = { mode ->
                     when (mode) {

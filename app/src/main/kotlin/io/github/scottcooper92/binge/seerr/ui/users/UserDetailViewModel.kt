@@ -2,6 +2,8 @@ package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -16,6 +18,7 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
+import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -24,6 +27,7 @@ import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.toRequestMediaTypeOrNull
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -34,8 +38,19 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** Nothing to load and nothing more to come: how a list the viewer may not read reports itself. */
+private val FINISHED =
+    LoadStates(
+        refresh = LoadState.NotLoading(endOfPaginationReached = true),
+        prepend = LoadState.NotLoading(endOfPaginationReached = true),
+        append = LoadState.NotLoading(endOfPaginationReached = true),
+    )
 
 /** A carousel is a teaser; the server's own page has the rest. */
 private const val CAROUSEL_LIMIT = 20
@@ -45,6 +60,7 @@ private const val CAROUSEL_LIMIT = 20
  * best-effort, since each is a section the server may not have or the user may not see.
  * The user's own requests are a separate paged stream.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = UserDetailViewModel.Factory::class)
 class UserDetailViewModel
     @AssistedInject
@@ -61,10 +77,31 @@ class UserDetailViewModel
         private val eventFlow = MutableSharedFlow<UserDetailEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<UserDetailEvent> = eventFlow.asSharedFlow()
 
+        /** Empty, without asking the server, for a viewer it would refuse: see [mayReadRequests]. */
         val requests: Flow<PagingData<RequestItem>> =
-            Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
-                UserRequestsPagingSource(userId = userId, api = connection::api, hydrate = titles::get)
-            }.flow.cachedIn(viewModelScope)
+            flow { emit(mayReadRequests()) }
+                .flatMapLatest { allowed ->
+                    if (allowed) {
+                        Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
+                            UserRequestsPagingSource(userId = userId, api = connection::api, hydrate = titles::get)
+                        }.flow
+                    } else {
+                        flowOf(PagingData.empty<RequestItem>(sourceLoadStates = FINISHED))
+                    }
+                }.cachedIn(viewModelScope)
+
+        /**
+         * The server lists a user's requests to that user, and to a viewer who holds MANAGE_REQUESTS or REQUEST_VIEW; anyone
+         * else gets a 403 the page could only show as a Retry that fails again. A viewer that cannot be read is let through,
+         * so a failed read does not leave the list empty for good.
+         */
+        private suspend fun mayReadRequests(): Boolean {
+            val viewer = runCatching { connection.authenticatedUser() }.getOrNull()
+            return viewer.mayReadRequestsOf(userId)
+        }
+
+        /** The one rule for both the pager and the screen's gate, so they cannot disagree about a viewer that cannot be read. */
+        private fun SeerrUserDto?.mayReadRequestsOf(userId: Int): Boolean = this == null || id == userId || toPermissions().canViewRequests
 
         init {
             reload()
@@ -151,6 +188,7 @@ class UserDetailViewModel
                     watch = watch.await()?.let { UserWatch(playCount = it.playCount, recentlyWatched = recent.mapNotNull(cards::get)) },
                     watchlist = listed.mapNotNull(cards::get),
                     isSelf = viewerDto?.id == userId,
+                    canViewRequests = viewerDto.mayReadRequestsOf(userId),
                     canEditSettings = viewerDto?.id == userId || permissions.canManageUsers,
                     canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
                     serverUrl = connection.current().baseUrl,
