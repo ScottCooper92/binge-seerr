@@ -52,7 +52,6 @@ private fun GridFrame(rows: TvPagedRows<RequestItem>) =
         filter = RequestFilter.Pending,
         counts = GridCounts,
         rows = rows,
-        actingIds = emptySet(),
         detailOpen = false,
         onOpenDetail = {},
         onRetryLoad = {},

@@ -21,15 +21,10 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
-import io.github.scottcooper92.binge.seerr.telemetry.Analytics
-import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
-import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
-import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -81,8 +76,6 @@ class RequestsViewModel
         private val titles: TitleCache,
         private val store: RequestStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
-        private val analytics: Analytics = NoOpAnalytics,
-        private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
@@ -100,23 +93,10 @@ class RequestsViewModel
          */
         private val refreshedVersions = ConcurrentHashMap<RequestFilter, Int>()
 
-        private val moderator =
-            RequestModeration(
-                scope = viewModelScope,
-                dispatcher = dispatcher,
-                connection = connection,
-                analytics = analytics,
-                crashBreadcrumbs = crashBreadcrumbs,
-                cache = store,
-            ) { listChanged() }
-
-        /** What the screen may ask of the moderation: its actions only. Its acting set is folded into [uiState] (#1048). */
-        val moderation: RequestModerationControls = moderator
-
-        /** How a moderation went, for the screen's snackbar. */
-        val events: SharedFlow<ModerationEvent> = moderator.events
-
-        /** A moderation finished, here or in a row's sheet: refetch the counts and stale the lists. */
+        /**
+         * A moderation finished in a row's sheet, on that request's own view model: refetch the counts and stale the lists.
+         * The list moderates nothing itself, so it has no acting set and no moderation events of its own (#1231).
+         */
         fun listChanged() {
             countsRefresh.value++
             listVersionState.update { it + 1 }
@@ -141,7 +121,7 @@ class RequestsViewModel
          * shows [ScopeState.Resolving] again. The profile is re-read too, so a server upgraded in place
          * offers its blocklist without a reconnect (#1074).
          *
-         * `flowOn(dispatcher)` for the same reason [moderation] takes one (#177): without it, this
+         * `flowOn(dispatcher)` for the same reason [RequestModeration] takes a dispatcher (#177): without it, this
          * flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`, which
          * can outlive a cleared scope same as a plain `launch` would.
          */
@@ -225,9 +205,8 @@ class RequestsViewModel
                 combine(selectedFilter, selectedSort, listVersionState) { filter, sort, version -> Triple(filter, sort, version) },
                 counts,
                 scope,
-                moderator.actingIds,
                 refreshes.latest,
-            ) { (filter, sort, version), counts, scope, acting, refreshes ->
+            ) { (filter, sort, version), counts, scope, refreshes ->
                 when (scope) {
                     ScopeState.Resolving -> RequestsUiState.Loading
                     is ScopeState.Failed -> RequestsUiState.Error(scope.error)
@@ -237,7 +216,6 @@ class RequestsViewModel
                             sort = sort,
                             counts = counts,
                             scope = scope.scope.moderation,
-                            actingIds = acting,
                             listVersion = version,
                             refreshes = refreshes,
                         )

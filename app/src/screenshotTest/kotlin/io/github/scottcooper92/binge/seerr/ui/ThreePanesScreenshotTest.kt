@@ -96,7 +96,6 @@ private fun Requests() =
                 sort = RequestSort.Added,
                 counts = RequestCounts(total = 128, pending = 6, approved = 90, processing = 12, available = 70),
                 scope = ModerationScope(permissions = SeerrPermissions(canManageRequests = true), currentUserId = 1),
-                actingIds = emptySet(),
                 listVersion = 1,
             ),
         requestsFor = { flowOf(PagingData.from(emptyList())) },

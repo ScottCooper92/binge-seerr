@@ -154,7 +154,6 @@ class TvRequestsRowsBoardFocusTest {
                             currentUserId = 7,
                             hasBlocklist = false,
                         ),
-                    actingIds = emptySet(),
                     listVersion = 0,
                 )
             BingeTvTheme {

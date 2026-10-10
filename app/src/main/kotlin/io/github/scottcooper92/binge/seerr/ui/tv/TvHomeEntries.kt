@@ -153,7 +153,6 @@ internal fun TvRequestsGridOverlay(
         filter = filter,
         counts = ready?.counts,
         rows = lazyItems.toRows(ready?.refreshes?.get(filter)) { it.id },
-        actingIds = ready?.actingIds.orEmpty(),
         detailOpen = detailOpen,
         onOpenDetail = { onOpenRequest(it.id) },
         onRetryLoad = { lazyItems.retry() },
