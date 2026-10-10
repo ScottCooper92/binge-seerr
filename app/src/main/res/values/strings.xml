@@ -1192,6 +1192,7 @@
     <string name="server_settings_language_codes">Language codes</string>
     <string name="server_settings_list_use">Use</string>
     <string name="server_settings_list_clear">Clear</string>
+    <string name="settings_choices_filter">Filter</string>
     <string name="server_settings_regions_unavailable">The server didn\'t send its list of regions. Try again, or enter a two-letter country code.</string>
     <string name="server_settings_languages_unavailable">The server didn\'t send its list of languages. Try again, or enter codes separated by |, like en|ja.</string>
     <string name="server_settings_api_key_hidden">•••• %1$s</string>
