@@ -40,7 +40,7 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         // and a batch of statuses is the core GetStatus many times over, so neither needs a permission.
         add(Capability.CAPABILITY_LIST_REQUESTS)
         add(Capability.CAPABILITY_BATCH_STATUS)
-        if (canCreateIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
+        if (canReportIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
         if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
     }
 

@@ -106,7 +106,7 @@ internal class DetailSources(
             destination = destination,
             downloads = downloads(),
             mediaId = dto.media.id,
-            canReportIssue = profile.hasIssues && permissions.canCreateIssues && dto.media.id != null,
+            canReportIssue = profile.hasIssues && permissions.canReportIssues && dto.media.id != null,
             webUrl = webRoot + dto.media.mediaType + "/" + dto.media.tmdbId,
             mediaServerUrl = preferred(dto.media.mediaUrl, dto.media.mediaUrl4k),
             serviceUrl = preferred(dto.media.serviceUrl, dto.media.serviceUrl4k),
