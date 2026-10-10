@@ -190,7 +190,11 @@ class TvSetupScreenshotTest {
             state =
                 setupSignIn(
                     form = SignInForm(mode = SeerrSignInMode.Emby, username = "scott"),
-                    server = SampleSetupServer.copy(modes = listOf(SeerrSignInMode.Emby, SeerrSignInMode.Local)),
+                    server =
+                        SampleSetupServer.copy(
+                            modes = listOf(SeerrSignInMode.Emby, SeerrSignInMode.Local),
+                            mediaServerName = null,
+                        ),
                 ),
             actions = NoSetupActions,
             initialFocus = TvSetupFocus.Credential,
