@@ -37,6 +37,7 @@ import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 private const val REQUEST_WAIT_MILLIS = 2_000L
 private const val POLL_MILLIS = 10L
@@ -68,13 +69,16 @@ class RequestsViewModelTest {
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
 
+    /** The server's version, which a test can change mid-run, as an upgrade in place would. */
+    private val serverVersion = AtomicReference("3.1.0")
+
     private fun server(permissions: Int) {
         viewerPermissions.set(permissions)
         seerr.dispatcher = { request ->
             received += request
             when (request.url.encodedPath) {
                 "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
-                "/api/v1/status" -> json("""{"version":"3.1.0"}""")
+                "/api/v1/status" -> json("""{"version":"${serverVersion.get()}"}""")
                 "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
                 "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
                 "/api/v1/request" ->
@@ -175,6 +179,21 @@ class RequestsViewModelTest {
                     .awaitReady { true }
                     .scope.permissions.canManageRequests,
             )
+        }
+
+    /** A Jellyseerr 1.x upgraded in place to 2.x offers block-on-decline on the next arrival, with no reconnect (#1074). */
+    @Test
+    fun `becoming visible re-reads the profile, so a server upgraded in place offers its blocklist`() =
+        runTest {
+            serverVersion.set("1.9.0")
+            server(ADMIN)
+            val vm = viewModel()
+            assertFalse(vm.awaitReady { it.scope.permissions.canManageRequests }.scope.hasBlocklist)
+
+            serverVersion.set("2.7.0")
+            vm.setScreenVisible(true)
+
+            assertTrue(vm.awaitReady { it.scope.hasBlocklist }.scope.hasBlocklist)
         }
 
     @Test

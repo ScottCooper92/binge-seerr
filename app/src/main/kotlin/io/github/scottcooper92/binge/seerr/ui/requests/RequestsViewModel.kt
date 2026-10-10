@@ -125,8 +125,8 @@ class RequestsViewModel
          * Re-read from the server on becoming visible, since the cached `auth/me` would not show a
          * permission changed in the web client; a failed re-resolve is [ScopeState.Failed] rather than a
          * guessed, all-permissive scope, so nothing downstream acts on one. A retry from a failure
-         * shows [ScopeState.Resolving] again. The profile is not re-read: `hasBlocklist` follows the
-         * server's version, which an upgrade restarts anyway.
+         * shows [ScopeState.Resolving] again. The profile is re-read too, so a server upgraded in place
+         * offers its blocklist without a reconnect (#1074).
          *
          * `flowOn(dispatcher)` for the same reason [moderation] takes one (#177): without it, this
          * flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`, which
@@ -141,7 +141,7 @@ class RequestsViewModel
                             runCatching { connection.refreshAuthenticatedUser() }.fold(
                                 onSuccess = { resolved ->
                                     val permissions = resolved.toPermissions()
-                                    val hasBlocklist = runCatching { connection.profile().hasBlocklist }.getOrDefault(false)
+                                    val hasBlocklist = runCatching { connection.refreshProfile().hasBlocklist }.getOrDefault(false)
                                     ScopeState.Resolved(
                                         ListScope(
                                             moderation =
