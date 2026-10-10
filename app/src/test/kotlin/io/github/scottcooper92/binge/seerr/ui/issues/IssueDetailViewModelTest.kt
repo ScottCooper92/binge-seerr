@@ -132,6 +132,29 @@ class IssueDetailViewModelTest {
     private suspend fun IssueDetailViewModel.awaitReady(match: (IssueDetailUiState.Ready) -> Boolean = { true }): IssueDetailUiState.Ready =
         uiState.first { it is IssueDetailUiState.Ready && match(it) } as IssueDetailUiState.Ready
 
+    /** #1239: the thread's "2 minutes ago" ages while the page shows, and the clock stops when it leaves. */
+    @Test
+    fun `the thread's clock moves on each minute while the page is showing, and stops when it leaves`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            vm.awaitReady()
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.awaitReady { it.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, vm.awaitReady().now)
+        }
+
     /** #1026: a comment half typed when the process is killed comes back in the composer. */
     @Test
     fun `a half-typed comment survives the process being killed`() =

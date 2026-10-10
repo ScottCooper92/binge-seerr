@@ -87,6 +87,7 @@ fun IssuesScreen(
                 filter = filter,
                 lazyItems = issuesFor(filter).collectAsLazyPagingItems(),
                 lastRefresh = loaded.refreshes[filter],
+                now = loaded.now,
                 onOpen = actions.onOpen,
                 onPull = actions.onRefreshCounts,
                 modifier = Modifier.fillMaxSize(),
