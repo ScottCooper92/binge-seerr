@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ class IssuesActions(
  * the server's totals. The ViewModel owns the selected filter; a chip's index is its filter's ordinal.
  *
  * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
+ * @param pullState a still frame's resting pull for every page; null gives each page M3's own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +47,7 @@ fun IssuesScreen(
     issuesFor: (IssueFilter) -> Flow<PagingData<IssueItem>>,
     actions: IssuesActions,
     showBack: Boolean = true,
+    pullState: PullToRefreshState? = null,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssuesUiState.Ready
@@ -85,6 +88,7 @@ fun IssuesScreen(
                 onOpen = actions.onOpen,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = contentPadding,
+                pullState = pullState,
             )
         }
     }

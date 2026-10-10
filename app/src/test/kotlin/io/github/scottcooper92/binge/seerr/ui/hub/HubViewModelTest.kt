@@ -730,6 +730,68 @@ class HubViewModelTest {
             assertTrue((vm.uiState.value as HubUiState.Ready).downloading.isEmpty())
         }
 
+    /** The dashboard's pull re-reads what becoming visible does, and the downloads with it: each once, then settles. */
+    @Test
+    fun `a pull re-reads the pending count, the downloads and the install state once`() =
+        runTest {
+            healthyServer()
+            val installCheck = FakeBingeInstallCheck(installed = false)
+            val vm = viewModel(installCheck = installCheck)
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.downloading.isNotEmpty() && it.overview.pendingRequestCount == 2 }
+            seerr.awaitIdle()
+
+            fun reads(path: String) = seerr.requests.count { it.url.encodedPath == path }
+
+            val downloadReads = reads("/api/v1/request")
+            val countReads = reads("/api/v1/request/count")
+            serve("/api/v1/request/count", """{"total":13,"movie":9,"tv":4,"pending":3,"processing":1}""")
+            installCheck.installed = true
+
+            vm.refresh()
+            val settled =
+                vm.awaitReady {
+                    !it.refreshing && it.overview.pendingRequestCount == 3 && it.bingeStatus == BingeStatus.NotConnected
+                }
+            seerr.awaitIdle()
+
+            assertEquals(3, settled.overview.pendingRequestCount)
+            assertEquals(downloadReads + 1, reads("/api/v1/request"))
+            assertEquals(countReads + 1, reads("/api/v1/request/count"))
+        }
+
+    /** A pull is the spinner until its reads answer, and a second pull meanwhile reads nothing more. */
+    @Test
+    fun `a pull while one is running starts no second`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel()
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.downloading.isNotEmpty() && it.overview.pendingRequestCount == 2 }
+            seerr.awaitIdle()
+
+            fun reads(path: String) = seerr.requests.count { it.url.encodedPath == path }
+
+            val downloadReads = reads("/api/v1/request")
+            val countReads = reads("/api/v1/request/count")
+            val release = CountDownLatch(1)
+            val count = responses.getValue("/api/v1/request/count")
+            responses["/api/v1/request/count"] = {
+                release.await(LATCH_SECONDS, TimeUnit.SECONDS)
+                count()
+            }
+
+            vm.refresh()
+            vm.awaitReady { it.refreshing }
+            vm.refresh()
+            release.countDown()
+            vm.awaitReady { !it.refreshing }
+            seerr.awaitIdle()
+
+            assertEquals(downloadReads + 1, reads("/api/v1/request"))
+            assertEquals(countReads + 1, reads("/api/v1/request/count"))
+        }
+
     private object PlainCipher : SecretCipher {
         override fun encrypt(plaintext: String): String = plaintext
 

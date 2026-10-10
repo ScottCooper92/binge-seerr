@@ -8,9 +8,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,7 +60,9 @@ class UsersActions(
  * action writes a permission set to everyone ticked.
  *
  * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
+ * @param pullState a still frame's resting pull; null remembers M3's own.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UsersScreen(
     state: UsersUiState,
@@ -66,6 +70,7 @@ fun UsersScreen(
     events: Flow<UsersEvent>,
     actions: UsersActions,
     showBack: Boolean = true,
+    pullState: PullToRefreshState? = null,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? UsersUiState.Ready
@@ -105,6 +110,7 @@ fun UsersScreen(
                     onToggleSelected = actions.onToggleSelected,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = padding.screenInnerPadding(),
+                    pullState = pullState,
                 )
             }
         }

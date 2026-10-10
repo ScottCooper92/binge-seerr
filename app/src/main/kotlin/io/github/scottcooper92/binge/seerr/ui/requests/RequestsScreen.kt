@@ -9,6 +9,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +55,7 @@ class RequestsActions(
  * @param shouldRefresh true at most once per list version per filter, so a freshly composed, current
  * page does not blank-refresh after a moderation elsewhere.
  * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
+ * @param pullState a still frame's resting pull for every page; null gives each page M3's own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +65,7 @@ fun RequestsScreen(
     shouldRefresh: (RequestFilter, Int) -> Boolean,
     actions: RequestsActions,
     showBack: Boolean = true,
+    pullState: PullToRefreshState? = null,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     // The request whose sheet was last opened, and whether it is up: dismissing keeps the id so a
@@ -113,6 +116,7 @@ fun RequestsScreen(
                     sheetOpen = true
                 },
                 contentPadding = contentPadding,
+                pullState = pullState,
             )
         }
     }
@@ -145,6 +149,7 @@ fun RequestsScreen(
  * one's. Refreshing is the selected page's alone: a neighbour or a page only swiped past must not spend the
  * list's one refresh for this version.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RequestsPage(
     filter: RequestFilter,
@@ -154,6 +159,7 @@ private fun RequestsPage(
     actions: RequestsActions,
     onManage: (RequestItem) -> Unit,
     contentPadding: PaddingValues,
+    pullState: PullToRefreshState?,
 ) {
     val lazyItems = requestsFor(filter).collectAsLazyPagingItems()
     val selected = filter == state.filter
@@ -171,6 +177,7 @@ private fun RequestsPage(
         onManage = onManage,
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
+        pullState = pullState,
     )
 }
 
