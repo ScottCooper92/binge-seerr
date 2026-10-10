@@ -105,10 +105,11 @@ class DiscoverSliderViewModel
          * stay.
          */
         fun selectType(type: SliderType) {
-            val previous = ready()?.draft?.type
-            val keepsData = previous != null && previous.keepsDataFor(type)
+            val draft = ready()?.draft
+            val keepsData = draft != null && draft.type.keepsDataFor(type)
             edit { it.copy(type = type, data = if (keepsData) it.data else "") }
-            if (!keepsData) readers.readFor(SliderForm(type = type))
+            // Asked every time: what is already read is left alone, and a read that failed is tried again.
+            readers.readFor(SliderForm(type = type, data = if (keepsData) draft.data else ""))
         }
 
         fun toggleKeyword(keywordId: Int) = edit { it.copy(data = it.data.withIdToggled(keywordId)) }

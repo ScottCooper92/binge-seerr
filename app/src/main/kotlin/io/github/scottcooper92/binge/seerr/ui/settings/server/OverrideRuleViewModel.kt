@@ -25,7 +25,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 /** Matches `UserAdmission`'s `ALL_USERS_TAKE`: the "requested by" picker needs every user, not one page of them. */
 private const val USERS_PAGE = 1000
@@ -53,7 +52,14 @@ class OverrideRuleViewModel
         private var radarrRecords: List<SeerrServiceSettingsDto> = emptyList()
         private var sonarrRecords: List<SeerrServiceSettingsDto> = emptyList()
 
-        private var genresJob: Job? = null
+        private val genres =
+            GenreLookup(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = { currentExtras().genres },
+                set = { choices -> editExtras { it.copy(genres = choices) } },
+            )
 
         private val keywords =
             KeywordLookup(
@@ -91,7 +97,7 @@ class OverrideRuleViewModel
                 val userChoices = users.await().map { user -> Choice(user.id, user.displayString() ?: user.id.toString()) }
                 editExtras { it.copy(instances = instances, users = userChoices) }
                 form.serviceId?.let { serviceId -> form.serviceType?.let { type -> loadChoices(type, serviceId) } }
-                form.serviceType?.let(::loadGenres)
+                form.serviceType?.let { genres.ensure(it.genreSegment()) }
                 keywords.name(form.keywords.tagIds())
                 form
             }
@@ -112,11 +118,10 @@ class OverrideRuleViewModel
         override fun canSave(draft: OverrideRuleForm): Boolean = draft.valid
 
         fun selectInstance(instance: DvrSummary) {
-            val sameType = ready()?.draft?.serviceType == instance.type
             edit { it.copy(serviceType = instance.type, serviceId = instance.id, profileId = null, rootFolder = null, tagIds = emptySet()) }
             choicesJob?.cancel()
             choicesJob = viewModelScope.launch(dispatcher) { loadChoices(instance.type, instance.id) }
-            if (!sameType || currentExtras().genres !is GenreChoices.Ready) loadGenres(instance.type)
+            genres.ensure(instance.type.genreSegment())
         }
 
         fun toggleUser(userId: Int) = edit { it.copy(userIds = it.userIds.toggled(userId)) }
@@ -159,23 +164,6 @@ class OverrideRuleViewModel
             }
         }
 
-        /** The genres the rule's instance type matches, named in the device's language; a newer pick supersedes an older read. */
-        private fun loadGenres(type: ServiceType) {
-            genresJob?.cancel()
-            editExtras { it.copy(genres = GenreChoices.Loading) }
-            genresJob =
-                viewModelScope.launch(dispatcher) {
-                    val segment = if (type == ServiceType.Radarr) "movie" else "tv"
-                    val genres =
-                        attempt { connection.api().genres(segment, Locale.getDefault().toLanguageTag()) }
-                            .fold(
-                                { list -> GenreChoices.Ready(list.mapNotNull { dto -> dto.name?.let { Choice(dto.id, it) } }) },
-                                { GenreChoices.Failed },
-                            )
-                    editExtras { it.copy(genres = genres) }
-                }
-        }
-
         /** The instance's stored connection is what the admin's read of it carries, so no key is typed here. */
         private suspend fun loadChoices(
             type: ServiceType,
@@ -201,3 +189,6 @@ class OverrideRuleViewModel
             fun create(id: Int?): OverrideRuleViewModel
         }
     }
+
+/** The genre list a rule's instance type matches: Radarr's movies or Sonarr's TV. */
+private fun ServiceType.genreSegment(): String = if (this == ServiceType.Radarr) "movie" else "tv"

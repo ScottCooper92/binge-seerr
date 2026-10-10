@@ -223,6 +223,25 @@ class DiscoverSliderViewModelTest {
         }
 
     @Test
+    fun `a failed genre read is tried again when the kind is picked again, and a good one is not read twice`() =
+        runTest {
+            seerr.serve("GET /api/v1/genres/movie", "{}", code = 500)
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.MovieGenre)
+            vm.awaitReady { it.extras.genres == GenreChoices.Failed }
+
+            seerr.serve("GET /api/v1/genres/movie", """[{"id":28,"name":"Action"}]""")
+            vm.selectType(SliderType.MovieGenre)
+            vm.awaitReady { it.extras.genres is GenreChoices.Ready }
+            assertEquals(2, seerr.count("GET", "/api/v1/genres/movie"))
+
+            vm.selectType(SliderType.MovieGenre)
+            vm.awaitReady { it.extras.genres is GenreChoices.Ready }
+            assertEquals(2, seerr.count("GET", "/api/v1/genres/movie"))
+        }
+
+    @Test
     fun `a studio is found by search, picked as its id, and named on the row`() =
         runTest {
             val vm = viewModel(id = null)
