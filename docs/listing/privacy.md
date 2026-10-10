@@ -21,6 +21,8 @@ https://github.com/ScottCooper92/binge-seerr.
 - **A cache of what the server showed you** (requests, issues, users, titles and artwork URLs), so
   lists open instantly and work offline until refreshed. It is cleared when you disconnect.
 - **Your notification choices**, and the last time the background check ran.
+- **Up to three addresses per server that you sent to a television** (see "Phone-to-TV hand-off"),
+  so the next send offers them again. They are addresses you typed, nothing secret.
 - **A random identifier** minted on first use, sent to plex.tv only when you sign in with Plex so
   that this install appears once, not once per sign-in, in the devices list on your Plex account.
 - **Your answers about usage data and crash reports**, and whether shaking the phone offers to
@@ -28,19 +30,24 @@ https://github.com/ScottCooper92/binge-seerr.
 
 The app sets `allowBackup="false"`, so Android's own backup does not copy any of the above.
 Uninstalling the app removes it. Disconnecting inside the app removes the address, the secret,
-the cache and the Block Store copy. The Block Store copy is the one path by which the connection
-can leave the device, and only in the two ways described above.
+the cache and the Block Store copy. It does not remove the short list of addresses you sent to a
+television; uninstalling, or clearing the app's data in Android's settings, does.
+
+The connection can leave the device in two ways, both started by you: the Block Store copy, in the
+two ways described above, and the phone-to-TV hand-off below, which stays on your local network.
 
 ## Where the app sends data
 
-- **To the server you entered**, and to nothing else, for everything the app shows and every change
-  you make. If you enter a plain `http://` address, that traffic is unencrypted on the network; the
-  app warns you when the address is on a public host. Use `https://` where you can.
+- **To the server you entered**, for everything the app shows and every change you make. If you
+  enter a plain `http://` address, that traffic is unencrypted on the network; the app warns you
+  when the address is on a public host. Use `https://` where you can.
 - **To plex.tv**, only when you choose to sign in with Plex: the app opens Plex's sign-in page and
   polls plex.tv for the approval, sending the identifier above. Plex's own privacy policy governs
   what happens there.
 - **To Google (Play services Block Store)**, if the device has Play services: the connection copy
   described above, handled by Google's own service under your Google account.
+- **To a television on your local network**, only when you tap Send in the phone-to-TV hand-off
+  described below.
 - **To Binge**, on the same device, when Binge is installed and you allow it: request and status
   data for the titles Binge asks about, over an Android service binding that never leaves the
   device. Binge cannot read the server address or the secret.
@@ -57,13 +64,46 @@ can leave the device, and only in the two ways described above.
   records it against a random identifier for this install, not against you, and derives a rough
   location from the IP address.
 - **To Google (Firebase Crashlytics)**, when the app crashes: what the app was doing, the device
-  model and Android version. This is on unless you turn it off in Settings. No user identifier is
-  set, and the app does not forward its logs.
+  model and Android version. "What the app was doing" is a short line from a fixed list ("deleting
+  issue", "moderating request: approved") and, where an action is on one record, that record's
+  number on your server: the number of an issue, request, comment, title (its TMDB id), collection,
+  DVR instance or override rule. The app attaches no title, name, message or server address. A crash
+  report also carries the crash's own stack trace and exception message, which the app does not
+  write and cannot promise are free of an address. This is
+  on unless you turn it off in Settings. No user identifier is set, and the app does not forward its
+  logs.
 - **To GitHub**, only when you choose to report a bug: the app opens a new issue form in your
   browser with the app version, the device and the Android version filled in. Nothing is sent until
   you submit the form yourself, and the issue is public.
 
 The app has no server of its own.
+
+## Phone-to-TV hand-off
+
+On a television the app can be told your server's address from your phone, so you do not type it
+with a remote. It is only ever started by you.
+
+- **On the television**, while it shows its code, the app listens for one phone on your local
+  network: a small web server on the television's own private address (never on every network
+  interface), at a one-time address that only the code on screen spells out, behind a PIN that the
+  phone must send. It keeps listening through the television's sign-in step, and stops when the
+  television connects, when you leave the page, or after the sign-in timeout; an unused code is
+  replaced every five minutes, and five wrong PINs lock it. The page it serves is the one a phone's
+  browser opens from the code.
+- **On the phone**, you scan the code, or open its link, and tap Send. Nothing is sent before that
+  tap. Scanning uses Google Play services' own code scanner: the app holds no camera permission,
+  Play services shows the camera, and the app is given only the text of the code.
+- **What crosses your network** is the server address you typed, the PIN, and, only if you switch
+  it on in that sheet, your phone's session for that server, sealed with AES-256-GCM under a key
+  that was in the code on the television's screen and is never sent over the network. The API key the
+  app holds is never sent or shared.
+- **On the television's sign-in step**, sign-in details you type on the phone, in the app or on the
+  television's page, are sealed the same way and sent only when you tap. They are an email and
+  password, a Jellyfin or Emby username and password, or an API key.
+- **All of it** travels over plain HTTP, because a television has no certificate a phone would
+  trust; someone watching your network sees the address and the sealed bytes, not what opens them.
+- **After it is sent**, the phone remembers the address (up to three per server), so the next send
+  offers it again.
 
 ## What the app does not do
 
@@ -71,8 +111,10 @@ The app has no server of its own.
   categories and failed-action details above.
 - No account with the app's author, and no sign-in other than to your own server (and Plex, if you
   choose it).
-- No access to contacts, location, files, the camera, the microphone or the clipboard beyond the
-  copy actions you press.
+- No access of its own to contacts, location, files, the camera, the microphone or the clipboard
+  beyond the copy actions you press. The app holds no camera permission. When you choose to scan a
+  television's code, Google Play services' scanner opens the camera for that one scan and hands the
+  app the code's text.
 - No background activity other than the notification check, which asks your server for new
   requests and issues on a fixed interval, using the same stored secret, and which you can turn off.
 
@@ -81,12 +123,17 @@ The app has no server of its own.
 - **Internet**, to reach your server.
 - **Notifications** (Android 13 and later), to tell you about new requests and issues. Denying it
   disables the notifications and nothing else.
+- **Network state**, so a television can read its own address on your network for the hand-off.
+- **Local network access** (a runtime permission from Android API level 37), to reach a server on
+  your own network (a private address, a `.local` or `.lan` name) and a television for the hand-off.
+  The app asks when you enter such an address or scan a television's code. Refusing it only turns
+  those local-network features off; a server reached by a public address is unaffected.
 
 Libraries the app includes add more to the installed app's manifest. None is used to reach anything
 beyond what this policy describes:
 
-- **Network state**, **wake lock**, **run at startup** and **foreground service**, from Android's
-  WorkManager (and, for network state, PostHog): they let the background notification check
+- **Wake lock**, **run at startup** and **foreground service**, from Android's WorkManager (which
+  also declares network state, as does PostHog): they let the background notification check
   survive a restart and run reliably.
 - **Biometric** and **fingerprint**, declared by the `androidx.biometric` library that a
   dependency brings in. The app never asks for biometrics.
