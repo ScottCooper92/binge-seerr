@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -155,7 +154,7 @@ private fun ServerStatStrip(overview: HubOverview) {
 
 /**
  * The connected user: the design system's profile card, with their photo, name and role, and under it their request
- * quota where the server sets one. The whole card opens their page.
+ * quota where the server sets one. The whole card opens their page, as one control with one focus stop.
  */
 @Composable
 internal fun AccountCard(
@@ -174,7 +173,7 @@ internal fun AccountCard(
             secondaryLine = stringResource(account.role.labelRes()),
             initialsName = account.name,
             avatarUrl = account.avatarUrl,
-            modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+            // The card is one control: its rounded surface takes the press and names the action (#1241).
             onClick = onClick,
         )
         quota?.let { QuotaSection(it) }
