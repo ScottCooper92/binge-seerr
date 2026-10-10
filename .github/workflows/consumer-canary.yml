@@ -79,43 +79,12 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          CANARY_RESULT: ${{ needs.canary.result }}
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@f7344d426f38e2dba330ed1b0483a284e0a6af9d # v1
         with:
-          script: |
-            const title = 'Consumer canary: main no longer builds against upstream heads';
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const { owner, repo } = context.repo;
-            const open = (await github.paginate(github.rest.issues.listForRepo, {
-              owner, repo, state: 'open', per_page: 100,
-            })).find((i) => !i.pull_request && i.title === title);
-
-            if (process.env.CANARY_RESULT === 'success') {
-              if (!open) return;
-              await github.rest.issues.createComment({
-                owner, repo, issue_number: open.number,
-                body: `The canary is green again: ${runUrl}`,
-              });
-              await github.rest.issues.update({
-                owner, repo, issue_number: open.number, state: 'closed', state_reason: 'completed',
-              });
-            } else {
-              if (open) {
-                await github.rest.issues.createComment({
-                  owner, repo, issue_number: open.number,
-                  body: `Still failing: ${runUrl}`,
-                });
-                return;
-              }
-              await github.rest.issues.create({
-                owner, repo, title,
-                body: [
-                  `The scheduled canary failed: ${runUrl}`,
-                  '',
-                  'This build uses the heads of design-system/ (binge-design-system) and binge-companions/, not the pinned commits. If the nightly CI run is green, an upstream commit broke this app: the log names the submodule commits it built against, and bumping the pin would be red too.',
-                  '',
-                  'The canary-reports artifact is kept for seven days. This issue closes itself on the next green canary run.',
-                ].join('\n'),
-              });
-            }
+          result: ${{ needs.canary.result }}
+          title: 'Consumer canary: main no longer builds against upstream heads'
+          note: >-
+            This build uses the heads of design-system/ (binge-design-system) and binge-companions/,
+            not the pinned commits. If the nightly CI run is green, an upstream commit broke this app:
+            the log names the submodule commits it built against, and bumping the pin would be red too.
+            The canary-reports artifact is kept for seven days.
