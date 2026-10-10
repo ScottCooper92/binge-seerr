@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui
 
-import android.content.Context
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
@@ -25,9 +24,9 @@ import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventDispatcher
 import androidx.navigationevent.NavigationEventDispatcherOwner
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
-import androidx.test.core.app.ApplicationProvider
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -57,7 +56,7 @@ class ThreePaneSceneTest {
     private val dispatcher = NavigationEventDispatcher()
     private val input = DirectNavigationEventInput().also { dispatcher.addInput(it) }
 
-    private val nothingOpen = ApplicationProvider.getApplicationContext<Context>().getString(R.string.three_pane_nothing_open_title)
+    private val nothingOpen = string(R.string.three_pane_nothing_open_title)
 
     private fun show(vararg keys: NavKey): NavBackStack<NavKey> {
         lateinit var backStack: NavBackStack<NavKey>

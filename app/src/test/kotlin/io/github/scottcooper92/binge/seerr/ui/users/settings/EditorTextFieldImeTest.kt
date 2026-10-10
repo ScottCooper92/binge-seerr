@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
-import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,10 +13,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.input.ImeAction
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -30,7 +29,7 @@ class EditorTextFieldImeTest {
     @get:Rule
     val composeTestRule = createSeerrComposeRule()
 
-    private val clear get() = ApplicationProvider.getApplicationContext<Context>().getString(R.string.field_clear)
+    private val clear get() = string(R.string.field_clear)
 
     private fun setTwoFields(
         secondAction: ImeAction = ImeAction.Done,
