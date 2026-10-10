@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.data
 
 import androidx.paging.PagingSource
-import androidx.room.withTransaction
 
 /**
  * The request cache behind a seam, as [IssueStore] is, so the mediator and the browser are tested
@@ -48,6 +47,16 @@ class RoomRequestStore(
     private val requests get() = db.requestDao()
     private val keys get() = db.requestRemoteKeyDao()
     private val sources = OpenPagingSources<Int, RequestEntity>()
+    private val writes =
+        PagedWrites(
+            db = db,
+            sources = sources,
+            clearList = { requests.clear(it) },
+            upsertRows = { requests.upsertAll(it) },
+            setCursor = { listKey, nextSkip -> keys.upsert(RequestRemoteKeyEntity(listKey, nextSkip)) },
+            clearEverything = { requests.clearAll() },
+            clearCursors = { keys.clearAll() },
+        )
 
     override fun pagingSource(listKey: String): PagingSource<Int, RequestEntity> = sources.track(requests.pagingSource(listKey))
 
@@ -59,24 +68,13 @@ class RoomRequestStore(
         listKey: String,
         requests: List<RequestEntity>,
         nextSkip: Int?,
-    ) = sources.afterWrite {
-        db.withTransaction {
-            this.requests.clear(listKey)
-            this.requests.upsertAll(requests)
-            keys.upsert(RequestRemoteKeyEntity(listKey, nextSkip))
-        }
-    }
+    ) = writes.refresh(listKey, requests, nextSkip)
 
     override suspend fun append(
         listKey: String,
         requests: List<RequestEntity>,
         nextSkip: Int?,
-    ) = sources.afterWrite {
-        db.withTransaction {
-            this.requests.upsertAll(requests)
-            keys.upsert(RequestRemoteKeyEntity(listKey, nextSkip))
-        }
-    }
+    ) = writes.append(listKey, requests, nextSkip)
 
     override suspend fun updateStatus(
         requestId: Int,
@@ -85,13 +83,7 @@ class RoomRequestStore(
 
     override suspend fun delete(requestId: Int) = sources.afterWrite { requests.delete(requestId) }
 
-    override suspend fun clearAll() =
-        sources.afterWrite {
-            db.withTransaction {
-                requests.clearAll()
-                keys.clearAll()
-            }
-        }
+    override suspend fun clearAll() = writes.clearAll()
 }
 
 /** No cache at all: writes go nowhere. What a build or a test that has not wired one gets. */
