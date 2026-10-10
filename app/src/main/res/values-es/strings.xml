@@ -757,7 +757,7 @@
     <string name="server_settings_slider_type">Tipo</string>
     <string name="server_settings_slider_title">Título</string>
     <string name="server_settings_slider_data">Datos</string>
-    <string name="server_settings_slider_data_keywords">IDs de palabra clave de TMDB separados por comas</string>
+    <string name="server_settings_slider_genre">Género</string>
     <string name="server_settings_slider_data_genre">Un ID de género de TMDB</string>
     <string name="server_settings_slider_data_company">Un ID de productora o cadena de TMDB</string>
     <string name="server_settings_slider_data_search">La búsqueda que ejecuta la fila</string>

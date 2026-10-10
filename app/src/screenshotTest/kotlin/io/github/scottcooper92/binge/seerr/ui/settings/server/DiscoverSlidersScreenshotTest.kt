@@ -5,8 +5,10 @@ import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -54,39 +56,66 @@ class DiscoverSlidersScreenshotTest {
 }
 
 class DiscoverSliderFormScreenshotTest {
-    /** A new slider: the first custom kind, with nothing typed, so Save stays off. */
+    /** A new slider: the first custom kind, with nothing picked, so Save stays off. */
     @PreviewTest
     @SeerrScreenPreviews
     @Composable
-    fun newLayout() = SliderFormFrame(EditorUiState.Ready(draft = SliderForm(), saved = SliderForm()))
+    fun newLayout() = SliderFormFrame(readyForm(SliderForm()))
 
-    /** A saved slider: its kind's hint under the data field, and Delete. */
+    /** A saved keyword slider: its keywords named on the row, and Delete. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun existing() = SliderFormFrame(settledSliders(savedSlider()))
+    fun existing() = SliderFormFrame(readyForm(savedSlider(), keywordNames))
+
+    /** A genre slider names its genre, from the list of its kind. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun genreKind() = SliderFormFrame(readyForm(savedSlider().copy(type = SliderType.MovieGenre, data = "878"), genres = genreList))
+
+    /** A server that cannot send the genres gets the typed id back, so the slider stays in reach. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun genresUnavailable() =
+        SliderFormFrame(readyForm(savedSlider().copy(type = SliderType.MovieGenre, data = "878"), genres = GenreChoices.Failed))
 
     /** A search slider, whose data hint is about a query rather than ids. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun searchKind() = SliderFormFrame(settledSliders(savedSlider().copy(type = SliderType.Search, data = "dune")))
+    fun searchKind() = SliderFormFrame(readyForm(savedSlider().copy(type = SliderType.Search, data = "dune")))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun unsavedEdit() = SliderFormFrame(EditorUiState.Ready(draft = savedSlider().copy(title = "Kaiju"), saved = savedSlider()))
+    fun unsavedEdit() =
+        SliderFormFrame(
+            ExtrasEditorUiState.Ready(draft = savedSlider().copy(title = "Kaiju"), saved = savedSlider(), extras = keywordNames),
+        )
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = SliderFormFrame(EditorUiState.Loading)
+    fun loading() = SliderFormFrame(ExtrasEditorUiState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = SliderFormFrame(EditorUiState.Error(SeerrError.Server))
+    fun failed() = SliderFormFrame(ExtrasEditorUiState.Error(SeerrError.Server))
 }
+
+private val keywordNames = SliderExtras(keywords = KeywordSearch(names = mapOf(210024 to "kaiju", 4344 to "monster")))
+
+private val genreList =
+    GenreChoices.Ready(listOf(Choice(28, "Action"), Choice(878, "Science Fiction"), Choice(12, "Adventure")))
+
+private fun readyForm(
+    form: SliderForm,
+    extras: SliderExtras = SliderExtras(),
+    genres: GenreChoices = extras.genres,
+) = ExtrasEditorUiState.Ready(draft = form, saved = form, extras = extras.copy(genres = genres))
 
 private fun <T> settledSliders(form: T) = EditorUiState.Ready(draft = form, saved = form)
 
@@ -114,5 +143,18 @@ private fun SlidersFrame(state: EditorUiState<List<DiscoverSlider>>) =
     )
 
 @Composable
-private fun SliderFormFrame(state: EditorUiState<SliderForm>) =
-    DiscoverSliderScreen(state = state, events = emptyFlow(), actions = noActions(), onDelete = {})
+private fun SliderFormFrame(state: ExtrasEditorUiState<SliderForm, SliderExtras>) =
+    DiscoverSliderScreen(
+        state = state,
+        events = emptyFlow(),
+        actions = noActions(),
+        sliderActions =
+            SliderEditorActions(
+                onSelectType = {},
+                onToggleKeyword = {},
+                onSelectGenre = {},
+                onSearchKeywords = {},
+                onLoadKeywordNames = {},
+                onDelete = {},
+            ),
+    )

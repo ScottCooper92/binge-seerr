@@ -35,12 +35,42 @@ enum class SliderType(
     TvStreamingServices(21, custom = true),
     ;
 
+    /** What this kind's [DiscoverSlider.data] holds, which decides how the editor asks for it. */
+    val dataKind: SliderDataKind
+        get() =
+            when (this) {
+                MovieKeyword, TvKeyword -> SliderDataKind.Keywords
+                MovieGenre, TvGenre -> SliderDataKind.Genre
+                else -> SliderDataKind.Text
+            }
+
+    /** The path segment of `GET genres/{type}` for a genre slider; null for any other kind. */
+    val genreSegment: String?
+        get() =
+            when (this) {
+                MovieGenre -> "movie"
+                TvGenre -> "tv"
+                else -> null
+            }
+
     companion object {
         fun fromCode(code: Int): SliderType? = entries.firstOrNull { it.code == code }
 
         val customTypes: List<SliderType> get() = entries.filter { it.custom }
     }
 }
+
+/**
+ * How a custom slider's data is chosen: TMDB keyword ids picked by search, one genre picked by name, or typed as the web
+ * client takes it (a company, a network, a search, a region and its providers).
+ */
+enum class SliderDataKind { Keywords, Genre, Text }
+
+/** What the slider editor holds beside the form: the keyword search and names, and the genres of a genre slider's kind. */
+data class SliderExtras(
+    val keywords: KeywordSearch = KeywordSearch(),
+    val genres: GenreChoices = GenreChoices.Loading,
+)
 
 /** One slider as the list shows it; a built-in one has no [title] of its own. */
 data class DiscoverSlider(
