@@ -547,14 +547,15 @@ kover {
                 annotatedBy("androidx.compose.runtime.Composable")
             }
         }
-        // 78, measured: the suite sits at 80.3% today. Chosen rather than inherited - Binge's 70
-        // is derived from its own per-module layout, and this is one module holding ViewModels,
-        // the client, the stores and the service together. The ~2 points of headroom are about
-        // 180 lines, so a feature landing without tests trips this and a class or two that is
-        // genuinely awkward to reach does not. Ratchet it up as ui/state and ui/tv are covered.
+        // 84, measured: the suite sits at 86.4% today, up from the 80.3% the first floor of 78 was
+        // set from (#1054). Chosen rather than inherited - Binge's 70 is derived from its own
+        // per-module layout, and this is one module holding ViewModels, the client, the stores and
+        // the service together. The ~2 points of headroom are about 300 lines, so a feature landing
+        // without tests trips this and a class or two that is genuinely awkward to reach does not.
+        // Ratchet it up as ui/state and ui/tv are covered.
         verify {
             rule {
-                minBound(78)
+                minBound(84)
             }
         }
     }
