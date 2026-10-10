@@ -20,6 +20,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.ScreenBar
@@ -32,7 +33,6 @@ import io.github.scottcooper92.binge.seerr.ui.DisconnectButton
 import io.github.scottcooper92.binge.seerr.ui.handoff.rememberScanTvCode
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerSettingsPage
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
-import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
 /**

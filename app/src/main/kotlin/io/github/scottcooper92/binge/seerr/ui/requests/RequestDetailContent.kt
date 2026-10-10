@@ -23,12 +23,12 @@ import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ExpandableOverview
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.component.SectionHeader
+import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.MediaStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
-import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
 import com.binge.designsystem.R as DesR
 

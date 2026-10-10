@@ -927,15 +927,6 @@
     <string name="media_state_blocklisted">Blocked</string>
     <string name="media_state_deleted">Deleted</string>
 
-    <plurals name="download_eta_minutes">
-        <item quantity="one">About %1$d min left</item>
-        <item quantity="other">About %1$d min left</item>
-    </plurals>
-    <plurals name="download_eta_hours">
-        <item quantity="one">About %1$d hr left</item>
-        <item quantity="other">About %1$d hr left</item>
-    </plurals>
-
     <!-- The television surface: setup and the advanced picker, driven from a remote. -->
     <string name="tv_setup_headline">Connect to your server</string>
     <string name="tv_setup_checking">Checking the server…</string>

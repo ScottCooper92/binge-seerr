@@ -30,9 +30,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.SubcomposeAsyncImage
 import com.binge.designsystem.CARD_ASPECT_RATIO
 import com.binge.designsystem.component.ImagePlaceholder
+import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.resolvedContentPadding
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
 import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
 import com.binge.designsystem.R as DesR
 
