@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui
 import androidx.compose.runtime.mutableStateListOf
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.binge.designsystem.paneShowsBack
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -104,7 +105,7 @@ class SectionPanesTest {
         assertEquals(1, backStack(HomeRoute).paneDepth())
     }
 
-    /** The issue's own table (#335), checked directly against the two inputs the rule takes. */
+    /** The issue's own table (#335), checked against the design system's rule, which this app reads (#1083). */
     @Test
     fun `the back-arrow rule matches the issue's table`() {
         // [Hub, Requests]: depth 1, hidden — matches today.
