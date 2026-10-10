@@ -50,7 +50,7 @@ class OverrideRuleFormTest {
                 state = ExtrasEditorUiState.Ready(draft = draft, saved = OverrideRuleForm(), extras = extras),
                 events = emptyFlow(),
                 actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
-                ruleActions = OverrideRuleActions(onSelectInstance = {}, onToggleUser = { users += it }, onToggleTag = {}, onDelete = {}),
+                ruleActions = ruleActions(onToggleUser = { users += it }),
             )
         }
     }
@@ -91,3 +91,17 @@ class OverrideRuleFormTest {
         assertEquals(1, saves)
     }
 }
+
+private fun ruleActions(onToggleUser: (Int) -> Unit) =
+    OverrideRuleActions(
+        onSelectInstance = {},
+        onToggleUser = onToggleUser,
+        onToggleTag = {},
+        onToggleGenre = {},
+        onLoadLanguages = {},
+        onSelectLanguages = {},
+        onToggleKeyword = {},
+        onSearchKeywords = {},
+        onLoadKeywordNames = {},
+        onDelete = {},
+    )

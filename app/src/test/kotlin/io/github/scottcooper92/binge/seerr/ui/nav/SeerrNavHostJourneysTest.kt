@@ -2,6 +2,8 @@ package io.github.scottcooper92.binge.seerr.ui.nav
 
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -9,6 +11,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.HomeRoute
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -16,15 +19,26 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.binge.designsystem.R as DesR
 
-private const val WIDE = "w1000dp-h800dp"
+/** Two panes: wide enough for the hub beside a section, under the landscape-tablet line. */
+private const val WIDE = "w900dp-h800dp"
+
+/** A landscape tablet, where the hub, a section and what it opened sit side by side (#1110). */
+private const val TABLET = "w1280dp-h800dp"
 private const val NARROW = "w400dp-h800dp"
 private const val EMPTY_PAGE = """{"pageInfo":{"pages":0,"results":0},"results":[]}"""
+private const val ANA = "Ana"
+private const val BO = "Bo"
+private const val USERS_PAGE =
+    """{"pageInfo":{"pages":1,"results":2},"results":[{"id":8,"displayName":"Ana","permissions":32},
+       {"id":9,"displayName":"Bo","permissions":32}]}"""
 
 /** How long the server holds a re-check before dropping it: long enough to watch many frames of it. */
 private const val RECHECK_MILLIS = 500L
 private const val RECHECK_TIMEOUT_MILLIS = 15_000L
 private const val FRAME_PAUSE_MILLIS = 5L
+private const val AWAIT_MILLIS = 10_000L
 
 /**
  * Journeys through the real [io.github.scottcooper92.binge.seerr.ui.SeerrNavHost], with the app's own
@@ -85,6 +99,93 @@ class SeerrNavHostJourneysTest {
         assertRotationKeeps(
             row = host.string(R.string.hub_section_issues_desc),
             screen = host.string(R.string.issues_filter_resolved),
+        )
+
+    /**
+     * The three panes with the app's own entries: the default section is beside the hub from the start, what a section
+     * opens takes the third pane in place of what was there, and Back closes it rather than walking back through
+     * every item opened (#1110).
+     */
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `on a landscape tablet, opening from a list replaces the open item, and Back closes it`() {
+        connectToUsers()
+        host.launch(HomeRoute)
+        host.awaitShowing(hub)
+        host.awaitShowing(host.string(R.string.requests_filter_processing))
+        assertTrue("the third pane did not say nothing was open", host.isShowing(nothingOpen))
+
+        host.compose
+            .onNodeWithText(host.string(R.string.hub_section_users_desc), substring = true)
+            .performScrollTo()
+            .performClick()
+        host.awaitShowing(ANA)
+        openUser(ANA)
+        assertTrue("the list left the screen", host.isShowing(BO))
+        assertNoBackArrow()
+
+        openUser(BO)
+        assertEquals("Ana was left on screen under Bo", 1, host.count(ANA))
+        assertNoBackArrow()
+
+        host.back()
+        host.awaitShowing(nothingOpen)
+        assertEquals("Back went to Ana rather than closing Bo", 1, host.count(ANA))
+        assertEquals("Bo's page stayed after Back", 1, host.count(BO))
+        assertTrue("the hub left the screen", host.isShowing(hub))
+    }
+
+    /** A rotation to two panes shows the hub beside the open item, and back to three restores the list between them. */
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `a rotation from three panes to two and back keeps the open item`() {
+        connectToUsers()
+        host.launch(HomeRoute)
+        host.awaitShowing(hub)
+        host.compose
+            .onNodeWithText(host.string(R.string.hub_section_users_desc), substring = true)
+            .performScrollTo()
+            .performClick()
+        host.awaitShowing(BO)
+        openUser(ANA)
+
+        host.rotate(WIDE)
+        host.compose.waitUntil("Ana alone beside the hub", AWAIT_MILLIS) { host.isShowing(ANA) && !host.isShowing(BO) }
+        assertTrue("two panes lost the hub", host.isShowing(hub))
+
+        host.rotate(TABLET)
+        host.compose.waitUntil("the list back between the hub and Ana", AWAIT_MILLIS) { host.isShowing(BO) && host.count(ANA) > 1 }
+    }
+
+    private val nothingOpen get() = host.string(R.string.three_pane_nothing_open_title)
+
+    /** The lists, and two users whose pages read in full, so a user's page shows their name. */
+    private fun connectToUsers() {
+        connectToLists()
+        host.seerr.serve("GET /api/v1/user", USERS_PAGE)
+        listOf(8 to ANA, 9 to BO).forEach { (id, name) ->
+            host.seerr.serve("GET /api/v1/user/$id", """{"id":$id,"displayName":"$name","permissions":32,"userType":3}""")
+            host.seerr.serve("GET /api/v1/user/$id/quota", """{"movie":{"days":7,"limit":0},"tv":{"days":7,"limit":0}}""")
+            host.seerr.serve("GET /api/v1/user/$id/watch_data", """{"playCount":0,"recentlyWatched":[]}""")
+            host.seerr.serve("GET /api/v1/user/$id/watchlist", """{"page":1,"totalPages":1,"totalResults":0,"results":[]}""")
+            host.seerr.serve("GET /api/v1/user/$id/requests", EMPTY_PAGE)
+        }
+    }
+
+    /** Taps [name]'s row in the list, the first node reading it, and waits for their page in the third pane. */
+    private fun openUser(name: String) {
+        host.compose.onAllNodesWithText(name, substring = true)[0].performClick()
+        host.compose.waitUntil("$name's page in the third pane", AWAIT_MILLIS) { !host.isShowing(nothingOpen) && host.count(name) > 1 }
+    }
+
+    /** Neither the section nor what it opened offers Back, since neither leaves the screen. */
+    private fun assertNoBackArrow() =
+        assertTrue(
+            "a Back arrow in the three panes",
+            host.compose
+                .onAllNodesWithContentDescription(host.string(DesR.string.cd_navigate_back))
+                .fetchSemanticsNodes()
+                .isEmpty(),
         )
 
     /**

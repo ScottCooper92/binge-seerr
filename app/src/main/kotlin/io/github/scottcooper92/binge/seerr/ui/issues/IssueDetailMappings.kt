@@ -30,7 +30,9 @@ internal fun SeerrIssueDto.toDetail(
         canComment = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
         canManage = permissions.canManageIssues,
         canResolve = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
-        canDelete = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
+        // The reporter's own issue only while nobody has replied: the report is the first comment, and the server refuses
+        // a non-manager's delete once there is a second (#1010).
+        canDelete = permissions.canManageIssues || (permissions.canCreateIssues && isReporter && comments.size <= 1),
         webUrl = baseUrl + "issues/" + id,
         mediaServerUrl = media?.mediaUrl?.takeIf { it.isWebUrl() },
         serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },

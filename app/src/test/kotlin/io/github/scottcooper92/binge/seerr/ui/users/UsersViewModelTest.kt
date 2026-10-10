@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.PERMISSION_MANAGE_USERS
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
@@ -103,6 +104,20 @@ class UsersViewModelTest {
 
     private suspend fun UsersViewModel.awaitReady(match: (UsersUiState.Ready) -> Boolean = { true }): UsersUiState.Ready =
         uiState.first { it is UsersUiState.Ready && match(it) } as UsersUiState.Ready
+
+    /** The import lists live under `/settings`, which needs ADMIN; a manager may still add an account (#1009). */
+    @Test
+    fun `importing is offered to an admin only, and adding to any manager`() =
+        runTest {
+            viewerPermissions.set(PERMISSION_MANAGE_USERS)
+            val vm = viewModel()
+            val manager = vm.awaitReady { it.canAdmit }
+            assertNull(manager.importSource)
+
+            viewerPermissions.set(ADMIN)
+            vm.setScreenVisible(true)
+            assertEquals(UserOrigin.Jellyfin, vm.awaitReady { it.importSource != null }.importSource)
+        }
 
     @Test
     fun `becoming visible re-reads the scope, so a permission revoked on the server lands`() =
@@ -442,6 +457,87 @@ class UsersViewModelTest {
             assertTrue(received.none { it.method == "PUT" })
             val jo = ManageablePermission.decode(cache.rows.first { it.id == 11 }.permissions)
             assertTrue(ManageablePermission.ManageIssues in jo)
+        }
+
+    /**
+     * The viewer is Scott (7), an admin who is not the owner. The list holds the owner (1), another admin (12) and Bo (13),
+     * who holds Request alone (#1008).
+     */
+    private fun serveOwnerAdminAndBo() {
+        val request = ManageablePermission.Request.bit
+        seerr.dispatcher = { req ->
+            received += req
+            when (req.method + " " + req.url.encodedPath) {
+                "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
+                "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
+                "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                "GET /api/v1/user" ->
+                    json(
+                        """{"pageInfo":{"pages":1,"results":3},"results":[
+                           {"id":1,"displayName":"Owner","permissions":$ADMIN,"userType":3,"requestCount":0},
+                           {"id":12,"displayName":"Ada","permissions":${ADMIN or request},"userType":3,"requestCount":0},
+                           {"id":13,"displayName":"Bo","permissions":$request,"userType":3,"requestCount":0}]}""",
+                    )
+                "PUT /api/v1/user" -> json("[]")
+                else -> FakeResponse(code = 404)
+            }
+        }
+    }
+
+    @Test
+    fun `a viewer who is not the owner sees Admin locked in the bulk editor, and cannot tick it`() =
+        runTest {
+            serveOwnerAdminAndBo()
+            val vm = viewModel()
+            vm.users.asSnapshot()
+            assertTrue(ManageablePermission.Admin in vm.awaitReady { it.canAdmit }.locked)
+            vm.toggleSelected(13)
+            vm.awaitReady { it.selection == setOf(13) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+
+            vm.togglePermission(ManageablePermission.Admin)
+
+            val edit = vm.awaitReady().edit
+            assertFalse(ManageablePermission.Admin in edit?.selected.orEmpty())
+            assertTrue(edit?.touched.orEmpty().isEmpty())
+        }
+
+    @Test
+    fun `a bulk save by a viewer who is not the owner leaves the owner and admins alone, and saves the rest`() =
+        runTest {
+            serveOwnerAdminAndBo()
+            val vm = viewModel()
+            vm.users.asSnapshot()
+            vm.awaitReady { it.canAdmit }
+            listOf(1, 12, 13).forEach(vm::toggleSelected)
+            vm.awaitReady { it.selection == setOf(1, 12, 13) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.touched?.isNotEmpty() == true }
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            // The server would refuse a mask carrying Admin from anyone but the owner, and drop user 1 without a word.
+            assertEquals(UsersEvent.PermissionsSaved(1), permissionsSaved.await())
+            val put = received.single { it.method == "PUT" }.body
+            val expected = ManageablePermission.Request.bit or ManageablePermission.CreateIssues.bit
+            assertTrue(put, put.contains("\"ids\":[13]"))
+            assertTrue(put, put.contains("\"permissions\":$expected"))
+            assertEquals(ADMIN, cache.rows.first { it.id == 1 }.permissions)
+            assertEquals(ADMIN or ManageablePermission.Request.bit, cache.rows.first { it.id == 12 }.permissions)
+        }
+
+    @Test
+    fun `the owner may tick Admin in the bulk editor`() =
+        runTest {
+            serveIdaAndJoWhoDiffer()
+            val vm = viewModel()
+            vm.users.asSnapshot()
+
+            assertFalse(ManageablePermission.Admin in vm.awaitReady { it.canAdmit }.locked)
         }
 
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)

@@ -653,6 +653,26 @@ class RequestDetailViewModelTest {
             assertFalse(viewModel().awaitReady().detail.canEdit)
         }
 
+    /** A movie has no seasons: without advanced requests there is nothing to edit, and the server refuses the save (#1013). */
+    @Test
+    fun `a requester without advanced requests is not offered an edit on their own movie request`() =
+        runTest {
+            server(REQUEST)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+                   "media":{"id":900,"tmdbId":300,"mediaType":"movie","status":2}}""",
+            )
+            serve("/api/v1/movie/300", """{"title":"Dune","releaseDate":"2021-10-22","mediaInfo":{"id":900,"status":4}}""")
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":$REQUEST}""")
+            assertFalse(viewModel().awaitReady().detail.canEdit)
+
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":${REQUEST or REQUEST_ADVANCED}}""")
+            val detail = viewModel().awaitReady().detail
+            assertTrue(detail.canEdit)
+            assertTrue(detail.canEditDestination)
+        }
+
     @Test
     fun `with partial requests off a show's seasons are not editable, but its destination still is for who may`() =
         runTest {

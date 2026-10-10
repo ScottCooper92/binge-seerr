@@ -56,10 +56,10 @@ fun SeerrNavHost(
     // rooted on HomeRoute, and it can arrive after the connection has already resolved.
     val root = backStack.firstOrNull()
     LaunchedEffect(connected, root) { backStack.settleHome(connected) }
-    SeerrPaneHost(backStack, connected, modifier) { hubBeside, showBack ->
-        homeEntries(backStack, connected = { connectedState.value }, hubBeside = hubBeside)
-        sectionEntries(backStack, showBack = showBack)
-        detailEntries(backStack, showBack = showBack)
+    SeerrPaneHost(backStack, connected, modifier, defaultSection = { DefaultSectionPane(backStack) }) { panes ->
+        homeEntries(backStack, connected = { connectedState.value }, panes = panes)
+        sectionEntries(backStack, panes)
+        detailEntries(backStack, showBack = panes.showBack)
         serverSettingsEntries(backStack)
     }
 }
@@ -72,13 +72,30 @@ private fun HomeUiState.connected(): Boolean? =
     }
 
 /**
+ * What an entry asks of the layout it is in, as providers rather than values. Navigation 3 builds an entry once for its
+ * key and keeps it, content and metadata both, for as long as the key is on the stack. A value captured when it is
+ * built is the value from that frame. So what changes later is read inside the content, where reading the state is
+ * what recomposes it.
+ *
+ * [hubBeside]: the hub is on screen beside the pane. [showBack]: the pane's Back arrow, by [paneShowsBack].
+ * [threePane]: a landscape tablet's three panes, where what a section opens replaces what it had open (#1110).
+ */
+internal class PaneLayout(
+    val hubBeside: () -> Boolean,
+    val showBack: () -> Boolean,
+    val threePane: () -> Boolean,
+) {
+    /** Opens [route] from a section's list or the hub: in place of the open item in three panes, else above it. */
+    fun open(
+        backStack: NavBackStack<NavKey>,
+        route: NavKey,
+    ) = if (threePane()) backStack.openBeside(route) else backStack.add(route)
+}
+
+/**
  * The [NavDisplay] and the pane locals around it, apart from the entries that fill it. [SeerrNavHost] passes the real
  * entries; [entries] is a parameter so a test can pin the panes with stand-ins,
- * cheaply and on their own.
- *
- * [entries] is handed two providers rather than values. Navigation 3 builds an entry once for its key and keeps it,
- * content and metadata both, for as long as the key is on the stack. A value captured when it is built is the value
- * from that frame. So what changes later is read inside the content, where reading the state is what recomposes it.
+ * cheaply and on their own. [defaultSection] is the section a wide window shows while none is open.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -86,12 +103,19 @@ internal fun SeerrPaneHost(
     backStack: NavBackStack<NavKey>,
     connected: Boolean?,
     modifier: Modifier = Modifier,
-    entries: EntryProviderScope<NavKey>.(hubBeside: () -> Boolean, showBack: () -> Boolean) -> Unit,
+    defaultSection: @Composable () -> Unit = {},
+    entries: EntryProviderScope<NavKey>.(panes: PaneLayout) -> Unit,
 ) {
     // One directive for both the strategy and the back-arrow decision, so the two cannot disagree
     // about whether the hub is on screen beside a section.
     val directive = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
     val hubBeside = rememberUpdatedState(connected == true && directive.maxHorizontalPartitions > 1)
+    val threePane = rememberUpdatedState(hubBeside.value && isThreePaneWindow())
+    // Three panes show a section in the middle all the time, so the default one goes on the stack, not a placeholder:
+    // its list then keeps its state when it opens an item. Back from it leaves the app, as from the placeholder (#815).
+    LaunchedEffect(threePane.value, backStack.size) {
+        if (threePane.value && backStack.toList() == listOf(HubRoute)) backStack.add(DefaultSection.route())
+    }
     // The one back-arrow rule (paneShowsBack), fed the stack's own shape (paneDepth) alongside
     // hubBeside — read here as a provider for the same reason hubBeside is: an entry's metadata is
     // fixed when it is built, so what the stack looks like later has to be read inside the content.
@@ -108,13 +132,13 @@ internal fun SeerrPaneHost(
             backStack = backStack,
             modifier = modifier,
             onBack = { backStack.removeLastOrNull() },
-            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack)),
+            sceneStrategies = listOf(rememberSeerrPaneStrategy(directive, backStack, threePane.value, defaultSection)),
             entryDecorators =
                 listOf(
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
-            entryProvider = entryProvider { entries({ hubBeside.value }, showBack) },
+            entryProvider = entryProvider { entries(PaneLayout({ hubBeside.value }, showBack, { threePane.value })) },
         )
     }
 }
@@ -129,7 +153,7 @@ internal fun SeerrPaneHost(
 private fun EntryProviderScope<NavKey>.homeEntries(
     backStack: NavBackStack<NavKey>,
     connected: () -> Boolean?,
-    hubBeside: () -> Boolean,
+    panes: PaneLayout,
 ) {
     entry<HomeRoute> {
         // Connected shows the spinner for a frame at most, while settleHome swaps the hub in.
@@ -143,22 +167,17 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     // show the hub alone. What it opens puts the section on the stack first (openAboveDefault). A
     // placeholder gets no entry scope, so its ViewModel belongs to the host.
     entry<HubRoute>(
-        metadata =
-            ListDetailSceneStrategy.listPane(
-                detailPlaceholder = {
-                    DetailPaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
-                },
-            ),
+        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { DefaultSectionPane(backStack) }) + ThreePaneHub,
     ) {
         PaneContent(innerEdge = PaneEdge.End) {
             // And the other way: after a disconnect, settleHome is already swapping setup back in.
             if (connected() == true) {
                 HubEntry(
-                    selectedSection = backStack.selectedSection(defaultShowing = hubBeside()),
+                    selectedSection = backStack.selectedSection(defaultShowing = panes.hubBeside()),
                     onOpenSection = { section -> backStack.openSection(section) },
-                    onOpenAccount = { id -> backStack.add(UserDetailRoute(id)) },
-                    onOpenRequest = { id -> backStack.add(RequestDetailRoute(id)) },
-                    onReconnect = { backStack.add(EditConnectionRoute) },
+                    onOpenAccount = { id -> panes.open(backStack, UserDetailRoute(id)) },
+                    onOpenRequest = { id -> panes.open(backStack, RequestDetailRoute(id)) },
+                    onReconnect = { panes.open(backStack, EditConnectionRoute) },
                     developerRows = debugDeveloperRows(backStack),
                 )
             } else {
@@ -168,22 +187,41 @@ private fun EntryProviderScope<NavKey>.homeEntries(
     }
 }
 
-/** The hub's manage sections: the detail pane beside it, or the whole window on a narrow one. */
+/**
+ * The hub's manage sections: the detail pane beside it, the middle of three panes on a landscape tablet, or the whole
+ * window on a narrow one.
+ */
 private fun EntryProviderScope<NavKey>.sectionEntries(
     backStack: NavBackStack<NavKey>,
-    showBack: () -> Boolean,
+    panes: PaneLayout,
 ) {
-    entry<RequestsRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Requests, backStack, showBack()) } }
-    entry<IssuesRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Issues, backStack, showBack()) } }
-    entry<BlocklistRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Blocklist, backStack, showBack()) } }
-    entry<UsersRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Users, backStack, showBack()) } }
-    entry<SettingsRoute>(metadata = DetailPane) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, showBack()) } }
-    entry<SectionRoute>(metadata = DetailPane) { route ->
+    val section = DetailPane + ThreePaneSection
+    val open: (NavKey) -> Unit = { route -> panes.open(backStack, route) }
+    entry<RequestsRoute>(
+        metadata = section,
+    ) { DetailPaneContent { SectionContent(HubSection.Requests, backStack, panes.showBack(), open) } }
+    entry<IssuesRoute>(metadata = section) { DetailPaneContent { SectionContent(HubSection.Issues, backStack, panes.showBack(), open) } }
+    entry<BlocklistRoute>(
+        metadata = section,
+    ) { DetailPaneContent { SectionContent(HubSection.Blocklist, backStack, panes.showBack(), open) } }
+    entry<UsersRoute>(metadata = section) { DetailPaneContent { SectionContent(HubSection.Users, backStack, panes.showBack(), open) } }
+    entry<SettingsRoute>(
+        metadata = section,
+    ) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, panes.showBack(), open) } }
+    entry<SectionRoute>(metadata = section) { route ->
         DetailPaneContent {
             EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
         }
     }
 }
+
+/**
+ * [DefaultSection] standing in beside the hub while no section is open: what it opens puts it on the stack first.
+ * It is not an entry, so it gets no entry scope, and its ViewModel belongs to the host.
+ */
+@Composable
+private fun DefaultSectionPane(backStack: NavBackStack<NavKey>) =
+    DetailPaneContent { SectionContent(DefaultSection, backStack, showBack = false, open = backStack::openAboveDefault) }
 
 /**
  * One section's screen, whether it is on the stack or standing in as the default beside the hub. [open] pushes what
@@ -215,7 +253,7 @@ private fun SectionContent(
             )
         HubSection.Users ->
             UsersEntry(onBack = onBack, showBack = showBack, onOpen = { id -> open(UserDetailRoute(id)) })
-        HubSection.Settings -> SettingsEntry(backStack, showBack = showBack)
+        HubSection.Settings -> SettingsEntry(backStack, showBack = showBack, open = open)
     }
 }
 

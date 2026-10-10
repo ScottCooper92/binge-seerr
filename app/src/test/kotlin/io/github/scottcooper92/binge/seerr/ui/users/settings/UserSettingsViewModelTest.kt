@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -106,5 +107,28 @@ class UserSettingsViewModelTest {
                 listOf(UserSettingsPage.General, UserSettingsPage.Password, UserSettingsPage.Notifications, UserSettingsPage.Permissions),
                 pages(),
             )
+        }
+
+    /** The server refuses every settings save to user 1 from anyone else, as the web client's own menu knows (#1005). */
+    @Test
+    fun `nobody but the owner is offered the owner's settings`() =
+        runTest {
+            seerr.serve("GET /api/v1/user/1", """{"id":1,"displayName":"Ana","permissions":$ADMIN,"userType":3}""")
+
+            seerr.viewer(id = 2, permissions = MANAGE_USERS)
+            assertEquals(emptyList<UserSettingsPage>(), pages(userId = 1))
+
+            seerr.viewer(id = 3, permissions = ADMIN)
+            assertEquals(emptyList<UserSettingsPage>(), pages(userId = 1))
+        }
+
+    /** The server refuses a permissions write to oneself or to user 1, so the owner's own index has no Permissions page (#1006). */
+    @Test
+    fun `the owner is not offered their own permissions`() =
+        runTest {
+            seerr.serve("GET /api/v1/user/1", """{"id":1,"displayName":"Ana","permissions":$ADMIN,"userType":3}""")
+            seerr.viewer(id = 1, permissions = ADMIN)
+
+            assertFalse(UserSettingsPage.Permissions in pages(userId = 1))
         }
 }

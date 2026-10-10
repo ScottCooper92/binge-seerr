@@ -36,6 +36,18 @@ class SeerrServerProfileTest {
         assertFalse(current.hasDeleteMediaFiles)
         assertFalse(profile("1.28.0").hasWatchData)
         assertTrue(current.hasWatchData)
+        assertFalse(current.hasStreamingRegion)
+    }
+
+    /** Jellyseerr 1.0 to 1.3 have no discover routes: every call 404s (#1017). */
+    @Test
+    fun `discover sliders arrive with overseerr 1_32 and with jellyseerr 1_4`() {
+        val jellyfin = SeerrPublicSettings(mediaServerType = MEDIA_SERVER_JELLYFIN)
+
+        assertFalse(profile("1.3.0", jellyfin).hasDiscoverSliders)
+        assertTrue(profile("1.4.0", jellyfin).hasDiscoverSliders)
+        assertFalse(profile("1.31.0").hasDiscoverSliders)
+        assertTrue(profile("1.32.0").hasDiscoverSliders)
     }
 
     @Test
@@ -57,6 +69,10 @@ class SeerrServerProfileTest {
         assertFalse(profile("1.4.0").hasDeleteMediaFiles)
         assertTrue(jellyseerr.hasDeleteMediaFiles)
         assertTrue(jellyseerr.hasWatchData)
+        // The one region split in two at 2.2, not at Jellyseerr's first release (#1012).
+        assertFalse(jellyseerr.hasStreamingRegion)
+        assertTrue(profile("2.2.0").hasStreamingRegion)
+        assertTrue(seerr.hasStreamingRegion)
     }
 
     @Test
