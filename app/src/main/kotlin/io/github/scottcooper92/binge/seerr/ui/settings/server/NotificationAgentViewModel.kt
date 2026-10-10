@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -128,7 +129,9 @@ class NotificationAgentViewModel
                         return@collectLatest
                     }
                     delay(soundsDebounceMillis)
-                    val sounds = runCatching { connection.api().pushoverSounds(token).map { it.toSound() } }.getOrDefault(emptyList())
+                    // attempt, not runCatching: a keystroke cancels this fetch, and a swallowed cancellation would go on
+                    // to empty the picker until the next one answered (#1025).
+                    val sounds = attempt { connection.api().pushoverSounds(token).map { it.toSound() } }.getOrDefault(emptyList())
                     editExtras { it.copy(sounds = sounds) }
                 }
         }
