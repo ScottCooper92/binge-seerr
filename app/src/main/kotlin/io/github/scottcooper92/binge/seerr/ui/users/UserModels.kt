@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
+import io.github.scottcooper92.binge.seerr.ui.users.settings.UserRole
 
 /** The orders the server lists users in, each carrying its own `sort` value. */
 enum class UserSort(
@@ -34,6 +35,7 @@ data class UserItem(
     val createdAtMillis: Long?,
 ) {
     val isAdmin: Boolean get() = isAdminBitmask(permissions)
+    val role: UserRole get() = userRole(id, isAdmin)
 }
 
 /** The bulk editor while it is open: the toggles to apply onto each selected user's own permissions. */

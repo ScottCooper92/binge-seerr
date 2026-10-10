@@ -144,6 +144,7 @@ data class RequestSummary(
     val is4k: Boolean,
     /** Empty for a movie. */
     val seasonNumbers: List<Int>,
+    val requestedByAvatarUrl: String? = null,
 )
 
 data class RequestDetail(
@@ -187,6 +188,7 @@ data class RequestDetail(
                 id = item.id,
                 status = item.status,
                 requestedBy = item.requestedBy,
+                requestedByAvatarUrl = item.requestedByAvatarUrl,
                 requestedAtMillis = item.requestedAtMillis,
                 is4k = item.is4k,
                 seasonNumbers = item.seasonNumbers,

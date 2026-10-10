@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
@@ -29,14 +27,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.InfoValue
 import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ItemRows
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
@@ -79,7 +78,7 @@ internal fun RequestCard(
             )
             Box(Modifier.alpha(if (isActing) ACTING_ALPHA else 1f)) { SummaryStatus(summary) }
         }
-        people.forEach { CardPersonRow(it) }
+        if (people.isNotEmpty()) ItemRows(people.map { it.toListItem() })
         if (people.isNotEmpty() && hasInfo) CardDivider()
         if (hasInfo) CardInfoRows(summary, destination, tags)
         if (onClick != null) {
@@ -140,9 +139,17 @@ internal fun RequestSummaryGroup(
         title = null,
         rows =
             summaries.map { summary ->
+                val requester = summary.requestedBy ?: stringResource(R.string.requests_requester_unknown)
                 ListItem(
                     icon = Icons.Filled.Person,
-                    label = summary.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                    leadingContent = {
+                        BingeInitialsAvatar(
+                            name = requester,
+                            avatarUrl = summary.requestedByAvatarUrl,
+                            size = dimensionResource(DesR.dimen.avatar_size_md),
+                        )
+                    },
+                    label = requester,
                     detail =
                         listOfNotNull(
                             formatRelativeOrAbsolute(summary.requestedAtMillis),
@@ -163,33 +170,28 @@ internal fun RequestSummaryGroup(
     )
 }
 
-/** A settings-style row: the icon box, a title, the date under it, and a chevron where the row opens that user. */
+/**
+ * A fact as a list row, which is what a person is everywhere else: the requester and whoever changed it lead with their
+ * avatar, the rest with their icon, and a fact that links to a user opens them under a chevron.
+ */
 @Composable
-private fun CardPersonRow(fact: Fact) {
-    val link = fact.primary as? InfoValue.Link
-    val name = fact.primary.plainText()
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .let { if (link != null) it.clickable(role = Role.Button, onClick = link.onClick) else it }
-                .padding(cardRowPadding()),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        FactIconBox(fact)
-        Spacer(Modifier.width(dimensionResource(DesR.dimen.account_card_spacing)))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = if (fact.secondary != null && name.isNotBlank()) "${fact.label} $name" else fact.label,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            (fact.secondary ?: name).takeIf { it.isNotBlank() }?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        if (link != null) CardChevron()
-    }
+private fun Fact.toListItem(): ListItem {
+    val link = primary as? InfoValue.Link
+    val name = primary.plainText()
+    val requester = if (secondary != null && name.isNotBlank()) "$label $name" else label
+    return ListItem(
+        icon = icon,
+        leadingContent =
+            if (person) {
+                { BingeInitialsAvatar(name = name, avatarUrl = avatarUrl, size = dimensionResource(DesR.dimen.avatar_size_md)) }
+            } else {
+                null
+            },
+        label = requester,
+        detail = (secondary ?: name).takeIf { it.isNotBlank() },
+        clickable = link != null,
+        onClick = { link?.onClick?.invoke() },
+    )
 }
 
 /** What it asked for as a row of its own, then server, quality and folder side by side, then its tags. */
@@ -207,12 +209,12 @@ private fun CardInfoRows(
             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
         ).joinToString(stringResource(R.string.hub_meta_separator))
     if (asked.isNotEmpty()) {
-        CardPersonRow(Fact(Icons.Filled.Info, stringResource(R.string.request_card_info), primary = "", secondary = asked))
+        ItemRows(listOf(Fact(Icons.Filled.Info, stringResource(R.string.request_card_info), primary = "", secondary = asked).toListItem()))
     }
     if (destination.isNotEmpty()) CardDestinationLine(destination)
     // Tags are free text of any length, so they get a row of their own rather than a column of the line above.
     tags?.let {
-        CardPersonRow(Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), primary = "", secondary = it))
+        ItemRows(listOf(Fact(Icons.Filled.Sell, stringResource(R.string.request_tags), primary = "", secondary = it).toListItem()))
     }
 }
 

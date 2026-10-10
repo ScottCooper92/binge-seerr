@@ -89,6 +89,7 @@ data class RequestItem(
     val year: String?,
     val requestedBy: String?,
     val requestedById: Int?,
+    val requestedByAvatarUrl: String? = null,
     val requestedAtMillis: Long?,
     val status: SeerrRequestStatusCode?,
     val mediaStatus: SeerrMediaStatusCode?,

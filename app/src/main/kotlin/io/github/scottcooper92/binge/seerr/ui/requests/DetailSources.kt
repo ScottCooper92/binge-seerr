@@ -19,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
+import io.github.scottcooper92.binge.seerr.seerr.toAvatarUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
@@ -29,6 +30,7 @@ private fun SeerrRequestSummaryDto.toSummary(): RequestSummary =
         id = id,
         status = status,
         requestedBy = requestedBy?.displayString(),
+        requestedByAvatarUrl = requestedBy?.avatar.toAvatarUrl(),
         requestedAtMillis = createdAt?.toEpochMillisOrNull(),
         is4k = is4k,
         seasonNumbers = seasons.map { it.seasonNumber },

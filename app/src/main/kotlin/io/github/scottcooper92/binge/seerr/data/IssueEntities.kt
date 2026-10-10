@@ -21,6 +21,7 @@ data class IssueEntity(
     val status: String,
     val reportedBy: String?,
     val reportedById: Int?,
+    val reportedByAvatarUrl: String? = null,
     val commentCount: Int,
     val createdAtMillis: Long?,
     val updatedAtMillis: Long?,

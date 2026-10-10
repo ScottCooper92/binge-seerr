@@ -30,6 +30,7 @@ data class BlocklistItem(
     val posterUrl: String?,
     val year: String?,
     val addedBy: String?,
+    val addedByAvatarUrl: String? = null,
     val addedAtMillis: Long?,
     val tags: List<String>,
 )
