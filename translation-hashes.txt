@@ -528,8 +528,7 @@ app:server_settings_application_url_hint  5a74ac1e0707
 app:server_settings_blocklist  f8019af406d1
 app:server_settings_blocklist_language  b7743138bfe2
 app:server_settings_blocklist_limit  3fe575a24b13
-app:server_settings_blocklist_limit_error  3a7a5f03eb92
-app:server_settings_blocklist_limit_hint  f76cffd33293
+app:server_settings_blocklist_limit_value  bd475baddc41
 app:server_settings_blocklist_region  9391f44e4e9d
 app:server_settings_blocklist_tags  e3b9b71bdffd
 app:server_settings_blocklist_tags_count  a261eeaaf3db
@@ -738,8 +737,6 @@ app:server_settings_slider_data_keywords  1172f08bc881
 app:server_settings_slider_data_search  a1d567e5f8ec
 app:server_settings_slider_data_streaming  9d35b8ea64d9
 app:server_settings_slider_edit  d3dcc7c4edee
-app:server_settings_slider_move_down  40bb50da160c
-app:server_settings_slider_move_up  c66feb5eb8f2
 app:server_settings_slider_movie_genre  9d6879e33ebd
 app:server_settings_slider_movie_genres  56c6cdedba51
 app:server_settings_slider_movie_keyword  7b4200551434
@@ -750,7 +747,6 @@ app:server_settings_slider_popular_movies  7cfbd05499d2
 app:server_settings_slider_popular_tv  16c10204e017
 app:server_settings_slider_recent_requests  b83a589f114a
 app:server_settings_slider_recently_added  96ec5d338ae3
-app:server_settings_slider_reorder  ef86a0ed9287
 app:server_settings_slider_search  e978b00de465
 app:server_settings_slider_studio  31e0eb449d92
 app:server_settings_slider_studios  e41cca7d2395
