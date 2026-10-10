@@ -17,10 +17,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.R as DesR
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.tv.R as TvR
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import com.binge.designsystem.tv.focus.tvFocusTarget
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.DetailDownload
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
@@ -32,8 +35,6 @@ import io.github.scottcooper92.binge.seerr.ui.state.formatFileSize
 import io.github.scottcooper92.binge.seerr.ui.state.labelRes
 import io.github.scottcooper92.binge.seerr.ui.state.tone
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
-import com.binge.designsystem.R as DesR
-import com.binge.designsystem.tv.R as TvR
 
 /** One labelled fact on the details row. */
 internal data class TvInfoCardItem(
@@ -175,7 +176,7 @@ internal fun TvInfoCard(
 ) {
     TvDetailCard(isFocused, onFocusChanged, modifier) {
         Text(
-            text = card.label.uppercase(),
+            text = card.label.uppercaseLocalised(),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,

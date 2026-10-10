@@ -30,8 +30,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.R as DesR
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.tv.R as TvR
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -42,6 +44,7 @@ import com.binge.designsystem.tv.focus.tvFocusFill
 import com.binge.designsystem.tv.template.TvMessagePage
 import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvPageHosting
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueComment
@@ -51,13 +54,11 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.issueAffectedLabel
 import io.github.scottcooper92.binge.seerr.ui.issues.labelRes
 import io.github.scottcooper92.binge.seerr.ui.issues.tone
+import io.github.scottcooper92.binge.seerr.ui.requests.labelRes as mediaTypeLabelRes
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadingPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPoster
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
-import com.binge.designsystem.R as DesR
-import com.binge.designsystem.tv.R as TvR
-import io.github.scottcooper92.binge.seerr.ui.requests.labelRes as mediaTypeLabelRes
 
 /** Everything the TV issue detail page can ask of its host, in one place so the overlay stays a wiring. */
 internal class TvIssueDetailActions(
@@ -265,6 +266,6 @@ private fun TvTag(label: String) {
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(horizontal = dimensionResource(DesR.dimen.padding_s), vertical = dimensionResource(DesR.dimen.tag_padding_v)),
     ) {
-        Text(text = label.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = label.uppercaseLocalised(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import com.binge.designsystem.R as DesR
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
@@ -43,10 +44,10 @@ import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
-import com.binge.designsystem.R as DesR
 
 /** A dashboard block: a tonal surface with the pane's [sides] around it and the medium spacing inside. */
 @Composable
@@ -203,7 +204,7 @@ internal fun AccountCard(
         quota?.let {
             Column {
                 Text(
-                    text = stringResource(R.string.hub_quota_title).uppercase(),
+                    text = stringResource(R.string.hub_quota_title).uppercaseLocalised(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = rowPadding).semantics { heading() },
