@@ -211,9 +211,12 @@ class MediaServerViewModelTest {
             assertEquals(LibraryType.Movies, extras.libraries.first { it.id == "1" }.type)
         }
 
-    /** Each answer changes its own library in the list as it stands then, so neither undoes the other (#1024). */
+    /**
+     * Two overlapping toggles, answered in reverse order, both land. This pins the end state only: #1024's lost update needs
+     * the two answers applied on two threads at once, and this test's single-threaded dispatcher cannot interleave them.
+     */
     @Test
-    fun `two toggles in flight, answered in reverse order, both stay`() =
+    fun `two overlapping toggles, answered in reverse order, both land`() =
         runTest {
             plexServer()
             seerr.serveFrom("PUT /api/v1/settings/plex/library/2", delayMillis = LIBRARY_HOLD_MILLIS) {

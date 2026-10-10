@@ -119,7 +119,8 @@ class MediaServerViewModel
                                     // rather than the snapshot from before it landed.
                                     val fresh = libraries.map { dto -> dto.toLibrary() }
                                     editExtras { it.copy(libraries = fresh, busyLibraryIds = it.busyLibraryIds - id) }
-                                    val change: (List<MediaLibrary>) -> List<MediaLibrary> = { fresh }
+                                    // Already folded in above, so the change after the lock keeps the list as it then stands.
+                                    val change: (List<MediaLibrary>) -> List<MediaLibrary> = { it }
                                     change
                                 }
                             },
