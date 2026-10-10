@@ -1,19 +1,29 @@
 package io.github.scottcooper92.binge.seerr
 
 import com.binge.companion.sdk.BingeHosts
+import com.binge.companion.sdk.HandOffPolicy
+import com.binge.companion.sdk.HostPackagePolicy
 import io.grpc.Status
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-/** The debug build admits Binge's packages under any certificate, and refuses every other app (#679). */
+/**
+ * The debug build admits Binge's packages under any certificate, and refuses every other app (#679). The decisions
+ * are the SDK's; what this app adds is its own uid on the Service (#1052). Robolectric, for the SDK's log line.
+ */
+@RunWith(RobolectricTestRunner::class)
 class BingeOnlyPoliciesTest {
     private val uid = 10_042
     private val selfUid = 10_001
 
-    private fun hostCode(vararg packages: String): Status.Code =
-        BingeOnlyHostPolicy(selfUid = selfUid, packagesForUid = { packages.toList() }).checkAuthorization(uid).code
+    private fun policy(vararg packages: String) =
+        SelfOrPolicy(selfUid = selfUid, policy = HostPackagePolicy(BingeHosts.PACKAGE_NAMES, packagesForUid = { packages.toList() }))
+
+    private fun hostCode(vararg packages: String): Status.Code = policy(*packages).checkAuthorization(uid).code
 
     @Test
     fun `the Service admits debug and release Binge`() {
@@ -29,7 +39,7 @@ class BingeOnlyPoliciesTest {
 
     @Test
     fun `the Service admits its own uid and still refuses another uid with a non-Binge package`() {
-        val policy = BingeOnlyHostPolicy(selfUid = selfUid, packagesForUid = { listOf("com.example.other") })
+        val policy = policy("com.example.other")
 
         assertEquals(Status.Code.OK, policy.checkAuthorization(selfUid).code)
         assertEquals(Status.Code.PERMISSION_DENIED, policy.checkAuthorization(uid).code)
@@ -37,7 +47,7 @@ class BingeOnlyPoliciesTest {
 
     @Test
     fun `the hand-off gate admits Binge and refuses everything else, a missing caller included`() {
-        val gate = bingeOnlyHandOffGate()
+        val gate = HandOffPolicy.anyCertificateOf()
 
         assertTrue(gate.permits(BingeHosts.DEBUG_PACKAGE_NAME))
         assertTrue(gate.permits(BingeHosts.RELEASE_PACKAGE_NAME))

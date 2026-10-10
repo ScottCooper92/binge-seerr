@@ -15,8 +15,7 @@ private const val HAND_OFF_TAG = "SeerrCompanion"
  */
 internal fun Context.bingeHandOffPolicy(): HandOffGate =
     if (ADMITS_UNVERIFIED_CALLERS) {
-        bingeOnlyHandOffGate(logWarning(HAND_OFF_TAG))
+        HandOffGate(HandOffPolicy.anyCertificateOf(tag = HAND_OFF_TAG)::permits)
     } else {
-        val pinned = HandOffPolicy.pinned(this, listOf(BingeHosts.release))
-        HandOffGate(pinned::permits)
+        HandOffGate(HandOffPolicy.pinned(this, listOf(BingeHosts.release))::permits)
     }
