@@ -122,6 +122,7 @@ class TvAccountBoardFocusTest {
                         openRequestId = it.id
                     },
                     onRetry = {},
+                    onRetryRequests = {},
                     overlayOpen = openRequestId != null,
                 )
             }
