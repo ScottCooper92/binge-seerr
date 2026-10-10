@@ -50,6 +50,16 @@ sealed interface EditorEvent {
     data class Notice(
         @StringRes val messageRes: Int,
     ) : EditorEvent
+
+    /**
+     * A change on a page that saves as it changes, which the snackbar offers to take back (#940): [messageRes] formatted
+     * with [argRes]'s text, and [undo] to call when the user asks.
+     */
+    class Undoable(
+        @StringRes val messageRes: Int,
+        @StringRes val argRes: Int,
+        val undo: () -> Unit,
+    ) : EditorEvent
 }
 
 /**
