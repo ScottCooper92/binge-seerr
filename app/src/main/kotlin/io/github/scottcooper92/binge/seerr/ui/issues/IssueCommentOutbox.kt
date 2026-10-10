@@ -67,9 +67,10 @@ internal class IssueCommentOutbox(
     }
 
     /**
-     * A pending comment never reached the server, so its edit is local and re-sent at once. Any
-     * send still in flight for it is cancelled first, so an edit mid-send can never land alongside
-     * the text it replaced.
+     * Edits a pending comment and sends the new text at once. A send still in flight is cancelled
+     * first, which stops this app waiting for it but cannot recall a request whose body already
+     * reached the server: that one may land too, and the page then shows only the edit until it next
+     * reloads the thread.
      */
     fun edit(
         localId: Long,
@@ -82,7 +83,11 @@ internal class IssueCommentOutbox(
         jobs[localId] = scope.launch(dispatcher) { send(localId, trimmed) }
     }
 
-    /** Cancels a send still in flight, so a discarded comment can never land after the fact. */
+    /**
+     * Discards a pending comment and cancels a send still in flight. That stops this app waiting for
+     * the answer but cannot recall a request already on the wire, so a comment dropped mid-send may
+     * still land on the server and show up the next time the thread reloads.
+     */
     fun drop(localId: Long) {
         jobs.remove(localId)?.cancel()
         state.updateReady { it.copy(outbox = it.outbox.filterNot { entry -> entry.localId == localId }) }
