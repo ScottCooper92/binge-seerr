@@ -28,6 +28,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.ListItem
@@ -64,6 +67,8 @@ internal data class TvPaneOption(
 /**
  * A row of the list/pane board: its name on the left, and on the right what it means, its options and a
  * closing note. No options means a read-out: the value lives in [body] and [note] says where to change it.
+ * [announceNote] makes the note a polite live region, for a note that is a transient outcome rather than
+ * a static hint: a static one would be re-read every time focus moves to its row.
  */
 @Immutable
 internal data class TvPaneRow(
@@ -73,6 +78,7 @@ internal data class TvPaneRow(
     val note: String? = null,
     val options: List<TvPaneOption> = emptyList(),
     val icon: ImageVector? = null,
+    val announceNote: Boolean = false,
 )
 
 /** A titled block of rows; headers are read-outs and never take focus. */
@@ -264,7 +270,10 @@ private fun TvPane(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = dimensionResource(DesR.dimen.padding_xs)),
+                    modifier =
+                        Modifier
+                            .padding(top = dimensionResource(DesR.dimen.padding_xs))
+                            .then(if (row.announceNote) Modifier.semantics { liveRegion = LiveRegionMode.Polite } else Modifier),
                 )
             }
         }

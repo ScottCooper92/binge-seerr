@@ -172,7 +172,7 @@ private fun tvSettingGroups(
         // Admin-only, same as the phone: this is the one section that also gets an action, so it is
         // built by hand rather than through the read-only mapping every other section shares.
         if (config != null) {
-            add(mediaServerGroup(state.server, onStartLibraryScan, note = scanNote ?: readOnly))
+            add(mediaServerGroup(state.server, onStartLibraryScan, note = scanNote ?: readOnly, announceNote = scanNote != null))
         }
         config?.services?.let {
             add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it), readOnly))
@@ -195,6 +195,7 @@ private fun mediaServerGroup(
     server: ServerSummary,
     onStartLibraryScan: () -> Unit,
     note: String,
+    announceNote: Boolean,
 ): TvPaneGroup =
     TvPaneGroup(
         title = stringResource(R.string.server_settings_media_server),
@@ -205,6 +206,7 @@ private fun mediaServerGroup(
                     label = stringResource(server.mediaServer.labelRes()),
                     body = stringResource(R.string.server_settings_media_server_caption),
                     note = note,
+                    announceNote = announceNote,
                     options =
                         listOf(
                             TvPaneOption(label = stringResource(R.string.tv_settings_start_library_scan), onSelect = onStartLibraryScan),

@@ -23,6 +23,9 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.tv.template.TvMessagePage
@@ -188,7 +191,12 @@ internal fun TvFormNote(
                 TvFormNoteTone.Error -> MaterialTheme.colorScheme.error
                 TvFormNoteTone.Success -> MaterialTheme.colorScheme.primary
             },
-        modifier = modifier.width(dimensionResource(R.dimen.tv_form_field_width)),
+        // A screen reader announces a note when it appears or changes: the board's transient answers come and go in a few
+        // seconds, and without this nothing is spoken (#1039). A failure interrupts; anything else waits its turn.
+        modifier =
+            modifier
+                .width(dimensionResource(R.dimen.tv_form_field_width))
+                .semantics { liveRegion = if (tone == TvFormNoteTone.Error) LiveRegionMode.Assertive else LiveRegionMode.Polite },
     )
 }
 

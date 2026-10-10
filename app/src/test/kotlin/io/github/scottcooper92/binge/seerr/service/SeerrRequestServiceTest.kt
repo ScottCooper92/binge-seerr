@@ -24,6 +24,7 @@ import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.RequestFilter
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
+import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
@@ -1857,6 +1858,38 @@ class SeerrRequestServiceTest {
 
             seerr.enqueue(json("""{"mediaInfo":{"id":9,"status":5}}"""))
             assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
+        }
+
+    /** Seerr's 409 for a request in the wrong state is the contract's FAILED_PRECONDITION, so the host refreshes (#999). */
+    @Test
+    fun `moderating, retrying or editing a request in the wrong state is FAILED_PRECONDITION`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only pending requests can be approved or declined."}"""))
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code { approveRequest(ApproveRequestRequest.newBuilder().setRequestId(4).build()) },
+            )
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only failed requests can be retried."}"""))
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code { retryRequest(RetryRequestRequest.newBuilder().setRequestId(4).build()) },
+            )
+            seerr.enqueue(json("""{"id":4,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only pending requests can be modified."}"""))
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code {
+                    editRequest(
+                        EditRequestRequest
+                            .newBuilder()
+                            .setRequestId(4)
+                            .addSeasonNumbers(1)
+                            .build(),
+                    )
+                },
+            )
         }
 
     /** The contract defines them as what this user may do *now*, so a row that stored them would lie. */

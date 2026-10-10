@@ -18,6 +18,7 @@ import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -90,6 +91,14 @@ class IssuesRemoteMediatorTest {
             .HydratedTitle(it.displayTitle, null, it.year)
     }
 
+    /** Rows loaded for everyone's issues and for one reporter's must not share a key (#1023). */
+    @Test
+    fun `the viewer's scope is part of the cache key`() {
+        assertEquals("open:added:all", IssueListQuery("open", "added", createdBy = null).listKey)
+        assertEquals("open:added:7", IssueListQuery("open", "added", createdBy = 7).listKey)
+        assertNotEquals(IssueListQuery("open", "added", createdBy = null).listKey, IssueListQuery("open", "added", createdBy = 7).listKey)
+    }
+
     @Test
     fun `a refresh replaces the list with page zero, titled, dropping what it cannot show, and keeps the next cursor`() =
         runTest {
@@ -108,7 +117,7 @@ class IssuesRemoteMediatorTest {
             assertEquals("1995", heat.year)
             assertEquals("scott", heat.reportedBy)
             assertEquals("Open", heat.status)
-            assertEquals("open:added", heat.listKey)
+            assertEquals("open:added:all", heat.listKey)
             val severance = rows.last()
             assertEquals("Resolved", severance.status)
             assertEquals("Audio", severance.issueType)

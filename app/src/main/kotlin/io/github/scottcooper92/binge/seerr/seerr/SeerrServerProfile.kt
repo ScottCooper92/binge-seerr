@@ -104,7 +104,8 @@ data class SeerrServerProfile(
 
     val hasQuickConnect: Boolean get() = jellyseerrLineage && atLeast(3, 4)
 
-    val hasDiscoverSliders: Boolean get() = jellyseerrLineage || atLeast(1, 32)
+    /** The slider routes arrived with Overseerr 1.32 and with Jellyseerr 1.4; Jellyseerr 1.0 to 1.3 answer 404. */
+    val hasDiscoverSliders: Boolean get() = if (jellyseerrLineage) atLeast(1, 4) else atLeast(1, 32)
 
     /** The ntfy agent arrived with Jellyseerr 2.6; Overseerr never had it. */
     val hasNtfy: Boolean get() = jellyseerrLineage && atLeast(2, 6)
