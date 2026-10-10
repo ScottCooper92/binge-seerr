@@ -3,9 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.tv.issues
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
+import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.NoIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
@@ -73,6 +75,27 @@ class TvIssuesScreenshotTest {
         TvIssuesBoard(
             state = issuesReady(),
             rowsFor = { TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed) },
+            events = emptyFlow(),
+            actions = NoIssuesActions,
+        )
+    }
+
+    /** Before the viewer's scope is known (#1053): no rows yet, so the loading page. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScopeLoading() {
+        TvIssuesBoard(state = IssuesUiState.Loading, rowsFor = { rows(emptyList()) }, events = emptyFlow(), actions = NoIssuesActions)
+    }
+
+    /** The scope could not be read: the page says so, and its retry reads the scope again. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScopeFailed() {
+        TvIssuesBoard(
+            state = IssuesUiState.Error(SeerrError.Unreachable),
+            rowsFor = { rows(emptyList()) },
             events = emptyFlow(),
             actions = NoIssuesActions,
         )

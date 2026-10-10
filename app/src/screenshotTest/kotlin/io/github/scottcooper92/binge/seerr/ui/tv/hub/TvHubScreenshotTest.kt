@@ -58,6 +58,14 @@ class TvHubScreenshotTest {
     fun CouldNotLoad() {
         TvHubBoard(state = previewReady(health = ConnectionHealth.CouldNotLoad), actions = previewTvHubActions())
     }
+
+    /** A cold start refused the local network before the server answered (#1053): the permission still leads. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun LocalNetworkDeniedOnFirstRead() {
+        TvHubBoard(state = HubUiState.Error(ConnectionHealth.LocalNetworkDenied), actions = previewTvHubActions())
+    }
 }
 
 private fun previewTvHubActions() = TvHubActions(onRetry = {}, onReconnect = {}, onDisconnect = {})

@@ -188,4 +188,30 @@ class TvAccountScreenshotTest {
             Box(modifier = Modifier.fillMaxSize())
         }
     }
+
+    /** The cached profile before the account loads (#1053): the quota tiles hold their place without guessing the numbers. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Seeded() {
+        TvAccountBoard(
+            detail = UserDetailUiState.Seeded(detail(quota = null).detail.item),
+            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
+            onOpenRequest = {},
+            onRetry = {},
+            onRetryRequests = {},
+            overlayOpen = false,
+            now = FIXED_NOW_MILLIS,
+        )
+    }
+
+    /** A server with issues turned off, or a viewer who may not see them: the rail has no Issues item. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RailWithoutIssues() {
+        TvShellScaffold(selected = TvDestination.Hub, onSelect = {}, accountName = "Scott", showIssues = false) {
+            Box(modifier = Modifier.fillMaxSize())
+        }
+    }
 }
