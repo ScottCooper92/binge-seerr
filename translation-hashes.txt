@@ -1008,6 +1008,7 @@ app:tv_setup_headline  ce58388b892d
 app:tv_setup_mode_title  11aaa14268df
 app:tv_setup_no_modes_here  972f8dfe0600
 app:tv_setup_send_from_phone  1ab32bb4c551
+app:tv_setup_send_reset_link  708c5d67ba8e
 app:tv_setup_sign_in_scan_body  aab704cf8525
 app:tv_setup_status_checking  86d5ab0a7412
 app:tv_setup_status_found  c2720b373a4d

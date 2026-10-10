@@ -21,6 +21,7 @@
     <string name="setup_plex_hint">Aprobarás esta app en plex.tv desde tu navegador y después volverás aquí.</string>
     <string name="setup_quick_connect_hint">Recibirás un código para aprobarlo en cualquier app de Jellyfin en la que ya tengas la sesión iniciada.</string>
     <string name="setup_forgot_password">¿Has olvidado la contraseña?</string>
+    <string name="tv_setup_send_reset_link">Enviar enlace</string>
     <string name="setup_session_rejected">El servidor rechazó el inicio de sesión guardado.</string>
     <string name="setup_reset_email_sent">Si esa dirección pertenece a una cuenta, ya va de camino un enlace para restablecerla.</string>
     <string name="setup_error_invalid_url">Eso no es una dirección de servidor.</string>

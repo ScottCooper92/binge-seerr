@@ -107,7 +107,7 @@ class TvSetupScreenshotTest {
     @Composable
     fun signInJellyfin() = TvSetupScreen(state = setupSignIn(), actions = NoSetupActions, initialFocus = TvSetupFocus.Credential)
 
-    /** A local account on a server that mails resets: Forgot password? sits under the fields, the form scrolling to it (#1037). */
+    /** A local account on a server that mails resets: the Forgot password? toggle under the fields, off, and Sign in (#1037, #1302). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -116,6 +116,40 @@ class TvSetupScreenshotTest {
             state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com")),
             actions = NoSetupActions,
             initialFocus = TvSetupFocus.Credential,
+        )
+
+    /** A server that cannot mail a reset: no Forgot password? toggle, and the form is the fields alone (#1302). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInLocalNoReset() =
+        TvSetupScreen(
+            state =
+                setupSignIn(
+                    form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com"),
+                    server = SampleSetupServer.copy(canResetPassword = false),
+                ),
+            actions = NoSetupActions,
+        )
+
+    /** Forgot password? ticked: the password is gone, and the commit is Send reset link (#1302). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInLocalForgot() =
+        TvSetupScreen(
+            state = setupSignIn(form = ForgotForm),
+            actions = NoSetupActions,
+        )
+
+    /** The same in Spanish, whose toggle label runs longest (#1302). */
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun signInLocalForgotSpanish() =
+        TvSetupScreen(
+            state = setupSignIn(form = ForgotForm),
+            actions = NoSetupActions,
         )
 
     /** An API key typed, with Connect focused. */
@@ -200,19 +234,27 @@ class TvSetupScreenshotTest {
             initialFocus = TvSetupFocus.Credential,
         )
 
-    /** A reset email went out: the notice says so above the local sign-in. */
+    /** A reset email went out: the notice says so under the toggle, still ticked. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun resetEmailSent() =
         TvSetupScreen(
-            state =
-                setupSignIn(
-                    form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com"),
-                    notice = SetupNotice.ResetEmailSent,
-                ),
+            state = setupSignIn(form = ForgotForm, notice = SetupNotice.ResetEmailSent),
+            actions = NoSetupActions,
+        )
+
+    /** The reset request failed: the error says why, and Send reset link is there to try again. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun resetFailed() =
+        TvSetupScreen(
+            state = setupSignIn(form = ForgotForm, error = SetupError.Unreachable),
             actions = NoSetupActions,
         )
 }
+
+private val ForgotForm = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", forgotPassword = true)
 
 private val ReconnectActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {})
