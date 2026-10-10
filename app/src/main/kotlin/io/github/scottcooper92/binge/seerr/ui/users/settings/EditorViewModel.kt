@@ -50,6 +50,16 @@ sealed interface EditorEvent {
     data class Notice(
         @StringRes val messageRes: Int,
     ) : EditorEvent
+
+    /**
+     * A change on a page that saves as it changes, which the snackbar offers to take back (#940): [messageRes] formatted
+     * with [argRes]'s text, and [undo] to call when the user asks.
+     */
+    class Undoable(
+        @StringRes val messageRes: Int,
+        @StringRes val argRes: Int,
+        val undo: () -> Unit,
+    ) : EditorEvent
 }
 
 /**
@@ -82,6 +92,9 @@ abstract class EditorViewModel<T>(
      * page on its Save. See [SaveAsMade].
      */
     protected open val saveAsMadeScope: CoroutineScope? = null
+
+    /** Where an explicit-save page keeps its unsaved draft across the process being killed (#1026); null keeps it in memory. */
+    protected open val savedDraft: SavedDraft<T>? = null
 
     /**
      * What a page that saves as it changes may send (#957). A write is the saved record with the user's change in it, so a
@@ -134,8 +147,11 @@ abstract class EditorViewModel<T>(
             val kept = settling?.await()
             saveAsMade?.reloaded(keptUnsent = kept != null)
             attempt { load() }
-                .onSuccess { state.value = EditorUiState.Ready(draft = kept ?: it, saved = it, saveFailed = kept != null) }
-                .onFailure { state.value = EditorUiState.Error(it.toSeerrError()) }
+                .onSuccess { loaded ->
+                    // A draft kept across the process being killed goes back over what was read (#1026).
+                    val draft = kept ?: savedDraft?.restoreOver(loaded) ?: loaded
+                    state.value = EditorUiState.Ready(draft = draft, saved = loaded, saveFailed = kept != null)
+                }.onFailure { state.value = EditorUiState.Error(it.toSeerrError()) }
         }
     }
 
@@ -146,6 +162,7 @@ abstract class EditorViewModel<T>(
             if (ready.saving) ready else ready.copy(draft = transform(ready.draft))
         }
         if (ready()?.draft != before) saveAsMade?.changed()
+        ready()?.let { savedDraft?.keep(it.draft.takeIf { draft -> draft != it.saved }) }
     }
 
     /** Writes the draft; on a page that saves as it changes, this is the retry after a write that failed. */
@@ -161,6 +178,7 @@ abstract class EditorViewModel<T>(
             attempt { write(ready.draft) }
                 .onSuccess { adopted ->
                     state.value = EditorUiState.Ready(draft = adopted, saved = adopted)
+                    savedDraft?.keep(null)
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saving = false) ?: current }
@@ -250,6 +268,9 @@ abstract class ExtrasEditorViewModel<T, X>(
     /** As [EditorViewModel.saveAsMadeScope]: the application's scope for a page that saves as it changes (#930). */
     protected open val saveAsMadeScope: CoroutineScope? = null
 
+    /** As [EditorViewModel.savedDraft]. */
+    protected open val savedDraft: SavedDraft<T>? = null
+
     /**
      * What a page that saves as it changes may send (#957). A write is the saved record with the user's change in it, so a
      * record the server sent that already fails [canSave] (a required email it left blank, say) goes back as it came rather
@@ -290,9 +311,10 @@ abstract class ExtrasEditorViewModel<T, X>(
             val kept = settling?.await()
             saveAsMade?.reloaded(keptUnsent = kept != null)
             attempt { load() }
-                .onSuccess {
+                .onSuccess { loaded ->
+                    val draft = kept ?: savedDraft?.restoreOver(loaded) ?: loaded
                     state.value =
-                        ExtrasEditorUiState.Ready(draft = kept ?: it, saved = it, extras = extrasState.value, saveFailed = kept != null)
+                        ExtrasEditorUiState.Ready(draft = draft, saved = loaded, extras = extrasState.value, saveFailed = kept != null)
                 }.onFailure { state.value = ExtrasEditorUiState.Error(it.toSeerrError()) }
         }
     }
@@ -304,6 +326,7 @@ abstract class ExtrasEditorViewModel<T, X>(
             if (ready.saving) ready else ready.copy(draft = transform(ready.draft))
         }
         if (ready()?.draft != before) saveAsMade?.changed()
+        ready()?.let { savedDraft?.keep(it.draft.takeIf { draft -> draft != it.saved }) }
     }
 
     /** Writes the draft; on a page that saves as it changes, this is the retry after a write that failed. */
@@ -319,6 +342,7 @@ abstract class ExtrasEditorViewModel<T, X>(
             attempt { write(ready.draft) }
                 .onSuccess { adopted ->
                     state.value = ExtrasEditorUiState.Ready(draft = adopted, saved = adopted, extras = extrasState.value)
+                    savedDraft?.keep(null)
                     eventFlow.emit(EditorEvent.Saved)
                 }.onFailure { failure ->
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saving = false) ?: current }

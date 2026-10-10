@@ -39,6 +39,8 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
     // from one of its cards, so the page above and the grid below can both be showing.
     var seeAllRequests by rememberSaveable { mutableStateOf<String?>(null) }
     var seeAllIssues by rememberSaveable { mutableStateOf<String?>(null) }
+    // The account page's own see-all: the signed-in user's requests, which belong to no filter.
+    var seeAllAccount by rememberSaveable { mutableStateOf(false) }
     TvShellScaffold(
         selected = selected,
         onSelect = { selected = it },
@@ -52,7 +54,7 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                     {
                         { TvEditConnectionOverlay(onDone = { editingConnection = false }) }
                     }
-                openRequestId != null || openIssueId != null || seeAllRequests != null || seeAllIssues != null ->
+                openRequestId != null || openIssueId != null || seeAllRequests != null || seeAllIssues != null || seeAllAccount ->
                     {
                         {
                             seeAllRequests?.let { name ->
@@ -63,6 +65,14 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                                     onDone = { seeAllRequests = null },
                                 )
                             }
+                            if (seeAllAccount && account != null) {
+                                TvAccountRequestsGridOverlay(
+                                    accountId = account.id,
+                                    detailOpen = openRequestId != null,
+                                    onOpenRequest = { openRequestId = it },
+                                    onDone = { seeAllAccount = false },
+                                )
+                            }
                             seeAllIssues?.let { name ->
                                 TvIssuesGridOverlay(
                                     filter = IssueFilter.valueOf(name),
@@ -71,19 +81,7 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                                     onDone = { seeAllIssues = null },
                                 )
                             }
-                            // Each page its own view models, cleared when it closes: a reopened page starts fresh, and nothing
-                            // piles up in the activity's store or outlives a change of server (#789).
-                            openRequestId?.let { id ->
-                                ScopedViewModels("request-detail-$id") {
-                                    TvRequestDetailOverlay(requestId = id, onDone = {
-                                        openRequestId =
-                                            null
-                                    })
-                                }
-                            }
-                            openIssueId?.let { id ->
-                                ScopedViewModels("issue-detail-$id") { TvIssueDetailOverlay(issueId = id, onDone = { openIssueId = null }) }
-                            }
+                            TvDetailOverlays(openRequestId, openIssueId, { openRequestId = null }, { openIssueId = null })
                         }
                     }
                 else -> null
@@ -91,7 +89,13 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
     ) { destination ->
         when (destination) {
             TvDestination.Account ->
-                TvAccountEntry(openRequestId = openRequestId, onOpenRequest = { openRequestId = it }, hubViewModel = hubViewModel)
+                TvAccountEntry(
+                    openRequestId = openRequestId,
+                    onOpenRequest = { openRequestId = it },
+                    seeAllOpen = seeAllAccount,
+                    onSeeAll = { seeAllAccount = true },
+                    hubViewModel = hubViewModel,
+                )
             // Home is what needs attention: the requests as rows over a backdrop, once the server answers.
             TvDestination.Hub ->
                 TvHomeEntry(
@@ -110,5 +114,24 @@ internal fun TvConnectedShell(hubViewModel: HubViewModel = hiltViewModel()) {
                 )
             TvDestination.Settings -> TvSettingsEntry(onEditConnection = { editingConnection = true })
         }
+    }
+}
+
+/**
+ * The request and issue pages above the rail. Each page its own view models, cleared when it closes: a reopened page starts
+ * fresh, and nothing piles up in the activity's store or outlives a change of server (#789).
+ */
+@Composable
+private fun TvDetailOverlays(
+    openRequestId: Int?,
+    openIssueId: Int?,
+    onCloseRequest: () -> Unit,
+    onCloseIssue: () -> Unit,
+) {
+    openRequestId?.let { id ->
+        ScopedViewModels("request-detail-$id") { TvRequestDetailOverlay(requestId = id, onDone = onCloseRequest) }
+    }
+    openIssueId?.let { id ->
+        ScopedViewModels("issue-detail-$id") { TvIssueDetailOverlay(issueId = id, onDone = onCloseIssue) }
     }
 }

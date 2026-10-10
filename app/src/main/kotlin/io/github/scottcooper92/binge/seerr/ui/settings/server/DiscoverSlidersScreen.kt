@@ -16,7 +16,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,14 +33,12 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.semantics
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.HintCard
+import com.binge.designsystem.component.ReorderableHandleRow
+import com.binge.designsystem.component.bingeSwitchColors
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ActionSheetGroup
 import io.github.scottcooper92.binge.seerr.ui.state.actionItem
@@ -202,66 +199,23 @@ private fun SliderRow(
     handleModifier: Modifier,
 ) {
     val editable = !slider.builtIn && slider.type != null
-    val moveUpLabel = stringResource(R.string.server_settings_slider_move_up)
-    val moveDownLabel = stringResource(R.string.server_settings_slider_move_down)
-    Row(
+    ReorderableHandleRow(
+        handleModifier = handleModifier,
+        onMoveUp = { actions.onMove(index, index - 1) }.takeIf { index > 0 },
+        onMoveDown = { actions.onMove(index, index + 1) }.takeIf { index < lastIndex },
+        // An editable row's own tap opens its editor - the more valuable action, and still
+        // there via the switch itself. A built-in row has no editor to open, so the whole
+        // row toggles it instead of leaving that to the small switch alone.
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                // An editable row's own tap opens its editor - the more valuable action, and still
-                // there via the switch itself. A built-in row has no editor to open, so the whole
-                // row toggles it instead of leaving that to the small switch alone.
-                .then(
-                    if (editable) {
-                        Modifier.clickable(enabled = enabled) { actions.onOpenSlider(slider.id) }
-                    } else {
-                        Modifier.toggleable(
-                            value = slider.enabled,
-                            enabled = enabled,
-                            role = Role.Switch,
-                        ) { actions.onToggle(slider.id) }
-                    },
-                )
-                // The drag gesture has no TalkBack equivalent, so the row itself still offers Move
-                // Up/Move Down as custom actions - the same pair the row used to expose as buttons,
-                // just read from the screen reader's rotor instead of drawn on screen.
-                .semantics {
-                    customActions =
-                        listOfNotNull(
-                            if (index > 0) {
-                                CustomAccessibilityAction(moveUpLabel) {
-                                    actions.onMove(index, index - 1)
-                                    true
-                                }
-                            } else {
-                                null
-                            },
-                            if (index < lastIndex) {
-                                CustomAccessibilityAction(moveDownLabel) {
-                                    actions.onMove(index, index + 1)
-                                    true
-                                }
-                            } else {
-                                null
-                            },
-                        )
-                },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+            if (editable) {
+                Modifier.clickable(enabled = enabled) { actions.onOpenSlider(slider.id) }
+            } else {
+                Modifier.toggleable(value = slider.enabled, enabled = enabled, role = Role.Switch) { actions.onToggle(slider.id) }
+            },
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(slider.label(), style = MaterialTheme.typography.bodyLarge)
             Text(slider.caption(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        // clearAndSetSemantics: the handle's own node would otherwise announce as an unlabelled
-        // button in the same row the Move Up/Move Down actions already cover.
-        IconButton(
-            onClick = {},
-            enabled = enabled,
-            modifier = handleModifier.clearAndSetSemantics {},
-        ) {
-            Icon(Icons.Rounded.DragHandle, contentDescription = stringResource(R.string.server_settings_slider_reorder))
         }
         // null for a built-in row: the row's own toggleable above owns the tap and the semantics
         // for it, and a still-interactive switch nested inside would double both up for TalkBack.
@@ -274,6 +228,7 @@ private fun SliderRow(
                     null
                 },
             enabled = enabled,
+            colors = bingeSwitchColors(),
         )
     }
 }

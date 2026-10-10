@@ -1,14 +1,18 @@
 package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.lifecycle.ViewModelStore
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.data.UserEntity
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.ui.users.labelRes
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -96,6 +100,31 @@ class PermissionsViewModelTest {
             assertEquals("""{"permissions":$expected}""", seerr.body("POST", "/api/v1/user/8/settings/permissions"))
             assertEquals(expected, vm.awaitReady().saved.original)
             assertEquals(expected, cache.rows.single().permissions)
+        }
+
+    /** #940: a switch saves on its own, so the snackbar offers to flip it back; a locked one says nothing. */
+    @Test
+    fun `a toggle offers an undo that flips it back, and a locked one offers none`() =
+        runTest {
+            seerr.viewer(id = 2, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val offered = awaitEvent(vm.events)
+            vm.toggle(ManageablePermission.ManageIssues)
+            val undoable = offered.await() as EditorEvent.Undoable
+            assertEquals(R.string.user_settings_permission_on, undoable.messageRes)
+            assertEquals(ManageablePermission.ManageIssues.labelRes(), undoable.argRes)
+            assertTrue(ManageablePermission.ManageIssues in vm.awaitReady().draft.selected)
+
+            undoable.undo()
+            assertFalse(ManageablePermission.ManageIssues in vm.awaitReady().draft.selected)
+
+            val none = awaitEvent(vm.events)
+            vm.toggle(ManageablePermission.Admin)
+            runCurrent()
+            assertFalse(none.isCompleted)
+            none.cancel()
         }
 
     /** The server refuses any change to an admin's mask from anyone but the owner, so the page is read-only to them (#1134). */
