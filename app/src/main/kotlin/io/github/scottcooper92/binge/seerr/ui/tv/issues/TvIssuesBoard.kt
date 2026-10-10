@@ -18,6 +18,12 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.tv.component.TvSideSheet
+import com.binge.designsystem.tv.component.TvSideSheetBody
+import com.binge.designsystem.tv.component.TvSideSheetConfirm
+import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetStepFocus
+import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvHubRow
@@ -39,12 +45,6 @@ import io.github.scottcooper92.binge.seerr.ui.issues.labelRes
 import io.github.scottcooper92.binge.seerr.ui.issues.tone
 import io.github.scottcooper92.binge.seerr.ui.tv.OverlayFocusRestore
 import io.github.scottcooper92.binge.seerr.ui.tv.TV_ROW_ITEM_CAP
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetBody
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetRow
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetStepFocus
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetTitle
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropCopy
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
@@ -283,10 +283,10 @@ internal fun TvIssueActionsSheet(
 ) {
     var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
     val open = item.status == IssueStatus.Open
-    TvActionSheet(onDismiss = onDismiss, modifier = modifier) { entryFocus ->
+    TvSideSheet(onDismiss = onDismiss, modifier = modifier) { entryFocus ->
         when (pending) {
             Pending.Resolve ->
-                TvActionSheetConfirm(
+                TvSideSheetConfirm(
                     title = stringResource(R.string.issue_resolve_confirm_title),
                     message = stringResource(R.string.issue_resolve_confirm_message),
                     confirmLabel = stringResource(R.string.tv_issue_resolve),
@@ -295,7 +295,7 @@ internal fun TvIssueActionsSheet(
                     entryFocus = entryFocus,
                 )
             Pending.Reopen ->
-                TvActionSheetConfirm(
+                TvSideSheetConfirm(
                     title = stringResource(R.string.issue_reopen_confirm_title),
                     message = stringResource(R.string.issue_reopen_confirm_message),
                     confirmLabel = stringResource(R.string.tv_issue_reopen),
@@ -304,7 +304,7 @@ internal fun TvIssueActionsSheet(
                     entryFocus = entryFocus,
                 )
             Pending.Delete ->
-                TvActionSheetConfirm(
+                TvSideSheetConfirm(
                     title = stringResource(R.string.issue_delete_confirm_title),
                     message = stringResource(R.string.issue_delete_confirm_message),
                     confirmLabel = stringResource(R.string.issue_delete),
@@ -313,25 +313,25 @@ internal fun TvIssueActionsSheet(
                     entryFocus = entryFocus,
                 )
             null -> {
-                TvActionSheetTitle(item.title ?: stringResource(item.mediaType.mediaTypeLabelRes()))
-                TvActionSheetBody(
+                TvSideSheetTitle(item.title ?: stringResource(item.mediaType.mediaTypeLabelRes()))
+                TvSideSheetBody(
                     listOfNotNull(item.reportedBy, stringResource(item.status.labelRes()))
                         .joinToString(stringResource(R.string.hub_meta_separator)),
                 )
-                TvActionSheetRow(
+                TvSideSheetRow(
                     label = stringResource(if (open) R.string.tv_issue_resolve else R.string.tv_issue_reopen),
                     onClick = { pending = if (open) Pending.Resolve else Pending.Reopen },
                     modifier = Modifier.focusRequester(entryFocus),
                 )
                 if (canDelete) {
-                    TvActionSheetRow(
+                    TvSideSheetRow(
                         label = stringResource(R.string.issue_delete),
                         onClick = { pending = Pending.Delete },
                         destructive = true,
                     )
                 }
-                TvActionSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
-                TvActionSheetStepFocus(entryFocus)
+                TvSideSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
+                TvSideSheetStepFocus(entryFocus)
             }
         }
     }
