@@ -1,10 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 /**
- * The instant every frame that shows relative dates is drawn at. It is fixed, and far past anything a sample's own dates
- * are measured from, so a date lands past the relative-date window and renders as the same absolute date whenever the
- * suite runs: a "now" taken from the clock made the committed frames drift a day on every CI run after they were
- * recorded. Shared, so one frame cannot differ from its sibling because one fixture moved and the other did not.
+ * The instant every frame that shows relative dates is drawn at. It is fixed, so the rendered text is the same on every
+ * run: a "now" taken from the clock made the committed frames drift a day on every CI run after they were recorded.
+ * Shared, so one frame cannot differ from its sibling because one fixture moved and the other did not. A sample whose
+ * date should read as an absolute date keeps its own timestamp far before this one.
  */
 internal const val FIXED_NOW_MILLIS = 1_770_000_000_000L
 
