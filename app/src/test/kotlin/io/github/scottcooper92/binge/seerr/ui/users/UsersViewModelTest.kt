@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.PERMISSION_MANAGE_USERS
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
@@ -103,6 +104,20 @@ class UsersViewModelTest {
 
     private suspend fun UsersViewModel.awaitReady(match: (UsersUiState.Ready) -> Boolean = { true }): UsersUiState.Ready =
         uiState.first { it is UsersUiState.Ready && match(it) } as UsersUiState.Ready
+
+    /** The import lists live under `/settings`, which needs ADMIN; a manager may still add an account (#1009). */
+    @Test
+    fun `importing is offered to an admin only, and adding to any manager`() =
+        runTest {
+            viewerPermissions.set(PERMISSION_MANAGE_USERS)
+            val vm = viewModel()
+            val manager = vm.awaitReady { it.canAdmit }
+            assertNull(manager.importSource)
+
+            viewerPermissions.set(ADMIN)
+            vm.setScreenVisible(true)
+            assertEquals(UserOrigin.Jellyfin, vm.awaitReady { it.importSource != null }.importSource)
+        }
 
     @Test
     fun `becoming visible re-reads the scope, so a permission revoked on the server lands`() =

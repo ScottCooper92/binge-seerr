@@ -114,8 +114,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /blocklist/collection/{collectionId}` | Add collection to blocklist | — | v3.2.0 | yes | `BlocklistViewModel.setCollectionBlocked`; the collection page that calls it is Phase 7. |
 | `DELETE /blocklist/{tmdbId}` | Remove media from blocklist | — | v3.0.0 | yes | Unblock from the browser's row, behind a confirm. |
 | `GET /blocklist/{tmdbId}` | Get media from blocklist | — | v3.0.0 |  | Not needed: the list payload carries everything a row shows. |
-| `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 | yes | The import picker on a Jellyfin or Emby server, filtered here to accounts not yet imported. |
-| `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 | yes | The import picker on a Plex server; the server filters the known accounts. |
+| `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 | yes | The import picker on a Jellyfin or Emby server, filtered here to accounts not yet imported. Admin only, like all of `/settings`. |
+| `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 | yes | The import picker on a Plex server; the server filters the known accounts. Admin only, like all of `/settings`. |
 | `GET /user` | Get all users | v1.0.0 | v1.0.0 | yes | The hub's count; the users browser, cached in Room and refreshed on open. |
 | `POST /user` | Create new user | v1.0.0 | v1.0.0 | yes | Create a local user from the users browser. |
 | `PUT /user` | Update batch of users | v1.18.0 | v1.0.0 | yes | The users browser's bulk permission edit. |
