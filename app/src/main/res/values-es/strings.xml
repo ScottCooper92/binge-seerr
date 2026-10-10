@@ -192,7 +192,7 @@
     <string name="media_clear_confirm_message">El servidor olvida este título: su estado y todas sus peticiones. Cualquiera puede volver a solicitarlo.</string>
     <string name="media_delete_files">Eliminar los archivos</string>
     <string name="media_delete_files_confirm_title">¿Eliminar los archivos?</string>
-    <string name="media_delete_files_confirm_message">Los archivos descargados se eliminan del cliente de descargas y el título se marca como desconocido en cada solicitud que lo tenga.</string>
+    <string name="media_delete_files_confirm_message">Los archivos descargados se eliminan del cliente de descargas y el título se marca como desconocido en cada petición que lo tenga.</string>
     <string name="media_delete_files_second_title">¿Eliminar de %1$s?</string>
     <string name="media_delete_files_second_message">%1$s elimina los archivos del disco. Esto no se puede deshacer.</string>
     <string name="media_status_set">Estado del contenido actualizado</string>
@@ -220,7 +220,7 @@
     <string name="issues_empty_open">No hay incidencias abiertas. Nada requiere tu atención.</string>
     <string name="issues_empty_resolved">Aún no hay incidencias resueltas.</string>
     <string name="issues_empty_all">No se ha informado de ninguna incidencia en tu servidor.</string>
-    <string name="requests_refresh_failed">Mostrando las últimas solicitudes conocidas. Toca para actualizar.</string>
+    <string name="requests_refresh_failed">Mostrando las últimas peticiones conocidas. Toca para actualizar.</string>
     <string name="issues_refresh_failed">Mostrando las últimas incidencias conocidas. Toca para actualizar.</string>
     <string name="issue_state_open">Abierta</string>
     <string name="issue_state_resolved">Resuelta</string>
@@ -345,9 +345,9 @@
     <string name="permission_request_series">Solicitar series</string>
     <string name="permission_auto_approve_movies">Aprobación automática de películas</string>
     <string name="permission_auto_approve_series">Aprobación automática de series</string>
-    <string name="permission_auto_request">Solicitud automática</string>
-    <string name="permission_auto_request_movies">Solicitud automática de películas</string>
-    <string name="permission_auto_request_series">Solicitud automática de series</string>
+    <string name="permission_auto_request">Petición automática</string>
+    <string name="permission_auto_request_movies">Petición automática de películas</string>
+    <string name="permission_auto_request_series">Petición automática de series</string>
     <string name="permission_request_4k_movies">Solicitar películas en 4K</string>
     <string name="permission_request_4k_series">Solicitar series en 4K</string>
     <string name="permission_auto_approve_4k_movies">Aprobación automática de películas en 4K</string>
@@ -548,7 +548,7 @@
     <string name="server_settings_rule_languages">Idiomas originales</string>
     <string name="server_settings_rule_keywords">Palabras clave</string>
     <string name="server_settings_rule_keywords_empty_title">Sin palabras clave</string>
-    <string name="server_settings_rule_keywords_empty">Busca una palabra clave para que la regla se aplique a las solicitudes que la tengan.</string>
+    <string name="server_settings_rule_keywords_empty">Busca una palabra clave para que la regla se aplique a las peticiones que la tengan.</string>
     <string name="server_settings_rule_overrides_title">Enviarla con</string>
     <string name="server_settings_rule_pick_instance">Elige una instancia para ver lo que ofrece.</string>
     <string name="server_settings_rule_needs_condition">Añade al menos una condición: un usuario, género, idioma o palabra clave.</string>
@@ -1108,9 +1108,9 @@
     <string name="tv_detail_info_status">Estado</string>
     <string name="tv_detail_info_sent_to">Enviado a</string>
     <string name="tv_detail_info_phone_only">Cámbialo en el móvil</string>
-    <string name="tv_detail_phone_edit">Editar la solicitud</string>
+    <string name="tv_detail_phone_edit">Editar la petición</string>
     <string name="tv_detail_phone_requester">Quien la pidió</string>
-    <string name="tv_detail_phone_siblings">Otras solicitudes</string>
+    <string name="tv_detail_phone_siblings">Otras peticiones</string>
     <string name="tv_detail_details">Detalles</string>
     <string name="settings_group_server_settings">Ajustes del servidor</string>
     <string name="settings_section_general_detail">Título, dirección y Descubrir</string>
@@ -1204,7 +1204,7 @@
     <string name="server_settings_metadata_not_tested">Sin probar</string>
     <string name="server_settings_metadata_operational">Funciona</string>
     <string name="server_settings_metadata_failed">No funciona</string>
-    <string name="server_settings_agent_types_requests">Avisar de solicitudes</string>
+    <string name="server_settings_agent_types_requests">Avisar de peticiones</string>
     <string name="server_settings_agent_types_issues">Avisar de incidencias</string>
     <string name="server_settings_about_title">Acerca de %1$s</string>
     <string name="server_settings_about_discussions">Debates en GitHub</string>
