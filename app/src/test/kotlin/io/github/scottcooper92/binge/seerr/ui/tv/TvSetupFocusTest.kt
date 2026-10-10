@@ -1,6 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
@@ -23,6 +26,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
 import io.github.scottcooper92.binge.seerr.ui.LinkFlow
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
+import io.github.scottcooper92.binge.seerr.ui.SetupError
 import io.github.scottcooper92.binge.seerr.ui.SetupServer
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
@@ -177,6 +181,45 @@ class TvSetupFocusTest {
 
         pressRight()
         pressLeft()
+
+        addressField().assertIsFocused()
+    }
+
+    /** The field is disabled while the address is inspected; when the inspection fails the remote is still on it (#1044). */
+    @Test
+    fun aFailedInspectionPutsTheRemoteBackOnTheField() {
+        var state by mutableStateOf<SetupUiState>(address("http://seerr.lan:5055"))
+        composeTestRule.setContent {
+            BingeTvTheme { TvSetupScreen(state = state, actions = actions) }
+        }
+        composeTestRule.waitForIdle()
+        addressField().assertIsFocused()
+
+        state = SetupUiState.Address(serverUrl = "http://seerr.lan:5055", insecure = false, isInspecting = true, error = null)
+        composeTestRule.waitForIdle()
+        state =
+            SetupUiState.Address(serverUrl = "http://seerr.lan:5055", insecure = false, isInspecting = false, error = SetupError.NotSeerr)
+        composeTestRule.waitForIdle()
+
+        addressField().assertIsFocused()
+    }
+
+    /** Continue cannot hold focus while the address is inspected; after a failure the remote is back on the field (#1044). */
+    @Test
+    fun aFailedInspectionFromContinuePutsTheRemoteBackOnTheField() {
+        var state by mutableStateOf<SetupUiState>(address("http://seerr.lan:5055"))
+        composeTestRule.setContent {
+            BingeTvTheme { TvSetupScreen(state = state, actions = actions) }
+        }
+        composeTestRule.waitForIdle()
+        pressRight()
+        continueButton().assertIsFocused()
+
+        state = SetupUiState.Address(serverUrl = "http://seerr.lan:5055", insecure = false, isInspecting = true, error = null)
+        composeTestRule.waitForIdle()
+        state =
+            SetupUiState.Address(serverUrl = "http://seerr.lan:5055", insecure = false, isInspecting = false, error = SetupError.NotSeerr)
+        composeTestRule.waitForIdle()
 
         addressField().assertIsFocused()
     }
