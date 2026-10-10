@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,6 +26,8 @@ import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
+import com.binge.designsystem.tv.template.TvMessagePage
+import com.binge.designsystem.tv.template.TvPageAction
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
@@ -66,6 +70,7 @@ internal class TvIssuesActions(
     val onDelete: (IssueItem) -> Unit,
     val onSeeAll: (IssueFilter) -> Unit,
     val onRetryLoad: () -> Unit,
+    val onRetryScope: () -> Unit,
 )
 
 /**
@@ -106,7 +111,7 @@ internal fun TvIssuesBoard(
     }
     Box(modifier = modifier.fillMaxSize()) {
         if (ready == null) {
-            TvHubLoading()
+            TvIssuesUnresolved(state, actions)
         } else {
             TvIssuesRows(
                 ready = ready,
@@ -166,6 +171,23 @@ internal fun TvIssuesBoard(
             )
         }
     }
+}
+
+/** What the board shows before the issues are known: the loading page, or that they could not be read, with a retry. */
+@Composable
+private fun TvIssuesUnresolved(
+    state: IssuesUiState,
+    actions: TvIssuesActions,
+) {
+    if (state !is IssuesUiState.Error) {
+        TvHubLoading()
+        return
+    }
+    TvMessagePage(
+        body = stringResource(R.string.tv_list_load_failed),
+        icon = Icons.Filled.Warning,
+        primary = TvPageAction(stringResource(R.string.hub_retry), actions.onRetryScope),
+    )
 }
 
 /** The filters that get a row; "All" would only repeat the others. */

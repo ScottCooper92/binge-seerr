@@ -75,6 +75,11 @@ sealed interface UsersUiState {
         /** The list's latest finished network refresh, for [sort]; missing while its refresh runs. */
         val refresh: ListRefresh? = null,
     ) : UsersUiState
+
+    /** The signed-in user could not be read, so what they may do here is unknown. */
+    data class Error(
+        val error: SeerrError,
+    ) : UsersUiState
 }
 
 sealed interface UsersEvent {
