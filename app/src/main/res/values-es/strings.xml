@@ -1088,6 +1088,10 @@
     <string name="tv_detail_info_requested">Solicitado</string>
     <string name="tv_detail_info_status">Estado</string>
     <string name="tv_detail_info_sent_to">Enviado a</string>
+    <string name="tv_detail_info_phone_only">Cámbialo en el móvil</string>
+    <string name="tv_detail_phone_edit">Editar la solicitud</string>
+    <string name="tv_detail_phone_requester">Quien la pidió</string>
+    <string name="tv_detail_phone_siblings">Otras solicitudes</string>
     <string name="tv_detail_details">Detalles</string>
     <string name="settings_group_server_settings">Ajustes del servidor</string>
     <string name="settings_section_general_detail">Título, dirección y Descubrir</string>
