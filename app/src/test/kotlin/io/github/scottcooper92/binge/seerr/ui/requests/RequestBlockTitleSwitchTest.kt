@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performClick
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -74,20 +75,14 @@ class RequestBlockTitleSwitchTest {
     }
 
     private fun item() =
-        RequestItem(
+        requestItem(
             id = 11,
             tmdbId = 1396,
             mediaType = RequestMediaType.Tv,
             title = "Breaking Bad",
-            posterUrl = null,
             year = "2008",
             requestedBy = null,
             requestedById = null,
-            requestedAtMillis = null,
             status = null,
-            mediaStatus = null,
-            download = null,
-            seasonNumbers = emptyList(),
-            is4k = false,
         )
 }

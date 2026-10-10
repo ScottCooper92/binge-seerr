@@ -6,10 +6,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-
-/** The width of a phone, which is what a bottom sheet's body spans in a frame. */
-internal val SHEET_WIDTH = 411.dp
 
 /**
  * How a bottom sheet's body looks: a phone's width on the sheet surface. A frame renders the stateless body rather than
@@ -21,7 +17,7 @@ internal fun SheetFrame(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Box(Modifier.width(SHEET_WIDTH).then(modifier).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+    Box(Modifier.width(PHONE_WIDTH).then(modifier).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
         content()
     }
 }

@@ -7,6 +7,7 @@ import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -126,21 +127,15 @@ class RequestActionsContentDeleteFilesTest {
     ) = MediaInstance(is4k = is4k, status = status, serviceUrl = null, mediaServerUrl = null, watch = null)
 
     private fun item() =
-        RequestItem(
+        requestItem(
             id = REQUEST_ID,
             tmdbId = TMDB_ID,
             mediaType = RequestMediaType.Tv,
             title = "Breaking Bad",
-            posterUrl = null,
             year = "2008",
             requestedBy = null,
             requestedById = null,
-            requestedAtMillis = null,
             status = null,
-            mediaStatus = null,
-            download = null,
-            seasonNumbers = emptyList(),
-            is4k = false,
         )
 
     private companion object {

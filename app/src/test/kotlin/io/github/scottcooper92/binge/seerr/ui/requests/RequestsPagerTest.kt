@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.paging.PagingData
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
@@ -131,21 +132,14 @@ class RequestsPagerTest {
     private fun titleFor(filter: RequestFilter) = "Title for ${filter.name}"
 
     private fun item(filter: RequestFilter) =
-        RequestItem(
+        requestItem(
             id = filter.ordinal + 1,
             tmdbId = filter.ordinal + 100,
-            mediaType = RequestMediaType.Movie,
             title = titleFor(filter),
-            posterUrl = null,
             year = null,
             requestedBy = null,
             requestedById = null,
-            requestedAtMillis = null,
             status = null,
-            mediaStatus = null,
-            download = null,
-            seasonNumbers = emptyList(),
-            is4k = false,
         )
 
     private fun ready(filter: RequestFilter) =

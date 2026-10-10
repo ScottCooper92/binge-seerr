@@ -22,6 +22,7 @@ import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -80,23 +81,7 @@ class EditRequestDestinationPickerTest {
         }
     }
 
-    private fun item() =
-        RequestItem(
-            id = 1,
-            tmdbId = 1,
-            mediaType = RequestMediaType.Tv,
-            title = "Severance",
-            posterUrl = null,
-            year = "2022",
-            requestedBy = "ana",
-            requestedById = 3,
-            requestedAtMillis = null,
-            status = null,
-            mediaStatus = null,
-            download = null,
-            seasonNumbers = emptyList(),
-            is4k = false,
-        )
+    private fun item() = requestItem(mediaType = RequestMediaType.Tv, title = "Severance", year = "2022", status = null)
 
     private fun saveShown() = rule.onNodeWithText(string(R.string.request_edit_save))
 
