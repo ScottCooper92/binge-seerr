@@ -14,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.data.ListRefreshes
 import io.github.scottcooper92.binge.seerr.data.RequestListQuery
 import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestsRemoteMediator
+import io.github.scottcooper92.binge.seerr.data.whileSet
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 /** Who the list is scoped to: everyone's requests, or one user's where they may not see others'. */
@@ -85,6 +87,9 @@ class RequestsViewModel
         private val selectedSort = MutableStateFlow(RequestSort.Added)
         private val refreshTrigger = MutableStateFlow(0)
         private val countsRefresh = MutableStateFlow(0)
+
+        /** A `request/count` read is running, so a pull leaves it to finish rather than restarting it (#1193). */
+        private val countsInFlight = AtomicBoolean(false)
         private val listVersionState = MutableStateFlow(0)
 
         /**
@@ -195,9 +200,11 @@ class RequestsViewModel
                 flow {
                     emit(
                         if (seesEveryRequest) {
-                            attempt { connection.api().requestCount() }
-                                .getOrNull()
-                                ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) }
+                            countsInFlight.whileSet {
+                                attempt { connection.api().requestCount() }
+                                    .getOrNull()
+                                    ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) }
+                            }
                         } else {
                             null
                         },
@@ -241,6 +248,11 @@ class RequestsViewModel
         /** Re-reads the signed-in user after [RequestsUiState.Error]. */
         fun retry() {
             refreshTrigger.value++
+        }
+
+        /** A pull refreshed the list: the chips re-read their counts too, unless a read is already running (#1193). */
+        fun refreshCounts() {
+            if (!countsInFlight.get()) countsRefresh.value++
         }
 
         /** The counts and the scope are low-velocity: refetched on entry, never polled. */

@@ -39,6 +39,8 @@ class RequestsActions(
     val onSortChange: (RequestSort) -> Unit,
     val onOpen: (RequestItem) -> Unit,
     val onRetryLoad: () -> Unit,
+    /** A pull refreshed a list, so the chips re-read their counts. */
+    val onRefreshCounts: () -> Unit,
     /** A moderation from a row's sheet finished, so the lists and counts are stale. */
     val onChanged: () -> Unit,
     /**
@@ -175,6 +177,7 @@ private fun RequestsPage(
         actingIds = state.actingIds,
         onOpen = actions.onOpen,
         onManage = onManage,
+        onPull = actions.onRefreshCounts,
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
         pullState = pullState,

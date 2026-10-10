@@ -42,6 +42,7 @@ class IssuesPagerTest {
                             onSortChange = {},
                             onOpen = {},
                             onRetryLoad = {},
+                            onRefreshCounts = {},
                         ),
                 )
             }
@@ -84,6 +85,7 @@ class IssuesPagerTest {
                             onSortChange = {},
                             onOpen = {},
                             onRetryLoad = {},
+                            onRefreshCounts = {},
                         ),
                 )
             }

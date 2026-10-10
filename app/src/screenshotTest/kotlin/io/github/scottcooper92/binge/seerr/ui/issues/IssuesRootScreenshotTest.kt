@@ -68,6 +68,6 @@ private fun Frame(
         state = state,
         issuesFor = { rows },
         pullState = pullState,
-        actions = IssuesActions(onBack = {}, onFilterChange = {}, onSortChange = {}, onOpen = {}, onRetryLoad = {}),
+        actions = IssuesActions(onBack = {}, onFilterChange = {}, onSortChange = {}, onOpen = {}, onRetryLoad = {}, onRefreshCounts = {}),
     )
 }

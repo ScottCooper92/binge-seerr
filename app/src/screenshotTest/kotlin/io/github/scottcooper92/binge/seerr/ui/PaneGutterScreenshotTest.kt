@@ -73,6 +73,7 @@ private fun Requests() =
                 onSortChange = {},
                 onOpen = {},
                 onRetryLoad = {},
+                onRefreshCounts = {},
                 onChanged = {},
                 detailSheet = {},
             ),

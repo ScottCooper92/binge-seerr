@@ -43,6 +43,7 @@ internal fun IssuesEntry(
                 onSortChange = viewModel::setSort,
                 onOpen = { item -> onOpen(item.id) },
                 onRetryLoad = viewModel::retry,
+                onRefreshCounts = viewModel::refreshCounts,
             ),
     )
 }

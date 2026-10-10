@@ -19,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -33,6 +34,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -40,6 +43,7 @@ private const val ADMIN = 2
 private const val CREATE_ISSUES = 1 shl 22
 private const val HTTP_OK = 200
 private const val HTTP_SERVER_ERROR = 500
+private const val REQUEST_WAIT_MILLIS = 2_000L
 
 /** The browser over an in-memory connection into a path-scripted Seerr, paging through the fake cache. */
 class IssuesViewModelTest {
@@ -64,6 +68,13 @@ class IssuesViewModelTest {
     private val serverVersion = AtomicReference("3.1.0")
     private val publicSettings = AtomicReference("""{"mediaServerType":2}""")
 
+    /** The server's issue total, which a test can change mid-run to tell a fresh count from the last one. */
+    private val countTotal = AtomicInteger(3)
+
+    /** Set, a count read waits here until the test lets it go, so a test can act while one is running. */
+    private val heldCount = AtomicReference<CountDownLatch?>(null)
+    private val countStarted = CompletableDeferred<Unit>()
+
     @After
     fun tearDown() {
         viewModels.clear()
@@ -83,7 +94,13 @@ class IssuesViewModelTest {
                     }
                 "/api/v1/status" -> json("""{"version":"${serverVersion.get()}"}""")
                 "/api/v1/settings/public" -> json(publicSettings.get())
-                "/api/v1/issue/count" -> json("""{"total":3,"open":2,"closed":1}""")
+                "/api/v1/issue/count" -> {
+                    heldCount.get()?.let { release ->
+                        countStarted.complete(Unit)
+                        release.await(REQUEST_WAIT_MILLIS, TimeUnit.MILLISECONDS)
+                    }
+                    json("""{"total":${countTotal.get()},"open":2,"closed":1}""")
+                }
                 "/api/v1/issue" ->
                     json(
                         """{"pageInfo":{"pages":1,"results":1},"results":[{"id":31,"issueType":3,"status":1,
@@ -146,6 +163,46 @@ class IssuesViewModelTest {
             vm.awaitReady { it.sort == IssueSort.Modified }
             vm.issues(IssueFilter.Open).asSnapshot()
             assertTrue(received.any { it.url.encodedPath == "/api/v1/issue" && it.url.queryParameter("sort") == "modified" })
+        }
+
+    @Test
+    fun `a pull re-reads the chip counts once`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts?.total == 3 }
+            val before = countReads()
+
+            countTotal.set(4)
+            vm.refreshCounts()
+
+            assertEquals(4, vm.awaitReady { it.counts?.total == 4 }.counts?.total)
+            assertEquals(before + 1, countReads())
+        }
+
+    @Test
+    fun `a pull while the counts are being read starts no second read`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts?.total == 3 }
+            val before = countReads()
+            val release = CountDownLatch(1)
+            heldCount.set(release)
+            try {
+                countTotal.set(4)
+                vm.refreshCounts()
+                countStarted.await()
+                // A second pull while the first read is held: a restart would cancel it and read again (#1193).
+                vm.refreshCounts()
+                vm.refreshCounts()
+            } finally {
+                heldCount.set(null)
+                release.countDown()
+            }
+
+            vm.awaitReady { it.counts?.total == 4 }
+            assertEquals(before + 1, countReads())
         }
 
     /** An Overseerr upgraded in place to 1.30 has counts on the next arrival, with no reconnect (#1074). */
@@ -265,6 +322,8 @@ class IssuesViewModelTest {
             vm.awaitReady { it.actingIds.isEmpty() }
             assertTrue(analytics.events.isEmpty())
         }
+
+    private fun countReads() = received.count { it.url.encodedPath == "/api/v1/issue/count" }
 
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 

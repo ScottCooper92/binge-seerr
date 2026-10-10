@@ -174,6 +174,7 @@ internal fun RequestsEntry(
                 onSortChange = viewModel::setSort,
                 onOpen = { item -> onOpen(item.id) },
                 onRetryLoad = viewModel::retry,
+                onRefreshCounts = viewModel::refreshCounts,
                 onChanged = viewModel::listChanged,
                 detailSheet = { sheet -> SiblingRequestSheet(sheet, onOpenUser) },
             ),

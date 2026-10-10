@@ -89,6 +89,7 @@ private fun Frame(
                 onSortChange = {},
                 onOpen = {},
                 onRetryLoad = {},
+                onRefreshCounts = {},
                 onChanged = {},
                 detailSheet = {},
             ),

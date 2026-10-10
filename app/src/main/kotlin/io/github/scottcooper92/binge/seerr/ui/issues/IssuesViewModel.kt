@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.data.IssueListQuery
 import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.data.IssuesRemoteMediator
 import io.github.scottcooper92.binge.seerr.data.ListRefreshes
+import io.github.scottcooper92.binge.seerr.data.whileSet
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
@@ -45,6 +46,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 /** Where resolving the [IssueListScope] stands: in flight, done, or failed with why, so a failure is a state rather than an empty scope. */
@@ -82,6 +84,9 @@ class IssuesViewModel
         private val selectedFilter = MutableStateFlow(IssueFilter.Open)
         private val selectedSort = MutableStateFlow(IssueSort.Added)
         private val countsRefresh = MutableStateFlow(0)
+
+        /** An `issue/count` read is running, so a pull leaves it to finish rather than restarting it (#1193). */
+        private val countsInFlight = AtomicBoolean(false)
         private val scopeRefresh = MutableStateFlow(0)
         private val actionItem = MutableStateFlow<IssueItem?>(null)
         private val actingState = MutableStateFlow<Set<Int>>(emptySet())
@@ -154,7 +159,9 @@ class IssuesViewModel
                     flow {
                         emit(
                             if (hasCounts) {
-                                attempt { connection.api().issueCount() }.getOrNull()?.let { IssueCounts(it.total, it.open, it.closed) }
+                                countsInFlight.whileSet {
+                                    attempt { connection.api().issueCount() }.getOrNull()?.let { IssueCounts(it.total, it.open, it.closed) }
+                                }
                             } else {
                                 null
                             },
@@ -248,6 +255,11 @@ class IssuesViewModel
         /** Re-reads the signed-in user after [IssuesUiState.Error]. */
         fun retry() {
             scopeRefresh.value++
+        }
+
+        /** A pull refreshed the list: the chips re-read their counts too, unless a read is already running (#1193). */
+        fun refreshCounts() {
+            if (!countsInFlight.get()) countsRefresh.value++
         }
 
         /** The counts and the viewer's permissions are both refetched on entry, and neither is polled. */

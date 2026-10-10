@@ -35,6 +35,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -72,6 +74,13 @@ class RequestsViewModelTest {
     /** The server's version, which a test can change mid-run, as an upgrade in place would. */
     private val serverVersion = AtomicReference("3.1.0")
 
+    /** The server's request total, which a test can change mid-run to tell a fresh count from the last one. */
+    private val countTotal = AtomicInteger(3)
+
+    /** Set, a count read waits here until the test lets it go, so a test can act while one is running. */
+    private val heldCount = AtomicReference<CountDownLatch?>(null)
+    private val countStarted = CompletableDeferred<Unit>()
+
     private fun server(permissions: Int) {
         viewerPermissions.set(permissions)
         seerr.dispatcher = { request ->
@@ -80,7 +89,13 @@ class RequestsViewModelTest {
                 "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
                 "/api/v1/status" -> json("""{"version":"${serverVersion.get()}"}""")
                 "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
-                "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
+                "/api/v1/request/count" -> {
+                    heldCount.get()?.let { release ->
+                        countStarted.complete(Unit)
+                        release.await(REQUEST_WAIT_MILLIS, TimeUnit.MILLISECONDS)
+                    }
+                    json("""{"total":${countTotal.get()},"pending":1,"approved":2,"processing":1,"available":1}""")
+                }
                 "/api/v1/request" ->
                     json(
                         """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
@@ -158,6 +173,46 @@ class RequestsViewModelTest {
             assertTrue(vm.shouldRefresh(RequestFilter.All, after))
             assertFalse(vm.shouldRefresh(RequestFilter.All, after))
             assertTrue(vm.shouldRefresh(RequestFilter.Pending, after))
+        }
+
+    @Test
+    fun `a pull re-reads the chip counts once`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts?.total == 3 }
+            val before = countReads()
+
+            countTotal.set(4)
+            vm.refreshCounts()
+
+            assertEquals(4, vm.awaitReady { it.counts?.total == 4 }.counts?.total)
+            assertEquals(before + 1, countReads())
+        }
+
+    @Test
+    fun `a pull while the counts are being read starts no second read`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts?.total == 3 }
+            val before = countReads()
+            val release = CountDownLatch(1)
+            heldCount.set(release)
+            try {
+                countTotal.set(4)
+                vm.refreshCounts()
+                countStarted.await()
+                // A second pull while the first read is held: a restart would cancel it and read again (#1193).
+                vm.refreshCounts()
+                vm.refreshCounts()
+            } finally {
+                heldCount.set(null)
+                release.countDown()
+            }
+
+            vm.awaitReady { it.counts?.total == 4 }
+            assertEquals(before + 1, countReads())
         }
 
     @Test
@@ -333,6 +388,8 @@ class RequestsViewModelTest {
         authStatus.set(failing)
         return connection
     }
+
+    private fun countReads() = received.count { it.url.encodedPath == "/api/v1/request/count" }
 
     private fun authReads() = received.count { it.url.encodedPath == "/api/v1/auth/me" }
 
