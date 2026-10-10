@@ -12,12 +12,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
+import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.R as DesR
 
-/** One tappable row of an action sheet: an icon and a label in [tint], at least a touch target tall. */
+/** One tappable row of an action sheet: an icon and a label in [tint], at least a touch target tall. A row that is not [enabled] is dimmed. */
 @Composable
 internal fun ActionRow(
     icon: ImageVector,
@@ -30,6 +32,7 @@ internal fun ActionRow(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .alpha(if (enabled) 1f else DISABLED_ALPHA)
                 .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
                 .clickable(enabled = enabled, onClick = onClick)
                 .padding(horizontal = dimensionResource(DesR.dimen.padding_m), vertical = dimensionResource(DesR.dimen.padding_s)),

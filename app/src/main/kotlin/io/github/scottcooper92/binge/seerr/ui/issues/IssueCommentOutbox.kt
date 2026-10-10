@@ -11,11 +11,9 @@ import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The optimistic comment outbox of one issue page: a posted draft shows at once as a pending row,
@@ -33,13 +31,6 @@ internal class IssueCommentOutbox(
 ) {
     private var nextLocalId = 1L
 
-    /**
-     * The in-flight [send] for each outbox entry, so an edit or a drop can cancel a still-running
-     * one. A [ConcurrentHashMap] because [send] itself removes its own entry from the IO dispatcher
-     * it runs on, while every other mutator here runs on Main.
-     */
-    private val jobs = ConcurrentHashMap<Long, Job>()
-
     /** The draft goes into the outbox and the send runs behind it; the composer clears at once. */
     fun post() {
         val ready = ready() ?: return
@@ -56,40 +47,39 @@ internal class IssueCommentOutbox(
         state.value = ready.copy(draft = "", outbox = ready.outbox + entry)
         crashBreadcrumbs.key("issue_id", issueId.toString())
         crashBreadcrumbs.log("posting comment on issue")
-        jobs[entry.localId] = scope.launch(dispatcher) { send(entry.localId, message) }
+        scope.launch(dispatcher) { send(entry.localId, message) }
     }
 
     fun retry(localId: Long) {
         val entry = entry(localId) ?: return
-        jobs.remove(localId)?.cancel()
         update(localId) { it.copy(state = SendState.Sending) }
-        jobs[localId] = scope.launch(dispatcher) { send(localId, entry.message) }
+        scope.launch(dispatcher) { send(localId, entry.message) }
     }
 
     /**
-     * Edits a pending comment and sends the new text at once. A send still in flight is cancelled
-     * first, which stops this app waiting for it but cannot recall a request whose body already
-     * reached the server: that one may land too, and the page then shows only the edit until it next
-     * reloads the thread.
+     * Edits a pending comment and sends the new text at once. A comment whose send is in flight is left alone: cancelling
+     * the coroutine stops this app waiting but cannot recall a request whose body already reached the server, so a second
+     * send could land beside the first. The sheet turns Edit off while it is in flight; it comes back once the send lands
+     * or fails.
      */
     fun edit(
         localId: Long,
         message: String,
     ) {
         val trimmed = message.trim()
-        if (trimmed.isEmpty() || entry(localId) == null) return
-        jobs.remove(localId)?.cancel()
+        val entry = entry(localId)
+        if (trimmed.isEmpty() || entry == null || entry.state == SendState.Sending) return
         update(localId) { it.copy(message = trimmed, state = SendState.Sending) }
-        jobs[localId] = scope.launch(dispatcher) { send(localId, trimmed) }
+        scope.launch(dispatcher) { send(localId, trimmed) }
     }
 
     /**
-     * Discards a pending comment and cancels a send still in flight. That stops this app waiting for
-     * the answer but cannot recall a request already on the wire, so a comment dropped mid-send may
-     * still land on the server and show up the next time the thread reloads.
+     * Discards a failed pending comment. One whose send is in flight is left alone, for the reason [edit] gives: a request
+     * already on the wire may still land, and it would then show up on the thread after being discarded. The sheet turns
+     * Discard off while it is in flight.
      */
     fun drop(localId: Long) {
-        jobs.remove(localId)?.cancel()
+        if (entry(localId)?.state == SendState.Sending) return
         state.updateReady { it.copy(outbox = it.outbox.filterNot { entry -> entry.localId == localId }) }
     }
 
@@ -111,7 +101,6 @@ internal class IssueCommentOutbox(
             val user = attempt { connection.authenticatedUser() }.getOrNull()
             issue to user
         }.onSuccess { (issue, user) ->
-            jobs.remove(localId)
             var matched = false
             state.updateReady { ready ->
                 val knownIds = setOfNotNull(ready.detail.report?.id) + ready.detail.comments.map { it.id }
@@ -132,10 +121,8 @@ internal class IssueCommentOutbox(
             if (matched) analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "posted"))
             if (!matched) update(localId) { it.copy(state = SendState.Failed(retryable = true)) }
         }.onFailure { failure ->
-            // A cancellation means this send was superseded by an edit or a drop, not that it failed:
-            // that entry's outbox state (or its removal) is already handled by whatever cancelled it.
+            // A cancellation is the page going away, not a failed send: there is nothing left to show it on.
             if (failure is CancellationException) throw failure
-            jobs.remove(localId)
             val retryable = failure.toSeerrError().let { it != SeerrError.Forbidden && it != SeerrError.Unauthorized }
             update(localId) { it.copy(state = SendState.Failed(retryable)) }
         }

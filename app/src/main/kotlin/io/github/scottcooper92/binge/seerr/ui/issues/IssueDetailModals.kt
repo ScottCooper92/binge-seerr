@@ -79,6 +79,7 @@ internal fun OutboxModals(
         state.outbox.firstOrNull { it.localId == localId }?.let { entry ->
             OutboxActionsSheet(
                 retryable = (entry.state as? SendState.Failed)?.retryable == true,
+                sending = entry.state == SendState.Sending,
                 onRetry = {
                     modals.outboxActionId = null
                     actions.onRetryOutbox(localId)
