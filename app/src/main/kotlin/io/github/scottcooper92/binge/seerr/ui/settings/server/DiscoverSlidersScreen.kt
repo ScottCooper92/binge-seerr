@@ -36,14 +36,16 @@ import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ReorderableHandleRow
 import com.binge.designsystem.component.bingeSwitchColors
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.settings.Regions
 import io.github.scottcooper92.binge.seerr.ui.state.ActionSheetGroup
 import io.github.scottcooper92.binge.seerr.ui.state.actionItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPageActionBar
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.LocalEditorPageInsets
+import io.github.scottcooper92.binge.seerr.ui.users.settings.toEditorUiState
 import kotlinx.coroutines.flow.Flow
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
@@ -71,19 +73,20 @@ class SlidersActions(
  */
 @Composable
 fun DiscoverSlidersScreen(
-    state: EditorUiState<List<DiscoverSlider>>,
+    state: ExtrasEditorUiState<List<DiscoverSlider>, SliderNames>,
     events: Flow<EditorEvent>,
     actions: EditorActions<List<DiscoverSlider>>,
     sliderActions: SlidersActions,
 ) {
-    val ready = state as? EditorUiState.Ready<List<DiscoverSlider>>
+    val ready = state as? ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
+    val names = ready?.extras ?: SliderNames()
     val actionsEnabled = ready?.saving == false
     var showOverflow by rememberSaveable { mutableStateOf(false) }
     var confirmingReset by rememberSaveable { mutableStateOf(false) }
 
     EditorPage(
         title = stringResource(R.string.server_settings_sliders),
-        state = state,
+        state = state.toEditorUiState(),
         events = events,
         actions = actions,
         scrolling = false,
@@ -135,6 +138,7 @@ fun DiscoverSlidersScreen(
                 ReorderableItem(reorderableState, key = slider.id) {
                     SliderRow(
                         slider = slider,
+                        names = names,
                         enabled = enabled,
                         actions = sliderActions,
                         index = index,
@@ -188,6 +192,7 @@ internal fun SlidersOverflowContent(
 @Composable
 private fun SliderRow(
     slider: DiscoverSlider,
+    names: SliderNames,
     enabled: Boolean,
     actions: SlidersActions,
     index: Int,
@@ -211,7 +216,7 @@ private fun SliderRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(slider.label(), style = MaterialTheme.typography.bodyLarge)
-            Text(slider.caption(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(slider.caption(names), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         // null for a built-in row: the row's own toggleable above owns the tap and the semantics
         // for it, and a still-interactive switch nested inside would double both up for TalkBack.
@@ -235,11 +240,11 @@ internal fun DiscoverSlider.label(): String =
     title ?: type?.let { stringResource(it.labelRes()) } ?: stringResource(R.string.server_settings_slider_unknown_type, typeCode)
 
 @Composable
-private fun DiscoverSlider.caption(): String =
+private fun DiscoverSlider.caption(names: SliderNames): String =
     if (builtIn) {
         stringResource(R.string.server_settings_slider_built_in)
     } else {
-        listOfNotNull(type?.let { stringResource(it.labelRes()) }, data?.takeIf { it.isNotBlank() })
+        listOfNotNull(type?.let { stringResource(it.labelRes()) }, dataLabel(names, Regions::name))
             .joinToString(stringResource(R.string.hub_meta_separator))
     }
 

@@ -303,6 +303,11 @@ abstract class ExtrasEditorViewModel<T, X>(
         }
     }
 
+    /** As [EditorViewModel.discardUnsent]: drops a change not yet on the server before the page replaces the record (#1019). */
+    protected fun discardUnsent() {
+        saveAsMade?.discard()
+    }
+
     /** As [EditorViewModel.reload]: a change not yet on the server goes first, or is kept over what was read. */
     fun reload() {
         val settling = saveAsMade?.settle()

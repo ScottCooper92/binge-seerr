@@ -757,6 +757,16 @@
     <string name="server_settings_slider_title">Título</string>
     <string name="server_settings_slider_data">Datos</string>
     <string name="server_settings_slider_genre">Género</string>
+    <string name="server_settings_slider_studio_row">Estudio</string>
+    <string name="server_settings_slider_network_row">Cadena</string>
+    <string name="server_settings_slider_studio_search">Buscar estudios en TMDB</string>
+    <string name="server_settings_slider_studio_type">Escribe el nombre de un estudio para encontrarlo en TMDB.</string>
+    <string name="server_settings_slider_studio_no_match">Ningún estudio coincide.</string>
+    <string name="server_settings_slider_studio_failed">No se pudieron buscar los estudios. Inténtalo de nuevo en un momento.</string>
+    <string name="server_settings_slider_network_invalid">Introduce el id de TMDB de la cadena, un número entero.</string>
+    <string name="server_settings_slider_providers">Servicios de streaming</string>
+    <string name="server_settings_slider_pick_region">Elige primero una región</string>
+    <string name="server_settings_slider_providers_failed">No se pudieron leer. Elige la región de nuevo para reintentar.</string>
     <string name="server_settings_slider_data_genre">Un ID de género de TMDB</string>
     <string name="server_settings_slider_data_company">Un ID de productora o cadena de TMDB</string>
     <string name="server_settings_slider_data_search">La búsqueda que ejecuta la fila</string>

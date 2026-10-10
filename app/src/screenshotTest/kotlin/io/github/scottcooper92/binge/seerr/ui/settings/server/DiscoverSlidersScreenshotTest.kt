@@ -14,7 +14,6 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -44,22 +43,22 @@ class DiscoverSlidersScreenshotTest {
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun unsavedOrder() = SlidersFrame(EditorUiState.Ready(draft = sliders().reversed(), saved = sliders()))
+    fun unsavedOrder() = SlidersFrame(ExtrasEditorUiState.Ready(draft = sliders().reversed(), saved = sliders(), extras = sliderNames))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun saving() = SlidersFrame(EditorUiState.Ready(draft = sliders(), saved = sliders(), saving = true))
+    fun saving() = SlidersFrame(ExtrasEditorUiState.Ready(draft = sliders(), saved = sliders(), extras = sliderNames, saving = true))
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun loading() = SlidersFrame(EditorUiState.Loading)
+    fun loading() = SlidersFrame(ExtrasEditorUiState.Loading)
 
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun failed() = SlidersFrame(EditorUiState.Error(SeerrError.Unreachable))
+    fun failed() = SlidersFrame(ExtrasEditorUiState.Error(SeerrError.Unreachable))
 }
 
 /** The slider list's overflow sheet, as the stateless body a modal window will not capture: reset, in the error colour. */
@@ -101,6 +100,50 @@ class DiscoverSliderFormScreenshotTest {
     fun genresUnavailable() =
         SliderFormFrame(readyForm(savedSlider().copy(type = SliderType.MovieGenre, data = "878"), genres = GenreChoices.Failed))
 
+    /** A studio slider names its studio, from TMDB's company search. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun studioKind() =
+        SliderFormFrame(
+            readyForm(
+                savedSlider().copy(type = SliderType.Studio, title = "Marvel", data = "420"),
+                SliderExtras(studios = CompanySearch(names = mapOf(420 to "Marvel Studios"))),
+            ),
+        )
+
+    /** A network is typed as its id, and named once the server has said which it is. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun networkKind() =
+        SliderFormFrame(
+            readyForm(
+                savedSlider().copy(type = SliderType.Network, title = "HBO", data = "49"),
+                SliderExtras(networkNames = mapOf(49 to "HBO")),
+            ),
+        )
+
+    /** A streaming slider: the region, then the providers TMDB lists there, some picked. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun streamingKind() =
+        SliderFormFrame(
+            readyForm(
+                savedSlider().copy(type = SliderType.MovieStreamingServices, title = "Streaming", data = "GB,8|337"),
+                SliderExtras(
+                    providers = ProviderChoices.Ready(listOf(Choice(8, "Netflix"), Choice(337, "Disney Plus"), Choice(9, "Prime Video"))),
+                ),
+            ),
+        )
+
+    /** A new streaming slider has no region yet, so its providers wait for one. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun streamingNoRegion() = SliderFormFrame(readyForm(SliderForm(type = SliderType.TvStreamingServices, title = "Streaming")))
+
     /** A search slider, whose data hint is about a query rather than ids. */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -137,7 +180,17 @@ private fun readyForm(
     genres: GenreChoices = extras.genres,
 ) = ExtrasEditorUiState.Ready(draft = form, saved = form, extras = extras.copy(genres = genres))
 
-private fun <T> settledSliders(form: T) = EditorUiState.Ready(draft = form, saved = form)
+private fun settledSliders(list: List<DiscoverSlider>) = ExtrasEditorUiState.Ready(draft = list, saved = list, extras = sliderNames)
+
+/** What the list has read to name its custom sliders: the keywords, the genre, the studio, the network and the providers. */
+private val sliderNames =
+    SliderNames(
+        keywords = mapOf(210024 to "kaiju", 4344 to "monster"),
+        studios = mapOf(420 to "Marvel Studios"),
+        networks = mapOf(49 to "HBO"),
+        genres = mapOf("movie" to mapOf(878 to "Science Fiction")),
+        providers = mapOf("movies:GB" to mapOf(8 to "Netflix", 337 to "Disney Plus")),
+    )
 
 private fun sliders() =
     listOf(
@@ -147,6 +200,10 @@ private fun sliders() =
         DiscoverSlider(id = 4, typeCode = 13, title = "Kaiju films", builtIn = false, enabled = true, data = "210024,4344"),
         DiscoverSlider(id = 5, typeCode = 19, title = "Dune", builtIn = false, enabled = false, data = "dune"),
         DiscoverSlider(id = 6, typeCode = 5, title = null, builtIn = true, enabled = true, data = null),
+        DiscoverSlider(id = 7, typeCode = 15, title = "Sci-fi", builtIn = false, enabled = true, data = "878"),
+        DiscoverSlider(id = 8, typeCode = 17, title = "Marvel", builtIn = false, enabled = true, data = "420"),
+        DiscoverSlider(id = 9, typeCode = 18, title = "HBO", builtIn = false, enabled = true, data = "49"),
+        DiscoverSlider(id = 10, typeCode = 20, title = "Streaming", builtIn = false, enabled = true, data = "GB,8|337"),
     )
 
 private fun savedSlider() = SliderForm(id = 4, type = SliderType.MovieKeyword, title = "Kaiju films", data = "210024,4344")
@@ -154,7 +211,7 @@ private fun savedSlider() = SliderForm(id = 4, type = SliderType.MovieKeyword, t
 private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
 
 @Composable
-private fun SlidersFrame(state: EditorUiState<List<DiscoverSlider>>) =
+private fun SlidersFrame(state: ExtrasEditorUiState<List<DiscoverSlider>, SliderNames>) =
     DiscoverSlidersScreen(
         state = state,
         events = emptyFlow(),
@@ -175,6 +232,12 @@ private fun SliderFormFrame(state: ExtrasEditorUiState<SliderForm, SliderExtras>
                 onSelectGenre = {},
                 onSearchKeywords = {},
                 onLoadKeywordNames = {},
+                onSearchStudios = {},
+                onSelectStudio = {},
+                onNameNetwork = {},
+                onLoadRegions = {},
+                onSelectRegion = {},
+                onToggleProvider = {},
                 onDelete = {},
             ),
     )

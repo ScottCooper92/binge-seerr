@@ -474,3 +474,23 @@ data class SeerrKeywordDto(
 data class SeerrKeywordPageDto(
     @SerialName("results") val results: List<SeerrKeywordDto> = emptyList(),
 )
+
+/** A TMDB company or network: what a Discover slider's studio or network is, by id. */
+@Serializable
+data class SeerrCompanyDto(
+    @SerialName("id") val id: Int = 0,
+    @SerialName("name") val name: String? = null,
+)
+
+/** A page of TMDB's company search, as the server passes it through. */
+@Serializable
+data class SeerrCompanyPageDto(
+    @SerialName("results") val results: List<SeerrCompanyDto> = emptyList(),
+)
+
+/** One streaming provider TMDB lists in a region. */
+@Serializable
+data class SeerrWatchProviderDto(
+    @SerialName("id") val id: Int = 0,
+    @SerialName("name") val name: String? = null,
+)

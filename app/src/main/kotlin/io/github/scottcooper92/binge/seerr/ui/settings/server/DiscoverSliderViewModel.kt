@@ -9,13 +9,10 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
-import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 /**
  * One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. Keywords are picked by
@@ -26,11 +23,10 @@ class DiscoverSliderViewModel
     @AssistedInject
     constructor(
         private val connection: SeerrConnection,
+        private val listCatalog: ServerListCatalog,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
     ) : ExtrasEditorViewModel<SliderForm, SliderExtras>(SliderExtras(), dispatcher) {
-        private var genresJob: Job? = null
-
         private val keywords =
             KeywordLookup(
                 scope = viewModelScope,
@@ -38,6 +34,35 @@ class DiscoverSliderViewModel
                 api = connection::api,
                 current = { currentExtras().keywords },
                 edit = { change -> editExtras { it.copy(keywords = change(it.keywords)) } },
+            )
+
+        private val studios =
+            CompanyLookup(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = { currentExtras().studios },
+                edit = { change -> editExtras { it.copy(studios = change(it.studios)) } },
+            )
+
+        private val lists =
+            ListChoicesLoader(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                catalog = listCatalog,
+                held = { currentExtras().regions },
+                set = { _, choices -> editExtras { it.copy(regions = choices) } },
+            )
+
+        private val readers =
+            SliderReaders(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = ::currentExtras,
+                edit = { change -> editExtras(change) },
+                nameKeywords = keywords::name,
+                nameStudio = studios::name,
             )
 
         init {
@@ -55,11 +80,7 @@ class DiscoverSliderViewModel
                         .firstOrNull { it.id == id }
                         ?.toForm() ?: throw NoSuchElementException("slider $id")
                 }
-            when (form.type.dataKind) {
-                SliderDataKind.Keywords -> keywords.name(form.data.tagIds())
-                SliderDataKind.Genre -> loadGenres(form.type)
-                SliderDataKind.Text -> Unit
-            }
+            readers.readFor(form)
             return form
         }
 
@@ -79,40 +100,55 @@ class DiscoverSliderViewModel
         override fun canSave(draft: SliderForm): Boolean = draft.valid
 
         /**
-         * A kind that keeps its data differently drops it: ids picked for one kind mean nothing to another, and a movie
-         * genre is not a TV one. Keyword ids are the same for both of their kinds, so those stay.
+         * A kind that keeps its data differently drops it: ids picked for one kind mean nothing to another, a movie genre
+         * is not a TV one, and a provider list is one kind's. Keyword ids are the same for both of their kinds, so those
+         * stay.
          */
         fun selectType(type: SliderType) {
             val previous = ready()?.draft?.type
-            val keepsData = previous != null && previous.dataKind == type.dataKind && previous.genreSegment == type.genreSegment
+            val keepsData = previous != null && previous.keepsDataFor(type)
             edit { it.copy(type = type, data = if (keepsData) it.data else "") }
-            if (type.dataKind == SliderDataKind.Genre && previous?.genreSegment != type.genreSegment) loadGenres(type)
+            if (!keepsData) readers.readFor(SliderForm(type = type))
         }
 
         fun toggleKeyword(keywordId: Int) = edit { it.copy(data = it.data.withIdToggled(keywordId)) }
 
         fun selectGenre(genreId: Int) = edit { it.copy(data = genreId.toString()) }
 
+        fun searchStudios(query: String) = studios.search(query)
+
+        /** Takes [company] as the slider's studio, and keeps its name so the row can show it. */
+        fun selectStudio(company: Company) {
+            editExtras { it.copy(studios = it.studios.copy(names = it.studios.names + (company.id to company.name))) }
+            edit { it.copy(data = company.id.toString()) }
+        }
+
+        /** Reads the streaming regions for the region sheet, once; a failed read can be asked for again. */
+        fun loadRegions() = lists.load(ServerList.StreamingRegions)
+
+        /** A new region has its own providers: the ones picked in the last are dropped and the new region's are read. */
+        fun selectRegion(code: String) {
+            val type = ready()?.draft?.type ?: return
+            edit { form -> form.copy(data = StreamingPick(region = code).encode()) }
+            if (code.isBlank()) editExtras { it.copy(providers = ProviderChoices.Idle) } else readers.providers(type, code)
+        }
+
+        fun toggleProvider(providerId: Int) =
+            edit {
+                it.copy(
+                    data =
+                        it.data
+                            .toStreamingPick()
+                            .withProviderToggled(providerId)
+                            .encode(),
+                )
+            }
+
+        fun nameNetwork(id: Int) = readers.network(id)
+
         fun searchKeywords(query: String) = keywords.search(query)
 
         fun loadKeywordNames(ids: List<Int>) = keywords.name(ids)
-
-        /** The genres of a genre slider's kind, named in the device's language; a newer pick supersedes an older read. */
-        private fun loadGenres(type: SliderType) {
-            val segment = type.genreSegment ?: return
-            genresJob?.cancel()
-            editExtras { it.copy(genres = GenreChoices.Loading) }
-            genresJob =
-                viewModelScope.launch(dispatcher) {
-                    val genres =
-                        attempt { connection.api().genres(segment, Locale.getDefault().toLanguageTag()) }
-                            .fold(
-                                { list -> GenreChoices.Ready(list.mapNotNull { dto -> dto.name?.let { Choice(dto.id, it) } }) },
-                                { GenreChoices.Failed },
-                            )
-                    editExtras { it.copy(genres = genres) }
-                }
-        }
 
         fun delete() {
             val existing = id ?: return
