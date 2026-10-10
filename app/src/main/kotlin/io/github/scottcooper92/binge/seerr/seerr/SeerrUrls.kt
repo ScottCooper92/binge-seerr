@@ -58,11 +58,14 @@ fun SeerrVariant.githubUrl(): String = releaseNotesUrl().removeSuffix("/releases
 /** Where each fork takes questions on GitHub: its Discussions, as the web client's About page links. */
 fun SeerrVariant.discussionsUrl(): String = githubUrl() + "/discussions"
 
-/** Where each fork takes contributions: Seerr's Open Collective, or Overseerr's GitHub Sponsors. */
+/**
+ * Where each fork takes contributions, as the web client's About page links: Seerr's Open Collective, and GitHub
+ * Sponsors for Overseerr and Jellyseerr (`sct`, checked in Jellyseerr 1.9.2 and 2.7.3).
+ */
 fun SeerrVariant.contributeUrl(): String =
     when (this) {
-        SeerrVariant.Overseerr -> "https://github.com/sponsors/sct"
-        SeerrVariant.Jellyseerr, SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://opencollective.com/seerr"
+        SeerrVariant.Overseerr, SeerrVariant.Jellyseerr -> "https://github.com/sponsors/sct"
+        SeerrVariant.Seerr, SeerrVariant.Unknown -> "https://opencollective.com/seerr"
     }
 
 /** Only an `http(s)` address is handed to a browser. */

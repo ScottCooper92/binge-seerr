@@ -7,13 +7,12 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrTvSpanishScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.ui.HAND_OFF_CODE
 import io.github.scottcooper92.binge.seerr.ui.NoSetupActions
+import io.github.scottcooper92.binge.seerr.ui.PREVIEW_API_KEY
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupError
 import io.github.scottcooper92.binge.seerr.ui.SetupNotice
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
-
-private const val API_KEY = "MTc0NDE1NzQ0MjQyMzFhYzY0"
 
 /**
  * The television setup's arms past the empty address step, which `TvSetupAddressStepScreenshotTest`
@@ -114,7 +113,7 @@ class TvSetupScreenshotTest {
     @Composable
     fun signInApiKey() =
         TvSetupScreen(
-            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = API_KEY)),
+            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = PREVIEW_API_KEY)),
             actions = NoSetupActions,
             initialFocus = TvSetupFocus.Connect,
         )
@@ -137,7 +136,7 @@ class TvSetupScreenshotTest {
     @Composable
     fun signInConnecting() =
         TvSetupScreen(
-            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = API_KEY), isConnecting = true),
+            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = PREVIEW_API_KEY), isConnecting = true),
             actions = NoSetupActions,
         )
 

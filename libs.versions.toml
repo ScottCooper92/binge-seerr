@@ -5,12 +5,12 @@
 # AGP 9 has built-in Kotlin support and rejects the separate `org.jetbrains.kotlin.android`
 # plugin being APPLIED — but it compiles with whichever Kotlin Gradle plugin is on the build
 # classpath, and with none declared that is the 2.2 it embeds. Declaring the plugin `apply false`
-# in the root build puts 2.4.10 there, which is what Binge does and what the included
+# in the root build puts 2.4.20 there, which is what Binge does and what the included
 # binge-companions build compiles the contracts and SDK with; a mismatch fails as "compiled with
 # an incompatible version of Kotlin" on every SDK class.
 [versions]
 agp = "9.4.1"
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 coreKtx = "1.19.1"
 junit = "4.13.2"
 # The version binge-design-system pins; the TV focus tests drive a real D-pad on the JVM with it.

@@ -83,6 +83,14 @@ private fun SignInFormContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Body(stringResource(R.string.send_signin_form, step.server))
+        step.address?.let { address ->
+            Text(
+                stringResource(R.string.send_signin_address, address),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
         step.sessionOffer?.let { offer ->
             ItemGroup(
                 title = null,

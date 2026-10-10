@@ -412,6 +412,7 @@ app:send_address_title  962146889135
 app:send_pin_body  8f0be2072da3
 app:send_pin_label  b92942282245
 app:send_pin_wrong  0a80fb522a2e
+app:send_signin_address  d498da823c43
 app:send_signin_confirm  b36b97b9ea5e
 app:send_signin_connected  fa1da6d9b5d6
 app:send_signin_continue_as  8c3ac09ff743

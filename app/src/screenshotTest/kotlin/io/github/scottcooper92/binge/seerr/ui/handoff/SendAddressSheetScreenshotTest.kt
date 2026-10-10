@@ -74,6 +74,23 @@ class SendAddressSheetScreenshotTest {
             ),
         )
 
+    /** Carrying on from a code this phone did not send: the form names the address the TV is signing in to (#1085). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInFormCarriedOn() =
+        Frame(
+            SendAddressUiState.SigningIn(
+                "192.168.86.53",
+                SignInStep.Form(
+                    "Living room",
+                    listOf(SeerrSignInMode.Local),
+                    SignInForm(mode = SeerrSignInMode.Local),
+                    address = "http://192.168.1.66:5055/",
+                ),
+            ),
+        )
+
     @PreviewTest
     @SeerrComponentPreviews
     @Composable

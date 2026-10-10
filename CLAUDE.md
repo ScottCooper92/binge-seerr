@@ -103,7 +103,7 @@ to design; the server's API is versioned by release because it is not.
 - The `org.jetbrains.kotlin.android` plugin is declared `apply false` in the root
   build and never applied. AGP 9 has built-in Kotlin support and rejects the plugin
   being applied, but compiles with whichever Kotlin Gradle plugin is on the build
-  classpath, and the declaration is what puts 2.4.10 there — the version the included
+  classpath, and the declaration is what puts 2.4.20 there — the version the included
   binge-companions build compiles the contracts and SDK with. See the comment in
   `libs.versions.toml`.
 - The version catalog is `libs.versions.toml` at the repository root, not under
