@@ -16,6 +16,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.hasExplicitPort
+import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import io.github.scottcooper92.binge.seerr.seerr.inspectProfile
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import retrofit2.HttpException
 import java.io.IOException
 import kotlin.time.Duration
@@ -427,7 +427,9 @@ class SeerrConnection(
         val profile = apis.probe(baseUrl, auth) { it.readProfile(SeerrVariant.Unknown) }
         val credentials = SeerrCredentials(baseUrl, auth, profile.variant)
         if (!store.save(credentials)) throw CredentialsSaveException()
-        cleartext.retainOnly(baseUrl.toHttpUrlOrNull()?.host)
+        // Consent is for plain HTTP to this server, so it survives only when the saved address is itself plain HTTP to a
+        // public host. Moving the same host to https drops it, and a redirect back down to http is refused (#1034).
+        cleartext.retainOnly(baseUrl.insecurePublicHostOrNull())
         // A public plain-HTTP server is only reachable with the opt-in, so a new device needs it too.
         carrier.put(cleartext.carriedFor(credentials))
         userLock.withLock {
