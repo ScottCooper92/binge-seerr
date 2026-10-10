@@ -22,9 +22,10 @@ import io.github.scottcooper92.binge.seerr.ui.SignInForm
  * source set, so they're the review surface here rather than part of `validateDebugScreenshotTest`.
  */
 
-private val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
+/** The setup screens' actions, none of which does anything: a frame is a still. Shared with the screenshot frames. */
+internal val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
 
-private val NoAdvancedActions = TvAdvancedRequestActions({}, {}, {}, {}, {}, {})
+internal val NoAdvancedActions = TvAdvancedRequestActions({}, {}, {}, {}, {}, {})
 
 internal val SampleSetupServer =
     SetupServer(

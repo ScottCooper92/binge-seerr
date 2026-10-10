@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrTabletPanesPreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.ui.tv.NoSetupActions
 
 /**
  * The phone setup: the two steps' layouts across the device matrix, then each state of them on the
