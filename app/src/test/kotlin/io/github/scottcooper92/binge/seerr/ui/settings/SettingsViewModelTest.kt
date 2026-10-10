@@ -17,7 +17,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
-import io.github.scottcooper92.binge.seerr.ui.MinuteTicker
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
@@ -122,13 +122,13 @@ class SettingsViewModelTest {
 
     /** The rows' clock read once and never again, so a virtual clock does not spin its minute loop (#337). */
     private val boundedTicker =
-        object : MinuteTicker() {
+        object : Ticker() {
             override suspend fun await(millis: Long) = awaitCancellation()
         }
 
     private suspend fun TestScope.viewModel(
         session: Boolean = false,
-        ticker: MinuteTicker = boundedTicker,
+        ticker: Ticker = boundedTicker,
     ): SettingsViewModel {
         connection =
             SeerrConnection(
@@ -176,7 +176,7 @@ class SettingsViewModelTest {
     fun `the rows' clock moves on each minute while the screen is showing, and stops when it leaves`() =
         runTest {
             server(ADMIN)
-            val vm = viewModel(ticker = MinuteTicker())
+            val vm = viewModel(ticker = Ticker())
             var now = 1_789_275_660_000L
             vm.clock = { now }
             vm.setScreenVisible(true)

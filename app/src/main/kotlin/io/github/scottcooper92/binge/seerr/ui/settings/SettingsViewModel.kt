@@ -20,7 +20,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
-import io.github.scottcooper92.binge.seerr.ui.MinuteTicker
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -112,7 +112,7 @@ class SettingsViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
-        private val minuteTicker: MinuteTicker = MinuteTicker(),
+        private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
         private val fetchTrigger = MutableStateFlow(0)
 
