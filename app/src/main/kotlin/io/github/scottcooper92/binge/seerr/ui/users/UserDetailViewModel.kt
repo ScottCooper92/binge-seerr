@@ -23,13 +23,16 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import io.github.scottcooper92.binge.seerr.ui.hub.toHubQuota
+import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.toRequestMediaTypeOrNull
 import io.github.scottcooper92.binge.seerr.ui.users.settings.mayOpenSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -72,9 +75,16 @@ class UserDetailViewModel
         private val store: UserStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val userId: Int,
+        private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
         private val state = MutableStateFlow<UserDetailUiState>(UserDetailUiState.Loading)
         val uiState: StateFlow<UserDetailUiState> = state.asStateFlow()
+
+        /** The wall clock the page's relative times count from; a test pins it. */
+        internal var clock: () -> Long = System::currentTimeMillis
+
+        private val now = MutableStateFlow(clock())
+        private var ticker: Job? = null
 
         private val eventFlow = MutableSharedFlow<UserDetailEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<UserDetailEvent> = eventFlow.asSharedFlow()
@@ -116,6 +126,20 @@ class UserDetailViewModel
             reload()
         }
 
+        /** Ticks the page's clock once a minute while it shows, so "joined" and each request's time age (#1239). */
+        fun setScreenVisible(visible: Boolean) {
+            ticker?.cancel()
+            ticker = null
+            if (!visible) return
+            ticker =
+                viewModelScope.launch(dispatcher) {
+                    minuteClock(clock, minuteTicker).collect { time ->
+                        now.value = time
+                        state.update { (it as? UserDetailUiState.Ready)?.copy(now = time) ?: it }
+                    }
+                }
+        }
+
         fun reload() {
             state.update { current ->
                 when (current) {
@@ -127,7 +151,7 @@ class UserDetailViewModel
             viewModelScope.launch(dispatcher) {
                 seedFromCache()
                 attempt { load() }
-                    .onSuccess { detail -> state.value = UserDetailUiState.Ready(detail) }
+                    .onSuccess { detail -> state.value = UserDetailUiState.Ready(detail, now = now.value) }
                     .onFailure { failure ->
                         state.update { current ->
                             when (current) {

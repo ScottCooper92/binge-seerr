@@ -64,6 +64,11 @@ private fun TvAccountContent(
     viewModel: UserDetailViewModel = accountViewModel(accountId),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The page stays under its see-all grid, so this one hook ticks the clock for both.
+    DisposableEffect(viewModel) {
+        viewModel.setScreenVisible(true)
+        onDispose { viewModel.setScreenVisible(false) }
+    }
     val requests = viewModel.requests.collectAsLazyPagingItems()
     TvAccountBoard(
         detail = state,
@@ -73,6 +78,7 @@ private fun TvAccountContent(
         onRetryRequests = requests::retry,
         overlayOpen = overlayOpen,
         onSeeAll = onSeeAll,
+        now = (state as? UserDetailUiState.Ready)?.now ?: System.currentTimeMillis(),
     )
 }
 
@@ -110,5 +116,6 @@ internal fun TvAccountRequestsGridOverlay(
         onOpenDetail = { onOpenRequest(it.id) },
         onRetryLoad = { requests.retry() },
         onBack = onDone,
+        now = (state as? UserDetailUiState.Ready)?.now ?: System.currentTimeMillis(),
     )
 }
