@@ -1235,7 +1235,6 @@
     <string name="server_settings_blocklist_tags_empty">Aún no hay etiquetas. Busca una palabra clave para bloquear lo que la tenga.</string>
     <string name="server_settings_blocklist_tags_empty_title">No hay etiquetas bloqueadas</string>
     <string name="server_settings_blocklist_tags_remove">Quitar %1$s</string>
-    <string name="server_settings_blocklist_tags_type">Escribe una palabra clave para buscarla en TMDB.</string>
     <string name="server_settings_blocklist_tags_save_failed">No se pudieron guardar las etiquetas.</string>
     <string name="server_settings_blocklist_tags_retry">Reintentar</string>
     <string name="server_settings_blocklist_tags_no_match">Ninguna palabra clave coincide.</string>

@@ -13,7 +13,7 @@ import com.binge.designsystem.template.FormScreen
 import io.github.scottcooper92.binge.seerr.R
 
 /**
- * The blocklisted tags page's search and chips, over the rule being edited and handing its picks back to it: a keyword
+ * The blocklisted tags page's search and tags, over the rule being edited and handing its picks back to it: a keyword
  * is added or taken out with a tap, through [onToggle], and nothing is saved until the rule is. Back closes it.
  */
 @Composable
@@ -29,11 +29,11 @@ internal fun KeywordPickerDialog(
         Surface(modifier = Modifier.fillMaxSize()) {
             FormScreen(title = title, onBack = onDismiss, scrolling = false) { inner ->
                 Column(modifier = Modifier.fillMaxSize().padding(inner)) {
-                    TagSearch(chosen, search, onSearch, onToggle)
-                    ChosenTags(
+                    TagSearchPanel(
                         chosen = chosen,
                         search = search,
-                        onRemove = onToggle,
+                        onQuery = onSearch,
+                        onToggle = onToggle,
                         emptyTitle = stringResource(R.string.server_settings_rule_keywords_empty_title),
                         emptyBody = stringResource(R.string.server_settings_rule_keywords_empty),
                         modifier = Modifier.weight(1f),
