@@ -275,29 +275,24 @@ class IssueDetailViewModelTest {
         }
 
     @Test
-    fun `editing a pending comment mid-send cancels the original post so only the edit lands`() =
+    fun `editing or discarding a comment whose send is in flight does nothing, and the one post lands`() =
         runTest {
             server(ADMIN)
             // A CompletableDeferred, not a blocking latch: awaiting it must not stall the test's own
             // coroutine machinery, which is what a real blocking wait here would do.
-            val firstPostReceived = CompletableDeferred<Unit>()
-            val releaseFirstPost = CountDownLatch(1)
+            val postReceived = CompletableDeferred<Unit>()
+            val releasePost = CountDownLatch(1)
             var postCount = 0
             responses["POST /api/v1/issue/31/comment"] = {
-                val n = ++postCount
-                if (n == 1) {
-                    firstPostReceived.complete(Unit)
-                    releaseFirstPost.await()
-                }
+                postCount++
+                postReceived.complete(Unit)
+                releasePost.await()
                 FakeResponse(
                     code = 200,
                     headers = headersOf("Content-Type", "application/json"),
                     body =
                         issueJson(
-                            comments =
-                                """[{"id":1,"message":"Audio out of sync"},
-                                   {"id":${if (n == 1) 9 else 10},"message":"${if (n == 1) "original" else "edited"}",
-                                   "user":{"id":7}}]""",
+                            comments = """[{"id":1,"message":"Audio out of sync"},{"id":9,"message":"original","user":{"id":7}}]""",
                         ),
                 )
             }
@@ -307,46 +302,53 @@ class IssueDetailViewModelTest {
             vm.setDraft("original")
             vm.postComment()
             val pending = vm.awaitReady { it.outbox.singleOrNull()?.state == SendState.Sending }
-            firstPostReceived.await()
+            postReceived.await()
 
-            vm.editOutbox(pending.outbox.single().localId, "edited")
-            releaseFirstPost.countDown()
+            // Held on the wire: neither takes effect, so no second send and no vanished row.
+            val localId = pending.outbox.single().localId
+            vm.editOutbox(localId, "edited")
+            vm.dropOutbox(localId)
+            val held = vm.awaitReady()
+            assertEquals("original", held.outbox.single().message)
+            assertEquals(SendState.Sending, held.outbox.single().state)
 
-            val landed = vm.awaitReady { it.outbox.isEmpty() && it.detail.comments.any { c -> c.id == 10 } }
-            assertFalse(landed.detail.comments.any { it.id == 9 })
+            releasePost.countDown()
+            val landed = vm.awaitReady { it.outbox.isEmpty() && it.detail.comments.any { c -> c.id == 9 } }
+            assertEquals(1, postCount)
+            assertEquals(1, landed.detail.comments.count { it.message == "original" })
         }
 
     @Test
-    fun `discarding a pending comment mid-send cancels the send so it cannot resurrect`() =
+    fun `a comment whose send failed can be edited and sent again, or discarded`() =
         runTest {
             server(ADMIN)
-            val postReceived = CompletableDeferred<Unit>()
-            val releasePost = CountDownLatch(1)
+            var postCount = 0
             responses["POST /api/v1/issue/31/comment"] = {
-                postReceived.complete(Unit)
-                releasePost.await()
-                FakeResponse(
-                    code = 200,
-                    headers = headersOf("Content-Type", "application/json"),
-                    body =
-                        issueJson(
-                            comments = """[{"id":1,"message":"Audio out of sync"},{"id":9,"message":"gone","user":{"id":7}}]""",
-                        ),
-                )
+                postCount++
+                if (postCount == 1) {
+                    FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+                } else {
+                    FakeResponse(
+                        code = 200,
+                        headers = headersOf("Content-Type", "application/json"),
+                        body =
+                            issueJson(
+                                comments = """[{"id":1,"message":"Audio out of sync"},{"id":10,"message":"edited","user":{"id":7}}]""",
+                            ),
+                    )
+                }
             }
             val vm = viewModel()
             vm.awaitReady()
 
-            vm.setDraft("gone")
+            vm.setDraft("original")
             vm.postComment()
-            val pending = vm.awaitReady { it.outbox.singleOrNull()?.state == SendState.Sending }
-            postReceived.await()
+            val failed = vm.awaitReady { it.outbox.singleOrNull()?.state is SendState.Failed }
 
-            vm.dropOutbox(pending.outbox.single().localId)
-            releasePost.countDown()
-
-            val settled = vm.awaitReady { it.outbox.isEmpty() }
-            assertFalse(settled.detail.comments.any { it.id == 9 })
+            vm.editOutbox(failed.outbox.single().localId, "edited")
+            val landed = vm.awaitReady { it.outbox.isEmpty() && it.detail.comments.any { c -> c.id == 10 } }
+            assertEquals(2, postCount)
+            assertEquals(1, landed.detail.comments.count { it.message == "edited" })
         }
 
     @Test

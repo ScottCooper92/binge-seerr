@@ -99,10 +99,14 @@ internal fun CommentActionsContent(
     }
 }
 
-/** A pending comment: retried where a re-send may land, edited, or dropped; it never reached the server. */
+/**
+ * A pending comment: retried where a re-send may land, edited, or dropped. While its send is in flight ([sending]) Edit
+ * and Discard are off, since a request already on the wire cannot be recalled; they come back once it lands or fails.
+ */
 @Composable
 internal fun OutboxActionsSheet(
     retryable: Boolean,
+    sending: Boolean,
     onRetry: () -> Unit,
     onEdit: () -> Unit,
     onDrop: () -> Unit,
@@ -111,6 +115,7 @@ internal fun OutboxActionsSheet(
     BingeBottomSheet(onDismissRequest = onDismiss) {
         OutboxActionsContent(
             retryable = retryable,
+            sending = sending,
             onRetry = onRetry,
             onEdit = onEdit,
             onDrop = onDrop,
@@ -125,14 +130,16 @@ internal fun OutboxActionsContent(
     onEdit: () -> Unit,
     onDrop: () -> Unit,
     modifier: Modifier = Modifier,
+    sending: Boolean = false,
 ) {
     Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
         if (retryable) ActionRow(Icons.Filled.Refresh, stringResource(R.string.issue_comment_retry), onClick = onRetry)
-        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onClick = onEdit)
+        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), enabled = !sending, onClick = onEdit)
         ActionRow(
             Icons.Filled.Delete,
             stringResource(R.string.issue_comment_discard),
             tint = MaterialTheme.colorScheme.error,
+            enabled = !sending,
             onClick = onDrop,
         )
     }

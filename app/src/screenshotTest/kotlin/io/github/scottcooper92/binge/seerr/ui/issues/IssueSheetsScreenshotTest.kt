@@ -48,6 +48,12 @@ class IssueSheetsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun outboxNotRetryable() = SheetFrame { OutboxActionsContent(retryable = false, onRetry = {}, onEdit = {}, onDrop = {}) }
+
+    /** A pending comment whose send is in flight: Edit and Discard are off until it lands or fails. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun outboxSending() = SheetFrame { OutboxActionsContent(retryable = false, sending = true, onRetry = {}, onEdit = {}, onDrop = {}) }
 }
 
 @Composable
