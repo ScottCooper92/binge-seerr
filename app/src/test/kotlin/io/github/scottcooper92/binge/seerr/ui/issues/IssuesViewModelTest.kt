@@ -292,7 +292,7 @@ class IssuesViewModelTest {
             assertEquals(listOf("issue_moderated" to mapOf("action" to "resolved")), analytics.events)
         }
 
-    /** The server answers a refused delete with 401, which reads as a dead session, so none is sent (#1151). */
+    /** The server refuses a reporter's delete once someone has replied, so none is sent (#1151). */
     @Test
     fun `a reporter's delete is not sent once someone has replied, and is while nobody has`() =
         runTest {
