@@ -29,7 +29,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.binge.designsystem.component.AccountProfileCard
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.ItemGroup
@@ -38,7 +37,6 @@ import com.binge.designsystem.resolvedContentPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
-import io.github.scottcooper92.binge.seerr.ui.state.labelRes
 import com.binge.designsystem.R as DesR
 
 /** A dashboard block: a tonal surface with the pane's [sides] around it and the medium spacing inside. */
@@ -150,34 +148,6 @@ private fun ServerStatStrip(overview: HubOverview) {
             ),
         contentPadding = PaddingValues(),
     )
-}
-
-/**
- * The connected user: the design system's profile card, with their photo, name and role, and under it their request
- * quota where the server sets one. The whole card opens their page, as one control with one focus stop.
- */
-@Composable
-internal fun AccountCard(
-    account: HubAccount,
-    quota: HubQuota?,
-    modifier: Modifier = Modifier,
-    sides: PaddingValues = resolvedContentPadding(),
-    onClick: (() -> Unit)? = null,
-) {
-    Column(
-        modifier = modifier.padding(sides).padding(vertical = dimensionResource(DesR.dimen.padding_s)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
-    ) {
-        AccountProfileCard(
-            name = account.name,
-            secondaryLine = stringResource(account.role.labelRes()),
-            initialsName = account.name,
-            avatarUrl = account.avatarUrl,
-            // The card is one control: its rounded surface takes the press and names the action (#1241).
-            onClick = onClick,
-        )
-        quota?.let { QuotaSection(it) }
-    }
 }
 
 /** Request quota as settings-style rows: Movies and TV, each with what is left, or "Unlimited" and no bar. */
