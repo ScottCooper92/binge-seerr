@@ -19,6 +19,20 @@ class UserDisplayStringTest {
         assertNull(SeerrRequestUserDto().displayString())
     }
 
+    /** #1216: Seerr fills `displayName` with the email for a user created by email, so a name can be the address. */
+    @Test
+    fun `a display name that is the email is masked like the email`() {
+        assertEquals("ana", SeerrRequestUserDto(displayName = "ana@example.com", email = "ana@example.com").displayString())
+        assertEquals("ana", SeerrRequestUserDto(displayName = "Ana@Example.com", email = "ana@example.com").displayString())
+        assertEquals("ana", SeerrRequestUserDto(displayName = "ana@example.com").displayString())
+        // A real username behind it still wins over the masked address.
+        assertEquals(
+            "ana_r",
+            SeerrRequestUserDto(displayName = "ana@example.com", username = "ana_r", email = "ana@example.com").displayString(),
+        )
+        assertEquals("ana", SeerrUserDto(id = 1, displayName = "ana@example.com", email = "ana@example.com").displayString())
+    }
+
     @Test
     fun `a full user record is named the same way as a requester`() {
         val cases =
@@ -26,6 +40,7 @@ class UserDisplayStringTest {
                 Triple("Ana", "ana", "ana@example.com"),
                 Triple("", "ana", "ana@example.com"),
                 Triple(null, null, "ana@example.com"),
+                Triple("ana@example.com", null, "ana@example.com"),
                 Triple(null, null, null),
             )
         cases.forEach { (displayName, username, email) ->
