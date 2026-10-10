@@ -47,7 +47,10 @@ internal fun SectionHeaderSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
-/** [com.binge.designsystem.component.BingeTag]'s own height and corner, on a plausible fixed [width]: the real tag sizes to its label. */
+/**
+ * [com.binge.designsystem.component.BingeTag]'s own height and corner, on a plausible fixed [width]: the real tag sizes to its label.
+ * A request or issue state is a [com.binge.designsystem.component.StatusChip] instead; see [StatusChipSkeleton].
+ */
 @Composable
 internal fun ChipSkeleton(
     width: Dp,
@@ -58,5 +61,26 @@ internal fun ChipSkeleton(
             .width(width)
             .height(lineHeightOf(MaterialTheme.typography.labelSmallEmphasis) + dimensionResource(DesR.dimen.tag_padding_v) * 2),
         shape = BingeShapes.Tag,
+    )
+}
+
+/**
+ * [com.binge.designsystem.component.StatusChip]'s own height and shape, on a plausible fixed [width]: the taller of its dot's halo
+ * and one line of `labelMedium`, plus its vertical padding, in a pill. The placeholder for a request or issue state, so the page
+ * does not shift when the chip arrives.
+ */
+@Composable
+internal fun StatusChipSkeleton(
+    width: Dp,
+    modifier: Modifier = Modifier,
+) {
+    SkeletonPlate(
+        modifier
+            .width(width)
+            .height(
+                maxOf(dimensionResource(DesR.dimen.status_chip_dot_halo_size), lineHeightOf(MaterialTheme.typography.labelMedium)) +
+                    dimensionResource(DesR.dimen.status_chip_padding_v) * 2,
+            ),
+        shape = BingeShapes.Pill,
     )
 }
