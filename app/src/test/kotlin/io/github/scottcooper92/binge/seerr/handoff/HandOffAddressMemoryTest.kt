@@ -37,4 +37,16 @@ class HandOffAddressMemoryTest {
             assertEquals(listOf("http://a/"), memory.remembered("HTTP://192.168.1.10:5055"))
             assertEquals(listOf("http://b/"), memory.remembered("https://seerr.example.com"))
         }
+
+    @Test
+    fun `clearing forgets every server's addresses`() =
+        runTest {
+            memory.remember("http://192.168.1.10:5055/", "http://a/")
+            memory.remember("https://seerr.example.com/", "http://b/")
+
+            memory.clear()
+
+            assertEquals(emptyList<String>(), memory.remembered("http://192.168.1.10:5055/"))
+            assertEquals(emptyList<String>(), memory.remembered("https://seerr.example.com/"))
+        }
 }

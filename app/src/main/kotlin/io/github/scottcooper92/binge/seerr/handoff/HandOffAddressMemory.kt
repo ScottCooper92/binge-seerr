@@ -21,6 +21,9 @@ interface HandOffAddressMemory {
         server: String,
         address: String,
     )
+
+    /** Forgets every address for every server: they were typed for a server the app no longer holds. */
+    suspend fun clear()
 }
 
 /**
@@ -43,6 +46,10 @@ class DataStoreHandOffAddressMemory(
             val updated = (listOf(address) + prefs[key].decode().filterNot { it == address }).take(limit)
             prefs[key] = Json.encodeToString(updated)
         }
+    }
+
+    override suspend fun clear() {
+        dataStore.edit { it.clear() }
     }
 
     private fun keyFor(server: String): Preferences.Key<String> =
