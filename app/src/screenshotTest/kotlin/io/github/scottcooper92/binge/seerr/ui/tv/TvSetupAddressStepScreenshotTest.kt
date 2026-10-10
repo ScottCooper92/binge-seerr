@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
-import io.github.scottcooper92.binge.seerr.ui.NoSetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 
 /**
