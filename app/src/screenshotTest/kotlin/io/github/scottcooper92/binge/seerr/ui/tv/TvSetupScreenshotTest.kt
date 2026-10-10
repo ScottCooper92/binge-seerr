@@ -180,6 +180,35 @@ class TvSetupScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun reconnectTyped() = TvSetupScreen(state = setupSignIn(notice = SetupNotice.SessionRejected), actions = ReconnectActions)
+
+    /** An Emby server's sign-in (#1053): the same username and password as Jellyfin, under Emby's own name. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInEmby() =
+        TvSetupScreen(
+            state =
+                setupSignIn(
+                    form = SignInForm(mode = SeerrSignInMode.Emby, username = "scott"),
+                    server = SampleSetupServer.copy(modes = listOf(SeerrSignInMode.Emby, SeerrSignInMode.Local)),
+                ),
+            actions = NoSetupActions,
+            initialFocus = TvSetupFocus.Credential,
+        )
+
+    /** A reset email went out: the notice says so above the local sign-in. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun resetEmailSent() =
+        TvSetupScreen(
+            state =
+                setupSignIn(
+                    form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com"),
+                    notice = SetupNotice.ResetEmailSent,
+                ),
+            actions = NoSetupActions,
+        )
 }
 
 private val ReconnectActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {})
