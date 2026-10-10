@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
@@ -9,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -82,8 +84,12 @@ class NotificationAgentViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(agent: ServerAgent): NotificationAgentViewModel {
-        val vm = NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent, analytics)
+    private suspend fun TestScope.viewModel(
+        agent: ServerAgent,
+        savedState: SavedStateHandle = SavedStateHandle(),
+    ): NotificationAgentViewModel {
+        val vm =
+            NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent, analytics, savedState = savedState)
         vm.soundsDebounceMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -96,6 +102,28 @@ class NotificationAgentViewModelTest {
         uiState.first {
             it is ExtrasEditorUiState.Ready && !it.saving && where(it)
         } as ExtrasEditorUiState.Ready<AgentForm, AgentExtras>
+
+    /** #1026: an agent's draft outlives the process; a webhook address carries its token, so it comes back from the record. */
+    @Test
+    fun `an agent's draft survives the process being killed, without its credentials`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/notifications/discord",
+                """{"enabled":false,"types":0,"options":{"webhookUrl":"https://discord.example/old","botUsername":""}}""",
+            )
+            val savedState = SavedStateHandle()
+            val vm = viewModel(ServerAgent.Discord, savedState)
+            vm.awaitReady()
+            vm.setOption(AgentOption.DiscordBotUsername, "Seerr bot")
+            vm.setOption(AgentOption.DiscordWebhookUrl, "https://discord.example/t0ken")
+            vm.awaitReady { it.draft.option(AgentOption.DiscordBotUsername) == "Seerr bot" }
+            assertTrue(savedState.keys().none { savedState.get<Any?>(it).toString().contains("t0ken") })
+
+            val back = viewModel(ServerAgent.Discord, savedState.afterProcessDeath()).awaitReady()
+
+            assertEquals("Seerr bot", back.draft.option(AgentOption.DiscordBotUsername))
+            assertEquals("https://discord.example/old", back.draft.option(AgentOption.DiscordWebhookUrl))
+        }
 
     @Test
     fun `only the options holding a username opt out of autocorrect`() {

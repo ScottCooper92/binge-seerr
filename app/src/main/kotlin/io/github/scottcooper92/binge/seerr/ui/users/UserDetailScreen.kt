@@ -69,6 +69,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.ActionRow
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.RoleTag
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -281,7 +282,7 @@ private fun ProfileHeader(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-                BingeTag(label = stringResource(if (item.isAdmin) R.string.hub_role_admin else R.string.hub_role_user))
+                RoleTag(item.role)
                 BingeTag(label = stringResource(item.origin.labelRes()))
             }
         }

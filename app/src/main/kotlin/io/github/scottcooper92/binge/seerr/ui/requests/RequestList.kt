@@ -243,7 +243,7 @@ private fun RequestRowMeta(
         Spacer(Modifier.weight(1f).heightIn(min = gap))
         Row(verticalAlignment = Alignment.CenterVertically) {
             item.requestedBy?.let { requester ->
-                BingeInitialsAvatar(name = requester)
+                BingeInitialsAvatar(name = requester, avatarUrl = item.requestedByAvatarUrl)
                 Spacer(Modifier.width(gap))
             }
             Text(

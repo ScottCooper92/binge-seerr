@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.displayString
+import io.github.scottcooper92.binge.seerr.seerr.toAvatarUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
@@ -96,6 +97,7 @@ suspend fun SeerrIssueDto.toIssueItem(
         status = status.toIssueStatus(),
         reportedBy = createdBy?.displayString(),
         reportedById = createdBy?.id,
+        reportedByAvatarUrl = createdBy?.avatar.toAvatarUrl(),
         commentCount = comments.size,
         createdAtMillis = createdAt?.toEpochMillisOrNull(),
         updatedAtMillis = updatedAt?.toEpochMillisOrNull(),
@@ -137,6 +139,7 @@ fun IssueItem.toEntity(
         status = status.name,
         reportedBy = reportedBy,
         reportedById = reportedById,
+        reportedByAvatarUrl = reportedByAvatarUrl,
         commentCount = commentCount,
         createdAtMillis = createdAtMillis,
         updatedAtMillis = updatedAtMillis,
@@ -161,6 +164,7 @@ fun IssueEntity.toIssueItem(): IssueItem =
         status = IssueStatus.valueOf(status),
         reportedBy = reportedBy,
         reportedById = reportedById,
+        reportedByAvatarUrl = reportedByAvatarUrl,
         commentCount = commentCount,
         createdAtMillis = createdAtMillis,
         updatedAtMillis = updatedAtMillis,

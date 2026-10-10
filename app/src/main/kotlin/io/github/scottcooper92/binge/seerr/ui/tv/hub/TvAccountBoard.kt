@@ -40,6 +40,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCardRow
+import com.binge.designsystem.tv.component.TvSeeAllTile
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.tvFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvContentInset
@@ -67,6 +68,9 @@ import com.binge.designsystem.tv.R as TvR
 /** The requests row's slot in the page's list: the profile and the quota tiles come first. */
 private const val REQUESTS_ITEM_INDEX = 2
 
+/** The see-all tile's key for [OverlayFocusRestore]: the page has the one row, so the one tile. */
+private const val SEE_ALL_KEY = "requests"
+
 private enum class AccountFocusArea { Profile, Requests }
 
 /**
@@ -78,7 +82,8 @@ private enum class AccountFocusArea { Profile, Requests }
  * [detail] is null until the account is known, and [accountFailed] says the account could not be resolved at all (the
  * hub could not load it), so the page offers a retry rather than loading forever; [requests] is the user's own paged list,
  * and a failed page of it says so beside a retry, [onRetryRequests], rather than reading as no requests (#1035). [overlayOpen] is
- * whether a request's page is showing above the rail, so focus returns to the card that opened it.
+ * whether a request's page, or the see-all grid, is showing above the rail, so focus returns to the card or the tile that opened it. [onSeeAll] opens
+ * the whole list once the count passes [TV_ROW_ITEM_CAP].
  */
 @Composable
 internal fun TvAccountBoard(
@@ -89,6 +94,7 @@ internal fun TvAccountBoard(
     onRetryRequests: () -> Unit,
     overlayOpen: Boolean,
     modifier: Modifier = Modifier,
+    onSeeAll: () -> Unit = {},
     accountFailed: Boolean = false,
     now: Long = System.currentTimeMillis(),
 ) {
@@ -163,6 +169,7 @@ internal fun TvAccountBoard(
                                 onOpenRequest(it)
                             },
                             onRetry = onRetryRequests,
+                            onSeeAll = onSeeAll,
                             failureModifier = Modifier.padding(start = startInset, end = endInset),
                         )
                     }
@@ -200,6 +207,7 @@ private fun TvAccountRequests(
     onFocused: () -> Unit,
     onOpen: (RequestItem) -> Unit,
     onRetry: () -> Unit,
+    onSeeAll: () -> Unit,
     failureModifier: Modifier,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
@@ -210,6 +218,7 @@ private fun TvAccountRequests(
                 restore = restore,
                 onFocused = onFocused,
                 onOpen = onOpen,
+                onSeeAll = onSeeAll,
             )
         }
         if (failed) TvAccountRequestsFailed(onRetry = onRetry, onFocused = onFocused, modifier = failureModifier)
@@ -265,14 +274,34 @@ private fun TvAccountRequestsRow(
     restore: OverlayFocusRestore,
     onFocused: () -> Unit,
     onOpen: (RequestItem) -> Unit,
+    onSeeAll: () -> Unit,
 ) {
     val heading = stringResource(R.string.tv_account_your_requests)
+    val cardWidth = dimensionResource(TvR.dimen.tv_immersive_card_width)
     TvCardRow(
         items = rows,
         key = { it.id },
-        cellWidth = dimensionResource(TvR.dimen.tv_immersive_card_width),
+        cellWidth = cardWidth,
         heading = stringResource(R.string.tv_filter_with_count, heading, requestCount),
         onCellFocused = { onFocused() },
+        // The row stops at the cap; the heading's count is the whole of it, so past the cap the tile opens the rest.
+        trailing =
+            if (requestCount > TV_ROW_ITEM_CAP) {
+                { isFocused, onFocusChanged, cellModifier ->
+                    TvSeeAllTile(
+                        label = stringResource(R.string.tv_see_all),
+                        isFocused = isFocused,
+                        onFocusChanged = onFocusChanged,
+                        onClick = {
+                            restore.leavingFromSeeAll(SEE_ALL_KEY)
+                            onSeeAll()
+                        },
+                        modifier = cellModifier.width(cardWidth).then(restore.seeAllModifier(SEE_ALL_KEY)),
+                    )
+                }
+            } else {
+                null
+            },
     ) { request, isFocused, onFocusChanged, cellModifier ->
         TvAccountRequestCard(
             request = request,

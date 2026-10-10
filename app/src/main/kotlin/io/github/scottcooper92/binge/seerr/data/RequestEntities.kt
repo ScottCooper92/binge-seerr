@@ -21,6 +21,7 @@ data class RequestEntity(
     val year: String?,
     val requestedBy: String?,
     val requestedById: Int?,
+    val requestedByAvatarUrl: String? = null,
     val requestedAtMillis: Long?,
     val status: Int?,
     val mediaStatus: Int?,

@@ -928,6 +928,7 @@ app:three_pane_nothing_open_message  99ac963e3b6a
 app:three_pane_nothing_open_title  d957e41014e9
 app:tv_account_quota_of  d7d879803c54
 app:tv_account_quota_unlimited_note  f7fcff0d8fea
+app:tv_account_requests_empty  1bea507092bb
 app:tv_account_your_requests  4c64a2a1c581
 app:tv_advanced_submitting  5d7513c4aa39
 app:tv_consent_point_change_title  4a8011b9ca93

@@ -39,6 +39,30 @@ class SeerrRequestsPageDecodingTest {
         assertNull(decode(page(tags = null)).results.single().tags)
     }
 
+    /** The server sends the requester's picture; the requests list, the issues list and the blocklist all draw it. */
+    @Test
+    fun `a requester's avatar decodes, and only a web address is loaded`() {
+        val withPhoto =
+            decode(
+                page(
+                    tags = null,
+                ).replace("\"displayName\":\"Claude\"", "\"displayName\":\"Claude\",\"avatar\":\"https://gravatar.com/avatar/abc\""),
+            )
+        val requester = withPhoto.results.single().requestedBy
+        assertEquals("https://gravatar.com/avatar/abc", requester?.avatar.toAvatarUrl())
+
+        assertNull(
+            decode(page(tags = null))
+                .results
+                .single()
+                .requestedBy
+                ?.avatar
+                .toAvatarUrl(),
+        )
+        assertNull("/avatarproxy/3".toAvatarUrl())
+        assertNull(null.toAvatarUrl())
+    }
+
     @Test
     fun `a request's tags decode when it has them`() {
         assertEquals(listOf(3, 7), decode(page(tags = "[3,7]")).results.single().tags)

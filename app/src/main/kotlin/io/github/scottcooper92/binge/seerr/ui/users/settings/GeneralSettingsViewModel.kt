@@ -20,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerListCatalog
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 import io.github.scottcooper92.binge.seerr.ui.users.toUserOrigin
+import io.github.scottcooper92.binge.seerr.ui.users.userRole
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -113,12 +114,7 @@ private fun SeerrPublicSettings?.toDiscoverDefaults(): ServerDiscoverDefaults =
         originalLanguage = this?.originalLanguage.orEmpty(),
     )
 
-internal fun SeerrUserDto.role(): UserRole =
-    when {
-        id == OWNER_USER_ID -> UserRole.Owner
-        isAdminBitmask(permissions ?: 0) -> UserRole.Admin
-        else -> UserRole.User
-    }
+internal fun SeerrUserDto.role(): UserRole = userRole(id, isAdminBitmask(permissions ?: 0))
 
 /**
  * What Seerr shows a user as once they have no display name: their media-server username, else their

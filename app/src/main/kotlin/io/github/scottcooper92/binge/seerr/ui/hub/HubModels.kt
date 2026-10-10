@@ -2,6 +2,8 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.ui.users.settings.UserRole
+import io.github.scottcooper92.binge.seerr.ui.users.userRole
 
 /**
  * Live reachability of the connected server as the hub shows it. [Checking] is the brief re-probe;
@@ -31,7 +33,9 @@ data class HubAccount(
     val name: String,
     val isAdmin: Boolean,
     val avatarUrl: String?,
-)
+) {
+    val role: UserRole get() = userRole(id, isAdmin)
+}
 
 /** A per-type request quota; a null bucket is unlimited. */
 data class HubQuota(

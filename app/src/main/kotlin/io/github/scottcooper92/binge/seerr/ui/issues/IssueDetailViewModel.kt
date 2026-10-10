@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -47,6 +48,7 @@ class IssueDetailViewModel
         @Assisted private val issueId: Int,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val savedState: SavedStateHandle = SavedStateHandle(),
     ) : ViewModel() {
         private val state = MutableStateFlow<IssueDetailUiState>(IssueDetailUiState.Loading)
         val uiState: StateFlow<IssueDetailUiState> = state.asStateFlow()
@@ -77,7 +79,8 @@ class IssueDetailViewModel
                             val ready = current as? IssueDetailUiState.Ready
                             IssueDetailUiState.Ready(
                                 detail = detail,
-                                draft = ready?.draft.orEmpty(),
+                                // A comment half typed when the process was killed comes back in the composer (#1026).
+                                draft = ready?.draft ?: savedState.get<String>(COMMENT_DRAFT_KEY).orEmpty(),
                                 outbox = ready?.outbox.orEmpty(),
                             )
                         }
@@ -101,10 +104,16 @@ class IssueDetailViewModel
             state.update { current -> if (current is IssueDetailUiState.Loading) IssueDetailUiState.Seeded(item) else current }
         }
 
-        fun setDraft(text: String) = updateReady { it.copy(draft = text) }
+        fun setDraft(text: String) {
+            updateReady { it.copy(draft = text) }
+            savedState[COMMENT_DRAFT_KEY] = text
+        }
 
         /** The draft goes into the outbox and the send runs behind it; the composer clears at once. */
-        fun postComment() = outbox.post()
+        fun postComment() {
+            outbox.post()
+            if ((state.value as? IssueDetailUiState.Ready)?.draft.isNullOrEmpty()) savedState.remove<String>(COMMENT_DRAFT_KEY)
+        }
 
         fun retryOutbox(localId: Long) = outbox.retry(localId)
 
@@ -248,5 +257,9 @@ class IssueDetailViewModel
         @AssistedFactory
         interface Factory {
             fun create(issueId: Int): IssueDetailViewModel
+        }
+
+        private companion object {
+            const val COMMENT_DRAFT_KEY = "issue.comment.draft"
         }
     }

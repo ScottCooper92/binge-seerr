@@ -1074,6 +1074,7 @@
     <string name="tv_account_quota_of">of %1$d left</string>
     <string name="tv_account_quota_unlimited_note">No limit</string>
     <string name="tv_account_your_requests">Your requests</string>
+    <string name="tv_account_requests_empty">You have not made any requests yet.</string>
     <!-- The eye in a masked field. The description names the tap's effect, so it changes with the state. -->
     <string name="field_secret_show">Show the value</string>
     <string name="field_secret_hide">Hide the value</string>

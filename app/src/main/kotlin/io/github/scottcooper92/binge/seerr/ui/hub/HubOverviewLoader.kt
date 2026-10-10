@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
+import io.github.scottcooper92.binge.seerr.seerr.toAvatarUrl
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbPosterUrl
@@ -157,7 +158,7 @@ private fun SeerrUserDto.toAccount(isAdmin: Boolean): HubAccount =
         id = id,
         name = displayString() ?: "#$id",
         isAdmin = isAdmin,
-        avatarUrl = avatar?.takeIf { it.startsWith("http") },
+        avatarUrl = avatar.toAvatarUrl(),
     )
 
 internal fun SeerrQuotaDto.toHubQuota(): HubQuota = HubQuota(movie.toBucket(), tv.toBucket())

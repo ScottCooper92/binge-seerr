@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.isWebUrl
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
+import kotlinx.serialization.Serializable
 
 private const val RADARR_PORT = "7878"
 private const val SONARR_PORT = "8989"
@@ -61,6 +62,7 @@ sealed interface ServicesUiState {
  * folder, tags — is picked from what the test answered, so it is empty until one has run. The
  * Radarr-only and Sonarr-only fields are null on the other kind.
  */
+@Serializable
 data class DvrForm(
     val type: ServiceType,
     val id: Int? = null,
