@@ -196,7 +196,7 @@ class HubViewModelTest {
             assertEquals(12, download.etaMinutes)
         }
 
-    /** No route honours `MANAGE_SETTINGS`; every `/settings` route needs `ADMIN` (#1004). */
+    /** No route honours `MANAGE_SETTINGS`; every route on the admin `/settings` router needs `ADMIN` (#1004). */
     @Test
     fun `manage settings without admin does not open the settings section`() =
         runTest {
