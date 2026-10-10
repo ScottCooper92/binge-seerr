@@ -66,6 +66,8 @@ internal fun IssuesBody(
     /** This list's latest finished network refresh; see [rememberPagedPhase]. */
     lastRefresh: ListRefresh?,
     onOpen: (IssueItem) -> Unit,
+    /** A pull, beside the list's own refresh: what else on the page it refreshes. */
+    onPull: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     pullState: PullToRefreshState? = null,
@@ -74,7 +76,10 @@ internal fun IssuesBody(
     PagedPullToRefresh(
         phase = phase,
         loadState = lazyItems.loadState,
-        onRefresh = lazyItems::refresh,
+        onRefresh = {
+            lazyItems.refresh()
+            onPull()
+        },
         contentPadding = contentPadding,
         modifier = modifier,
         state = pullState,

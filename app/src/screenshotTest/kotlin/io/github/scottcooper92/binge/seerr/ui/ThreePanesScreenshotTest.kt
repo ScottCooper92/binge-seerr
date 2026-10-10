@@ -108,6 +108,7 @@ private fun Requests() =
                 onSortChange = {},
                 onOpen = {},
                 onRetryLoad = {},
+                onRefreshCounts = {},
                 onChanged = {},
                 detailSheet = {},
             ),
@@ -125,6 +126,6 @@ private fun Issues() =
                 IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 1),
             ),
         issuesFor = { flowOf(PagingData.from(emptyList())) },
-        actions = IssuesActions(onBack = {}, onFilterChange = {}, onSortChange = {}, onOpen = {}, onRetryLoad = {}),
+        actions = IssuesActions(onBack = {}, onFilterChange = {}, onSortChange = {}, onOpen = {}, onRetryLoad = {}, onRefreshCounts = {}),
         showBack = false,
     )

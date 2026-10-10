@@ -72,6 +72,8 @@ internal fun RequestsBody(
     actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
+    /** A pull, beside the list's own refresh: what else on the page it refreshes. */
+    onPull: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     pullState: PullToRefreshState? = null,
@@ -80,7 +82,10 @@ internal fun RequestsBody(
     PagedPullToRefresh(
         phase = phase,
         loadState = lazyItems.loadState,
-        onRefresh = lazyItems::refresh,
+        onRefresh = {
+            lazyItems.refresh()
+            onPull()
+        },
         contentPadding = contentPadding,
         modifier = modifier,
         state = pullState,

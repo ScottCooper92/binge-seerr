@@ -31,6 +31,8 @@ class IssuesActions(
     val onSortChange: (IssueSort) -> Unit,
     val onOpen: (IssueItem) -> Unit,
     val onRetryLoad: () -> Unit,
+    /** A pull refreshed a list, so the chips re-read their counts. */
+    val onRefreshCounts: () -> Unit,
 )
 
 /**
@@ -86,6 +88,7 @@ fun IssuesScreen(
                 lazyItems = issuesFor(filter).collectAsLazyPagingItems(),
                 lastRefresh = loaded.refreshes[filter],
                 onOpen = actions.onOpen,
+                onPull = actions.onRefreshCounts,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = contentPadding,
                 pullState = pullState,
