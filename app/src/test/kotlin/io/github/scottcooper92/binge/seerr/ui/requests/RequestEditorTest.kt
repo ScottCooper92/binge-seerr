@@ -324,7 +324,13 @@ class RequestEditorTest {
             // Season 3 is on the server now, so it is locked; the request still covers it.
             val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 3)))
             editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
-            assertTrue(editor.awaitLoaded().seasons.single { it.number == 3 }.let { it.locked && it.selected })
+            assertTrue(
+                editor
+                    .awaitLoaded()
+                    .seasons
+                    .single { it.number == 3 }
+                    .let { it.locked && it.selected },
+            )
 
             editor.toggleSeason(2)
             editor.save()
