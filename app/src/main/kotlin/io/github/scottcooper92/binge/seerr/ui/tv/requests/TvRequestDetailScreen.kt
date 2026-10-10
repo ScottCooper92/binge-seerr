@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,11 +31,8 @@ import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvDetailPage
 import com.binge.designsystem.tv.template.TvDetailPageScope
-import com.binge.designsystem.tv.template.TvMessagePage
-import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvPageHosting
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueReport
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.MediaStatusChoice
@@ -54,6 +49,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadingPlate
+import io.github.scottcooper92.binge.seerr.ui.tv.TvSeerrErrorPage
 import io.github.scottcooper92.binge.seerr.ui.tv.rememberTvTransientEvent
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.tv.R as TvR
@@ -103,27 +99,14 @@ internal fun TvRequestDetailScreen(
                 if (failure == null) {
                     TvLoadingPlate(modifier = Modifier.fillMaxSize(), hosting = TvPageHosting.Overlay)
                 } else {
-                    TvErrorPlate(failure, actions.onRetry)
+                    TvSeerrErrorPage(failure, actions.onRetry)
                 }
             }
-            is RequestDetailUiState.Error -> TvErrorPlate(state.error, actions.onRetry)
+            is RequestDetailUiState.Error -> TvSeerrErrorPage(state.error, actions.onRetry)
             is RequestDetailUiState.Ready ->
                 TvRequestDetailContent(detail = state.detail, report = state.report, events = events, given = actions)
         }
     }
-}
-
-@Composable
-private fun TvErrorPlate(
-    error: SeerrError,
-    onRetry: () -> Unit,
-) {
-    TvMessagePage(
-        body = stringResource(error.messageRes()),
-        hosting = TvPageHosting.Overlay,
-        icon = Icons.Filled.Warning,
-        primary = TvPageAction(stringResource(R.string.hub_retry), onRetry),
-    )
 }
 
 /**
