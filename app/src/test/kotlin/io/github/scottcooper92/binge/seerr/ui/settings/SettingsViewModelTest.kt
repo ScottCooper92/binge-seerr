@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -193,6 +194,27 @@ class SettingsViewModelTest {
                 listOf("http://10.0.0.4:7878", "https://sonarr.example.com"),
                 checkNotNull(config.services).map { it.url },
             )
+        }
+
+    /** A connection dropped while the configuration loads has no profile to read; the page keeps its general rows (#1027). */
+    @Test
+    fun `a connection dropped while the configuration loads does not crash the page`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/settings/main"] = {
+                runBlocking { connection.disconnect() }
+                FakeResponse(
+                    code = 200,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"applicationTitle":"Family","applicationUrl":"https://seerr.example.com/","appLanguage":"en"}""",
+                )
+            }
+            val vm = viewModel()
+
+            val general = checkNotNull(vm.awaitReady { it.config?.general != null }.config?.general)
+
+            assertEquals("Family", general.applicationTitle)
+            assertFalse(general.discoverSliders)
         }
 
     @Test

@@ -119,6 +119,7 @@ fun UsersScreen(
         PermissionsEditorSheet(
             offered = ready.offered,
             edit = edit,
+            locked = ready.locked,
             userCount = ready.selection.size,
             onToggle = actions.onTogglePermission,
             onSave = actions.onApplyBulkEdit,

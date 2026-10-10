@@ -75,9 +75,9 @@ endpoint, is in [`api-coverage.md`](api-coverage.md). The gates that change what
 | Delete media files from Radarr and Sonarr | never | Jellyseerr 1.5 |
 | Media-server watchlist add and remove | never | Jellyseerr 1.6 |
 | LunaSea notification agent | always | never |
-| Discover sliders, watch providers, keyword and company search | 1.32 | always |
+| Discover sliders, watch providers, keyword and company search | 1.32 | Jellyseerr 1.4 |
 | Combined RT and IMDb ratings | 1.34 | Jellyseerr 1.7 |
-| Pushover sounds, read by an admin only (`/settings` needs `ADMIN` on both) | 1.34 | Jellyseerr 1.8 |
+| Pushover sounds, read by any signed-in user (the route sits ahead of the admin-only `/settings` router) | 1.34 | Jellyseerr 1.8 |
 | Telegram topic, `messageThreadId`, on a user and on the Telegram agent | never | Jellyseerr 2.2 |
 | Issues, comments | 1.28 | always |
 | Issue and request counts | 1.30 | always |
@@ -149,9 +149,10 @@ client offers:
 
 - `CAPABILITY_REQUEST_4K` needs the user to hold the 4K permission for a media type the server has
   4K on for: `movie4kEnabled` for movies, `series4kEnabled` for series.
-- `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the server takes a whole
-  show. A user who may change the destination still gets the editor for that, with no season list,
-  and its save sends no `seasons`, so the request keeps the ones it has.
+- `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the web client takes a whole
+  show; the server itself does not check the setting. A user who may change the destination still
+  gets the editor for that, with no season list. Its save sends the request's own `seasons` back,
+  because both lineages answer a show's `PUT /request/{id}` without them with a 500.
 
 ## A capability this companion does not offer
 

@@ -92,12 +92,15 @@ class SettingsLoader
                 ServerConfig(
                     general =
                         mainDto?.toGeneral()?.let { general ->
-                            val profile = connection.profile()
-                            general.copy(
-                                discoverSliders = profile.hasDiscoverSliders,
-                                network = profile.hasNetworkSettings,
-                                metadata = profile.hasMetadataSettings,
-                            )
+                            // Best-effort like the reads around it: a connection dropped mid-load has no profile to ask.
+                            val profile = runCatching { connection.profile() }.getOrNull()
+                            profile?.let {
+                                general.copy(
+                                    discoverSliders = it.hasDiscoverSliders,
+                                    network = it.hasNetworkSettings,
+                                    metadata = it.hasMetadataSettings,
+                                )
+                            } ?: general
                         },
                     requestPolicy = mainDto?.toRequestPolicy(),
                     agents = agents(email.await(), discord.await()),

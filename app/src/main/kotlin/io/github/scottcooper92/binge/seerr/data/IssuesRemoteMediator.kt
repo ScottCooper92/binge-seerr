@@ -19,7 +19,11 @@ data class IssueListQuery(
     val sort: String,
     val createdBy: Int?,
 ) {
-    val listKey: String get() = "$filter:$sort"
+    /**
+     * The scope is part of the key, as it is for requests: rows loaded for a viewer who sees everyone's issues must never read
+     * as the list of one who sees their own, should the permission change within a session.
+     */
+    val listKey: String get() = "$filter:$sort:${createdBy ?: "all"}"
 }
 
 /**
@@ -57,7 +61,7 @@ class IssuesRemoteMediator(
                     take = ISSUES_PAGE_SIZE,
                     skip = skip,
                     filter = query.filter,
-                    // query.createdBy only keys the cache by scope: the server narrows the list itself.
+                    // query.createdBy is not sent: the server narrows a viewer without MANAGE_ISSUES itself. It keys the cache.
                     sort = query.sort,
                 )
             val rows =

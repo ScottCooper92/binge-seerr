@@ -301,7 +301,10 @@ interface SeerrApi {
         @Body body: SeerrCreateUserBody,
     ): SeerrUserDto
 
-    /** The media server's accounts to offer for import. `MANAGE_USERS`. */
+    /**
+     * The media server's accounts to offer for import. `ADMIN`: they live under `/settings`, which every lineage mounts
+     * behind it, whatever the route itself checks. The import that follows needs only `MANAGE_USERS` (#1009).
+     */
     @GET("api/v1/settings/plex/users")
     suspend fun plexUsers(): List<SeerrPlexUserDto>
 
@@ -612,12 +615,15 @@ interface SeerrApi {
         @Query("token") token: String,
     ): List<SeerrPushoverSoundDto>
 
-    /** Re-targets a request: the seasons of a show, and the destination for one not yet sent to the client. */
+    /**
+     * Re-targets a request: the seasons of a show, and the destination for one not yet sent to the client. The raw
+     * [Response], because a 202 is a refusal whose body is not a request; call it through [updateRequest].
+     */
     @PUT("api/v1/request/{requestId}")
     suspend fun editRequest(
         @Path("requestId") requestId: Int,
         @Body body: SeerrEditRequestBody,
-    ): SeerrRequestDto
+    ): Response<Unit>
 
     @DELETE("api/v1/request/{requestId}")
     suspend fun deleteRequest(

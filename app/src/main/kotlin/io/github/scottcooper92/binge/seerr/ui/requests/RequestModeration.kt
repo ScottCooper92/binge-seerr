@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusSeasonBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.seerr.updateRequest
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
@@ -111,7 +112,7 @@ class RequestModeration(
     fun edit(
         requestId: Int,
         body: SeerrEditRequestBody,
-    ) = moderate(requestId, ModerationEvent.Edited) { connection.api().editRequest(it, body) }
+    ) = moderate(requestId, ModerationEvent.Edited) { connection.api().updateRequest(it, body) }
 
     /**
      * [seasonNumbers] is this request's own seasons - what marking *this* title available should

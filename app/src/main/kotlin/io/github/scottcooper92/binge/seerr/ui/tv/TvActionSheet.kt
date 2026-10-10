@@ -29,6 +29,9 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
@@ -158,8 +161,15 @@ internal fun TvActionSheetRow(
                 .fillMaxWidth()
                 .clip(BingeShapes.TvListItem)
                 .tvFocusFill(isFocused = focused, shape = BingeShapes.TvListItem)
-                .then(if (enabled) Modifier.tvClickable(onFocusChanged = { focused = it }, onClick = onClick) else Modifier)
-                .padding(
+                .then(
+                    if (enabled) {
+                        Modifier
+                            .tvClickable(onFocusChanged = { focused = it }, onClick = onClick)
+                            .semantics { role = Role.Button }
+                    } else {
+                        Modifier
+                    },
+                ).padding(
                     horizontal = dimensionResource(DesR.dimen.padding_l),
                     vertical = dimensionResource(DesR.dimen.padding_m),
                 ),

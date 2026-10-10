@@ -11,6 +11,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_CONFLICT
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
@@ -173,10 +174,6 @@ class AdvancedRequestViewModel
 
         private fun updateDestination(transform: (DestinationChoices) -> DestinationChoices) =
             updateReady { it.copy(destination = transform(it.destination)) }
-
-        private companion object {
-            const val HTTP_CONFLICT = 409
-        }
 
         /** The title is the Intent's, not the graph's, so it is assisted in at creation. */
         @AssistedFactory
