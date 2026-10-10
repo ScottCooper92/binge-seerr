@@ -22,7 +22,8 @@ https://github.com/ScottCooper92/binge-seerr.
   lists open instantly and work offline until refreshed. It is cleared when you disconnect.
 - **Your notification choices**, and the last time the background check ran.
 - **Up to three addresses per server that you sent to a television** (see "Phone-to-TV hand-off"),
-  so the next send offers them again. They are addresses you typed, nothing secret.
+  so the next send offers them again. They are addresses you typed, nothing secret, and they are
+  removed when you disconnect.
 - **A random identifier** minted on first use, sent to plex.tv only when you sign in with Plex so
   that this install appears once, not once per sign-in, in the devices list on your Plex account.
 - **Your answers about usage data and crash reports**, and whether shaking the phone offers to
@@ -30,8 +31,7 @@ https://github.com/ScottCooper92/binge-seerr.
 
 The app sets `allowBackup="false"`, so Android's own backup does not copy any of the above.
 Uninstalling the app removes it. Disconnecting inside the app removes the address, the secret,
-the cache and the Block Store copy. It does not remove the short list of addresses you sent to a
-television; uninstalling, or clearing the app's data in Android's settings, does.
+the cache, the addresses you sent to a television, and the Block Store copy.
 
 The connection can leave the device in two ways, both started by you: the Block Store copy, in the
 two ways described above, and the phone-to-TV hand-off below, which stays on your local network.
@@ -103,7 +103,7 @@ with a remote. It is only ever started by you.
 - **All of it** travels over plain HTTP, because a television has no certificate a phone would
   trust; someone watching your network sees the address and the sealed bytes, not what opens them.
 - **After it is sent**, the phone remembers the address (up to three per server), so the next send
-  offers it again.
+  offers it again, until you disconnect.
 
 ## What the app does not do
 
