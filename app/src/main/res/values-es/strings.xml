@@ -900,16 +900,6 @@
     <string name="media_state_available">Disponible</string>
     <string name="media_state_blocklisted">Bloqueado</string>
     <string name="media_state_deleted">Eliminado</string>
-    <plurals name="download_eta_minutes">
-        <item quantity="one">Queda %1$d min aprox.</item>
-        <item quantity="many">Quedan %1$d min aprox.</item>
-        <item quantity="other">Quedan %1$d min aprox.</item>
-    </plurals>
-    <plurals name="download_eta_hours">
-        <item quantity="one">Queda %1$d h aprox.</item>
-        <item quantity="many">Quedan %1$d h aprox.</item>
-        <item quantity="other">Quedan %1$d h aprox.</item>
-    </plurals>
     <string name="tv_setup_headline">Conectar con tu servidor</string>
     <string name="tv_setup_checking">Comprobando el servidor…</string>
     <string name="tv_setup_code_headline">Configura Seerr</string>

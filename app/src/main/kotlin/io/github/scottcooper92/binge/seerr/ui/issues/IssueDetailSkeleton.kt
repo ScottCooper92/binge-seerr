@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.binge.designsystem.CARD_ASPECT_RATIO
+import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
@@ -26,7 +27,6 @@ import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.ui.state.ChipSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
-import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
 private const val TITLE_FRACTION = 0.6f

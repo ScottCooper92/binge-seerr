@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.binge.designsystem.component.ImagePlaceholder
+import com.binge.designsystem.component.SkeletonPlate
 import com.binge.designsystem.component.lineHeightOf
 import com.binge.designsystem.layout.LayoutAnchors
 import com.binge.designsystem.layout.layoutAnchor
@@ -34,7 +35,6 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.state.ChipSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
-import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
 
 private const val HERO_TITLE_FRACTION = 0.7f
