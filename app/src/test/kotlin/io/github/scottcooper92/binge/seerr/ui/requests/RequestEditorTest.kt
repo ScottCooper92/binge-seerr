@@ -2,7 +2,6 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
@@ -16,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestMediaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSeasonDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSeasonStatusDto
 import io.github.scottcooper92.binge.seerr.ui.Choice
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -386,10 +386,4 @@ class RequestEditorTest {
                     seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 3, status = SeerrMediaStatusCode.Available)),
                 ),
         )
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

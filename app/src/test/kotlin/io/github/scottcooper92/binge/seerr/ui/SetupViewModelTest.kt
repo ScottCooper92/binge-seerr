@@ -22,6 +22,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -855,12 +856,6 @@ class SetupViewModelTest {
         body: String,
         headers: okhttp3.Headers = headersOf(),
     ): FakeResponse = FakeResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body)
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 
     /** A Keystore that will not encrypt, as a flaky vendor keymaster is. */
     private object FailingCipher : SecretCipher {

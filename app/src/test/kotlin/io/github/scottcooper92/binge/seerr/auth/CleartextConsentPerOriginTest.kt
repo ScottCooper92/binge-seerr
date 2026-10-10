@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SessionCookieJar
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
@@ -83,11 +84,5 @@ class CleartextConsentPerOriginTest {
         val jar = SessionCookieJar("http://$HOST/", "s3ss10n")
 
         assertEquals(1, jar.loadForRequest("http://$HOST/api/v1/auth/me".toHttpUrl()).size)
-    }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
     }
 }

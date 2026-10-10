@@ -2,11 +2,11 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.util.OkHttpDrain
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
@@ -223,12 +223,6 @@ internal class ScriptedSeerr(
             )
         connection.connect(server.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
         return connection
-    }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
     }
 }
 
