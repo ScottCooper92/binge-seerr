@@ -28,10 +28,36 @@ internal fun TvRequestsGrid(
 ) {
     val label = stringResource(filter.labelRes())
     val count = counts?.countFor(filter)
-    TvPagedGridScreen(
+    TvRequestsGridContent(
         heading = if (count != null) stringResource(R.string.tv_filter_with_count, label, count) else label,
-        rows = rows,
         emptyBody = stringResource(filter.emptyMessageRes()),
+        rows = rows,
+        actingIds = actingIds,
+        detailOpen = detailOpen,
+        onOpenDetail = onOpenDetail,
+        onRetryLoad = onRetryLoad,
+        onBack = onBack,
+        now = now,
+    )
+}
+
+/** The grid itself, for any list of requests: [TvRequestsGrid] names one filter's, the account page names the user's own. */
+@Composable
+internal fun TvRequestsGridContent(
+    heading: String,
+    emptyBody: String,
+    rows: TvPagedRows<RequestItem>,
+    actingIds: Set<Int>,
+    detailOpen: Boolean,
+    onOpenDetail: (RequestItem) -> Unit,
+    onRetryLoad: () -> Unit,
+    onBack: () -> Unit,
+    now: Long = System.currentTimeMillis(),
+) {
+    TvPagedGridScreen(
+        heading = heading,
+        rows = rows,
+        emptyBody = emptyBody,
         onRetryLoad = onRetryLoad,
         onBack = onBack,
         detailOpen = detailOpen,
