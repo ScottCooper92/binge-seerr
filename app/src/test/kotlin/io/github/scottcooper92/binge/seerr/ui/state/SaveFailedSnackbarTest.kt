@@ -51,5 +51,3 @@ class SaveFailedSnackbarTest {
         rule.onNodeWithText("Couldn't save").assertDoesNotExist()
     }
 }
-
-private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertDoesNotExist() = assertDoesNotExist()
