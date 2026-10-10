@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
+import io.github.scottcooper92.binge.seerr.handoff.HandOffAddressMemory
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.notifications.NotificationPrefs
 import io.github.scottcooper92.binge.seerr.seerr.AndroidLocalNetworkPermission
@@ -148,6 +149,7 @@ object AuthModule {
         bingeConnection: BingeConnectionStore,
         hubOverview: HubOverviewCache,
         cleartext: CleartextConsent,
+        handOffMemory: HandOffAddressMemory,
     ): SeerrConnection =
         SeerrConnection(store, apis, health, carrier = carrier, cleartext = cleartext, onServerChanged = {
             caches.clearAll()
@@ -155,6 +157,8 @@ object AuthModule {
             notifications.forgetServer()
             bingeConnection.forget()
             hubOverview.clear()
+            // The addresses sent to a TV were typed for this server, so disconnecting removes them too.
+            handOffMemory.clear()
         })
 }
 

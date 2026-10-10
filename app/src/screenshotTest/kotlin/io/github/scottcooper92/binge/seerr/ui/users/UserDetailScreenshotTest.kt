@@ -21,12 +21,27 @@ class UserDetailScreenshotTest {
     @SeerrScreenPreviews
     @Composable
     fun manageable() = Frame(manageableUserDetail())
+
+    /** A row a list already had, before the fetch lands (#1053): the profile and permissions, with no quota or watch data guessed. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seeded() = Frame(UserDetailUiState.Seeded(manageableUserDetail().item))
+
+    /** A viewer the server would refuse this user's requests: the page ends at the profile's own sections, with no Requests header. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun readOnly() = Frame(manageableUserDetail().copy(canViewRequests = false, canEditSettings = false, canDelete = false))
 }
 
 @Composable
-private fun Frame(detail: UserDetail) {
+private fun Frame(detail: UserDetail) = Frame(UserDetailUiState.Ready(detail = detail))
+
+@Composable
+private fun Frame(state: UserDetailUiState) {
     UserDetailScreen(
-        state = UserDetailUiState.Ready(detail = detail),
+        state = state,
         // See manageableUserDetail()'s KDoc: LazyPagingItems never leaves Loading in a static frame.
         requests = flowOf(PagingData.from(emptyList())),
         events = emptyFlow(),

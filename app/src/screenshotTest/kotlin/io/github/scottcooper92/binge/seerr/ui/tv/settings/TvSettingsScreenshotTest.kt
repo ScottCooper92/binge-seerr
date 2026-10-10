@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrTvSpanishScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.previewAdminOverview
 import io.github.scottcooper92.binge.seerr.ui.hub.previewReady
+import io.github.scottcooper92.binge.seerr.ui.settings.SettingsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettings
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettingsAdmin
 import io.github.scottcooper92.binge.seerr.ui.tv.SampleSettingsWithApp
@@ -135,5 +136,13 @@ class TvSettingsScreenshotTest {
             initialFocusedKey = KEY_SHARE_USAGE_DATA,
             initialFocusedOptionLabel = "Turn on",
         )
+    }
+
+    /** Before the settings are read (#1053): the board's title over its loading plate. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Loading() {
+        TvSettingsBoard(state = SettingsUiState.Loading, onEditConnection = {}, onDisconnect = {})
     }
 }

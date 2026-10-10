@@ -13,6 +13,8 @@ import com.binge.designsystem.LocalPaneWidth
 import io.github.scottcooper92.binge.seerr.preview.SeerrListPanePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * The request page on the shared detail shape: the hero under an overlay bar carrying Open and
@@ -107,6 +109,18 @@ class RequestDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun partiallyAvailablePendingSeason() = Frame(partiallyAvailablePendingSeasonDetail())
+
+    /** A row a list already had, before the fetch lands (#1053): its hero over the loading body. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seeded() = SeededFrame(RequestDetailUiState.Seeded(pendingDetail().item))
+
+    /** The same seed after a failed refresh: the hero stays, and the body is the error and its retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seededFailed() = SeededFrame(RequestDetailUiState.Seeded(pendingDetail().item, error = SeerrError.Unreachable))
 }
 
 @Composable
@@ -125,5 +139,40 @@ private fun Frame(
         onOpenUser = {},
         initiallyOverflowing = true,
         isActing = isActing,
+    )
+}
+
+/** The Seeded arm draws none of [RequestDetailActions]' sheets, so every action is a no-op. */
+@Composable
+private fun SeededFrame(state: RequestDetailUiState.Seeded) {
+    RequestDetailScreen(
+        state = state,
+        events = emptyFlow(),
+        actions =
+            RequestDetailActions(
+                onBack = {},
+                onRetry = {},
+                onReportIssue = { _, _ -> },
+                onDismissReport = {},
+                onApprove = {},
+                onRetryRequest = {},
+                onDecline = {},
+                onRemove = {},
+                onStartEdit = {},
+                siblingSheet = {},
+                onOpenUser = {},
+                edit =
+                    EditRequestActions(
+                        onToggleSeason = {},
+                        onSelectAllSeasons = {},
+                        onSelectServer = {},
+                        onSelectProfile = {},
+                        onSelectRootFolder = {},
+                        onToggleTag = {},
+                        onSave = {},
+                        onDismiss = {},
+                    ),
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+            ),
     )
 }

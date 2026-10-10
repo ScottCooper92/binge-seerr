@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.requests
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.DetailDownload
@@ -204,6 +205,44 @@ class TvRequestDetailScreenshotTest {
             state = RequestDetailUiState.Ready(filmDetail()),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = null),
+        )
+    }
+
+    /** The page could not be read (#1053): the error page over the overlay, with its retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Failed() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Error(SeerrError.Unreachable),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+        )
+    }
+
+    /** Remove asks first (#1053): what it does, then Remove and Cancel, over the page. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RemoveConfirm() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(filmDetail().copy(actions = RequestActions(canRemove = true, canBlock = true))),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialSheet = DetailSheet.Remove,
+        )
+    }
+
+    /** Block asks first too: the title will not be requested again. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BlockConfirm() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(filmDetail().copy(actions = RequestActions(canRemove = true, canBlock = true))),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialSheet = DetailSheet.Block,
         )
     }
 }

@@ -261,8 +261,8 @@ internal fun ColumnScope.TvIssueCopy(
     )
 }
 
-/** The actions that take a second step before they land. */
-private enum class Pending { Resolve, Reopen, Delete }
+/** The actions that take a second step before they land: the confirm step an issue's sheet is on. */
+internal enum class TvIssueConfirm { Resolve, Reopen, Delete }
 
 /**
  * An issue's actions on the end-edge sheet, for a row this viewer may act on: close or reopen it, and
@@ -280,12 +280,14 @@ internal fun TvIssueActionsSheet(
     onOpenDetail: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    /** The confirm step open on arrival, for a frame: a static render cannot press the row that opens one. Production passes null. */
+    initialConfirm: TvIssueConfirm? = null,
 ) {
-    var pending by rememberSaveable { mutableStateOf<Pending?>(null) }
+    var pending by rememberSaveable { mutableStateOf(initialConfirm) }
     val open = item.status == IssueStatus.Open
     TvSideSheet(onDismiss = onDismiss, modifier = modifier) { entryFocus ->
         when (pending) {
-            Pending.Resolve ->
+            TvIssueConfirm.Resolve ->
                 TvSideSheetConfirm(
                     title = stringResource(R.string.issue_resolve_confirm_title),
                     message = stringResource(R.string.issue_resolve_confirm_message),
@@ -294,7 +296,7 @@ internal fun TvIssueActionsSheet(
                     onCancel = { pending = null },
                     entryFocus = entryFocus,
                 )
-            Pending.Reopen ->
+            TvIssueConfirm.Reopen ->
                 TvSideSheetConfirm(
                     title = stringResource(R.string.issue_reopen_confirm_title),
                     message = stringResource(R.string.issue_reopen_confirm_message),
@@ -303,7 +305,7 @@ internal fun TvIssueActionsSheet(
                     onCancel = { pending = null },
                     entryFocus = entryFocus,
                 )
-            Pending.Delete ->
+            TvIssueConfirm.Delete ->
                 TvSideSheetConfirm(
                     title = stringResource(R.string.issue_delete_confirm_title),
                     message = stringResource(R.string.issue_delete_confirm_message),
@@ -320,13 +322,13 @@ internal fun TvIssueActionsSheet(
                 )
                 TvSideSheetRow(
                     label = stringResource(if (open) R.string.tv_issue_resolve else R.string.tv_issue_reopen),
-                    onClick = { pending = if (open) Pending.Resolve else Pending.Reopen },
+                    onClick = { pending = if (open) TvIssueConfirm.Resolve else TvIssueConfirm.Reopen },
                     modifier = Modifier.focusRequester(entryFocus),
                 )
                 if (canDelete) {
                     TvSideSheetRow(
                         label = stringResource(R.string.issue_delete),
-                        onClick = { pending = Pending.Delete },
+                        onClick = { pending = TvIssueConfirm.Delete },
                         destructive = true,
                     )
                 }

@@ -3,9 +3,12 @@ package io.github.scottcooper92.binge.seerr.ui.tv.issues
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
+import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.NoIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
@@ -77,4 +80,72 @@ class TvIssuesScreenshotTest {
             actions = NoIssuesActions,
         )
     }
+
+    /** Before the viewer's scope is known (#1053): no rows yet, so the loading page. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScopeLoading() {
+        TvIssuesBoard(state = IssuesUiState.Loading, rowsFor = { rows(emptyList()) }, events = emptyFlow(), actions = NoIssuesActions)
+    }
+
+    /** The scope could not be read: the page says so, and its retry reads the scope again. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScopeFailed() {
+        TvIssuesBoard(
+            state = IssuesUiState.Error(SeerrError.Unreachable),
+            rowsFor = { rows(emptyList()) },
+            events = emptyFlow(),
+            actions = NoIssuesActions,
+        )
+    }
+
+    /** A resolved issue's sheet (#1053): its first action reopens it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ResolvedSheet() {
+        TvIssuesBoard(
+            state = issuesReady(actionItem = FixedSampleIssues[1]),
+            rowsFor = { filter -> if (filter == IssueFilter.Resolved) rows(listOf(FixedSampleIssues[1])) else rows(emptyList()) },
+            events = emptyFlow(),
+            actions = NoIssuesActions,
+            now = FIXED_NOW_MILLIS,
+        )
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ResolveConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Resolve)
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ReopenConfirm() = ConfirmFrame(FixedSampleIssues[1], TvIssueConfirm.Reopen)
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun DeleteConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Delete)
+}
+
+/** The sheet on one of its confirm steps, alone: the board behind it is framed by [TvIssuesScreenshotTest.Sheet]. */
+@Composable
+private fun ConfirmFrame(
+    item: IssueItem,
+    confirm: TvIssueConfirm,
+) {
+    TvIssueActionsSheet(
+        item = item,
+        canDelete = true,
+        onResolve = {},
+        onReopen = {},
+        onDelete = {},
+        onOpenDetail = {},
+        onDismiss = {},
+        initialConfirm = confirm,
+    )
 }
