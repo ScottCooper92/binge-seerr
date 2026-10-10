@@ -171,7 +171,7 @@ private fun Seeded(
     val inset = resolvedContentInset()
     val sides = resolvedContentPadding()
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
-        IssueHeader(state.item, onOpen = null, modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)))
+        IssueHeader(state.item, onOpen = null, modifier = Modifier.padding(resolvedContentPadding(vertical = inset)))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
         if (state.error != null) {
             ErrorScreen(error = state.error, onRetry = actions.onRetry)
@@ -208,7 +208,7 @@ private fun Ready(
             IssueHeader(
                 detail.item,
                 onOpen = { context.openInBrowser(detail.webUrl) },
-                modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)),
+                modifier = Modifier.padding(resolvedContentPadding(vertical = inset)),
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
             detail.report?.let { report ->

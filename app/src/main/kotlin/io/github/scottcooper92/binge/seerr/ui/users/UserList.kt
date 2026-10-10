@@ -74,7 +74,7 @@ internal fun UsersBody(
             is PagedPhase.Rows -> UserList(lazyItems, selection, onOpen, onToggleSelected, contentPadding)
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
-                    contentPadding = resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()) + contentPadding,
+                    contentPadding = resolvedContentPadding(vertical = resolvedContentInset()) + contentPadding,
                     height = dimensionResource(R.dimen.users_row_skeleton_height),
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -106,7 +106,7 @@ private fun UserList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()) + contentPadding,
+        contentPadding = resolvedContentPadding(vertical = resolvedContentInset()) + contentPadding,
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

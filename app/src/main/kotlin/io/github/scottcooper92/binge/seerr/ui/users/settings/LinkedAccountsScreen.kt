@@ -131,7 +131,7 @@ private fun LinkedAccountsContent(
         ItemGroup(
             title = stringResource(R.string.user_settings_linked_group),
             rows = rows,
-            modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())),
+            modifier = Modifier.padding(resolvedContentPadding(vertical = resolvedContentInset())),
             belowRows = { GroupMessage(stringResource(R.string.user_settings_linked_hint), error = false) },
         )
     }
