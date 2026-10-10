@@ -25,8 +25,8 @@ import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
-import io.github.scottcooper92.binge.seerr.ui.state.ChipSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.SectionHeaderSkeleton
+import io.github.scottcooper92.binge.seerr.ui.state.StatusChipSkeleton
 import com.binge.designsystem.R as DesR
 
 private const val TITLE_FRACTION = 0.6f
@@ -119,7 +119,7 @@ private fun HeaderSkeleton(modifier: Modifier = Modifier) {
                 SkeletonPlate(
                     Modifier.fillMaxWidth(TYPE_LABEL_FRACTION).height(lineHeightOf(MaterialTheme.typography.labelMedium)),
                 )
-                ChipSkeleton(dimensionResource(DesR.dimen.info_row_label_min_width))
+                StatusChipSkeleton(dimensionResource(DesR.dimen.info_row_label_min_width))
             }
         }
     }
