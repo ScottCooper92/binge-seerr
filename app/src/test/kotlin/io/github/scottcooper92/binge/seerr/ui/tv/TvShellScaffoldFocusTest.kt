@@ -15,7 +15,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
@@ -23,11 +26,13 @@ import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.tv.nav.LocalTvContentInset
 import com.binge.designsystem.tv.nav.TV_SHELL_CONTENT_SETTLE_MILLIS
 import com.binge.designsystem.tv.theme.BingeTvTheme
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val PAST_SETTLE_MILLIS = TV_SHELL_CONTENT_SETTLE_MILLIS + 100L
@@ -103,11 +108,21 @@ class TvShellScaffoldFocusTest {
         content(TvDestination.Hub).assertExists()
     }
 
-    private fun setShell() {
+    /** An account the server will not list issues for gets no Issues item on the rail (#1054). */
+    @Test
+    fun withoutIssuesTheRailHasNoIssuesItem() {
+        setShell(showIssues = false)
+
+        composeTestRule.onAllNodes(railItem).assertCountEquals(TvDestination.entries.size - 1)
+        val issues = string(R.string.hub_section_issues)
+        composeTestRule.onAllNodes(hasText(issues) or hasContentDescription(issues)).assertCountEquals(0)
+    }
+
+    private fun setShell(showIssues: Boolean = true) {
         composeTestRule.setContent {
             BingeTvTheme {
                 var selected by remember { mutableStateOf(TvDestination.Hub) }
-                TvShellScaffold(selected = selected, onSelect = { selected = it }) { destination ->
+                TvShellScaffold(selected = selected, onSelect = { selected = it }, showIssues = showIssues) { destination ->
                     // Cleared of the rail as every board is, so ← has the rail to land on.
                     Box(modifier = Modifier.fillMaxSize().padding(start = LocalTvContentInset.current)) {
                         Box(modifier = Modifier.fillMaxSize().testTag(tag(destination)).focusable())
@@ -137,4 +152,6 @@ class TvShellScaffoldFocusTest {
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.waitForIdle()
     }
+
+    private fun string(id: Int): String = RuntimeEnvironment.getApplication().getString(id)
 }

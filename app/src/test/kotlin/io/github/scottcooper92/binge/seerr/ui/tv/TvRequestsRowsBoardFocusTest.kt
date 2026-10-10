@@ -14,6 +14,7 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationScope
@@ -53,6 +54,7 @@ class TvRequestsRowsBoardFocusTest {
     private var openRequestId: Int? by mutableStateOf(null)
     private var seeAllOpen by mutableStateOf(false)
     private var retries = 0
+    private var scopeRetries = 0
 
     @Test
     fun downFromARowLandsOnTheNextRow() {
@@ -135,15 +137,30 @@ class TvRequestsRowsBoardFocusTest {
         composeTestRule.onNode(hasTextExactly(string(R.string.hub_retry)) and isFocusable()).assertExists()
     }
 
+    /** The scope itself could not be read: the page's retry reads the scope again, not a row (#1054). */
+    @Test
+    fun aScopeThatCouldNotBeReadRetriesTheScope() {
+        setBoard(scopeError = SeerrError.Unreachable)
+
+        val retry = composeTestRule.onNode(hasTextExactly(string(R.string.hub_retry)) and isFocusable())
+        retry.requestFocus()
+        composeTestRule.waitForIdle()
+        pressOk()
+
+        assertEquals(1, scopeRetries)
+        assertEquals(0, retries)
+    }
+
     private fun setBoard(
         pendingTotal: Int = 1,
         refresh: TvLoadPhase = TvLoadPhase.Idle,
         empty: Boolean = false,
+        scopeError: SeerrError? = null,
     ) {
         val pending = listOf(request(1, HEAT, SeerrRequestStatusCode.Pending))
         val approved = listOf(request(2, BEAR, SeerrRequestStatusCode.Approved))
         composeTestRule.setContent {
-            val state =
+            val ready =
                 RequestsUiState.Ready(
                     filter = RequestFilter.All,
                     sort = RequestSort.Added,
@@ -156,6 +173,7 @@ class TvRequestsRowsBoardFocusTest {
                         ),
                     listVersion = 0,
                 )
+            val state = scopeError?.let { RequestsUiState.Error(it) } ?: ready
             BingeTvTheme {
                 TvRequestsRowsBoard(
                     state = state,
@@ -182,7 +200,7 @@ class TvRequestsRowsBoardFocusTest {
                                 seeAllOpen = true
                             },
                             onRetryLoad = { retries++ },
-                            onRetryScope = {},
+                            onRetryScope = { scopeRetries++ },
                         ),
                 )
             }

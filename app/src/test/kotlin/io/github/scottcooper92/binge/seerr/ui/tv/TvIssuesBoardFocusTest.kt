@@ -17,6 +17,7 @@ import androidx.compose.ui.test.requestFocus
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueListScope
@@ -53,6 +54,8 @@ class TvIssuesBoardFocusTest {
 
     private val resolved = mutableListOf<Int>()
     private val deleted = mutableListOf<Int>()
+    private val reopened = mutableListOf<Int>()
+    private val seeAll = mutableListOf<IssueFilter>()
     private val opened = mutableListOf<Int>()
     private var dismissed = 0
 
@@ -139,13 +142,67 @@ class TvIssuesBoardFocusTest {
         assertTrue(resolved.isEmpty())
     }
 
+    /** A resolved issue's first action is to reopen it, through its own confirm step (#1054). */
+    @Test
+    fun aResolvedIssueReopensThroughTheConfirmStep() {
+        setBoard(manager, items = listOf(issue(11, SEVERANCE, reportedById = 3, status = IssueStatus.Resolved)))
+        focusFirstRow()
+
+        pressOk()
+        sheetRow(R.string.tv_issue_reopen).assertIsFocused()
+        pressOk()
+        sheetRow(com.binge.designsystem.R.string.action_cancel).assertIsFocused()
+        pressUp()
+        pressOk()
+
+        assertEquals(listOf(11), reopened)
+        assertTrue(resolved.isEmpty())
+    }
+
+    @Test
+    fun deletingFromTheRowGoesThroughTheConfirmStep() {
+        setBoard(manager)
+        focusFirstRow()
+        pressOk()
+        pressDown()
+        sheetRow(R.string.issue_delete).assertIsFocused()
+        pressOk()
+        sheetRow(com.binge.designsystem.R.string.action_cancel).assertIsFocused()
+        pressUp()
+        pressOk()
+
+        assertEquals(listOf(11), deleted)
+    }
+
+    /** Past the row's cap the row ends in See all, which opens that filter's grid (#1054). */
+    @Test
+    fun pastTheRowCapTheRowEndsInASeeAllTileThatOpensItsFilter() {
+        setBoard(manager, counts = IssueCounts(total = TV_ROW_ITEM_CAP + 1, open = TV_ROW_ITEM_CAP + 1, resolved = 0))
+        focusFirstRow()
+
+        pressRight()
+        pressRight()
+        seeAllTile().assertIsFocused()
+        pressOk()
+
+        assertEquals(listOf(IssueFilter.Open), seeAll)
+    }
+
+    @Test
+    fun aRowWithinTheCapHasNoSeeAllTile() {
+        setBoard(manager, counts = IssueCounts(total = TV_ROW_ITEM_CAP, open = TV_ROW_ITEM_CAP, resolved = 0))
+
+        seeAllTile().assertDoesNotExist()
+    }
+
     private fun setBoard(
         scope: IssueListScope,
         items: List<IssueItem> = listOf(issue(11, SEVERANCE, reportedById = 3), issue(12, HORSES, reportedById = 5)),
+        counts: IssueCounts? = null,
     ) {
         composeTestRule.setContent {
             var state by remember {
-                mutableStateOf(IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = null, scope = scope))
+                mutableStateOf(IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = counts, scope = scope))
             }
             BingeTvTheme {
                 TvIssuesBoard(
@@ -169,9 +226,9 @@ class TvIssuesBoardFocusTest {
                             },
                             onOpenDetail = { opened += it.id },
                             onResolve = { resolved += it.id },
-                            onReopen = {},
+                            onReopen = { reopened += it.id },
                             onDelete = { deleted += it.id },
-                            onSeeAll = {},
+                            onSeeAll = { seeAll += it },
                             onRetryLoad = {},
                             onRetryScope = {},
                         ),
@@ -188,6 +245,8 @@ class TvIssuesBoardFocusTest {
     }
 
     private fun row(title: String) = composeTestRule.onNode(hasContentDescription(title) and isFocusable())
+
+    private fun seeAllTile() = composeTestRule.onNode(hasContentDescription(string(R.string.tv_see_all)) and isFocusable())
 
     private fun sheetRow(label: Int) = composeTestRule.onNode(hasText(string(label)) and isFocusable())
 
@@ -219,6 +278,7 @@ class TvIssuesBoardFocusTest {
         title: String,
         reportedById: Int,
         commentCount: Int = 0,
+        status: IssueStatus = IssueStatus.Open,
     ) = IssueItem(
         id = id,
         tmdbId = id,
@@ -227,7 +287,7 @@ class TvIssuesBoardFocusTest {
         posterUrl = null,
         year = "2022",
         type = IssueType.Subtitles,
-        status = IssueStatus.Open,
+        status = status,
         reportedBy = "ana",
         reportedById = reportedById,
         commentCount = commentCount,
