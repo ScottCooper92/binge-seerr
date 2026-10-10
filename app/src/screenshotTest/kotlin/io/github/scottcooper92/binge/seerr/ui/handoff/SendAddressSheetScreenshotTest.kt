@@ -152,6 +152,23 @@ class SendAddressSheetScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
+    fun loading() = Frame(SendAddressUiState.Loading)
+
+    /** This phone has no server to send (#1053). */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun notConnected() = Frame(SendAddressUiState.NotConnected)
+
+    /** The TV is signing in on its own: the phone says where, and has nothing more to send. */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun signingInOnTv() = Frame(SendAddressUiState.SigningIn("192.168.86.53", SignInStep.OnTv(server = "Living room")))
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
     fun singleNotLocal() = Frame(ready(candidate("http://100.103.24.117:30042/", AddressSource.Connected, AddressLocality.NotLocal)))
 
     @PreviewTest

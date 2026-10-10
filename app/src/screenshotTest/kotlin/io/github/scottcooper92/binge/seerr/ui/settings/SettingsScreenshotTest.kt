@@ -45,6 +45,12 @@ class SettingsScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun loading() = SettingsFrame(SettingsUiState.Loading)
+
+    /** Ready while the server's own sections are still on their way (#1053): the groups so far, then the placeholder. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun pending() = SettingsFrame(adminState().copy(pending = true))
 }
 
 /** The row groups on their own, each in the variants that change what a row says. */
