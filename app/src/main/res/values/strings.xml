@@ -272,7 +272,6 @@
     <string name="issue_comment_send_blocked">The server refused this comment.</string>
     <string name="issue_comment_edited">Comment updated</string>
     <string name="issue_comment_deleted">Comment deleted</string>
-    <string name="issue_admin_tag">Admin</string>
     <string name="issue_manage_cd">Issue actions</string>
     <string name="issue_action_resolve">Resolve</string>
     <string name="issue_action_reopen">Reopen</string>

@@ -46,11 +46,12 @@ private val SampleRequests =
 private fun detail(
     quota: HubQuota?,
     requestCount: Int = SampleRequests.size,
+    id: Int = 7,
 ) = UserDetailUiState.Ready(
     UserDetail(
         item =
             UserItem(
-                id = 7,
+                id = id,
                 name = "Scott",
                 email = "scott@example.com",
                 handle = "scott",
@@ -68,7 +69,7 @@ private fun detail(
         canEditSettings = true,
         canDelete = false,
         serverUrl = "http://seerr.lan:5055",
-        webUrl = "http://seerr.lan:5055/users/7",
+        webUrl = "http://seerr.lan:5055/users/$id",
     ),
 )
 
@@ -121,6 +122,22 @@ class TvAccountScreenshotTest {
     fun SeeAll() {
         TvAccountBoard(
             detail = detail(HubQuota(movie = null, tv = null), requestCount = 57),
+            requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
+            onOpenRequest = {},
+            onRetry = {},
+            onRetryRequests = {},
+            overlayOpen = false,
+            now = FIXED_NOW_MILLIS,
+        )
+    }
+
+    /** User 1 is the server's owner: the role line reads Owner, not Admin (#1236). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Owner() {
+        TvAccountBoard(
+            detail = detail(HubQuota(movie = null, tv = null), id = 1),
             requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
             onOpenRequest = {},
             onRetry = {},

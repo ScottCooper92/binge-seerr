@@ -34,6 +34,7 @@ import io.github.scottcooper92.binge.seerr.ui.hub.HubQuotaBucket
 import io.github.scottcooper92.binge.seerr.ui.users.UserItem
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
+import io.github.scottcooper92.binge.seerr.ui.state.labelRes as roleLabelRes
 import io.github.scottcooper92.binge.seerr.ui.users.labelRes as originLabelRes
 
 /** The signed-in user as the phone's page shows them. Takes focus, so the rail does not hold it over a page with nothing else above the row. */
@@ -88,7 +89,7 @@ internal fun TvProfileCard(
             Text(
                 text =
                     listOf(
-                        stringResource(if (item.isAdmin) R.string.hub_role_admin else R.string.hub_role_user),
+                        stringResource(item.role.roleLabelRes()),
                         stringResource(item.origin.originLabelRes()),
                     ).joinToString(separator),
                 style = MaterialTheme.typography.titleSmall,
