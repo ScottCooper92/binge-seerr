@@ -136,7 +136,7 @@ internal fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefu
  * [statusCatching] uncaught rather than become the [Status] the contract expects.
  */
 internal fun HttpException.peekedBody(): String =
-    runCatching {
+    attempt {
         response()
             ?.errorBody()
             ?.source()
@@ -180,7 +180,10 @@ suspend inline fun <T> statusCatching(block: () -> T): T =
  * [runCatching] catches everything, cancellation included, which would swallow the cancellation a
  * cancelled scope or a stopped worker sends. This lets that one back out and treats the rest as a
  * failure to classify with [toSeerrError].
+ *
+ * The one `runCatching` detekt's ForbiddenMethodCall allows (#1173): this is what every other call site uses instead.
  */
+@Suppress("ForbiddenMethodCall")
 internal inline fun <T> attempt(block: () -> T): Result<T> =
     runCatching(block).onFailure { failure -> if (failure is CancellationException) throw failure }
 

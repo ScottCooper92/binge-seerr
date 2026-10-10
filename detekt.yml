@@ -192,6 +192,14 @@ style:
         value: 'FIXME'
       - reason: 'STOPSHIP markers must be resolved before shipping; open a GitHub Issue instead.'
         value: 'STOPSHIP'
+  # `runCatching` catches the CancellationException a cancelled scope throws, so a cancelled block goes on to
+  # set state as if the call had failed (#1025). `attempt` (seerr/SeerrErrors.kt) is the idiom here, and the one
+  # place `runCatching` belongs is inside it (#1173). Needs type resolution, which app/build.gradle.kts wires.
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - reason: 'runCatching swallows cancellation; use attempt from seerr/SeerrErrors.kt (#1025).'
+        value: 'kotlin.runCatching'
   MaxLineLength:
     active: false
   WildcardImport:
