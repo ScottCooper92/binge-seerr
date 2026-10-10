@@ -22,12 +22,12 @@ import io.github.scottcooper92.binge.seerr.ui.SetupServer
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val SERVER = "Living room"
@@ -123,11 +123,6 @@ class TvSetupCodePageTest {
 
     private fun button(label: Int) =
         composeTestRule.onNode((hasText(string(label)) or hasAnyDescendant(hasText(string(label)))) and isFocusable())
-
-    private fun string(
-        id: Int,
-        vararg args: Any,
-    ): String = RuntimeEnvironment.getApplication().getString(id, *args)
 
     private fun signIn() =
         SetupUiState.SignIn(

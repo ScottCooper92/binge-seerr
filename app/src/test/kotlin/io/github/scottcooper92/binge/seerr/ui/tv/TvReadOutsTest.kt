@@ -19,13 +19,13 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvRequestDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.KEY_VERSION
 import io.github.scottcooper92.binge.seerr.ui.tv.settings.TvSettingsBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val EDITION = "Jellyseerr 2.7.2"
@@ -117,11 +117,6 @@ class TvReadOutsTest {
     private fun assertTextAbsent(text: String) {
         assertEquals(true, composeTestRule.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isEmpty())
     }
-
-    private fun string(
-        id: Int,
-        vararg args: Any,
-    ): String = RuntimeEnvironment.getApplication().getString(id, *args)
 
     private fun detailActions(onBack: () -> Unit) =
         TvRequestDetailActions(
