@@ -9,13 +9,10 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
-import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 /**
  * One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. Keywords are picked by
@@ -30,9 +27,6 @@ class DiscoverSliderViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted private val id: Int?,
     ) : ExtrasEditorViewModel<SliderForm, SliderExtras>(SliderExtras(), dispatcher) {
-        private var genresJob: Job? = null
-        private var providersJob: Job? = null
-
         private val keywords =
             KeywordLookup(
                 scope = viewModelScope,
@@ -60,6 +54,17 @@ class DiscoverSliderViewModel
                 set = { _, choices -> editExtras { it.copy(regions = choices) } },
             )
 
+        private val readers =
+            SliderReaders(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = ::currentExtras,
+                edit = { change -> editExtras(change) },
+                nameKeywords = keywords::name,
+                nameStudio = studios::name,
+            )
+
         init {
             reload()
         }
@@ -75,7 +80,7 @@ class DiscoverSliderViewModel
                         .firstOrNull { it.id == id }
                         ?.toForm() ?: throw NoSuchElementException("slider $id")
                 }
-            readFor(form)
+            readers.readFor(form)
             return form
         }
 
@@ -103,33 +108,7 @@ class DiscoverSliderViewModel
             val previous = ready()?.draft?.type
             val keepsData = previous != null && previous.keepsDataFor(type)
             edit { it.copy(type = type, data = if (keepsData) it.data else "") }
-            if (!keepsData) readFor(SliderForm(type = type))
-        }
-
-        /** Reads what the form's kind needs to name or offer its data: the names it holds, or the list it picks from. */
-        private fun readFor(form: SliderForm) {
-            when (form.type.dataKind) {
-                SliderDataKind.Keywords -> keywords.name(form.data.tagIds())
-                SliderDataKind.Genre -> loadGenres(form.type)
-                SliderDataKind.Studio ->
-                    form.data
-                        .trim()
-                        .toIntOrNull()
-                        ?.let(studios::name)
-                SliderDataKind.Network ->
-                    form.data
-                        .trim()
-                        .toIntOrNull()
-                        ?.let(::nameNetwork)
-                SliderDataKind.Streaming ->
-                    form.data.toStreamingPick().region.takeIf { it.isNotBlank() }?.let {
-                        loadProviders(
-                            form.type,
-                            it,
-                        )
-                    }
-                SliderDataKind.Text -> Unit
-            }
+            if (!keepsData) readers.readFor(SliderForm(type = type))
         }
 
         fun toggleKeyword(keywordId: Int) = edit { it.copy(data = it.data.withIdToggled(keywordId)) }
@@ -144,17 +123,6 @@ class DiscoverSliderViewModel
             edit { it.copy(data = company.id.toString()) }
         }
 
-        fun loadStudioName(id: Int) = studios.name(id)
-
-        /** Names the network a typed id is, once; a failed read leaves the id as it is. */
-        fun nameNetwork(id: Int) {
-            if (id in currentExtras().networkNames) return
-            viewModelScope.launch(dispatcher) {
-                val name = attempt { connection.api().network(id) }.getOrNull()?.name?.takeIf { it.isNotBlank() }
-                if (name != null) editExtras { it.copy(networkNames = it.networkNames + (id to name)) }
-            }
-        }
-
         /** Reads the streaming regions for the region sheet, once; a failed read can be asked for again. */
         fun loadRegions() = lists.load(ServerList.StreamingRegions)
 
@@ -162,7 +130,7 @@ class DiscoverSliderViewModel
         fun selectRegion(code: String) {
             val type = ready()?.draft?.type ?: return
             edit { form -> form.copy(data = StreamingPick(region = code).encode()) }
-            if (code.isBlank()) editExtras { it.copy(providers = ProviderChoices.Idle) } else loadProviders(type, code)
+            if (code.isBlank()) editExtras { it.copy(providers = ProviderChoices.Idle) } else readers.providers(type, code)
         }
 
         fun toggleProvider(providerId: Int) =
@@ -176,53 +144,11 @@ class DiscoverSliderViewModel
                 )
             }
 
-        /** The providers TMDB lists in [region] for the kind's movies or TV; a newer region supersedes an older read. */
-        private fun loadProviders(
-            type: SliderType,
-            region: String,
-        ) {
-            val segment = type.providerSegment ?: return
-            providersJob?.cancel()
-            editExtras { it.copy(providers = ProviderChoices.Loading) }
-            providersJob =
-                viewModelScope.launch(dispatcher) {
-                    val providers =
-                        attempt { connection.api().watchProviders(segment, region) }
-                            .fold(
-                                { list ->
-                                    ProviderChoices.Ready(
-                                        list
-                                            .mapNotNull { dto ->
-                                                dto.name?.takeIf { it.isNotBlank() }?.let { Choice(dto.id, it) }
-                                            }.sortedBy { it.label.lowercase() },
-                                    )
-                                },
-                                { ProviderChoices.Failed },
-                            )
-                    editExtras { it.copy(providers = providers) }
-                }
-        }
+        fun nameNetwork(id: Int) = readers.network(id)
 
         fun searchKeywords(query: String) = keywords.search(query)
 
         fun loadKeywordNames(ids: List<Int>) = keywords.name(ids)
-
-        /** The genres of a genre slider's kind, named in the device's language; a newer pick supersedes an older read. */
-        private fun loadGenres(type: SliderType) {
-            val segment = type.genreSegment ?: return
-            genresJob?.cancel()
-            editExtras { it.copy(genres = GenreChoices.Loading) }
-            genresJob =
-                viewModelScope.launch(dispatcher) {
-                    val genres =
-                        attempt { connection.api().genres(segment, Locale.getDefault().toLanguageTag()) }
-                            .fold(
-                                { list -> GenreChoices.Ready(list.mapNotNull { dto -> dto.name?.let { Choice(dto.id, it) } }) },
-                                { GenreChoices.Failed },
-                            )
-                    editExtras { it.copy(genres = genres) }
-                }
-        }
 
         fun delete() {
             val existing = id ?: return

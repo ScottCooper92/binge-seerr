@@ -65,7 +65,6 @@ internal fun DiscoverSliderEntry(
                 onLoadKeywordNames = viewModel::loadKeywordNames,
                 onSearchStudios = viewModel::searchStudios,
                 onSelectStudio = viewModel::selectStudio,
-                onLoadStudioName = viewModel::loadStudioName,
                 onNameNetwork = viewModel::nameNetwork,
                 onLoadRegions = viewModel::loadRegions,
                 onSelectRegion = viewModel::selectRegion,

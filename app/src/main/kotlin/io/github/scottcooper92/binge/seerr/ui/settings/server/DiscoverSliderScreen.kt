@@ -45,7 +45,6 @@ class SliderEditorActions(
     val onLoadKeywordNames: (List<Int>) -> Unit,
     val onSearchStudios: (String) -> Unit,
     val onSelectStudio: (Company) -> Unit,
-    val onLoadStudioName: (Int) -> Unit,
     val onNameNetwork: (Int) -> Unit,
     val onLoadRegions: () -> Unit,
     val onSelectRegion: (String) -> Unit,
@@ -161,7 +160,6 @@ private fun studioItem(
     LaunchedEffect(enabled) { if (!enabled) open = false }
     val title = stringResource(R.string.server_settings_slider_studio_row)
     val id = draft.data.trim().toIntOrNull()
-    LaunchedEffect(id) { id?.let(sliderActions.onLoadStudioName) }
     if (open) {
         CompanyPickerDialog(
             title = title,

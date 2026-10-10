@@ -214,7 +214,6 @@ private fun SliderFormFrame(state: ExtrasEditorUiState<SliderForm, SliderExtras>
                 onLoadKeywordNames = {},
                 onSearchStudios = {},
                 onSelectStudio = {},
-                onLoadStudioName = {},
                 onNameNetwork = {},
                 onLoadRegions = {},
                 onSelectRegion = {},

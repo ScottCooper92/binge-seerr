@@ -167,6 +167,19 @@ class DiscoverSliderViewModelTest {
         }
 
     @Test
+    fun `opening a saved genre slider reads the genres of its kind`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/discover",
+                """[{"id":4,"type":16,"title":"Shows","isBuiltIn":false,"enabled":true,"data":"10759"}]""",
+            )
+            val vm = viewModel(id = 4)
+            assertEquals("10759", vm.awaitReady().draft.data)
+            val genres = vm.awaitReady { it.extras.genres is GenreChoices.Ready }.extras.genres as GenreChoices.Ready
+            assertEquals(listOf("Action & Adventure"), genres.genres.map { it.label })
+        }
+
+    @Test
     fun `a genre slider reads the genres of its kind, and a pick is the id alone`() =
         runTest {
             val vm = viewModel(id = null)

@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -41,19 +42,29 @@ internal fun DiscoverSlider.dataLabel(
     val raw = data?.takeIf { it.isNotBlank() } ?: return null
     return when (kind.dataKind) {
         SliderDataKind.Keywords -> raw.tagIds().joinToString(", ") { names.keywords[it] ?: it.toString() }
-        SliderDataKind.Genre -> raw.trim().toIntOrNull()?.let { id -> names.genres[kind.genreSegment]?.get(id) ?: id.toString() } ?: raw
-        SliderDataKind.Studio -> raw.trim().toIntOrNull()?.let { names.studios[it] ?: it.toString() } ?: raw
-        SliderDataKind.Network -> raw.trim().toIntOrNull()?.let { names.networks[it] ?: it.toString() } ?: raw
-        SliderDataKind.Streaming -> {
-            val pick = raw.toStreamingPick()
-            val named = kind.providerSegment?.let { names.providers[providerKey(it, pick.region)] }.orEmpty()
-            listOfNotNull(
-                pick.region.takeIf { it.isNotBlank() }?.let(regionName),
-                pick.providerIds.joinToString(", ") { named[it] ?: it.toString() }.takeIf { it.isNotBlank() },
-            ).joinToString(" · ")
-        }
+        SliderDataKind.Genre -> raw.named(kind.genreSegment?.let { names.genres[it] })
+        SliderDataKind.Studio -> raw.named(names.studios)
+        SliderDataKind.Network -> raw.named(names.networks)
+        SliderDataKind.Streaming -> streamingLabel(raw, kind, names, regionName)
         SliderDataKind.Text -> raw
     }
+}
+
+/** A stored id by its name in [byId], as the number where it has none; text that is not an id stays as it is. */
+private fun String.named(byId: Map<Int, String>?): String = trim().toIntOrNull()?.let { byId?.get(it) ?: it.toString() } ?: this
+
+private fun streamingLabel(
+    raw: String,
+    kind: SliderType,
+    names: SliderNames,
+    regionName: (String) -> String,
+): String {
+    val pick = raw.toStreamingPick()
+    val named = kind.providerSegment?.let { names.providers[providerKey(it, pick.region)] }.orEmpty()
+    return listOfNotNull(
+        pick.region.takeIf { it.isNotBlank() }?.let(regionName),
+        pick.providerIds.joinToString(", ") { named[it] ?: it.toString() }.takeIf { it.isNotBlank() },
+    ).joinToString(" · ")
 }
 
 /**
@@ -71,73 +82,73 @@ internal class SliderNameLoader(
     fun name(sliders: List<DiscoverSlider>) {
         val custom = sliders.filter { !it.builtIn && it.type != null && !it.data.isNullOrBlank() }
         val held = current()
-        val keywords =
-            custom.filter { it.type?.dataKind == SliderDataKind.Keywords }.flatMap { it.data.orEmpty().tagIds() }.distinct() -
-                held.keywords.keys
-        val studios =
-            custom.filter { it.type?.dataKind == SliderDataKind.Studio }.mapNotNull { it.data?.trim()?.toIntOrNull() }.distinct() -
-                held.studios.keys
-        val networks =
-            custom.filter { it.type?.dataKind == SliderDataKind.Network }.mapNotNull { it.data?.trim()?.toIntOrNull() }.distinct() -
-                held.networks.keys
+        val keywords = custom.idsOf(SliderDataKind.Keywords) { it.tagIds() } - held.keywords.keys
+        val studios = custom.idsOf(SliderDataKind.Studio) { listOfNotNull(it.trim().toIntOrNull()) } - held.studios.keys
+        val networks = custom.idsOf(SliderDataKind.Network) { listOfNotNull(it.trim().toIntOrNull()) } - held.networks.keys
         val segments = custom.mapNotNull { it.type?.genreSegment }.distinct() - held.genres.keys
-        val streaming =
-            custom
-                .mapNotNull { slider ->
-                    val segment = slider.type?.providerSegment ?: return@mapNotNull null
-                    val region =
-                        slider.data
-                            .orEmpty()
-                            .toStreamingPick()
-                            .region
-                            .takeIf { it.isNotBlank() } ?: return@mapNotNull null
-                    segment to region
-                }.distinct()
-                .filter { (segment, region) -> providerKey(segment, region) !in held.providers }
-        if (keywords.isEmpty() && studios.isEmpty() && networks.isEmpty() && segments.isEmpty() && streaming.isEmpty()) return
+        val streaming = custom.regionsToRead().filter { (segment, region) -> providerKey(segment, region) !in held.providers }
+        val nothing = listOf(keywords, studios, networks, segments, streaming).all { it.isEmpty() }
+        if (nothing) return
         scope.launch(dispatcher) {
             val api = api()
             val language = Locale.getDefault().toLanguageTag()
-            keywords.map { id -> async { named(id) { api.keyword(id).name } } }.awaitAll().filterNotNull().toMap().let { found ->
-                if (found.isNotEmpty()) edit { it.copy(keywords = it.keywords + found) }
-            }
-            studios.map { id -> async { named(id) { api.studio(id).name } } }.awaitAll().filterNotNull().toMap().let { found ->
-                if (found.isNotEmpty()) edit { it.copy(studios = it.studios + found) }
-            }
-            networks.map { id -> async { named(id) { api.network(id).name } } }.awaitAll().filterNotNull().toMap().let { found ->
-                if (found.isNotEmpty()) edit { it.copy(networks = it.networks + found) }
-            }
+            keywords.readAll { api.keyword(it).name }.then { edit { names -> names.copy(keywords = names.keywords + it) } }
+            studios.readAll { api.studio(it).name }.then { edit { names -> names.copy(studios = names.studios + it) } }
+            networks.readAll { api.network(it).name }.then { edit { names -> names.copy(networks = names.networks + it) } }
             segments
-                .map { segment ->
-                    async {
-                        attempt { api.genres(segment, language) }.getOrNull()?.let { list ->
-                            segment to list.mapNotNull { dto -> dto.name?.let { dto.id to it } }.toMap()
-                        }
-                    }
-                }.awaitAll()
-                .filterNotNull()
-                .toMap()
-                .let { found ->
-                    if (found.isNotEmpty()) edit { it.copy(genres = it.genres + found) }
-                }
+                .readAllBy { segment ->
+                    attempt { api.genres(segment, language) }.getOrNull()?.let { list -> segment to list.idNames({ it.id }, { it.name }) }
+                }.then { edit { names -> names.copy(genres = names.genres + it) } }
             streaming
-                .map { (segment, region) ->
-                    async {
-                        attempt { api.watchProviders(segment, region) }.getOrNull()?.let { list ->
-                            providerKey(segment, region) to list.mapNotNull { dto -> dto.name?.let { dto.id to it } }.toMap()
-                        }
+                .readAllBy { (segment, region) ->
+                    attempt { api.watchProviders(segment, region) }.getOrNull()?.let { list ->
+                        providerKey(segment, region) to list.idNames({ it.id }, { it.name })
                     }
-                }.awaitAll()
-                .filterNotNull()
-                .toMap()
-                .let { found ->
-                    if (found.isNotEmpty()) edit { it.copy(providers = it.providers + found) }
-                }
+                }.then { edit { names -> names.copy(providers = names.providers + it) } }
         }
     }
 
-    private suspend fun named(
-        id: Int,
-        read: suspend () -> String?,
-    ): Pair<Int, String>? = attempt { read() }.getOrNull()?.takeIf { it.isNotBlank() }?.let { id to it }
+    /** The ids the sliders of [kind] hold, read from their data by [ids]. */
+    private fun List<DiscoverSlider>.idsOf(
+        kind: SliderDataKind,
+        ids: (String) -> List<Int>,
+    ): List<Int> = filter { it.type?.dataKind == kind }.flatMap { ids(it.data.orEmpty()) }.distinct()
+
+    /** The provider segment and region of each streaming slider that has picked a region. */
+    private fun List<DiscoverSlider>.regionsToRead(): List<Pair<String, String>> =
+        mapNotNull { slider ->
+            val segment = slider.type?.providerSegment
+            val region =
+                slider.data
+                    .orEmpty()
+                    .toStreamingPick()
+                    .region
+            if (segment != null && region.isNotBlank()) segment to region else null
+        }.distinct()
+
+    private suspend fun List<Int>.readAll(read: suspend (Int) -> String?): Map<Int, String> =
+        coroutineScope {
+            map { id -> async { attempt { read(id) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { id to it } } }
+                .awaitAll()
+                .filterNotNull()
+                .toMap()
+        }
+
+    private suspend fun <T, R> List<T>.readAllBy(read: suspend (T) -> Pair<R, Map<Int, String>>?): Map<R, Map<Int, String>> =
+        coroutineScope {
+            map { item -> async { read(item) } }
+                .awaitAll()
+                .filterNotNull()
+                .toMap()
+        }
+
+    private fun <K, V> Map<K, V>.then(apply: (Map<K, V>) -> Unit) {
+        if (isNotEmpty()) apply(this)
+    }
 }
+
+/** The ids a list of TMDB entries carries, by their names; an entry without one is left out. */
+private fun <T> List<T>.idNames(
+    id: (T) -> Int,
+    name: (T) -> String?,
+): Map<Int, String> = mapNotNull { item -> name(item)?.let { id(item) to it } }.toMap()
