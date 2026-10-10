@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,17 +32,12 @@ internal fun TagSearchPanel(
     initialQuery: String = "",
 ) {
     var query by rememberSaveable { mutableStateOf(initialQuery) }
+    LaunchedEffect(query) { onQuery(query) }
     Column(modifier = modifier) {
         BingeSearchField(
             query = query,
-            onQueryChange = {
-                query = it
-                onQuery(it)
-            },
-            onClear = {
-                query = ""
-                onQuery("")
-            },
+            onQueryChange = { query = it },
+            onClear = { query = "" },
             placeholder = stringResource(R.string.server_settings_blocklist_tags_search),
             modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
         )

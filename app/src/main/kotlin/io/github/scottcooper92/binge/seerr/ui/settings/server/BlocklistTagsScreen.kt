@@ -133,7 +133,7 @@ internal fun ChosenTags(
         ) {
             chosen.forEach { id ->
                 val name = search.names[id] ?: id.toString()
-                RemovableTag(name = search.names[id] ?: id.toString(), onRemove = { onRemove(id) })
+                RemovableTag(name = name, onRemove = { onRemove(id) })
             }
         }
     }
