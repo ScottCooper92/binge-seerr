@@ -198,6 +198,61 @@ class NotificationAgentViewModelTest {
         }
 
     @Test
+    fun `each ntfy priority level is saved as its number, and an unknown stored one is left as found`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/notifications/ntfy",
+                """{"enabled":false,"types":0,"options":{"url":"","topic":"","priority":7}}""",
+            )
+            seerr.serve("POST /api/v1/settings/notifications/ntfy", """{"enabled":false,"types":0,"options":{}}""")
+            val vm = viewModel(ServerAgent.Ntfy)
+            assertEquals("7", vm.awaitReady().draft.option(AgentOption.NtfyPriority))
+            assertEquals(listOf("1", "2", "3", "4", "5"), NtfyPriorityLevel.entries.map { it.value })
+
+            vm.setOption(AgentOption.NtfyPriority, NtfyPriorityLevel.High.value)
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/ntfy")).jsonObject
+            assertEquals(
+                "4",
+                sent
+                    .getValue("options")
+                    .jsonObject
+                    .getValue("priority")
+                    .jsonPrimitive.content,
+            )
+        }
+
+    @Test
+    fun `a pushover sound can be put back to the device default`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/notifications/pushover",
+                """{"enabled":false,"types":0,"options":{"accessToken":"","userToken":"","sound":"bike"}}""",
+            )
+            seerr.serve("POST /api/v1/settings/notifications/pushover", """{"enabled":false,"types":0,"options":{}}""")
+            val vm = viewModel(ServerAgent.Pushover)
+            assertEquals("bike", vm.awaitReady().draft.option(AgentOption.PushoverSound))
+
+            vm.setOption(AgentOption.PushoverSound, "")
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/pushover")).jsonObject
+            assertEquals(
+                "",
+                sent
+                    .getValue("options")
+                    .jsonObject
+                    .getValue("sound")
+                    .jsonPrimitive.content,
+            )
+        }
+
+    @Test
     fun `turning on one ntfy auth method turns the other off, and a server holding both stays fixable`() =
         runTest {
             val vm = viewModel(ServerAgent.Ntfy)
