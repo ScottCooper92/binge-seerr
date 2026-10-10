@@ -52,6 +52,17 @@ class TvSetupScreenshotTest {
             offerHandOff = true,
         )
 
+    /** #1084: any address a phone sent waits for the TV's user, landed on Continue, with a note saying where it came from. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressFromPhoneAwaitingConfirm() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://192.168.1.10:5055").copy(received = true),
+            actions = NoSetupActions,
+            offerHandOff = true,
+        )
+
     /** The same in Spanish, whose warning runs longest: it has to fit above the button bar without moving the field. */
     @PreviewTest
     @SeerrTvSpanishScreenPreviews

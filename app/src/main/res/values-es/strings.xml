@@ -931,6 +931,7 @@
     <string name="tv_advanced_submitting">Enviando la petición…</string>
     <string name="tv_setup_send_from_phone">Escanear un QR</string>
     <string name="tv_handoff_body">Usa el código QR o la URL para conectarte desde otro dispositivo de la misma red, o usa la app móvil de Seerr para iniciar sesión con tus datos actuales.</string>
+    <string name="tv_setup_confirm_sent_address">Un móvil envió esta dirección. Comprueba que es tu servidor y continúa.</string>
     <string name="tv_handoff_code_description">Código para escanear con el móvil</string>
     <string name="tv_handoff_pin">PIN  %1$s</string>
     <string name="tv_handoff_pin_description">PIN de este televisor: %1$s</string>
@@ -948,7 +949,7 @@
     <string name="handoff_page_sent_title">Enviada</string>
     <string name="handoff_page_sent_body">Tu televisor tiene la dirección y está comprobando el servidor. Esta página lo sigue.</string>
     <string name="handoff_page_confirm_title">Confirma en el televisor</string>
-    <string name="handoff_page_confirm_body">Esa dirección usa HTTP sin cifrar por internet, así que tu televisor pregunta si conectarse de todos modos. Responde en el televisor.</string>
+    <string name="handoff_page_confirm_body">Tu televisor muestra la dirección que enviaste y espera a que la compruebes. Responde en el televisor.</string>
     <string name="handoff_page_pin_title">Escribe el PIN de tu televisor</string>
     <string name="handoff_page_pin_body">Escribe el PIN de 4 cifras que aparece bajo el código en tu televisor. Así se comprueba que es el televisor que tienes delante.</string>
     <string name="handoff_page_pin_field">PIN</string>
@@ -981,7 +982,7 @@
     <string name="send_signin_continue_as_you">Continuar con tu cuenta</string>
     <string name="send_signin_session">Iniciando sesión en el televisor en %1$s…</string>
     <string name="send_signin_waiting">El televisor en %1$s tiene la dirección y está comprobando el servidor…</string>
-    <string name="send_signin_confirm">Esa dirección usa HTTP sin cifrar por internet, así que el televisor en %1$s pregunta si conectarse de todos modos. Responde en el televisor.</string>
+    <string name="send_signin_confirm">El televisor en %1$s muestra la dirección y espera a que la compruebes. Responde en el televisor.</string>
     <string name="send_signin_form">El televisor encontró %1$s. Inicia sesión aquí y el televisor también la iniciará.</string>
     <string name="send_signin_address">Iniciando sesión en %1$s</string>
     <string name="send_signin_sealed">Lo que escribes aquí se cifra para el televisor que muestra ese PIN y se envía por tu Wi-Fi. No se guarda en este móvil.</string>

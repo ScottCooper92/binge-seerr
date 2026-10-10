@@ -181,6 +181,13 @@ sealed interface SetupUiState {
          * screen (#907). Until they do, nothing is read, so the TV shows the opt-in rather than its code.
          */
         val awaitingCleartextConsent: Boolean get() = received && insecure && !cleartextAllowed && !isInspecting
+
+        /**
+         * A phone sent [serverUrl], and the TV waits for its user to confirm it with the remote before reading it (#1084).
+         * The PIN and token cross the network in the clear, so a peer that saw them could send an address of its own. The
+         * TV's screen is the one place such a peer cannot write to, so the address is read only once its user goes on.
+         */
+        val awaitingConfirm: Boolean get() = received && !isInspecting && error == null
     }
 
     /** Step two: this server's own sign-in modes. */
