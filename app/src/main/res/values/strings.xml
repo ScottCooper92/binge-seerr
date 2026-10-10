@@ -452,6 +452,7 @@
     <string name="user_settings_type_issue_reopened">Issue reopened</string>
     <string name="user_settings_type_media_auto_requested">Auto-requested from the watchlist</string>
     <string name="user_settings_permissions_lead">Only the owner can grant Admin.</string>
+    <string name="user_settings_permissions_owner_only">This user is an admin. Only the owner can change their permissions.</string>
     <string name="user_settings_linked_as">Linked as %1$s</string>
     <string name="server_settings_general_title">General settings</string>
     <string name="server_settings_application_title">Application title</string>

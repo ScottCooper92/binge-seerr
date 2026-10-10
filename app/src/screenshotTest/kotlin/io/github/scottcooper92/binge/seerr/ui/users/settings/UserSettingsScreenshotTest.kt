@@ -195,6 +195,21 @@ class UserPermissionsScreenshotTest {
     fun parentCoversChildren() =
         PermissionsFrame(settled(permissions().copy(selected = setOf(ManageablePermission.ManageRequests), locked = emptySet())))
 
+    /** An admin's page as a non-owner sees it: every toggle locked, and the note says why (#1134). */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun ownerOnly() =
+        PermissionsFrame(
+            settled(
+                permissions().copy(
+                    selected = setOf(ManageablePermission.Admin),
+                    locked = ManageablePermission.entries.toSet(),
+                    ownerOnly = true,
+                ),
+            ),
+        )
+
     @PreviewTest
     @SeerrSpanishPreviews
     @Composable

@@ -23,7 +23,6 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.attempt
-import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -320,13 +319,3 @@ class UsersViewModel
             }
         }
     }
-
-/**
- * Whether a viewer who is not the owner may give user [id] the bitmask [permissions] (#1008). The server answers 403 to a whole
- * `PUT /user` whose mask carries Admin from anyone but the owner, and drops user 1 from it without a word, so neither is sent:
- * the rest of the selection still saves, and no cached row claims a change the server never made.
- */
-private fun mayChangeAsNonOwner(
-    id: Int,
-    permissions: Int,
-): Boolean = id != OWNER_USER_ID && !isAdminBitmask(permissions)

@@ -1059,6 +1059,7 @@ app:user_settings_password_mismatch  f694aaa8da2c
 app:user_settings_password_new  3dd9df4441fb
 app:user_settings_password_none  d2e03582d927
 app:user_settings_permissions_lead  47985b21f369
+app:user_settings_permissions_owner_only  a6c04ee41c9c
 app:user_settings_pgp_error  414cf512c517
 app:user_settings_pushover_key_error  9b677f9b2310
 app:user_settings_pushover_sound_default  aa46c3735f07

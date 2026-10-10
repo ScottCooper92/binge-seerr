@@ -304,6 +304,11 @@ data class PermissionSettings(
     val original: Int = 0,
     val offered: List<ManageablePermission> = ManageablePermission.entries,
     val locked: Set<ManageablePermission> = emptySet(),
+    /**
+     * The user is an admin and the viewer is not the owner. The server refuses any change to an admin's mask from anyone
+     * but the owner, so every toggle is locked and the page says why (#1134).
+     */
+    val ownerOnly: Boolean = false,
 )
 
 /** One media-server account a user may link: what it is called, whether it is linked, and as whom where the server says. */

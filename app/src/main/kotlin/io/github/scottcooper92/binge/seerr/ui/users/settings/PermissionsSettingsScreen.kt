@@ -32,7 +32,7 @@ fun PermissionsSettingsScreen(
         actions = actions,
         saveAsMade = true,
     ) { draft, enabled ->
-        GroupMessage(stringResource(leadRes), error = false)
+        GroupMessage(stringResource(if (draft.ownerOnly) R.string.user_settings_permissions_owner_only else leadRes), error = false)
         permissionTree(draft.offered, draft.selected).forEach { (group, nodes) ->
             ItemGroup(
                 title = stringResource(group.labelRes()),
