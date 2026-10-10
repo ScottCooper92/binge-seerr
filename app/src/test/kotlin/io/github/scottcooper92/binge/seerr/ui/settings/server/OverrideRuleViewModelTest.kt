@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
@@ -9,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -83,10 +85,20 @@ class OverrideRuleViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(id: Int?): OverrideRuleViewModel {
+    private suspend fun TestScope.viewModel(
+        id: Int?,
+        savedState: SavedStateHandle = SavedStateHandle(),
+    ): OverrideRuleViewModel {
         val vm =
             seerr.connection(this).let { connection ->
-                OverrideRuleViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, id, analytics)
+                OverrideRuleViewModel(
+                    connection,
+                    ServerListCatalog(connection),
+                    mainDispatcherRule.dispatcher,
+                    id,
+                    analytics,
+                    savedState = savedState,
+                )
             }
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -342,5 +354,21 @@ class OverrideRuleViewModelTest {
             vm.delete()
             assertEquals(EditorEvent.Deleted, deleted.await())
             assertEquals(1, seerr.count("DELETE", "/api/v1/overrideRule/12"))
+        }
+
+    @Test
+    fun `an unsaved draft survives the process being killed`() =
+        runTest {
+            val savedState = SavedStateHandle()
+            val vm = viewModel(id = 11, savedState = savedState)
+            vm.awaitReady { it.extras.choices != null }
+            vm.edit { it.copy(genres = "28", languages = "de") }
+            vm.awaitReady()
+
+            val back = viewModel(id = 11, savedState = savedState.afterProcessDeath()).awaitReady()
+
+            assertEquals("de", back.draft.languages)
+            assertEquals("28", back.draft.genres)
+            assertTrue(back.dirty)
         }
 }

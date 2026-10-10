@@ -28,11 +28,11 @@ import com.binge.designsystem.tv.nav.TV_SHELL_CONTENT_SETTLE_MILLIS
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val PAST_SETTLE_MILLIS = TV_SHELL_CONTENT_SETTLE_MILLIS + 100L
@@ -152,6 +152,4 @@ class TvShellScaffoldFocusTest {
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.waitForIdle()
     }
-
-    private fun string(id: Int): String = RuntimeEnvironment.getApplication().getString(id)
 }

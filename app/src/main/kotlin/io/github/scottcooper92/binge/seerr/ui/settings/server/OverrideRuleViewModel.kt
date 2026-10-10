@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -20,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SavedDraft
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -45,7 +47,11 @@ class OverrideRuleViewModel
         @Assisted private val id: Int?,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<OverrideRuleForm, OverrideRuleExtras>(OverrideRuleExtras(), dispatcher) {
+        /** A long form, kept across the process being killed (#1246). It holds no credential. */
+        override val savedDraft = SavedDraft(savedState, OverrideRuleForm.serializer())
+
         /** The choices being read for the instance picked last; a newer pick cancels it (#1021). */
         private var choicesJob: Job? = null
 
@@ -90,9 +96,11 @@ class OverrideRuleViewModel
                         sonarrRecords.mapNotNull { it.toSummary(ServiceType.Sonarr) }
                 val userChoices = users.await().map { user -> Choice(user.id, user.displayString() ?: user.id.toString()) }
                 editExtras { it.copy(instances = instances, users = userChoices) }
-                form.serviceId?.let { serviceId -> form.serviceType?.let { type -> loadChoices(type, serviceId) } }
-                form.serviceType?.let(::loadGenres)
-                keywords.name(form.keywords.tagIds())
+                // What the page will show is the kept draft where there is one, so its instance is the one read.
+                val shown = savedDraft.restoreOver(form) ?: form
+                shown.serviceId?.let { serviceId -> shown.serviceType?.let { type -> loadChoices(type, serviceId) } }
+                shown.serviceType?.let(::loadGenres)
+                keywords.name(shown.keywords.tagIds())
                 form
             }
 

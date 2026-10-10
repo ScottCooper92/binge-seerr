@@ -17,13 +17,13 @@ import io.github.scottcooper92.binge.seerr.ui.tv.requests.TvSeasonCard
 import io.github.scottcooper92.binge.seerr.ui.tv.requests.requestInfoCards
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import io.github.scottcooper92.binge.seerr.util.requestDetail
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val MOVIES = "Movies"
@@ -141,11 +141,6 @@ class TvDetailCardsTest {
     }
 
     private fun List<TvInfoCardItem>.labelled(id: Int): TvInfoCardItem? = firstOrNull { it.label == string(id) }
-
-    private fun string(
-        id: Int,
-        vararg args: Any,
-    ): String = RuntimeEnvironment.getApplication().getString(id, *args)
 
     private fun detail(destination: RequestDestination) = requestDetail(destination = destination, mediaId = null)
 }

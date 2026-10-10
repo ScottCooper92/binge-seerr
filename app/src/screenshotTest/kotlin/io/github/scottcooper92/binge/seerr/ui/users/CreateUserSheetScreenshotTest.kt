@@ -1,16 +1,9 @@
 package io.github.scottcooper92.binge.seerr.ui.users
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
-
-private val SHEET_WIDTH = 411.dp
+import io.github.scottcooper92.binge.seerr.preview.SheetFrame
 
 /**
  * What the create-account sheet says before it is submitted. Every state here is one the sheet knew
@@ -71,7 +64,7 @@ class CreateUserSheetScreenshotTest {
 
 @Composable
 private fun Frame(draft: CreateUserDraft) {
-    Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+    SheetFrame {
         CreateUserSheetContent(draft = draft, saving = false, onEditDraft = {}, onCreate = {})
     }
 }

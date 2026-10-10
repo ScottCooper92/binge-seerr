@@ -16,6 +16,7 @@ import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import io.github.scottcooper92.binge.seerr.ui.consent.ConsentViewModel
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,7 +30,6 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val CONTENT = "Setup goes on"
@@ -101,6 +101,4 @@ class TvConsentGateTest {
         composeTestRule.onRoot().performKeyInput { pressKey(key) }
         composeTestRule.waitForIdle()
     }
-
-    private fun string(id: Int): String = RuntimeEnvironment.getApplication().getString(id)
 }

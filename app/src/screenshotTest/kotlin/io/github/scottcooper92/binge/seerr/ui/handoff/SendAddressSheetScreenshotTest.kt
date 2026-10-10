@@ -1,21 +1,14 @@
 package io.github.scottcooper92.binge.seerr.ui.handoff
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.handoff.AddressCandidate
 import io.github.scottcooper92.binge.seerr.handoff.AddressLocality
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.preview.SheetFrame
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
-
-private val SHEET_WIDTH = 411.dp
 
 /**
  * The phone's confirmation before it sends a server address to a television (#323): the field on its
@@ -213,7 +206,7 @@ private fun sampleReady() = ready(candidate("http://seerr.lan:5055/", AddressSou
 
 @Composable
 private fun Frame(state: SendAddressUiState) {
-    Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+    SheetFrame {
         SendAddressSheetContent(state = state, actions = SendAddressActions())
     }
 }

@@ -1,11 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -85,8 +87,8 @@ class MediaServerViewModelTest {
 
     private fun plexServer() = seerr.viewer(id = 1, permissions = ADMIN, settings = """{"mediaServerType":1}""")
 
-    private suspend fun TestScope.viewModel(): MediaServerViewModel {
-        val vm = MediaServerViewModel(seerr.connection(this), mainDispatcherRule.dispatcher)
+    private suspend fun TestScope.viewModel(savedState: SavedStateHandle = SavedStateHandle()): MediaServerViewModel {
+        val vm = MediaServerViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, savedState)
         vm.scanPollMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -361,5 +363,23 @@ class MediaServerViewModelTest {
             assertEquals("32400", draft.port)
             assertTrue(draft.useSsl)
             assertNull(vm.awaitReady().extras.picker)
+        }
+
+    @Test
+    fun `an unsaved draft survives the process being killed, and a jellyfin api key is not kept`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, settings = """{"mediaServerType":2}""")
+            val savedState = SavedStateHandle()
+            val vm = viewModel(savedState)
+            vm.awaitReady()
+            vm.edit { it.copy(host = "jelly.lan", apiKey = "s3cret") }
+            vm.awaitReady()
+            assertTrue(savedState.keys().none { savedState.get<Any?>(it).toString().contains("s3cret") })
+
+            val back = viewModel(savedState.afterProcessDeath()).awaitReady()
+
+            assertEquals("jelly.lan", back.draft.host)
+            assertEquals("jf-key", back.draft.apiKey)
+            assertTrue(back.dirty)
         }
 }
