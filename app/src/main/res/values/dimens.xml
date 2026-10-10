@@ -61,16 +61,6 @@
     <dimen name="server_settings_job_action_size">48dp</dimen>
     <dimen name="log_row_severity_stripe_width">4dp</dimen>
     <dimen name="log_row_level_icon_size">16dp</dimen>
-    <dimen name="tv_consent_band_spacing">30dp</dimen>
-    <dimen name="tv_consent_heading_gap">10dp</dimen>
-    <dimen name="tv_consent_copy_gap">18dp</dimen>
-    <dimen name="tv_consent_footer_gap">14dp</dimen>
-    <dimen name="tv_consent_point_padding_h">26dp</dimen>
-    <dimen name="tv_consent_point_padding_v">22dp</dimen>
-    <dimen name="tv_consent_point_gap">16dp</dimen>
-    <dimen name="tv_consent_point_badge">48dp</dimen>
-    <dimen name="tv_consent_point_icon">24dp</dimen>
-    <dimen name="tv_consent_point_text_gap">6dp</dimen>
     <dimen name="hub_quota_bar_width">72dp</dimen>
     <!-- The Settings screen's one plate where the admin groups will land while they are still answering. -->
     <dimen name="settings_pending_groups_height">240dp</dimen>
