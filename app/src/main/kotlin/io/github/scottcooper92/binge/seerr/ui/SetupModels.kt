@@ -55,6 +55,11 @@ data class SignInForm(
     val username: String = "",
     val email: String = "",
     val password: String = "",
+    /**
+     * The TV's Forgot password? toggle on a local account (#1302): the form then asks the server for a reset link
+     * rather than signing in, so it needs the email alone. The phone keeps its own button and leaves this off.
+     */
+    val forgotPassword: Boolean = false,
 ) {
     val canSubmit: Boolean
         get() =
