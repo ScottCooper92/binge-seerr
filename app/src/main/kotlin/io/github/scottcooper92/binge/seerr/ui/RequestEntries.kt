@@ -34,7 +34,7 @@ internal fun RequestDetailEntry(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     RequestDetailScreen(
         state = state,
-        events = viewModel.moderation.events,
+        events = viewModel.events,
         actions =
             viewModel.toActions(
                 requestId = requestId,
@@ -65,9 +65,9 @@ private fun SiblingRequestSheet(
         )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val current by rememberUpdatedState(sheet)
-    ModerationSnackbarEffect(viewModel.moderation.events, sheet.snackbarHostState)
+    ModerationSnackbarEffect(viewModel.events, sheet.snackbarHostState)
     LaunchedEffect(viewModel) {
-        viewModel.moderation.events.collect { event ->
+        viewModel.events.collect { event ->
             current.onChanged()
             if (event.removesTheRequest) current.onDismiss()
         }
