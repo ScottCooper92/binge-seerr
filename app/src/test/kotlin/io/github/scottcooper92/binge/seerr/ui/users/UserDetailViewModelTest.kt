@@ -40,6 +40,7 @@ import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val MANAGE_USERS = 1 shl 3
+private const val MANAGE_REQUESTS = 1 shl 4
 private const val REQUEST = 1 shl 5
 private const val REQUEST_VIEW = 1 shl 14
 
@@ -151,6 +152,30 @@ class UserDetailViewModelTest {
             val requests = vm.requests.asSnapshot()
             assertEquals("Heat", requests.single().title)
             assertEquals("20", received.first { it.url.encodedPath == "/api/v1/user/8/requests" }.url.queryParameter("take"))
+        }
+
+    /** The server reads another user's quota only with both permissions, so a manager of users alone is not sent to be refused (#1093). */
+    @Test
+    fun `a manager of users alone is not shown another user's quota, and the server is not asked`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS)
+
+            assertNull(viewModel().awaitReady().detail.quota)
+            assertTrue(received.none { it.url.encodedPath == "/api/v1/user/8/quota" })
+        }
+
+    @Test
+    fun `a manager of users and requests reads another user's quota`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS or MANAGE_REQUESTS)
+
+            assertEquals(
+                HubQuotaBucket(limit = 10, remaining = 7, days = 7),
+                viewModel()
+                    .awaitReady()
+                    .detail.quota
+                    ?.movie,
+            )
         }
 
     /** The server lists a user's requests to that user and to who may see everyone's, so nobody else is shown a failing list (#1015). */
