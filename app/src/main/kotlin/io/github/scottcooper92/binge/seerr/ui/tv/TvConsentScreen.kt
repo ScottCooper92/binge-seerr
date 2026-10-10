@@ -28,6 +28,7 @@ import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.focus.tvArrivalTarget
 import com.binge.designsystem.tv.theme.TvButtonStyle
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.consent.ConsentPoint
 import io.github.scottcooper92.binge.seerr.ui.consent.ConsentPoints
@@ -106,7 +107,7 @@ private fun TvConsentCopy(modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_consent_copy_gap))) {
         Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_consent_heading_gap))) {
             Text(
-                text = stringResource(R.string.consent_kicker).uppercase(),
+                text = stringResource(R.string.consent_kicker).uppercaseLocalised(),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )

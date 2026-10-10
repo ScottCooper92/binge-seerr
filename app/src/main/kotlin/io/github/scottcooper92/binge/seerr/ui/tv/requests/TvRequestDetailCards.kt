@@ -21,6 +21,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.focus.tvFocusIndicator
 import com.binge.designsystem.tv.focus.tvFocusTarget
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.DetailDownload
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
@@ -175,7 +176,7 @@ internal fun TvInfoCard(
 ) {
     TvDetailCard(isFocused, onFocusChanged, modifier) {
         Text(
-            text = card.label.uppercase(),
+            text = card.label.uppercaseLocalised(),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,

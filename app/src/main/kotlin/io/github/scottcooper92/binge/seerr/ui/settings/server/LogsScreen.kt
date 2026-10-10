@@ -67,6 +67,7 @@ import com.binge.designsystem.template.screenListPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.accent
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
@@ -273,7 +274,7 @@ private fun LogRowHeader(
             tint = tone,
             modifier = Modifier.size(dimensionResource(R.dimen.log_row_level_icon_size)),
         )
-        Text(stringResource(entry.level.labelRes()).uppercase(), style = MaterialTheme.typography.labelMedium, color = tone)
+        Text(stringResource(entry.level.labelRes()).uppercaseLocalised(), style = MaterialTheme.typography.labelMedium, color = tone)
         val meta =
             listOfNotNull(
                 entry.label,

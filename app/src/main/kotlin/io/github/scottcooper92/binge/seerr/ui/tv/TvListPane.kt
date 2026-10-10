@@ -45,6 +45,7 @@ import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.tvEntryFocusGroup
 import com.binge.designsystem.tv.focus.tvFocusGroup
 import com.binge.designsystem.tv.template.TvBoard
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
@@ -156,7 +157,7 @@ private fun TvPaneList(
         ) {
             groups.forEach { group ->
                 Text(
-                    text = group.title.uppercase(),
+                    text = group.title.uppercaseLocalised(),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier =
