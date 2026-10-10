@@ -60,7 +60,8 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
   API key the phone stores is never sent; sign-in details typed for the television's sign-in step
   (email and password, username and password, or an API key) are sealed and sent on the user's tap,
   and the listener stays up through that step. The scanner is Google Play services', so the app holds no camera permission.
-  The addresses it remembers (`handoff/HandOffAddressMemory.kt`) survive a disconnect.
+  The addresses it remembers (`handoff/HandOffAddressMemory.kt`) are cleared on disconnect and on
+  connecting to a server (`onServerChanged` in `di/AuthModule.kt`).
 - A crash report carries the ids of the record in hand (`telemetry/CrashReporting.kt`), a fixed action
   line, the device model and the Android version. The app attaches no title, name, message or address; the crash's own stack trace
   and exception message are Crashlytics's and are not filtered.

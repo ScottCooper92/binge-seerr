@@ -42,7 +42,7 @@ class HandOffMemoryDisconnectTest {
         }
 
     @Test
-    fun `switching to another server leaves none of the last one's`() =
+    fun `connecting again leaves none remembered`() =
         runTest {
             val server = seerr.server.url("/").toString()
             val connection = seerr.connection(this, onServerChanged = { memory.clear() })
