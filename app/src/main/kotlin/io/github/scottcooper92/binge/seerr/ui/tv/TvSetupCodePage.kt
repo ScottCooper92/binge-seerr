@@ -86,7 +86,7 @@ internal fun TvSetupCodePage(
                 }
             },
     ) {
-        TvHandOffContent(handOff = unavailable ?: code)
+        TvHandOffContent(handOff = unavailable ?: code, preparing = needsCode)
         val (status, isError) = codeStatus(address, signIn, hasCode = code != null)
         Text(
             text = status,

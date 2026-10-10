@@ -83,6 +83,13 @@ class TvSetupCodePageTest {
         button(R.string.hub_disconnect).assertDoesNotExist()
     }
 
+    @Test
+    fun aSignInWithNoCodeDoesNotPromiseOne() {
+        setPage(signIn().copy(code = null))
+
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_status_preparing)).assertDoesNotExist()
+    }
+
     /** #810: the server rejected the saved session, so the page says so and offers leaving the server. */
     @Test
     fun aRejectedSessionSaysSoAndOffersDisconnect() {

@@ -18,11 +18,15 @@ private const val QR_FILL = 0.6f
 
 /**
  * The pane's content: the design system's pairing card (#1064) with the code while the TV listens, or a placeholder of
- * the same shape while [handOff] is null and the code is on its way, so the page does not move as the code arrives. A TV
- * with no code to give says why in a note instead, with the way to type the address under it.
+ * the same shape while [preparing], so the page does not move as the code arrives. [preparing] is true only when a code
+ * is actually being fetched; with no code and nothing coming, the pane stays empty rather than promise one. A TV with no
+ * code to give says why in a note instead, with the way to type the address under it.
  */
 @Composable
-internal fun ColumnScope.TvHandOffContent(handOff: AddressHandOff?) {
+internal fun ColumnScope.TvHandOffContent(
+    handOff: AddressHandOff?,
+    preparing: Boolean,
+) {
     if (handOff is AddressHandOff.Unavailable) {
         TvFormNote(stringResource(handOff.reason.messageRes()), tone = TvFormNoteTone.Error)
         return
@@ -30,9 +34,10 @@ internal fun ColumnScope.TvHandOffContent(handOff: AddressHandOff?) {
     // The pane's room sizes the code; the card then wraps it and nothing more, centred in what is left.
     BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
         val qrSize = minOf(maxWidth, maxHeight) * QR_FILL
-        when (handOff) {
-            is AddressHandOff.Listening -> TvHandOffCodeCard(handOff, qrSize)
-            else -> TvPairingCardLoading(message = stringResource(R.string.tv_setup_status_preparing), qrSize = qrSize)
+        if (handOff is AddressHandOff.Listening) {
+            TvHandOffCodeCard(handOff, qrSize)
+        } else if (preparing) {
+            TvPairingCardLoading(message = stringResource(R.string.tv_setup_status_preparing), qrSize = qrSize)
         }
     }
 }
