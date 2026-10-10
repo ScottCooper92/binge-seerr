@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.nav.BingeTvNavRail
 import com.binge.designsystem.tv.nav.TvNavRailItem
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.delay
 
 /**
@@ -72,7 +73,7 @@ internal fun TvShellScaffold(
     var railHasFocus by remember { mutableStateOf(false) }
     val overlayOpen = overlay != null
     BackHandler(enabled = !overlayOpen && (!railHasFocus || selected != TvDestination.Hub)) {
-        if (!railHasFocus) runCatching { railFocus.requestFocus() } else onSelect(TvDestination.Hub)
+        if (!railHasFocus) attempt { railFocus.requestFocus() } else onSelect(TvDestination.Hub)
     }
     Box(modifier = modifier.fillMaxSize()) {
         BingeTvNavRail(

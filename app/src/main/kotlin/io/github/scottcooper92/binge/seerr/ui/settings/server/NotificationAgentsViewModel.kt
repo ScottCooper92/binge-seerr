@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -30,7 +31,7 @@ class NotificationAgentsViewModel
         fun reload() {
             state.value = AgentsUiState.Loading
             viewModelScope.launch(dispatcher) {
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { state.value = it }
                     .onFailure { state.value = AgentsUiState.Error(it.toSeerrError()) }
             }
@@ -41,7 +42,7 @@ class NotificationAgentsViewModel
                 val api = connection.api()
                 val agents =
                     connection.profile().offeredAgents().map { agent ->
-                        async { AgentSummary(agent, runCatching { api.notificationAgent(agent.segment).enabled }.getOrNull()) }
+                        async { AgentSummary(agent, attempt { api.notificationAgent(agent.segment).enabled }.getOrNull()) }
                     }
                 AgentsUiState.Ready(agents.awaitAll())
             }

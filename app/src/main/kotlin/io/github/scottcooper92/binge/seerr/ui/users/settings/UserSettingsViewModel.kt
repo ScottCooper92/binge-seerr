@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
@@ -43,7 +44,7 @@ class UserSettingsViewModel
         fun reload() {
             state.value = UserSettingsUiState.Loading
             viewModelScope.launch(dispatcher) {
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { state.value = UserSettingsUiState.Ready(it) }
                     .onFailure { state.value = UserSettingsUiState.Error(it.toSeerrError()) }
             }

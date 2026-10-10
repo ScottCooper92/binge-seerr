@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.data.IssueStore
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentBody
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -70,7 +71,7 @@ class IssueDetailViewModel
             }
             viewModelScope.launch(dispatcher) {
                 seedFromCache()
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { detail ->
                         state.update { current ->
                             val ready = current as? IssueDetailUiState.Ready
@@ -96,7 +97,7 @@ class IssueDetailViewModel
         /** Shows the cached row's header in place of the skeleton, if a list has the issue and nothing has landed yet. */
         private suspend fun seedFromCache() {
             if (state.value !is IssueDetailUiState.Loading) return
-            val item = runCatching { store.byId(issueId)?.toIssueItem() }.getOrNull() ?: return
+            val item = attempt { store.byId(issueId)?.toIssueItem() }.getOrNull() ?: return
             state.update { current -> if (current is IssueDetailUiState.Loading) IssueDetailUiState.Seeded(item) else current }
         }
 
@@ -126,7 +127,7 @@ class IssueDetailViewModel
             crashBreadcrumbs.key("comment_id", commentId.toString())
             crashBreadcrumbs.log("editing comment on issue")
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
+                attempt { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                     .onSuccess {
                         val reloadFailure = reloadAfterWrite()
                         if (reloadFailure == null) {
@@ -151,7 +152,7 @@ class IssueDetailViewModel
             crashBreadcrumbs.key("issue_id", issueId.toString())
             crashBreadcrumbs.log(if (resolving) "resolving issue" else "reopening issue")
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection.api().setIssueStatus(issueId, if (resolving) STATUS_RESOLVED else STATUS_OPEN)
                     store.updateStatus(issueId, (if (resolving) IssueStatus.Resolved else IssueStatus.Open).name)
                 }.onSuccess {
@@ -179,7 +180,7 @@ class IssueDetailViewModel
             crashBreadcrumbs.key("issue_id", issueId.toString())
             crashBreadcrumbs.log("deleting issue")
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection.api().deleteIssue(issueId)
                     store.delete(issueId)
                 }.onSuccess {
@@ -200,7 +201,7 @@ class IssueDetailViewModel
             crashBreadcrumbs.key("comment_id", commentId.toString())
             crashBreadcrumbs.log("deleting comment on issue")
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().deleteIssueComment(commentId) }
+                attempt { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {
                         val reloadFailure = reloadAfterWrite()
                         if (reloadFailure == null) {
@@ -221,7 +222,7 @@ class IssueDetailViewModel
          * itself failed, so a caller never announces success on a page still showing the stale comment.
          */
         private suspend fun reloadAfterWrite(): Throwable? {
-            val result = runCatching { load() }
+            val result = attempt { load() }
             updateReady { ready ->
                 result
                     .getOrNull()
@@ -234,7 +235,7 @@ class IssueDetailViewModel
         private suspend fun load(): IssueDetail =
             coroutineScope {
                 val api = connection.api()
-                val user = async { runCatching { connection.authenticatedUser() }.getOrNull() }
+                val user = async { attempt { connection.authenticatedUser() }.getOrNull() }
                 val dto = api.issue(issueId)
                 val item = checkNotNull(dto.toIssueItem(api, titles::get)) { "Unrenderable media type" }
                 dto.toDetail(item, user.await(), connection.current().baseUrl, connection.profile())

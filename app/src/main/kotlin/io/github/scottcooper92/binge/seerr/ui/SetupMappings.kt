@@ -17,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
@@ -37,7 +38,7 @@ private val MODE_ORDER =
 /** [this] as a form for one of the server's [offered] modes that has fields to fill; null for any other, or one that is not a mode. */
 internal fun HandOffCredentials.toSignInForm(offered: List<SeerrSignInMode>): SignInForm? {
     val mode =
-        runCatching { SeerrSignInMode.valueOf(mode) }.getOrNull()?.takeIf { it in offered && it in HandOffSignInModes } ?: return null
+        attempt { SeerrSignInMode.valueOf(mode) }.getOrNull()?.takeIf { it in offered && it in HandOffSignInModes } ?: return null
     return SignInForm(mode = mode, apiKey = apiKey, username = username, email = email, password = password)
 }
 

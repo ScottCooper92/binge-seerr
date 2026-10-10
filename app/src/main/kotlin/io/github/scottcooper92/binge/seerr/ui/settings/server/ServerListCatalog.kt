@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -75,7 +76,7 @@ internal class ListChoicesLoader(
         if (current is ListChoices.Ready || current == ListChoices.Loading) return
         set(kind, ListChoices.Loading)
         scope.launch(dispatcher) {
-            set(kind, runCatching { catalog.entries(kind) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed }))
+            set(kind, attempt { catalog.entries(kind) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed }))
         }
     }
 }

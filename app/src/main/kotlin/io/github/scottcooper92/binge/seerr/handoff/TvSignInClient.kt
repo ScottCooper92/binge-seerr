@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
 import io.github.scottcooper92.binge.seerr.logWarning
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -61,7 +62,7 @@ internal class OkHttpTvSignInClient(
                         warn("The TV answered ${response.code} for its status")
                         null
                     } else {
-                        runCatching { JSON.decodeFromString<HandOffStatus>(response.body.string()) }.getOrNull()
+                        attempt { JSON.decodeFromString<HandOffStatus>(response.body.string()) }.getOrNull()
                     }
                 }
             } catch (e: IOException) {
@@ -98,7 +99,7 @@ internal class OkHttpTvSignInClient(
                         warn("The TV answered ${response.code} to the credentials")
                         null
                     } else {
-                        runCatching { JSON.decodeFromString<HandOffTaken>(response.body.string()).attempt }.getOrNull()
+                        attempt { JSON.decodeFromString<HandOffTaken>(response.body.string()).attempt }.getOrNull()
                     }
                 }
             } catch (e: IOException) {

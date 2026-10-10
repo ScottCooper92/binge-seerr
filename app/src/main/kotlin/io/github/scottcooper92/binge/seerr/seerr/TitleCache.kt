@@ -62,7 +62,7 @@ class TitleCache
             tmdbId: Int,
         ): HydratedTitle? {
             val details =
-                runCatching {
+                attempt {
                     if (mediaType == SEERR_MEDIA_TYPE_MOVIE) api.movieDetails(tmdbId) else api.tvDetails(tmdbId)
                 }.getOrNull() ?: return null
             return HydratedTitle(
@@ -77,7 +77,7 @@ class TitleCache
 
         suspend fun clear() {
             lock.withLock { entries.clear() }
-            runCatching { dao.clear() }
+            attempt { dao.clear() }
         }
 
         private suspend fun remember(
@@ -92,7 +92,7 @@ class TitleCache
             mediaType: String,
             tmdbId: Int,
         ): HydratedTitle? =
-            runCatching { dao.find(mediaType, tmdbId, now() - MAX_AGE_MILLIS) }
+            attempt { dao.find(mediaType, tmdbId, now() - MAX_AGE_MILLIS) }
                 .getOrNull()
                 ?.let { HydratedTitle(it.title, it.posterUrl, it.year, it.backdropUrl, it.overview, it.certification) }
 
@@ -102,7 +102,7 @@ class TitleCache
             hydrated: HydratedTitle,
         ) {
             val first = lock.withLock { !pruned.also { pruned = true } }
-            runCatching {
+            attempt {
                 if (first) {
                     dao.deleteOlderThan(now() - MAX_AGE_MILLIS)
                     dao.trimTo(MAX_PERSISTED)

@@ -17,6 +17,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.LOCAL_NETWORK_PERMISSION
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 
 /**
  * What the "allow local network access" button does now, and what it says. [shortLabel] is for a row
@@ -53,5 +54,5 @@ internal fun rememberAllowLocalNetwork(onChanged: () -> Unit): AllowLocalNetwork
 /** This app's own Settings page, where the permission can be switched on. A device with no such page does nothing. */
 private fun Context.openAppSettings() {
     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
-    runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+    attempt { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 }

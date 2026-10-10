@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 
@@ -47,7 +48,7 @@ class DataStoreHandOffAddressMemory(
     private fun keyFor(server: String): Preferences.Key<String> =
         stringPreferencesKey("$KEY_PREFIX${normaliseServerAddress(server) ?: server}")
 
-    private fun String?.decode(): List<String> = this?.let { runCatching { Json.decodeFromString<List<String>>(it) }.getOrNull() }.orEmpty()
+    private fun String?.decode(): List<String> = this?.let { attempt { Json.decodeFromString<List<String>>(it) }.getOrNull() }.orEmpty()
 
     private companion object {
         const val KEY_PREFIX = "sent_for:"

@@ -80,7 +80,7 @@ class SeerrSessionInterceptor(
         // returns the 403 unmarked rather than a transport failure ([mentionsQuota] reads a body the same way).
         val buffered = response.buffered()
         if (buffered.peekBody(Long.MAX_VALUE).string().namesQuota()) return buffered
-        val rejected = runCatching { rejectsSession(chain, request, authMe) }.getOrDefault(false)
+        val rejected = attempt { rejectsSession(chain, request, authMe) }.getOrDefault(false)
         return if (rejected) buffered.newBuilder().header(SESSION_REJECTED_HEADER, "true").build() else buffered
     }
 
@@ -95,7 +95,7 @@ class SeerrSessionInterceptor(
         authMe: HttpUrl,
     ): Response {
         val buffered = response.buffered()
-        val alive = runCatching { probe(chain, request, authMe) { it.isSuccessful } }.getOrDefault(false)
+        val alive = attempt { probe(chain, request, authMe) { it.isSuccessful } }.getOrDefault(false)
         return if (alive) buffered.newBuilder().header(SESSION_ALIVE_HEADER, "true").build() else buffered
     }
 
@@ -124,6 +124,6 @@ class SeerrSessionInterceptor(
 
 /** [this] with its body read into memory, or emptied if it will not read, so it can be returned after a probe. */
 private fun Response.buffered(): Response {
-    val bytes = runCatching { body.bytes() }.getOrDefault(ByteArray(0))
+    val bytes = attempt { body.bytes() }.getOrDefault(ByteArray(0))
     return newBuilder().body(bytes.toResponseBody(body.contentType())).build()
 }

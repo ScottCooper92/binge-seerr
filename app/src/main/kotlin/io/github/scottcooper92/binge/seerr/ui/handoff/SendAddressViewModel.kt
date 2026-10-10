@@ -24,6 +24,7 @@ import io.github.scottcooper92.binge.seerr.handoff.addressCandidates
 import io.github.scottcooper92.binge.seerr.handoff.normaliseServerAddress
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
 import kotlinx.coroutines.CoroutineDispatcher
@@ -157,12 +158,11 @@ class SendAddressViewModel
         /** An offer only with a key to seal with and a user's session to share; the name is best-effort. */
         private suspend fun signInOffer(target: TvHandOffTarget): SignInOffer? {
             if (target.key == null || sharedSession() == null) return null
-            return SignInOffer(userName = runCatching { connection.authenticatedUser().displayString() }.getOrNull())
+            return SignInOffer(userName = attempt { connection.authenticatedUser().displayString() }.getOrNull())
         }
 
         /** This phone's session cookie, when it signed in as a user; an API key is never shared. */
-        private suspend fun sharedSession(): String? =
-            (runCatching { connection.current() }.getOrNull()?.auth as? SeerrAuth.Session)?.cookie
+        private suspend fun sharedSession(): String? = (attempt { connection.current() }.getOrNull()?.auth as? SeerrAuth.Session)?.cookie
 
         fun chooseSignIn(chosen: Boolean) =
             _uiState.updateReady {

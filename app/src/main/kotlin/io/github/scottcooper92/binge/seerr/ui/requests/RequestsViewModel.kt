@@ -17,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.data.RequestsRemoteMediator
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
@@ -138,10 +139,10 @@ class RequestsViewModel
                     flow {
                         if (scope.value is ScopeState.Failed) emit(ScopeState.Resolving)
                         emit(
-                            runCatching { connection.refreshAuthenticatedUser() }.fold(
+                            attempt { connection.refreshAuthenticatedUser() }.fold(
                                 onSuccess = { resolved ->
                                     val permissions = resolved.toPermissions()
-                                    val hasBlocklist = runCatching { connection.refreshProfile().hasBlocklist }.getOrDefault(false)
+                                    val hasBlocklist = attempt { connection.refreshProfile().hasBlocklist }.getOrDefault(false)
                                     ScopeState.Resolved(
                                         ListScope(
                                             moderation =
@@ -194,7 +195,7 @@ class RequestsViewModel
                 flow {
                     emit(
                         if (seesEveryRequest) {
-                            runCatching { connection.api().requestCount() }
+                            attempt { connection.api().requestCount() }
                                 .getOrNull()
                                 ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) }
                         } else {

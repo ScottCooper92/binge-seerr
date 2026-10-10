@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
@@ -58,7 +59,7 @@ class DiscoverSlidersViewModel
             viewModelScope.launch {
                 val result =
                     withContext(dispatcher) {
-                        runCatching {
+                        attempt {
                             val response = connection.api().resetDiscoverSliders()
                             if (!response.isSuccessful) throw HttpException(response)
                         }

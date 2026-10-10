@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.issues
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrIssueCommentBody
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -100,9 +101,9 @@ internal class IssueCommentOutbox(
         localId: Long,
         message: String,
     ) {
-        runCatching {
+        attempt {
             val issue = connection.api().commentOnIssue(issueId, SeerrIssueCommentBody(message))
-            val user = runCatching { connection.authenticatedUser() }.getOrNull()
+            val user = attempt { connection.authenticatedUser() }.getOrNull()
             issue to user
         }.onSuccess { (issue, user) ->
             jobs.remove(localId)

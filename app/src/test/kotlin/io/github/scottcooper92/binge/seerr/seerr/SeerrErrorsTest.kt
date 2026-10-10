@@ -2,11 +2,13 @@ package io.github.scottcooper92.binge.seerr.seerr
 
 import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
 import io.grpc.Status
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -83,5 +85,13 @@ class SeerrErrorsTest {
 
         assertEquals(Status.Code.INTERNAL, status.code)
         assertFalse(status.description.orEmpty().contains("abc123"))
+    }
+
+    /** A cancelled scope backs out of [attempt]; any other failure is a result to classify (#1025). */
+    @Test
+    fun `attempt rethrows a cancellation and keeps every other failure`() {
+        val failure = IOException("down")
+        assertEquals(failure, attempt { throw failure }.exceptionOrNull())
+        assertThrows(CancellationException::class.java) { attempt { throw CancellationException("gone") } }
     }
 }

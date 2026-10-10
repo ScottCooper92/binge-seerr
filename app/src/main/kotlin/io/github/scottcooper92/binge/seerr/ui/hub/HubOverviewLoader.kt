@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaBucketDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrQuotaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
@@ -56,9 +57,9 @@ class HubOverviewLoader
         }
 
         suspend fun load(): HubOverview {
-            val api = runCatching { connection.api() }.getOrElse { return HubOverview(loaded = true, userLoad = HubUserLoad.Failed) }
+            val api = attempt { connection.api() }.getOrElse { return HubOverview(loaded = true, userLoad = HubUserLoad.Failed) }
             val profile = connection.profile()
-            val user = runCatching { api.authenticatedUser() }
+            val user = attempt { api.authenticatedUser() }
             val userDto =
                 user.getOrNull()
                     ?: return HubOverview(
@@ -70,25 +71,25 @@ class HubOverviewLoader
             val permissions = userDto.toPermissions()
             return coroutineScope {
                 val quota =
-                    async { runCatching { api.userQuota(userDto.id).toHubQuota() }.getOrNull() }
-                val requests = async { runCatching { api.requestCount() }.getOrNull() }
+                    async { attempt { api.userQuota(userDto.id).toHubQuota() }.getOrNull() }
+                val requests = async { attempt { api.requestCount() }.getOrNull() }
                 val issues =
                     async {
                         if (profile.hasIssues &&
                             profile.hasCounts &&
                             permissions.canSeeIssues
                         ) {
-                            runCatching { api.issueCount().open }.getOrNull()
+                            attempt { api.issueCount().open }.getOrNull()
                         } else {
                             null
                         }
                     }
                 val users =
-                    async { if (permissions.canManageUsers) runCatching { api.userCountProbe().pageInfo.results }.getOrNull() else null }
+                    async { if (permissions.canManageUsers) attempt { api.userCountProbe().pageInfo.results }.getOrNull() else null }
                 val blocklist =
                     async {
                         if (profile.hasBlocklist && permissions.canViewBlocklist) {
-                            runCatching { api.blocklistCountProbe(profile.blocklistPath).pageInfo.results }.getOrNull()
+                            attempt { api.blocklistCountProbe(profile.blocklistPath).pageInfo.results }.getOrNull()
                         } else {
                             null
                         }
@@ -112,11 +113,11 @@ class HubOverviewLoader
         }
 
         /** The pending request count alone, for the badge's refresh on becoming visible. */
-        suspend fun pendingRequestCount(): Int? = runCatching { connection.api().requestCount().pending }.getOrNull()
+        suspend fun pendingRequestCount(): Int? = attempt { connection.api().requestCount().pending }.getOrNull()
 
         /** The first page of processing requests that are actually transferring, newest first, titled. */
         suspend fun activeDownloads(): Result<List<HubDownload>> =
-            runCatching {
+            attempt {
                 val api = connection.api()
                 val page = api.requests(take = ACTIVE_DOWNLOADS_PAGE, filter = FILTER_PROCESSING)
                 coroutineScope {
@@ -136,7 +137,7 @@ class HubOverviewLoader
             if (statuses.isEmpty()) return null
             val totalSize = statuses.sumOf { it.size ?: 0.0 }
             val totalLeft = statuses.sumOf { it.sizeLeft ?: 0.0 }
-            val details = runCatching { api.details(media.mediaType, media.tmdbId) }.getOrNull()
+            val details = attempt { api.details(media.mediaType, media.tmdbId) }.getOrNull()
             return HubDownload(
                 requestId = id,
                 title = details?.displayTitle ?: statuses.firstOrNull()?.title,

@@ -8,6 +8,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toTmdbBackdropUrl
@@ -63,8 +64,8 @@ class BlocklistDetailViewModel
             viewModelScope.launch(dispatcher) {
                 coroutineScope {
                     val api = connection.api()
-                    val webRoot = async { runCatching { connection.current().baseUrl }.getOrDefault("") }
-                    val details = async { runCatching { api.details(item.mediaType.seerrMediaType(), item.tmdbId) }.getOrNull() }
+                    val webRoot = async { attempt { connection.current().baseUrl }.getOrDefault("") }
+                    val details = async { attempt { api.details(item.mediaType.seerrMediaType(), item.tmdbId) }.getOrNull() }
                     val resolvedDetails = details.await()
                     state.update {
                         it.copy(
@@ -83,7 +84,7 @@ class BlocklistDetailViewModel
             crashBreadcrumbs.key("tmdb_id", item.tmdbId.toString())
             crashBreadcrumbs.log("removing from blocklist")
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection.api().removeFromBlocklist(
                         connection.profile().blocklistPath,
                         item.tmdbId,

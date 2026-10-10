@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.ui.DeepLinks
 import java.net.URI
 import java.net.URISyntaxException
@@ -106,7 +107,7 @@ internal object TvHandOffLinks {
             }
         if (!uri.scheme.equals(DeepLinks.SCHEME, ignoreCase = true) || uri.host != HOST) return null
         val query =
-            runCatching {
+            attempt {
                 uri.rawQuery
                     ?.split('&')
                     ?.associate { it.substringBefore('=') to URLDecoder.decode(it.substringAfter('=', ""), StandardCharsets.UTF_8.name()) }

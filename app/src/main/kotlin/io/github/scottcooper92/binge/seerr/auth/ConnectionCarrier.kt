@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.auth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -104,7 +105,7 @@ internal fun encodeCarriedConnection(carried: CarriedCredentials): ByteArray {
  */
 internal fun decodeCarriedConnection(bytes: ByteArray): CarriedCredentials? {
     val carried =
-        runCatching { carrierJson.decodeFromString<CarriedConnection>(bytes.toString(Charsets.UTF_8)) }.getOrNull()
+        attempt { carrierJson.decodeFromString<CarriedConnection>(bytes.toString(Charsets.UTF_8)) }.getOrNull()
             ?: return null
     if (carried.baseUrl.isBlank() || carried.secret.isBlank()) return null
     val auth =
@@ -113,6 +114,6 @@ internal fun decodeCarriedConnection(bytes: ByteArray): CarriedCredentials? {
             KIND_SESSION -> carried.userId?.let { SeerrAuth.Session(carried.secret, it, shared = carried.shared) }
             else -> null
         } ?: return null
-    val variant = carried.variant?.let { name -> runCatching { SeerrVariant.valueOf(name) }.getOrNull() } ?: SeerrVariant.Unknown
+    val variant = carried.variant?.let { name -> attempt { SeerrVariant.valueOf(name) }.getOrNull() } ?: SeerrVariant.Unknown
     return CarriedCredentials(SeerrCredentials(carried.baseUrl, auth, variant), carried.cleartext)
 }

@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import java.util.Locale
 
 /**
@@ -132,7 +133,7 @@ internal object Regions {
     const val ALL = "all"
 
     fun name(code: String): String =
-        runCatching {
+        attempt {
             Locale
                 .Builder()
                 .setRegion(code)

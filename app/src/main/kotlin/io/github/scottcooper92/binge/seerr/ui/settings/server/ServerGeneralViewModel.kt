@@ -121,7 +121,7 @@ class ServerGeneralViewModel
             if (currentExtras().apiKey.regenerating) return
             editExtras { it.copy(apiKey = it.apiKey.copy(regenerating = true)) }
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection
                         .api()
                         .regenerateApiKey()

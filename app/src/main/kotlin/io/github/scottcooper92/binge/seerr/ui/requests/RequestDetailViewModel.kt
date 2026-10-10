@@ -16,6 +16,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestDto
 import io.github.scottcooper92.binge.seerr.seerr.arrServer
 import io.github.scottcooper92.binge.seerr.seerr.arrServers
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -104,7 +105,7 @@ class RequestDetailViewModel
             }
             viewModelScope.launch(dispatcher) {
                 seedFromCache()
-                val result = runCatching { load() }
+                val result = attempt { load() }
                 state.update { current ->
                     result.fold(
                         { RequestDetailUiState.Ready(it) },
@@ -122,7 +123,7 @@ class RequestDetailViewModel
         /** Shows the cached row's hero in place of the skeleton, if a list has the request and nothing has landed yet. */
         private suspend fun seedFromCache() {
             if (state.value !is RequestDetailUiState.Loading) return
-            val item = runCatching { cache.byId(requestId)?.toRequestItem() }.getOrNull() ?: return
+            val item = attempt { cache.byId(requestId)?.toRequestItem() }.getOrNull() ?: return
             state.update { current -> if (current is RequestDetailUiState.Loading) RequestDetailUiState.Seeded(item) else current }
         }
 
@@ -144,7 +145,7 @@ class RequestDetailViewModel
             crashBreadcrumbs.log("reporting issue on request")
             viewModelScope.launch(dispatcher) {
                 val outcome =
-                    runCatching { connection.api().createIssue(SeerrCreateIssueBody(mediaId, type.code, message.trim())) }
+                    attempt { connection.api().createIssue(SeerrCreateIssueBody(mediaId, type.code, message.trim())) }
                         .fold({ IssueReport.Sent }, { IssueReport.Failed(it.toSeerrError()) })
                 if (outcome is IssueReport.Sent) analytics.event(AnalyticsEvents.ISSUE_REPORTED)
                 state.update { current -> (current as? RequestDetailUiState.Ready)?.copy(report = outcome) ?: current }
@@ -179,16 +180,16 @@ class RequestDetailViewModel
             coroutineScope {
                 val api = connection.api()
                 val profile = async { connection.profile() }
-                val user = async { runCatching { connection.authenticatedUser() }.getOrNull() }
+                val user = async { attempt { connection.authenticatedUser() }.getOrNull() }
                 val permissions = async { user.await().toPermissions() }
                 val dto = api.request(requestId)
-                val details = async { runCatching { api.details(dto.media.mediaType, dto.media.tmdbId) }.getOrNull() }
+                val details = async { attempt { api.details(dto.media.mediaType, dto.media.tmdbId) }.getOrNull() }
                 val destination = async { dto.destination(api) }
                 val watch =
                     async {
                         val mediaId = dto.media.id
                         if (mediaId != null && permissions.await().isAdmin && profile.await().hasWatchData) {
-                            runCatching { api.watchData(mediaId) }.getOrNull()
+                            attempt { api.watchData(mediaId) }.getOrNull()
                         } else {
                             null
                         }
@@ -212,8 +213,8 @@ class RequestDetailViewModel
             // Not `isTv`: this page reads anything that is not a film as a series, which is a
             // different answer from the picker's for a media type that is neither.
             val notMovie = media.mediaType != SEERR_MEDIA_TYPE_MOVIE
-            val servers = runCatching { api.arrServers(notMovie) }.getOrNull()
-            val details = runCatching { api.arrServer(notMovie, serverId) }.getOrNull()
+            val servers = attempt { api.arrServers(notMovie) }.getOrNull()
+            val details = attempt { api.arrServer(notMovie, serverId) }.getOrNull()
             return RequestDestination(
                 serverName = servers?.firstOrNull { it.id == serverId }?.name ?: details?.server?.name,
                 profileName = details?.profiles?.firstOrNull { it.id == profileId }?.name,

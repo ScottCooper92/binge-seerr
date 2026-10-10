@@ -102,7 +102,7 @@ class NotificationAgentViewModel
             crashBreadcrumbs.log("testing ${agent.segment} notification agent")
             viewModelScope.launch(dispatcher) {
                 val outcome =
-                    runCatching {
+                    attempt {
                         val response = connection.api().testNotificationAgent(agent.segment, draft.toDto())
                         if (!response.isSuccessful) throw HttpException(response)
                     }

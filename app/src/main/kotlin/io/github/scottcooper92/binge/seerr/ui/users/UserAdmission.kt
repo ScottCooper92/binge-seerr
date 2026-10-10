@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrImportJellyfinBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrImportPlexBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJellyfinUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPlexUserDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +65,7 @@ class UserAdmission(
         if (creating.saving || !draft.valid) return
         stateFlow.value = creating.copy(saving = true)
         scope.launch(dispatcher) {
-            runCatching {
+            attempt {
                 val body =
                     SeerrCreateUserBody(
                         email = draft.email.trim(),
@@ -87,7 +88,7 @@ class UserAdmission(
         stateFlow.value = UserAdmissionState.Importing(ImportPicker(source))
         scope.launch(dispatcher) {
             val candidates =
-                runCatching {
+                attempt {
                     val api = connection.api()
                     when (source) {
                         UserOrigin.Plex -> api.plexUsers().map { it.toCandidate() }
@@ -136,7 +137,7 @@ class UserAdmission(
         if (importing.saving || ids.isEmpty()) return
         stateFlow.value = importing.copy(saving = true)
         scope.launch(dispatcher) {
-            runCatching {
+            attempt {
                 val api = connection.api()
                 when (importing.picker.source) {
                     UserOrigin.Plex -> api.importFromPlex(SeerrImportPlexBody(ids)).createdCount()

@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationScheduler
 import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 import io.github.scottcooper92.binge.seerr.notifications.SeerrNotifier
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -128,19 +129,19 @@ class SettingsViewModel
         private suspend fun seeded(): SettingsReadCache =
             cache.also {
                 it.adopt(
-                    runCatching { connection.current().let { it.baseUrl to it.auth } }.getOrNull(),
+                    attempt { connection.current().let { it.baseUrl to it.auth } }.getOrNull(),
                 )
             }
 
         private val summary: Flow<ConnectionSummary?> =
             viewerRefreshed
-                .flatMapLatest { flow { emit(runCatching { loader.connection() }.getOrNull()) } }
+                .flatMapLatest { flow { emit(attempt { loader.connection() }.getOrNull()) } }
                 .onEach { if (it != null) cache.summary = it }
                 .onStart { emit(seeded().summary) }
 
         private val server: Flow<ServerSummary?> =
             fetchTrigger
-                .flatMapLatest { flow { emit(runCatching { loader.server() }.getOrNull()) } }
+                .flatMapLatest { flow { emit(attempt { loader.server() }.getOrNull()) } }
                 .onEach { if (it != null) cache.server = it }
                 .onStart { emit(seeded().server) }
 
