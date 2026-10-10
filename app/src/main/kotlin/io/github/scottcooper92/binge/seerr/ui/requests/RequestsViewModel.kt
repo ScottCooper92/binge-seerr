@@ -21,8 +21,11 @@ import io.github.scottcooper92.binge.seerr.seerr.TitleCache
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.Ticker
+import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +39,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -76,6 +80,7 @@ class RequestsViewModel
         private val titles: TitleCache,
         private val store: RequestStore,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
         private val selectedFilter = MutableStateFlow(RequestFilter.All)
         private val selectedSort = MutableStateFlow(RequestSort.Added)
@@ -85,6 +90,12 @@ class RequestsViewModel
         /** A `request/count` read is running, so a pull leaves it to finish rather than restarting it (#1193). */
         private val countsInFlight = AtomicBoolean(false)
         private val listVersionState = MutableStateFlow(0)
+
+        internal var clock: () -> Long = System::currentTimeMillis
+
+        /** The rows' "2 minutes ago" is worded against this, moved on each minute while the list shows (#1239). */
+        private val now = MutableStateFlow(clock())
+        private var ticker: Job? = null
 
         /**
          * The version each filter's list last refreshed at: a filter refreshes once while it trails
@@ -220,7 +231,8 @@ class RequestsViewModel
                             refreshes = refreshes,
                         )
                 }
-            }.stateIn(viewModelScope, SharingStarted.Lazily, RequestsUiState.Loading)
+            }.combine(now) { state, now -> (state as? RequestsUiState.Ready)?.copy(now = now) ?: state }
+                .stateIn(viewModelScope, SharingStarted.Lazily, RequestsUiState.Loading)
 
         fun setFilter(filter: RequestFilter) {
             selectedFilter.value = filter
@@ -240,8 +252,13 @@ class RequestsViewModel
             if (!countsInFlight.get()) countsRefresh.value++
         }
 
-        /** The counts and the scope are low-velocity: refetched on entry, never polled. */
+        /** The counts and the scope are low-velocity: refetched on entry, never polled. The rows' clock runs only while shown. */
         fun setScreenVisible(visible: Boolean) {
-            if (visible) refreshTrigger.value++
+            ticker?.cancel()
+            ticker = null
+            if (visible) {
+                refreshTrigger.value++
+                ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
+            }
         }
     }

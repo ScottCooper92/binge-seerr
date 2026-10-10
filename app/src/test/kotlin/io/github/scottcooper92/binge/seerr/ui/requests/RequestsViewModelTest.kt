@@ -10,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
@@ -18,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -107,7 +109,13 @@ class RequestsViewModelTest {
         }
     }
 
-    private suspend fun TestScope.viewModel(): RequestsViewModel {
+    /** The rows' clock read once and never again, so a virtual clock does not spin its minute loop (#337). */
+    private val boundedTicker =
+        object : Ticker() {
+            override suspend fun await(millis: Long) = awaitCancellation()
+        }
+
+    private suspend fun TestScope.viewModel(ticker: Ticker = boundedTicker): RequestsViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -118,7 +126,7 @@ class RequestsViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
-        val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher)
+        val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher, ticker)
         viewModels.put("requests", vm)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.setScreenVisible(true)
@@ -127,6 +135,29 @@ class RequestsViewModelTest {
 
     private suspend fun RequestsViewModel.awaitReady(match: (RequestsUiState.Ready) -> Boolean): RequestsUiState.Ready =
         uiState.first { it is RequestsUiState.Ready && match(it) } as RequestsUiState.Ready
+
+    /** #1239: the rows' "2 minutes ago" ages while the list shows, and the clock stops when it leaves. */
+    @Test
+    fun `the rows' clock moves on each minute while the list is showing, and stops when it leaves`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel(ticker = Ticker())
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            // The helper showed the list before the clock was set; showing it again reads the new clock at once.
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.awaitReady { it.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, (vm.uiState.value as RequestsUiState.Ready).now)
+        }
 
     @Test
     fun `a moderator sees everyone's requests with the chip counts, and the sort re-queries`() =
@@ -305,7 +336,8 @@ class RequestsViewModelTest {
             // Fail only the ViewModel's own resolve, not the connect() probe above.
             authShouldFail.set(true)
             val probes = authReads()
-            val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher)
+            val vm =
+                RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher, boundedTicker)
             viewModels.put("requests", vm)
             // Every emission, not the current value: Loading is also stateIn's seed, so sampling
             // uiState cannot tell "held at Loading" apart from "has not propagated yet".
@@ -346,7 +378,8 @@ class RequestsViewModelTest {
                 }
             }
             val connection = connectedWhile(authStatus)
-            val vm = RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher)
+            val vm =
+                RequestsViewModel(connection, TitleCache(FakeTitleDao()), FakeRequestStore(), mainDispatcherRule.dispatcher, boundedTicker)
             viewModels.put("requests", vm)
             backgroundScope.launch { vm.uiState.collect {} }
             vm.setScreenVisible(true)
