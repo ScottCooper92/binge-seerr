@@ -31,6 +31,8 @@ app:blocklist_unblock  712da63171e0
 app:blocklist_unblock_confirm_message  b3fbbba0b9a2
 app:blocklist_unblock_confirm_title  fa537450834b
 app:blocklist_untitled  b588b8ee4230
+app:companion_refusal_blocklisted  1ef35782e4e3
+app:companion_refusal_quota  2d262170429f
 app:connected_hint  6e5fa3c2df6a
 app:consent_accept  30b4f3d19026
 app:consent_decline  a0e63d7c7125

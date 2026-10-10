@@ -1254,4 +1254,6 @@
     <string name="editor_create">Crear</string>
     <string name="editor_test_and_save">Probar y guardar</string>
     <string name="user_settings_password_change">Cambiar contraseña</string>
+    <string name="companion_refusal_quota">Has alcanzado tu límite de peticiones en este servidor. Vuelve a intentarlo cuando se renueve.</string>
+    <string name="companion_refusal_blocklisted">Este título está en la lista de bloqueo del servidor, así que no se puede pedir.</string>
 </resources>

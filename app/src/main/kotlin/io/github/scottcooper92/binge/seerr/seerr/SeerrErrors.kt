@@ -102,6 +102,7 @@ fun Throwable.toStatusException(): StatusException =
         is StatusException -> this
         is NotConnectedException -> StatusException(Status.UNAUTHENTICATED.withDescription(message))
         is NothingLeftToRequestException -> StatusException(Status.FAILED_PRECONDITION.withDescription(NOTHING_LEFT_TO_REQUEST))
+        is BlocklistedTitleException -> StatusException(Status.FAILED_PRECONDITION.withDescription(BLOCKLISTED))
         is HttpException -> StatusException(httpStatus().withDescription("Seerr answered HTTP ${code()}"))
         is IOException -> StatusException(Status.UNAVAILABLE.withDescription("Seerr could not be reached").withCause(this))
         is SerializationException -> StatusException(Status.UNAVAILABLE.withDescription(UNREADABLE).withCause(this))
@@ -151,6 +152,37 @@ internal fun HttpException.peekedBody(): String =
  */
 private fun HttpException.mentionsBlocklisted(): Boolean = peekedBody().contains("blocklisted", ignoreCase = true)
 
+/**
+ * A refusal the user can act on, so the host may show them a sentence for it rather than its own copy for the code
+ * (binge-companions#132). [reason] is the machine half, the `ErrorInfo.reason` beside the sentence.
+ */
+enum class UserFacingRefusal(
+    val reason: String,
+) {
+    /** RESOURCE_EXHAUSTED: the user's request quota on the server is spent. */
+    QuotaSpent("QUOTA_EXCEEDED"),
+
+    /** FAILED_PRECONDITION: the title is on the server's blocklist. */
+    Blocklisted("TITLE_BLOCKLISTED"),
+}
+
+/** A title this app already knows is blocklisted, refused before Seerr is asked: FAILED_PRECONDITION, as Seerr's own refusal is. */
+class BlocklistedTitleException : IllegalStateException(BLOCKLISTED)
+
+/**
+ * Whether [this] failure, already classified as [code], is a refusal the user can act on, which the exported Service
+ * gives a sentence (binge-companions#132). Only Seerr's quota 403 is RESOURCE_EXHAUSTED. A FAILED_PRECONDITION has
+ * several causes, so only the two blocklist refusals count: Seerr's 403, and this app's own up-front check.
+ */
+internal fun Throwable.userFacingRefusal(code: Status.Code): UserFacingRefusal? =
+    when {
+        code == Status.Code.RESOURCE_EXHAUSTED -> UserFacingRefusal.QuotaSpent
+        code != Status.Code.FAILED_PRECONDITION -> null
+        this is BlocklistedTitleException -> UserFacingRefusal.Blocklisted
+        this is HttpException && code() == HTTP_FORBIDDEN && mentionsBlocklisted() -> UserFacingRefusal.Blocklisted
+        else -> null
+    }
+
 /** Seerr's only signal for a quota breach is the word in its 403 body. */
 private fun HttpException.mentionsQuota(): Boolean = peekedBody().namesQuota()
 
@@ -186,4 +218,5 @@ internal inline fun <T> attempt(block: () -> T): Result<T> =
 
 private const val UNREADABLE = "Seerr returned something this companion could not read"
 private const val UNHANDLED = "The companion failed to handle this request"
+private const val BLOCKLISTED = "The title is blocklisted"
 private const val NOTHING_LEFT_TO_REQUEST = "Seerr has nothing left to request for those seasons"

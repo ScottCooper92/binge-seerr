@@ -48,6 +48,7 @@ import com.binge.companion.contracts.request.v1.UnblockTitleResponse
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.sdk.handshakeResponse
 import com.binge.companion.sdk.requireDeclared
+import com.binge.companion.sdk.withUserMessage
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.NotConnectedException
@@ -57,6 +58,7 @@ import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoRequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestStore
+import io.github.scottcooper92.binge.seerr.seerr.BlocklistedTitleException
 import io.github.scottcooper92.binge.seerr.seerr.HTTP_ACCEPTED
 import io.github.scottcooper92.binge.seerr.seerr.HTTP_CONFLICT
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
@@ -90,6 +92,7 @@ import io.github.scottcooper92.binge.seerr.seerr.toRequestStatus
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toStatusException
 import io.github.scottcooper92.binge.seerr.seerr.updateRequest
+import io.github.scottcooper92.binge.seerr.seerr.userFacingRefusal
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
@@ -131,6 +134,7 @@ class SeerrRequestService(
     private val bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
     private val analytics: Analytics = NoOpAnalytics,
     private val requestCache: RequestStore = NoRequestStore,
+    private val userMessages: UserMessages = UserMessages.None,
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
 
@@ -430,7 +434,7 @@ class SeerrRequestService(
      */
     private suspend fun refuseIfKnownBlocklisted(media: MediaId) {
         if (cachedStatus(media)?.status?.availability == Availability.AVAILABILITY_BLOCKLISTED) {
-            throw StatusException(Status.FAILED_PRECONDITION.withDescription("The title is blocklisted"))
+            throw BlocklistedTitleException()
         }
     }
 
@@ -623,6 +627,9 @@ class SeerrRequestService(
      *
      * An `observe*` poll goes through it per tick, and a failure ends the stream, so a failing server
      * is reported once per stream rather than once per tick.
+     *
+     * A refusal the user can act on (a spent quota, a blocklisted title) also carries a sentence for them, in the
+     * contract's rich error model (binge-companions#132). The code and description are the same either way.
      */
     @Suppress("TooGenericExceptionCaught")
     private suspend fun <T> reportingFailure(
@@ -636,9 +643,15 @@ class SeerrRequestService(
                 throw e
             } catch (e: Exception) {
                 analytics.operationFailed(operation, e, connection)
-                throw e.toStatusException()
+                throw e.toStatusException().withSentenceFor(e)
             }
         }
+
+    private fun StatusException.withSentenceFor(cause: Throwable): StatusException {
+        val refusal = cause.userFacingRefusal(status.code) ?: return this
+        val sentence = userMessages.sentence(refusal) ?: return this
+        return status.withUserMessage(refusal.reason, sentence.message, sentence.locale)
+    }
 
     private suspend fun declared(): Set<Capability> = permissions().toCapabilities(connection.profile())
 
