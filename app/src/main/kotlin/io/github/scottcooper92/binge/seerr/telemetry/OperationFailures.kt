@@ -25,8 +25,8 @@ private const val UNKNOWN = "unknown"
  * before the server was asked). What remains is an HTTP answer the server chose to give, and an
  * unclassified failure, which is usually a body this app could not read.
  *
- * A dead session is whatever [toSeerrError] reads as [SeerrError.Unauthorized]: a 401, or a 403
- * `SeerrSessionInterceptor` marked after `auth/me` refused the same credentials. On Seerr an expired
+ * A dead session is whatever [toSeerrError] reads as [SeerrError.Unauthorized]: a 401 or a 403 that
+ * `SeerrSessionInterceptor` confirmed, because `auth/me` refused the same credentials (#1165). On Seerr an expired
  * sign-in arrives as that marked 403, so skipping only a 401 would report it (#689). An unmarked 403
  * is a permission refusal and is still sent.
  *
