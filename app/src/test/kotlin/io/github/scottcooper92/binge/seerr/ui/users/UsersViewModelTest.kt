@@ -462,23 +462,17 @@ class UsersViewModelTest {
         }
 
     @Test
-    fun `a permission toggled on and back off is untouched again, so the user who had it keeps it`() =
+    fun `a mixed permission cycled on, off and back is untouched again, so the user who had it keeps it`() =
         runTest {
-            serveIdaAndJoWhoDiffer()
-            val vm = viewModel()
-            vm.awaitReady()
-            vm.users.asSnapshot()
-            vm.toggleSelected(10)
-            vm.toggleSelected(11)
-            vm.awaitReady { it.selection == setOf(10, 11) }
-            vm.startBulkEdit()
-            vm.awaitReady { it.edit?.saving == false }
+            val vm = bulkEditIdaAndJo()
 
-            // Manage issues is Jo's alone, so it opens unticked: ticked and then unticked, the sheet is where it began.
+            // Manage issues is Jo's alone, so it opens as each user has it: three taps go round to there again (#1100).
             vm.togglePermission(ManageablePermission.ManageIssues)
             vm.awaitReady { ManageablePermission.ManageIssues in it.edit?.selected.orEmpty() }
             vm.togglePermission(ManageablePermission.ManageIssues)
-            val back = vm.awaitReady { ManageablePermission.ManageIssues !in it.edit?.selected.orEmpty() }
+            vm.awaitReady { ManageablePermission.ManageIssues !in it.edit?.selected.orEmpty() }
+            vm.togglePermission(ManageablePermission.ManageIssues)
+            val back = vm.awaitReady { ManageablePermission.ManageIssues in it.edit?.undecided.orEmpty() }
             assertEquals(emptySet<ManageablePermission>(), back.edit?.touched)
             val permissionsSaved = awaitEvent(vm.events)
             vm.applyBulkEdit()
@@ -488,6 +482,40 @@ class UsersViewModelTest {
             val jo = ManageablePermission.decode(cache.rows.first { it.id == 11 }.permissions)
             assertTrue(ManageablePermission.ManageIssues in jo)
         }
+
+    @Test
+    fun `a mixed permission set off for everyone is taken from the users who had it, and no one else is written`() =
+        runTest {
+            val vm = bulkEditIdaAndJo()
+
+            // On for everyone, then off for everyone (#1100).
+            vm.togglePermission(ManageablePermission.ManageIssues)
+            vm.awaitReady { ManageablePermission.ManageIssues in it.edit?.selected.orEmpty() }
+            vm.togglePermission(ManageablePermission.ManageIssues)
+            val off = vm.awaitReady { ManageablePermission.ManageIssues !in it.edit?.selected.orEmpty() }
+            assertEquals(setOf(ManageablePermission.ManageIssues), off.edit?.touched)
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            assertEquals(UsersEvent.PermissionsSaved(2), permissionsSaved.await())
+            val put = received.single { it.method == "PUT" }.body
+            assertTrue(put, put.contains("\"ids\":[11]"))
+            assertTrue(put, put.contains("\"permissions\":${ManageablePermission.Request.bit}"))
+        }
+
+    /** Ida and Jo selected and the bulk sheet open, settled. */
+    private suspend fun TestScope.bulkEditIdaAndJo(): UsersViewModel {
+        serveIdaAndJoWhoDiffer()
+        val vm = viewModel()
+        vm.awaitReady()
+        vm.users.asSnapshot()
+        vm.toggleSelected(10)
+        vm.toggleSelected(11)
+        vm.awaitReady { it.selection == setOf(10, 11) }
+        vm.startBulkEdit()
+        vm.awaitReady { it.edit?.saving == false }
+        return vm
+    }
 
     /**
      * The viewer is Scott (7), an admin who is not the owner. The list holds the owner (1), another admin (12) and Bo (13),
