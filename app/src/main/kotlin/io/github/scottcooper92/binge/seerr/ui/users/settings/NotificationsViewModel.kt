@@ -137,7 +137,7 @@ internal fun NotificationSettings.toDto(): SeerrUserNotificationSettingsDto {
         emailEnabled = agent(NotificationAgent.Email).enabled,
         pgpKey = sent(AgentField.PgpKey),
         discordEnabled = agent(NotificationAgent.Discord).enabled,
-        discordId = ids.firstOrNull(),
+        discordId = ids.firstOrNull().orEmpty(),
         discordIds = ids,
         pushbulletAccessToken = sent(AgentField.PushbulletToken),
         pushoverApplicationToken = sent(AgentField.PushoverAppToken),

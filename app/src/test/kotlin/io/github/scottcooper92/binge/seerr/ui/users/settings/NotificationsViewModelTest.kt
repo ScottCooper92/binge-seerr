@@ -139,6 +139,21 @@ class NotificationsViewModelTest {
             assertEquals("", sent.getValue("pushbulletAccessToken").jsonPrimitive.content)
         }
 
+    /** A single-id server reads `discordId` only, so a cleared one goes out as "" rather than a missing key (#1020). */
+    @Test
+    fun `clearing the Discord id on a single-id server sends it empty, so the server clears it`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(discordIds = listOf("")) }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
+            assertEquals("", sent.getValue("discordId").jsonPrimitive.content)
+        }
+
     @Test
     fun `a Discord id that is not digits is never written`() =
         runTest {
