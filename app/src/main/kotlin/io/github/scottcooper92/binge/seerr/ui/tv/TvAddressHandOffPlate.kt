@@ -1,7 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
-import android.graphics.Bitmap
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -14,40 +12,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.binge.designsystem.theme.BingeShapes
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.EncodeHintType
-import com.google.zxing.qrcode.QRCodeWriter
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import com.binge.designsystem.tv.component.TvQrCode
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
 
-/** The four-module quiet zone the QR specification asks for around a code. */
-private const val QR_QUIET_ZONE = 4
-
 /** How much of the room the card leaves it the code takes: a little under all of it, so it sits in the card rather than against it. */
 private const val QR_FILL = 0.6f
-private const val QR_DARK = 0xFF000000.toInt()
-private const val QR_LIGHT = 0xFFFFFFFF.toInt()
 
 /** The pane's content: the code, or why there is none. */
 @Composable
@@ -92,7 +76,12 @@ private fun TvHandOffCodeCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            TvQrCode(scanUrl, qrSize)
+            // The design system's code: drawn at display size, black on a white plate that is its own quiet zone.
+            TvQrCode(
+                content = scanUrl,
+                contentDescription = stringResource(R.string.tv_handoff_code_description),
+                modifier = Modifier.size(qrSize),
+            )
             // The PIN the phone asks for before it does anything with the code (#803): read across the room, so large and
             // spaced, and announced as the PIN rather than a number.
             pin?.let { digits ->
@@ -127,26 +116,3 @@ private fun AddressHandOff.Reason.messageRes(): Int =
         AddressHandOff.Reason.NoLocalNetwork -> R.string.tv_handoff_no_network
         AddressHandOff.Reason.CouldNotListen -> R.string.tv_handoff_could_not_listen
     }
-
-/** The code itself: dark on light whatever the theme, because that is what a phone's camera reads. */
-@Composable
-private fun TvQrCode(
-    text: String,
-    size: Dp,
-) {
-    val image = remember(text) { qrImage(text) }
-    Image(
-        bitmap = image,
-        contentDescription = stringResource(R.string.tv_handoff_code_description),
-        filterQuality = FilterQuality.None,
-        modifier = Modifier.size(size),
-    )
-}
-
-/** [text] as a QR code, one pixel per module with its quiet zone; the Image scales it up without smoothing. */
-internal fun qrImage(text: String): ImageBitmap {
-    val hints = mapOf(EncodeHintType.MARGIN to QR_QUIET_ZONE, EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M)
-    val matrix = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, 0, 0, hints)
-    val pixels = IntArray(matrix.width * matrix.height) { i -> if (matrix[i % matrix.width, i / matrix.width]) QR_DARK else QR_LIGHT }
-    return Bitmap.createBitmap(pixels, matrix.width, matrix.height, Bitmap.Config.ARGB_8888).asImageBitmap()
-}
