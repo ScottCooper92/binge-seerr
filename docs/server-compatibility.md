@@ -133,6 +133,11 @@ keeps `/blacklist` as an alias. The profile picks the path by version, and the R
 `MANAGE_BLOCKLIST`. Declaring it against an Overseerr server would offer Binge an action the
 server answers with a `404`.
 
+Removing a title the list does not hold is answered differently too. Seerr 3.x answers `404`.
+Jellyseerr 2.x's `/blacklist` answers `401`, although the session is fine. The app asks `auth/me`
+about every `401`, so this one is not read as a dead session, and `UnblockTitle` answers
+`NOT_FOUND` on both lineages.
+
 The General page's automatic blocklist settings were renamed the same way. Jellyseerr 2.6 sends
 `hideBlacklisted`, `blacklistedTags` and `blacklistedTagsLimit`. Seerr 3.x sends `hideBlocklisted`,
 `blocklistedTags` and `blocklistedTagsLimit`, and later added `blocklistRegion` and

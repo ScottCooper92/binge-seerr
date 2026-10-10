@@ -203,7 +203,9 @@ class RequestModerationTest {
             assertEquals("DELETE", received.first { it.url.encodedPath == "/api/v1/request/11" }.method)
             assertEquals(1, moderated)
 
+            // An expired sign-in: auth/me refuses the interceptor's probe too, so the 401 is the session (#997).
             codes["/api/v1/request/12/approve"] = 401
+            codes["/api/v1/auth/me"] = 401
             val failed = awaitEvent(sut.events)
             sut.approve(12)
             assertEquals(ModerationEvent.Failed(SeerrError.Unauthorized), failed.await())

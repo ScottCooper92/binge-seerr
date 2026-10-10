@@ -95,6 +95,8 @@ class TvHomeViewModelTest {
             vm.uiState.first { it == TvHomeUiState.Connected }
 
             server.enqueue(MockResponse(code = 401))
+            // The interceptor's own probe: auth/me refuses too, so the 401 is the session (#997).
+            server.enqueue(MockResponse(code = 401))
             runCatching { connection.api().requests(take = 1) }
             server.enqueue(MockResponse(code = 401))
             vm.uiState.first { it == TvHomeUiState.Reconnect }

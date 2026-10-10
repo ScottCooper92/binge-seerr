@@ -140,6 +140,8 @@ class HomeViewModelTest {
                 withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Connected } }
 
                 server.enqueue(MockResponse(code = 401))
+                // The interceptor's own probe: auth/me refuses too, so the 401 is the session (#997).
+                server.enqueue(MockResponse(code = 401))
                 runCatching { connection.api().requests(take = 1) }
                 server.enqueue(MockResponse(code = 401))
                 withContext(Dispatchers.Default) { vm.uiState.first { it == HomeUiState.Reconnect } }
