@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import com.binge.designsystem.tv.nav.LocalTvContentInset
+import com.binge.designsystem.tv.nav.TV_SHELL_CONTENT_SETTLE_MILLIS
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
 import org.junit.Rule
@@ -29,7 +30,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-private const val PAST_SETTLE_MILLIS = CONTENT_SETTLE_MILLIS + 100L
+private const val PAST_SETTLE_MILLIS = TV_SHELL_CONTENT_SETTLE_MILLIS + 100L
 
 /** The account sits above Home at the top of the rail, so Home is its second item. */
 private const val HOME_RAIL_INDEX = 1
