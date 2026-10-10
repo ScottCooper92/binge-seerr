@@ -63,6 +63,11 @@ internal fun TvFormPage(
     pinnedCentered: Boolean = false,
     /** Where the remote lands when it moves into [pinnedAction] from above: the form's commit, not whatever is nearest. */
     pinnedEntry: FocusRequester? = null,
+    /**
+     * A control held at the top of the form's column, above what scrolls, such as the sign-in step's mode tabs (#1302).
+     * The form then starts under it rather than at the column's top inset, so it has that height for its fields and notes.
+     */
+    formHeader: (@Composable () -> Unit)? = null,
     form: @Composable ColumnScope.() -> Unit,
 ) {
     if (!buttonBar) {
@@ -96,24 +101,48 @@ internal fun TvFormPage(
                 TvTwoPaneCopy(headline = headline, body = body, illustration = icon, note = note, alignment = Alignment.CenterHorizontally)
             },
             action =
-                if (actionScrolls) {
-                    {
-                        Column(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
-                                    .padding(top = dimensionResource(R.dimen.tv_form_top_inset)),
-                            verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
-                            content = form,
-                        )
+                when {
+                    formHeader != null -> {
+                        { TvHeldHeaderForm(formHeader, form) }
                     }
-                } else {
-                    form
+                    actionScrolls -> {
+                        {
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState())
+                                        .padding(top = dimensionResource(R.dimen.tv_form_top_inset)),
+                                verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
+                                content = form,
+                            )
+                        }
+                    }
+                    else -> form
                 },
         )
         TvFormButtonBar(copyAction = copyAction, pinnedAction = pinnedAction, pinnedCentered = pinnedCentered, pinnedEntry = pinnedEntry)
     }
+}
+
+/** [header] at the column's top, where it stays, and [form] scrolling in the height under it. */
+@Composable
+private fun ColumnScope.TvHeldHeaderForm(
+    header: @Composable () -> Unit,
+    form: @Composable ColumnScope.() -> Unit,
+) {
+    val gap = dimensionResource(TvR.dimen.tv_two_pane_action_gap)
+    header()
+    Column(
+        modifier =
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(top = gap),
+        verticalArrangement = Arrangement.spacedBy(gap),
+        content = form,
+    )
 }
 
 /**

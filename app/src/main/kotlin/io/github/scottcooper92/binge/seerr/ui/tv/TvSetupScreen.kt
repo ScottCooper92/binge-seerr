@@ -138,7 +138,8 @@ private fun TvSetupSignInStep(
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
     val commit = remember { FocusRequester() }
-    val canSignIn = state.form.canSubmit && !state.isConnecting && state.link == null
+    val canCommit =
+        !state.isConnecting && state.link == null && if (state.resetting) state.form.canRequestReset else state.form.canSubmit
     TvFormPage(
         headline = state.server.title,
         // The code page's copy, so stepping between it and this form moves nothing on the left.
@@ -146,68 +147,81 @@ private fun TvSetupSignInStep(
         icon = Icons.Filled.Lock,
         modifier = modifier,
         buttonBar = true,
-        // Down from the fields lands on Sign in while it can be pressed, and on Change server while it can't.
-        pinnedEntry = commit.takeIf { canSignIn && offered.isNotEmpty() },
+        // Down from the fields lands on the commit while it can be pressed, and on Change server while it can't.
+        pinnedEntry = commit.takeIf { canCommit && offered.isNotEmpty() },
         pinnedAction = {
-            TvSignInButtons(state, actions, offered.isNotEmpty(), canSignIn, commit, arrival.takeIf { offered.isEmpty() }, initialFocus)
+            TvSignInButtons(state, actions, offered.isNotEmpty(), canCommit, commit, arrival.takeIf { offered.isEmpty() }, initialFocus)
         },
         // Back to the code page, where a phone can finish this.
         copyAction = { TvButton(label = stringResource(R.string.tv_setup_send_from_phone), onClick = onScan) },
+        // Held at the top of the column, so the fields and notes under them have its height (#1302).
+        formHeader =
+            if (offered.isEmpty()) {
+                null
+            } else {
+                {
+                    TvTabs(
+                        choices = offered.map { mode -> mode to mode.label(state.server) },
+                        selected = state.form.mode,
+                        onSelect = { mode -> actions.onEditForm { copy(mode = mode) } },
+                        // Where the page lands: the first thing to choose is how to sign in.
+                        arrival = arrival,
+                    )
+                }
+            },
     ) {
         if (offered.isEmpty()) {
             // Change server is in the button bar, the one way on from a server this TV can't sign in to.
             TvFormNote(stringResource(R.string.tv_setup_no_modes_here))
         } else {
-            TvTabs(
-                choices = offered.map { mode -> mode to mode.label(state.server) },
-                selected = state.form.mode,
-                onSelect = { mode -> actions.onEditForm { copy(mode = mode) } },
-                // Where the page lands: the first thing to choose is how to sign in.
-                arrival = arrival,
-            )
             TvModeFields(
                 form = state.form,
                 server = state.server,
                 onEdit = actions.onEditForm,
+                resetting = state.resetting,
                 credentialFocused = initialFocus == TvSetupFocus.Credential,
                 onDone = actions.onConnect,
             )
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
             state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone) }
-            // As on the phone: the server mails the reset link, so it is offered only where it can (#1037). Below the
-            // notes, so a rejected password reads straight under the field it is about.
-            if (state.form.mode == SeerrSignInMode.Local && state.server.canResetPassword) {
-                TvButton(
-                    label = stringResource(R.string.setup_forgot_password),
-                    onClick = actions.onRequestPasswordReset,
-                    style = TvButtonStyle.Secondary,
-                    enabled = state.form.canRequestReset && !state.isConnecting,
-                )
-            }
         }
     }
 }
 
 /**
+ * Whether the form is asking for a reset link rather than signing in: the Forgot password? toggle, ticked on a local
+ * account of a server that can mail one (#1037, #1302). The phone offers the same request as a button of its own.
+ */
+private val SetupUiState.SignIn.resetting: Boolean
+    get() = form.forgotPassword && form.mode == SeerrSignInMode.Local && server.canResetPassword
+
+/**
  * The sign-in step's commit and its way back, on the right of the button bar where the remote ends up after the
- * fields. With no mode this TV can finish, Change server is the only way on, so it leads and the page lands on it.
+ * fields. The commit is Sign in, or Send reset link while the form is [resetting]. With no mode this TV can finish,
+ * Change server is the only way on, so it leads and the page lands on it.
  */
 @Composable
 private fun TvSignInButtons(
     state: SetupUiState.SignIn,
     actions: SetupActions,
     hasModes: Boolean,
-    canSignIn: Boolean,
+    canCommit: Boolean,
     commit: FocusRequester,
     arrival: TvArrivalFocus?,
     initialFocus: TvSetupFocus?,
 ) {
     if (hasModes) {
+        val label =
+            when {
+                state.resetting -> R.string.tv_setup_send_reset_link
+                state.isConnecting -> R.string.tv_setup_connecting
+                else -> state.form.mode.submitLabelRes()
+            }
         TvButton(
-            label = stringResource(if (state.isConnecting) R.string.tv_setup_connecting else state.form.mode.submitLabelRes()),
-            onClick = actions.onConnect,
+            label = stringResource(label),
+            onClick = if (state.resetting) actions.onRequestPasswordReset else actions.onConnect,
             style = TvButtonStyle.Primary,
-            enabled = canSignIn,
+            enabled = canCommit,
             initiallyFocused = initialFocus == TvSetupFocus.Connect,
             // Dimmed as a whole, so it can't be read as the outlined button beside it, and one width for every mode's
             // label, so Change server beside it stays where it is.
@@ -215,7 +229,7 @@ private fun TvSignInButtons(
                 Modifier
                     .focusRequester(commit)
                     .widthIn(min = dimensionResource(R.dimen.tv_form_commit_min_width))
-                    .alpha(if (canSignIn) 1f else DISABLED_ALPHA),
+                    .alpha(if (canCommit) 1f else DISABLED_ALPHA),
         )
     }
     TvButton(
@@ -226,12 +240,16 @@ private fun TvSignInButtons(
     )
 }
 
-/** The fields the chosen mode needs, and only those: a key, or an identity and a password. */
+/**
+ * The fields the chosen mode needs, and only those: a key, or an identity and a password. A local account [resetting]
+ * its password needs only the email.
+ */
 @Composable
 private fun TvModeFields(
     form: SignInForm,
     server: SetupServer,
     onEdit: (SignInForm.() -> SignInForm) -> Unit,
+    resetting: Boolean,
     credentialFocused: Boolean,
     onDone: () -> Unit = {},
 ) {
@@ -264,7 +282,16 @@ private fun TvModeFields(
                 contentType = ContentType.EmailAddress + ContentType.Username,
                 initiallyFocused = credentialFocused,
             )
-            TvPasswordField(form, onEdit, onDone)
+            if (!resetting) TvPasswordField(form, onEdit, onDone)
+            // As on the phone: the server mails the reset link, so it is offered only where it can (#1037). A toggle, as
+            // the address step's opt-in is, so the bar keeps one commit and the remote finds it where Sign in was (#1302).
+            if (server.canResetPassword) {
+                TvCheckboxRow(
+                    label = stringResource(R.string.setup_forgot_password),
+                    checked = form.forgotPassword,
+                    onCheckedChange = { checked -> onEdit { copy(forgotPassword = checked) } },
+                )
+            }
         }
         SeerrSignInMode.Jellyfin, SeerrSignInMode.Emby -> {
             TvTextField(
