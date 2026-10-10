@@ -72,6 +72,10 @@
     <dimen name="tv_consent_point_icon">24dp</dimen>
     <dimen name="tv_consent_point_text_gap">6dp</dimen>
     <dimen name="hub_quota_bar_width">72dp</dimen>
+    <!-- The hub bar's account action (#1325): the quota ring, its stroke, and the avatar inside it. -->
+    <dimen name="hub_account_ring_size">40dp</dimen>
+    <dimen name="hub_account_ring_stroke">3dp</dimen>
+    <dimen name="hub_account_avatar_size">32dp</dimen>
     <!-- The Settings screen's one plate where the admin groups will land while they are still answering. -->
     <dimen name="settings_pending_groups_height">240dp</dimen>
     <dimen name="tv_detail_season_card_width">140dp</dimen>

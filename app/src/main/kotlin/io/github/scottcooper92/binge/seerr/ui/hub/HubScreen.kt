@@ -78,7 +78,17 @@ fun HubScreen(
     val health = if (state is HubUiState.Error) state.health else ready?.health
     val rechecking = (state as? HubUiState.Error)?.rechecking ?: ready?.rechecking ?: false
     val allow = rememberAllowLocalNetwork { if (health == ConnectionHealth.LocalNetworkDenied) actions.onRetry() }
-    BingeScreenScaffold(bar = ScreenBar.Small, title = ready?.server?.title ?: stringResource(R.string.companion_name)) { padding ->
+    // The account sits in the bar while the dashboard is up (#1325): the photo or initials, ringed by what is left of the quota.
+    val account = ready?.overview?.account?.takeUnless { ready.health.isProblem() }
+    BingeScreenScaffold(
+        bar = ScreenBar.Small,
+        title = ready?.server?.title ?: stringResource(R.string.companion_name),
+        actions = {
+            account?.let {
+                HubAccountAction(account = it, quota = ready.overview.quota, onClick = { actions.onOpenAccount(it.id) })
+            }
+        },
+    ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
             val inner = padding.screenInnerPadding()
             when {
@@ -147,14 +157,6 @@ private fun Dashboard(
             )
         }
         ServerCard(server = state.server, overview = state.overview, sides = sides)
-        state.overview.account?.let { account ->
-            AccountCard(
-                account = account,
-                quota = state.overview.quota,
-                sides = sides,
-                onClick = { actions.onOpenAccount(account.id) },
-            )
-        }
         if (state.downloading.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.hub_downloading_now, state.downloading.size))
             DownloadingStrip(state.downloading, onClick = { actions.onOpenRequest(it.requestId) }, sides = sides)
