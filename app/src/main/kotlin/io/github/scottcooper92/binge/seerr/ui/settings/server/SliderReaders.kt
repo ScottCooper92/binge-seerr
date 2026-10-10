@@ -48,6 +48,11 @@ internal class SliderReaders(
         }
     }
 
+    /** Makes the genres of [type] available: left alone where they have been read, read again where they have not. */
+    fun ensureGenres(type: SliderType) {
+        type.genreSegment?.let(genreLookup::ensure)
+    }
+
     /** Forgets the provider list and any read of it in flight: with no region there is no list to offer. */
     fun clearProviders() {
         providersJob?.cancel()

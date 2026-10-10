@@ -334,6 +334,21 @@ class DiscoverSliderViewModelTest {
         }
 
     @Test
+    fun `picking the streaming kind again leaves its providers alone`() =
+        runTest {
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectType(SliderType.MovieStreamingServices)
+            vm.selectRegion("GB")
+            vm.awaitReady { it.extras.providers is ProviderChoices.Ready }
+            assertEquals(1, seerr.count("GET", "/api/v1/watchproviders/movies"))
+
+            vm.selectType(SliderType.MovieStreamingServices)
+            assertTrue(vm.awaitReady().extras.providers is ProviderChoices.Ready)
+            assertEquals(1, seerr.count("GET", "/api/v1/watchproviders/movies"))
+        }
+
+    @Test
     fun `a new region drops the providers picked for the last, and a TV kind reads TV's list`() =
         runTest {
             val vm = viewModel(id = null)

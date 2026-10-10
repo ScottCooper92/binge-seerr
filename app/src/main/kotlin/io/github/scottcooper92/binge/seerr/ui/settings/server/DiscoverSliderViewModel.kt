@@ -115,8 +115,9 @@ class DiscoverSliderViewModel
             val draft = ready()?.draft
             val keepsData = draft != null && draft.type.keepsDataFor(type)
             edit { it.copy(type = type, data = if (keepsData) it.data else "") }
-            // Asked every time: what is already read is left alone, and a read that failed is tried again.
-            readers.readFor(SliderForm(type = type, data = if (keepsData) draft.data else ""))
+            // A kind that dropped its data reads for the new one. A kind that kept it has its names and lists already, except
+            // the genres, which are asked for again so that a read that failed is tried again.
+            if (keepsData) readers.ensureGenres(type) else readers.readFor(SliderForm(type = type, data = ""))
         }
 
         fun toggleKeyword(keywordId: Int) = edit { it.copy(data = it.data.withIdToggled(keywordId)) }

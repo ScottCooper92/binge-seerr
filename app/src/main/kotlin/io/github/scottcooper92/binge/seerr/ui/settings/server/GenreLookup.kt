@@ -33,7 +33,7 @@ internal class GenreLookup(
     }
 
     /** Reads the list for [segment]; a newer read supersedes an older one. */
-    fun load(segment: String) {
+    private fun load(segment: String) {
         this.segment = segment
         job?.cancel()
         set(GenreChoices.Loading)
