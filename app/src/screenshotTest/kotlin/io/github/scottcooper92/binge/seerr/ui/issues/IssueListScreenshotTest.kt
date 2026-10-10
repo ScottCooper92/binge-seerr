@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
+import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 
 private val ROW_WIDTH = 411.dp
 
@@ -34,6 +35,6 @@ class IssueListScreenshotTest {
 @Composable
 private fun Frame(item: IssueItem) {
     Box(Modifier.width(ROW_WIDTH).background(MaterialTheme.colorScheme.background)) {
-        IssueRow(item = item, onClick = {}, now = ISSUE_ROW_NOW_MILLIS)
+        IssueRow(item = item, onClick = {}, now = FIXED_NOW_MILLIS)
     }
 }

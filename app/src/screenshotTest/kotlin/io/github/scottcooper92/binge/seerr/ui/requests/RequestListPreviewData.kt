@@ -2,13 +2,12 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 
 /**
- * Fixed and kept far apart (well past the 30-day relative-date window `formatRelativeOrAbsolute`
- * switches on) so the row's requester line always renders the same absolute date, whenever the
- * suite runs.
+ * Kept far before [FIXED_NOW_MILLIS], well past the 30-day relative-date window `formatRelativeOrAbsolute` switches on, so
+ * the row's requester line always renders the same absolute date, whenever the suite runs.
  */
-internal const val ROW_NOW_MILLIS = 1_770_000_000_000L
 private const val REQUESTED_AT_MILLIS = 1_759_000_000_000L
 private const val MOVIE_TMDB_ID = 545_611
 private const val TV_TMDB_ID = 95_396
