@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.ui.Ticker
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
@@ -64,8 +65,8 @@ class HubViewModelTest {
 
     /** One refresh, then never again: the strip only needs its first read, and this keeps the poll loop bounded. */
     private val boundedTicker =
-        object : DownloadsPollerTicker() {
-            override suspend fun await(intervalMs: Long) = awaitCancellation()
+        object : Ticker() {
+            override suspend fun await(millis: Long) = awaitCancellation()
         }
 
     /** The network gone, as with Tailscale off: every call fails with an [IOException] before any answer. */
