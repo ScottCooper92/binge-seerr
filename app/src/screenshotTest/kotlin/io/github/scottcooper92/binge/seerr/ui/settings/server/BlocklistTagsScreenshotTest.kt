@@ -1,12 +1,14 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrSpanishPreviews
 
-/** Settings › General › Blocklisted tags: the tags as chips under Material's search bar, or the empty state. */
+/** Settings › General › Blocklisted tags: the tags under the search field, or the empty state, or TMDB's matches for a query. */
 class BlocklistTagsScreenshotTest {
     @PreviewTest
     @SeerrScreenPreviews
@@ -17,6 +19,25 @@ class BlocklistTagsScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun empty() = TagsFrame(BlocklistTagsUiState.Ready(tags = emptyList()))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun searching() =
+        TagSearchPanel(
+            chosen = listOf(9951),
+            search =
+                KeywordSearch(
+                    names = mapOf(9951 to "kaiju"),
+                    results = listOf(Keyword(9951, "kaiju"), Keyword(161791, "kaiju film"), Keyword(2349, "kaleidoscope")),
+                ),
+            onQuery = {},
+            onToggle = {},
+            emptyTitle = "",
+            emptyBody = "",
+            modifier = Modifier.fillMaxSize(),
+            initialQuery = "ka",
+        )
 
     @PreviewTest
     @SeerrSpanishPreviews
