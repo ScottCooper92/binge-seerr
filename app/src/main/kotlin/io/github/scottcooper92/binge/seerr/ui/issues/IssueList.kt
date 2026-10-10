@@ -6,16 +6,16 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ReportProblem
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,16 +44,21 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.toTagType
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPullToRefresh
+import io.github.scottcooper92.binge.seerr.ui.state.PullableMessage
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
 
 /**
- * The selected filter's rows with the states the pager reports. The rows come from the cache, so
- * the server's refresh shows over them as a thin bar, or as a tappable line when it failed; the
- * full-screen states are for a cache with nothing in it.
+ * The selected filter's rows with the states the pager reports, under a pull that refreshes them. The rows come
+ * from the cache, so the server's refresh shows over them as the pull's spinner below the bar, or as a tappable line
+ * when it failed; the full-screen states are for a cache with nothing in it.
+ *
+ * @param pullState a still frame's resting pull; null remembers M3's own. See [PagedPullToRefresh].
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun IssuesBody(
     filter: IssueFilter,
@@ -63,39 +68,48 @@ internal fun IssuesBody(
     onOpen: (IssueItem) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    pullState: PullToRefreshState? = null,
 ) {
-    when (val phase = lazyItems.rememberPagedPhase(lastRefresh)) {
-        is PagedPhase.Rows ->
-            if (phase.refreshing || phase.refreshError != null) {
-                // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
-                Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                    if (phase.refreshError == null) {
-                        LinearProgressIndicator(Modifier.fillMaxWidth())
-                    } else {
+    val phase = lazyItems.rememberPagedPhase(lastRefresh)
+    PagedPullToRefresh(
+        phase = phase,
+        loadState = lazyItems.loadState,
+        onRefresh = lazyItems::refresh,
+        contentPadding = contentPadding,
+        modifier = modifier,
+        state = pullState,
+    ) {
+        when (phase) {
+            is PagedPhase.Rows ->
+                if (phase.refreshError != null) {
+                    // The failed line is pinned below the top bar and the header; the rows start below it while it shows.
+                    Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                         RefreshFailedLine(R.string.issues_refresh_failed, onRetry = lazyItems::retry)
+                        IssueList(lazyItems, onOpen, contentPadding.belowPinnedLine())
                     }
-                    IssueList(lazyItems, onOpen, contentPadding.belowPinnedLine())
+                } else {
+                    IssueList(lazyItems, onOpen, contentPadding)
                 }
-            } else {
-                IssueList(lazyItems, onOpen, contentPadding)
-            }
-        PagedPhase.Skeleton ->
-            ListRowSkeletonColumn(
-                contentPadding = contentPadding.screenListPadding(),
-                modifier = modifier,
-            )
-        is PagedPhase.Failed ->
-            PagedRefreshError(
-                phase.error,
-                onRetry = lazyItems::retry,
-                modifier = modifier.padding(contentPadding),
-            )
-        PagedPhase.Empty ->
-            EmptyScreen(
-                message = stringResource(filter.emptyMessageRes()),
-                modifier = modifier.padding(contentPadding),
-                icon = Icons.Filled.ReportProblem,
-            )
+            PagedPhase.Skeleton ->
+                ListRowSkeletonColumn(
+                    contentPadding = contentPadding.screenListPadding(),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            is PagedPhase.Failed ->
+                PagedRefreshError(
+                    phase.error,
+                    onRetry = lazyItems::retry,
+                    modifier = Modifier.fillMaxSize().padding(contentPadding),
+                )
+            PagedPhase.Empty ->
+                PullableMessage { fill ->
+                    EmptyScreen(
+                        message = stringResource(filter.emptyMessageRes()),
+                        modifier = fill.padding(contentPadding),
+                        icon = Icons.Filled.ReportProblem,
+                    )
+                }
+        }
     }
 }
 

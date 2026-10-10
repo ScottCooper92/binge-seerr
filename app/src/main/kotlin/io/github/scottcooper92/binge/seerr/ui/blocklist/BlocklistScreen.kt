@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,6 +66,7 @@ class BlocklistActions(
  * @param shouldRefresh true at most once per list version per filter, so a freshly composed, current
  * page does not blank-refresh after a removal elsewhere.
  * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
+ * @param pullState a still frame's resting pull for every page; null gives each page M3's own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +77,7 @@ fun BlocklistScreen(
     shouldRefresh: (BlocklistFilter, Int) -> Boolean,
     actions: BlocklistActions,
     showBack: Boolean = true,
+    pullState: PullToRefreshState? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -112,6 +115,7 @@ fun BlocklistScreen(
                     actions = actions,
                     barHeight = padding.calculateTopPadding(),
                     bottomPadding = padding.calculateBottomPadding(),
+                    pullState = pullState,
                     modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding()),
                 )
         }
@@ -119,6 +123,7 @@ fun BlocklistScreen(
 }
 
 /** The search field and the chips over a page per filter — or, on a server without them, one page. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BlocklistPages(
     state: BlocklistUiState.Ready,
@@ -127,6 +132,7 @@ private fun BlocklistPages(
     actions: BlocklistActions,
     barHeight: Dp,
     bottomPadding: Dp,
+    pullState: PullToRefreshState?,
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
@@ -178,6 +184,7 @@ private fun BlocklistPages(
                 shouldRefresh = shouldRefresh,
                 actions = actions,
                 contentPadding = PaddingValues(top = overlay.calculateTopPadding(), bottom = bottomPadding),
+                pullState = pullState,
             )
         }
     }
@@ -189,6 +196,7 @@ private fun BlocklistPages(
  * selected one's. Refreshing is the selected page's alone, and so is the confirm dialog: a title can
  * sit under two filters, and two composed pages would otherwise raise two dialogs for it.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BlocklistPage(
     filter: BlocklistFilter,
@@ -197,6 +205,7 @@ private fun BlocklistPage(
     shouldRefresh: (BlocklistFilter, Int) -> Boolean,
     actions: BlocklistActions,
     contentPadding: PaddingValues,
+    pullState: PullToRefreshState?,
 ) {
     val lazyItems = itemsFor(filter).collectAsLazyPagingItems()
     val selected = filter == state.filter
@@ -214,6 +223,7 @@ private fun BlocklistPage(
         onRemove = { item -> removing = item.tmdbId },
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
+        pullState = pullState,
     )
     if (selected) {
         removing?.let { tmdbId ->

@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.hub
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -11,6 +12,7 @@ import com.binge.designsystem.LocalPaneWidth
 import io.github.scottcooper92.binge.seerr.preview.SeerrListPanePreview
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.ui.state.RestingPull
 
 /**
  * The hub, which had no committed baseline until now (#241). It is the app's most-touched screen —
@@ -47,6 +49,13 @@ class HubScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun readySectionOpen() = HubScreen(state = previewReady(), actions = previewActions(), selectedSection = HubSection.Requests)
+
+    /** A pull re-reading the dashboard: the spinner rests below the bar, over the server card. */
+    @OptIn(ExperimentalMaterial3Api::class)
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun refreshing() = HubScreen(state = previewReady().copy(refreshing = true), actions = previewActions(), pullState = RestingPull)
 
     /**
      * An administrator with nothing downloading, which is the steady state rather than an edge: it
