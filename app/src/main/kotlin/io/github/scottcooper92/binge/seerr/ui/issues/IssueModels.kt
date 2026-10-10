@@ -69,6 +69,8 @@ data class IssueItem(
 data class IssueListScope(
     val permissions: SeerrPermissions = SeerrPermissions(),
     val currentUserId: Int? = null,
+    /** Whether the server has the issue counts endpoint, from the profile as it was re-read on arrival (#1074). */
+    val hasCounts: Boolean = false,
 ) {
     /** The `createdBy` the list is narrowed to, or null for a user who may see everyone's. */
     val createdBy: Int? get() = currentUserId?.takeUnless { permissions.canManageIssues || permissions.canViewIssues }
@@ -88,6 +90,11 @@ sealed interface IssuesUiState {
         val actionItem: IssueItem? = null,
         /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
         val refreshes: Map<IssueFilter, ListRefresh> = emptyMap(),
+    ) : IssuesUiState
+
+    /** The signed-in user could not be read, so who the list is for is unknown. */
+    data class Error(
+        val error: SeerrError,
     ) : IssuesUiState
 }
 

@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.Inet4Address
@@ -104,7 +105,7 @@ private fun ipv4Bytes(name: String): ByteArray? =
  */
 private fun ipv6Bytes(name: String): ByteArray? {
     if (!name.contains(':') || !name.all { it in IPV6_CHARS }) return null
-    return when (val parsed = runCatching { InetAddress.getByName(name) }.getOrNull()) {
+    return when (val parsed = attempt { InetAddress.getByName(name) }.getOrNull()) {
         is Inet6Address, is Inet4Address -> parsed.address
         else -> null
     }

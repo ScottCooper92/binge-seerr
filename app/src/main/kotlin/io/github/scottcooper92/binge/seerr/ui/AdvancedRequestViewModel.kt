@@ -11,11 +11,13 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_CONFLICT
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
 import io.github.scottcooper92.binge.seerr.seerr.arrServer
 import io.github.scottcooper92.binge.seerr.seerr.arrServers
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.forRequest
 import io.github.scottcooper92.binge.seerr.seerr.preferred
 import io.github.scottcooper92.binge.seerr.seerr.seerrMediaType
@@ -81,7 +83,7 @@ class AdvancedRequestViewModel
         }
 
         private suspend fun load() {
-            runCatching { connection.api().arrServers(isTv).forRequest(request.is4k) }
+            attempt { connection.api().arrServers(isTv).forRequest(request.is4k) }
                 .onFailure { _uiState.value = AdvancedRequestUiState.Failed(it.toAdvancedRequestError()) }
                 .onSuccess { loaded ->
                     servers = loaded
@@ -118,7 +120,7 @@ class AdvancedRequestViewModel
             if (!ready.canSubmit) return
             _uiState.value = ready.copy(isSubmitting = true, error = null)
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     val response = connection.api().requestMedia(ready.toBody())
                     // A 409 is a title the server already tracks: nothing to change, and nothing to tell.
                     if (!response.isSuccessful && response.code() != HTTP_CONFLICT) throw HttpException(response)
@@ -134,7 +136,7 @@ class AdvancedRequestViewModel
          */
         private suspend fun loadChoices(server: SeerrServerDto) {
             val stillChosen = { state: AdvancedRequestUiState.Ready -> state.destination.serverId == server.id }
-            runCatching { connection.api().arrServer(isTv, server.id) }
+            attempt { connection.api().arrServer(isTv, server.id) }
                 .onSuccess { details ->
                     updateReady { if (stillChosen(it)) it.copy(destination = it.destination.withChoices(details)) else it }
                 }.onFailure { failure ->
@@ -173,10 +175,6 @@ class AdvancedRequestViewModel
 
         private fun updateDestination(transform: (DestinationChoices) -> DestinationChoices) =
             updateReady { it.copy(destination = transform(it.destination)) }
-
-        private companion object {
-            const val HTTP_CONFLICT = 409
-        }
 
         /** The title is the Intent's, not the graph's, so it is assisted in at creation. */
         @AssistedFactory

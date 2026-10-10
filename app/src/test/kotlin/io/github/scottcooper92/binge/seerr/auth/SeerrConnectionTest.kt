@@ -243,6 +243,8 @@ class SeerrConnectionTest {
             assertFalse(sut.sessionRejected.first())
 
             server.enqueue(MockResponse(code = 401))
+            // The interceptor's own probe: auth/me refuses too, so the 401 is the session (#997).
+            server.enqueue(MockResponse(code = 401))
             runCatching { sut.api().requests(take = 1) }
             server.enqueue(MockResponse(code = 401))
             assertTrue(sut.sessionRejected.first())
@@ -253,16 +255,18 @@ class SeerrConnectionTest {
             assertFalse(sut.sessionRejected.first())
         }
 
-    /** A proxy's stray 401 is not the server turning the session away: auth/me answering puts the user back (#810). */
+    /**
+     * A proxy's stray 401 is not the server turning the session away (#810). The interceptor asks auth/me, which still
+     * answers, so the 401 never reads as the session and the connection stays healthy (#997).
+     */
     @Test
     fun `a rejection auth me contradicts is not believed`() =
         runTest {
             val sut = healthyConnection("stray")
 
             server.enqueue(MockResponse(code = 401))
-            runCatching { sut.api().requests(take = 1) }
-            assertEquals(SeerrConnectionHealth.Unauthorized, sut.health.first())
             server.enqueue(json("""{"id":1,"permissions":2}"""))
+            runCatching { sut.api().requests(take = 1) }
 
             assertFalse(sut.sessionRejected.first())
             assertEquals(SeerrConnectionHealth.Healthy, sut.health.first())

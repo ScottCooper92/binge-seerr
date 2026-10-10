@@ -2,6 +2,8 @@ package io.github.scottcooper92.binge.seerr.ui.users
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -16,14 +18,18 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
+import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.hub.toHubQuota
 import io.github.scottcooper92.binge.seerr.ui.requests.REQUESTS_PAGE_SIZE
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.toRequestMediaTypeOrNull
+import io.github.scottcooper92.binge.seerr.ui.users.settings.mayOpenSettings
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -34,8 +40,19 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** Nothing to load and nothing more to come: how a list the viewer may not read reports itself. */
+private val FINISHED =
+    LoadStates(
+        refresh = LoadState.NotLoading(endOfPaginationReached = true),
+        prepend = LoadState.NotLoading(endOfPaginationReached = true),
+        append = LoadState.NotLoading(endOfPaginationReached = true),
+    )
 
 /** A carousel is a teaser; the server's own page has the rest. */
 private const val CAROUSEL_LIMIT = 20
@@ -45,6 +62,7 @@ private const val CAROUSEL_LIMIT = 20
  * best-effort, since each is a section the server may not have or the user may not see.
  * The user's own requests are a separate paged stream.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = UserDetailViewModel.Factory::class)
 class UserDetailViewModel
     @AssistedInject
@@ -61,10 +79,38 @@ class UserDetailViewModel
         private val eventFlow = MutableSharedFlow<UserDetailEvent>(extraBufferCapacity = 1)
         val events: SharedFlow<UserDetailEvent> = eventFlow.asSharedFlow()
 
+        /** Empty, without asking the server, for a viewer it would refuse: see [mayReadRequests]. */
         val requests: Flow<PagingData<RequestItem>> =
-            Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
-                UserRequestsPagingSource(userId = userId, api = connection::api, hydrate = titles::get)
-            }.flow.cachedIn(viewModelScope)
+            flow { emit(mayReadRequests()) }
+                .flatMapLatest { allowed ->
+                    if (allowed) {
+                        Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
+                            UserRequestsPagingSource(userId = userId, api = connection::api, hydrate = titles::get)
+                        }.flow
+                    } else {
+                        flowOf(PagingData.empty<RequestItem>(sourceLoadStates = FINISHED))
+                    }
+                }.cachedIn(viewModelScope)
+
+        /**
+         * The server lists a user's requests to that user, and to a viewer who holds MANAGE_REQUESTS or REQUEST_VIEW; anyone
+         * else gets a 403 the page could only show as a Retry that fails again. A viewer that cannot be read is let through,
+         * so a failed read does not leave the list empty for good.
+         */
+        private suspend fun mayReadRequests(): Boolean {
+            val viewer = attempt { connection.authenticatedUser() }.getOrNull()
+            return viewer.mayReadRequestsOf(userId)
+        }
+
+        /** The one rule for both the pager and the screen's gate, so they cannot disagree about a viewer that cannot be read. */
+        private fun SeerrUserDto?.mayReadRequestsOf(userId: Int): Boolean = this == null || id == userId || toPermissions().canViewRequests
+
+        /**
+         * The server reads another user's quota only for a viewer with both `MANAGE_USERS` and `MANAGE_REQUESTS` (#1093), so a
+         * viewer with one of them is not sent to be refused. An unknown viewer is tried, as [mayReadRequestsOf] does.
+         */
+        private fun SeerrUserDto?.mayReadQuotaOf(userId: Int): Boolean =
+            this == null || id == userId || toPermissions().let { it.canManageUsers && it.canManageRequests }
 
         init {
             reload()
@@ -80,7 +126,7 @@ class UserDetailViewModel
             }
             viewModelScope.launch(dispatcher) {
                 seedFromCache()
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { detail -> state.value = UserDetailUiState.Ready(detail) }
                     .onFailure { failure ->
                         state.update { current ->
@@ -97,7 +143,7 @@ class UserDetailViewModel
         /** Shows the cached row's profile in place of the skeleton, if a list has the user and nothing has landed yet. */
         private suspend fun seedFromCache() {
             if (state.value !is UserDetailUiState.Loading) return
-            val item = runCatching { store.byId(userId)?.toUserItem() }.getOrNull() ?: return
+            val item = attempt { store.byId(userId)?.toUserItem() }.getOrNull() ?: return
             state.update { current -> if (current is UserDetailUiState.Loading) UserDetailUiState.Seeded(item) else current }
         }
 
@@ -107,7 +153,7 @@ class UserDetailViewModel
             if (ready.deleting || !ready.detail.canDelete) return
             state.value = ready.copy(deleting = true)
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection.api().deleteUser(userId)
                     store.delete(userId)
                 }.onSuccess { eventFlow.emit(UserDetailEvent.UserDeleted) }
@@ -121,10 +167,13 @@ class UserDetailViewModel
         private suspend fun load(): UserDetail =
             coroutineScope {
                 val api = connection.api()
-                val viewer = async { runCatching { connection.authenticatedUser() }.getOrNull() }
-                val quota = async { runCatching { api.userQuota(userId).toHubQuota() }.getOrNull() }
-                val watch = async { runCatching { api.userWatchData(userId) }.getOrNull() }
-                val watchlist = async { runCatching { api.userWatchlist(userId) }.getOrNull() }
+                val viewer = async { attempt { connection.authenticatedUser() }.getOrNull() }
+                val quota =
+                    async {
+                        if (viewer.await().mayReadQuotaOf(userId)) attempt { api.userQuota(userId).toHubQuota() }.getOrNull() else null
+                    }
+                val watch = async { attempt { api.userWatchData(userId) }.getOrNull() }
+                val watchlist = async { attempt { api.userWatchlist(userId) }.getOrNull() }
                 val dto = api.user(userId)
                 val item = dto.toUserItemOrFallback()
                 val recent =
@@ -151,7 +200,8 @@ class UserDetailViewModel
                     watch = watch.await()?.let { UserWatch(playCount = it.playCount, recentlyWatched = recent.mapNotNull(cards::get)) },
                     watchlist = listed.mapNotNull(cards::get),
                     isSelf = viewerDto?.id == userId,
-                    canEditSettings = viewerDto?.id == userId || permissions.canManageUsers,
+                    canViewRequests = viewerDto.mayReadRequestsOf(userId),
+                    canEditSettings = mayOpenSettings(userId, viewerDto?.id, permissions),
                     canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
                     serverUrl = connection.current().baseUrl,
                     webUrl = connection.current().baseUrl + "users/" + userId,

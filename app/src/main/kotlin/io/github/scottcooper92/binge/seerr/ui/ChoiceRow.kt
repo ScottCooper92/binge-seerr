@@ -28,12 +28,12 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.rowLabelColor
 import com.binge.designsystem.R as DesR
 
 /**
- * The row form of [ChoicePicker]: one line naming the current choice, opening a sheet with the
- * full list rather than stacking a chip per option. A list a server supplies has no length or
+ * One line naming the current choice, opening the shared choice sheet with the full list rather than stacking a
+ * chip per option. A list a server supplies has no length or
  * label width this app controls, so it is the only shape whose height does not scale with the
  * connected server's config — see #336.
  *
- * [enabled] is what an editor page passes while it saves, same as on [ChoicePicker]: off, it dims
+ * [enabled] is what an editor page passes while it saves: off, it dims
  * the row and blocks the tap that opens the sheet. An already-open sheet closes the moment a save
  * starts too, so a pick made mid-save cannot land in a draft the request has already gone out
  * from — the constraint the chip form carried and this one has to keep by a different route.

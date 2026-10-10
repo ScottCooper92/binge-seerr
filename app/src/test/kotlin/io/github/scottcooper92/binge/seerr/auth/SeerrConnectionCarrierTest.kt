@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.test.TestScope
@@ -101,12 +102,6 @@ class SeerrConnectionCarrierTest {
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 
     private companion object {
         const val PUBLIC_HOST = "seerr.example.com"

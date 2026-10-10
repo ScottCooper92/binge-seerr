@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerDto
 import io.github.scottcooper92.binge.seerr.seerr.arrServer
 import io.github.scottcooper92.binge.seerr.seerr.arrServers
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.forRequest
 import io.github.scottcooper92.binge.seerr.seerr.isTv
 import io.github.scottcooper92.binge.seerr.seerr.preferred
@@ -26,8 +27,9 @@ private const val FIRST_SEASON = 1
 
 /**
  * What the editor opens on: the request as the server returned it, and its title as the server lists it.
- * [seasonsEditable] is false for a show on a server with partial requests off, which takes the whole
- * show: the editor then offers no season list and sends no seasons.
+ * [seasonsEditable] is false for a show on a server with partial requests off: the editor then offers
+ * no season list. Its save still sends the request's own seasons, because the server refuses a show's
+ * edit without them (#1003).
  */
 class EditSource(
     val request: SeerrRequestDto,
@@ -129,7 +131,7 @@ class RequestEditor(
 
     /** The list a request of this shape may go to; the request's own server where it is still listed, else the default. */
     private suspend fun loadServers(request: SeerrRequestDto) {
-        val loaded = runCatching { connection.api().arrServers(request.isTv).forRequest(request.is4k) }.getOrNull()
+        val loaded = attempt { connection.api().arrServers(request.isTv).forRequest(request.is4k) }.getOrNull()
         if (loaded == null) {
             updateDestination { it.copy(loadingChoices = false) }
             return
@@ -143,7 +145,7 @@ class RequestEditor(
     /** Fills the chosen server's choices in, unless the user has moved to another server meanwhile. */
     private suspend fun loadChoices(serverId: Int) {
         val request = source?.request ?: return
-        val details = runCatching { connection.api().arrServer(request.isTv, serverId) }.getOrNull()
+        val details = attempt { connection.api().arrServer(request.isTv, serverId) }.getOrNull()
         updateDestination { destination ->
             when {
                 destination.serverId != serverId -> destination
@@ -156,17 +158,20 @@ class RequestEditor(
     /**
      * The server assigns the whole destination from the body, so a `PUT` that leaves one of its
      * fields out clears it. A user who may not change the destination still edits seasons through
-     * here, and their request's own destination is what goes back with it.
+     * here, and their request's own destination is what goes back with it. Seasons are the same the
+     * other way round: both lineages answer a show's `PUT` without them with a 500, so where the
+     * editor offers no season list, the request's own seasons go back.
      */
     private fun EditState.toBody(request: SeerrRequestDto): SeerrEditRequestBody {
         val destination = destination ?: request.destination()
         return SeerrEditRequestBody(
             mediaType = request.media.mediaType,
             seasons =
-                if (request.isTv && seasonsEditable && !seasonsUnknown) {
-                    seasons.filter { it.selected && !it.locked }.map { it.number }
-                } else {
-                    null
+                when {
+                    !request.isTv -> null
+                    // Every season ticked, held ones included: the server keeps only the seasons the body names (#1022).
+                    seasonsEditable && !seasonsUnknown -> seasons.filter { it.selected }.map { it.number }
+                    else -> request.seasons.map { it.seasonNumber }
                 },
             is4k = request.is4k,
             serverId = destination.serverId,

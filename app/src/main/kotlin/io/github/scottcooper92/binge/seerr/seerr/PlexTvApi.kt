@@ -82,27 +82,7 @@ fun plexTvApi(
     testTransport: Interceptor? = null,
     testDispatcher: Dispatcher? = null,
 ): PlexTvApi {
-    val client =
-        OkHttpClient
-            .Builder()
-            .addInterceptor { chain ->
-                chain.proceed(
-                    chain
-                        .request()
-                        .newBuilder()
-                        .header("Accept", "application/json")
-                        .header("X-Plex-Product", identity.product)
-                        .header("X-Plex-Version", identity.version)
-                        .header("X-Plex-Client-Identifier", identity.identifier)
-                        .header("X-Plex-Platform", identity.platform)
-                        .header("X-Plex-Device", identity.device)
-                        .build(),
-                )
-            }.apply { testTransport?.let(::addInterceptor) }
-            .apply { testDispatcher?.let(::dispatcher) }
-            .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .build()
+    val client = plexTvClient(identity, testTransport, testDispatcher)
     val json = Json { ignoreUnknownKeys = true }
     return Retrofit
         .Builder()
@@ -112,3 +92,35 @@ fun plexTvApi(
         .build()
         .create(PlexTvApi::class.java)
 }
+
+/**
+ * The client every plex.tv call goes through. It never follows a redirect from `https` to `http` (#1033): polling the PIN
+ * answers with the Plex auth token, and the only plain-HTTP traffic this app sends is to the user's own server, with
+ * their consent. A redirect that stays on `https` is still followed.
+ */
+internal fun plexTvClient(
+    identity: PlexClientIdentity,
+    testTransport: Interceptor? = null,
+    testDispatcher: Dispatcher? = null,
+): OkHttpClient =
+    OkHttpClient
+        .Builder()
+        .addInterceptor { chain ->
+            chain.proceed(
+                chain
+                    .request()
+                    .newBuilder()
+                    .header("Accept", "application/json")
+                    .header("X-Plex-Product", identity.product)
+                    .header("X-Plex-Version", identity.version)
+                    .header("X-Plex-Client-Identifier", identity.identifier)
+                    .header("X-Plex-Platform", identity.platform)
+                    .header("X-Plex-Device", identity.device)
+                    .build(),
+            )
+        }.apply { testTransport?.let(::addInterceptor) }
+        .apply { testDispatcher?.let(::dispatcher) }
+        .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .followSslRedirects(false)
+        .build()

@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserPermissionsBody
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.ui.users.OWNER_USER_ID
+import io.github.scottcooper92.binge.seerr.ui.users.mayChangeAsNonOwner
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -20,7 +21,7 @@ import kotlinx.coroutines.coroutineScope
 /**
  * The permissions page for one user: the same toggles as the browser's bulk edit, over the
  * server's record of this user. A save also lands on the cached browser row, so the list agrees
- * without a refresh.
+ * without a refresh. An admin's page is read-only to anyone but the owner, as the server's rule is.
  */
 @HiltViewModel(assistedFactory = PermissionsViewModel.Factory::class)
 class PermissionsViewModel
@@ -45,13 +46,14 @@ class PermissionsViewModel
                 val viewer = async { connection.authenticatedUser() }
                 val profile = async { connection.profile() }
                 val record = api.userPermissions(userId)
-                val viewerDto = viewer.await()
-                val held = ManageablePermission.decode(viewerDto.permissions ?: 0)
+                val isOwner = viewer.await().id == OWNER_USER_ID
+                val ownerOnly = !isOwner && !mayChangeAsNonOwner(userId, record.permissions)
                 PermissionSettings(
                     selected = ManageablePermission.decode(record.permissions),
                     original = record.permissions,
                     offered = ManageablePermission.offered(profile.await().permissionScope()),
-                    locked = lockedFor(held, isOwner = viewerDto.id == OWNER_USER_ID),
+                    locked = if (ownerOnly) ManageablePermission.entries.toSet() else lockedFor(isOwner),
+                    ownerOnly = ownerOnly,
                 )
             }
 
@@ -74,11 +76,8 @@ class PermissionsViewModel
         }
     }
 
-/** A viewer may grant only what they hold, and only the owner may grant or revoke Admin. */
-internal fun lockedFor(
-    held: Set<ManageablePermission>,
-    isOwner: Boolean,
-): Set<ManageablePermission> =
-    ManageablePermission.entries.filterTo(mutableSetOf()) { permission ->
-        !ManageablePermission.isGranted(permission, held) || (permission == ManageablePermission.Admin && !isOwner)
-    }
+/**
+ * The toggles a viewer may not flip: Admin, for anyone but the owner. That is the server's one rule on a permissions
+ * write (`canMakePermissionsChange`), and the web client's. A manager may grant any other permission, held or not (#1016).
+ */
+internal fun lockedFor(isOwner: Boolean): Set<ManageablePermission> = if (isOwner) emptySet() else setOf(ManageablePermission.Admin)

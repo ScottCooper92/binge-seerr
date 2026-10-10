@@ -12,8 +12,16 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.toInitials
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
@@ -32,6 +40,12 @@ class OverrideRuleActions(
     val onSelectInstance: (DvrSummary) -> Unit,
     val onToggleUser: (Int) -> Unit,
     val onToggleTag: (Int) -> Unit,
+    val onToggleGenre: (Int) -> Unit,
+    val onLoadLanguages: () -> Unit,
+    val onSelectLanguages: (String) -> Unit,
+    val onToggleKeyword: (Int) -> Unit,
+    val onSearchKeywords: (String) -> Unit,
+    val onLoadKeywordNames: (List<Int>) -> Unit,
     val onDelete: () -> Unit,
 )
 
@@ -58,7 +72,7 @@ fun OverrideRuleScreen(
         commitLabel = (state as? ExtrasEditorUiState.Ready)?.takeIf { it.draft.id == null }?.let { stringResource(R.string.editor_create) },
     ) { draft, enabled ->
         RuleInstance(extras, draft, enabled, ruleActions.onSelectInstance)
-        RuleConditions(extras, draft, enabled, actions, ruleActions.onToggleUser)
+        RuleConditions(extras, draft, enabled, actions, ruleActions)
         RuleOverrides(extras, draft, enabled, actions, ruleActions.onToggleTag)
         if (draft.id != null) DeleteGroup(ruleActions.onDelete)
     }
@@ -97,7 +111,7 @@ internal fun RuleConditions(
     draft: OverrideRuleForm,
     enabled: Boolean,
     actions: EditorActions<OverrideRuleForm>,
-    onToggleUser: (Int) -> Unit,
+    ruleActions: OverrideRuleActions,
 ) {
     val any = stringResource(R.string.server_settings_rule_any)
     ItemGroup(
@@ -107,42 +121,24 @@ internal fun RuleConditions(
                 multiChoiceSettingItem(
                     icon = Icons.Filled.Group,
                     title = stringResource(R.string.server_settings_rule_users),
-                    choices = extras.users.map { it.id to it.label },
+                    choices = extras.users.map { BingeChoice(it.id, it.label, mark = it.label.toInitials()) },
                     selected = draft.userIds,
                     enabled = enabled,
                     emptyLabel = any,
-                    onToggle = onToggleUser,
+                    onToggle = ruleActions.onToggleUser,
                 ),
-                textSettingItem(
-                    icon = Icons.Filled.Category,
-                    label = stringResource(R.string.server_settings_rule_genres),
-                    value = draft.genres,
-                    enabled = enabled,
-                    onChange = { value -> actions.onEdit { it.copy(genres = value) } },
-                    keyboard = VerbatimKeyboard,
-                    emptyLabel = any,
-                    hint = stringResource(R.string.server_settings_rule_genres_hint),
-                ),
-                textSettingItem(
+                genreItem(extras, draft, enabled, actions, ruleActions.onToggleGenre),
+                languageSettingItem(
                     icon = Icons.Filled.Translate,
-                    label = stringResource(R.string.server_settings_rule_languages),
-                    value = draft.languages,
+                    title = stringResource(R.string.server_settings_rule_languages),
+                    // The rule keeps codes joined by commas and the sheet by `|`; the edge maps, and what is saved is unchanged.
+                    value = draft.languages.replace(',', '|'),
+                    choices = extras.lists[ServerList.Languages],
                     enabled = enabled,
-                    onChange = { value -> actions.onEdit { it.copy(languages = value) } },
-                    keyboard = VerbatimKeyboard,
-                    emptyLabel = any,
-                    hint = stringResource(R.string.server_settings_rule_languages_hint),
+                    onOpen = ruleActions.onLoadLanguages,
+                    onSelect = ruleActions.onSelectLanguages,
                 ),
-                textSettingItem(
-                    icon = Icons.Filled.Key,
-                    label = stringResource(R.string.server_settings_rule_keywords),
-                    value = draft.keywords,
-                    enabled = enabled,
-                    onChange = { value -> actions.onEdit { it.copy(keywords = value) } },
-                    keyboard = VerbatimKeyboard,
-                    emptyLabel = any,
-                    hint = stringResource(R.string.server_settings_rule_keywords_hint),
-                ),
+                keywordItem(extras, draft, enabled, ruleActions, any),
             ),
         belowRows =
             if (draft.hasCondition) {
@@ -150,6 +146,92 @@ internal fun RuleConditions(
             } else {
                 { GroupMessage(stringResource(R.string.server_settings_rule_needs_condition), error = false) }
             },
+    )
+}
+
+/**
+ * The genres the instance's kind matches, as a checklist of names. Until an instance is picked there is no kind to ask
+ * for; a server that cannot send the list gets typed ids back, so the condition stays in reach.
+ */
+@Composable
+private fun genreItem(
+    extras: OverrideRuleExtras,
+    draft: OverrideRuleForm,
+    enabled: Boolean,
+    actions: EditorActions<OverrideRuleForm>,
+    onToggle: (Int) -> Unit,
+): ListItem {
+    val title = stringResource(R.string.server_settings_rule_genres)
+    val any = stringResource(R.string.server_settings_rule_any)
+    val genres = extras.genres
+    return when {
+        draft.serviceType == null ->
+            untestedItem(
+                Icons.Filled.Category,
+                title,
+                savedLabel = draft.genres.ifBlank { null },
+                waitingFor = stringResource(R.string.server_settings_rule_pick_instance),
+            )
+        genres is GenreChoices.Ready ->
+            multiChoiceSettingItem(
+                icon = Icons.Filled.Category,
+                title = title,
+                choices =
+                    genreChecklist(genres.genres, draft.genres.tagIds().toSet()).map {
+                        BingeChoice(it.id, it.label, icon = Icons.Filled.Category)
+                    },
+                selected = draft.genres.tagIds().toSet(),
+                enabled = enabled,
+                emptyLabel = any,
+                onToggle = onToggle,
+            )
+        genres is GenreChoices.Failed ->
+            textSettingItem(
+                icon = Icons.Filled.Category,
+                label = title,
+                value = draft.genres,
+                enabled = enabled,
+                onChange = { value -> actions.onEdit { it.copy(genres = value) } },
+                keyboard = VerbatimKeyboard,
+                emptyLabel = any,
+                hint = stringResource(R.string.server_settings_rule_genres_hint),
+            )
+        else -> untestedItem(Icons.Filled.Category, title, savedLabel = draft.genres.ifBlank { null }).copy(loading = true)
+    }
+}
+
+/** The keywords a rule matches, named, with TMDB's keyword search over the rule to change them. */
+@Composable
+private fun keywordItem(
+    extras: OverrideRuleExtras,
+    draft: OverrideRuleForm,
+    enabled: Boolean,
+    ruleActions: OverrideRuleActions,
+    any: String,
+): ListItem {
+    var open by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(enabled) { if (!enabled) open = false }
+    val title = stringResource(R.string.server_settings_rule_keywords)
+    val chosen = draft.keywords.tagIds()
+    if (open) {
+        KeywordPickerDialog(
+            title = title,
+            chosen = chosen,
+            search = extras.keywords,
+            onSearch = ruleActions.onSearchKeywords,
+            onToggle = ruleActions.onToggleKeyword,
+            onDismiss = { open = false },
+        )
+    }
+    return keywordSettingItem(
+        icon = Icons.Filled.Key,
+        title = title,
+        chosen = chosen,
+        names = extras.keywords.names,
+        enabled = enabled,
+        onLoadNames = ruleActions.onLoadKeywordNames,
+        onOpen = { open = true },
+        emptyLabel = any,
     )
 }
 
@@ -206,7 +288,7 @@ internal fun RuleOverrides(
                 multiChoiceSettingItem(
                     icon = Icons.AutoMirrored.Filled.Label,
                     title = tagsTitle,
-                    choices = choices.tags.map { it.id to it.label },
+                    choices = choices.tags.map { BingeChoice(it.id, it.label, icon = Icons.AutoMirrored.Filled.Label) },
                     selected = draft.tagIds,
                     enabled = enabled,
                     emptyLabel = unchanged,

@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.service
 
 import com.binge.companion.contracts.request.v1.ListRequestsRequest
 import com.binge.companion.contracts.request.v1.RequestFilter
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import java.util.Base64
 
 /** What `ListRequests` answers with when the host leaves `page_size` at 0. */
@@ -89,7 +90,7 @@ internal object ListRequestsPageToken {
     /** Null for anything [issue] could not have written. */
     private fun decode(token: String): Decoded? {
         val fields =
-            runCatching { String(Base64.getUrlDecoder().decode(token)) }
+            attempt { String(Base64.getUrlDecoder().decode(token)) }
                 .getOrNull()
                 ?.split(':')
                 ?.takeIf { it.size == FIELD_COUNT && it[0] == VERSION }

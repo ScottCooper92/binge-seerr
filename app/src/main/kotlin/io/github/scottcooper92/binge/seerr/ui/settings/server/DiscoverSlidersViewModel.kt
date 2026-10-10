@@ -6,12 +6,14 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import javax.inject.Inject
 
@@ -47,15 +49,25 @@ class DiscoverSlidersViewModel
 
         fun toggle(id: Int) = edit { sliders -> sliders.map { if (it.id == id) it.copy(enabled = !it.enabled) else it } }
 
+        /**
+         * A change still waiting out its save delay is dropped at the tap, or it would be written over the reset (#1019). The
+         * page then reads the list again on the main thread, as save-as-made needs, whether the reset went through or not:
+         * either way it shows what the server holds.
+         */
         fun reset() {
-            viewModelScope.launch(dispatcher) {
-                runCatching {
-                    val response = connection.api().resetDiscoverSliders()
-                    if (!response.isSuccessful) throw HttpException(response)
-                }.onSuccess {
-                    reload()
-                    notify(EditorEvent.Notice(R.string.server_settings_sliders_reset_done))
-                }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+            discardUnsent()
+            viewModelScope.launch {
+                val result =
+                    withContext(dispatcher) {
+                        attempt {
+                            val response = connection.api().resetDiscoverSliders()
+                            if (!response.isSuccessful) throw HttpException(response)
+                        }
+                    }
+                reload()
+                result
+                    .onSuccess { notify(EditorEvent.Notice(R.string.server_settings_sliders_reset_done)) }
+                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
             }
         }
     }

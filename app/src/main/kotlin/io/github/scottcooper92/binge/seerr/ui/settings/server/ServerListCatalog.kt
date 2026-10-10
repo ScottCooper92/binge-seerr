@@ -1,6 +1,10 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
+import io.github.scottcooper92.binge.seerr.seerr.attempt
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
@@ -54,4 +58,25 @@ sealed interface ListChoices {
     ) : ListChoices
 
     data object Failed : ListChoices
+}
+
+/**
+ * Reads a [ServerList] for the picker that opens it, once: a list being read or read is left alone, and a failed one is
+ * asked for again. Each page that offers these pickers keeps the lists in its own state, through [held] and [set].
+ */
+internal class ListChoicesLoader(
+    private val scope: CoroutineScope,
+    private val dispatcher: CoroutineDispatcher,
+    private val catalog: ServerListCatalog,
+    private val held: (ServerList) -> ListChoices?,
+    private val set: (ServerList, ListChoices) -> Unit,
+) {
+    fun load(kind: ServerList) {
+        val current = held(kind)
+        if (current is ListChoices.Ready || current == ListChoices.Loading) return
+        set(kind, ListChoices.Loading)
+        scope.launch(dispatcher) {
+            set(kind, attempt { catalog.entries(kind) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed }))
+        }
+    }
 }

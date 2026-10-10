@@ -34,6 +34,7 @@ internal fun TvAccountEntry(
             requests = TvPagedRows(count = 0, at = { null }),
             onOpenRequest = {},
             onRetry = hubViewModel::recheck,
+            onRetryRequests = {},
             overlayOpen = false,
             accountFailed = hub !is HubUiState.Loading,
         )
@@ -61,6 +62,7 @@ private fun TvAccountContent(
         requests = requests.toRows(null) { it.id },
         onOpenRequest = { onOpenRequest(it.id) },
         onRetry = viewModel::reload,
+        onRetryRequests = requests::retry,
         overlayOpen = openRequestId != null,
     )
 }

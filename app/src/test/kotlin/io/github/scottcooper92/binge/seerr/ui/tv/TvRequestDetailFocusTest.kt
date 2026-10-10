@@ -263,6 +263,9 @@ class TvRequestDetailFocusTest {
                             onDecline = {},
                             onRemove = {},
                             onBlock = {},
+                            onSetMediaStatus = { _, _, _ -> },
+                            onReportIssue = { _, _ -> },
+                            onDismissReport = {},
                         ),
                 )
             }
@@ -333,6 +336,9 @@ class TvRequestDetailFocusTest {
                                 onDecline = {},
                                 onRemove = {},
                                 onBlock = {},
+                                onSetMediaStatus = { _, _, _ -> },
+                                onReportIssue = { _, _ -> },
+                                onDismissReport = {},
                             ),
                     )
                 }
@@ -445,6 +451,9 @@ class TvRequestDetailFocusTest {
                                     },
                                     onRemove = { removed += it },
                                     onBlock = { blocked++ },
+                                    onSetMediaStatus = { _, _, _ -> },
+                                    onReportIssue = { _, _ -> },
+                                    onDismissReport = {},
                                 ),
                         )
                     }

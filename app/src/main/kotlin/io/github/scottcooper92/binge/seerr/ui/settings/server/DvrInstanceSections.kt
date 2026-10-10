@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import io.github.scottcooper92.binge.seerr.R
@@ -201,7 +202,7 @@ private fun tagsItem(
         multiChoiceSettingItem(
             icon = Icons.AutoMirrored.Filled.Label,
             title = title,
-            choices = choices.tags.map { it.id to it.label },
+            choices = choices.tags.map { BingeChoice(it.id, it.label, icon = Icons.AutoMirrored.Filled.Label) },
             selected = selected,
             enabled = enabled,
             emptyLabel = stringResource(R.string.server_settings_dvr_tags_none),

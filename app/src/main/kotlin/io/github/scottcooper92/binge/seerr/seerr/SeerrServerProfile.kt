@@ -95,6 +95,12 @@ data class SeerrServerProfile(
 
     val hasOverrideRules: Boolean get() = jellyseerrLineage && atLeast(2, 2)
 
+    /**
+     * Jellyseerr split its one `region` into `discoverRegion` and `streamingRegion` at 2.2, not at its first release
+     * (#1012). Before it, and on Overseerr, the server keeps one region and ignores a streaming one.
+     */
+    val hasStreamingRegion: Boolean get() = jellyseerrLineage && atLeast(2, 2)
+
     val hasNetworkSettings: Boolean get() = jellyseerrLineage && atLeast(2, 4)
 
     /** Choosing TMDB or TVDB for series and anime arrived with Seerr 3.0. */

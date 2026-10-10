@@ -27,6 +27,11 @@ private const val HUB = "hub"
 private const val DEFAULT = "default section"
 private const val SETTINGS = "settings"
 private const val PAGE = "server settings page"
+private const val REQUESTS = "requests"
+private const val SUBPAGE = "server settings subpage"
+
+/** A landscape tablet: past the design system's expanded-rail line, so the host lays out three panes (#1110). */
+private const val TABLET = "w1280dp-h800dp"
 
 /**
  * [SeerrPaneHost] in a two-pane window, with the pane locals it provides read the way the design system reads them:
@@ -34,10 +39,12 @@ private const val PAGE = "server settings page"
  * gutter frames set those locals by hand, so neither fails if the host stops providing [LocalIsSinglePaneNav] or
  * [LocalPaneDepth] (#823). The entries are stand-ins wrapped as the real ones are, because the real screens take Hilt
  * ViewModels.
+ *
+ * Two panes on a window under the landscape-tablet line; [TABLET] for the three panes above it.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @RunWith(RobolectricTestRunner::class)
-@Config(qualifiers = "w1000dp-h800dp")
+@Config(qualifiers = "w900dp-h800dp")
 class SeerrPaneHostTest {
     @get:Rule
     val rule = createSeerrComposeRule()
@@ -50,18 +57,24 @@ class SeerrPaneHostTest {
 
     private val panes = mutableMapOf<String, Pane>()
 
-    private fun show(vararg keys: NavKey) {
+    private fun show(vararg keys: NavKey): NavBackStack<NavKey> {
+        lateinit var backStack: NavBackStack<NavKey>
         rule.setContent {
-            val backStack = remember { NavBackStack(mutableStateListOf(*keys)) }
-            SeerrPaneHost(backStack, connected = true) { _, _ ->
+            backStack = remember { NavBackStack(mutableStateListOf(*keys)) }
+            SeerrPaneHost(backStack, connected = true, defaultSection = { DetailPaneContent { Record(DEFAULT) } }) {
                 entry<HubRoute>(
-                    metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { DetailPaneContent { Record(DEFAULT) } }),
+                    metadata =
+                        ListDetailSceneStrategy.listPane(detailPlaceholder = { DetailPaneContent { Record(DEFAULT) } }) + ThreePaneHub,
                 ) { PaneContent(innerEdge = PaneEdge.End) { Record(HUB) } }
-                entry<SettingsRoute>(metadata = DetailPane) { DetailPaneContent { Record(SETTINGS) } }
-                entry<ServerSettingsPageRoute>(metadata = DetailPane) { DetailPaneContent { Record(PAGE) } }
+                entry<RequestsRoute>(metadata = DetailPane + ThreePaneSection) { DetailPaneContent { Record(REQUESTS) } }
+                entry<SettingsRoute>(metadata = DetailPane + ThreePaneSection) { DetailPaneContent { Record(SETTINGS) } }
+                entry<ServerSettingsPageRoute>(metadata = DetailPane) { route ->
+                    DetailPaneContent { Record(if (route.page == ServerSettingsPage.General) PAGE else SUBPAGE) }
+                }
             }
         }
         rule.waitForIdle()
+        return backStack
     }
 
     @Composable
@@ -97,5 +110,39 @@ class SeerrPaneHostTest {
         show(HubRoute, SettingsRoute, ServerSettingsPageRoute(ServerSettingsPage.General))
 
         assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(PAGE))
+    }
+
+    /** The default section goes on the stack, so its list keeps its state when it opens something; Back still leaves (#815). */
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `in three panes, the hub alone gets the default section on the stack beside it`() {
+        val backStack = show(HubRoute)
+
+        assertEquals(listOf<NavKey>(HubRoute, RequestsRoute), backStack.toList())
+        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(REQUESTS))
+    }
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `in three panes, neither the section nor what it opened shows a Back arrow`() {
+        show(HubRoute, SettingsRoute, ServerSettingsPageRoute(ServerSettingsPage.General))
+
+        assertEquals(PaneEdge.End, panes.getValue(HUB).innerEdge)
+        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(SETTINGS))
+        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(PAGE))
+    }
+
+    @Test
+    @Config(qualifiers = TABLET)
+    fun `in three panes, a screen stacked above the open item keeps its Back arrow, and the section still has none`() {
+        show(
+            HubRoute,
+            SettingsRoute,
+            ServerSettingsPageRoute(ServerSettingsPage.General),
+            ServerSettingsPageRoute(ServerSettingsPage.Users),
+        )
+
+        assertEquals(Pane(PaneEdge.Start, showsBack = false), panes.getValue(SETTINGS))
+        assertEquals(Pane(PaneEdge.Start, showsBack = true), panes.getValue(SUBPAGE))
     }
 }

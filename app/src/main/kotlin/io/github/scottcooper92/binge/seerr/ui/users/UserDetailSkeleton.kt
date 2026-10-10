@@ -59,7 +59,7 @@ internal fun UserDetailSkeleton(modifier: Modifier = Modifier) {
             modifier =
                 Modifier
                     .padding(
-                        resolvedContentPadding(top = inset, bottom = inset),
+                        resolvedContentPadding(vertical = inset),
                     ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)),
         )
         SectionHeaderSkeleton()

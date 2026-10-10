@@ -304,7 +304,7 @@ internal fun RequestDetailPage(
                 detail,
                 Modifier
                     .padding(
-                        resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()),
+                        resolvedContentPadding(vertical = resolvedContentInset()),
                     ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
                 initiallyOverflowing,
             )

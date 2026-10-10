@@ -28,21 +28,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCardRow
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvContentInset
 import com.binge.designsystem.tv.template.TvMessagePage
@@ -52,15 +50,19 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.statusChip
+import io.github.scottcooper92.binge.seerr.ui.tv.OverlayFocusRestore
+import io.github.scottcooper92.binge.seerr.ui.tv.TV_ROW_ITEM_CAP
+import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
+import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
+import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterIconChip
+import io.github.scottcooper92.binge.seerr.ui.tv.rememberOverlayFocusRestore
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
 import io.github.scottcooper92.binge.seerr.ui.users.UserDetailUiState
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
-
-private const val ROW_ITEM_CAP = 20
 
 /** The requests row's slot in the page's list: the profile and the quota tiles come first. */
 private const val REQUESTS_ITEM_INDEX = 2
@@ -74,7 +76,8 @@ private enum class AccountFocusArea { Profile, Requests }
  * needs no description beyond its caption.
  *
  * [detail] is null until the account is known, and [accountFailed] says the account could not be resolved at all (the
- * hub could not load it), so the page offers a retry rather than loading forever; [requests] is the user's own paged list. [overlayOpen] is
+ * hub could not load it), so the page offers a retry rather than loading forever; [requests] is the user's own paged list,
+ * and a failed page of it says so beside a retry, [onRetryRequests], rather than reading as no requests (#1035). [overlayOpen] is
  * whether a request's page is showing above the rail, so focus returns to the card that opened it.
  */
 @Composable
@@ -83,6 +86,7 @@ internal fun TvAccountBoard(
     requests: TvPagedRows<RequestItem>,
     onOpenRequest: (RequestItem) -> Unit,
     onRetry: () -> Unit,
+    onRetryRequests: () -> Unit,
     overlayOpen: Boolean,
     modifier: Modifier = Modifier,
     accountFailed: Boolean = false,
@@ -99,12 +103,9 @@ internal fun TvAccountBoard(
         TvAccountUnresolved(failed = accountFailed || detail is UserDetailUiState.Error, onRetry = onRetry, modifier = modifier)
         return
     }
-    val restoreFocus = remember { FocusRequester() }
-    var restoreRequestId by rememberSaveable { mutableStateOf<Int?>(null) }
-    LaunchedEffect(overlayOpen) {
-        if (!overlayOpen && restoreRequestId != null) restoreTvOverlayFocus(restoreFocus)
-    }
-    val rows = (0 until minOf(requests.count, ROW_ITEM_CAP)).mapNotNull { requests.at(it) }
+    val restore = rememberOverlayFocusRestore(overlayOpen)
+    val rows = (0 until minOf(requests.count, TV_ROW_ITEM_CAP)).mapNotNull { requests.at(it) }
+    val requestsFailed = requests.refresh == TvLoadPhase.Failed || requests.append == TvLoadPhase.Failed
     val verticalInset = dimensionResource(TvR.dimen.tv_overscan_vertical)
     val listState = rememberLazyListState()
     // Which block holds focus. The page is taller than the screen, and the default scroll only brings the focused
@@ -148,18 +149,21 @@ internal fun TvAccountBoard(
                         TvQuotaTile(stringResource(R.string.hub_quota_tv), quota?.tv, quota != null, Modifier.weight(1f))
                     }
                 }
-                if (rows.isNotEmpty()) {
+                if (rows.isNotEmpty() || requestsFailed) {
+                    // One slot for the row and its failure, so the scroll anchor's index holds either way.
                     item(key = "requests") {
-                        TvAccountRequestsRow(
+                        TvAccountRequests(
                             rows = rows,
                             requestCount = item.requestCount,
-                            restoreRequestId = restoreRequestId,
-                            restoreFocus = restoreFocus,
+                            failed = requestsFailed,
+                            restore = restore,
                             onFocused = { focusArea = AccountFocusArea.Requests },
                             onOpen = {
-                                restoreRequestId = it.id
+                                restore.leavingFromRow(it.id)
                                 onOpenRequest(it)
                             },
+                            onRetry = onRetryRequests,
+                            failureModifier = Modifier.padding(start = startInset, end = endInset),
                         )
                     }
                 }
@@ -183,6 +187,52 @@ private fun TvAccountUnresolved(
         )
     } else {
         TvMessagePage(body = stringResource(R.string.tv_loading), modifier = modifier, loading = true)
+    }
+}
+
+/** The requests slot: the row when there are rows, and beneath it a failed page's note and retry. */
+@Composable
+private fun TvAccountRequests(
+    rows: List<RequestItem>,
+    requestCount: Int,
+    failed: Boolean,
+    restore: OverlayFocusRestore,
+    onFocused: () -> Unit,
+    onOpen: (RequestItem) -> Unit,
+    onRetry: () -> Unit,
+    failureModifier: Modifier,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
+        if (rows.isNotEmpty()) {
+            TvAccountRequestsRow(
+                rows = rows,
+                requestCount = requestCount,
+                restore = restore,
+                onFocused = onFocused,
+                onOpen = onOpen,
+            )
+        }
+        if (failed) TvAccountRequestsFailed(onRetry = onRetry, onFocused = onFocused, modifier = failureModifier)
+    }
+}
+
+/** The user's requests could not be read: said so, with a retry, where the row would be. */
+@Composable
+private fun TvAccountRequestsFailed(
+    onRetry: () -> Unit,
+    onFocused: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+    ) {
+        TvFormNote(stringResource(R.string.tv_list_load_failed), tone = TvFormNoteTone.Error)
+        TvButton(
+            label = stringResource(R.string.hub_retry),
+            onClick = onRetry,
+            modifier = Modifier.onFocusChanged { if (it.isFocused) onFocused() },
+        )
     }
 }
 
@@ -212,8 +262,7 @@ private fun AnchorAccountScroll(
 private fun TvAccountRequestsRow(
     rows: List<RequestItem>,
     requestCount: Int,
-    restoreRequestId: Int?,
-    restoreFocus: FocusRequester,
+    restore: OverlayFocusRestore,
     onFocused: () -> Unit,
     onOpen: (RequestItem) -> Unit,
 ) {
@@ -230,7 +279,7 @@ private fun TvAccountRequestsRow(
             isFocused = isFocused,
             onFocusChanged = onFocusChanged,
             onClick = { onOpen(request) },
-            cellModifier = if (request.id == restoreRequestId) cellModifier.focusRequester(restoreFocus) else cellModifier,
+            cellModifier = restore.rowModifier(request.id, cellModifier),
         )
     }
 }

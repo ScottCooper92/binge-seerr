@@ -6,7 +6,6 @@ import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.BingeHint
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
@@ -16,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -26,6 +26,7 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.Headers.Companion.headersOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -193,6 +194,16 @@ class HubViewModelTest {
             assertEquals("https://image.tmdb.org/t/p/w342/fc.jpg", download.posterUrl)
             assertEquals(0.75f, download.fraction)
             assertEquals(12, download.etaMinutes)
+        }
+
+    /** No route honours `MANAGE_SETTINGS`; every route on the admin `/settings` router needs `ADMIN` (#1004). */
+    @Test
+    fun `manage settings without admin does not open the settings section`() =
+        runTest {
+            healthyServer(permissions = REQUEST or (1 shl 2))
+            val vm = viewModel()
+
+            assertFalse(HubSection.Settings in vm.awaitReady().overview.visibleSections())
         }
 
     @Test
@@ -719,9 +730,65 @@ class HubViewModelTest {
             assertTrue((vm.uiState.value as HubUiState.Ready).downloading.isEmpty())
         }
 
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
+    /** The dashboard's pull re-reads what becoming visible does, and the downloads with it: each once, then settles. */
+    @Test
+    fun `a pull re-reads the pending count, the downloads and the install state once`() =
+        runTest {
+            healthyServer()
+            val installCheck = FakeBingeInstallCheck(installed = false)
+            val vm = viewModel(installCheck = installCheck)
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.downloading.isNotEmpty() && it.overview.pendingRequestCount == 2 }
+            seerr.awaitIdle()
 
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
+            fun reads(path: String) = seerr.requests.count { it.url.encodedPath == path }
+
+            val downloadReads = reads("/api/v1/request")
+            val countReads = reads("/api/v1/request/count")
+            serve("/api/v1/request/count", """{"total":13,"movie":9,"tv":4,"pending":3,"processing":1}""")
+            installCheck.installed = true
+
+            vm.refresh()
+            val settled =
+                vm.awaitReady {
+                    !it.refreshing && it.overview.pendingRequestCount == 3 && it.bingeStatus == BingeStatus.NotConnected
+                }
+            seerr.awaitIdle()
+
+            assertEquals(3, settled.overview.pendingRequestCount)
+            assertEquals(downloadReads + 1, reads("/api/v1/request"))
+            assertEquals(countReads + 1, reads("/api/v1/request/count"))
+        }
+
+    /** A pull is the spinner until its reads answer, and a second pull meanwhile reads nothing more. */
+    @Test
+    fun `a pull while one is running starts no second`() =
+        runTest {
+            healthyServer()
+            val vm = viewModel()
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.downloading.isNotEmpty() && it.overview.pendingRequestCount == 2 }
+            seerr.awaitIdle()
+
+            fun reads(path: String) = seerr.requests.count { it.url.encodedPath == path }
+
+            val downloadReads = reads("/api/v1/request")
+            val countReads = reads("/api/v1/request/count")
+            val release = CountDownLatch(1)
+            val count = responses.getValue("/api/v1/request/count")
+            responses["/api/v1/request/count"] = {
+                release.await(LATCH_SECONDS, TimeUnit.SECONDS)
+                count()
+            }
+
+            vm.refresh()
+            vm.awaitReady { it.refreshing }
+            vm.refresh()
+            release.countDown()
+            vm.awaitReady { !it.refreshing }
+            seerr.awaitIdle()
+
+            assertEquals(downloadReads + 1, reads("/api/v1/request"))
+            assertEquals(countReads + 1, reads("/api/v1/request/count"))
+        }
 }

@@ -15,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,7 +36,8 @@ import javax.inject.Inject
  * The connected hub: the server and account cards, the counts, the downloading strip and the
  * manage rows, over the connection's live health. The overview loads once per connect or re-check
  * and never on the poll; the pending-request badge also refreshes on becoming visible, so returning
- * from a sub-screen picks up an approval without waiting on anything.
+ * from a sub-screen picks up an approval without waiting on anything. A pull on the dashboard re-reads
+ * the same, and the downloads with it.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -54,6 +56,9 @@ class HubViewModel
         private val recheckTrigger = MutableStateFlow(0)
         private val isProbing = MutableStateFlow(false)
         private val screenVisible = MutableStateFlow(false)
+
+        /** A pull's re-read is running; a second pull meanwhile is dropped. */
+        private val pulling = MutableStateFlow(false)
 
         /** Re-read on every arrival: installing Binge while this screen is backgrounded should flip the tile unprompted. */
         private val installedTrigger = MutableStateFlow(installCheck.isInstalled())
@@ -157,20 +162,17 @@ class HubViewModel
         private val bingeHintDismissed: Flow<Boolean> =
             combine(bingeStatus, bingeConnection.dismissedHints) { status, dismissed -> status.hint() in dismissed }
 
-        /** Folded with the downloading strip rather than added as a sixth argument: [combine] has no six-flow overload. */
-        private val downloadingAndBingeStatus: Flow<Triple<List<HubDownload>, BingeStatus, Boolean>> =
-            combine(downloadsPoller.downloading, bingeStatus, bingeHintDismissed) { downloading, status, dismissed ->
-                Triple(downloading, status, dismissed)
-            }
+        /** Folded together rather than added as more arguments: [combine] has no overload past five flows. */
+        private val extras: Flow<HubExtras> = combine(downloadsPoller.downloading, bingeStatus, bingeHintDismissed, pulling, ::HubExtras)
 
         private val freshState: Flow<HubUiState> =
             combine(
                 server,
                 health,
                 overview,
-                downloadingAndBingeStatus,
+                extras,
                 refreshedPendingCount,
-            ) { server, health, overview, (downloading, bingeStatus, hintDismissed), pending ->
+            ) { server, health, overview, extras, pending ->
                 // Not loaded is not ready: the overview carries the user's permissions, and every
                 // manage row is gated on one, so a Ready built on the placeholder is a hub with
                 // Requests alone — a settled-looking menu that then grows rows under a finger.
@@ -183,9 +185,10 @@ class HubViewModel
                             server = server.server,
                             health = effectiveHealth(health, overview),
                             overview = overview.copy(pendingRequestCount = pending ?: overview.pendingRequestCount),
-                            downloading = downloading,
-                            bingeStatus = bingeStatus,
-                            bingeHintDismissed = hintDismissed,
+                            downloading = extras.downloading,
+                            bingeStatus = extras.bingeStatus,
+                            bingeHintDismissed = extras.hintDismissed,
+                            refreshing = extras.pulling,
                         )
                 }
             }
@@ -231,8 +234,31 @@ class HubViewModel
             downloadsPoller.setScreenVisible(visible && downloads)
             if (visible && dashboard) {
                 installedTrigger.value = installCheck.isInstalled()
-                viewModelScope.launch(dispatcher) { loader.pendingRequestCount()?.let { refreshedPendingCount.value = it } }
+                viewModelScope.launch(dispatcher) { rereadPendingCount() }
             }
+        }
+
+        /**
+         * The dashboard's pull: re-reads what becoming visible does, the pending count and whether Binge is installed,
+         * and the downloads now rather than on the poll's next tick. A pull while one is running is dropped.
+         */
+        fun refresh() {
+            if (!pulling.compareAndSet(expect = false, update = true)) return
+            installedTrigger.value = installCheck.isInstalled()
+            viewModelScope.launch(dispatcher) {
+                try {
+                    coroutineScope {
+                        launch { rereadPendingCount() }
+                        launch { downloadsPoller.refreshNow() }
+                    }
+                } finally {
+                    pulling.value = false
+                }
+            }
+        }
+
+        private suspend fun rereadPendingCount() {
+            loader.pendingRequestCount()?.let { refreshedPendingCount.value = it }
         }
 
         /** Re-probes the server and reloads the overview: the "can't reach server" retry. */
@@ -242,7 +268,7 @@ class HubViewModel
                 isProbing.value = true
                 try {
                     // The probe's outcome reaches health through the cached client's interceptor.
-                    runCatching { connection.api().authenticatedUser() }
+                    attempt { connection.api().authenticatedUser() }
                 } finally {
                     isProbing.value = false
                 }
@@ -259,6 +285,14 @@ class HubViewModel
             viewModelScope.launch(dispatcher) { connection.disconnect() }
         }
     }
+
+/** What [HubUiState.Ready] carries beside the server, the health and the overview. */
+private data class HubExtras(
+    val downloading: List<HubDownload>,
+    val bingeStatus: BingeStatus,
+    val hintDismissed: Boolean,
+    val pulling: Boolean,
+)
 
 /** What the first read of the server has said so far. */
 private sealed interface ServerRead {

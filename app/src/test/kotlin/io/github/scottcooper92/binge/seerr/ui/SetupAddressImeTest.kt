@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import android.content.Context
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performImeAction
 import androidx.test.core.app.ApplicationProvider
@@ -26,13 +25,9 @@ class SetupAddressImeTest {
         var inspected = 0
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
-                SetupAddressStep(
+                SetupScreen(
                     state = SetupUiState.Address(serverUrl = serverUrl, insecure = false, isInspecting = false, error = null),
-                    onEditAddress = {},
-                    onInspect = { inspected++ },
-                    onAllowCleartext = {},
-                    onLocalNetworkChanged = {},
-                    contentPadding = PaddingValues(),
+                    actions = SetupActions({}, { inspected++ }, {}, {}, {}, {}, {}, {}),
                 )
             }
         }

@@ -51,6 +51,8 @@ class SeerrApiFactory(
      * passes the network interceptors, which a [testTransport] answers before they run.
      */
     internal val testDns: Dns? = null,
+    /** Where the request log goes when [logRequests] is on, when set. Test-only (#1031): it is how a test reads what is logged. */
+    internal val testLogger: HttpLoggingInterceptor.Logger? = null,
 ) {
     /**
      * `explicitNulls = false` so an omitted field (`seasons` on a movie request) is dropped from the body, not sent as null.
@@ -82,7 +84,7 @@ class SeerrApiFactory(
                         .addInterceptor(SeerrWriteInterceptor(onWrite))
                         .addInterceptor(SeerrSessionInterceptor(baseUrl))
                         .applyAuth(auth, baseUrl)
-                        .finish(HttpLoggingInterceptor.Level.BODY, sessionCookieJarOrNull(auth, baseUrl))
+                        .finish(sessionCookieJarOrNull(auth, baseUrl))
                 CachedApi(baseUrl, auth, client, retrofit(baseUrl, client)).also { cached = it }.api
             }
         }
@@ -104,8 +106,7 @@ class SeerrApiFactory(
         auth: SeerrAuth,
         block: suspend (SeerrApi) -> T,
     ): T {
-        val client =
-            OkHttpClient.Builder().applyAuth(auth, baseUrl).finish(HttpLoggingInterceptor.Level.BODY, sessionCookieJarOrNull(auth, baseUrl))
+        val client = OkHttpClient.Builder().applyAuth(auth, baseUrl).finish(sessionCookieJarOrNull(auth, baseUrl))
         return try {
             block(retrofit(baseUrl, client))
         } finally {
@@ -115,15 +116,14 @@ class SeerrApiFactory(
 
     /**
      * Runs a login [block] against a throwaway, auth-less client whose cookie jar records the
-     * `connect.sid` the login response sets. HEADERS logging, never BODY: the login body carries the
-     * password, and redaction covers headers only.
+     * `connect.sid` the login response sets.
      */
     suspend fun <T> login(
         baseUrl: String,
         block: suspend (SeerrApi) -> T,
     ): SeerrLoginResult<T> {
         val capture = CapturingCookieJar()
-        val client = OkHttpClient.Builder().cookieJar(capture).finish(HttpLoggingInterceptor.Level.HEADERS, capture)
+        val client = OkHttpClient.Builder().cookieJar(capture).finish(capture)
         return try {
             SeerrLoginResult(value = block(retrofit(baseUrl, client)), sessionCookie = capture.sessionCookie)
         } finally {
@@ -133,14 +133,13 @@ class SeerrApiFactory(
 
     /**
      * A throwaway client with no credentials at all, for the calls a server answers before
-     * sign-in: its profile, its artwork, a Quick Connect code, a password reset. HEADERS logging
-     * for the same reason as [login]: a reset body carries the address.
+     * sign-in: its profile, its artwork, a Quick Connect code, a password reset.
      */
     suspend fun <T> anonymous(
         baseUrl: String,
         block: suspend (SeerrApi) -> T,
     ): T {
-        val client = OkHttpClient.Builder().finish(HttpLoggingInterceptor.Level.HEADERS, cookieJar = null)
+        val client = OkHttpClient.Builder().finish(cookieJar = null)
         return try {
             block(retrofit(baseUrl, client))
         } finally {
@@ -155,15 +154,12 @@ class SeerrApiFactory(
      * connection the server is about to close — which OkHttp does not recover from, because its
      * retry looks for another route and a single server offers none (#254).
      */
-    private fun OkHttpClient.Builder.finish(
-        debugLevel: HttpLoggingInterceptor.Level,
-        cookieJar: CookieJar?,
-    ): OkHttpClient =
+    private fun OkHttpClient.Builder.finish(cookieJar: CookieJar?): OkHttpClient =
         apply { testTransport?.let { addInterceptor(it(cookieJar ?: CookieJar.NO_COOKIES)) } }
             .apply { testDispatcher?.let { dispatcher(it()) } }
             .apply { testDns?.let { dns(it) } }
             .addNetworkInterceptor(CleartextGuard(cleartext))
-            .addNetworkInterceptor(loggingInterceptor(debugLevel))
+            .addNetworkInterceptor(loggingInterceptor())
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -171,12 +167,15 @@ class SeerrApiFactory(
 
     /**
      * A NETWORK interceptor so it sees the fully-formed request — including the `Cookie` header the
-     * jar attaches downstream of application interceptors — and can redact it. Every secret here is
-     * header-borne, so redacting [REDACTED_HEADERS] masks all of them.
+     * jar attaches downstream of application interceptors — and can redact it. Headers only, never
+     * bodies, on every client (#1031). The credentials are headers, and redacting [REDACTED_HEADERS]
+     * masks them, but plenty of bodies carry secrets too: the server's own API key on its settings,
+     * each service's key, notification agents' tokens, and every password a form sends. A debug build
+     * goes to testers, and anything that can read the device log would read those.
      */
-    private fun loggingInterceptor(debugLevel: HttpLoggingInterceptor.Level): HttpLoggingInterceptor =
-        HttpLoggingInterceptor().apply {
-            level = if (logRequests) debugLevel else HttpLoggingInterceptor.Level.NONE
+    private fun loggingInterceptor(): HttpLoggingInterceptor =
+        HttpLoggingInterceptor(testLogger ?: HttpLoggingInterceptor.Logger.DEFAULT).apply {
+            level = if (logRequests) HttpLoggingInterceptor.Level.HEADERS else HttpLoggingInterceptor.Level.NONE
             REDACTED_HEADERS.forEach(::redactHeader)
         }
 
@@ -271,7 +270,9 @@ internal fun HttpUrl.sharesOriginWith(base: HttpUrl): Boolean = scheme == base.s
 
 /**
  * Replays one `connect.sid` cookie, scoped to the saved server's host. [loadForRequest] filters on
- * [Cookie.matches], so a cross-host redirect never receives the session.
+ * [Cookie.matches], so a cross-host redirect never receives the session. For an `https` server the
+ * cookie is `Secure` too (#1034): [Cookie.matches] ignores the scheme otherwise, so a redirect down to
+ * `http` on the same host would carry the session in the clear.
  */
 internal class SessionCookieJar(
     baseUrl: String,
@@ -288,6 +289,7 @@ internal class SessionCookieJar(
                         .value(cookieValue)
                         .hostOnlyDomain(url.host)
                         .path("/")
+                        .apply { if (url.isHttps) secure() }
                         .build(),
                 )
             }.orEmpty()

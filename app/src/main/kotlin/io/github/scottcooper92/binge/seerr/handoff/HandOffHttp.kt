@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -193,7 +194,7 @@ internal class HandOffRequestReader(
 
 /** The fields of an `application/x-www-form-urlencoded` body; a malformed escape reads as no fields. */
 internal fun ByteArray.formFields(): Map<String, String> =
-    runCatching {
+    attempt {
         String(this, StandardCharsets.UTF_8)
             .split('&')
             .filter { it.isNotEmpty() }

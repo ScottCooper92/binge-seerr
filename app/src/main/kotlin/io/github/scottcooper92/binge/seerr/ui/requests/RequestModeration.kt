@@ -9,7 +9,10 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusSeasonBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.addToBlocklistOnce
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.seerr.updateRequest
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
@@ -111,7 +114,7 @@ class RequestModeration(
     fun edit(
         requestId: Int,
         body: SeerrEditRequestBody,
-    ) = moderate(requestId, ModerationEvent.Edited) { connection.api().editRequest(it, body) }
+    ) = moderate(requestId, ModerationEvent.Edited) { connection.api().updateRequest(it, body) }
 
     /**
      * [seasonNumbers] is this request's own seasons - what marking *this* title available should
@@ -207,7 +210,7 @@ class RequestModeration(
         crashBreadcrumbs.key("request_id", requestId.toString())
         crashBreadcrumbs.log("moderating request: ${done.actionLabel()}")
         scope.launch(dispatcher) {
-            val result = runCatching { action(requestId) }
+            val result = attempt { action(requestId) }
             acting.update { it - requestId }
             result
                 .onSuccess {
@@ -242,10 +245,10 @@ class RequestModeration(
     }
 
     private suspend fun block(item: RequestItem): Boolean =
-        runCatching {
+        attempt {
             val mediaType = item.mediaType.seerrMediaType()
             val user = connection.authenticatedUser().id
-            connection.api().addToBlocklist(
+            connection.api().addToBlocklistOnce(
                 connection.profile().blocklistPath,
                 SeerrAddToBlocklistBody(item.tmdbId, mediaType, item.title.orEmpty(), user),
             )

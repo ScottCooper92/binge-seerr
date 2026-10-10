@@ -57,8 +57,8 @@ internal class OkHttpAddressSender(
                     .build()
             try {
                 client.newCall(request).execute().use { response ->
-                    if (response.code != HTTP_OK) warn("The TV answered ${response.code}")
-                    response.code == HTTP_OK
+                    if (response.code != HttpStatus.Ok.code) warn("The TV answered ${response.code}")
+                    response.code == HttpStatus.Ok.code
                 }
             } catch (e: IOException) {
                 warn("Sending the address failed: ${e.javaClass.simpleName}: ${e.message}")
@@ -68,8 +68,6 @@ internal class OkHttpAddressSender(
 
     private companion object {
         const val TAG = "AddressSender"
-
-        const val HTTP_OK = 200
     }
 }
 

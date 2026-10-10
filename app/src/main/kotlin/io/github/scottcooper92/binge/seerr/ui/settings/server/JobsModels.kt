@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrCacheDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDnsEntryDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -165,7 +166,7 @@ private fun JsonElement?.toDnsEntries(): List<DnsEntry> {
     val json = Json { ignoreUnknownKeys = true }
 
     fun JsonObject.entry(hostname: String?): DnsEntry? {
-        val dto = runCatching { json.decodeFromJsonElement(SeerrDnsEntryDto.serializer(), this) }.getOrNull() ?: return null
+        val dto = attempt { json.decodeFromJsonElement(SeerrDnsEntryDto.serializer(), this) }.getOrNull() ?: return null
         val host = hostname ?: dto.hostname ?: return null
         return DnsEntry(hostname = host, activeAddress = dto.activeAddress, ttlSeconds = dto.ttl, hits = dto.hits, misses = dto.misses)
     }

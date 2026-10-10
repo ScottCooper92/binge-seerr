@@ -16,7 +16,10 @@ the raw facts behind it.
    `GET /auth/me` as the permission bitmask, decoded by `SeerrPermissions`. `ADMIN` implies
    everything. Jellyseerr and Seerr define three bits Overseerr's current code does not:
    `MANAGE_SETTINGS`, `MANAGE_BLOCKLIST` and `VIEW_BLOCKLIST`. Overseerr up to 1.29 did define
-   `MANAGE_SETTINGS` (bit 4), so an old grant of it can exist on any lineage.
+   `MANAGE_SETTINGS` (bit 4), so an old grant of it can exist on any lineage. No route honours
+   `MANAGE_SETTINGS`. Every route on the admin `/settings` router needs `ADMIN`, so the app gates
+   Settings on that. Only `/settings/public`, `GET /settings/discover` and the Pushover sounds
+   lookup sit outside that router.
 3. **The server's configuration.** What the administrator turned on. Read from
    `GET /settings/public`: `localLogin`, `mediaServerLogin`, `mediaServerType`, `movie4kEnabled`,
    `series4kEnabled`, `partialRequestsEnabled`, `enableSpecialEpisodes`, `hideAvailable`,
@@ -91,7 +94,7 @@ know.
 
 | Write | Overseerr | Jellyseerr / Seerr |
 |---|---|---|
-| `POST /user/{id}/settings/main` | `region`, `discordId` | `discoverRegion` and `streamingRegion`; `discordId` was dropped after Seerr 3.2 |
+| `POST /user/{id}/settings/main` | `region`, `discordId` | `region` up to Jellyseerr 2.1; `discoverRegion` and `streamingRegion` from 2.2; `discordId` was dropped after Seerr 3.2 |
 | `POST /user/{id}/settings/notifications` | `discordId` | `discordId` up to Seerr 3.2, the list `discordIds` from 3.3; `telegramMessageThreadId` throughout |
 | `GET`/`PUT /settings/metadatas` | never | `{tv, anime}` at the top level, with no wrapper |
 
@@ -130,6 +133,11 @@ keeps `/blacklist` as an alias. The profile picks the path by version, and the R
 `MANAGE_BLOCKLIST`. Declaring it against an Overseerr server would offer Binge an action the
 server answers with a `404`.
 
+Removing a title the list does not hold is answered differently too. Seerr 3.x answers `404`.
+Jellyseerr 2.x's `/blacklist` answers `401`, although the session is fine. The app asks `auth/me`
+about every `401`, so this one is not read as a dead session, and `UnblockTitle` answers
+`NOT_FOUND` on both lineages.
+
 The General page's automatic blocklist settings were renamed the same way. Jellyseerr 2.6 sends
 `hideBlacklisted`, `blacklistedTags` and `blacklistedTagsLimit`. Seerr 3.x sends `hideBlocklisted`,
 `blocklistedTags` and `blocklistedTagsLimit`, and later added `blocklistRegion` and
@@ -146,9 +154,10 @@ client offers:
 
 - `CAPABILITY_REQUEST_4K` needs the user to hold the 4K permission for a media type the server has
   4K on for: `movie4kEnabled` for movies, `series4kEnabled` for series.
-- `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the server takes a whole
-  show. A user who may change the destination still gets the editor for that, with no season list,
-  and its save sends no `seasons`, so the request keeps the ones it has.
+- `CAPABILITY_EDIT_SEASONS` needs `partialRequestsEnabled`. With it off the web client takes a whole
+  show; the server itself does not check the setting. A user who may change the destination still
+  gets the editor for that, with no season list. Its save sends the request's own `seasons` back,
+  because both lineages answer a show's `PUT /request/{id}` without them with a 500.
 
 ## A capability this companion does not offer
 

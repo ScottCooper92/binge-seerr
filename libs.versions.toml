@@ -11,7 +11,7 @@
 [versions]
 agp = "9.4.1"
 kotlin = "2.4.10"
-coreKtx = "1.19.0"
+coreKtx = "1.19.1"
 junit = "4.13.2"
 # The version binge-design-system pins; the TV focus tests drive a real D-pad on the JVM with it.
 robolectric = "4.16.1"
@@ -67,13 +67,10 @@ room = "2.8.4"
 workManager = "2.11.2"
 # The version binge-design-system pins: its components load their artwork with it, and a consumer
 # that includes that build has to agree with it or resolution silently picks one of the two.
-coil = "3.6.1"
+coil = "3.6.3"
 # Drag-to-reorder for LazyColumn, built on Modifier.animateItem() rather than a hand-rolled
 # animation. Published as a Kotlin Multiplatform artifact; this module resolves its Android variant.
 reorderable = "2.5.1"
-# The television's hand-off QR code (#323). `core` only: the encoder is plain Java with no
-# dependencies and no Android code, and the TV draws the matrix itself.
-zxing = "3.5.4"
 # The phone's in-app scan of a TV's hand-off code (#773). Play Services draws the camera UI itself,
 # so the app needs no camera permission; without Play Services the camera-and-browser route remains.
 codeScanner = "16.1.0"
@@ -136,7 +133,6 @@ androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref =
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
-zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 play-services-code-scanner = { module = "com.google.android.gms:play-services-code-scanner", version.ref = "codeScanner" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }

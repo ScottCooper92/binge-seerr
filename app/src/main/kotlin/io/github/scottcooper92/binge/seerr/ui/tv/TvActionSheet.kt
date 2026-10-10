@@ -41,6 +41,7 @@ import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
 import com.binge.designsystem.tv.focus.tvStartDirectionKey
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import com.binge.designsystem.R as DesR
 
 private const val SCRIM_ALPHA = 0.6f
@@ -87,7 +88,7 @@ internal fun TvActionSheet(
  */
 @Composable
 internal fun TvActionSheetStepFocus(entryFocus: FocusRequester) {
-    LaunchedEffect(Unit) { runCatching { entryFocus.requestFocus() } }
+    LaunchedEffect(Unit) { attempt { entryFocus.requestFocus() } }
 }
 
 /** The sheet's visible panel — stateless, so a preview renders it without the scrim's focus request. */

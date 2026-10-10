@@ -43,6 +43,7 @@ import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.accent
 import com.binge.designsystem.theme.fill
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
@@ -203,7 +204,7 @@ internal fun AccountCard(
         quota?.let {
             Column {
                 Text(
-                    text = stringResource(R.string.hub_quota_title).uppercase(),
+                    text = stringResource(R.string.hub_quota_title).uppercaseLocalised(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = rowPadding).semantics { heading() },

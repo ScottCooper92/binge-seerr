@@ -4,7 +4,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import androidx.paging.testing.asSnapshot
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.data.UserEntity
@@ -20,6 +19,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -40,7 +40,9 @@ import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val MANAGE_USERS = 1 shl 3
+private const val MANAGE_REQUESTS = 1 shl 4
 private const val REQUEST = 1 shl 5
+private const val REQUEST_VIEW = 1 shl 14
 
 /** The user page over an in-memory connection into a path-scripted Seerr. */
 class UserDetailViewModelTest {
@@ -150,6 +152,87 @@ class UserDetailViewModelTest {
             val requests = vm.requests.asSnapshot()
             assertEquals("Heat", requests.single().title)
             assertEquals("20", received.first { it.url.encodedPath == "/api/v1/user/8/requests" }.url.queryParameter("take"))
+        }
+
+    /** The server reads another user's quota only with both permissions, so a manager of users alone is not sent to be refused (#1093). */
+    @Test
+    fun `a manager of users alone is not shown another user's quota, and the server is not asked`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS)
+
+            assertNull(viewModel().awaitReady().detail.quota)
+            assertTrue(received.none { it.url.encodedPath == "/api/v1/user/8/quota" })
+        }
+
+    @Test
+    fun `a manager of users and requests reads another user's quota`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS or MANAGE_REQUESTS)
+
+            assertEquals(
+                HubQuotaBucket(limit = 10, remaining = 7, days = 7),
+                viewModel()
+                    .awaitReady()
+                    .detail.quota
+                    ?.movie,
+            )
+        }
+
+    /** The server lists a user's requests to that user and to who may see everyone's, so nobody else is shown a failing list (#1015). */
+    @Test
+    fun `a manager of users who may not see requests is not offered the list, and the server is not asked`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS)
+            val vm = viewModel()
+
+            assertFalse(vm.awaitReady().detail.canViewRequests)
+            assertTrue(vm.requests.asSnapshot().isEmpty())
+            assertTrue(received.none { it.url.encodedPath == "/api/v1/user/8/requests" })
+        }
+
+    @Test
+    fun `a viewer who cannot be read is let through, in the section and in the list`() =
+        runTest {
+            server(viewerId = 1, permissions = MANAGE_USERS)
+            val signIn = responses.getValue("GET /api/v1/auth/me")
+            var reads = 0
+            // Connecting reads auth/me once; every read after that, the page's own, fails.
+            responses["GET /api/v1/auth/me"] = {
+                if (reads++ == 0) {
+                    signIn()
+                } else {
+                    FakeResponse(code = 500, headers = headersOf("Content-Type", "application/json"), body = "{}")
+                }
+            }
+            val vm = viewModel()
+
+            assertTrue(vm.awaitReady().detail.canViewRequests)
+            assertEquals(
+                "Heat",
+                vm.requests
+                    .asSnapshot()
+                    .single()
+                    .title,
+            )
+            assertTrue(received.any { it.url.encodedPath == "/api/v1/user/8/requests" })
+        }
+
+    @Test
+    fun `the user themself, and a viewer of everyone's requests, are offered the list`() =
+        runTest {
+            server(viewerId = 8, permissions = REQUEST)
+            assertTrue(viewModel().awaitReady().detail.canViewRequests)
+
+            server(viewerId = 1, permissions = REQUEST or REQUEST_VIEW)
+            val vm = viewModel()
+            assertTrue(vm.awaitReady().detail.canViewRequests)
+            assertEquals(
+                "Heat",
+                vm.requests
+                    .asSnapshot()
+                    .single()
+                    .title,
+            )
         }
 
     @Test
@@ -265,10 +348,4 @@ class UserDetailViewModelTest {
             createdAtMillis = null,
             orderIndex = id,
         )
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

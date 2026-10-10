@@ -211,6 +211,29 @@ class MediaServerViewModelTest {
             assertEquals(LibraryType.Movies, extras.libraries.first { it.id == "1" }.type)
         }
 
+    /**
+     * Two overlapping toggles, answered in reverse order, both land. This pins the end state only: #1024's lost update needs
+     * the two answers applied on two threads at once, and this test's single-threaded dispatcher cannot interleave them.
+     */
+    @Test
+    fun `two overlapping toggles, answered in reverse order, both land`() =
+        runTest {
+            plexServer()
+            seerr.serveFrom("PUT /api/v1/settings/plex/library/2", delayMillis = LIBRARY_HOLD_MILLIS) {
+                """{"id":"2","name":"Shows","enabled":true,"type":"show"}"""
+            }
+            seerr.serve("PUT /api/v1/settings/plex/library/1", """{"id":"1","name":"Movies","enabled":false,"type":"movie"}""")
+            val vm = viewModel()
+            vm.awaitReady { it.extras.libraries.isNotEmpty() }
+
+            vm.setLibraryEnabled("2", true)
+            vm.setLibraryEnabled("1", false)
+            // Both are marked busy as they are sent, so the list is settled once neither is.
+            val extras = vm.awaitReady { it.extras.busyLibraryIds.isEmpty() }.extras
+
+            assertEquals(mapOf("1" to false, "2" to true), extras.libraries.associate { it.id to it.enabled })
+        }
+
     @Test
     fun `syncing libraries uses the sync route where the server has it`() =
         runTest {

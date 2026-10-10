@@ -29,6 +29,8 @@ import com.binge.designsystem.R as DesR
 internal fun PermissionsEditorSheet(
     offered: List<ManageablePermission>,
     edit: BulkEdit,
+    /** What this viewer may not grant: shown, and not flippable, as on one user's own Permissions page (#1008). */
+    locked: Set<ManageablePermission>,
     userCount: Int,
     onToggle: (ManageablePermission) -> Unit,
     onSave: () -> Unit,
@@ -42,6 +44,7 @@ internal fun PermissionsEditorSheet(
             saving = edit.saving,
             onToggle = onToggle,
             onSave = onSave,
+            locked = locked,
             note = if (edit.mixed.isEmpty()) null else stringResource(R.string.users_edit_permissions_mixed),
         )
     }

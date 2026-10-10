@@ -3,9 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.users.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,15 +24,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.BingeChoiceList
-import com.binge.designsystem.component.BingeChoiceSheet
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeOutlinedButton
-import com.binge.designsystem.component.CheckboxRow
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListItemConnector
 import com.binge.designsystem.component.TextEntrySurface
+import com.binge.designsystem.component.bingeChoiceItem
+import com.binge.designsystem.component.bingeMultiChoiceItem
 import io.github.scottcooper92.binge.seerr.R
-import io.github.scottcooper92.binge.seerr.ui.state.PeekingListSheet
 import com.binge.designsystem.R as DesR
 
 /** The keyboard a number asks for: a port, a count, a number of seconds. */
@@ -228,9 +225,11 @@ private fun SheetHint(text: String) =
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
 /**
- * A pick from a fixed list as a list row: the setting's name, and what it is set to now. A tap opens the shared
- * choice sheet, each choice with [choiceIcon]'s icon or else the setting's; picking one applies it and closes. The sheet closes if a save
- * starts, so a pick can't land in a draft that has already gone out.
+ * A pick from a fixed list as a list row: the setting's name, and what it is set to now. A thin wrapper over the
+ * design system's [bingeChoiceItem]: a tap opens its choice sheet, each choice with [choiceIcon]'s icon or else the
+ * setting's, and picking one applies it and closes. The sheet closes if a save starts, so a pick can't land in a draft
+ * that has already gone out. The row says "Not set" while nothing is picked, and "Unknown" for a saved value the list
+ * lacks.
  */
 @Composable
 internal fun <T> choiceSettingItem(
@@ -241,66 +240,48 @@ internal fun <T> choiceSettingItem(
     enabled: Boolean,
     choiceIcon: (T) -> ImageVector? = { null },
     onSelect: (T) -> Unit,
-): ListItem {
-    var open by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(enabled) { if (!enabled) open = false }
-    if (open) {
-        BingeChoiceSheet(
-            title = title,
-            // Every choice carries an icon: its own where it has one, else the setting's.
-            choices = BingeChoiceList.Ready(choices.map { (value, label) -> BingeChoice(value, label, icon = choiceIcon(value) ?: icon) }),
-            selected = selected,
-            onSelect = onSelect,
-            onDismiss = { open = false },
-        )
-    }
-    return ListItem(
+): ListItem =
+    bingeChoiceItem(
         icon = icon,
-        label = title,
-        detail =
-            choices.firstOrNull { it.first == selected }?.second
-                ?: stringResource(if (selected == null) R.string.settings_value_not_set else R.string.settings_value_unknown),
-        clickable = enabled,
-        disabled = !enabled,
-        onClick = { open = true },
+        title = title,
+        // Every choice carries an icon: its own where it has one, else the setting's.
+        choices = BingeChoiceList.Ready(choices.map { (value, label) -> BingeChoice(value, label, icon = choiceIcon(value) ?: icon) }),
+        selected = selected,
+        emptyLabel = stringResource(if (selected == null) R.string.settings_value_not_set else R.string.settings_value_unknown),
+        onSelect = onSelect,
+        enabled = enabled,
     )
-}
+
+/** From this many choices a pick-several sheet gets its filter field, the length the design system sections a list at. */
+private const val FILTERED_CHOICES = 8
 
 /**
  * A pick of any number from a list, as a list row: the setting's name, and the picks named (or [emptyLabel]). A tap
- * opens a peeking checklist; each tick applies at once through [onToggle], so closing the sheet is all that's left.
+ * opens the design system's multi-choice sheet, the same as the language pick's, in its apply-as-picked mode: each
+ * tick, and Clear, applies at once through [onToggle], so closing the sheet is all that's left. A long list gets the
+ * sheet's filter. The sheet closes if a save starts, so a pick can't land in a draft that has already gone out.
  */
 @Composable
 internal fun <T> multiChoiceSettingItem(
     icon: ImageVector,
     title: String,
-    choices: List<Pair<T, String>>,
+    choices: List<BingeChoice<T>>,
     selected: Set<T>,
     enabled: Boolean,
     emptyLabel: String,
     onToggle: (T) -> Unit,
-): ListItem {
-    var open by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(enabled) { if (!enabled) open = false }
-    if (open) {
-        PeekingListSheet(title = title, onDismiss = { open = false }) {
-            choices.forEachIndexed { index, (choice, label) ->
-                CheckboxRow(
-                    label = label,
-                    checked = choice in selected,
-                    onToggle = { onToggle(choice) },
-                    showDivider = index < choices.lastIndex,
-                )
-            }
-            Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_l)))
-        }
-    }
-    return ListItem(
+): ListItem =
+    bingeMultiChoiceItem(
         icon = icon,
-        label = title,
-        detail = choices.filter { it.first in selected }.joinToString(", ") { it.second }.ifEmpty { emptyLabel },
-        clickable = enabled,
-        disabled = !enabled,
-        onClick = { open = true },
+        title = title,
+        choices = BingeChoiceList.Ready(choices),
+        selected = selected,
+        emptyLabel = emptyLabel,
+        doneLabel = stringResource(R.string.editor_done),
+        clearLabel = stringResource(R.string.server_settings_list_clear),
+        // The sheet hands back the whole set; the editors toggle one value at a time, so each change is a toggle.
+        onDone = { picked -> ((picked - selected) + (selected - picked)).forEach(onToggle) },
+        enabled = enabled,
+        filterPlaceholder = stringResource(R.string.settings_choices_filter).takeIf { choices.size >= FILTERED_CHOICES },
+        applyAsPicked = true,
     )
-}

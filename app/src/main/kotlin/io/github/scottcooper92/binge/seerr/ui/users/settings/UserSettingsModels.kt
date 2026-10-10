@@ -61,7 +61,7 @@ data class GeneralSettings(
     val discordId: String = "",
     val locale: String = "",
     val region: String = "",
-    /** Null where the lineage has no streaming region: Overseerr. */
+    /** Null where the server keeps one region: without `SeerrServerProfile.hasStreamingRegion` (Overseerr, Jellyseerr before 2.2). */
     val streamingRegion: String? = null,
     val originalLanguage: String = "",
     /** While an override is off its limit and window are the server's default, which turning it on starts from. */
@@ -79,13 +79,14 @@ data class GeneralSettings(
     val canEditEmail: Boolean = false,
 ) {
     /**
-     * Blank clears the address where that is allowed, and the value the server sent is kept as it was; a changed one has
-     * to look like an address.
+     * The server never clears an address: it keeps the one it has for a blank (#1020). So a blank is valid only where there
+     * is nothing to clear and none is required, or where the viewer could not change it. The value the server sent is kept
+     * as it was; a changed one has to look like an address.
      */
     val emailValid: Boolean
         get() =
             if (email.isBlank()) {
-                !emailRequired || !canEditEmail
+                !canEditEmail || (!emailRequired && loadedEmail.isBlank())
             } else {
                 email.trim() == loadedEmail.trim() || email.isEmailShape()
             }
@@ -295,14 +296,19 @@ private val TELEGRAM_CHAT_ID = Regex("-?[0-9]+")
 
 /**
  * The permissions page: the toggles offered, what is selected, and the bits the editor leaves
- * alone. [locked] are the toggles this viewer may not flip: what they do not hold themselves, and
- * Admin for anyone but the owner, which is the web client's rule.
+ * alone. [locked] are the toggles this viewer may not flip: Admin, for anyone but the owner. That is
+ * the server's one rule on a permissions write, and the web client's (#1016).
  */
 data class PermissionSettings(
     val selected: Set<ManageablePermission> = emptySet(),
     val original: Int = 0,
     val offered: List<ManageablePermission> = ManageablePermission.entries,
     val locked: Set<ManageablePermission> = emptySet(),
+    /**
+     * The user is an admin and the viewer is not the owner. The server refuses any change to an admin's mask from anyone
+     * but the owner, so every toggle is locked and the page says why (#1134).
+     */
+    val ownerOnly: Boolean = false,
 )
 
 /** One media-server account a user may link: what it is called, whether it is linked, and as whom where the server says. */

@@ -165,6 +165,7 @@ class RequestsPagerTest {
             onSortChange = {},
             onOpen = {},
             onRetryLoad = {},
+            onRefreshCounts = {},
             onChanged = {},
             detailSheet = {},
         )

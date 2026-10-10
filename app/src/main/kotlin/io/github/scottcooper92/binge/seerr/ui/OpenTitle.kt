@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.core.net.toUri
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.CompanionManifest
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 
 /** Where a tapped title goes: Binge's own page for it, or the server's web page when Binge is not there. */
@@ -62,7 +63,7 @@ fun Context.openTitle(
     val answers = bingeAnswersTitleLink(mediaType, tmdbId)
     when (val target = BingeHandOff.target(answers, mediaType, tmdbId, webUrl)) {
         is TitleTarget.Binge ->
-            runCatching {
+            attempt {
                 startActivity(Intent(Intent.ACTION_VIEW, target.uri.toUri()))
             }.onFailure { openInBrowser(webUrl) }
         is TitleTarget.Web -> openInBrowser(target.url)
@@ -80,5 +81,5 @@ fun Context.openTitleInBinge(
     tmdbId: Int,
 ) {
     val uri = BingeHandOff.titleUri(mediaType, tmdbId) ?: return
-    runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri.toUri())) }
+    attempt { startActivity(Intent(Intent.ACTION_VIEW, uri.toUri())) }
 }

@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui.settings
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.feedback.BugReportLinks
 import io.github.scottcooper92.binge.seerr.feedback.FeedbackPrefs
@@ -21,9 +20,11 @@ import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -42,6 +43,9 @@ import java.util.concurrent.CountDownLatch
 
 private const val ADMIN = 2
 private const val REQUEST = 32
+
+/** `MANAGE_SETTINGS`, which no `/settings` route honours: the admin `/settings` router needs `ADMIN` (#1004). */
+private const val MANAGE_SETTINGS = 4
 
 /** Settings over an in-memory connection into a Seerr scripted by path. */
 class SettingsViewModelTest {
@@ -192,6 +196,27 @@ class SettingsViewModelTest {
             )
         }
 
+    /** A connection dropped while the configuration loads has no profile to read; the page keeps its general rows (#1027). */
+    @Test
+    fun `a connection dropped while the configuration loads does not crash the page`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/settings/main"] = {
+                runBlocking { connection.disconnect() }
+                FakeResponse(
+                    code = 200,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"applicationTitle":"Family","applicationUrl":"https://seerr.example.com/","appLanguage":"en"}""",
+                )
+            }
+            val vm = viewModel()
+
+            val general = checkNotNull(vm.awaitReady { it.config?.general != null }.config?.general)
+
+            assertEquals("Family", general.applicationTitle)
+            assertFalse(general.discoverSliders)
+        }
+
     @Test
     fun `a group that is slow to answer is held as a placeholder once the wait runs out`() =
         runTest {
@@ -287,6 +312,16 @@ class SettingsViewModelTest {
             assertNull(ready.config)
             responses["/api/v1/settings/main"] = { error("A restricted user must not read the settings") }
             vm.setScreenVisible(true)
+            assertNull(vm.awaitReady { it.connection.userName != null }.config)
+        }
+
+    @Test
+    fun `manage settings without admin reads no configuration, since the server would refuse every call`() =
+        runTest {
+            server(MANAGE_SETTINGS)
+            responses["/api/v1/settings/main"] = { error("The admin /settings router needs ADMIN") }
+            val vm = viewModel(session = true)
+
             assertNull(vm.awaitReady { it.connection.userName != null }.config)
         }
 
@@ -409,10 +444,4 @@ class SettingsViewModelTest {
             val vm = viewModel()
             assertEquals(NotificationSignal.entries, checkNotNull(vm.awaitReady { it.notifications != null }.notifications).offered)
         }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

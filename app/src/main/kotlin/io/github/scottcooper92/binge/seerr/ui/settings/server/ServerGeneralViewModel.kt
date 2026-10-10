@@ -45,51 +45,48 @@ class ServerGeneralViewModel
                 val api = connection.api()
                 val profile = async { connection.profile() }
                 val main = api.mainSettings()
-                val variant = profile.await().variant
+                val server = profile.await()
+                val variant = server.variant
                 editExtras { current ->
                     current.copy(
                         apiKey = current.apiKey.copy(key = main.apiKey.orEmpty()),
                         variant = variant,
                     )
                 }
-                main.toServerGeneral(variant)
+                main.toServerGeneral(variant, server.hasStreamingRegion)
             }
 
         override suspend fun write(draft: ServerGeneralSettings): ServerGeneralSettings {
             val answered = connection.api().updateMainSettings(draft.toBody())
-            return answered.toServerGeneral(connection.profile().variant)
+            val server = connection.profile()
+            return answered.toServerGeneral(server.variant, server.hasStreamingRegion)
         }
 
         override fun canSave(draft: ServerGeneralSettings): Boolean = draft.valid
 
+        private val lists =
+            ListChoicesLoader(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                catalog = listCatalog,
+                held = { currentExtras().lists[it] },
+                set = { kind, choices -> editExtras { it.copy(lists = it.lists + (kind to choices)) } },
+            )
+
         /** Reads [kind]'s list for its picker, once; a failed read can be asked for again. */
-        fun loadList(kind: ServerList) {
-            val held = currentExtras().lists[kind]
-            if (held is ListChoices.Ready || held == ListChoices.Loading) return
-            editExtras { it.copy(lists = it.lists + (kind to ListChoices.Loading)) }
-            viewModelScope.launch(dispatcher) {
-                val choices = runCatching { listCatalog.entries(kind) }.fold({ ListChoices.Ready(it) }, { ListChoices.Failed })
-                editExtras { it.copy(lists = it.lists + (kind to choices)) }
-            }
-        }
+        fun loadList(kind: ServerList) = lists.load(kind)
+
+        private val keywords =
+            KeywordLookup(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = { currentExtras().keywords },
+                edit = { change -> editExtras { it.copy(keywords = change(it.keywords)) } },
+            )
 
         /** Names the blocklisted tags the draft holds, once each: the server keeps them as TMDB ids. */
-        fun loadKeywordNames(ids: List<Int>) {
-            val missing = ids.filter { it !in currentExtras().keywords.names }
-            if (missing.isEmpty()) return
-            viewModelScope.launch(dispatcher) {
-                val api = connection.api()
-                val named =
-                    missing
-                        .mapNotNull { id ->
-                            attempt { api.keyword(id) }
-                                .getOrNull()
-                                ?.name
-                                ?.let { id to it }
-                        }.toMap()
-                editExtras { it.copy(keywords = it.keywords.copy(names = it.keywords.names + named)) }
-            }
-        }
+        fun loadKeywordNames(ids: List<Int>) = keywords.name(ids)
 
         /**
          * Re-reads the blocklisted tags after the tags page has saved them, into the saved record and the draft alike, so
@@ -124,7 +121,7 @@ class ServerGeneralViewModel
             if (currentExtras().apiKey.regenerating) return
             editExtras { it.copy(apiKey = it.apiKey.copy(regenerating = true)) }
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     connection
                         .api()
                         .regenerateApiKey()

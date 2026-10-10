@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +29,6 @@ import com.binge.designsystem.tv.component.TvDetailActionRow
 import com.binge.designsystem.tv.component.TvDetailHero
 import com.binge.designsystem.tv.component.TvDetailHeroItem
 import com.binge.designsystem.tv.component.TvHeroOverview
-import com.binge.designsystem.tv.focus.TvOverlayCloser
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvDetailPage
@@ -40,6 +38,9 @@ import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvPageHosting
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.ui.requests.IssueReport
+import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
+import io.github.scottcooper92.binge.seerr.ui.requests.MediaStatusChoice
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationEvent
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetailUiState
@@ -49,8 +50,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.messageRes
 import io.github.scottcooper92.binge.seerr.ui.requests.statusChip
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
@@ -71,11 +70,15 @@ internal class TvRequestDetailActions(
     val onRemove: (Boolean) -> Unit,
     /** Blocks the title alone, leaving the request as it is. */
     val onBlock: () -> Unit,
+    val onSetMediaStatus: (mediaId: Int, status: MediaStatusChoice, is4k: Boolean) -> Unit,
+    val onReportIssue: (IssueType, String) -> Unit,
+    val onDismissReport: () -> Unit,
 )
 
 /**
- * One request as a read-only television page: the title over its state, who asked and when, the seasons
- * and their status, and what is downloading now. The same [RequestDetailUiState] the phone's
+ * One request as a television page: the title over its state, who asked and when, the seasons
+ * and their status, and what is downloading now. What it lets a viewer do is a deliberate subset of the phone's;
+ * `requestDetailActions` records the split. The same [RequestDetailUiState] the phone's
  * `RequestDetailScreen` renders — this is a TV surface over the same ViewModel, so a moderation elsewhere
  * (or this page's own) shows here without any polling. Presented as a full-screen overlay above the rail,
  * so it owns Back itself rather than leaving it to the shell.
@@ -104,7 +107,8 @@ internal fun TvRequestDetailScreen(
                 }
             }
             is RequestDetailUiState.Error -> TvErrorPlate(state.error, actions.onRetry)
-            is RequestDetailUiState.Ready -> TvRequestDetailContent(detail = state.detail, events = events, given = actions)
+            is RequestDetailUiState.Ready ->
+                TvRequestDetailContent(detail = state.detail, report = state.report, events = events, given = actions)
         }
     }
 }
@@ -134,6 +138,7 @@ private fun TvErrorPlate(
 @Composable
 private fun TvRequestDetailContent(
     detail: RequestDetail,
+    report: IssueReport,
     events: Flow<ModerationEvent>,
     given: TvRequestDetailActions,
 ) {
@@ -142,25 +147,30 @@ private fun TvRequestDetailContent(
     // actions change (#801).
     var refocusRow by remember { mutableStateOf(false) }
     val actions = remember(given) { given.markingRefocus { refocusRow = true } }
-    // The two actions that cannot be undone take a confirm; the rest run at once, since a decline keeps the request.
-    var confirming by rememberSaveable { mutableStateOf<DetailConfirm?>(null) }
+    // The two actions that cannot be undone take a confirm, and Mark as and Report open their own sheets; the rest run at
+    // once, since a decline keeps the request.
+    var sheet by rememberSaveable { mutableStateOf<DetailSheet?>(null) }
+    val sheetFocus = remember { DetailSheet.entries.associateWith { FocusRequester() } }
+    val closers =
+        DetailSheet.entries.associateWith {
+            rememberTvOverlayCloser(
+                restoreTo = sheetFocus.getValue(it),
+                onClose = { sheet = null },
+            )
+        }
+    val draft = rememberTvReportDraft()
     val event = rememberTvTransientEvent(events)
     val actionRowFocus = remember { FocusRequester() }
-    val removeFocus = remember { FocusRequester() }
-    val blockFocus = remember { FocusRequester() }
     val synopsisFocus = remember { FocusRequester() }
     var synopsisFocused by remember { mutableStateOf(false) }
-    val removeCloser = rememberTvOverlayCloser(restoreTo = removeFocus, onClose = { confirming = null })
-    val blockCloser = rememberTvOverlayCloser(restoreTo = blockFocus, onClose = { confirming = null })
     val item = detail.item
     val allowed = detail.actions
     val actionList =
         requestDetailActions(
-            allowed = allowed,
+            detail = detail,
             actions = actions,
-            onConfirm = { confirming = it },
-            removeFocus = removeFocus,
-            blockFocus = blockFocus,
+            onOpenSheet = { sheet = it },
+            sheetFocus = sheetFocus,
         )
     LaunchedEffect(allowed) {
         if (refocusRow) {
@@ -199,8 +209,14 @@ private fun TvRequestDetailContent(
             )
         }
     }
-    confirming?.let { step ->
-        TvDetailConfirmSheet(step = step, actions = actions, removeCloser = removeCloser, blockCloser = blockCloser)
+    sheet?.let { step ->
+        TvRequestDetailSheet(
+            host = TvDetailSheetHost(step, closers.getValue(step)),
+            actions = actions,
+            media = detail.media,
+            report = report,
+            draft = draft,
+        )
     }
 }
 
@@ -332,45 +348,7 @@ private fun TvRequestDetailActions.markingRefocus(mark: () -> Unit) =
             mark()
             onBlock()
         },
+        onSetMediaStatus = onSetMediaStatus,
+        onReportIssue = onReportIssue,
+        onDismissReport = onDismissReport,
     )
-
-internal enum class DetailConfirm { Remove, Block }
-
-/** The confirm for an action that cannot be taken back: removing the request, or blocking its title. */
-@Composable
-private fun TvDetailConfirmSheet(
-    step: DetailConfirm,
-    actions: TvRequestDetailActions,
-    removeCloser: TvOverlayCloser,
-    blockCloser: TvOverlayCloser,
-) {
-    val closer = if (step == DetailConfirm.Remove) removeCloser else blockCloser
-    TvActionSheet(onDismiss = closer::close) { entryFocus ->
-        when (step) {
-            DetailConfirm.Remove ->
-                TvActionSheetConfirm(
-                    title = stringResource(R.string.request_remove_confirm_title),
-                    message = stringResource(R.string.request_remove_confirm_message),
-                    confirmLabel = stringResource(R.string.request_remove),
-                    onConfirm = {
-                        actions.onRemove(false)
-                        closer.close()
-                    },
-                    onCancel = closer::close,
-                    entryFocus = entryFocus,
-                )
-            DetailConfirm.Block ->
-                TvActionSheetConfirm(
-                    title = stringResource(R.string.request_block_confirm_title),
-                    message = stringResource(R.string.request_block_confirm_message),
-                    confirmLabel = stringResource(R.string.tv_detail_block),
-                    onConfirm = {
-                        actions.onBlock()
-                        closer.close()
-                    },
-                    onCancel = closer::close,
-                    entryFocus = entryFocus,
-                )
-        }
-    }
-}

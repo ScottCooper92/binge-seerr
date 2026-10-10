@@ -108,5 +108,7 @@ sealed interface HubUiState {
          * so the dashboard isn't shown on a re-probe's way through Checking, then taken away again (#873).
          */
         val rechecking: Boolean = false,
+        /** A pull's re-read of the dashboard is running, which the pull's spinner shows. */
+        val refreshing: Boolean = false,
     ) : HubUiState
 }

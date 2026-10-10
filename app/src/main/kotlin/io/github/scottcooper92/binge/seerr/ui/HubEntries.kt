@@ -48,6 +48,7 @@ internal fun HubEntry(
                 onReconnect = onReconnect,
                 onDisconnect = viewModel::disconnect,
                 onDismissBingeHint = viewModel::dismissBingeHint,
+                onRefresh = viewModel::refresh,
                 developerRows = developerRows,
             ),
     )
@@ -57,6 +58,7 @@ internal fun HubEntry(
 internal fun SettingsEntry(
     backStack: NavBackStack<NavKey>,
     showBack: Boolean,
+    open: (NavKey) -> Unit = backStack::add,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -72,8 +74,8 @@ internal fun SettingsEntry(
     val actions =
         SettingsActions(
             onBack = onBack,
-            onEditConnection = { backStack.add(EditConnectionRoute) },
-            onOpenPage = { page -> backStack.add(ServerSettingsPageRoute(page)) },
+            onEditConnection = { open(EditConnectionRoute) },
+            onOpenPage = { page -> open(ServerSettingsPageRoute(page)) },
             onToggleSignal = viewModel::setSignal,
             onNotificationAccessChanged = viewModel::recheckNotificationAccess,
             onToggleShakeToReport = viewModel::setShakeToReport,

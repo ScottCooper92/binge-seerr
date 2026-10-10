@@ -4,6 +4,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNotificationAgentDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPushoverSoundDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -305,7 +306,7 @@ internal fun SeerrPushoverSoundDto.toSound(): PushoverSound = PushoverSound(name
  * then base64. A value that is not in that shape — a server storing the text plainly — is shown as is.
  */
 internal fun String.decodePayload(): String =
-    runCatching {
+    attempt {
         val decoded = String(Base64.getDecoder().decode(trim()), Charsets.UTF_8)
         Json.decodeFromString<String>(decoded)
     }.getOrDefault(this)

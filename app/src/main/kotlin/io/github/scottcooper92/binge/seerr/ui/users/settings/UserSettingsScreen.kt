@@ -84,7 +84,7 @@ private fun PageList(
         ItemGroup(
             title = stringResource(R.string.user_settings_title),
             rows = rows,
-            modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())),
+            modifier = Modifier.padding(resolvedContentPadding(vertical = resolvedContentInset())),
         )
     }
 }

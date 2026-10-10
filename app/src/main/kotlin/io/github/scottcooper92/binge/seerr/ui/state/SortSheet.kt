@@ -16,14 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeChoice
+import com.binge.designsystem.component.BingeChoiceList
+import com.binge.designsystem.component.BingeChoiceSheet
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.R as DesR
 
 /**
- * A single-select picker over any list: the choices as radio rows; picking one applies it and
- * dismisses. [title] defaults to the sort picker's own copy — its first and still most common
- * caller — so a differently-titled caller (`ChoiceRow`) is the only one that has to pass one.
+ * A single-select picker over any list, on the design system's choice sheet, the same sheet the settings rows open:
+ * picking one applies it and dismisses. [title] defaults to the sort picker's own copy, its first and still most
+ * common caller, so a differently-titled caller (`ChoiceRow`) is the only one that has to pass one.
  */
 @Composable
 fun <T> SortSheet(
@@ -34,20 +36,19 @@ fun <T> SortSheet(
     onDismiss: () -> Unit,
     title: String = stringResource(R.string.sort_title),
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss) {
-        SortContent(
-            choices = choices,
-            selected = selected,
-            label = label,
-            onSelect = {
-                onSelect(it)
-                onDismiss()
-            },
-            title = title,
-        )
-    }
+    BingeChoiceSheet(
+        title = title,
+        choices = BingeChoiceList.Ready(choices.map { BingeChoice(it, label(it)) }),
+        selected = selected,
+        onSelect = onSelect,
+        onDismiss = onDismiss,
+    )
 }
 
+/**
+ * The radio list alone, for a caller that is already a sheet and swaps it in as content: the request editor (#336).
+ * It moves onto the design system's choice list once that has a stateless form (binge-design-system #469).
+ */
 @Composable
 fun <T> SortContent(
     choices: List<T>,

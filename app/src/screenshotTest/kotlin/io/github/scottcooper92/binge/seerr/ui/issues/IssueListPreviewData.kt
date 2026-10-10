@@ -1,14 +1,13 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
+import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 
 /**
- * Fixed and kept far past the 30-day relative-date window `formatRelativeOrAbsolute` switches on
- * (mirrors `RequestListPreviewData.kt`'s `ROW_NOW_MILLIS`/`REQUESTED_AT_MILLIS`), so the row's
- * reported-at date always renders the same absolute date, whenever the suite runs.
+ * Kept far before [FIXED_NOW_MILLIS], well past the 30-day relative-date window `formatRelativeOrAbsolute` switches on, so
+ * the row's reported-at date always renders the same absolute date, whenever the suite runs.
  */
-internal const val ISSUE_ROW_NOW_MILLIS = 1_770_000_000_000L
 private const val REPORTED_AT_MILLIS = 1_759_000_000_000L
 private const val TV_TMDB_ID = 95_396
 

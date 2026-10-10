@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServiceSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
@@ -56,7 +57,7 @@ class DvrInstanceViewModel
                 }
             if (!form.connectionValid) return form
             val choices =
-                runCatching { connection.api().testDvr(type.apiSegment, form.toTestBody()).toChoices() }
+                attempt { connection.api().testDvr(type.apiSegment, form.toTestBody()).toChoices() }
                     .onSuccess { choices -> editExtras { it.copy(choices = choices) } }
                     .getOrNull()
             return choices?.let { form.reconciledWith(it) } ?: form
@@ -87,7 +88,7 @@ class DvrInstanceViewModel
             editExtras { it.copy(testing = true) }
             crashBreadcrumbs.log("testing ${type.apiSegment} instance")
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().testDvr(type.apiSegment, draft.toTestBody()).toChoices() }
+                attempt { connection.api().testDvr(type.apiSegment, draft.toTestBody()).toChoices() }
                     .onSuccess { choices ->
                         editExtras { it.copy(choices = choices, testing = false) }
                         edit { form -> form.reconciledWith(choices) }
@@ -108,7 +109,7 @@ class DvrInstanceViewModel
             crashBreadcrumbs.key("instance_id", existing.toString())
             crashBreadcrumbs.log("deleting ${type.apiSegment} instance")
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().deleteDvr(type.apiSegment, existing) }
+                attempt { connection.api().deleteDvr(type.apiSegment, existing) }
                     .onSuccess {
                         analytics.event(
                             AnalyticsEvents.DVR_INSTANCE_CHANGED,

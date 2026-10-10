@@ -8,9 +8,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +34,7 @@ import com.binge.designsystem.template.screenInnerPadding
 import com.binge.designsystem.template.screenOuterPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
@@ -48,6 +51,7 @@ class UsersActions(
     val onTogglePermission: (ManageablePermission) -> Unit,
     val onApplyBulkEdit: () -> Unit,
     val onCancelBulkEdit: () -> Unit,
+    val onRetryLoad: () -> Unit,
     val admission: UserAdmissionActions,
 )
 
@@ -56,7 +60,9 @@ class UsersActions(
  * action writes a permission set to everyone ticked.
  *
  * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
+ * @param pullState a still frame's resting pull; null remembers M3's own.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UsersScreen(
     state: UsersUiState,
@@ -64,6 +70,7 @@ fun UsersScreen(
     events: Flow<UsersEvent>,
     actions: UsersActions,
     showBack: Boolean = true,
+    pullState: PullToRefreshState? = null,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? UsersUiState.Ready
@@ -89,7 +96,9 @@ fun UsersScreen(
         snackbarHostState = snackbarHostState,
         actions = { UsersBarActions(ready, actions, onSort = { showSort = true }) },
     ) { padding ->
-        if (ready == null) {
+        if (state is UsersUiState.Error) {
+            ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetryLoad)
+        } else if (ready == null) {
             LoadingScreen(Modifier.fillMaxSize().padding(padding))
         } else {
             Column(Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
@@ -101,6 +110,7 @@ fun UsersScreen(
                     onToggleSelected = actions.onToggleSelected,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = padding.screenInnerPadding(),
+                    pullState = pullState,
                 )
             }
         }
@@ -119,6 +129,7 @@ fun UsersScreen(
         PermissionsEditorSheet(
             offered = ready.offered,
             edit = edit,
+            locked = ready.locked,
             userCount = ready.selection.size,
             onToggle = actions.onTogglePermission,
             onSave = actions.onApplyBulkEdit,

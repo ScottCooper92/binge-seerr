@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.CoroutineDispatcher
@@ -57,7 +58,7 @@ class CacheViewModel
             if (key in ready.busyIds) return
             state.value = ready.copy(busyIds = ready.busyIds + key)
             viewModelScope.launch(dispatcher) {
-                runCatching {
+                attempt {
                     val response = call(connection.api())
                     if (!response.isSuccessful) throw HttpException(response)
                 }.onSuccess {
@@ -74,6 +75,6 @@ class CacheViewModel
         private fun busy(): Set<String> = (state.value as? CacheUiState.Ready)?.busyIds.orEmpty()
 
         private suspend fun read(): CacheUiState =
-            runCatching { connection.api().caches().toReady() }
+            attempt { connection.api().caches().toReady() }
                 .getOrElse { CacheUiState.Error(it.toSeerrError()) }
     }

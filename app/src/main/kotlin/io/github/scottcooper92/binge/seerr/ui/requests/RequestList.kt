@@ -15,11 +15,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.ThumbsUpDown
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -44,6 +46,8 @@ import com.binge.designsystem.template.screenListPadding
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPullToRefresh
+import io.github.scottcooper92.binge.seerr.ui.state.PullableMessage
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
 import io.github.scottcooper92.binge.seerr.ui.state.downloadEtaLabel
@@ -51,10 +55,13 @@ import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
 
 /**
- * The selected filter's rows with the states the pager reports. Once rows are on screen a refresh
- * shows as a thin bar over them, or a tappable line when it failed; the full-screen states are for a cache
- * with nothing in it.
+ * The selected filter's rows with the states the pager reports, under a pull that refreshes them. Once rows are on
+ * screen a refresh shows as the pull's spinner below the bar, or a tappable line when it failed; the full-screen
+ * states are for a cache with nothing in it.
+ *
+ * @param pullState a still frame's resting pull; null remembers M3's own. See [PagedPullToRefresh].
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RequestsBody(
     filter: RequestFilter,
@@ -65,41 +72,55 @@ internal fun RequestsBody(
     actingIds: Set<Int>,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
+    /** A pull, beside the list's own refresh: what else on the page it refreshes. */
+    onPull: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    pullState: PullToRefreshState? = null,
 ) {
-    when (val phase = lazyItems.rememberPagedPhase(lastRefresh)) {
-        is PagedPhase.Rows ->
-            if (phase.refreshing || phase.refreshError != null) {
-                // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
-                Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                    if (phase.refreshError == null) {
-                        LinearProgressIndicator(Modifier.fillMaxWidth())
-                    } else {
+    val phase = lazyItems.rememberPagedPhase(lastRefresh)
+    PagedPullToRefresh(
+        phase = phase,
+        loadState = lazyItems.loadState,
+        onRefresh = {
+            lazyItems.refresh()
+            onPull()
+        },
+        contentPadding = contentPadding,
+        modifier = modifier,
+        state = pullState,
+    ) {
+        when (phase) {
+            is PagedPhase.Rows ->
+                if (phase.refreshError != null) {
+                    // The failed line is pinned below the top bar and the header; the rows start below it while it shows.
+                    Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                         RefreshFailedLine(R.string.requests_refresh_failed, onRetry = lazyItems::retry)
+                        RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding.belowPinnedLine())
                     }
-                    RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding.belowPinnedLine())
+                } else {
+                    RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding)
                 }
-            } else {
-                RequestList(lazyItems, scope, actingIds, onOpen, onManage, contentPadding)
-            }
-        PagedPhase.Skeleton ->
-            ListRowSkeletonColumn(
-                contentPadding = contentPadding.screenListPadding(),
-                modifier = modifier,
-            )
-        is PagedPhase.Failed ->
-            PagedRefreshError(
-                phase.error,
-                onRetry = lazyItems::retry,
-                modifier = modifier.padding(contentPadding),
-            )
-        PagedPhase.Empty ->
-            EmptyScreen(
-                message = stringResource(filter.emptyMessageRes()),
-                modifier = modifier.padding(contentPadding),
-                icon = Icons.Filled.Inbox,
-            )
+            PagedPhase.Skeleton ->
+                ListRowSkeletonColumn(
+                    contentPadding = contentPadding.screenListPadding(),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            is PagedPhase.Failed ->
+                PagedRefreshError(
+                    phase.error,
+                    onRetry = lazyItems::retry,
+                    modifier = Modifier.fillMaxSize().padding(contentPadding),
+                )
+            PagedPhase.Empty ->
+                PullableMessage { fill ->
+                    EmptyScreen(
+                        message = stringResource(filter.emptyMessageRes()),
+                        modifier = fill.padding(contentPadding),
+                        icon = Icons.Filled.Inbox,
+                    )
+                }
+        }
     }
 }
 

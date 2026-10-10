@@ -2,7 +2,6 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
 import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
@@ -16,12 +15,12 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestMediaDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSeasonDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSeasonStatusDto
 import io.github.scottcooper92.binge.seerr.ui.Choice
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -69,6 +68,9 @@ class RequestEditorTest {
     /** Paths the dispatcher should answer 500 for, so a failed load can be driven. */
     private val failing = mutableSetOf<String>()
 
+    /** When set, the edit's `PUT` gets Seerr's 202 for an edit that leaves nothing to request. */
+    @Volatile private var nothingLeftToRequest = false
+
     @After
     fun tearDown() = seerr.close()
 
@@ -79,6 +81,9 @@ class RequestEditorTest {
                     received += request
                     val path = request.url.encodedPath
                     if (path in failing) return MockResponse(code = 500)
+                    if (nothingLeftToRequest && request.method == "PUT") {
+                        return MockResponse(code = 202, body = """{"message":"No seasons available to request"}""")
+                    }
                     val body =
                         when {
                             path == "/api/v1/auth/me" -> """{"id":1,"permissions":2}"""
@@ -225,10 +230,11 @@ class RequestEditorTest {
         }
 
     @Test
-    fun `a show on a server with partial requests off offers no seasons and saves none, only its destination`() =
+    fun `a show on a server with partial requests off offers no seasons, and its save sends back the ones it has`() =
         runTest {
             val editor = editor()
-            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = true, seasonsEditable = false))
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 2)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = true, seasonsEditable = false))
 
             val loaded = editor.awaitLoaded()
             // The season list is absent by rule, not because it failed to load, so the editor can still save.
@@ -241,9 +247,9 @@ class RequestEditorTest {
             editor.save()
             editor.awaitClosed()
 
-            // A PUT without seasons leaves the request's own alone; one with an empty list would drop every season.
+            // Both lineages answer a show's PUT without seasons with a 500 (#1003), so the request's own go back.
             val body = editBody()
-            assertTrue(body["seasons"] == null || body["seasons"] is JsonNull)
+            assertEquals(listOf(1, 2), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
             assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
         }
 
@@ -294,6 +300,62 @@ class RequestEditorTest {
             assertEquals(listOf(4), body.getValue("tags").jsonArray.map { it.jsonPrimitive.int })
         }
 
+    @Test
+    fun `an edit seerr answers with nothing left to request stays open, unlocked, as a failure`() =
+        runTest {
+            nothingLeftToRequest = true
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.toggleSeason(2)
+            editor.save()
+
+            // The 202 is a refusal (#1001): the sheet does not close as though the edit had gone through.
+            val after = editor.state.first { it != null && !it.saving }
+            val seasons = after?.seasons.orEmpty()
+            assertTrue(seasons.single { it.number == 2 }.selected)
+        }
+
+    @Test
+    fun `a held season the request already covers stays in the body, or the server would drop it`() =
+        runTest {
+            val editor = editor()
+            // Season 3 is on the server now, so it is locked; the request still covers it.
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            assertTrue(
+                editor
+                    .awaitLoaded()
+                    .seasons
+                    .single { it.number == 3 }
+                    .let { it.locked && it.selected },
+            )
+
+            editor.toggleSeason(2)
+            editor.save()
+            editor.awaitClosed()
+
+            assertEquals(listOf(1, 2, 3), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `a request whose seasons are all held can still change where it goes`() =
+        runTest {
+            val editor = editor()
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = true))
+
+            assertTrue(editor.awaitLoaded().canSave)
+            editor.selectProfile(8)
+            editor.save()
+            editor.awaitClosed()
+
+            val body = editBody()
+            assertEquals(listOf(3), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+            assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
+        }
+
     private fun movieRequest(tags: List<Int> = emptyList()) =
         SeerrRequestDto(
             id = 11,
@@ -324,10 +386,4 @@ class RequestEditorTest {
                     seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 3, status = SeerrMediaStatusCode.Available)),
                 ),
         )
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

@@ -14,9 +14,11 @@ import io.github.scottcooper92.binge.seerr.data.ListRefreshes
 import io.github.scottcooper92.binge.seerr.data.RequestListQuery
 import io.github.scottcooper92.binge.seerr.data.RequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestsRemoteMediator
+import io.github.scottcooper92.binge.seerr.data.whileSet
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.TitleCache
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
@@ -39,6 +41,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 /** Who the list is scoped to: everyone's requests, or one user's where they may not see others'. */
@@ -84,6 +87,9 @@ class RequestsViewModel
         private val selectedSort = MutableStateFlow(RequestSort.Added)
         private val refreshTrigger = MutableStateFlow(0)
         private val countsRefresh = MutableStateFlow(0)
+
+        /** A `request/count` read is running, so a pull leaves it to finish rather than restarting it (#1193). */
+        private val countsInFlight = AtomicBoolean(false)
         private val listVersionState = MutableStateFlow(0)
 
         /**
@@ -125,8 +131,8 @@ class RequestsViewModel
          * Re-read from the server on becoming visible, since the cached `auth/me` would not show a
          * permission changed in the web client; a failed re-resolve is [ScopeState.Failed] rather than a
          * guessed, all-permissive scope, so nothing downstream acts on one. A retry from a failure
-         * shows [ScopeState.Resolving] again. The profile is not re-read: `hasBlocklist` follows the
-         * server's version, which an upgrade restarts anyway.
+         * shows [ScopeState.Resolving] again. The profile is re-read too, so a server upgraded in place
+         * offers its blocklist without a reconnect (#1074).
          *
          * `flowOn(dispatcher)` for the same reason [moderation] takes one (#177): without it, this
          * flow's own suspend calls resume on `viewModelScope`'s `Dispatchers.Main.immediate`, which
@@ -138,10 +144,10 @@ class RequestsViewModel
                     flow {
                         if (scope.value is ScopeState.Failed) emit(ScopeState.Resolving)
                         emit(
-                            runCatching { connection.refreshAuthenticatedUser() }.fold(
+                            attempt { connection.refreshAuthenticatedUser() }.fold(
                                 onSuccess = { resolved ->
                                     val permissions = resolved.toPermissions()
-                                    val hasBlocklist = runCatching { connection.profile().hasBlocklist }.getOrDefault(false)
+                                    val hasBlocklist = attempt { connection.refreshProfile().hasBlocklist }.getOrDefault(false)
                                     ScopeState.Resolved(
                                         ListScope(
                                             moderation =
@@ -194,9 +200,11 @@ class RequestsViewModel
                 flow {
                     emit(
                         if (seesEveryRequest) {
-                            runCatching { connection.api().requestCount() }
-                                .getOrNull()
-                                ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) }
+                            countsInFlight.whileSet {
+                                attempt { connection.api().requestCount() }
+                                    .getOrNull()
+                                    ?.let { RequestCounts(it.total, it.pending, it.approved, it.processing, it.available) }
+                            }
                         } else {
                             null
                         },
@@ -240,6 +248,11 @@ class RequestsViewModel
         /** Re-reads the signed-in user after [RequestsUiState.Error]. */
         fun retry() {
             refreshTrigger.value++
+        }
+
+        /** A pull refreshed the list: the chips re-read their counts too, unless a read is already running (#1193). */
+        fun refreshCounts() {
+            if (!countsInFlight.get()) countsRefresh.value++
         }
 
         /** The counts and the scope are low-velocity: refetched on entry, never polled. */

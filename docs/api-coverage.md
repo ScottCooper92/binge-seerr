@@ -19,8 +19,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 - Phase 0 (#27), Phase 1 (#28), Phase 2 (#29), Phase 3 (#30), Phase 4 (#31), Phase 8 (#35).
   Phases 5, 6, 10 and 11 add no endpoints: they are the poll, the host contract, TV and release.
 - A few lookups that sit beside discovery are used anyway, because a settings picker needs them:
-  the region, language and streaming region lists, and the two keyword calls behind the blocklist
-  settings. The table marks each one with what uses it.
+  the region, language and streaming region lists, the two keyword calls behind the blocklist
+  settings and the override rule's keyword condition, and the two genre lists behind its genre condition. The table marks each one with what uses it.
 - "Not planned" is three things. Discovery, search, title, person, collection, studio, network,
   and watchlist calls: this app is the companion and an admin console, not a discovery client, and
   a title opens in Binge or the web client (#26, and the closed #34). Web push, which is the PWA's
@@ -114,8 +114,8 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `POST /blocklist/collection/{collectionId}` | Add collection to blocklist | — | v3.2.0 | yes | `BlocklistViewModel.setCollectionBlocked`; the collection page that calls it is Phase 7. |
 | `DELETE /blocklist/{tmdbId}` | Remove media from blocklist | — | v3.0.0 | yes | Unblock from the browser's row, behind a confirm. |
 | `GET /blocklist/{tmdbId}` | Get media from blocklist | — | v3.0.0 |  | Not needed: the list payload carries everything a row shows. |
-| `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 | yes | The import picker on a Jellyfin or Emby server, filtered here to accounts not yet imported. |
-| `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 | yes | The import picker on a Plex server; the server filters the known accounts. |
+| `GET /settings/jellyfin/users` | Get Jellyfin Users | — | v1.1.0 | yes | The import picker on a Jellyfin or Emby server, filtered here to accounts not yet imported. Admin only, like all of `/settings`. |
+| `GET /settings/plex/users` | Get Plex users | v1.29.0 | v1.1.0 | yes | The import picker on a Plex server; the server filters the known accounts. Admin only, like all of `/settings`. |
 | `GET /user` | Get all users | v1.0.0 | v1.0.0 | yes | The hub's count; the users browser, cached in Room and refreshed on open. |
 | `POST /user` | Create new user | v1.0.0 | v1.0.0 | yes | Create a local user from the users browser. |
 | `PUT /user` | Update batch of users | v1.18.0 | v1.0.0 | yes | The users browser's bulk permission edit. |
@@ -253,9 +253,9 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /discover/tv/network/{networkId}` | Discover TV shows by network | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /discover/tv/upcoming` | Discover Upcoming TV shows | v1.20.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /discover/watchlist` | Get the Plex watchlist. | v1.30.0 | v1.2.0 |  | Discovery is Binge's surface. |
-| `GET /genres/movie` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /genres/tv` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
-| `GET /keyword/{keywordId}` | Get keyword | v1.32.0 | v1.4.0 | yes | Names a blocklisted tag on the General settings page. |
+| `GET /genres/movie` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Radarr override rule's condition. |
+| `GET /genres/tv` | Get list of official TMDB movie genres | v1.21.0 | v1.0.0 | yes | Names the genres of a Sonarr override rule's condition. |
+| `GET /keyword/{keywordId}` | Get keyword | v1.32.0 | v1.4.0 | yes | Names a blocklisted tag on the General settings page, and a keyword of an override rule. |
 | `GET /languages` | Languages supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's language pickers: discover languages and blocklisted languages. |
 | `GET /media` | Get media | v1.0.0 | v1.0.0 |  | Recently-added is a discovery slider. |
 | `GET /movie/{movieId}/ratings` | Get movie ratings | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |
@@ -268,7 +268,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `GET /regions` | Regions supported by TMDB | v1.20.0 | v1.0.0 | yes | The General settings page's region pickers: discover region and blocklisted regions. |
 | `GET /search` | Search for movies, TV shows, or people | v1.0.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /search/company` | Search for companies | v1.32.0 | v1.4.0 |  | Discovery is Binge's surface. |
-| `GET /search/keyword` | Search for keywords | v1.32.0 | v1.4.0 | yes | Finds tags to blocklist on the General settings page. |
+| `GET /search/keyword` | Search for keywords | v1.32.0 | v1.4.0 | yes | Finds tags to blocklist on the General settings page, and keywords for an override rule's condition. |
 | `POST /settings/initialize` | Initialize application | v1.20.0 | v1.0.0 |  | The first-run wizard stays the web client's. |
 | `GET /studio/{studioId}` | Get movie studio details | v1.21.0 | v1.0.0 |  | Discovery is Binge's surface. |
 | `GET /tv/{tvId}/ratings` | Get TV ratings | v1.0.0 | v1.0.0 |  | Title pages are Binge's surface; the movie/tv lookups the app already makes stay for status. |

@@ -24,15 +24,16 @@ import com.binge.companion.contracts.request.v1.ReportIssueRequest
 import com.binge.companion.contracts.request.v1.RequestFilter
 import com.binge.companion.contracts.request.v1.RequestServiceGrpcKt
 import com.binge.companion.contracts.request.v1.RequestStatus
+import com.binge.companion.contracts.request.v1.RetryRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitAdvancedRequestRequest
 import com.binge.companion.contracts.request.v1.SubmitRequestRequest
 import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
+import com.binge.companion.sdk.MAX_SEASON_NUMBERS
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.CachedStatus
 import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
@@ -43,6 +44,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
@@ -74,6 +76,7 @@ private const val REQUEST_4K_MOVIE = 1 shl 11
 private const val REQUEST_ADVANCED = 1 shl 13
 private const val REQUEST_4K_PERMISSION = 1 shl 10
 private const val CREATE_ISSUES = 1 shl 22
+private const val MANAGE_ISSUES = 1 shl 20
 
 private const val ALL_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true,"series4kEnabled":true}"""
 
@@ -94,6 +97,10 @@ private const val DOWNLOADING_ONLY_IN_4K =
     """{"mediaInfo":{"id":9,"status":1,"status4k":3,"downloadStatus4k":[{"title":"UHD","size":3000,"sizeLeft":1500}]}}"""
 
 private const val MOVIE_4K_ENABLED = """{"initialized":true,"movie4kEnabled":true}"""
+
+/** Seasons 1 to 3 as the server's show details list them, which an edit's seasons are checked against (#1002). */
+private const val SHOW_WITH_THREE_SEASONS =
+    """{"seasons":[{"seasonNumber":1,"episodeCount":10},{"seasonNumber":2,"episodeCount":10},{"seasonNumber":3,"episodeCount":10}]}"""
 
 /**
  * The whole contract end to end, on the JVM: a host's generated stub over an in-process channel
@@ -253,6 +260,15 @@ class SeerrRequestServiceTest {
             )
         }
 
+    /** `POST /issue` takes either bit, so an issue manager without the create bit is offered the report (#1018). */
+    @Test
+    fun `an issue manager without the create bit is offered the report capability`() =
+        runTest {
+            val response = connected(permissions = MANAGE_ISSUES).handshakeAs(MANAGE_ISSUES)
+
+            assertTrue(Capability.CAPABILITY_REPORT_ISSUE in response.capabilitiesList)
+        }
+
     @Test
     fun `overseerr has no blocklist, so an admin there is not offered the block capability`() =
         runTest {
@@ -311,6 +327,50 @@ class SeerrRequestServiceTest {
             )
         }
 
+    /** The contract says blocking a title already blocklisted is OK and changes nothing (#1000). */
+    @Test
+    fun `blocking a title already on the blocklist is OK, whichever database seerr keeps it in`() =
+        runTest {
+            val stub = connected(version = "3.1.0")
+            // SQLite: Seerr's own words for the unique-key clash. Postgres: the same clash as a generic 409.
+            seerr.enqueue(MockResponse(code = 412, body = """{"message":"Item already blocklisted"}"""))
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Something wrong"}"""))
+
+            repeat(2) { stub.blockTitle(matrixBlock) }
+
+            assertEquals("/api/v1/blocklist", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `blocking a title already on jellyseerr 2's blacklist is OK`() =
+        runTest {
+            val stub = connected(version = "2.7.0")
+            seerr.enqueue(MockResponse(code = 412, body = """{"message":"Item already blacklisted"}"""))
+
+            stub.blockTitle(matrixBlock)
+
+            assertEquals("/api/v1/blacklist", seerr.takeRequest().url.encodedPath)
+        }
+
+    private val matrixBlock: BlockTitleRequest =
+        BlockTitleRequest
+            .newBuilder()
+            .setMedia(movie)
+            .setTitle("The Matrix")
+            .build()
+
+    @Test
+    fun `any other refusal of a block still reaches the host`() =
+        runTest {
+            val stub = connected(version = "3.1.0")
+            seerr.enqueue(MockResponse(code = 500, body = """{"message":"boom"}"""))
+
+            assertEquals(
+                Status.Code.UNAVAILABLE,
+                stub.code { blockTitle(matrixBlock) },
+            )
+        }
+
     @Test
     fun `an unblock deletes the title's blocklist entry by tmdb id and media type`() =
         runTest {
@@ -349,6 +409,22 @@ class SeerrRequestServiceTest {
                 Status.Code.NOT_FOUND,
                 stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) },
             )
+        }
+
+    /** Jellyseerr 2.x's blacklist answers 401 for a title it does not hold, with the session fine (#998). */
+    @Test
+    fun `unblocking a title jellyseerr 2 does not hold is not found, not a dead session`() =
+        runTest {
+            val stub = connected(version = "2.7.0")
+            seerr.enqueue(MockResponse(code = 401, body = """{"message":"Could not find any entity of type Blacklist"}"""))
+            seerr.enqueue(json("""{"id":1,"permissions":$ADMIN}"""))
+
+            assertEquals(
+                Status.Code.NOT_FOUND,
+                stub.code { unblockTitle(UnblockTitleRequest.newBuilder().setMedia(movie).build()) },
+            )
+            assertEquals("/api/v1/blacklist/603", seerr.takeRequest().url.encodedPath)
+            assertEquals("/api/v1/auth/me", seerr.takeRequest().url.encodedPath)
         }
 
     /** The Jellyseerr 2.x bug (#539) that only a device log showed: a 400 on one operation, one lineage and version. */
@@ -451,7 +527,8 @@ class SeerrRequestServiceTest {
             val analytics = RecordingAnalytics()
             val stub = connected(permissions = ADMIN, analytics = analytics)
 
-            // A 401 is the session outright: nothing asks `auth/me` again.
+            // A dead session: the 401, then auth/me refusing the interceptor's probe too (#997).
+            seerr.enqueue(MockResponse(code = 401))
             seerr.enqueue(MockResponse(code = 401))
             assertTrue(stub.getAttention(GetAttentionRequest.getDefaultInstance()).attention.needsReconnect)
             assertEquals(emptyList<Any>(), analytics.events)
@@ -974,6 +1051,8 @@ class SeerrRequestServiceTest {
         runTest {
             val stub = connected()
 
+            // A dead session: the 401, then auth/me refusing the interceptor's probe too (#997).
+            seerr.enqueue(MockResponse(code = 401))
             seerr.enqueue(MockResponse(code = 401))
             assertEquals(Status.Code.UNAUTHENTICATED, stub.status(movie))
 
@@ -1307,6 +1386,40 @@ class SeerrRequestServiceTest {
             assertEquals("/api/v1/request/4", deleted.url.encodedPath)
         }
 
+    /** Every lineage's 401 for a request this user may not delete is not the session (#997), so the host is not sent to reconnect. */
+    @Test
+    fun `cancelling a request this user may not delete is PERMISSION_DENIED, or FAILED_PRECONDITION once it is past pending`() =
+        runTest {
+            val stub = connected(permissions = REQUEST)
+            val cancel = CancelRequestRequest.newBuilder().setRequestId(4).build()
+            val refused = """{"message":"You do not have permission to delete this request."}"""
+
+            // Someone else's pending request: the refusal, then auth/me still answering, then the request read.
+            seerr.enqueue(MockResponse(code = 401, body = refused))
+            seerr.enqueue(json("""{"id":1,"permissions":$REQUEST}"""))
+            seerr.enqueue(json("""{"id":4,"status":1,"media":{"tmdbId":603,"mediaType":"movie"}}"""))
+            assertEquals(Status.Code.PERMISSION_DENIED, stub.code { cancelRequest(cancel) })
+
+            // Their own, approved between the host's last read and the tap.
+            seerr.enqueue(MockResponse(code = 401, body = refused))
+            seerr.enqueue(json("""{"id":1,"permissions":$REQUEST}"""))
+            seerr.enqueue(json("""{"id":4,"status":2,"media":{"tmdbId":603,"mediaType":"movie"}}"""))
+            assertEquals(Status.Code.FAILED_PRECONDITION, stub.code { cancelRequest(cancel) })
+        }
+
+    @Test
+    fun `a 401 on cancel while auth_me is refused too is still the session`() =
+        runTest {
+            val stub = connected(version = "1.33.0")
+            seerr.enqueue(MockResponse(code = 401))
+            seerr.enqueue(MockResponse(code = 401))
+
+            assertEquals(
+                Status.Code.UNAUTHENTICATED,
+                stub.code { cancelRequest(CancelRequestRequest.newBuilder().setRequestId(4).build()) },
+            )
+        }
+
     @Test
     fun `observe pushes a status only when it changes`() =
         runTest {
@@ -1449,6 +1562,7 @@ class SeerrRequestServiceTest {
                         "media":{"tmdbId":1399,"mediaType":"tv"}}""",
                 ),
             )
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
             seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
 
             stub.editRequest(
@@ -1462,6 +1576,8 @@ class SeerrRequestServiceTest {
             val read = seerr.takeRequest()
             assertEquals("GET", read.method)
             assertEquals("/api/v1/request/7", read.url.encodedPath)
+            // The show's own seasons, which the edit is checked against before it goes (#1002).
+            assertEquals("/api/v1/tv/1399", seerr.takeRequest().url.encodedPath)
             val update = seerr.takeRequest()
             assertEquals("PUT", update.method)
             assertEquals("/api/v1/request/7", update.url.encodedPath)
@@ -1502,6 +1618,122 @@ class SeerrRequestServiceTest {
                 },
             )
             assertEquals(before + 1, seerr.requestCount)
+        }
+
+    @Test
+    fun `an edit naming a negative or repeated season is INVALID_ARGUMENT before anything is read`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+
+            listOf(listOf(1, 1), listOf(-1), (1..MAX_SEASON_NUMBERS + 1).toList()).forEach { seasons ->
+                assertEquals(
+                    Status.Code.INVALID_ARGUMENT,
+                    stub.code {
+                        editRequest(
+                            EditRequestRequest
+                                .newBuilder()
+                                .setRequestId(7)
+                                .addAllSeasonNumbers(seasons)
+                                .build(),
+                        )
+                    },
+                )
+            }
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `an edit naming a season the show does not have is INVALID_ARGUMENT, and nothing is written`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+            seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
+
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code {
+                    editRequest(
+                        EditRequestRequest
+                            .newBuilder()
+                            .setRequestId(7)
+                            .addAllSeasonNumbers(listOf(2, 99))
+                            .build(),
+                    )
+                },
+            )
+            // The request and the show were read; no PUT followed.
+            assertEquals(before + 2, seerr.requestCount)
+        }
+
+    @Test
+    fun `a submit naming a repeated or negative season is INVALID_ARGUMENT, and nothing is posted`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+
+            listOf(listOf(2, 2), listOf(-3, 1)).forEach { seasons ->
+                assertEquals(
+                    Status.Code.INVALID_ARGUMENT,
+                    stub.code {
+                        submitRequest(
+                            SubmitRequestRequest
+                                .newBuilder()
+                                .setMedia(show)
+                                .addAllSeasonNumbers(seasons)
+                                .build(),
+                        )
+                    },
+                )
+            }
+            assertEquals(before, seerr.requestCount)
+        }
+
+    @Test
+    fun `a submit naming a season the show does not have is INVALID_ARGUMENT, and only the details are read`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            val before = seerr.requestCount
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
+
+            assertEquals(
+                Status.Code.INVALID_ARGUMENT,
+                stub.code {
+                    submitRequest(
+                        SubmitRequestRequest
+                            .newBuilder()
+                            .setMedia(show)
+                            .addAllSeasonNumbers(listOf(2, 99))
+                            .build(),
+                    )
+                },
+            )
+            assertEquals(before + 1, seerr.requestCount)
+            assertEquals("/api/v1/tv/1399", seerr.takeRequest().url.encodedPath)
+        }
+
+    /** Seerr's 202 for an edit that leaves nothing to request is final, not the transient UNAVAILABLE (#1001). */
+    @Test
+    fun `an edit that leaves seerr nothing to request is FAILED_PRECONDITION`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(json("""{"id":7,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(json(SHOW_WITH_THREE_SEASONS))
+            seerr.enqueue(MockResponse(code = 202, body = """{"message":"No seasons available to request"}"""))
+
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code {
+                    editRequest(
+                        EditRequestRequest
+                            .newBuilder()
+                            .setRequestId(7)
+                            .addSeasonNumbers(1)
+                            .build(),
+                    )
+                },
+            )
         }
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.status(media: MediaId): Status.Code =
@@ -1815,6 +2047,38 @@ class SeerrRequestServiceTest {
             assertEquals(Availability.AVAILABILITY_AVAILABLE, getStatus(stub).availability)
         }
 
+    /** Seerr's 409 for a request in the wrong state is the contract's FAILED_PRECONDITION, so the host refreshes (#999). */
+    @Test
+    fun `moderating, retrying or editing a request in the wrong state is FAILED_PRECONDITION`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only pending requests can be approved or declined."}"""))
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code { approveRequest(ApproveRequestRequest.newBuilder().setRequestId(4).build()) },
+            )
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only failed requests can be retried."}"""))
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code { retryRequest(RetryRequestRequest.newBuilder().setRequestId(4).build()) },
+            )
+            seerr.enqueue(json("""{"id":4,"media":{"tmdbId":1399,"mediaType":"tv"}}"""))
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Only pending requests can be modified."}"""))
+            assertEquals(
+                Status.Code.FAILED_PRECONDITION,
+                stub.code {
+                    editRequest(
+                        EditRequestRequest
+                            .newBuilder()
+                            .setRequestId(4)
+                            .addSeasonNumbers(1)
+                            .build(),
+                    )
+                },
+            )
+        }
+
     /** The contract defines them as what this user may do *now*, so a row that stored them would lie. */
     @Test
     fun `allowed actions are recomputed on every read and never stored`() =
@@ -1887,12 +2151,6 @@ class SeerrRequestServiceTest {
 
     private fun json(body: String): MockResponse =
         MockResponse(code = 200, headers = okhttp3.Headers.headersOf("Content-Type", "application/json"), body = body)
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 
     private class RecordingBingeConnectionStore : BingeConnectionStore {
         var recorded = false

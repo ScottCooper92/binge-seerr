@@ -5,9 +5,11 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -81,9 +83,9 @@ class BlocklistTagsViewModelTest {
     @Test
     fun `the tags are read and named`() =
         runTest {
-            val ready = viewModel().awaitReady { it.names.isNotEmpty() }
+            val ready = viewModel().awaitReady { it.search.names.isNotEmpty() }
             assertEquals(listOf(9951), ready.tags)
-            assertEquals(mapOf(9951 to "kaiju"), ready.names)
+            assertEquals(mapOf(9951 to "kaiju"), ready.search.names)
         }
 
     @Test
@@ -177,19 +179,21 @@ class BlocklistTagsViewModelTest {
             vm.awaitReady()
             vm.toggle(4344)
             vm.awaitReady { it.saveFailed }
-            val seen = mutableListOf<Boolean>()
+            // What this collector has recorded, as a flow, so the test waits on the record itself. Waiting on uiState
+            // instead can see the second failure before this collector has (#1160).
+            val seen = MutableStateFlow<List<Boolean>>(emptyList())
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 vm.uiState
                     .mapNotNull { (it as? BlocklistTagsUiState.Ready)?.saveFailed }
                     .distinctUntilChanged()
-                    .collect { seen += it }
+                    .collect { failed -> seen.update { it + failed } }
             }
 
             vm.retry()
-            vm.uiState.first { seerr.count("POST", "/api/v1/settings/main") == 2 }
-            vm.awaitReady { it.saveFailed }
+            val history = seen.first { it.size >= 3 }
 
-            assertEquals("cleared when the retry starts, set again when it fails", listOf(true, false, true), seen)
+            assertEquals("cleared when the retry starts, set again when it fails", listOf(true, false, true), history)
+            assertEquals(2, seerr.count("POST", "/api/v1/settings/main"))
         }
 
     @Test
@@ -202,7 +206,7 @@ class BlocklistTagsViewModelTest {
             vm.search("mus")
             val found = vm.awaitReady { it.search.results != null }
             assertEquals(listOf(Keyword(4344, "musical")), found.search.results)
-            assertEquals("musical", found.names[4344])
+            assertEquals("musical", found.search.names[4344])
 
             vm.search("")
             assertEquals(null, vm.awaitReady { it.search.results == null }.search.results)

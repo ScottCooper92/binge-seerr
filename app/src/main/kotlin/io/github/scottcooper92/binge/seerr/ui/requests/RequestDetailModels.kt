@@ -46,7 +46,9 @@ enum class IssueType(
 
 /**
  * One season of a show in the editor. [heldStatus] is set where the server already has it, is
- * fetching it, or another request covers it; a held season cannot be ticked or unticked here.
+ * fetching it, or another request covers it; a held season cannot be ticked or unticked here. Locked
+ * is about the tick, not the save: a held season this request already covers still goes in its body,
+ * or the server drops it from the request (#1022).
  */
 data class SeasonChoice(
     val number: Int,
@@ -64,7 +66,7 @@ data class EditState(
     val saving: Boolean = false,
     /** The show's season list failed to load, so [seasons] is empty for lack of data, not because there is none. */
     val seasonsUnknown: Boolean = false,
-    /** False where the server takes a whole show, so [seasons] is empty by rule and the save sends none. */
+    /** False where the server takes a whole show, so [seasons] is empty by rule and the save sends back the request's own. */
     val seasonsEditable: Boolean = true,
 ) {
     /** The seasons the editor may change: those the server does not already hold. */
@@ -74,13 +76,16 @@ data class EditState(
     val allSeasonsSelected: Boolean
         get() = toggleableSeasons.let { changeable -> changeable.isNotEmpty() && changeable.all { it.selected } }
 
-    /** A show with nothing ticked is a request for nothing, which the server refuses. */
+    /**
+     * A show with nothing ticked is a request for nothing, which the server refuses. A held season this request covers
+     * counts, so a request whose seasons are all held can still change its destination (#1022).
+     */
     val canSave: Boolean
         get() =
             !saving &&
                 !seasonsUnknown &&
                 destination?.loadingChoices != true &&
-                (seasons.isEmpty() || seasons.any { it.selected && !it.locked })
+                (seasons.isEmpty() || seasons.any { it.selected })
 }
 
 /** The states the server lets a moderator mark a media record with, by the path it takes. */

@@ -158,7 +158,7 @@ sealed interface SetupUiState {
      * Step one: the address, and nothing else until the server answers. An [insecure] address, plain
      * HTTP to a public host, is not read until the user has ticked [cleartextAllowed] for it. A local
      * address on a platform that gates the local network shows [needsLocalNetwork] until it is allowed;
-     * it never disables Continue, so an address misjudged as local cannot block setup. A [handOff] in
+     * meanwhile asking for the permission takes Continue's place, and a grant reads the server at once. A [handOff] in
      * progress takes the television's page over until it ends.
      */
     data class Address(

@@ -9,10 +9,12 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuota
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuotaBucket
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDownload
 import io.github.scottcooper92.binge.seerr.ui.tv.TvDestination
+import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvShellScaffold
 import io.github.scottcooper92.binge.seerr.ui.tv.request
@@ -21,14 +23,13 @@ import io.github.scottcooper92.binge.seerr.ui.users.UserDetailUiState
 import io.github.scottcooper92.binge.seerr.ui.users.UserItem
 import io.github.scottcooper92.binge.seerr.ui.users.UserOrigin
 
-/** A fixed render instant, so the profile's "joined" line and the requests' dates do not move with the day the suite runs. */
-private const val ACCOUNT_NOW_MILLIS = 1_770_000_000_000L
-private const val JOINED_MILLIS = ACCOUNT_NOW_MILLIS - 400L * 24 * 60 * 60 * 1000
+/** When the account joined, a fixed span before [FIXED_NOW_MILLIS], so the "joined" line does not move with the day the suite runs. */
+private const val JOINED_MILLIS = FIXED_NOW_MILLIS - 400L * 24 * 60 * 60 * 1000
 private const val ADMIN_PERMISSIONS = 2
 
 private val SampleRequests =
     listOf(
-        request(1, "Heat", SeerrRequestStatusCode.Pending, now = ACCOUNT_NOW_MILLIS),
+        request(1, "Heat", SeerrRequestStatusCode.Pending, now = FIXED_NOW_MILLIS),
         request(
             2,
             "The Bear",
@@ -36,10 +37,10 @@ private val SampleRequests =
             seasons = listOf(1, 2),
             mediaStatus = SeerrMediaStatusCode.Processing,
             download = RequestDownload(0.4f, 12, true),
-            now = ACCOUNT_NOW_MILLIS,
+            now = FIXED_NOW_MILLIS,
         ),
-        request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined, now = ACCOUNT_NOW_MILLIS),
-        request(4, "Severance", SeerrRequestStatusCode.Approved, mediaStatus = SeerrMediaStatusCode.Available, now = ACCOUNT_NOW_MILLIS),
+        request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined, now = FIXED_NOW_MILLIS),
+        request(4, "Severance", SeerrRequestStatusCode.Approved, mediaStatus = SeerrMediaStatusCode.Available, now = FIXED_NOW_MILLIS),
     )
 
 private fun detail(quota: HubQuota?) =
@@ -90,8 +91,9 @@ class TvAccountScreenshotTest {
             requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
             onOpenRequest = {},
             onRetry = {},
+            onRetryRequests = {},
             overlayOpen = false,
-            now = ACCOUNT_NOW_MILLIS,
+            now = FIXED_NOW_MILLIS,
         )
     }
 
@@ -104,8 +106,9 @@ class TvAccountScreenshotTest {
             requests = TvPagedRows(count = SampleRequests.size, at = { SampleRequests.getOrNull(it) }),
             onOpenRequest = {},
             onRetry = {},
+            onRetryRequests = {},
             overlayOpen = false,
-            now = ACCOUNT_NOW_MILLIS,
+            now = FIXED_NOW_MILLIS,
         )
     }
 
@@ -118,6 +121,7 @@ class TvAccountScreenshotTest {
             requests = TvPagedRows(count = 0, at = { null }),
             onOpenRequest = {},
             onRetry = {},
+            onRetryRequests = {},
             overlayOpen = false,
         )
     }
@@ -131,7 +135,24 @@ class TvAccountScreenshotTest {
             requests = TvPagedRows(count = 0, at = { null }),
             onOpenRequest = {},
             onRetry = {},
+            onRetryRequests = {},
             overlayOpen = false,
+        )
+    }
+
+    /** The user's own requests could not be read: the page says so where the row would be, with a retry (#1035). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RequestsFailed() {
+        TvAccountBoard(
+            detail = detail(HubQuota(movie = null, tv = null)),
+            requests = TvPagedRows(count = 0, at = { null }, refresh = TvLoadPhase.Failed),
+            onOpenRequest = {},
+            onRetry = {},
+            onRetryRequests = {},
+            overlayOpen = false,
+            now = FIXED_NOW_MILLIS,
         )
     }
 

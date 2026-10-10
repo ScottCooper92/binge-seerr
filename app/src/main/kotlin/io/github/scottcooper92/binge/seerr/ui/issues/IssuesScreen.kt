@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +20,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.template.FilteredListScreen
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +30,9 @@ class IssuesActions(
     val onFilterChange: (IssueFilter) -> Unit,
     val onSortChange: (IssueSort) -> Unit,
     val onOpen: (IssueItem) -> Unit,
+    val onRetryLoad: () -> Unit,
+    /** A pull refreshed a list, so the chips re-read their counts. */
+    val onRefreshCounts: () -> Unit,
 )
 
 /**
@@ -35,6 +40,7 @@ class IssuesActions(
  * the server's totals. The ViewModel owns the selected filter; a chip's index is its filter's ordinal.
  *
  * @param showBack false when the hub is showing beside this pane, where a back arrow to it is redundant.
+ * @param pullState a still frame's resting pull for every page; null gives each page M3's own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +49,7 @@ fun IssuesScreen(
     issuesFor: (IssueFilter) -> Flow<PagingData<IssueItem>>,
     actions: IssuesActions,
     showBack: Boolean = true,
+    pullState: PullToRefreshState? = null,
 ) {
     var showSort by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssuesUiState.Ready
@@ -64,7 +71,13 @@ fun IssuesScreen(
                 }
             }
         },
-        notReady = { padding -> LoadingScreen(Modifier.fillMaxSize().padding(padding)) },
+        notReady = { padding ->
+            when (state) {
+                is IssuesUiState.Error ->
+                    ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetryLoad)
+                else -> LoadingScreen(Modifier.fillMaxSize().padding(padding))
+            }
+        },
     ) { page, contentPadding ->
         // Its own filter, never the selected one: the pager composes a page while it is swiped into view,
         // and keeps the pages either side of the selected one composed.
@@ -75,8 +88,10 @@ fun IssuesScreen(
                 lazyItems = issuesFor(filter).collectAsLazyPagingItems(),
                 lastRefresh = loaded.refreshes[filter],
                 onOpen = actions.onOpen,
+                onPull = actions.onRefreshCounts,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = contentPadding,
+                pullState = pullState,
             )
         }
     }

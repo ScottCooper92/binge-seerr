@@ -56,7 +56,7 @@ class PermissionsViewModelTest {
         uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<PermissionSettings>
 
     @Test
-    fun `the owner may flip everything, another admin everything but Admin, and a manager only what they hold`() =
+    fun `the owner may flip everything, and anyone else everything but Admin, held or not`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val owner = viewModel().awaitReady().draft
@@ -67,10 +67,11 @@ class PermissionsViewModelTest {
             seerr.viewer(id = 2, permissions = ADMIN)
             assertEquals(setOf(ManageablePermission.Admin), viewModel().awaitReady().draft.locked)
 
+            // The server's one rule is Admin, owner-only: a manager may grant Manage issues without holding it (#1016).
             seerr.viewer(id = 2, permissions = MANAGE_USERS or REQUEST, version = "1.33.0", settings = "{}")
             val manager = viewModel().awaitReady().draft
-            assertTrue(ManageablePermission.Request4k in manager.locked)
-            assertTrue(ManageablePermission.ManageRequests in manager.locked)
+            assertEquals(setOf(ManageablePermission.Admin), manager.locked)
+            assertFalse(ManageablePermission.ManageIssues in manager.locked)
             assertFalse(ManageablePermission.ManageBlocklist in manager.offered)
         }
 
@@ -95,6 +96,28 @@ class PermissionsViewModelTest {
             assertEquals("""{"permissions":$expected}""", seerr.body("POST", "/api/v1/user/8/settings/permissions"))
             assertEquals(expected, vm.awaitReady().saved.original)
             assertEquals(expected, cache.rows.single().permissions)
+        }
+
+    /** The server refuses any change to an admin's mask from anyone but the owner, so the page is read-only to them (#1134). */
+    @Test
+    fun `an admin's page is read-only to anyone but the owner, and sends nothing`() =
+        runTest {
+            seerr.serve("GET /api/v1/user/8/settings/permissions", """{"permissions":${ADMIN or REQUEST}}""")
+            seerr.viewer(id = 7, permissions = ADMIN)
+            val vm = viewModel()
+            val draft = vm.awaitReady().draft
+            assertTrue(draft.ownerOnly)
+            assertEquals(ManageablePermission.entries.toSet(), draft.locked)
+
+            vm.toggle(ManageablePermission.ManageIssues)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            assertFalse(vm.awaitReady().dirty)
+            assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/permissions"))
+
+            seerr.viewer(id = 1, permissions = ADMIN)
+            val owner = viewModel().awaitReady().draft
+            assertFalse(owner.ownerOnly)
+            assertTrue(owner.locked.isEmpty())
         }
 
     private fun cachedUser(id: Int) =

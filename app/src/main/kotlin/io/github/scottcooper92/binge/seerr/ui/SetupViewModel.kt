@@ -12,7 +12,9 @@ import io.github.scottcooper92.binge.seerr.handoff.AddressHandOffs
 import io.github.scottcooper92.binge.seerr.handoff.HAND_OFF_SESSION_MODE
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
+import io.github.scottcooper92.binge.seerr.seerr.isBlockedByLocalNetwork
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
@@ -121,7 +123,7 @@ class SetupViewModel
             if (draft.value.editing != null) return
             crashBreadcrumbs.log("editing server connection")
             viewModelScope.launch(dispatcher) {
-                val saved = runCatching { connection.current() }.getOrNull() ?: return@launch
+                val saved = attempt { connection.current() }.getOrNull() ?: return@launch
                 // A connection already opted in to plain HTTP keeps its tick, or Edit would stall on it.
                 val consented = saved.baseUrl.insecurePublicHostOrNull()?.takeIf { connection.allowsCleartextTo(it) }
                 draft.update { it.copy(editing = saved, serverUrl = saved.baseUrl, cleartextHost = consented, notice = notice) }
@@ -129,8 +131,15 @@ class SetupViewModel
             }
         }
 
-        /** The permission prompt came back, or the user returned from Settings: read the permission again. */
-        fun localNetworkResult() = draft.update { it.copy(permissionReads = it.permissionReads + 1, error = null) }
+        /**
+         * The permission prompt came back, or the user returned from Settings: read the permission again. The ask is only on
+         * screen while the address waits on it, so a grant here goes straight on to read the server: allowing access and
+         * continuing are one tap (#1099).
+         */
+        fun localNetworkResult() {
+            draft.update { it.copy(permissionReads = it.permissionReads + 1, error = null) }
+            if (!draft.value.serverUrl.isBlockedByLocalNetwork(localNetwork)) inspect()
+        }
 
         fun editAddress(value: String) {
             // Typing takes over from the phone: the follow phase ends, so the phone cannot overwrite the field
@@ -308,7 +317,7 @@ class SetupViewModel
             // Before the server is read, not after: while `editing` is unset the saved credentials
             // read as connected, and the screen would leave for the hub mid-resume.
             if (pending.editing) {
-                val editing = runCatching { connection.current() }.getOrNull()
+                val editing = attempt { connection.current() }.getOrNull()
                 draft.update { it.copy(editing = editing) }
             }
             val server =

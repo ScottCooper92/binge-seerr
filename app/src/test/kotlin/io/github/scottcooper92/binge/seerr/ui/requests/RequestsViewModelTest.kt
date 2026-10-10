@@ -4,7 +4,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import androidx.paging.testing.asSnapshot
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeRequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
@@ -16,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.FakeTitleDao
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -35,8 +35,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 private const val REQUEST_WAIT_MILLIS = 2_000L
 private const val POLL_MILLIS = 10L
@@ -68,15 +71,31 @@ class RequestsViewModelTest {
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(0)
 
+    /** The server's version, which a test can change mid-run, as an upgrade in place would. */
+    private val serverVersion = AtomicReference("3.1.0")
+
+    /** The server's request total, which a test can change mid-run to tell a fresh count from the last one. */
+    private val countTotal = AtomicInteger(3)
+
+    /** Set, a count read waits here until the test lets it go, so a test can act while one is running. */
+    private val heldCount = AtomicReference<CountDownLatch?>(null)
+    private val countStarted = CompletableDeferred<Unit>()
+
     private fun server(permissions: Int) {
         viewerPermissions.set(permissions)
         seerr.dispatcher = { request ->
             received += request
             when (request.url.encodedPath) {
                 "/api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
-                "/api/v1/status" -> json("""{"version":"3.1.0"}""")
+                "/api/v1/status" -> json("""{"version":"${serverVersion.get()}"}""")
                 "/api/v1/settings/public" -> json("""{"mediaServerType":2}""")
-                "/api/v1/request/count" -> json("""{"total":3,"pending":1,"approved":2,"processing":1,"available":1}""")
+                "/api/v1/request/count" -> {
+                    heldCount.get()?.let { release ->
+                        countStarted.complete(Unit)
+                        release.await(REQUEST_WAIT_MILLIS, TimeUnit.MILLISECONDS)
+                    }
+                    json("""{"total":${countTotal.get()},"pending":1,"approved":2,"processing":1,"available":1}""")
+                }
                 "/api/v1/request" ->
                     json(
                         """{"pageInfo":{"pages":1,"results":1},"results":[{"id":11,"status":2,"media":{"tmdbId":100,"mediaType":"movie","status":3}}]}""",
@@ -157,6 +176,46 @@ class RequestsViewModelTest {
         }
 
     @Test
+    fun `a pull re-reads the chip counts once`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts?.total == 3 }
+            val before = countReads()
+
+            countTotal.set(4)
+            vm.refreshCounts()
+
+            assertEquals(4, vm.awaitReady { it.counts?.total == 4 }.counts?.total)
+            assertEquals(before + 1, countReads())
+        }
+
+    @Test
+    fun `a pull while the counts are being read starts no second read`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.counts?.total == 3 }
+            val before = countReads()
+            val release = CountDownLatch(1)
+            heldCount.set(release)
+            try {
+                countTotal.set(4)
+                vm.refreshCounts()
+                countStarted.await()
+                // A second pull while the first read is held: a restart would cancel it and read again (#1193).
+                vm.refreshCounts()
+                vm.refreshCounts()
+            } finally {
+                heldCount.set(null)
+                release.countDown()
+            }
+
+            vm.awaitReady { it.counts?.total == 4 }
+            assertEquals(before + 1, countReads())
+        }
+
+    @Test
     fun `a plain requester's list is scoped to their own requests, and its chips carry no server-wide counts`() =
         runTest {
             server(REQUEST)
@@ -175,6 +234,21 @@ class RequestsViewModelTest {
                     .awaitReady { true }
                     .scope.permissions.canManageRequests,
             )
+        }
+
+    /** A Jellyseerr 1.x upgraded in place to 2.x offers block-on-decline on the next arrival, with no reconnect (#1074). */
+    @Test
+    fun `becoming visible re-reads the profile, so a server upgraded in place offers its blocklist`() =
+        runTest {
+            serverVersion.set("1.9.0")
+            server(ADMIN)
+            val vm = viewModel()
+            assertFalse(vm.awaitReady { it.scope.permissions.canManageRequests }.scope.hasBlocklist)
+
+            serverVersion.set("2.7.0")
+            vm.setScreenVisible(true)
+
+            assertTrue(vm.awaitReady { it.scope.hasBlocklist }.scope.hasBlocklist)
         }
 
     @Test
@@ -315,6 +389,8 @@ class RequestsViewModelTest {
         return connection
     }
 
+    private fun countReads() = received.count { it.url.encodedPath == "/api/v1/request/count" }
+
     private fun authReads() = received.count { it.url.encodedPath == "/api/v1/auth/me" }
 
     /** The resolve lands on OkHttp's threads after the dispatcher answered it; this waits in real time. */
@@ -324,10 +400,4 @@ class RequestsViewModelTest {
         }
 
     private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

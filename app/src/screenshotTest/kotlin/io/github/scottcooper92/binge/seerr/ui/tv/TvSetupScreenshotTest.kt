@@ -5,14 +5,13 @@ import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvSpanishScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
-import io.github.scottcooper92.binge.seerr.ui.AddressHandOff
+import io.github.scottcooper92.binge.seerr.ui.HAND_OFF_CODE
+import io.github.scottcooper92.binge.seerr.ui.NoSetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupActions
 import io.github.scottcooper92.binge.seerr.ui.SetupError
 import io.github.scottcooper92.binge.seerr.ui.SetupNotice
 import io.github.scottcooper92.binge.seerr.ui.SetupUiState
 import io.github.scottcooper92.binge.seerr.ui.SignInForm
-
-private val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
 
 private const val API_KEY = "MTc0NDE1NzQ0MjQyMzFhYzY0"
 
@@ -150,7 +149,7 @@ class TvSetupScreenshotTest {
     @Composable
     fun reconnectCode() =
         TvSetupScreen(
-            state = setupSignIn(notice = SetupNotice.SessionRejected).copy(code = RECONNECT_CODE),
+            state = setupSignIn(notice = SetupNotice.SessionRejected).copy(code = HAND_OFF_CODE),
             actions = ReconnectActions,
             offerHandOff = true,
         )
@@ -161,7 +160,5 @@ class TvSetupScreenshotTest {
     @Composable
     fun reconnectTyped() = TvSetupScreen(state = setupSignIn(notice = SetupNotice.SessionRejected), actions = ReconnectActions)
 }
-
-private val RECONNECT_CODE = AddressHandOff.Listening(url = "http://192.168.86.53:41234/a/k7m2pqx4", pin = "4821")
 
 private val ReconnectActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {})

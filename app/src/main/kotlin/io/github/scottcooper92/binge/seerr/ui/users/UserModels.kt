@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.users
 import io.github.scottcooper92.binge.seerr.data.ListRefresh
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 
 /** The orders the server lists users in, each carrying its own `sort` value. */
 enum class UserSort(
@@ -32,7 +33,7 @@ data class UserItem(
     val requestCount: Int,
     val createdAtMillis: Long?,
 ) {
-    val isAdmin: Boolean get() = ManageablePermission.Admin in ManageablePermission.decode(permissions)
+    val isAdmin: Boolean get() = isAdminBitmask(permissions)
 }
 
 /** The bulk editor while it is open: the toggles to apply onto each selected user's own permissions. */
@@ -62,13 +63,23 @@ sealed interface UsersUiState {
         val edit: BulkEdit?,
         /** The toggles the editor offers: the blocklist ones only on the Jellyseerr lineage. */
         val offered: List<ManageablePermission>,
-        /** Adding users is a manager's; [importSource] is the media server whose accounts can be imported, if any. */
+        /**
+         * Adding users is a manager's. [importSource] is the media server whose accounts can be imported, if any, and
+         * only for an admin: the lists to import from live under `/settings`, which needs `ADMIN` (#1009).
+         */
         val canAdmit: Boolean = false,
         val importSource: UserOrigin? = null,
         val canGeneratePassword: Boolean = false,
+        /** The toggles the bulk editor shows but won't flip: what this viewer may not grant (#1008). */
+        val locked: Set<ManageablePermission> = setOf(ManageablePermission.Admin),
         val admission: UserAdmissionState? = null,
         /** The list's latest finished network refresh, for [sort]; missing while its refresh runs. */
         val refresh: ListRefresh? = null,
+    ) : UsersUiState
+
+    /** The signed-in user could not be read, so what they may do here is unknown. */
+    data class Error(
+        val error: SeerrError,
     ) : UsersUiState
 }
 

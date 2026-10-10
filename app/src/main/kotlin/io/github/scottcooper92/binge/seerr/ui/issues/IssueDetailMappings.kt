@@ -30,7 +30,7 @@ internal fun SeerrIssueDto.toDetail(
         canComment = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
         canManage = permissions.canManageIssues,
         canResolve = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
-        canDelete = permissions.canManageIssues || (permissions.canCreateIssues && isReporter),
+        canDelete = mayDeleteIssue(permissions, isReporter, comments.size),
         webUrl = baseUrl + "issues/" + id,
         mediaServerUrl = media?.mediaUrl?.takeIf { it.isWebUrl() },
         serviceUrl = media?.serviceUrl?.takeIf { it.isWebUrl() },

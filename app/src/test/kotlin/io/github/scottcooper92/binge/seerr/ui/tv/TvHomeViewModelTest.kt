@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui.tv
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealth
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
@@ -11,6 +10,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.OkHttpDrain
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.enqueueProfile
 import io.github.scottcooper92.binge.seerr.util.routeProfiles
 import kotlinx.coroutines.flow.first
@@ -95,6 +95,8 @@ class TvHomeViewModelTest {
             vm.uiState.first { it == TvHomeUiState.Connected }
 
             server.enqueue(MockResponse(code = 401))
+            // The interceptor's own probe: auth/me refuses too, so the 401 is the session (#997).
+            server.enqueue(MockResponse(code = 401))
             runCatching { connection.api().requests(take = 1) }
             server.enqueue(MockResponse(code = 401))
             vm.uiState.first { it == TvHomeUiState.Reconnect }
@@ -120,10 +122,4 @@ class TvHomeViewModelTest {
         }
 
     private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

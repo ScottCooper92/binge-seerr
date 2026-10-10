@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -115,6 +116,14 @@ abstract class EditorViewModel<T>(
     }
 
     /**
+     * On a page that saves as it changes, drops a change not yet on the server instead of sending it ([SaveAsMade.discard]):
+     * the page is about to replace the record from elsewhere (#1019). Call it on the main thread, before the replacement.
+     */
+    protected fun discardUnsent() {
+        saveAsMade?.discard()
+    }
+
+    /**
      * Reads the record again. On a page that saves as it changes, a change not yet on the server goes first ([SaveAsMade.settle]),
      * and if it cannot, the draft is kept over what was read, with the failure showing.
      */
@@ -124,7 +133,7 @@ abstract class EditorViewModel<T>(
         viewModelScope.launch(dispatcher) {
             val kept = settling?.await()
             saveAsMade?.reloaded(keptUnsent = kept != null)
-            runCatching { load() }
+            attempt { load() }
                 .onSuccess { state.value = EditorUiState.Ready(draft = kept ?: it, saved = it, saveFailed = kept != null) }
                 .onFailure { state.value = EditorUiState.Error(it.toSeerrError()) }
         }
@@ -149,7 +158,7 @@ abstract class EditorViewModel<T>(
         if (ready.saving || !ready.dirty || !canSave(ready.draft)) return
         state.value = ready.copy(saving = true)
         viewModelScope.launch(dispatcher) {
-            runCatching { write(ready.draft) }
+            attempt { write(ready.draft) }
                 .onSuccess { adopted ->
                     state.value = EditorUiState.Ready(draft = adopted, saved = adopted)
                     eventFlow.emit(EditorEvent.Saved)
@@ -280,7 +289,7 @@ abstract class ExtrasEditorViewModel<T, X>(
         viewModelScope.launch(dispatcher) {
             val kept = settling?.await()
             saveAsMade?.reloaded(keptUnsent = kept != null)
-            runCatching { load() }
+            attempt { load() }
                 .onSuccess {
                     state.value =
                         ExtrasEditorUiState.Ready(draft = kept ?: it, saved = it, extras = extrasState.value, saveFailed = kept != null)
@@ -307,7 +316,7 @@ abstract class ExtrasEditorViewModel<T, X>(
         if (ready.saving || !ready.dirty || !canSave(ready.draft)) return
         state.value = ready.copy(saving = true)
         viewModelScope.launch(dispatcher) {
-            runCatching { write(ready.draft) }
+            attempt { write(ready.draft) }
                 .onSuccess { adopted ->
                     state.value = ExtrasEditorUiState.Ready(draft = adopted, saved = adopted, extras = extrasState.value)
                     eventFlow.emit(EditorEvent.Saved)

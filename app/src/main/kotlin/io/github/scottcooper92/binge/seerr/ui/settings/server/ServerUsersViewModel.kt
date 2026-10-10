@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -55,7 +56,7 @@ class ServerUsersViewModel
         /** Re-reads the default permissions on return from their editor, leaving the form's unsaved edits alone. */
         fun refreshDefaultPermissions() {
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().mainSettings() }.onSuccess { main ->
+                attempt { connection.api().mainSettings() }.onSuccess { main ->
                     editExtras { it.copy(defaultPermissions = ManageablePermission.decode(main.defaultPermissions ?: 0)) }
                 }
             }

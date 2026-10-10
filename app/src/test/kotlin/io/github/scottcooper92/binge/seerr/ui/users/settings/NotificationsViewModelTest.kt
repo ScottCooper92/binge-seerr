@@ -15,7 +15,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -115,12 +114,44 @@ class NotificationsViewModelTest {
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
             assertEquals("true", sent.getValue("discordEnabled").jsonPrimitive.content)
             assertEquals("1234", sent.getValue("discordId").jsonPrimitive.content)
-            assertNull(sent["pgpKey"])
+            assertEquals("", sent.getValue("pgpKey").jsonPrimitive.content)
             assertEquals("true", sent.getValue("telegramSendSilently").jsonPrimitive.content)
             val types = sent.getValue("notificationTypes").jsonObject
             assertEquals("4", types.getValue("discord").jsonPrimitive.content)
             assertEquals("${12 or (1 shl 9)}", types.getValue("email").jsonPrimitive.content)
             assertEquals("0", types.getValue("webpush").jsonPrimitive.content)
+        }
+
+    /** The server keeps a key the body leaves out, so a cleared token goes out as "", as the web client sends it (#1020). */
+    @Test
+    fun `clearing the Pushbullet token sends it empty, so the server clears it`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { settings ->
+                settings.update(NotificationAgent.Pushbullet) { it.copy(fields = it.fields + (AgentField.PushbulletToken to "  ")) }
+            }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
+            assertEquals("", sent.getValue("pushbulletAccessToken").jsonPrimitive.content)
+        }
+
+    /** A single-id server reads `discordId` only, so a cleared one goes out as "" rather than a missing key (#1020). */
+    @Test
+    fun `clearing the Discord id on a single-id server sends it empty, so the server clears it`() =
+        runTest {
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(discordIds = listOf("")) }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
+
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/notifications")).jsonObject
+            assertEquals("", sent.getValue("discordId").jsonPrimitive.content)
         }
 
     @Test

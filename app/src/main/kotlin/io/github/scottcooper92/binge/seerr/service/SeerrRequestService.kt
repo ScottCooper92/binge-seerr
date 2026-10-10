@@ -57,6 +57,8 @@ import io.github.scottcooper92.binge.seerr.data.MediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoMediaStatusStore
 import io.github.scottcooper92.binge.seerr.data.NoRequestStore
 import io.github.scottcooper92.binge.seerr.data.RequestStore
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_ACCEPTED
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_CONFLICT
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAddToBlocklistBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrCreateIssueBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrEditRequestBody
@@ -65,11 +67,16 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.addToBlocklistOnce
 import io.github.scottcooper92.binge.seerr.seerr.advancedRequestOptions
+import io.github.scottcooper92.binge.seerr.seerr.attempt
+import io.github.scottcooper92.binge.seerr.seerr.checkHasSeasons
+import io.github.scottcooper92.binge.seerr.seerr.checkedSeasonNumbers
 import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
 import io.github.scottcooper92.binge.seerr.seerr.recordIdFor
+import io.github.scottcooper92.binge.seerr.seerr.refusedWithLiveSession
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
@@ -82,6 +89,7 @@ import io.github.scottcooper92.binge.seerr.seerr.toRequestInfo
 import io.github.scottcooper92.binge.seerr.seerr.toRequestStatus
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.toStatusException
+import io.github.scottcooper92.binge.seerr.seerr.updateRequest
 import io.github.scottcooper92.binge.seerr.telemetry.Analytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.operationFailed
@@ -99,12 +107,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import retrofit2.HttpException
-
-/** Seerr returns 202 Accepted when there was nothing left to request, and created nothing. */
-private const val HTTP_ACCEPTED = 202
-
-/** Seerr returns 409 Conflict when the media has already been requested. */
-private const val HTTP_CONFLICT = 409
 
 /**
  * REQUEST v1, served against the connected Seerr server.
@@ -180,11 +182,12 @@ class SeerrRequestService(
             }
             val media = request.media
             refuseIfKnownBlocklisted(media)
+            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
             val body =
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
+                    seasons = seasons.takeIf { it.isNotEmpty() },
                     is4k = request.is4K,
                 )
             submitAndRespond(media, body)
@@ -225,6 +228,7 @@ class SeerrRequestService(
             val media = request.media
             refuseIfKnownBlocklisted(media)
             val isTv = media.seerrMediaType().isSeerrTv()
+            val seasons = checkedSubmitSeasons(media, request.seasonNumbersList)
             // 4K here is a property of the server the caller named. A user who may not request 4K is
             // never offered a 4K server, so naming one is INVALID_ARGUMENT, like any server not offered.
             val destination =
@@ -239,7 +243,7 @@ class SeerrRequestService(
                 SeerrRequestBody(
                     mediaType = media.seerrMediaType(),
                     mediaId = media.tmdbId,
-                    seasons = request.seasonNumbersList.takeIf { it.isNotEmpty() },
+                    seasons = seasons.takeIf { it.isNotEmpty() },
                     is4k = destination.server.is4k,
                     serverId = destination.server.id,
                     profileId = destination.profileId,
@@ -247,6 +251,21 @@ class SeerrRequestService(
                 )
             SubmitAdvancedRequestResponse.newBuilder().setResult(submitAndRespond(media, body)).build()
         }
+
+    /**
+     * A submit's seasons, refused as INVALID_ARGUMENT before anything is posted if they are malformed or name a season the
+     * show does not have (#1002), the same rule [editRequest] applies. No seasons means the whole show, so nothing is looked up.
+     */
+    private suspend fun checkedSubmitSeasons(
+        media: MediaId,
+        numbers: List<Int>,
+    ): List<Int> {
+        val seasons = numbers.checkedSeasonNumbers()
+        if (seasons.isNotEmpty() && media.seerrMediaType().isSeerrTv()) {
+            connection.api().tvDetails(media.tmdbId).checkHasSeasons(seasons)
+        }
+        return seasons
+    }
 
     /** The part of a submit that does not depend on where the body came from: post, read the outcome off the status code, attach the fresh status. */
     private suspend fun submitAndRespond(
@@ -286,9 +305,30 @@ class SeerrRequestService(
         }.distinctUntilChanged()
             .map { ObserveStatusResponse.newBuilder().setStatus(it).build() }
 
+    /**
+     * The server answers 401 when this user may not delete the request. Seerr and Jellyseerr refuse a request that is
+     * not theirs or is no longer pending; Overseerr refuses only one that is both. That is not the session, which the interceptor confirms against `auth/me` (#997). The request is read
+     * only then, to tell the contract's two answers apart: FAILED_PRECONDITION for a request past pending, and
+     * PERMISSION_DENIED for one that is pending and someone else's.
+     */
     override suspend fun cancelRequest(request: CancelRequestRequest): CancelRequestResponse =
         gated("cancel_request", Capability.CAPABILITY_CANCEL) {
-            connection.api().deleteRequest(request.requestId)
+            val api = connection.api()
+            try {
+                api.deleteRequest(request.requestId)
+            } catch (e: HttpException) {
+                if (!e.refusedWithLiveSession()) throw e
+                // A request with no status is pending, as everywhere else; one that will not read is taken as pending too.
+                val status = attempt { api.request(request.requestId).status }.getOrNull()
+                val pending = status == null || status == SeerrRequestStatusCode.Pending
+                throw StatusException(
+                    if (pending) {
+                        Status.PERMISSION_DENIED.withDescription("This user may not cancel that request")
+                    } else {
+                        Status.FAILED_PRECONDITION.withDescription("Only a pending request can be cancelled")
+                    },
+                )
+            }
             requestCache.delete(request.requestId)
             CancelRequestResponse.getDefaultInstance()
         }
@@ -323,20 +363,23 @@ class SeerrRequestService(
     override suspend fun editRequest(request: EditRequestRequest): EditRequestResponse =
         gated("edit_request", Capability.CAPABILITY_EDIT_SEASONS) {
             if (request.seasonNumbersList.isEmpty()) throw invalidArgument("a request covers at least one season")
+            val seasons = request.seasonNumbersList.checkedSeasonNumbers()
             val api = connection.api()
             val current = api.request(request.requestId)
             if (!current.media.mediaType.isSeerrTv()) throw invalidArgument("only a TV request has seasons to edit")
+            // The contract's INVALID_ARGUMENT for "a season the show does not have", which Seerr itself never checks.
+            api.tvDetails(current.media.tmdbId).checkHasSeasons(seasons)
             val body =
                 SeerrEditRequestBody(
                     mediaType = current.media.mediaType,
-                    seasons = request.seasonNumbersList,
+                    seasons = seasons,
                     is4k = current.is4k,
                     serverId = current.serverId,
                     profileId = current.profileId,
                     rootFolder = current.rootFolder,
                     tags = current.tags,
                 )
-            api.editRequest(request.requestId, body)
+            api.updateRequest(request.requestId, body)
             EditRequestResponse.getDefaultInstance()
         }
 
@@ -391,6 +434,11 @@ class SeerrRequestService(
         }
     }
 
+    /**
+     * A title already on the blocklist is OK and changes nothing, as the contract says (#1000). Seerr refuses the
+     * second add instead, and [addToBlocklistOnce] reads that refusal as done. A cached status could not decide this
+     * up front: a cold cache knows nothing, and the console may have blocked the title a moment ago.
+     */
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated("block_title", Capability.CAPABILITY_BLOCK) {
             val body =
@@ -400,18 +448,26 @@ class SeerrRequestService(
                     title = request.title,
                     user = connection.authenticatedUser().id,
                 )
-            connection.api().addToBlocklist(connection.profile().blocklistPath, body)
+            connection.api().addToBlocklistOnce(connection.profile().blocklistPath, body)
             BlockTitleResponse.getDefaultInstance()
         }
 
-    /** Keyed by TMDB id and media type, as the block was; a title the server has no entry for is its 404, NOT_FOUND. */
+    /**
+     * Keyed by TMDB id and media type, as the block was. A title the server has no entry for is NOT_FOUND: Seerr 3
+     * answers 404, and Jellyseerr 2.x's `blacklist` answers 401 with the session still alive (#998).
+     */
     override suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse =
         gated("unblock_title", Capability.CAPABILITY_BLOCK) {
-            connection.api().removeFromBlocklist(
-                connection.profile().blocklistPath,
-                request.media.tmdbId,
-                connection.profile().unblockMediaType(request.media.seerrMediaType()),
-            )
+            try {
+                connection.api().removeFromBlocklist(
+                    connection.profile().blocklistPath,
+                    request.media.tmdbId,
+                    connection.profile().unblockMediaType(request.media.seerrMediaType()),
+                )
+            } catch (e: HttpException) {
+                if (!e.refusedWithLiveSession()) throw e
+                throw StatusException(Status.NOT_FOUND.withDescription("The title is not on the blocklist"))
+            }
             UnblockTitleResponse.getDefaultInstance()
         }
 

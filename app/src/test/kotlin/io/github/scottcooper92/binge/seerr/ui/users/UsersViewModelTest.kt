@@ -4,16 +4,18 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import androidx.paging.testing.asSnapshot
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeUserStore
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
+import io.github.scottcooper92.binge.seerr.seerr.PERMISSION_MANAGE_USERS
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -34,6 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 private const val ADMIN = 2
+private const val HTTP_OK = 200
+private const val HTTP_SERVER_ERROR = 500
 
 /** A real bit the editor does not manage (`VOTE`, which no editor offers), to prove a save preserves it. */
 private const val UNMANAGED_VOTE_BIT = 1 shl 6
@@ -58,12 +62,20 @@ class UsersViewModelTest {
     /** The viewer's permissions as the server currently has them; a test can change them mid-run. */
     private val viewerPermissions = AtomicInteger(ADMIN)
 
+    /** What `auth/me` answers once connected; anything but 200 fails the ViewModel's own read. */
+    private val authStatus = AtomicInteger(HTTP_OK)
+
     @Before
     fun setUp() {
         seerr.dispatcher = { request ->
             received += request
             when (request.method + " " + request.url.encodedPath) {
-                "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                "GET /api/v1/auth/me" ->
+                    if (authStatus.get() == HTTP_OK) {
+                        json("""{"id":7,"displayName":"Scott","permissions":${viewerPermissions.get()}}""")
+                    } else {
+                        FakeResponse(code = authStatus.get())
+                    }
                 "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
                 "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
                 "GET /api/v1/user" ->
@@ -84,7 +96,8 @@ class UsersViewModelTest {
         seerr.awaitIdle()
     }
 
-    private suspend fun TestScope.viewModel(): UsersViewModel {
+    /** [authAfterConnect] is what `auth/me` answers once the `connect()` probe has passed. */
+    private suspend fun TestScope.viewModel(authAfterConnect: Int = HTTP_OK): UsersViewModel {
         val connection =
             SeerrConnection(
                 store =
@@ -95,6 +108,7 @@ class UsersViewModelTest {
                 apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
             )
         connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        authStatus.set(authAfterConnect)
         val vm = UsersViewModel(connection, cache, mainDispatcherRule.dispatcher)
         viewModels.put("users", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -103,6 +117,37 @@ class UsersViewModelTest {
 
     private suspend fun UsersViewModel.awaitReady(match: (UsersUiState.Ready) -> Boolean = { true }): UsersUiState.Ready =
         uiState.first { it is UsersUiState.Ready && match(it) } as UsersUiState.Ready
+
+    /** The import lists live under `/settings`, which needs ADMIN; a manager may still add an account (#1009). */
+    @Test
+    fun `importing is offered to an admin only, and adding to any manager`() =
+        runTest {
+            viewerPermissions.set(PERMISSION_MANAGE_USERS)
+            val vm = viewModel()
+            val manager = vm.awaitReady { it.canAdmit }
+            assertNull(manager.importSource)
+
+            viewerPermissions.set(ADMIN)
+            vm.setScreenVisible(true)
+            assertEquals(UserOrigin.Jellyfin, vm.awaitReady { it.importSource != null }.importSource)
+        }
+
+    /** Not a list whose viewer may add no one, which hides the add action without a word (#1073). */
+    @Test
+    fun `a failed auth me is an error the screen can show, and retry recovers from it`() =
+        runTest {
+            val seen = CopyOnWriteArrayList<UsersUiState>()
+            val vm = viewModel(authAfterConnect = HTTP_SERVER_ERROR)
+            backgroundScope.launch { vm.uiState.collect { seen += it } }
+
+            assertEquals(UsersUiState.Error(SeerrError.Server), vm.uiState.first { it is UsersUiState.Error })
+            assertTrue(seen.none { it is UsersUiState.Ready })
+
+            authStatus.set(HTTP_OK)
+            vm.retry()
+
+            assertTrue(vm.awaitReady().canAdmit)
+        }
 
     @Test
     fun `becoming visible re-reads the scope, so a permission revoked on the server lands`() =
@@ -444,11 +489,86 @@ class UsersViewModelTest {
             assertTrue(ManageablePermission.ManageIssues in jo)
         }
 
-    private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
+    /**
+     * The viewer is Scott (7), an admin who is not the owner. The list holds the owner (1), another admin (12) and Bo (13),
+     * who holds Request alone (#1008).
+     */
+    private fun serveOwnerAdminAndBo() {
+        val request = ManageablePermission.Request.bit
+        seerr.dispatcher = { req ->
+            received += req
+            when (req.method + " " + req.url.encodedPath) {
+                "GET /api/v1/auth/me" -> json("""{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
+                "GET /api/v1/status" -> json("""{"version":"3.1.0"}""")
+                "GET /api/v1/settings/public" -> json("""{"mediaServerType":2}""")
+                "GET /api/v1/user" ->
+                    json(
+                        """{"pageInfo":{"pages":1,"results":3},"results":[
+                           {"id":1,"displayName":"Owner","permissions":$ADMIN,"userType":3,"requestCount":0},
+                           {"id":12,"displayName":"Ada","permissions":${ADMIN or request},"userType":3,"requestCount":0},
+                           {"id":13,"displayName":"Bo","permissions":$request,"userType":3,"requestCount":0}]}""",
+                    )
+                "PUT /api/v1/user" -> json("[]")
+                else -> FakeResponse(code = 404)
+            }
+        }
     }
+
+    @Test
+    fun `a viewer who is not the owner sees Admin locked in the bulk editor, and cannot tick it`() =
+        runTest {
+            serveOwnerAdminAndBo()
+            val vm = viewModel()
+            vm.users.asSnapshot()
+            assertTrue(ManageablePermission.Admin in vm.awaitReady { it.canAdmit }.locked)
+            vm.toggleSelected(13)
+            vm.awaitReady { it.selection == setOf(13) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+
+            vm.togglePermission(ManageablePermission.Admin)
+
+            val edit = vm.awaitReady().edit
+            assertFalse(ManageablePermission.Admin in edit?.selected.orEmpty())
+            assertTrue(edit?.touched.orEmpty().isEmpty())
+        }
+
+    @Test
+    fun `a bulk save by a viewer who is not the owner leaves the owner and admins alone, and saves the rest`() =
+        runTest {
+            serveOwnerAdminAndBo()
+            val vm = viewModel()
+            vm.users.asSnapshot()
+            vm.awaitReady { it.canAdmit }
+            listOf(1, 12, 13).forEach(vm::toggleSelected)
+            vm.awaitReady { it.selection == setOf(1, 12, 13) }
+            vm.startBulkEdit()
+            vm.awaitReady { it.edit?.saving == false }
+
+            vm.togglePermission(ManageablePermission.CreateIssues)
+            vm.awaitReady { it.edit?.touched?.isNotEmpty() == true }
+            val permissionsSaved = awaitEvent(vm.events)
+            vm.applyBulkEdit()
+
+            // The server would refuse a mask carrying Admin from anyone but the owner, and drop user 1 without a word.
+            assertEquals(UsersEvent.PermissionsSaved(1), permissionsSaved.await())
+            val put = received.single { it.method == "PUT" }.body
+            val expected = ManageablePermission.Request.bit or ManageablePermission.CreateIssues.bit
+            assertTrue(put, put.contains("\"ids\":[13]"))
+            assertTrue(put, put.contains("\"permissions\":$expected"))
+            assertEquals(ADMIN, cache.rows.first { it.id == 1 }.permissions)
+            assertEquals(ADMIN or ManageablePermission.Request.bit, cache.rows.first { it.id == 12 }.permissions)
+        }
+
+    @Test
+    fun `the owner may tick Admin in the bulk editor`() =
+        runTest {
+            serveIdaAndJoWhoDiffer()
+            val vm = viewModel()
+            vm.users.asSnapshot()
+
+            assertFalse(ManageablePermission.Admin in vm.awaitReady { it.canAdmit }.locked)
+        }
+
+    private fun json(body: String) = FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
 }

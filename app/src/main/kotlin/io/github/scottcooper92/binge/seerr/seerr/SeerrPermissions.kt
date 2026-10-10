@@ -30,6 +30,9 @@ internal const val PERMISSION_WATCHLIST_VIEW = 1 shl 27
 internal const val PERMISSION_MANAGE_BLOCKLIST = 1 shl 28
 internal const val PERMISSION_VIEW_BLOCKLIST = 1 shl 30
 
+/** Whether [bitmask] carries `ADMIN`, which the server reads as every other permission: the one test for it. */
+internal fun isAdminBitmask(bitmask: Int): Boolean = bitmask and PERMISSION_ADMIN != 0
+
 /**
  * What the connected user may do, decoded from their permission bitmask. This is what the
  * handshake's capability set is derived from, so a restricted user is offered only what the server
@@ -53,10 +56,11 @@ data class SeerrPermissions(
     val canViewIssues: Boolean = false,
     val canManageUsers: Boolean = false,
     /**
-     * Jellyseerr's own bits; Overseerr's current code never sets them, so there they read as false unless the user
-     * is an admin. Overseerr up to 1.29 defined `MANAGE_SETTINGS`, so an old grant of that one can exist.
+     * Jellyseerr's own bit; Overseerr's current code never sets it, so there it reads as false unless the user is an
+     * admin. There is no flag for `MANAGE_SETTINGS`: the bit exists on the Jellyseerr lineage, and Overseerr up to 1.29
+     * defined it too, but no route honours it. The admin settings router needs `ADMIN`, so that is the settings gate (#1004).
+     * Only `/settings/public`, `GET /settings/discover` and the Pushover sounds lookup sit outside that router.
      */
-    val canManageSettings: Boolean = false,
     val canViewBlocklist: Boolean = false,
 ) {
     /** Whether the user may request something; the server checks the media type it is asked for. */
@@ -71,6 +75,12 @@ data class SeerrPermissions(
     /** The server's issue list admits any of the three; `CREATE_ISSUES` alone sees only the user's own. */
     val canSeeIssues: Boolean get() = canManageIssues || canViewIssues || canCreateIssues
 
+    /**
+     * Whether the user may report an issue. `POST /issue` takes `MANAGE_ISSUES` or `CREATE_ISSUES` on both lineages
+     * (`server/routes/issue.ts`), so an issue manager without the create bit may report too (#1018).
+     */
+    val canReportIssues: Boolean get() = canCreateIssues || canManageIssues
+
     companion object {
         /**
          * `ADMIN` short-circuits every flag, the `REQUEST_4K` umbrella grants both 4K media types,
@@ -78,7 +88,7 @@ data class SeerrPermissions(
          */
         fun fromBits(permissions: Int?): SeerrPermissions {
             val bits = permissions ?: 0
-            val isAdmin = bits and PERMISSION_ADMIN != 0
+            val isAdmin = isAdminBitmask(bits)
 
             fun granted(bit: Int) = isAdmin || bits and bit != 0
             val request4k = granted(PERMISSION_REQUEST_4K)
@@ -96,7 +106,6 @@ data class SeerrPermissions(
                 canManageIssues = granted(PERMISSION_MANAGE_ISSUES),
                 canViewIssues = granted(PERMISSION_VIEW_ISSUES),
                 canManageUsers = granted(PERMISSION_MANAGE_USERS),
-                canManageSettings = granted(PERMISSION_MANAGE_SETTINGS),
                 canViewBlocklist = granted(PERMISSION_VIEW_BLOCKLIST) || granted(PERMISSION_MANAGE_BLOCKLIST),
             )
         }
@@ -142,7 +151,7 @@ enum class SeerrDefaultAccess {
     companion object {
         fun fromBits(bits: Int?): SeerrDefaultAccess {
             val value = bits ?: 0
-            val isAdmin = value and PERMISSION_ADMIN != 0
+            val isAdmin = isAdminBitmask(value)
 
             fun granted(bit: Int) = isAdmin || value and bit != 0
             return when {

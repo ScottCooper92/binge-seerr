@@ -19,6 +19,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
@@ -106,9 +107,6 @@ private fun SetupActions.withStartHandOff(start: () -> Unit) =
         onOfferSignInCode = onOfferSignInCode,
         onLocalNetworkChanged = onLocalNetworkChanged,
     )
-
-/** How far a disabled commit fades: far enough that it reads as unavailable, not as a second outlined button. */
-private const val DISABLED_BUTTON_ALPHA = 0.38f
 
 /**
  * The sign-ins a remote can finish — which, now, is all of them. A key or an account typed on
@@ -201,7 +199,7 @@ private fun TvSignInButtons(
                 Modifier
                     .focusRequester(commit)
                     .widthIn(min = dimensionResource(R.dimen.tv_form_commit_min_width))
-                    .alpha(if (canSignIn) 1f else DISABLED_BUTTON_ALPHA),
+                    .alpha(if (canSignIn) 1f else DISABLED_ALPHA),
         )
     }
     TvButton(

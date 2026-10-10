@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -68,7 +69,7 @@ class AboutViewModel
         fun reload() {
             state.value = AboutUiState.Loading
             viewModelScope.launch(dispatcher) {
-                runCatching { load() }
+                attempt { load() }
                     .onSuccess { state.value = AboutUiState.Ready(it) }
                     .onFailure { state.value = AboutUiState.Error(it.toSeerrError()) }
             }
@@ -77,8 +78,8 @@ class AboutViewModel
         private suspend fun load(): AboutInfo =
             coroutineScope {
                 val api = connection.api()
-                val about = async { runCatching { api.about() }.getOrNull() }
-                val appData = async { runCatching { api.appData() }.getOrNull() }
+                val about = async { attempt { api.about() }.getOrNull() }
+                val appData = async { attempt { api.appData() }.getOrNull() }
                 val profile = connection.profile()
                 val aboutDto = about.await()
                 val appDataDto = appData.await()

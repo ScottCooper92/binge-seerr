@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobScheduleBody
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.CoroutineDispatcher
@@ -106,7 +107,7 @@ class JobsViewModel
         fun reload() {
             state.value = JobsUiState.Loading
             viewModelScope.launch(dispatcher) {
-                runCatching { connection.api().jobs().map { it.toServerJob() } }
+                attempt { connection.api().jobs().map { it.toServerJob() } }
                     .onSuccess { jobs -> setJobs(jobs) }
                     .onFailure { state.value = JobsUiState.Error(it.toSeerrError()) }
             }
@@ -175,7 +176,7 @@ class JobsViewModel
             }
             if (!claimed) return
             viewModelScope.launch(dispatcher) {
-                val outcome = runCatching { call(connection.api()).toServerJob() }
+                val outcome = attempt { call(connection.api()).toServerJob() }
                 outcome.onSuccess { updated ->
                     setJobs(jobs().map { if (it.id == updated.id) updated else it })
                     if (trackRun) {
@@ -243,7 +244,7 @@ class JobsViewModel
         }
 
         private suspend fun readDue() {
-            runCatching { connection.api().jobs().map { it.toServerJob() } }.onSuccess { setJobs(it) }
+            attempt { connection.api().jobs().map { it.toServerJob() } }.onSuccess { setJobs(it) }
         }
 
         /**
@@ -291,7 +292,7 @@ class JobsViewModel
                     while (jobs().any { it.running }) {
                         if (wait) delay(runningRefreshMillis)
                         wait = true
-                        runCatching { connection.api().jobs().map { it.toServerJob() } }.onSuccess { jobs ->
+                        attempt { connection.api().jobs().map { it.toServerJob() } }.onSuccess { jobs ->
                             state.update { current -> (current as? JobsUiState.Ready)?.copy(jobs = jobs) ?: current }
                             jobs.filter { job -> !job.running && job.id in awaiting }.forEach { showOutcome(it.id, JobOutcome.Succeeded) }
                         }

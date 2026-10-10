@@ -16,6 +16,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.hasExplicitPort
+import io.github.scottcooper92.binge.seerr.seerr.insecurePublicHostOrNull
 import io.github.scottcooper92.binge.seerr.seerr.inspectProfile
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import io.github.scottcooper92.binge.seerr.seerr.normaliseBaseUrl
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import retrofit2.HttpException
 import java.io.IOException
 import kotlin.time.Duration
@@ -137,7 +137,7 @@ class SeerrConnection(
             .map { it == SeerrConnectionHealth.Unauthorized }
             .distinctUntilChanged()
             .mapLatest { flagged ->
-                flagged && runCatching { refreshAuthenticatedUser() }.exceptionOrNull()?.toSeerrError()?.rejectsSession == true
+                flagged && attempt { refreshAuthenticatedUser() }.exceptionOrNull()?.toSeerrError()?.rejectsSession == true
             }.distinctUntilChanged()
 
     private val userLock = Mutex()
@@ -238,13 +238,13 @@ class SeerrConnection(
      * [withPortFallback]'s retry carries forward whichever address actually worked.
      */
     private suspend fun inspectCandidate(baseUrl: String): Result<SeerrServerPreview> =
-        runCatching {
+        attempt {
             apis.anonymous(baseUrl) { api ->
                 val profile =
                     api.inspectProfile(SeerrVariant.Unknown).getOrElse { failure ->
                         throw if (failure is IOException) failure else NotSeerrServerException(failure)
                     }
-                val backdrops = runCatching { api.backdrops() }.getOrDefault(emptyList())
+                val backdrops = attempt { api.backdrops() }.getOrDefault(emptyList())
                 SeerrServerPreview(baseUrl, profile, backdrops.map { it.toTmdbBackdropUrl() })
             }
         }
@@ -260,7 +260,7 @@ class SeerrConnection(
     ): Result<SeerrCredentials> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return runCatching { apis.probe(baseUrl, auth) { it.authenticatedUser() } }
+        return attempt { apis.probe(baseUrl, auth) { it.authenticatedUser() } }
             .mapCatching { persist(baseUrl, auth) }
     }
 
@@ -293,7 +293,7 @@ class SeerrConnection(
     ): Result<SeerrCredentials> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return runCatching {
+        return attempt {
             val user = apis.probe(baseUrl, SeerrAuth.Session(cookie = cookie, userId = 0)) { it.authenticatedUser() }
             persist(baseUrl, SeerrAuth.Session(cookie = cookie, userId = user.id, shared = true))
         }
@@ -316,7 +316,7 @@ class SeerrConnection(
     suspend fun startQuickConnect(rawBaseUrl: String): Result<SeerrQuickConnect> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return runCatching { apis.anonymous(baseUrl) { api -> api.initiateQuickConnect() } }
+        return attempt { apis.anonymous(baseUrl) { api -> api.initiateQuickConnect() } }
             .map { SeerrQuickConnect(code = it.code, secret = it.secret) }
     }
 
@@ -369,7 +369,7 @@ class SeerrConnection(
     ): Result<Unit> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return runCatching { apis.anonymous(baseUrl) { api -> api.requestPasswordReset(SeerrPasswordResetBody(email)) } }
+        return attempt { apis.anonymous(baseUrl) { api -> api.requestPasswordReset(SeerrPasswordResetBody(email)) } }
     }
 
     /**
@@ -380,7 +380,7 @@ class SeerrConnection(
     suspend fun disconnect() {
         val saved = store.credentials.first()
         val auth = saved?.auth
-        if (auth is SeerrAuth.Session && !auth.shared) runCatching { apis.cached(saved.baseUrl, auth).logOut() }
+        if (auth is SeerrAuth.Session && !auth.shared) attempt { apis.cached(saved.baseUrl, auth).logOut() }
         userLock.withLock {
             cachedUser = null
             cachedProfile = null
@@ -407,7 +407,7 @@ class SeerrConnection(
     ): Result<SeerrCredentials> {
         if (!rawBaseUrl.isValidBaseUrl()) return Result.failure(InvalidServerUrlException())
         val baseUrl = rawBaseUrl.normaliseBaseUrl()
-        return runCatching {
+        return attempt {
             val result = apis.login(baseUrl, block)
             val cookie = result.sessionCookie ?: throw NoSessionCookieException()
             persist(baseUrl, SeerrAuth.Session(cookie = cookie, userId = result.value.id))
@@ -427,7 +427,9 @@ class SeerrConnection(
         val profile = apis.probe(baseUrl, auth) { it.readProfile(SeerrVariant.Unknown) }
         val credentials = SeerrCredentials(baseUrl, auth, profile.variant)
         if (!store.save(credentials)) throw CredentialsSaveException()
-        cleartext.retainOnly(baseUrl.toHttpUrlOrNull()?.host)
+        // Consent is for plain HTTP to this server, so it survives only when the saved address is itself plain HTTP to a
+        // public host. Moving the same host to https drops it, and a redirect back down to http is refused (#1034).
+        cleartext.retainOnly(baseUrl.insecurePublicHostOrNull())
         // A public plain-HTTP server is only reachable with the opt-in, so a new device needs it too.
         carrier.put(cleartext.carriedFor(credentials))
         userLock.withLock {

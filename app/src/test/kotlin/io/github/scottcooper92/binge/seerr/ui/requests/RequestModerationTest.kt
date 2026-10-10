@@ -2,13 +2,13 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeRequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.RecordingCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -191,6 +191,29 @@ class RequestModerationTest {
             assertEquals(ModerationEvent.BlockFailed, failed.await())
         }
 
+    /**
+     * Seerr refuses a second add: 412 on SQLite, 409 on Postgres. The title is blocked either way, so the console says
+     * so, as the exported Service does (#1139, #1000).
+     */
+    @Test
+    fun `blocking a title already on the blocklist is a block, on either database`() =
+        runTest {
+            val sut = moderation()
+
+            for (code in listOf(412, 409)) {
+                codes["/api/v1/blacklist"] = code
+                val blocked = awaitEvent(sut.events)
+                sut.blockTitle(item)
+                assertEquals(ModerationEvent.Blocked, blocked.await())
+            }
+            assertEquals(2, moderated)
+
+            codes["/api/v1/blacklist"] = 412
+            val declinedAndBlocked = awaitEvent(sut.events)
+            sut.decline(item, blockTitle = true)
+            assertEquals(ModerationEvent.DeclinedAndBlocked, declinedAndBlocked.await())
+        }
+
     @Test
     fun `a block that fails after the removal landed is its own outcome, and a rejected action carries its error`() =
         runTest {
@@ -203,7 +226,9 @@ class RequestModerationTest {
             assertEquals("DELETE", received.first { it.url.encodedPath == "/api/v1/request/11" }.method)
             assertEquals(1, moderated)
 
+            // An expired sign-in: auth/me refuses the interceptor's probe too, so the 401 is the session (#997).
             codes["/api/v1/request/12/approve"] = 401
+            codes["/api/v1/auth/me"] = 401
             val failed = awaitEvent(sut.events)
             sut.approve(12)
             assertEquals(ModerationEvent.Failed(SeerrError.Unauthorized), failed.await())
@@ -224,10 +249,4 @@ class RequestModerationTest {
                 analytics.events,
             )
         }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

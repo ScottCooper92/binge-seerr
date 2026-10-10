@@ -1,6 +1,7 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
+import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
@@ -9,10 +10,13 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -25,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.Locale
 
 private const val RADARR =
     """[{"id":1,"name":"Movies","hostname":"radarr.local","port":7878,"apiKey":"r-key","activeProfileId":4,"activeDirectory":"/movies"},
@@ -37,6 +42,16 @@ private const val RULES =
 private const val TEST_RESULT =
     """{"profiles":[{"id":4,"name":"HD-1080p"},{"id":6,"name":"Ultra-HD"}],"rootFolders":[{"id":1,"path":"/movies"},{"id":2,"path":"/movies-4k"}],
         "tags":[{"id":1,"label":"binge"},{"id":2,"label":"kids"}]}"""
+
+/** A Sonarr instance, and its choices, which differ from every Radarr one's (#1021). */
+private const val SONARR =
+    """[{"id":7,"name":"Shows","hostname":"sonarr.local","port":8989,"apiKey":"s-key","activeProfileId":9,"activeDirectory":"/tv"}]"""
+
+private const val SONARR_TEST_RESULT =
+    """{"profiles":[{"id":9,"name":"Any"}],"rootFolders":[{"id":5,"path":"/tv"}],"tags":[]}"""
+
+/** Long enough for a second pick to land while the first instance's test is still out. */
+private const val SLOW_TEST_MILLIS = 400L
 
 private const val USERS = """{"results":[{"id":3,"displayName":"Ann"},{"id":5,"username":"bob"}]}"""
 
@@ -69,7 +84,10 @@ class OverrideRuleViewModelTest {
     }
 
     private suspend fun TestScope.viewModel(id: Int?): OverrideRuleViewModel {
-        val vm = OverrideRuleViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, id, analytics)
+        val vm =
+            seerr.connection(this).let { connection ->
+                OverrideRuleViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, id, analytics)
+            }
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -120,6 +138,89 @@ class OverrideRuleViewModelTest {
             val extras = vm.awaitReady { it.extras.users.isNotEmpty() }.extras
             assertEquals(listOf("ann", "5"), extras.users.map { it.label })
         }
+
+    @Test
+    fun `an instance's kind decides which genres are read, named in the device's language`() =
+        runTest {
+            seerr.serve("GET /api/v1/genres/movie", """[{"id":28,"name":"Action"},{"id":12,"name":"Adventure"}]""")
+            seerr.serve("GET /api/v1/genres/tv", """[{"id":10759,"name":"Action & Adventure"}]""")
+            seerr.serve(
+                "GET /api/v1/settings/sonarr",
+                """[{"id":7,"name":"Shows","hostname":"sonarr.local","port":8989,"apiKey":"s-key"}]""",
+            )
+
+            val vm = viewModel(id = 11)
+            val movie = vm.awaitReady { it.extras.genres is GenreChoices.Ready }.extras.genres as GenreChoices.Ready
+            assertEquals(listOf("Action", "Adventure"), movie.genres.map { it.label })
+            assertEquals(
+                Locale.getDefault().toLanguageTag(),
+                seerr.received
+                    .first { it.url.encodedPath == "/api/v1/genres/movie" }
+                    .url
+                    .queryParameter("language"),
+            )
+
+            vm.selectInstance(
+                vm
+                    .awaitReady()
+                    .extras.instances
+                    .first { it.type == ServiceType.Sonarr },
+            )
+            val tv = vm.awaitReady { (it.extras.genres as? GenreChoices.Ready)?.genres?.size == 1 }.extras.genres as GenreChoices.Ready
+            assertEquals("Action & Adventure", tv.genres.single().label)
+        }
+
+    @Test
+    fun `a server that cannot send the genres leaves the condition typed`() =
+        runTest {
+            seerr.serve("GET /api/v1/genres/movie", "{}", code = 500)
+
+            val vm = viewModel(id = 11)
+
+            assertEquals(GenreChoices.Failed, vm.awaitReady { it.extras.genres != GenreChoices.Loading }.extras.genres)
+            assertEquals("28,12", vm.awaitReady().draft.genres)
+        }
+
+    @Test
+    fun `genres, languages and keywords are picked into the draft as the rule keeps them`() =
+        runTest {
+            seerr.serve("GET /api/v1/keyword/9951", """{"id":9951,"name":"kaiju"}""")
+            val vm = viewModel(id = 11)
+            vm.awaitReady()
+
+            vm.toggleGenre(16)
+            vm.toggleGenre(28)
+            assertEquals("12,16", vm.awaitReady().draft.genres)
+
+            vm.selectLanguages("ja|es")
+            assertEquals("ja, es", vm.awaitReady().draft.languages)
+
+            vm.toggleKeyword(9951)
+            // The page names what it shows, as its row does through keywordSettingItem.
+            vm.loadKeywordNames(
+                vm
+                    .awaitReady()
+                    .draft.keywords
+                    .tagIds(),
+            )
+            val ready =
+                vm.awaitReady {
+                    it.extras.keywords.names
+                        .isNotEmpty()
+                }
+            assertEquals("9951", ready.draft.keywords)
+            assertEquals("kaiju", ready.extras.keywords.names[9951])
+
+            assertEquals("ja|es", ready.draft.toDto().language)
+        }
+
+    @Test
+    fun `a saved genre the list lacks is still offered, so Done keeps it`() {
+        val listed = listOf(Choice(28, "Action"), Choice(12, "Adventure"))
+
+        assertEquals(listOf("99", "Action", "Adventure"), genreChecklist(listed, setOf(28, 99)).map { it.label })
+        assertEquals(listOf("Action", "Adventure"), genreChecklist(listed, emptySet()).map { it.label })
+    }
 
     @Test
     fun `a new rule cannot be saved without an instance, and picking one clears the overrides`() =
@@ -185,6 +286,28 @@ class OverrideRuleViewModelTest {
             assertNull(sent["keywords"])
             assertEquals(12, vm.awaitReady().saved.id)
             assertEquals(listOf("override_rule_changed" to mapOf("action" to "created")), analytics.events)
+        }
+
+    /** A slow answer for the instance picked first must not land under the one picked after it (#1021). */
+    @Test
+    fun `picking a second instance while the first one's choices load keeps the second one's choices`() =
+        runTest {
+            seerr.serve("GET /api/v1/settings/sonarr", SONARR)
+            seerr.serve("POST /api/v1/settings/sonarr/test", SONARR_TEST_RESULT)
+            seerr.serveFrom("POST /api/v1/settings/radarr/test", delayMillis = SLOW_TEST_MILLIS) { TEST_RESULT }
+            val vm = viewModel(null)
+            val instances = vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances
+
+            vm.selectInstance(instances.first { it.type == ServiceType.Radarr })
+            seerr.awaitCount("POST", "/api/v1/settings/radarr/test", moreThan = 0)
+            vm.selectInstance(instances.first { it.type == ServiceType.Sonarr })
+            vm.awaitReady { it.extras.choices != null }
+            // Real time, since the slow answer comes back on OkHttp's own threads.
+            withContext(Dispatchers.IO) { delay(SLOW_TEST_MILLIS * 2) }
+
+            val ready = vm.awaitReady()
+            assertEquals(7, ready.draft.serviceId)
+            assertEquals(listOf("/tv"), ready.extras.choices?.rootFolders)
         }
 
     @Test

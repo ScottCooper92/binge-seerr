@@ -5,7 +5,6 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import java.io.IOException
 
-private const val HTTP_FORBIDDEN = 403
 private const val HTTP_TOO_MANY_REQUESTS = 429
 private const val HTTP_SERVER_ERROR_MIN = 500
 
@@ -13,9 +12,9 @@ private const val HTTP_SERVER_ERROR_MIN = 500
  * Reports every saved-server call's outcome to the health monitor and returns the response
  * untouched; it never alters or short-circuits a request.
  *
- * The credentials are at fault only when the session is gone: a 401, a 403 that [SeerrSessionInterceptor]
- * marked ([isSessionRejection], the rule [toSeerrError] reads too), or a 403 from `auth/me` itself
- * ([rejectsSession]). Any other 403 is a permission, such as a user without `MANAGE_ISSUES` opening the
+ * The credentials are at fault only when the session is gone: a 401 that `auth/me` agrees with, a 403 that
+ * [SeerrSessionInterceptor] marked ([isSessionRejection], the rule [toSeerrError] reads too), or a 403 from
+ * `auth/me` itself ([rejectsSession]). A 401 that `auth/me` contradicts is a refusal, not the session (#1165). Any other 403 is a permission, such as a user without `MANAGE_ISSUES` opening the
  * issues list. A transport failure, any 5xx or a 429 (up, but rate-limiting us) is transient. Every other
  * answer, a permission 403 and any other 4xx included, means the server reached us and accepted the
  * credentials.

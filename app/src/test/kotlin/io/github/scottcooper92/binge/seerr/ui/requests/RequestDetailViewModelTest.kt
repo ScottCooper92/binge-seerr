@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeRequestStore
 import io.github.scottcooper92.binge.seerr.data.NoRequestStore
@@ -18,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.util.FakeRequest
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
@@ -41,6 +41,7 @@ import java.util.concurrent.CountDownLatch
 private const val ADMIN = 2
 private const val REQUEST = 32
 private const val REQUEST_ADVANCED = 1 shl 13
+private const val MANAGE_ISSUES = 1 shl 20
 
 /** The request page over an in-memory connection into a path-scripted Seerr. */
 class RequestDetailViewModelTest {
@@ -383,6 +384,15 @@ class RequestDetailViewModelTest {
                 }
             val plain = viewModel()
             assertFalse(plain.awaitReady().detail.canReportIssue)
+        }
+
+    /** `POST /issue` takes `MANAGE_ISSUES` as well as `CREATE_ISSUES`, so an issue manager may report (#1018). */
+    @Test
+    fun `an issue manager without the create bit is offered the report`() =
+        runTest {
+            server(MANAGE_ISSUES)
+
+            assertTrue(viewModel().awaitReady().detail.canReportIssue)
         }
 
     @Test
@@ -877,10 +887,4 @@ class RequestDetailViewModelTest {
             val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/processing" }
             assertEquals("""{"is4k":false}""", status.body)
         }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

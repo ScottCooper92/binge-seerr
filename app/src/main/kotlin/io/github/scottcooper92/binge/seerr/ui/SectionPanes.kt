@@ -6,7 +6,9 @@ import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
@@ -57,12 +59,17 @@ internal val DefaultSection: HubSection = HubSection.Requests
  *
  * [backStack] is read for the one case the library can't see: [DefaultSection] opened beside the hub, where
  * popping it would land on its own placeholder and look like Back did nothing (#815).
+ *
+ * With [threePane], a landscape tablet's [ThreePaneStrategy] lays the hub out first, with [defaultSection] in the
+ * second pane while no section is on the stack (#1110).
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun rememberSeerrPaneStrategy(
     directive: PaneScaffoldDirective,
     backStack: List<NavKey>,
+    threePane: Boolean = false,
+    defaultSection: @Composable () -> Unit = {},
 ): SceneStrategy<NavKey> {
     // The design system's gap between the panes in place of Material adaptive's own 24dp (#814), as Binge's is.
     val spaced = directive.copy(horizontalPartitionSpacerSize = dimensionResource(DesR.dimen.pane_spacer))
@@ -71,20 +78,29 @@ internal fun rememberSeerrPaneStrategy(
             backNavigationBehavior = PaneBackNavigationBehavior,
             directive = spaced.copy(defaultPanePreferredWidth = equalPaneWidth(spaced)),
         )
-    return remember(listDetail, backStack) { SeerrPaneStrategy(listDetail, backStack) }
+    val currentDefault by rememberUpdatedState(defaultSection)
+    return remember(listDetail, backStack, threePane) {
+        val first = if (threePane) ThreePaneStrategy { currentDefault() } else null
+        SeerrPaneStrategy(listDetail, backStack, first)
+    }
 }
 
 /**
- * [listDetail]'s scenes, except that one showing the hub beside the default section that was opened on purpose
- * claims no Back. The system takes it and leaves the app, as it does from the placeholder, which looks the same.
- * Every scene is wrapped, so a scene's type never changes with the stack and the panes don't animate as if it had.
+ * [threePane]'s scenes when it has one, else [listDetail]'s, except that one showing the hub beside the default
+ * section that was opened on purpose claims no Back. The system takes it and leaves the app, as it does from the
+ * placeholder, which looks the same. Every scene is wrapped, so a scene's type never changes with the stack and the
+ * panes don't animate as if it had.
  */
 private class SeerrPaneStrategy(
     private val listDetail: SceneStrategy<NavKey>,
     private val backStack: List<NavKey>,
+    private val threePane: SceneStrategy<NavKey>? = null,
 ) : SceneStrategy<NavKey> {
     override fun SceneStrategyScope<NavKey>.calculateScene(entries: List<NavEntry<NavKey>>): Scene<NavKey>? {
-        val scene = with(listDetail) { calculateScene(entries) } ?: return null
+        val scene =
+            threePane?.let { with(it) { calculateScene(entries) } }
+                ?: with(listDetail) { calculateScene(entries) }
+                ?: return null
         // toList(): a NavBackStack is a list by delegation, without a list's equality.
         val defaultBesideHub = scene.entries.size > 1 && backStack.toList() == listOf(HubRoute, DefaultSection.route())
         return SeerrPaneScene(scene, claimsBack = !defaultBesideHub)
@@ -174,21 +190,10 @@ internal fun List<NavKey>.selectedSection(defaultShowing: Boolean): HubSection? 
  * How many entries sit above [HubRoute] on the way to whatever is on screen now: 1 for a screen
  * pushed directly onto the hub, more for one stacked further above that. [HubRoute] not being on the
  * stack at all (a narrow window's own screens, or setup) counts as every entry being "above" it,
- * which is harmless: [paneShowsBack] only reads this once its own `hubBeside` is already true.
+ * which is harmless: the design system's `paneShowsBack` only reads this once its own `hubBeside`
+ * is already true.
  */
 internal fun List<NavKey>.paneDepth(): Int {
     val hubIndex = indexOfLast { it == HubRoute }
     return if (hubIndex == -1) size else size - hubIndex - 1
 }
-
-/**
- * The one back-arrow rule for the detail pane, whatever is filling it: hidden only when the hub is
- * showing beside the pane and this is the only thing stacked above it, because popping there would
- * not return the viewer anywhere they came from — the hub never left the screen. A section beside the
- * hub is always exactly that one entry, so this is the same rule the section screens already applied,
- * expressed once instead of twice.
- */
-internal fun paneShowsBack(
-    hubBeside: Boolean,
-    paneDepth: Int,
-): Boolean = !hubBeside || paneDepth > 1

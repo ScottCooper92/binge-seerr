@@ -32,6 +32,7 @@ class HubUsersStatTest {
                             onReconnect = {},
                             onDisconnect = {},
                             onDismissBingeHint = {},
+                            onRefresh = {},
                         ),
                 )
             }

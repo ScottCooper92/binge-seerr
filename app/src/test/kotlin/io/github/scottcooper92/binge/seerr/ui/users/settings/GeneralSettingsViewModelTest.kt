@@ -11,7 +11,6 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -218,6 +217,15 @@ class GeneralSettingsViewModelTest {
             assertNull(Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject["streamingRegion"])
         }
 
+    /** Jellyseerr split its one region in two at 2.2, not at its first release (#1012). */
+    @Test
+    fun `Jellyseerr before 2_2 has one region too, so the page shows no streaming region`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN, version = "2.1.0")
+
+            assertNull(viewModel().awaitReady().draft.streamingRegion)
+        }
+
     @Test
     fun `a required email cleared is never written`() =
         runTest {
@@ -235,18 +243,20 @@ class GeneralSettingsViewModelTest {
             assertFalse(seerr.awaitCountHoldingTime("POST", "/api/v1/user/8/settings/main", moreThan = 0))
         }
 
+    /** The server keeps an address it has for a blank, so even an account that may go without one cannot clear it (#1020). */
     @Test
-    fun `an email the account may go without is cleared and written`() =
+    fun `a saved email cannot be cleared, even where the account may go without one`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             val vm = viewModel()
             assertFalse(vm.awaitReady().draft.emailRequired)
 
             vm.edit { it.copy(email = "") }
-            awaitWritten(vm)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
 
-            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/user/8/settings/main")).jsonObject
-            // A blank address is sent as no address.
-            assertTrue(sent["email"].let { it == null || it is JsonNull })
+            val draft = vm.awaitReady().draft
+            assertEquals("", draft.email)
+            assertFalse(draft.valid)
+            assertEquals(0, seerr.count("POST", "/api/v1/user/8/settings/main"))
         }
 }

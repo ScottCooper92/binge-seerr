@@ -1,16 +1,16 @@
 package io.github.scottcooper92.binge.seerr.auth
 
+import io.github.scottcooper92.binge.seerr.seerr.HTTP_NOT_FOUND
 import io.github.scottcooper92.binge.seerr.seerr.PlexClientIdentity
 import io.github.scottcooper92.binge.seerr.seerr.PlexPinDto
 import io.github.scottcooper92.binge.seerr.seerr.PlexTvApi
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.plexTvApi
 import kotlinx.coroutines.delay
 import retrofit2.HttpException
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-
-private const val HTTP_NOT_FOUND = 404
 
 /** The user did not approve the PIN before plex.tv expired it. */
 class PlexPinExpiredException : IllegalStateException("The Plex PIN expired before it was approved")
@@ -84,7 +84,7 @@ class PlexPinFlow(
             id = id,
             code = code,
             authUrl = identity.authUrl(code),
-            expiresAt = expiresAt?.let { raw -> runCatching { Instant.parse(raw) }.getOrNull() },
+            expiresAt = expiresAt?.let { raw -> attempt { Instant.parse(raw) }.getOrNull() },
             identity = identity,
         )
 }

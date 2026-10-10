@@ -1,15 +1,21 @@
 package io.github.scottcooper92.binge.seerr.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.preview.SeerrTabletPanesPreview
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 
 /**
  * The phone setup: the two steps' layouts across the device matrix, then each state of them on the
  * phone cell alone. The sign-in step's fields follow the mode, so a frame per mode that draws
  * differently. The link sheet is a modal with no stateless split, so it has no frame.
+ *
+ * The `tabletLand` frames hold the step flow's split on a wide window: heading and commit on one side, the
+ * fields on the other, and neither stretched across the screen (#1104).
  */
 class SetupScreenshotTest {
     @PreviewTest
@@ -170,5 +176,46 @@ class SetupScreenshotTest {
                     server = previewSetupServer(modes = listOf(SeerrSignInMode.QuickConnect, SeerrSignInMode.ApiKey)),
                 ),
             actions = NoSetupActions,
+        )
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun addressTabletLand() = SetupScreen(state = previewAddress(serverUrl = "http://seerr.lan:5055"), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun addressNeedsLocalNetworkTabletLand() =
+        SetupScreen(state = previewAddress(serverUrl = "http://192.168.1.20:5055", needsLocalNetwork = true), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun signInTabletLand() = SetupScreen(state = previewSignIn(), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrTabletPanesPreview
+    @Composable
+    fun signInRejectedTabletLand() =
+        SetupScreen(
+            state =
+                previewSignIn(
+                    form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", password = "hunter2"),
+                    error = SetupError.Rejected,
+                ),
+            actions = NoSetupActions,
+        )
+
+    /** Edit connection keeps its bar above the flow: its title, and Back out of the pane. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun editConnection() =
+        SetupScreen(
+            state = previewSignIn(),
+            actions = NoSetupActions,
+            title = stringResource(R.string.settings_edit_connection),
+            onBack = {},
         )
 }

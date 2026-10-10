@@ -47,7 +47,7 @@ internal class SetupLinks(
      */
     fun pending(): PendingLink? {
         val stored = savedState.get<String>(PENDING_LINK) ?: return null
-        return runCatching { Json.decodeFromString<PendingLink>(stored) }.getOrNull()?.decrypted(cipher)
+        return attempt { Json.decodeFromString<PendingLink>(stored) }.getOrNull()?.decrypted(cipher)
     }
 
     /** [forLink] is the television's flow: a short PIN typed at plex.tv/link rather than opened in a browser. */

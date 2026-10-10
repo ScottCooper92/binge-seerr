@@ -7,6 +7,7 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueListScope
+import io.github.scottcooper92.binge.seerr.ui.issues.canBeDeleted
 import io.github.scottcooper92.binge.seerr.ui.issues.emptyMessageRes
 import io.github.scottcooper92.binge.seerr.ui.issues.labelRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
@@ -71,6 +72,7 @@ internal fun TvIssuesGrid(
     management.actionItem?.let { item ->
         TvIssueActionsSheet(
             item = item,
+            canDelete = management.scope?.let(item::canBeDeleted) == true,
             onResolve = {
                 management.onResolve(item)
                 management.onDismissActions()

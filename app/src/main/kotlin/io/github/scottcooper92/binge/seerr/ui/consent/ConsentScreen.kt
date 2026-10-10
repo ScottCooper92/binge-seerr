@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.centredReadingColumn
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.isLandscape
+import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import com.binge.designsystem.R as DesR
@@ -116,7 +117,7 @@ private fun ConsentLandscape(onChoice: (Boolean) -> Unit) {
 private fun ConsentHeading(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth().padding(top = dimensionResource(DesR.dimen.padding_m))) {
         Text(
-            text = stringResource(R.string.consent_kicker).uppercase(),
+            text = stringResource(R.string.consent_kicker).uppercaseLocalised(),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_sm)),

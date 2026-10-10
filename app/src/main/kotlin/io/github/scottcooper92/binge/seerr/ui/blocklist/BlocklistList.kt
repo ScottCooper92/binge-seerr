@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -15,9 +14,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,11 +43,18 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.toTagType
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
-import io.github.scottcooper92.binge.seerr.ui.state.belowPinnedLine
+import io.github.scottcooper92.binge.seerr.ui.state.PagedPullToRefresh
+import io.github.scottcooper92.binge.seerr.ui.state.PullableMessage
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
 
-/** The rows with the states the pager reports; a filter or search that matches nothing reads differently from an empty list. */
+/**
+ * The rows with the states the pager reports, under a pull that refreshes them; a filter or search that matches
+ * nothing reads differently from an empty list.
+ *
+ * @param pullState a still frame's resting pull; null remembers M3's own. See [PagedPullToRefresh].
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BlocklistBody(
     lazyItems: LazyPagingItems<BlocklistItem>,
@@ -58,36 +65,40 @@ internal fun BlocklistBody(
     onRemove: (BlocklistItem) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
+    pullState: PullToRefreshState? = null,
 ) {
-    // Read straight from a paging source, so there is no network refresh to wait on.
-    when (val phase = lazyItems.rememberPagedPhase(lastRefresh = null)) {
-        is PagedPhase.Rows ->
-            if (phase.refreshing) {
-                // A refresh line is pinned below the top bar and the header; the rows start below it while it shows.
-                Column(modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
-                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                    BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, contentPadding.belowPinnedLine())
+    // Read straight from a paging source, so there is no network refresh to wait on: a pull reads the source again.
+    val phase = lazyItems.rememberPagedPhase(lastRefresh = null)
+    PagedPullToRefresh(
+        phase = phase,
+        loadState = lazyItems.loadState,
+        onRefresh = lazyItems::refresh,
+        contentPadding = contentPadding,
+        modifier = modifier,
+        state = pullState,
+    ) {
+        when (phase) {
+            is PagedPhase.Rows -> BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, contentPadding)
+            PagedPhase.Skeleton ->
+                ListRowSkeletonColumn(
+                    contentPadding = contentPadding.screenListPadding(),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            is PagedPhase.Failed ->
+                PagedRefreshError(
+                    phase.error,
+                    onRetry = lazyItems::retry,
+                    modifier = Modifier.fillMaxSize().padding(contentPadding),
+                )
+            PagedPhase.Empty ->
+                PullableMessage { fill ->
+                    EmptyScreen(
+                        message = stringResource(if (isFiltered) R.string.blocklist_empty_filtered else R.string.blocklist_empty),
+                        modifier = fill.padding(contentPadding),
+                        icon = Icons.Filled.Block,
+                    )
                 }
-            } else {
-                BlocklistList(lazyItems, actingTmdbIds, canManage, onOpen, onRemove, contentPadding)
-            }
-        PagedPhase.Skeleton ->
-            ListRowSkeletonColumn(
-                contentPadding = contentPadding.screenListPadding(),
-                modifier = modifier,
-            )
-        is PagedPhase.Failed ->
-            PagedRefreshError(
-                phase.error,
-                onRetry = lazyItems::retry,
-                modifier = modifier.padding(contentPadding),
-            )
-        PagedPhase.Empty ->
-            EmptyScreen(
-                message = stringResource(if (isFiltered) R.string.blocklist_empty_filtered else R.string.blocklist_empty),
-                modifier = modifier.padding(contentPadding),
-                icon = Icons.Filled.Block,
-            )
+        }
     }
 }
 

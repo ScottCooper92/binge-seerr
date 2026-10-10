@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.di.IoDispatcher
 import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNotificationTypesDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserNotificationSettingsDto
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -63,7 +64,7 @@ class NotificationsViewModel
          */
         private suspend fun pushoverSounds(token: String): List<PushoverSoundChoice> {
             if (!connection.profile().hasPushoverSounds) return emptyList()
-            return runCatching { connection.api().pushoverSounds(token) }
+            return attempt { connection.api().pushoverSounds(token) }
                 .getOrDefault(emptyList())
                 .map { PushoverSoundChoice(name = it.name, description = it.description ?: it.name) }
         }
@@ -126,14 +127,18 @@ internal fun SeerrUserNotificationSettingsDto.toNotificationSettings(isModerator
     )
 }
 
+/**
+ * Every field goes out, a cleared one as `""` as the web client sends it. The server assigns each key from the body, and a
+ * missing one is `undefined`, which its database layer skips on save, so a cleared token would come back (#1020).
+ */
 internal fun NotificationSettings.toDto(): SeerrUserNotificationSettingsDto {
-    fun sent(of: AgentField): String? = field(of).trim().takeIf { it.isNotEmpty() }
+    fun sent(of: AgentField): String = field(of).trim()
     val ids = discordIds.map { it.trim() }.filter { it.isNotEmpty() }
     return SeerrUserNotificationSettingsDto(
         emailEnabled = agent(NotificationAgent.Email).enabled,
         pgpKey = sent(AgentField.PgpKey),
         discordEnabled = agent(NotificationAgent.Discord).enabled,
-        discordId = ids.firstOrNull(),
+        discordId = ids.firstOrNull().orEmpty(),
         discordIds = ids,
         pushbulletAccessToken = sent(AgentField.PushbulletToken),
         pushoverApplicationToken = sent(AgentField.PushoverAppToken),

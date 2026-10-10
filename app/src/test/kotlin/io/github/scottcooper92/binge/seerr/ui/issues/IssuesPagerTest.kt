@@ -35,7 +35,15 @@ class IssuesPagerTest {
                     // Held at Open: the page swiped to is composed but never selected.
                     state = IssuesUiState.Ready(filter = IssueFilter.Open, sort = IssueSort.Added, counts = null, scope = IssueListScope()),
                     issuesFor = ::rowsFor,
-                    actions = IssuesActions(onBack = {}, onFilterChange = { selections += it }, onSortChange = {}, onOpen = {}),
+                    actions =
+                        IssuesActions(
+                            onBack = {},
+                            onFilterChange = { selections += it },
+                            onSortChange = {},
+                            onOpen = {},
+                            onRetryLoad = {},
+                            onRefreshCounts = {},
+                        ),
                 )
             }
         }
@@ -70,7 +78,15 @@ class IssuesPagerTest {
                             scope = IssueListScope(),
                         ),
                     issuesFor = ::rowsFor,
-                    actions = IssuesActions(onBack = {}, onFilterChange = { selections += it }, onSortChange = {}, onOpen = {}),
+                    actions =
+                        IssuesActions(
+                            onBack = {},
+                            onFilterChange = { selections += it },
+                            onSortChange = {},
+                            onOpen = {},
+                            onRetryLoad = {},
+                            onRefreshCounts = {},
+                        ),
                 )
             }
         }

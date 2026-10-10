@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.handoff
 
+import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.isValidBaseUrl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -313,7 +314,7 @@ internal class AddressHandOffListener(
     ): String? =
         key
             ?.open(sealed, HandOffKey.context(token, address))
-            ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
+            ?.let { attempt { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
             ?.takeIf { it.mode == HAND_OFF_SESSION_MODE }
             ?.session
             ?.takeIf { it.isNotEmpty() }
@@ -335,7 +336,7 @@ internal class AddressHandOffListener(
         val credentials =
             fields["sealed"]
                 ?.let { key?.open(it, HandOffKey.context(token, progress.address)) }
-                ?.let { runCatching { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
+                ?.let { attempt { STATUS_JSON.decodeFromString<HandOffCredentials>(it.decodeToString()) }.getOrNull() }
                 ?.takeIf { it.mode in progress.modes || (it.mode == HAND_OFF_SESSION_MODE && it.session.isNotEmpty()) }
                 ?: return HandOffResponse(HttpStatus.BadRequest, REFUSED_JSON, JSON_TYPE, clientCookie = cookie) to null
         // The number the TV will count these as, so the phone knows which attempt a later `failed` is about.

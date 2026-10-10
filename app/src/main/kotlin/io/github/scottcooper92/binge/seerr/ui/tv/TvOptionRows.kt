@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.tv.component.TvSelectedTick
 import com.binge.designsystem.tv.focus.TvArrivalFocus
@@ -44,8 +45,6 @@ import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
 import io.github.scottcooper92.binge.seerr.R
 import com.binge.designsystem.tv.R as TvR
-
-private const val DISABLED_ROW_ALPHA = 0.38f
 
 /**
  * A titled set of mutually exclusive options, stacked so a long root-folder path has the row's width to
@@ -234,7 +233,7 @@ internal fun TvCheckboxRow(
     Row(
         modifier =
             modifier
-                .alpha(if (enabled) 1f else DISABLED_ROW_ALPHA)
+                .alpha(if (enabled) 1f else DISABLED_ALPHA)
                 .height(dimensionResource(R.dimen.tv_form_option_height))
                 .clip(BingeShapes.Pill)
                 .tvFocusFill(isFocused = focused, shape = BingeShapes.Pill)
