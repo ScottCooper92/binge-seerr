@@ -43,6 +43,9 @@ internal data class Fact(
     val label: String,
     val primary: InfoValue,
     val secondary: String? = null,
+    /** A person, drawn with their avatar ([avatarUrl] where the server has a photo) in place of the icon. */
+    val person: Boolean = false,
+    val avatarUrl: String? = null,
 )
 
 internal fun Fact(
@@ -86,6 +89,8 @@ internal fun requestPeopleFacts(
                     onOpenUser,
                 ),
             secondary = formatRelativeOrAbsolute(item.requestedAtMillis),
+            person = true,
+            avatarUrl = item.requestedByAvatarUrl,
         ),
         detail.modifiedBy?.let {
             Fact(
@@ -93,6 +98,8 @@ internal fun requestPeopleFacts(
                 label = stringResource(R.string.request_modified_by),
                 primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
                 secondary = updatedText,
+                person = true,
+                avatarUrl = detail.modifiedByAvatarUrl,
             )
         } ?: updatedText?.let {
             Fact(

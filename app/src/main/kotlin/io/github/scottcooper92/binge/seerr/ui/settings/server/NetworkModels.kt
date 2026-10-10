@@ -5,6 +5,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMetadataTestBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrNetworkSettingsDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrProxySettingsDto
+import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -15,6 +16,7 @@ private const val NO_TTL = -1
  * and the DNS cache, each null where the server did not send it, so the form shows what the
  * server has and sends back no more.
  */
+@Serializable
 data class NetworkForm(
     val csrfProtection: Boolean = false,
     val trustProxy: Boolean = false,
@@ -69,6 +71,7 @@ private const val MILLIS_SCALE = 3
 private val MILLIS_PER_SECOND = BigDecimal(1000)
 
 /** The outbound proxy: reachable only while it has a host and a port in range, with its credentials as a pair, if it is on. */
+@Serializable
 data class ProxyForm(
     val enabled: Boolean = false,
     val host: String = "",
@@ -89,6 +92,7 @@ data class ProxyForm(
 }
 
 /** The DNS cache and the TTL bounds it forces; a blank bound is none. */
+@Serializable
 data class DnsCacheForm(
     val enabled: Boolean = false,
     val minTtl: String = "",

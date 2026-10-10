@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SEERR_MEDIA_TYPE_TV
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApi
 import io.github.scottcooper92.binge.seerr.seerr.SeerrBlocklistEntryDto
 import io.github.scottcooper92.binge.seerr.seerr.displayString
+import io.github.scottcooper92.binge.seerr.seerr.toAvatarUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPage
 import io.github.scottcooper92.binge.seerr.ui.requests.OffsetPagingSource
@@ -73,6 +74,7 @@ internal suspend fun SeerrBlocklistEntryDto.toBlocklistItem(
         posterUrl = details?.posterUrl,
         year = details?.year,
         addedBy = user?.displayString(),
+        addedByAvatarUrl = user?.avatar.toAvatarUrl(),
         addedAtMillis = createdAt?.toEpochMillisOrNull(),
         tags = blocklistedTags.toBlocklistTags(),
     )

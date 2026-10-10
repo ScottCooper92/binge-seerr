@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.seerr.displayString
 import io.github.scottcooper92.binge.seerr.seerr.downloadFraction
 import io.github.scottcooper92.binge.seerr.seerr.etaMinutes
 import io.github.scottcooper92.binge.seerr.seerr.isDownloading
+import io.github.scottcooper92.binge.seerr.seerr.toAvatarUrl
 import io.github.scottcooper92.binge.seerr.seerr.toEpochMillisOrNull
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -97,6 +98,7 @@ suspend fun SeerrRequestDto.toRequestItem(
         year = details?.year,
         requestedBy = requestedBy?.displayString(),
         requestedById = requestedBy?.id,
+        requestedByAvatarUrl = requestedBy?.avatar.toAvatarUrl(),
         requestedAtMillis = createdAt?.toEpochMillisOrNull(),
         status = status,
         mediaStatus = if (is4k) media.status4k else media.status,

@@ -14,10 +14,17 @@ internal fun SeerrRequestUserDto.contractName(): String? =
     }
 
 /**
- * For the app's own screens: email is a last resort, masked to its local part. The host never gets this; it gets
- * [contractName], which has no email fallback at all.
+ * For the app's own screens: email is a last resort, masked to its local part. A `displayName` or `username` that is
+ * the email (Seerr fills `displayName` with it for a user created by email), or holds an `@`, is the email too, and is
+ * masked the same way (#1216). The host never gets this; it gets [contractName], which has no email fallback at all.
  */
 internal fun SeerrRequestUserDto.displayString(): String? = screenName(displayName, username, email)
+
+/**
+ * A picture to load: the server's address for it, where that is a web address. Seerr also sends a path on itself for
+ * an uploaded one, which needs the session to fetch and is left to the initials.
+ */
+internal fun String?.toAvatarUrl(): String? = this?.takeIf { it.startsWith("http") }
 
 /** The same name for a full user record, so a requester and an account are named by one rule (#700). */
 internal fun SeerrUserDto.displayString(): String? = screenName(displayName, username, email)
@@ -27,5 +34,7 @@ private fun screenName(
     username: String?,
     email: String?,
 ): String? =
-    listOfNotNull(displayName, username).firstOrNull { it.isNotBlank() }
-        ?: email?.substringBefore('@')?.takeIf { it.isNotBlank() }
+    listOfNotNull(displayName, username).filter { it.isNotBlank() }.let { names ->
+        names.firstOrNull { '@' !in it && !it.equals(email, ignoreCase = true) }
+            ?: (email ?: names.firstOrNull())?.substringBefore('@')?.takeIf { it.isNotBlank() }
+    }

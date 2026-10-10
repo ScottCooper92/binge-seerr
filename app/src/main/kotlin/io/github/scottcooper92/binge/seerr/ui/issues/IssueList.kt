@@ -194,7 +194,7 @@ private fun IssueRowMeta(
         Spacer(Modifier.height(gap))
         Row(verticalAlignment = Alignment.CenterVertically) {
             item.reportedBy?.let { reporter ->
-                BingeInitialsAvatar(name = reporter)
+                BingeInitialsAvatar(name = reporter, avatarUrl = item.reportedByAvatarUrl)
                 Spacer(Modifier.width(gap))
             }
             Text(

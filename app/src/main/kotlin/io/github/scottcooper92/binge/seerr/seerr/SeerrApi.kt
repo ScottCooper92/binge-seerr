@@ -1169,6 +1169,8 @@ data class SeerrRequestUserDto(
     @SerialName("email") val email: String? = null,
     /** The author's bitmask, present on a comment's user; what an Admin tag on a comment reads. */
     @SerialName("permissions") val permissions: Int? = null,
+    /** The user's picture, as the users list and a user's own page read it; see [toAvatarUrl]. */
+    @SerialName("avatar") val avatar: String? = null,
 )
 
 @Serializable

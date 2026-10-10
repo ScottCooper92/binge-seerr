@@ -45,6 +45,7 @@ class TvAccountBoardFocusTest {
 
     private val opened = mutableListOf<Int>()
     private var openRequestId: Int? by mutableStateOf(null)
+    private var seeAllOpened = 0
 
     @Test
     fun theProfileIsWhereTheRemoteStartsAndDownReachesTheRequests() {
@@ -83,9 +84,32 @@ class TvAccountBoardFocusTest {
         composeTestRule.onNode(hasContentDescription(HEAT)).assertDoesNotExist()
     }
 
+    @Test
+    fun pastTheRowCapTheRowEndsInASeeAllTileThatOpensTheWholeList() {
+        setBoard(requestCount = TV_ROW_ITEM_CAP + 1)
+        card(HEAT).requestFocus()
+        composeTestRule.waitForIdle()
+
+        // Past the last card in the row, onto the tile that closes it.
+        press(Key.DirectionRight)
+        press(Key.DirectionRight)
+        seeAll().assertIsFocused()
+        press(Key.DirectionCenter)
+
+        assertEquals(1, seeAllOpened)
+    }
+
+    @Test
+    fun aRowWithinTheCapHasNoSeeAllTile() {
+        setBoard(requestCount = TV_ROW_ITEM_CAP)
+
+        seeAll().assertDoesNotExist()
+    }
+
     private fun setBoard(
         requests: List<io.github.scottcooper92.binge.seerr.ui.requests.RequestItem> =
             listOf(request(1, HEAT, SeerrRequestStatusCode.Pending), request(2, BEAR, SeerrRequestStatusCode.Approved)),
+        requestCount: Int = requests.size,
     ) {
         val item =
             UserItem(
@@ -96,7 +120,7 @@ class TvAccountBoardFocusTest {
                 avatarUrl = null,
                 origin = UserOrigin.Jellyfin,
                 permissions = 2,
-                requestCount = requests.size,
+                requestCount = requestCount,
                 createdAtMillis = null,
             )
         val detail =
@@ -124,11 +148,14 @@ class TvAccountBoardFocusTest {
                     onRetry = {},
                     onRetryRequests = {},
                     overlayOpen = openRequestId != null,
+                    onSeeAll = { seeAllOpened++ },
                 )
             }
         }
         composeTestRule.waitForIdle()
     }
+
+    private fun seeAll() = composeTestRule.onNode(hasContentDescription("See all") and isFocusable())
 
     private fun profile() = composeTestRule.onNode(hasText("Scott") and isFocusable())
 

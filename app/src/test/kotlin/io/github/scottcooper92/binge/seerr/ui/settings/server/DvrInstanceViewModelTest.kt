@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.ui.settings.ServiceType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
@@ -8,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import io.github.scottcooper92.binge.seerr.util.afterProcessDeath
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -73,8 +75,10 @@ class DvrInstanceViewModelTest {
     private suspend fun TestScope.viewModel(
         type: ServiceType,
         id: Int?,
+        savedState: SavedStateHandle = SavedStateHandle(),
     ): DvrInstanceViewModel {
-        val vm = DvrInstanceViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, type, id, analytics)
+        val vm =
+            DvrInstanceViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, type, id, analytics, savedState = savedState)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -84,6 +88,24 @@ class DvrInstanceViewModelTest {
         where: (ExtrasEditorUiState.Ready<DvrForm, DvrExtras>) -> Boolean = { true },
     ): ExtrasEditorUiState.Ready<DvrForm, DvrExtras> =
         uiState.first { it is ExtrasEditorUiState.Ready && !it.saving && where(it) } as ExtrasEditorUiState.Ready<DvrForm, DvrExtras>
+
+    /** #1026: a half-filled instance outlives the process; its API key is not kept in saved state. */
+    @Test
+    fun `a half-filled new instance survives the process being killed, without its api key`() =
+        runTest {
+            val savedState = SavedStateHandle()
+            val vm = viewModel(ServiceType.Radarr, id = null, savedState = savedState)
+            vm.awaitReady()
+            vm.edit { it.copy(name = "Kids", host = "radarr.lan", apiKey = "k3y-s3cret") }
+            vm.awaitReady { it.draft.name == "Kids" }
+            assertTrue(savedState.keys().none { savedState.get<Any?>(it).toString().contains("k3y-s3cret") })
+
+            val back = viewModel(ServiceType.Radarr, id = null, savedState = savedState.afterProcessDeath()).awaitReady()
+
+            assertEquals("Kids", back.draft.name)
+            assertEquals("radarr.lan", back.draft.host)
+            assertEquals("", back.draft.apiKey)
+        }
 
     @Test
     fun `a new radarr starts on its port with nothing to pick from, and cannot be saved before a test`() =
