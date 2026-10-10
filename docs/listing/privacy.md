@@ -67,7 +67,9 @@ two ways described above, and the phone-to-TV hand-off below, which stays on you
   model and Android version. "What the app was doing" is a short line from a fixed list ("deleting
   issue", "moderating request: approved") and, where an action is on one record, that record's
   number on your server: the number of an issue, request, comment, title (its TMDB id), collection,
-  DVR instance or override rule. Never a title, a name, a message or your server's address. This is
+  DVR instance or override rule. The app attaches no title, name, message or server address. A crash
+  report also carries the crash's own stack trace and exception message, which the app does not
+  write and cannot promise are free of an address. This is
   on unless you turn it off in Settings. No user identifier is set, and the app does not forward its
   logs.
 - **To GitHub**, only when you choose to report a bug: the app opens a new issue form in your
@@ -84,16 +86,21 @@ with a remote. It is only ever started by you.
 - **On the television**, while it shows its code, the app listens for one phone on your local
   network: a small web server on the television's own private address (never on every network
   interface), at a one-time address that only the code on screen spells out, behind a PIN that the
-  phone must send. It stops when the code is used, when you leave the page, or after a timeout; an
-  unused code is replaced every five minutes, and five wrong PINs lock it. The page it serves is the
-  one a phone's browser opens from the code.
+  phone must send. It keeps listening through the television's sign-in step, and stops when the
+  television connects, when you leave the page, or after the sign-in timeout; an unused code is
+  replaced every five minutes, and five wrong PINs lock it. The page it serves is the one a phone's
+  browser opens from the code.
 - **On the phone**, you scan the code, or open its link, and tap Send. Nothing is sent before that
   tap. Scanning uses Google Play services' own code scanner: the app holds no camera permission,
   Play services shows the camera, and the app is given only the text of the code.
 - **What crosses your network** is the server address you typed, the PIN, and, only if you switch
   it on in that sheet, your phone's session for that server, sealed with AES-256-GCM under a key
-  that was in the code on the television's screen and is never sent over the network. An API key is
-  never shared. It travels over plain HTTP, because a television has no certificate a phone would
+  that was in the code on the television's screen and is never sent over the network. The API key the
+  app holds is never sent or shared.
+- **On the television's sign-in step**, sign-in details you type on the phone, in the app or on the
+  television's page, are sealed the same way and sent only when you tap. They are an email and
+  password, a Jellyfin or Emby username and password, or an API key.
+- **All of it** travels over plain HTTP, because a television has no certificate a phone would
   trust; someone watching your network sees the address and the sealed bytes, not what opens them.
 - **After it is sent**, the phone remembers the address (up to three per server), so the next send
   offers it again.

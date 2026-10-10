@@ -47,9 +47,12 @@ on, the phone's sealed session) leaves a device other than through Block Store.
 What a reviewer will want to check against the code: the phone sends only on the Send button
 (`ui/handoff/SendAddressViewModel.kt`), over plain HTTP to the television's private address
 (`handoff/AddressSender.kt`); a session, if sent, is sealed with a key that only the code on the
-television's screen holds (`handoff/HandOffCrypto.kt`); an API key is never sent; the television
-listens only on its own private address, behind a one-time token and a PIN, and only while its code
-is showing (`handoff/AddressHandOffListener.kt`). The scan uses Google Play services' scanner, so the
+television's screen holds (`handoff/HandOffCrypto.kt`); the API key the phone stores is never sent
+(`sharedSession()` returns only a session cookie); sign-in details typed on the phone for the
+television's sign-in step, which can include an API key, are sealed the same way and sent on the
+user's tap (`ui/handoff/SendSignInSteps.kt`); the television listens only on its own private
+address, behind a one-time token and a PIN, through its sign-in step, and stops on connecting, on
+leaving the page or after the sign-in timeout (`handoff/AddressHandOffListener.kt`). The scan uses Google Play services' scanner, so the
 app holds no camera permission (`ui/handoff/ScanTvCode.kt`).
 
 ## Security practices

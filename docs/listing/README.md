@@ -56,11 +56,14 @@ to `privacy.md` and `data-safety.md` in the same PR. The specific claims that mu
   PostHog only after the user agrees to usage data; Firebase Crashlytics for crash reports unless
   the user turns them off; and GitHub only when the user submits the bug report form.
 - The phone-to-TV hand-off (`handoff/`, `ui/handoff/`) sends the server address, and a sealed session
-  only if the user switches it on, to a television on the same network, only on the Send button; an
-  API key is never sent. The scanner is Google Play services', so the app holds no camera permission.
+  only if the user switches it on, to a television on the same network, only on the Send button. The
+  API key the phone stores is never sent; sign-in details typed for the television's sign-in step
+  (email and password, username and password, or an API key) are sealed and sent on the user's tap,
+  and the listener stays up through that step. The scanner is Google Play services', so the app holds no camera permission.
   The addresses it remembers (`handoff/HandOffAddressMemory.kt`) survive a disconnect.
 - A crash report carries the ids of the record in hand (`telemetry/CrashReporting.kt`), a fixed action
-  line, the device model and the Android version. Never a title, a name, a message or an address.
+  line, the device model and the Android version. The app attaches no title, name, message or address; the crash's own stack trace
+  and exception message are Crashlytics's and are not filtered.
 - There is an analytics SDK (PostHog) and a crash reporting SDK (Firebase Crashlytics), both gated
   as above, and no advertising SDK. Check `app/build.gradle.kts` and `telemetry/` before changing
   this claim in either direction.
