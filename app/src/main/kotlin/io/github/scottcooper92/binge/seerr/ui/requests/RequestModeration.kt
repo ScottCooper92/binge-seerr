@@ -9,6 +9,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusSeasonBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.seerr.addToBlocklistOnce
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.seerr.updateRequest
@@ -247,7 +248,7 @@ class RequestModeration(
         attempt {
             val mediaType = item.mediaType.seerrMediaType()
             val user = connection.authenticatedUser().id
-            connection.api().addToBlocklist(
+            connection.api().addToBlocklistOnce(
                 connection.profile().blocklistPath,
                 SeerrAddToBlocklistBody(item.tmdbId, mediaType, item.title.orEmpty(), user),
             )

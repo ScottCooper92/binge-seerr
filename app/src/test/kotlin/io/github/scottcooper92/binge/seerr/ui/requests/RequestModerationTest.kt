@@ -191,6 +191,29 @@ class RequestModerationTest {
             assertEquals(ModerationEvent.BlockFailed, failed.await())
         }
 
+    /**
+     * Seerr refuses a second add: 412 on SQLite, 409 on Postgres. The title is blocked either way, so the console says
+     * so, as the exported Service does (#1139, #1000).
+     */
+    @Test
+    fun `blocking a title already on the blocklist is a block, on either database`() =
+        runTest {
+            val sut = moderation()
+
+            for (code in listOf(412, 409)) {
+                codes["/api/v1/blacklist"] = code
+                val blocked = awaitEvent(sut.events)
+                sut.blockTitle(item)
+                assertEquals(ModerationEvent.Blocked, blocked.await())
+            }
+            assertEquals(2, moderated)
+
+            codes["/api/v1/blacklist"] = 412
+            val declinedAndBlocked = awaitEvent(sut.events)
+            sut.decline(item, blockTitle = true)
+            assertEquals(ModerationEvent.DeclinedAndBlocked, declinedAndBlocked.await())
+        }
+
     @Test
     fun `a block that fails after the removal landed is its own outcome, and a rejected action carries its error`() =
         runTest {
