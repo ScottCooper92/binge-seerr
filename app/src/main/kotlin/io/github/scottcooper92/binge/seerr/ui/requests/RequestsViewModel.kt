@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -99,7 +100,7 @@ class RequestsViewModel
          */
         private val refreshedVersions = ConcurrentHashMap<RequestFilter, Int>()
 
-        val moderation =
+        private val moderator =
             RequestModeration(
                 scope = viewModelScope,
                 dispatcher = dispatcher,
@@ -108,6 +109,12 @@ class RequestsViewModel
                 crashBreadcrumbs = crashBreadcrumbs,
                 cache = store,
             ) { listChanged() }
+
+        /** What the screen may ask of the moderation: its actions only. Its acting set is folded into [uiState] (#1048). */
+        val moderation: RequestModerationControls = moderator
+
+        /** How a moderation went, for the screen's snackbar. */
+        val events: SharedFlow<ModerationEvent> = moderator.events
 
         /** A moderation finished, here or in a row's sheet: refetch the counts and stale the lists. */
         fun listChanged() {
@@ -218,7 +225,7 @@ class RequestsViewModel
                 combine(selectedFilter, selectedSort, listVersionState) { filter, sort, version -> Triple(filter, sort, version) },
                 counts,
                 scope,
-                moderation.actingIds,
+                moderator.actingIds,
                 refreshes.latest,
             ) { (filter, sort, version), counts, scope, acting, refreshes ->
                 when (scope) {

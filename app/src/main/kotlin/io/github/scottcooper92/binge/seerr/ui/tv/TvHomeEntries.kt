@@ -187,7 +187,7 @@ internal fun TvRequestDetailOverlay(
         }
     TvRequestDetailScreen(
         state = state,
-        events = viewModel.moderation.events,
+        events = viewModel.events,
         actions =
             TvRequestDetailActions(
                 onBack = onDone,

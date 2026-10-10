@@ -738,13 +738,13 @@ class RequestDetailViewModelTest {
             assertEquals(1, received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" })
             serve("/api/v1/auth/me", """{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
 
-            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
             vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
             statusSet.await()
-            val filesDeleted = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaFilesDeleted }
+            val filesDeleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = false)
             filesDeleted.await()
-            val cleared = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaCleared }
+            val cleared = awaitEvent(vm.events) { it == ModerationEvent.MediaCleared }
             vm.moderation.clearMedia(11, 900)
             cleared.await()
 
@@ -774,7 +774,7 @@ class RequestDetailViewModelTest {
                 reloadGate.await()
                 page()
             }
-            val approved = awaitEvent(vm.moderation.events) { it == ModerationEvent.Approved }
+            val approved = awaitEvent(vm.events) { it == ModerationEvent.Approved }
             vm.moderation.approve(11)
             assertTrue("during the call", vm.awaitReady { it.isActing }.isActing)
             approveGate.countDown()
@@ -817,10 +817,10 @@ class RequestDetailViewModelTest {
             assertEquals("https://jellyfin.example.com/item/1-4k", fourK.mediaServerUrl)
             assertEquals(WatchStats(3, 1, 2, emptyList()), fourK.watch)
 
-            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
             vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = true)
             statusSet.await()
-            val filesDeleted = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaFilesDeleted }
+            val filesDeleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
             vm.moderation.deleteMediaFiles(11, 900, is4k = true)
             filesDeleted.await()
 
@@ -845,7 +845,7 @@ class RequestDetailViewModelTest {
             val vm = viewModel()
             val detail = vm.awaitReady().detail
 
-            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
             vm.moderation.setMediaStatus(
                 11,
                 900,
@@ -874,7 +874,7 @@ class RequestDetailViewModelTest {
             val vm = viewModel()
             val detail = vm.awaitReady().detail
 
-            val statusSet = awaitEvent(vm.moderation.events) { it == ModerationEvent.MediaStatusSet }
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
             vm.moderation.setMediaStatus(
                 11,
                 900,

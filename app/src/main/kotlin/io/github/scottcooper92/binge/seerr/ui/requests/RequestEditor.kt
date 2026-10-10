@@ -38,6 +38,25 @@ class EditSource(
     val seasonsEditable: Boolean = true,
 )
 
+/** What a screen may ask of a [RequestEditor]: its actions, and none of its flows (#1048). */
+interface RequestEditorControls {
+    fun cancel()
+
+    fun toggleSeason(number: Int)
+
+    fun selectAllSeasons(selected: Boolean)
+
+    fun selectServer(id: Int)
+
+    fun selectProfile(id: Int)
+
+    fun selectRootFolder(path: String)
+
+    fun toggleTag(id: Int)
+
+    fun save()
+}
+
 /**
  * The editor for one request: which of a show's seasons it covers, and, for a user with
  * `REQUEST_ADVANCED`, where it goes. Saving sends the whole new season set and the destination in
@@ -53,7 +72,7 @@ class RequestEditor(
     private val dispatcher: CoroutineDispatcher,
     private val connection: SeerrConnection,
     private val moderation: RequestModeration,
-) {
+) : RequestEditorControls {
     private val edit = MutableStateFlow<EditState?>(null)
     val state: StateFlow<EditState?> = edit.asStateFlow()
 
@@ -91,20 +110,20 @@ class RequestEditor(
         if (destination != null) scope.launch(dispatcher) { loadServers(request) }
     }
 
-    fun cancel() {
+    override fun cancel() {
         edit.value = null
     }
 
-    fun toggleSeason(number: Int) =
+    override fun toggleSeason(number: Int) =
         update { state ->
             state.copy(seasons = state.seasons.map { if (it.number == number && !it.locked) it.copy(selected = !it.selected) else it })
         }
 
     /** Ticks or clears every season the editor may change; a held season is left exactly as it is. */
-    fun selectAllSeasons(selected: Boolean) =
+    override fun selectAllSeasons(selected: Boolean) =
         update { state -> state.copy(seasons = state.seasons.map { if (it.locked) it else it.copy(selected = selected) }) }
 
-    fun selectServer(id: Int) {
+    override fun selectServer(id: Int) {
         val server = servers.firstOrNull { it.id == id } ?: return
         var changed = false
         updateDestination { destination ->
@@ -115,13 +134,13 @@ class RequestEditor(
         if (changed) scope.launch(dispatcher) { loadChoices(id) }
     }
 
-    fun selectProfile(id: Int) = updateDestination { it.copy(profileId = id) }
+    override fun selectProfile(id: Int) = updateDestination { it.copy(profileId = id) }
 
-    fun selectRootFolder(path: String) = updateDestination { it.copy(rootFolder = path) }
+    override fun selectRootFolder(path: String) = updateDestination { it.copy(rootFolder = path) }
 
-    fun toggleTag(id: Int) = updateDestination { it.copy(tagIds = if (id in it.tagIds) it.tagIds - id else it.tagIds + id) }
+    override fun toggleTag(id: Int) = updateDestination { it.copy(tagIds = if (id in it.tagIds) it.tagIds - id else it.tagIds + id) }
 
-    fun save() {
+    override fun save() {
         val state = edit.value ?: return
         val request = source?.request ?: return
         if (!state.canSave) return

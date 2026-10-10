@@ -121,10 +121,13 @@ class UsersViewModel
         /** Refreshes the list through the mediator: a new user is on the server, not in the cache. */
         private val listVersion = MutableStateFlow(0)
 
-        val admission =
+        private val userAdmission =
             UserAdmission(scope = viewModelScope, dispatcher = dispatcher, connection = connection, emit = eventFlow::emit) {
                 listVersion.update { it + 1 }
             }
+
+        /** What the screen may ask of the admission: its actions only. Its state is folded into [uiState] (#1048). */
+        val admission: UserAdmissionControls = userAdmission
 
         val events: SharedFlow<UsersEvent> = eventFlow.asSharedFlow()
 
@@ -186,7 +189,7 @@ class UsersViewModel
                 selection,
                 edit,
                 scope,
-                admission.state,
+                userAdmission.state,
             ) { (sort, refresh), selection, edit, scope, admission ->
                 when (scope) {
                     ScopeState.Resolving -> UsersUiState.Loading
