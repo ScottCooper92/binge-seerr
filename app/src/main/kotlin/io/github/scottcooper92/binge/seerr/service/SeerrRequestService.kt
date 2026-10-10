@@ -73,6 +73,7 @@ import io.github.scottcooper92.binge.seerr.seerr.destinationOptions
 import io.github.scottcooper92.binge.seerr.seerr.details
 import io.github.scottcooper92.binge.seerr.seerr.isSeerrTv
 import io.github.scottcooper92.binge.seerr.seerr.recordIdFor
+import io.github.scottcooper92.binge.seerr.seerr.refusedWithLiveSession
 import io.github.scottcooper92.binge.seerr.seerr.rejectsSession
 import io.github.scottcooper92.binge.seerr.seerr.requesterIds
 import io.github.scottcooper92.binge.seerr.seerr.resolveAdvancedDestination
@@ -307,9 +308,30 @@ class SeerrRequestService(
         }.distinctUntilChanged()
             .map { ObserveStatusResponse.newBuilder().setStatus(it).build() }
 
+    /**
+     * Every lineage answers 401 when this user may not delete the request: it is not theirs, or it is no longer
+     * pending. That is not the session, which the interceptor confirms against `auth/me` (#997). The request is read
+     * only then, to tell the contract's two answers apart: FAILED_PRECONDITION for a request past pending, and
+     * PERMISSION_DENIED for one that is pending and someone else's.
+     */
     override suspend fun cancelRequest(request: CancelRequestRequest): CancelRequestResponse =
         gated("cancel_request", Capability.CAPABILITY_CANCEL) {
-            connection.api().deleteRequest(request.requestId)
+            val api = connection.api()
+            try {
+                api.deleteRequest(request.requestId)
+            } catch (e: HttpException) {
+                if (!e.refusedWithLiveSession()) throw e
+                // A request with no status is pending, as everywhere else; one that will not read is taken as pending too.
+                val status = runCatching { api.request(request.requestId).status }.getOrNull()
+                val pending = status == null || status == SeerrRequestStatusCode.Pending
+                throw StatusException(
+                    if (pending) {
+                        Status.PERMISSION_DENIED.withDescription("This user may not cancel that request")
+                    } else {
+                        Status.FAILED_PRECONDITION.withDescription("Only a pending request can be cancelled")
+                    },
+                )
+            }
             requestCache.delete(request.requestId)
             CancelRequestResponse.getDefaultInstance()
         }
@@ -438,14 +460,22 @@ class SeerrRequestService(
             BlockTitleResponse.getDefaultInstance()
         }
 
-    /** Keyed by TMDB id and media type, as the block was; a title the server has no entry for is its 404, NOT_FOUND. */
+    /**
+     * Keyed by TMDB id and media type, as the block was. A title the server has no entry for is NOT_FOUND: Seerr 3
+     * answers 404, and Jellyseerr 2.x's `blacklist` answers 401 with the session still alive (#998).
+     */
     override suspend fun unblockTitle(request: UnblockTitleRequest): UnblockTitleResponse =
         gated("unblock_title", Capability.CAPABILITY_BLOCK) {
-            connection.api().removeFromBlocklist(
-                connection.profile().blocklistPath,
-                request.media.tmdbId,
-                connection.profile().unblockMediaType(request.media.seerrMediaType()),
-            )
+            try {
+                connection.api().removeFromBlocklist(
+                    connection.profile().blocklistPath,
+                    request.media.tmdbId,
+                    connection.profile().unblockMediaType(request.media.seerrMediaType()),
+                )
+            } catch (e: HttpException) {
+                if (!e.refusedWithLiveSession()) throw e
+                throw StatusException(Status.NOT_FOUND.withDescription("The title is not on the blocklist"))
+            }
             UnblockTitleResponse.getDefaultInstance()
         }
 
