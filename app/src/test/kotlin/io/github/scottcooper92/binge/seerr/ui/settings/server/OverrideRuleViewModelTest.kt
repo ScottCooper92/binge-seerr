@@ -10,10 +10,13 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -39,6 +42,16 @@ private const val RULES =
 private const val TEST_RESULT =
     """{"profiles":[{"id":4,"name":"HD-1080p"},{"id":6,"name":"Ultra-HD"}],"rootFolders":[{"id":1,"path":"/movies"},{"id":2,"path":"/movies-4k"}],
         "tags":[{"id":1,"label":"binge"},{"id":2,"label":"kids"}]}"""
+
+/** A Sonarr instance, and its choices, which differ from every Radarr one's (#1021). */
+private const val SONARR =
+    """[{"id":7,"name":"Shows","hostname":"sonarr.local","port":8989,"apiKey":"s-key","activeProfileId":9,"activeDirectory":"/tv"}]"""
+
+private const val SONARR_TEST_RESULT =
+    """{"profiles":[{"id":9,"name":"Any"}],"rootFolders":[{"id":5,"path":"/tv"}],"tags":[]}"""
+
+/** Long enough for a second pick to land while the first instance's test is still out. */
+private const val SLOW_TEST_MILLIS = 400L
 
 private const val USERS = """{"results":[{"id":3,"displayName":"Ann"},{"id":5,"username":"bob"}]}"""
 
@@ -261,6 +274,28 @@ class OverrideRuleViewModelTest {
             assertNull(sent["keywords"])
             assertEquals(12, vm.awaitReady().saved.id)
             assertEquals(listOf("override_rule_changed" to mapOf("action" to "created")), analytics.events)
+        }
+
+    /** A slow answer for the instance picked first must not land under the one picked after it (#1021). */
+    @Test
+    fun `picking a second instance while the first one's choices load keeps the second one's choices`() =
+        runTest {
+            seerr.serve("GET /api/v1/settings/sonarr", SONARR)
+            seerr.serve("POST /api/v1/settings/sonarr/test", SONARR_TEST_RESULT)
+            seerr.serveFrom("POST /api/v1/settings/radarr/test", delayMillis = SLOW_TEST_MILLIS) { TEST_RESULT }
+            val vm = viewModel(null)
+            val instances = vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances
+
+            vm.selectInstance(instances.first { it.type == ServiceType.Radarr })
+            seerr.awaitCount("POST", "/api/v1/settings/radarr/test", moreThan = 0)
+            vm.selectInstance(instances.first { it.type == ServiceType.Sonarr })
+            vm.awaitReady { it.extras.choices != null }
+            // Real time, since the slow answer comes back on OkHttp's own threads.
+            withContext(Dispatchers.IO) { delay(SLOW_TEST_MILLIS * 2) }
+
+            val ready = vm.awaitReady()
+            assertEquals(7, ready.draft.serviceId)
+            assertEquals(listOf("/tv"), ready.extras.choices?.rootFolders)
         }
 
     @Test

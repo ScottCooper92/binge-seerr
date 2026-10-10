@@ -44,6 +44,9 @@ class OverrideRuleViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
     ) : ExtrasEditorViewModel<OverrideRuleForm, OverrideRuleExtras>(OverrideRuleExtras(), dispatcher) {
+        /** The choices being read for the instance picked last; a newer pick cancels it (#1021). */
+        private var choicesJob: Job? = null
+
         /** Filled by [load] so [loadChoices] can reuse the same fetch instead of re-fetching per instance pick. */
         private var radarrRecords: List<SeerrServiceSettingsDto> = emptyList()
         private var sonarrRecords: List<SeerrServiceSettingsDto> = emptyList()
@@ -109,7 +112,8 @@ class OverrideRuleViewModel
         fun selectInstance(instance: DvrSummary) {
             val sameType = ready()?.draft?.serviceType == instance.type
             edit { it.copy(serviceType = instance.type, serviceId = instance.id, profileId = null, rootFolder = null, tagIds = emptySet()) }
-            viewModelScope.launch(dispatcher) { loadChoices(instance.type, instance.id) }
+            choicesJob?.cancel()
+            choicesJob = viewModelScope.launch(dispatcher) { loadChoices(instance.type, instance.id) }
             if (!sameType || currentExtras().genres !is GenreChoices.Ready) loadGenres(instance.type)
         }
 
@@ -182,6 +186,11 @@ class OverrideRuleViewModel
                     val record = records.firstOrNull { it.id == serviceId } ?: throw NoSuchElementException("instance $serviceId")
                     connection.api().testDvr(type.apiSegment, record.toForm(type).toTestBody()).toChoices()
                 }.getOrNull()
+            // An answer for an instance the rule no longer names is dropped: another pick replaced it, and its own
+            // load fills the choices in (#1021). The same guard RequestEditor.loadChoices keeps. The first load runs
+            // before there is a draft, and its answer is the rule's own.
+            val draft = ready()?.draft
+            if (draft != null && (draft.serviceType != type || draft.serviceId != serviceId)) return
             editExtras { it.copy(choices = choices, loadingChoices = false) }
         }
 
