@@ -27,6 +27,7 @@ import com.binge.designsystem.LocalIsSinglePaneNav
 import com.binge.designsystem.LocalPaneDepth
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
+import com.binge.designsystem.paneShowsBack
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.HubSection
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
@@ -77,7 +78,8 @@ private fun HomeUiState.connected(): Boolean? =
  * built is the value from that frame. So what changes later is read inside the content, where reading the state is
  * what recomposes it.
  *
- * [hubBeside]: the hub is on screen beside the pane. [showBack]: the pane's Back arrow, by [paneShowsBack].
+ * [hubBeside]: the hub is on screen beside the pane. [showBack]: the pane's Back arrow, by the design system's
+ * [paneShowsBack], the same rule its `paneBackOrNull` reads (#1083).
  * [threePane]: a landscape tablet's three panes, where what a section opens replaces what it had open (#1110).
  */
 internal class PaneLayout(
