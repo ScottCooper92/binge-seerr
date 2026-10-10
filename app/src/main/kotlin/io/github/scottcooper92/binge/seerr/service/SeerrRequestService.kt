@@ -106,6 +106,9 @@ import retrofit2.HttpException
 /** Seerr returns 202 Accepted when there was nothing left to request, and created nothing. */
 private const val HTTP_ACCEPTED = 202
 
+/** Seerr's blocklist answers 412 when the title is already on it (#1000). */
+private const val HTTP_PRECONDITION_FAILED = 412
+
 /**
  * REQUEST v1, served against the connected Seerr server.
  *
@@ -411,6 +414,12 @@ class SeerrRequestService(
         }
     }
 
+    /**
+     * A title already on the blocklist is OK and changes nothing, as the contract says (#1000). Seerr refuses the
+     * second add instead: 412 "Item already blocklisted" where its database is SQLite, and 409 where it is Postgres,
+     * which reports the same unique-key clash as a generic conflict. Both are read as done. A cached status could
+     * not decide this up front: a cold cache knows nothing, and the console may have blocked the title a moment ago.
+     */
     override suspend fun blockTitle(request: BlockTitleRequest): BlockTitleResponse =
         gated("block_title", Capability.CAPABILITY_BLOCK) {
             val body =
@@ -420,7 +429,11 @@ class SeerrRequestService(
                     title = request.title,
                     user = connection.authenticatedUser().id,
                 )
-            connection.api().addToBlocklist(connection.profile().blocklistPath, body)
+            try {
+                connection.api().addToBlocklist(connection.profile().blocklistPath, body)
+            } catch (e: HttpException) {
+                if (e.code() != HTTP_PRECONDITION_FAILED && e.code() != HTTP_CONFLICT) throw e
+            }
             BlockTitleResponse.getDefaultInstance()
         }
 

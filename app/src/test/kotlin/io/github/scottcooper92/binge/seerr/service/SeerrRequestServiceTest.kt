@@ -317,6 +317,50 @@ class SeerrRequestServiceTest {
             )
         }
 
+    /** The contract says blocking a title already blocklisted is OK and changes nothing (#1000). */
+    @Test
+    fun `blocking a title already on the blocklist is OK, whichever database seerr keeps it in`() =
+        runTest {
+            val stub = connected(version = "3.1.0")
+            // SQLite: Seerr's own words for the unique-key clash. Postgres: the same clash as a generic 409.
+            seerr.enqueue(MockResponse(code = 412, body = """{"message":"Item already blocklisted"}"""))
+            seerr.enqueue(MockResponse(code = 409, body = """{"message":"Something wrong"}"""))
+
+            repeat(2) { stub.blockTitle(matrixBlock) }
+
+            assertEquals("/api/v1/blocklist", seerr.takeRequest().url.encodedPath)
+        }
+
+    @Test
+    fun `blocking a title already on jellyseerr 2's blacklist is OK`() =
+        runTest {
+            val stub = connected(version = "2.7.0")
+            seerr.enqueue(MockResponse(code = 412, body = """{"message":"Item already blacklisted"}"""))
+
+            stub.blockTitle(matrixBlock)
+
+            assertEquals("/api/v1/blacklist", seerr.takeRequest().url.encodedPath)
+        }
+
+    private val matrixBlock: BlockTitleRequest =
+        BlockTitleRequest
+            .newBuilder()
+            .setMedia(movie)
+            .setTitle("The Matrix")
+            .build()
+
+    @Test
+    fun `any other refusal of a block still reaches the host`() =
+        runTest {
+            val stub = connected(version = "3.1.0")
+            seerr.enqueue(MockResponse(code = 500, body = """{"message":"boom"}"""))
+
+            assertEquals(
+                Status.Code.UNAVAILABLE,
+                stub.code { blockTitle(matrixBlock) },
+            )
+        }
+
     @Test
     fun `an unblock deletes the title's blocklist entry by tmdb id and media type`() =
         runTest {
