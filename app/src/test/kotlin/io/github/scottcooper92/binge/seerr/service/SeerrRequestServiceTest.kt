@@ -31,6 +31,8 @@ import com.binge.companion.contracts.request.v1.UnblockTitleRequest
 import com.binge.companion.contracts.v1.MediaId
 import com.binge.companion.contracts.v1.MediaType
 import com.binge.companion.sdk.MAX_SEASON_NUMBERS
+import com.binge.companion.sdk.UserMessage
+import com.binge.companion.sdk.userMessageOf
 import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.NoBingeConnectionStore
@@ -132,6 +134,7 @@ class SeerrRequestServiceTest {
         analytics: Analytics = NoOpAnalytics,
         warm: Boolean = true,
         publicSettings: String = """{"initialized":true}""",
+        userMessages: UserMessages = UserMessages.None,
     ): RequestServiceGrpcKt.RequestServiceCoroutineStub {
         val store =
             CredentialStore(
@@ -155,6 +158,7 @@ class SeerrRequestServiceTest {
                     statusCache = cache,
                     bingeConnection = bingeConnection,
                     analytics = analytics,
+                    userMessages = userMessages,
                 ),
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
@@ -1342,6 +1346,39 @@ class SeerrRequestServiceTest {
             assertEquals(Status.Code.FAILED_PRECONDITION, stub.submit(movie))
         }
 
+    /** A refusal the user can act on carries a sentence for them, beside the same code (binge-companions#132). */
+    @Test
+    fun `a quota or blocklist refusal carries the user's sentence, and any other refusal none`() =
+        runTest {
+            val messages = UserMessages { refusal -> UserSentence("sentence for ${refusal.name}", "en-GB") }
+            val cache = FakeStatusCache()
+            val stub = connected(cache = cache, userMessages = messages)
+
+            seerr.enqueue(MockResponse(code = 403, body = """{"message":"Movie Quota exceeded"}"""))
+            val quota = stub.submitFailure(movie)
+            assertEquals(Status.Code.RESOURCE_EXHAUSTED, quota.status.code)
+            assertEquals(UserMessage("QUOTA_EXCEEDED", "sentence for QuotaSpent", "en-GB"), userMessageOf(quota.trailers))
+
+            // Any 403 but a quota one is confirmed against auth/me first, which still answers.
+            seerr.enqueue(MockResponse(code = 403, body = """{"message":"This media is blocklisted."}"""))
+            seerr.enqueue(json("""{"id":1,"permissions":$ADMIN}"""))
+            assertEquals("TITLE_BLOCKLISTED", userMessageOf(stub.submitFailure(movie).trailers)?.reason)
+
+            seerr.enqueue(MockResponse(code = 403, body = """{"message":"Not allowed"}"""))
+            seerr.enqueue(json("""{"id":1,"permissions":$ADMIN}"""))
+            val denied = stub.submitFailure(movie)
+            assertEquals(Status.Code.PERMISSION_DENIED, denied.status.code)
+            assertNull(userMessageOf(denied.trailers))
+
+            cache.put(
+                movie,
+                CachedStatus(RequestStatus.newBuilder().setAvailability(Availability.AVAILABILITY_BLOCKLISTED).build(), 0L),
+            )
+            val known = stub.submitFailure(movie)
+            assertEquals(Status.Code.FAILED_PRECONDITION, known.status.code)
+            assertEquals("sentence for Blocklisted", userMessageOf(known.trailers)?.message)
+        }
+
     @Test
     fun `a submit for a title the cache knows is blocklisted is refused without asking seerr`() =
         runTest {
@@ -1953,6 +1990,14 @@ class SeerrRequestServiceTest {
             assertEquals(Status.Code.INVALID_ARGUMENT, stub.code { getStatuses(unusable) })
             assertEquals(0, stub.getStatuses(GetStatusesRequest.getDefaultInstance()).statusesCount)
             assertEquals(before, seerr.requestCount)
+        }
+
+    private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.submitFailure(media: MediaId): StatusException =
+        try {
+            submitRequest(SubmitRequestRequest.newBuilder().setMedia(media).build())
+            throw AssertionError("the submit succeeded")
+        } catch (e: StatusException) {
+            e
         }
 
     private suspend fun RequestServiceGrpcKt.RequestServiceCoroutineStub.submit(media: MediaId): Status.Code =

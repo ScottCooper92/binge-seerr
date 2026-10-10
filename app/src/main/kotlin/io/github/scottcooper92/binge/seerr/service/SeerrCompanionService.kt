@@ -49,6 +49,7 @@ class SeerrCompanionService : IntegrationService() {
                 bingeConnection = bingeConnection,
                 analytics = analytics,
                 requestCache = requests,
+                userMessages = AndroidUserMessages(this),
             ),
         )
 
