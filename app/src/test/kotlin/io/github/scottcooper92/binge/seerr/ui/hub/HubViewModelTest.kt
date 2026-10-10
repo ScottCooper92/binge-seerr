@@ -6,7 +6,6 @@ import io.github.scottcooper92.binge.seerr.auth.BingeConnectionStore
 import io.github.scottcooper92.binge.seerr.auth.BingeHint
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
 import io.github.scottcooper92.binge.seerr.auth.DataStoreBingeConnectionStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnectionHealthMonitor
 import io.github.scottcooper92.binge.seerr.seerr.LocalNetworkPermission
@@ -16,6 +15,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -791,10 +791,4 @@ class HubViewModelTest {
             assertEquals(downloadReads + 1, reads("/api/v1/request"))
             assertEquals(countReads + 1, reads("/api/v1/request/count"))
         }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }

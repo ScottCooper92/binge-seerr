@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui.handoff
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.handoff.AddressSender
 import io.github.scottcooper92.binge.seerr.handoff.AddressSource
@@ -21,6 +20,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrCredentials
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.util.InMemoryDataStore
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -327,12 +327,6 @@ class SendAddressViewModelTest {
 
             assertEquals(emptyList<String>(), memory.remembered("http://192.168.1.10:5055/"))
         }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 
     /** What a scanned code adds to the link: the key that seals credentials. */
     private val scannedLink = "$LINK&k=${HandOffKey.generate().encoded()}"

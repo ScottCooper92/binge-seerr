@@ -8,6 +8,7 @@ import io.github.scottcooper92.binge.seerr.auth.ConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.NoConnectionCarrier
 import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.di.DeviceKeysModule
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import javax.inject.Singleton
 
 /**
@@ -23,12 +24,7 @@ import javax.inject.Singleton
 object TestDeviceKeysModule {
     @Provides
     @Singleton
-    fun secretCipher(): SecretCipher =
-        object : SecretCipher {
-            override fun encrypt(plaintext: String): String = plaintext
-
-            override fun decrypt(ciphertext: String): String = ciphertext
-        }
+    fun secretCipher(): SecretCipher = PlainCipher
 
     @Provides
     @Singleton

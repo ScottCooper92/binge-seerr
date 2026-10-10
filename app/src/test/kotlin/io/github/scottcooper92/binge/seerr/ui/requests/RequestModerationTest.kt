@@ -2,13 +2,13 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.github.scottcooper92.binge.seerr.auth.CredentialStore
-import io.github.scottcooper92.binge.seerr.auth.SecretCipher
 import io.github.scottcooper92.binge.seerr.auth.SeerrConnection
 import io.github.scottcooper92.binge.seerr.data.FakeRequestStore
 import io.github.scottcooper92.binge.seerr.seerr.SeerrApiFactory
 import io.github.scottcooper92.binge.seerr.seerr.SeerrAuth
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
+import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.RecordingCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
@@ -249,10 +249,4 @@ class RequestModerationTest {
                 analytics.events,
             )
         }
-
-    private object PlainCipher : SecretCipher {
-        override fun encrypt(plaintext: String): String = plaintext
-
-        override fun decrypt(ciphertext: String): String = ciphertext
-    }
 }
