@@ -147,7 +147,7 @@ internal fun BlocklistDetailPage(
             state.overview?.let { overview ->
                 ExpandableOverview(
                     text = overview,
-                    modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())),
+                    modifier = Modifier.padding(resolvedContentPadding(vertical = resolvedContentInset())),
                 )
             }
             BlocklistDetailFacts(item)

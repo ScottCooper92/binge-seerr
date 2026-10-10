@@ -169,7 +169,7 @@ private fun Dashboard(
             modifier = Modifier.padding(sides),
         )
         Column(
-            modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)),
+            modifier = Modifier.padding(resolvedContentPadding(vertical = inset)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
         ) {
             BingeTile(state.bingeStatus, state.bingeHintDismissed, actions.onDismissBingeHint)

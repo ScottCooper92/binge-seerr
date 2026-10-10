@@ -75,7 +75,7 @@ internal fun RequestDetailSkeleton(modifier: Modifier = Modifier) {
             HeadlineSkeleton(
                 modifier =
                     Modifier
-                        .padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset()))
+                        .padding(resolvedContentPadding(vertical = resolvedContentInset()))
                         .layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.OVERVIEW)),
             )
             RequestCardSkeleton(modifier = Modifier.padding(resolvedContentPadding()))
@@ -92,7 +92,7 @@ internal fun RequestDetailSeededBody(
     if (error != null) {
         ErrorScreen(error = error, onRetry = onRetry)
     } else {
-        HeadlineSkeleton(modifier = Modifier.padding(resolvedContentPadding(top = resolvedContentInset(), bottom = resolvedContentInset())))
+        HeadlineSkeleton(modifier = Modifier.padding(resolvedContentPadding(vertical = resolvedContentInset())))
         RequestCardSkeleton(modifier = Modifier.padding(resolvedContentPadding()))
     }
 }

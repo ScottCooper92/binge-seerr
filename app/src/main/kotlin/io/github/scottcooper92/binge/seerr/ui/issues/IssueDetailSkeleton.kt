@@ -60,7 +60,7 @@ internal fun IssueDetailSkeleton(modifier: Modifier = Modifier) {
     val inset = resolvedContentInset()
     val sides = resolvedContentPadding()
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        HeaderSkeleton(modifier = Modifier.padding(resolvedContentPadding(top = inset, bottom = inset)))
+        HeaderSkeleton(modifier = Modifier.padding(resolvedContentPadding(vertical = inset)))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(sides))
         IssueBodySkeleton()
     }

@@ -172,7 +172,7 @@ private fun UserDetailContent(
                 modifier =
                     Modifier
                         .padding(
-                            resolvedContentPadding(top = inset, bottom = inset),
+                            resolvedContentPadding(vertical = inset),
                         ).layoutAnchor(LayoutAnchors.section(LayoutAnchors.Detail.PROFILE)),
             )
         }
