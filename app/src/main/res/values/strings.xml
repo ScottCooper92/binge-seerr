@@ -451,7 +451,7 @@
     <string name="user_settings_type_issue_resolved">Issue resolved</string>
     <string name="user_settings_type_issue_reopened">Issue reopened</string>
     <string name="user_settings_type_media_auto_requested">Auto-requested from the watchlist</string>
-    <string name="user_settings_permissions_lead">You can grant only what you hold; only the owner can grant Admin.</string>
+    <string name="user_settings_permissions_lead">Only the owner can grant Admin.</string>
     <string name="user_settings_linked_as">Linked as %1$s</string>
     <string name="server_settings_general_title">General settings</string>
     <string name="server_settings_application_title">Application title</string>
@@ -468,7 +468,7 @@
     <string name="server_settings_trust_proxy">Trust proxy headers</string>
     <string name="server_settings_csrf">CSRF protection</string>
     <string name="server_settings_default_permissions">Default permissions</string>
-    <string name="server_settings_default_permissions_lead">What a new account starts with. You can grant by default only what you hold.</string>
+    <string name="server_settings_default_permissions_lead">What a new account starts with. Only the owner can grant Admin.</string>
     <string name="server_settings_api_key">API key</string>
     <string name="server_settings_api_key_copy">Copy</string>
     <string name="server_settings_api_key_regenerate">Regenerate</string>

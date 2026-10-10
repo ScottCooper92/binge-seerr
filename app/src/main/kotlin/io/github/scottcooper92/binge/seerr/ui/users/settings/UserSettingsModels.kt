@@ -295,8 +295,8 @@ private val TELEGRAM_CHAT_ID = Regex("-?[0-9]+")
 
 /**
  * The permissions page: the toggles offered, what is selected, and the bits the editor leaves
- * alone. [locked] are the toggles this viewer may not flip: what they do not hold themselves, and
- * Admin for anyone but the owner, which is the web client's rule.
+ * alone. [locked] are the toggles this viewer may not flip: Admin, for anyone but the owner. That is
+ * the server's one rule on a permissions write, and the web client's (#1016).
  */
 data class PermissionSettings(
     val selected: Set<ManageablePermission> = emptySet(),
