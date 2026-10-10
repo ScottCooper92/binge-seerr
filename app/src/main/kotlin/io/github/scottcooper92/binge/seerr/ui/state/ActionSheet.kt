@@ -12,7 +12,20 @@ import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.R as DesR
 
 /**
- * A row of an action sheet that does something where it is, so it has no chevron. A [destructive] one takes the error
+ * A row of an action sheet that opens a screen or another sheet, so it carries the chevron that says so: Edit, or a
+ * page's own settings. Use [actionItem] for a row that does its work where it is.
+ */
+@Composable
+internal fun openItem(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+): ListItem = ListItem(icon = icon, label = label, disabled = !enabled, onClick = onClick)
+
+/**
+ * A row of an action sheet that does something where it is and stays on the screen, so it has no chevron: Retry, Delete,
+ * Discard. A row that opens something is [openItem]. A [destructive] one takes the error
  * colour, as the request actions sheet's deletes do, and a row that is not [enabled] is dimmed and inert.
  */
 @Composable

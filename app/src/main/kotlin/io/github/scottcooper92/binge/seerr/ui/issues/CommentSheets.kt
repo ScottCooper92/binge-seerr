@@ -14,6 +14,7 @@ import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.ActionSheetGroup
 import io.github.scottcooper92.binge.seerr.ui.state.actionItem
+import io.github.scottcooper92.binge.seerr.ui.state.openItem
 
 /** The composer: submitting hands the draft over and closes, since the pending row is the feedback. */
 @Composable
@@ -87,7 +88,7 @@ internal fun CommentActionsContent(
     ActionSheetGroup(
         rows =
             listOf(
-                actionItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onClick = onEdit),
+                openItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onClick = onEdit),
                 actionItem(Icons.Filled.Delete, stringResource(R.string.issue_delete_comment), destructive = true, onClick = onDelete),
             ),
         modifier = modifier,
@@ -131,7 +132,7 @@ internal fun OutboxActionsContent(
         rows =
             listOfNotNull(
                 actionItem(Icons.Filled.Refresh, stringResource(R.string.issue_comment_retry), onClick = onRetry).takeIf { retryable },
-                actionItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), enabled = !sending, onClick = onEdit),
+                openItem(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), enabled = !sending, onClick = onEdit),
                 actionItem(
                     Icons.Filled.Delete,
                     stringResource(R.string.issue_comment_discard),

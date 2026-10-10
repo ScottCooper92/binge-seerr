@@ -73,6 +73,7 @@ import io.github.scottcooper92.binge.seerr.ui.state.RoleTag
 import io.github.scottcooper92.binge.seerr.ui.state.actionItem
 import io.github.scottcooper92.binge.seerr.ui.state.externalItem
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
+import io.github.scottcooper92.binge.seerr.ui.state.openItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import com.binge.designsystem.R as DesR
@@ -301,7 +302,7 @@ internal fun UserActionsContent(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val settings = actionItem(Icons.Filled.Settings, stringResource(R.string.user_settings_title), onClick = onOpenSettings)
+    val settings = openItem(Icons.Filled.Settings, stringResource(R.string.user_settings_title), onClick = onOpenSettings)
     val web = externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, detail.serverName), onOpenWeb)
     val delete =
         actionItem(Icons.Filled.Delete, stringResource(R.string.user_delete), destructive = true, enabled = !deleting, onClick = onDelete)

@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -239,9 +239,10 @@ internal fun ImportUsersContent(
             candidates.isEmpty() -> EmptyScreen(message = stringResource(R.string.users_import_empty))
             else -> {
                 LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
-                    items(candidates, key = { it.id }) { candidate ->
+                    itemsIndexed(candidates, key = { _, candidate -> candidate.id }) { index, candidate ->
                         CandidateRow(
                             candidate = candidate,
+                            showDivider = index != candidates.lastIndex,
                             checked = candidate.id in picker.selected,
                             enabled = !saving,
                             onToggle = { actions.onToggleCandidate(candidate.id) },
@@ -266,6 +267,7 @@ private fun CandidateRow(
     candidate: ImportCandidate,
     checked: Boolean,
     enabled: Boolean,
+    showDivider: Boolean,
     onToggle: () -> Unit,
 ) {
     CheckboxRow(
@@ -274,7 +276,7 @@ private fun CandidateRow(
         onToggle = { onToggle() },
         subtitle = candidate.email,
         enabled = enabled,
-        showDivider = true,
+        showDivider = showDivider,
         // The avatar trails because CheckboxRow has no leading slot yet; binge-design-system#544 asks for one.
         trailingContent = {
             BingeInitialsAvatar(name = candidate.name, avatarUrl = candidate.avatarUrl, size = dimensionResource(DesR.dimen.avatar_size_md))

@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
-import io.github.scottcooper92.binge.seerr.ui.settings.server.SlidersOverflowContent
 
 private val SHEET_WIDTH = 411.dp
 
@@ -64,12 +63,6 @@ class UserSheetsScreenshotTest {
                 actions = noActions(),
             )
         }
-
-    /** The discover sliders' overflow: reset, in the error colour. */
-    @PreviewTest
-    @SeerrComponentPreviews
-    @Composable
-    fun slidersOverflow() = SheetFrame { SlidersOverflowContent(onReset = {}) }
 }
 
 private fun noActions() =
