@@ -45,7 +45,7 @@ class TvAddressHandOffPlateScreenshotTest {
             offerHandOff = true,
         )
 
-    /** Before the TV has a code to show (#1053): the line says it is getting one ready. */
+    /** Before the TV has a code to show (#1053): the card holds its place and says it is getting one ready (#1064). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
