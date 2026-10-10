@@ -139,6 +139,7 @@ data class DvrExtras(
  * are what it changes. Users are picked by id; genres and keywords are TMDB ids and languages ISO
  * codes, typed as the web client takes them.
  */
+@Serializable
 data class OverrideRuleForm(
     val id: Int? = null,
     val serviceType: ServiceType? = null,

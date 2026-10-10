@@ -1,5 +1,6 @@
 package io.github.scottcooper92.binge.seerr.ui.settings.server
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.scottcooper92.binge.seerr.R
@@ -13,6 +14,7 @@ import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.SavedDraft
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -37,7 +39,20 @@ class MediaServerViewModel
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<MediaServerForm, MediaServerExtras>(MediaServerExtras(), dispatcher) {
+        /**
+         * A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back
+         * in. A draft of another media server's kind is dropped, since the server's kind is read, not chosen.
+         */
+        override val savedDraft =
+            SavedDraft(
+                savedState,
+                MediaServerForm.serializer(),
+                scrub = { it.copy(apiKey = it.apiKey?.let { "" }) },
+                restore = { kept, loaded -> if (kept.kind == loaded.kind) kept.copy(apiKey = loaded.apiKey) else loaded },
+            )
+
         /** Test seam for the scan's poll; the constructor is Hilt's. */
         internal var scanPollMillis: Long = SCAN_POLL_MILLIS
 
