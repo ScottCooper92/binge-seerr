@@ -96,6 +96,17 @@ class TvSetupScreenshotTest {
     @Composable
     fun signInJellyfin() = TvSetupScreen(state = setupSignIn(), actions = NoSetupActions, initialFocus = TvSetupFocus.Credential)
 
+    /** A local account on a server that mails resets: Forgot password? sits under the fields, the form scrolling to it (#1037). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInLocal() =
+        TvSetupScreen(
+            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com")),
+            actions = NoSetupActions,
+            initialFocus = TvSetupFocus.Credential,
+        )
+
     /** An API key typed, with Connect focused. */
     @PreviewTest
     @SeerrTvScreenPreviews
