@@ -113,7 +113,7 @@ private fun SettingsContent(
             // About is a server section above when this viewer can read the server's settings, so it isn't said twice.
             connectionRows(state.connection, state.server, actions.onEditConnection, actions.onOpenPage, showAbout = config == null),
         )
-        state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions)) }
+        state.notifications?.let { Group(stringResource(R.string.settings_group_notify_me), notificationRows(it, actions, state.now)) }
         state.app?.let {
             Group(
                 stringResource(R.string.settings_group_app),

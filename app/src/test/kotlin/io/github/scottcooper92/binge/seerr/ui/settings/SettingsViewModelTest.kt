@@ -17,11 +17,13 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrLoginRequest
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsConsent
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
+import io.github.scottcooper92.binge.seerr.ui.MinuteTicker
 import io.github.scottcooper92.binge.seerr.util.FakeResponse
 import io.github.scottcooper92.binge.seerr.util.FakeSeerrServer
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -118,7 +120,16 @@ class SettingsViewModelTest {
         )
     }
 
-    private suspend fun TestScope.viewModel(session: Boolean = false): SettingsViewModel {
+    /** The rows' clock read once and never again, so a virtual clock does not spin its minute loop (#337). */
+    private val boundedTicker =
+        object : MinuteTicker() {
+            override suspend fun await(millis: Long) = awaitCancellation()
+        }
+
+    private suspend fun TestScope.viewModel(
+        session: Boolean = false,
+        ticker: MinuteTicker = boundedTicker,
+    ): SettingsViewModel {
         connection =
             SeerrConnection(
                 store =
@@ -149,6 +160,7 @@ class SettingsViewModelTest {
                 BugReportLinks(),
                 mainDispatcherRule.dispatcher,
                 analytics,
+                minuteTicker = ticker,
             )
         viewModels.put("settings", vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -158,6 +170,32 @@ class SettingsViewModelTest {
 
     private suspend fun SettingsViewModel.awaitReady(match: (SettingsUiState.Ready) -> Boolean): SettingsUiState.Ready =
         uiState.first { it is SettingsUiState.Ready && match(it) } as SettingsUiState.Ready
+
+    /** #989: the jobs' and the poll's "next run in 20 minutes" count down while the screen shows them, and no longer. */
+    @Test
+    fun `the rows' clock moves on each minute while the screen is showing, and stops when it leaves`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel(ticker = MinuteTicker())
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.awaitReady { it.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, (vm.uiState.value as SettingsUiState.Ready).now)
+            // Back on screen the clock reads at once; this test's ticker is real, so leave before the test ends.
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.now == now }
+            vm.setScreenVisible(false)
+        }
 
     @Test
     fun `an admin sees the connection, the server, and every configuration group`() =

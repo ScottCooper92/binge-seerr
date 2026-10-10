@@ -11,6 +11,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrJobDto
 import io.github.scottcooper92.binge.seerr.seerr.SeerrJobScheduleBody
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
+import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -34,9 +35,6 @@ private const val OUTCOME_MILLIS = 4_000L
 
 /** How long after a job's scheduled time the list is re-read, so the server has started it. */
 private const val DUE_GRACE_MILLIS = 5_000L
-
-/** How often the rows' "in 20 minutes" is worded again: on each minute, while the list is showing. */
-private const val TICK_MILLIS = 60_000L
 
 /**
  * The Jobs & cache page's jobs: every scheduled job, run now, cancelled, or given a new
@@ -220,13 +218,8 @@ class JobsViewModel
         }
 
         /** Moves the rows' clock on at each minute, for as long as the list is showing. */
-        private suspend fun tick() {
-            while (true) {
-                val now = clock()
-                state.update { current -> (current as? JobsUiState.Ready)?.copy(now = now) ?: current }
-                delay(TICK_MILLIS - now % TICK_MILLIS)
-            }
-        }
+        private suspend fun tick() =
+            minuteClock(clock).collect { now -> state.update { current -> (current as? JobsUiState.Ready)?.copy(now = now) ?: current } }
 
         /**
          * A page back on screen re-reads the list at once if a scheduled run came due while nothing was

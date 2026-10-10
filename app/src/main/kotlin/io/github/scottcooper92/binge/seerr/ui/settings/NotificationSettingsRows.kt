@@ -38,6 +38,8 @@ import io.github.scottcooper92.binge.seerr.notifications.NotificationSignal
 internal fun notificationRows(
     settings: NotificationSettings,
     actions: SettingsActions,
+    /** What the poll's last and next runs are worded against (#989). */
+    now: Long,
 ): List<ListItem> {
     val context = LocalContext.current
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { actions.onNotificationAccessChanged() }
@@ -91,8 +93,9 @@ internal fun notificationRows(
                     listOfNotNull(
                         formatRelativeOrAbsolute(
                             settings.lastRunMillis,
+                            now,
                         )?.let { stringResource(R.string.settings_notifications_last_run, it) },
-                        formatRelativeOrAbsolute(settings.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) },
+                        formatRelativeOrAbsolute(settings.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) },
                     ).joinToString(
                         stringResource(R.string.hub_meta_separator),
                     ).ifEmpty { stringResource(R.string.settings_notifications_not_yet) },

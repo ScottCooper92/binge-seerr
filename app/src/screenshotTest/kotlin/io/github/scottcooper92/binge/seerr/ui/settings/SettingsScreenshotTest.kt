@@ -113,7 +113,7 @@ class SettingsGroupsScreenshotTest {
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
-    fun system() = Group(R.string.settings_group_system, systemRows(systemInfo()))
+    fun system() = Group(R.string.settings_group_system, systemRows(systemInfo(), now = 0L))
 
     /** Each job state at once: running, idle, a run that finished, a run that failed, and a run in flight. */
     @PreviewTest
@@ -137,13 +137,13 @@ class SettingsGroupsScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun notificationsBlocked() =
-        Group(R.string.settings_group_notify_me, notificationRows(notifications().copy(blocked = true), noActions()))
+        Group(R.string.settings_group_notify_me, notificationRows(notifications().copy(blocked = true), noActions(), now = 0L))
 
     @PreviewTest
     @SeerrComponentPreviews
     @Composable
     fun notificationsOff() =
-        Group(R.string.settings_group_notify_me, notificationRows(notifications().copy(enabled = emptySet()), noActions()))
+        Group(R.string.settings_group_notify_me, notificationRows(notifications().copy(enabled = emptySet()), noActions(), now = 0L))
 }
 
 @Composable
