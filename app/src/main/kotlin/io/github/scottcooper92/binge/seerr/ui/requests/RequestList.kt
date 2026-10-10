@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -208,12 +209,16 @@ private fun RequestRowMeta(
         val chip = item.statusChip()
         ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
         Spacer(Modifier.height(gap))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Wraps rather than clips: the status chip carries a dot, and a long status beside the type, 4K and year
+        // would otherwise cut the year short.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(gap),
+            verticalArrangement = Arrangement.spacedBy(gap),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
             RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
-            Spacer(Modifier.width(gap))
             MediaTypeTag(type = item.mediaType.toTagType())
             if (item.is4k) {
-                Spacer(Modifier.width(gap))
                 Text(
                     stringResource(R.string.settings_service_4k),
                     style = MaterialTheme.typography.labelMedium,
@@ -221,7 +226,6 @@ private fun RequestRowMeta(
                 )
             }
             item.year?.let { year ->
-                Spacer(Modifier.width(gap))
                 Text(
                     year,
                     style = MaterialTheme.typography.labelMedium,
