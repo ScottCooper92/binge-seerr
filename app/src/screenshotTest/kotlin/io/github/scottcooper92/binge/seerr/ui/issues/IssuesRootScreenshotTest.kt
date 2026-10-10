@@ -5,6 +5,7 @@ import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import kotlinx.coroutines.flow.flowOf
 
@@ -30,6 +31,12 @@ class IssuesRootScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun loading() = Frame(IssuesUiState.Loading)
+
+    /** The signed-in user could not be read: the page says so, with a retry, rather than an empty list. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun scopeUnreachable() = Frame(IssuesUiState.Error(SeerrError.Unreachable))
 }
 
 private fun moderatorScope() = IssueListScope(permissions = SeerrPermissions(canManageIssues = true), currentUserId = 1)
@@ -39,6 +46,6 @@ private fun Frame(state: IssuesUiState) {
     IssuesScreen(
         state = state,
         issuesFor = { flowOf(PagingData.from(emptyList())) },
-        actions = IssuesActions(onBack = {}, onFilterChange = {}, onSortChange = {}, onOpen = {}),
+        actions = IssuesActions(onBack = {}, onFilterChange = {}, onSortChange = {}, onOpen = {}, onRetryLoad = {}),
     )
 }

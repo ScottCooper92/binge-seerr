@@ -5,6 +5,7 @@ import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 
@@ -35,6 +36,12 @@ class UsersRootScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun loading() = Frame(UsersUiState.Loading)
+
+    /** The signed-in user could not be read: the page says so, with a retry, rather than a list with nothing offered. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun scopeUnreachable() = Frame(UsersUiState.Error(SeerrError.Unreachable))
 }
 
 private fun ready(
@@ -59,6 +66,7 @@ private fun Frame(state: UsersUiState) {
                 onTogglePermission = {},
                 onApplyBulkEdit = {},
                 onCancelBulkEdit = {},
+                onRetryLoad = {},
                 admission = UserAdmissionActions({}, {}, {}, {}, {}, {}, {}, {}, {}),
             ),
     )

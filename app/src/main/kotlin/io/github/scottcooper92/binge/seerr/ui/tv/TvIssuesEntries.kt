@@ -52,6 +52,7 @@ internal fun TvIssuesEntry(
                 onDelete = viewModel::delete,
                 onSeeAll = onSeeAll,
                 onRetryLoad = { pagers.values.forEach { it.retry() } },
+                onRetryScope = viewModel::retry,
             ),
     )
 }
