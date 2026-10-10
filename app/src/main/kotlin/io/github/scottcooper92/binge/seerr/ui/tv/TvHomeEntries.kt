@@ -162,7 +162,7 @@ internal fun TvRequestsGridOverlay(
 }
 
 /**
- * A request's read-only page, above the rail exactly as the connection form is: the same
+ * A request's page, above the rail exactly as the connection form is: the same
  * [RequestDetailViewModel] the phone's `RequestDetailEntry` binds. The shell gives each opening its own view-model
  * scope, so the view model is this request's and is gone when the page closes. Open in Binge checks whether Binge
  * would answer the link once per detail load — this surface has no browser to fall back to, so the button is hidden
@@ -198,6 +198,11 @@ internal fun TvRequestDetailOverlay(
                 onDecline = { block -> detail?.let { viewModel.moderation.decline(it.item, block) } },
                 onRemove = { block -> detail?.let { viewModel.moderation.remove(it.item, block) } },
                 onBlock = { detail?.let { viewModel.moderation.blockTitle(it.item) } },
+                onSetMediaStatus = { mediaId, status, is4k ->
+                    viewModel.moderation.setMediaStatus(requestId, mediaId, status, is4k, detail?.seasons?.map { it.number }.orEmpty())
+                },
+                onReportIssue = viewModel::reportIssue,
+                onDismissReport = viewModel::dismissReport,
             ),
     )
 }

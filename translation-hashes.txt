@@ -931,9 +931,13 @@ app:tv_detail_approve  6007acbe30b2
 app:tv_detail_block  211d0bb8cf4f
 app:tv_detail_decline  a2d285b35287
 app:tv_detail_details  45989de49fb7
+app:tv_detail_info_phone_only  8d98a448cf95
 app:tv_detail_info_requested  2d9e28289fac
 app:tv_detail_info_sent_to  4e7201c7b898
 app:tv_detail_info_status  920e413c7d41
+app:tv_detail_phone_edit  f02cb5101bd0
+app:tv_detail_phone_requester  c404dd9869c5
+app:tv_detail_phone_siblings  638e58c202ba
 app:tv_detail_remove  c3812fc4acb8
 app:tv_download_percent  0edb69de9be1
 app:tv_filter_with_count  f7da0939cc40

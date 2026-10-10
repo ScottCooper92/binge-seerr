@@ -59,6 +59,7 @@ internal fun requestInfoCards(detail: RequestDetail): List<TvInfoCardItem> {
             ?.takeIf { it.isNotEmpty() }
             ?.let { TvInfoCardItem(stringResource(R.string.tv_detail_info_sent_to), it) },
         destination?.tagsLabel?.let { TvInfoCardItem(stringResource(R.string.request_tags), it) },
+        phoneOnlyCard(detail),
     )
 }
 

@@ -6,6 +6,8 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.DetailDownload
+import io.github.scottcooper92.binge.seerr.ui.requests.MediaInstance
+import io.github.scottcooper92.binge.seerr.ui.requests.MediaRecord
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDestination
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
@@ -119,6 +121,9 @@ private fun actions(onOpenInBinge: (() -> Unit)?) =
         onDecline = {},
         onRemove = {},
         onBlock = {},
+        onSetMediaStatus = { _, _, _ -> },
+        onReportIssue = { _, _ -> },
+        onDismissReport = {},
     )
 
 /**
@@ -147,6 +152,37 @@ class TvRequestDetailScreenshotTest {
             state =
                 RequestDetailUiState.Ready(
                     filmDetail().copy(actions = RequestActions(canApprove = true, canDecline = true, canRemove = true, canBlock = true)),
+                ),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+        )
+    }
+
+    /**
+     * A manager's page for a title the server tracks: Mark as and Report an issue beside the moderation, and the details row
+     * naming what stays on the phone (#1036).
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun MarkAndReport() {
+        TvRequestDetailScreen(
+            state =
+                RequestDetailUiState.Ready(
+                    filmDetail().copy(
+                        actions = RequestActions(canRemove = true),
+                        canEdit = true,
+                        canReportIssue = true,
+                        media =
+                            MediaRecord(
+                                mediaId = 900,
+                                isTv = false,
+                                instances = listOf(MediaInstance(false, SeerrMediaStatusCode.Available, null, null, null)),
+                                canSetStatus = true,
+                                canClearData = false,
+                                canDeleteFiles = false,
+                            ),
+                    ),
                 ),
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
