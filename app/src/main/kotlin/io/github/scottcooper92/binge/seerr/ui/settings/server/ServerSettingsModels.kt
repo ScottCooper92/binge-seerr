@@ -93,7 +93,7 @@ data class ServerGeneralSettings(
  * What the "Process Blocklisted Tags" job reads: the region and languages it scans (each null on a server that lacks
  * it), apart from Discover's, the TMDB
  * keywords whose titles it blocklists (ids, comma-separated, as the server keeps them), and how many pages it takes per
- * tag, which the web client holds to 0 through 250.
+ * tag, which the web client holds to 0 through 250 and the server does not, so a stored value past that stays valid.
  */
 data class BlocklistSettings(
     /** Null where the server has no such setting: Seerr added the region and languages after the tags. */
@@ -104,12 +104,12 @@ data class BlocklistSettings(
 ) {
     val tagIds: List<Int> get() = tags.split(',').mapNotNull { it.trim().toIntOrNull() }
 
-    val tagsLimitValid: Boolean get() = tagsLimit.trim().toIntOrNull()?.let { it in 0..MAX_TAGS_LIMIT } == true
+    val tagsLimitValid: Boolean get() = tagsLimit.trim().toIntOrNull()?.let { it >= 0 } == true
 
     val valid: Boolean get() = tagsLimitValid
 }
 
-/** The web client's starting tag limit, and its ceiling. */
+/** The web client's starting tag limit, and the top of the slider unless the server stores more. */
 internal const val DEFAULT_TAGS_LIMIT = 50
 internal const val MAX_TAGS_LIMIT = 250
 
