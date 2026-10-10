@@ -79,13 +79,14 @@ data class GeneralSettings(
     val canEditEmail: Boolean = false,
 ) {
     /**
-     * Blank clears the address where that is allowed, and the value the server sent is kept as it was; a changed one has
-     * to look like an address.
+     * The server never clears an address: it keeps the one it has for a blank (#1020). So a blank is valid only where there
+     * is nothing to clear and none is required, or where the viewer could not change it. The value the server sent is kept
+     * as it was; a changed one has to look like an address.
      */
     val emailValid: Boolean
         get() =
             if (email.isBlank()) {
-                !emailRequired || !canEditEmail
+                !canEditEmail || (!emailRequired && loadedEmail.isBlank())
             } else {
                 email.trim() == loadedEmail.trim() || email.isEmailShape()
             }

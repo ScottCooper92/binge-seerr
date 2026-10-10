@@ -4,21 +4,14 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
@@ -29,12 +22,14 @@ import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.statusChip
+import io.github.scottcooper92.binge.seerr.ui.tv.TV_ROW_ITEM_CAP
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropArtwork
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBackdropCopy
 import io.github.scottcooper92.binge.seerr.ui.tv.TvHubLoading
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvRowsFallback
+import io.github.scottcooper92.binge.seerr.ui.tv.rememberOverlayFocusRestore
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
 import com.binge.designsystem.tv.R as TvR
 
@@ -49,8 +44,6 @@ internal class TvRequestsActions(
 /** The filters that get a row; "All" would only repeat the others, so the rows are the tabs. */
 internal val RequestRowFilters = RequestFilter.entries.filter { it != RequestFilter.All }
 
-/** A row shows its first requests; past that the row's see-all tile opens the paged grid. */
-private const val ROW_ITEM_CAP = 20
 private const val PERCENT = 100
 
 /**
@@ -72,14 +65,7 @@ internal fun TvRequestsRowsBoard(
     seeAllOpen: Boolean = false,
 ) {
     val ready = state as? RequestsUiState.Ready
-    val restoreFocus = remember { FocusRequester() }
-    var restoreRowId by rememberSaveable { mutableStateOf<Int?>(null) }
-    // The row whose see-all tile opened the grid, so focus returns to that tile when the grid closes.
-    var restoreSeeAllKey by rememberSaveable { mutableStateOf<String?>(null) }
-    val overlayOpen = openRequestId != null || seeAllOpen
-    LaunchedEffect(overlayOpen) {
-        if (!overlayOpen && (restoreRowId != null || restoreSeeAllKey != null)) restoreTvOverlayFocus(restoreFocus)
-    }
+    val restore = rememberOverlayFocusRestore(overlayOpen = openRequestId != null || seeAllOpen)
     if (ready == null) {
         TvRequestsUnresolved(state, actions, modifier)
         return
@@ -102,13 +88,12 @@ internal fun TvRequestsRowsBoard(
                 key = filter.name,
                 title = if (count != null) stringResource(R.string.tv_filter_with_count, label, count) else label,
                 // Reading the item is what pages it in.
-                items = (0 until minOf(rows.count, ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
+                items = (0 until minOf(rows.count, TV_ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
                 onSeeAll =
                     {
-                        restoreSeeAllKey = filter.name
-                        restoreRowId = null
+                        restore.leavingFromSeeAll(filter.name)
                         actions.onSeeAll(filter)
-                    }.takeIf { (count ?: rows.count) > ROW_ITEM_CAP },
+                    }.takeIf { (count ?: rows.count) > TV_ROW_ITEM_CAP },
             )
         }
     val now = System.currentTimeMillis()
@@ -117,12 +102,11 @@ internal fun TvRequestsRowsBoard(
         itemId = { it.id },
         cardWidth = dimensionResource(TvR.dimen.tv_immersive_card_width),
         onItemClick = {
-            restoreRowId = it.id
-            restoreSeeAllKey = null
+            restore.leavingFromRow(it.id)
             actions.onOpenDetail(it)
         },
         seeAllLabel = stringResource(R.string.tv_see_all),
-        seeAllModifier = { key -> if (key == restoreSeeAllKey) Modifier.focusRequester(restoreFocus) else Modifier },
+        seeAllModifier = restore::seeAllModifier,
         artwork = { item -> TvBackdropArtwork(item.backdropUrl, item.posterUrl) },
         copy = { item -> TvRequestCopy(item, now) },
         modifier = modifier,
@@ -134,7 +118,7 @@ internal fun TvRequestsRowsBoard(
             onFocusChanged = onFocusChanged,
             enabled = item.id !in ready.actingIds,
             onClick = onClick,
-            modifier = if (item.id == restoreRowId) cellModifier.focusRequester(restoreFocus) else cellModifier,
+            modifier = restore.rowModifier(item.id, cellModifier),
         )
     }
 }

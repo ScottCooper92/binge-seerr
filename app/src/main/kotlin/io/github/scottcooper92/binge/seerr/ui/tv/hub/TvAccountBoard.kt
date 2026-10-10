@@ -28,12 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
@@ -44,7 +41,6 @@ import androidx.tv.material3.Text
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCardRow
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.focus.tvFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvContentInset
 import com.binge.designsystem.tv.template.TvMessagePage
@@ -54,18 +50,19 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.requests.statusChip
+import io.github.scottcooper92.binge.seerr.ui.tv.OverlayFocusRestore
+import io.github.scottcooper92.binge.seerr.ui.tv.TV_ROW_ITEM_CAP
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterIconChip
+import io.github.scottcooper92.binge.seerr.ui.tv.rememberOverlayFocusRestore
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
 import io.github.scottcooper92.binge.seerr.ui.users.UserDetailUiState
 import com.binge.designsystem.R as DesR
 import com.binge.designsystem.tv.R as TvR
-
-private const val ROW_ITEM_CAP = 20
 
 /** The requests row's slot in the page's list: the profile and the quota tiles come first. */
 private const val REQUESTS_ITEM_INDEX = 2
@@ -106,12 +103,8 @@ internal fun TvAccountBoard(
         TvAccountUnresolved(failed = accountFailed || detail is UserDetailUiState.Error, onRetry = onRetry, modifier = modifier)
         return
     }
-    val restoreFocus = remember { FocusRequester() }
-    var restoreRequestId by rememberSaveable { mutableStateOf<Int?>(null) }
-    LaunchedEffect(overlayOpen) {
-        if (!overlayOpen && restoreRequestId != null) restoreTvOverlayFocus(restoreFocus)
-    }
-    val rows = (0 until minOf(requests.count, ROW_ITEM_CAP)).mapNotNull { requests.at(it) }
+    val restore = rememberOverlayFocusRestore(overlayOpen)
+    val rows = (0 until minOf(requests.count, TV_ROW_ITEM_CAP)).mapNotNull { requests.at(it) }
     val requestsFailed = requests.refresh == TvLoadPhase.Failed || requests.append == TvLoadPhase.Failed
     val verticalInset = dimensionResource(TvR.dimen.tv_overscan_vertical)
     val listState = rememberLazyListState()
@@ -163,11 +156,10 @@ internal fun TvAccountBoard(
                             rows = rows,
                             requestCount = item.requestCount,
                             failed = requestsFailed,
-                            restoreRequestId = restoreRequestId,
-                            restoreFocus = restoreFocus,
+                            restore = restore,
                             onFocused = { focusArea = AccountFocusArea.Requests },
                             onOpen = {
-                                restoreRequestId = it.id
+                                restore.leavingFromRow(it.id)
                                 onOpenRequest(it)
                             },
                             onRetry = onRetryRequests,
@@ -204,8 +196,7 @@ private fun TvAccountRequests(
     rows: List<RequestItem>,
     requestCount: Int,
     failed: Boolean,
-    restoreRequestId: Int?,
-    restoreFocus: FocusRequester,
+    restore: OverlayFocusRestore,
     onFocused: () -> Unit,
     onOpen: (RequestItem) -> Unit,
     onRetry: () -> Unit,
@@ -216,8 +207,7 @@ private fun TvAccountRequests(
             TvAccountRequestsRow(
                 rows = rows,
                 requestCount = requestCount,
-                restoreRequestId = restoreRequestId,
-                restoreFocus = restoreFocus,
+                restore = restore,
                 onFocused = onFocused,
                 onOpen = onOpen,
             )
@@ -272,8 +262,7 @@ private fun AnchorAccountScroll(
 private fun TvAccountRequestsRow(
     rows: List<RequestItem>,
     requestCount: Int,
-    restoreRequestId: Int?,
-    restoreFocus: FocusRequester,
+    restore: OverlayFocusRestore,
     onFocused: () -> Unit,
     onOpen: (RequestItem) -> Unit,
 ) {
@@ -290,7 +279,7 @@ private fun TvAccountRequestsRow(
             isFocused = isFocused,
             onFocusChanged = onFocusChanged,
             onClick = { onOpen(request) },
-            cellModifier = if (request.id == restoreRequestId) cellModifier.focusRequester(restoreFocus) else cellModifier,
+            cellModifier = restore.rowModifier(request.id, cellModifier),
         )
     }
 }

@@ -4,26 +4,26 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
-import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
 import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
+import com.binge.designsystem.tv.template.TvMessagePage
+import com.binge.designsystem.tv.template.TvPageAction
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueCounts
@@ -36,6 +36,8 @@ import io.github.scottcooper92.binge.seerr.ui.issues.emptyMessageRes
 import io.github.scottcooper92.binge.seerr.ui.issues.issueAffectedLabel
 import io.github.scottcooper92.binge.seerr.ui.issues.labelRes
 import io.github.scottcooper92.binge.seerr.ui.issues.tone
+import io.github.scottcooper92.binge.seerr.ui.tv.OverlayFocusRestore
+import io.github.scottcooper92.binge.seerr.ui.tv.TV_ROW_ITEM_CAP
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetBody
 import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
@@ -50,6 +52,7 @@ import io.github.scottcooper92.binge.seerr.ui.tv.TvHubLoading
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPosterCard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvRowsFallback
+import io.github.scottcooper92.binge.seerr.ui.tv.rememberOverlayFocusRestore
 import io.github.scottcooper92.binge.seerr.ui.tv.rememberTvTransientEvent
 import io.github.scottcooper92.binge.seerr.ui.tv.tvColor
 import kotlinx.coroutines.flow.Flow
@@ -66,6 +69,7 @@ internal class TvIssuesActions(
     val onDelete: (IssueItem) -> Unit,
     val onSeeAll: (IssueFilter) -> Unit,
     val onRetryLoad: () -> Unit,
+    val onRetryScope: () -> Unit,
 )
 
 /**
@@ -92,37 +96,23 @@ internal fun TvIssuesBoard(
 ) {
     val ready = state as? IssuesUiState.Ready
     val event = rememberTvTransientEvent(events)
-    val restoreFocus = remember { FocusRequester() }
-    // Pinned to the row that opened the sheet or the page, not the open action item or issue id: by the
-    // time either closer requests the return the source it carried is already null, and the requester
-    // must still be attached somewhere.
-    var restoreRowId by rememberSaveable { mutableStateOf<Int?>(null) }
-    val closer = rememberTvOverlayCloser(restoreTo = restoreFocus, onClose = actions.onDismissActions)
-    // The row whose see-all tile opened the grid, so focus returns to that tile when the grid closes.
-    var restoreSeeAllKey by rememberSaveable { mutableStateOf<String?>(null) }
-    val overlayOpen = openIssueId != null || seeAllOpen
-    LaunchedEffect(overlayOpen) {
-        if (!overlayOpen && (restoreRowId != null || restoreSeeAllKey != null)) restoreTvOverlayFocus(restoreFocus)
-    }
+    val restore = rememberOverlayFocusRestore(overlayOpen = openIssueId != null || seeAllOpen)
+    val closer = rememberTvOverlayCloser(restoreTo = restore.requester, onClose = actions.onDismissActions)
     Box(modifier = modifier.fillMaxSize()) {
         if (ready == null) {
-            TvHubLoading()
+            TvIssuesUnresolved(state, actions)
         } else {
             TvIssuesRows(
                 ready = ready,
                 rowsFor = rowsFor,
                 actions = actions,
-                restoreRowId = restoreRowId,
-                restoreSeeAllKey = restoreSeeAllKey,
-                restoreFocus = restoreFocus,
+                restore = restore,
                 onSeeAll = { filter ->
-                    restoreSeeAllKey = filter.name
-                    restoreRowId = null
+                    restore.leavingFromSeeAll(filter.name)
                     actions.onSeeAll(filter)
                 },
                 onSelect = { item ->
-                    restoreRowId = item.id
-                    restoreSeeAllKey = null
+                    restore.leavingFromRow(item.id)
                     if (item.canBeActedOn(ready.scope)) actions.onOpenActions(item) else actions.onOpenDetail(item)
                 },
                 now = now,
@@ -168,9 +158,25 @@ internal fun TvIssuesBoard(
     }
 }
 
+/** What the board shows before the issues are known: the loading page, or that they could not be read, with a retry. */
+@Composable
+private fun TvIssuesUnresolved(
+    state: IssuesUiState,
+    actions: TvIssuesActions,
+) {
+    if (state !is IssuesUiState.Error) {
+        TvHubLoading()
+        return
+    }
+    TvMessagePage(
+        body = stringResource(R.string.tv_list_load_failed),
+        icon = Icons.Filled.Warning,
+        primary = TvPageAction(stringResource(R.string.hub_retry), actions.onRetryScope),
+    )
+}
+
 /** The filters that get a row; "All" would only repeat the others. */
 internal val IssueRowFilters = IssueFilter.entries.filter { it != IssueFilter.All }
-private const val ROW_ITEM_CAP = 20
 
 /** The issues as the design system's immersive hub: a row of posters per filter over a backdrop describing the focused issue. */
 @Composable
@@ -178,9 +184,7 @@ private fun TvIssuesRows(
     ready: IssuesUiState.Ready,
     rowsFor: (IssueFilter) -> TvPagedRows<IssueItem>,
     actions: TvIssuesActions,
-    restoreRowId: Int?,
-    restoreSeeAllKey: String?,
-    restoreFocus: FocusRequester,
+    restore: OverlayFocusRestore,
     onSeeAll: (IssueFilter) -> Unit,
     onSelect: (IssueItem) -> Unit,
     now: Long,
@@ -199,8 +203,8 @@ private fun TvIssuesRows(
             TvHubRow(
                 key = filter.name,
                 title = filterLabel(filter, ready.counts),
-                items = (0 until minOf(rows.count, ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
-                onSeeAll = { onSeeAll(filter) }.takeIf { (ready.counts?.countFor(filter) ?: rows.count) > ROW_ITEM_CAP },
+                items = (0 until minOf(rows.count, TV_ROW_ITEM_CAP)).mapNotNull { rows.at(it) },
+                onSeeAll = { onSeeAll(filter) }.takeIf { (ready.counts?.countFor(filter) ?: rows.count) > TV_ROW_ITEM_CAP },
             )
         }
     TvImmersiveHub(
@@ -209,7 +213,7 @@ private fun TvIssuesRows(
         cardWidth = dimensionResource(TvR.dimen.tv_immersive_card_width),
         onItemClick = onSelect,
         seeAllLabel = stringResource(R.string.tv_see_all),
-        seeAllModifier = { key -> if (key == restoreSeeAllKey) Modifier.focusRequester(restoreFocus) else Modifier },
+        seeAllModifier = restore::seeAllModifier,
         artwork = { item -> TvBackdropArtwork(item.backdropUrl, item.posterUrl) },
         copy = { item -> TvIssueCopy(item, now) },
     ) { item, isFocused, onFocusChanged, onClick, cellModifier ->
@@ -220,7 +224,7 @@ private fun TvIssuesRows(
             onFocusChanged = onFocusChanged,
             enabled = item.id !in ready.actingIds,
             onClick = onClick,
-            modifier = if (item.id == restoreRowId) cellModifier.focusRequester(restoreFocus) else cellModifier,
+            modifier = restore.rowModifier(item.id, cellModifier),
         )
     }
 }

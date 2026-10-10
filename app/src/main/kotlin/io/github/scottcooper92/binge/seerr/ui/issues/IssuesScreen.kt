@@ -19,6 +19,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.template.FilteredListScreen
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SortSheet
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,7 @@ class IssuesActions(
     val onFilterChange: (IssueFilter) -> Unit,
     val onSortChange: (IssueSort) -> Unit,
     val onOpen: (IssueItem) -> Unit,
+    val onRetryLoad: () -> Unit,
 )
 
 /**
@@ -64,7 +66,13 @@ fun IssuesScreen(
                 }
             }
         },
-        notReady = { padding -> LoadingScreen(Modifier.fillMaxSize().padding(padding)) },
+        notReady = { padding ->
+            when (state) {
+                is IssuesUiState.Error ->
+                    ErrorScreen(error = state.error, modifier = Modifier.padding(padding), onRetry = actions.onRetryLoad)
+                else -> LoadingScreen(Modifier.fillMaxSize().padding(padding))
+            }
+        },
     ) { page, contentPadding ->
         // Its own filter, never the selected one: the pager composes a page while it is swiped into view,
         // and keeps the pages either side of the selected one composed.

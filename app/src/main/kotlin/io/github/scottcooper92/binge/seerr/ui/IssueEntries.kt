@@ -42,6 +42,7 @@ internal fun IssuesEntry(
                 onFilterChange = viewModel::setFilter,
                 onSortChange = viewModel::setSort,
                 onOpen = { item -> onOpen(item.id) },
+                onRetryLoad = viewModel::retry,
             ),
     )
 }

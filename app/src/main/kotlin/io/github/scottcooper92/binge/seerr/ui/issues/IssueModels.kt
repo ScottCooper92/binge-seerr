@@ -91,6 +91,11 @@ sealed interface IssuesUiState {
         /** Each filter's latest finished network refresh; a filter is missing while its refresh runs. */
         val refreshes: Map<IssueFilter, ListRefresh> = emptyMap(),
     ) : IssuesUiState
+
+    /** The signed-in user could not be read, so who the list is for is unknown. */
+    data class Error(
+        val error: SeerrError,
+    ) : IssuesUiState
 }
 
 /** One-shot feedback for an action taken on an issue from its row. */
