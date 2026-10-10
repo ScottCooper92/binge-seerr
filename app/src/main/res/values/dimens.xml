@@ -60,16 +60,8 @@
     <!-- A job row's action slot: a button, a spinner and an outcome icon all sit in the same box,
          fixed so the row never changes height across the three. -->
     <dimen name="server_settings_job_action_size">48dp</dimen>
-    <!-- The consent screen, after Binge's analytics step. -->
-    <dimen name="consent_content_max_width">600dp</dimen>
-    <dimen name="consent_hero_size">92dp</dimen>
-    <dimen name="consent_hero_icon_size">44dp</dimen>
-    <dimen name="consent_hero_badge_size">34dp</dimen>
-    <dimen name="consent_hero_badge_icon_size">16dp</dimen>
     <dimen name="log_row_severity_stripe_width">4dp</dimen>
     <dimen name="log_row_level_icon_size">16dp</dimen>
-    <dimen name="consent_point_icon_size">40dp</dimen>
-    <dimen name="consent_landscape_points_top">48dp</dimen>
     <dimen name="tv_consent_band_spacing">30dp</dimen>
     <dimen name="tv_consent_heading_gap">10dp</dimen>
     <dimen name="tv_consent_copy_gap">18dp</dimen>
