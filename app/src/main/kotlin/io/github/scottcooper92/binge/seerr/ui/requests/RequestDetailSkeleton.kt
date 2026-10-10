@@ -35,11 +35,11 @@ import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.state.ChipSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
+import io.github.scottcooper92.binge.seerr.ui.state.StatusChipSkeleton
 import com.binge.designsystem.R as DesR
 
 private const val HERO_TITLE_FRACTION = 0.7f
 private const val HERO_META_FRACTION = 0.35f
-private const val HEADLINE_CHIP_COUNT = 2
 private const val OVERVIEW_LINE_COUNT = 3
 private const val OVERVIEW_LAST_LINE_FRACTION = 0.6f
 
@@ -132,7 +132,9 @@ private fun HeroSkeleton(modifier: Modifier = Modifier) {
 private fun HeadlineSkeleton(modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            repeat(HEADLINE_CHIP_COUNT) { ChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width)) }
+            // The real headline is the request's state, then a tag (4K): a status chip and a tag.
+            StatusChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
+            ChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
         }
         repeat(OVERVIEW_LINE_COUNT) { index ->
             SkeletonPlate(
@@ -163,7 +165,7 @@ private fun RequestCardSkeleton(modifier: Modifier = Modifier) {
                         .height(lineHeightOf(MaterialTheme.typography.titleLarge)),
                 )
             }
-            ChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
+            StatusChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(cardRowPadding()),
