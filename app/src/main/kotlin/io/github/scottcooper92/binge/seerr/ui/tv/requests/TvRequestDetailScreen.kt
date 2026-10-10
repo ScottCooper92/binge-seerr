@@ -85,6 +85,8 @@ internal fun TvRequestDetailScreen(
     events: Flow<ModerationEvent>,
     actions: TvRequestDetailActions,
     modifier: Modifier = Modifier,
+    /** The sheet open on arrival, for a frame: a static render cannot press the button that opens one. Production passes null. */
+    initialSheet: DetailSheet? = null,
 ) {
     BackHandler(onBack = actions.onBack)
     // A removed request has no page to stay on.
@@ -104,7 +106,14 @@ internal fun TvRequestDetailScreen(
             }
             is RequestDetailUiState.Error -> TvSeerrErrorPage(state.error, actions.onRetry)
             is RequestDetailUiState.Ready ->
-                TvRequestDetailContent(detail = state.detail, report = state.report, now = state.now, events = events, given = actions)
+                TvRequestDetailContent(
+                    detail = state.detail,
+                    report = state.report,
+                    now = state.now,
+                    events = events,
+                    given = actions,
+                    initialSheet = initialSheet,
+                )
         }
     }
 }
@@ -125,6 +134,7 @@ private fun TvRequestDetailContent(
     now: Long,
     events: Flow<ModerationEvent>,
     given: TvRequestDetailActions,
+    initialSheet: DetailSheet?,
 ) {
     // An approve, a decline, a retry or a block that lands reloads the page without its own button, and the focus that
     // button held would go with it to nowhere the D-pad can reach. Each marks the row to be focused again when the page's
@@ -133,7 +143,7 @@ private fun TvRequestDetailContent(
     val actions = remember(given) { given.markingRefocus { refocusRow = true } }
     // The two actions that cannot be undone take a confirm, and Mark as and Report open their own sheets; the rest run at
     // once, since a decline keeps the request.
-    var sheet by rememberSaveable { mutableStateOf<DetailSheet?>(null) }
+    var sheet by rememberSaveable { mutableStateOf(initialSheet) }
     val sheetFocus = remember { DetailSheet.entries.associateWith { FocusRequester() } }
     val closers =
         DetailSheet.entries.associateWith {

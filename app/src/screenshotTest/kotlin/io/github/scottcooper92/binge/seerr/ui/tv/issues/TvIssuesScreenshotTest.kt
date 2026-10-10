@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueFilter
+import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.NoIssuesActions
@@ -100,4 +101,51 @@ class TvIssuesScreenshotTest {
             actions = NoIssuesActions,
         )
     }
+
+    /** A resolved issue's sheet (#1053): its first action reopens it. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ResolvedSheet() {
+        TvIssuesBoard(
+            state = issuesReady(actionItem = FixedSampleIssues[1]),
+            rowsFor = { filter -> if (filter == IssueFilter.Resolved) rows(listOf(FixedSampleIssues[1])) else rows(emptyList()) },
+            events = emptyFlow(),
+            actions = NoIssuesActions,
+            now = FIXED_NOW_MILLIS,
+        )
+    }
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ResolveConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Resolve)
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ReopenConfirm() = ConfirmFrame(FixedSampleIssues[1], TvIssueConfirm.Reopen)
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun DeleteConfirm() = ConfirmFrame(FixedSampleIssues[0], TvIssueConfirm.Delete)
+}
+
+/** The sheet on one of its confirm steps, alone: the board behind it is framed by [TvIssuesScreenshotTest.Sheet]. */
+@Composable
+private fun ConfirmFrame(
+    item: IssueItem,
+    confirm: TvIssueConfirm,
+) {
+    TvIssueActionsSheet(
+        item = item,
+        canDelete = true,
+        onResolve = {},
+        onReopen = {},
+        onDelete = {},
+        onOpenDetail = {},
+        onDismiss = {},
+        initialConfirm = confirm,
+    )
 }

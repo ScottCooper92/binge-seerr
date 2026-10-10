@@ -219,4 +219,30 @@ class TvRequestDetailScreenshotTest {
             actions = actions(onOpenInBinge = {}),
         )
     }
+
+    /** Remove asks first (#1053): what it does, then Remove and Cancel, over the page. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun RemoveConfirm() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(filmDetail().copy(actions = RequestActions(canRemove = true, canBlock = true))),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialSheet = DetailSheet.Remove,
+        )
+    }
+
+    /** Block asks first too: the title will not be requested again. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun BlockConfirm() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(filmDetail().copy(actions = RequestActions(canRemove = true, canBlock = true))),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialSheet = DetailSheet.Block,
+        )
+    }
 }
