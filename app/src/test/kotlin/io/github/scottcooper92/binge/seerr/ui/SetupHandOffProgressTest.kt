@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 
-/** What the phone's page hears about an address that waits on the TV's plain-HTTP opt-in (#907). */
+/** What the phone's page hears about an address that waits on the TV: its plain-HTTP opt-in (#907), or its user going on (#1084). */
 class SetupHandOffProgressTest {
     private val publicHttp =
         SetupUiState.Address(serverUrl = "http://example.com:5055", insecure = true, isInspecting = false, error = null, received = true)
@@ -20,15 +20,25 @@ class SetupHandOffProgressTest {
     }
 
     @Test
-    fun `once the user agrees, or for a typed address, nothing waits on the TV`() {
+    fun `a typed address, or one being read, waits on nothing on the TV`() {
         assertEquals(
             HandOffProgress.Waiting,
-            publicHttp.copy(cleartextAllowed = true).toHandOffProgress(received = true, failed = false, attempts = 0),
+            publicHttp.copy(received = false, cleartextAllowed = true).toHandOffProgress(received = false, failed = false, attempts = 0),
         )
         assertFalse(publicHttp.copy(received = false).awaitingCleartextConsent)
         assertEquals(
             HandOffProgress.Checking,
             publicHttp.copy(isInspecting = true).toHandOffProgress(received = true, failed = false, attempts = 0),
         )
+    }
+
+    /** #1084: any address a phone sent waits for the TV's user, not only a plain-HTTP one. */
+    @Test
+    fun `a received address waits on the TV until it is read, and a failed one offers the form again`() {
+        val lan = publicHttp.copy(serverUrl = "http://192.168.1.10:5055", insecure = false)
+        assertEquals(HandOffProgress.ConfirmOnTv, lan.toHandOffProgress(received = true, failed = false, attempts = 0))
+        val failed = lan.copy(error = SetupError.Unreachable)
+        assertFalse(failed.awaitingConfirm)
+        assertEquals(HandOffProgress.Failed, failed.toHandOffProgress(received = true, failed = true, attempts = 0))
     }
 }

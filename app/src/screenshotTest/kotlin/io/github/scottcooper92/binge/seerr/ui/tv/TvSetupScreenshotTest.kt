@@ -52,6 +52,17 @@ class TvSetupScreenshotTest {
             offerHandOff = true,
         )
 
+    /** #1084: any address a phone sent waits for the TV's user, landed on Continue, with a note saying where it came from. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressFromPhoneAwaitingConfirm() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://192.168.1.10:5055").copy(received = true),
+            actions = NoSetupActions,
+            offerHandOff = true,
+        )
+
     /** The same in Spanish, whose warning runs longest: it has to fit above the button bar without moving the field. */
     @PreviewTest
     @SeerrTvSpanishScreenPreviews
@@ -95,6 +106,17 @@ class TvSetupScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun signInJellyfin() = TvSetupScreen(state = setupSignIn(), actions = NoSetupActions, initialFocus = TvSetupFocus.Credential)
+
+    /** A local account on a server that mails resets: Forgot password? sits under the fields, the form scrolling to it (#1037). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInLocal() =
+        TvSetupScreen(
+            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com")),
+            actions = NoSetupActions,
+            initialFocus = TvSetupFocus.Credential,
+        )
 
     /** An API key typed, with Connect focused. */
     @PreviewTest

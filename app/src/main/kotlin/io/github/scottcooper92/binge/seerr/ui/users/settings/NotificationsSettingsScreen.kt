@@ -209,18 +209,15 @@ private fun soundItem(
     draft: NotificationSettings,
     enabled: Boolean,
     onEdit: ((NotificationSettings) -> NotificationSettings) -> Unit,
-): ListItem {
-    val current = draft.field(AgentField.PushoverSound)
-    val listed = draft.pushoverSounds.map { it.name to it.description }
-    val kept = listOf(current to current).filter { (name, _) -> name.isNotBlank() && listed.none { it.first == name } }
-    return choiceSettingItem(
+): ListItem =
+    defaultFirstChoiceItem(
         icon = Icons.Filled.MusicNote,
         title = stringResource(AgentField.PushoverSound.labelRes()),
-        choices = listOf("" to stringResource(R.string.user_settings_pushover_sound_default)) + kept + listed,
-        selected = current,
+        default = stringResource(R.string.user_settings_pushover_sound_default),
+        current = draft.field(AgentField.PushoverSound),
+        listed = draft.pushoverSounds.map { it.name to it.description },
         enabled = enabled,
     ) { name -> onEdit { it.set(AgentField.PushoverSound, name) } }
-}
 
 /** The events [agent] is sent, as the web client's checklist: the request ones, then the issue ones. */
 @Composable

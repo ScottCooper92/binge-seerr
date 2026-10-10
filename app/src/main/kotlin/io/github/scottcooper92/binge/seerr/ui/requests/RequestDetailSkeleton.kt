@@ -30,9 +30,9 @@ import com.binge.designsystem.layout.layoutAnchor
 import com.binge.designsystem.resolvedContentInset
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.theme.BingeShapes
-import com.binge.designsystem.theme.labelSmallEmphasis
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
+import io.github.scottcooper92.binge.seerr.ui.state.ChipSkeleton
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.SkeletonPlate
 import com.binge.designsystem.R as DesR
@@ -132,7 +132,7 @@ private fun HeroSkeleton(modifier: Modifier = Modifier) {
 private fun HeadlineSkeleton(modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
         Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            repeat(HEADLINE_CHIP_COUNT) { ChipSkeleton() }
+            repeat(HEADLINE_CHIP_COUNT) { ChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width)) }
         }
         repeat(OVERVIEW_LINE_COUNT) { index ->
             SkeletonPlate(
@@ -142,17 +142,6 @@ private fun HeadlineSkeleton(modifier: Modifier = Modifier) {
             )
         }
     }
-}
-
-/** [com.binge.designsystem.component.BingeTag]'s own height and corner, on a plausible fixed width — the real tag sizes to its label. */
-@Composable
-private fun ChipSkeleton(modifier: Modifier = Modifier) {
-    SkeletonPlate(
-        modifier
-            .width(dimensionResource(R.dimen.request_skeleton_chip_width))
-            .height(lineHeightOf(MaterialTheme.typography.labelSmallEmphasis) + dimensionResource(DesR.dimen.tag_padding_v) * 2),
-        shape = BingeShapes.Tag,
-    )
 }
 
 /**
@@ -174,7 +163,7 @@ private fun RequestCardSkeleton(modifier: Modifier = Modifier) {
                         .height(lineHeightOf(MaterialTheme.typography.titleLarge)),
                 )
             }
-            ChipSkeleton()
+            ChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(cardRowPadding()),

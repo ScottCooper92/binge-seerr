@@ -46,6 +46,8 @@ internal fun PermissionsEditorSheet(
             onSave = onSave,
             locked = locked,
             note = if (edit.mixed.isEmpty()) null else stringResource(R.string.users_edit_permissions_mixed),
+            mixed = edit.mixed,
+            undecided = edit.undecided,
         )
     }
 }
@@ -63,6 +65,9 @@ internal fun PermissionsEditorContent(
     locked: Set<ManageablePermission> = emptySet(),
     /** A line under the title, such as how a bulk edit treats permissions the selection doesn't share. */
     note: String? = null,
+    /** A bulk edit's permissions only some selected users hold, and those of them still left as each user has them. */
+    mixed: Set<ManageablePermission> = emptySet(),
+    undecided: Set<ManageablePermission> = emptySet(),
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -93,10 +98,11 @@ internal fun PermissionsEditorContent(
                             .padding(bottom = dimensionResource(DesR.dimen.padding_m)),
                 )
             }
-            permissionTree(offered, selected).forEach { (group, nodes) ->
+            // A permission someone selected holds keeps its row through the whole cycle, even one the tree hides by default.
+            permissionTree(offered, selected + mixed).forEach { (group, nodes) ->
                 EditorToggleGroup(
                     stringResource(group.labelRes()),
-                    permissionRows(nodes, selected, saving, locked, onToggle),
+                    permissionRows(nodes, selected, saving, locked, onToggle, undecided),
                     modifier =
                         Modifier
                             .padding(horizontal = dimensionResource(DesR.dimen.padding_m))

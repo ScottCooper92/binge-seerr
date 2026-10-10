@@ -22,6 +22,27 @@ import kotlinx.serialization.json.JsonObject
 /** The web client reads the whole user list to know who is imported; this asks for it in one page. */
 private const val ALL_USERS_TAKE = 1000
 
+/** What a screen may ask of a [UserAdmission]: its actions, and none of its flows (#1048). */
+interface UserAdmissionControls {
+    fun start()
+
+    fun cancel()
+
+    fun startCreate(canGeneratePassword: Boolean)
+
+    fun editDraft(transform: (CreateUserDraft) -> CreateUserDraft)
+
+    fun create()
+
+    fun startImport(source: UserOrigin)
+
+    fun toggleCandidate(id: String)
+
+    fun selectAllCandidates(select: Boolean)
+
+    fun import()
+}
+
 /**
  * Adding users: a local account, or an import of the media server's accounts. The plex.tv list
  * arrives already filtered to the unknown; the Jellyfin one does not, so it is filtered here
@@ -37,29 +58,29 @@ class UserAdmission(
     /** Where this reports to: the owner's one events flow, so a subscriber to it never misses an admission's event. */
     private val emit: suspend (UsersEvent) -> Unit,
     private val onAdmitted: () -> Unit,
-) {
+) : UserAdmissionControls {
     private val stateFlow = MutableStateFlow<UserAdmissionState?>(null)
     val state: StateFlow<UserAdmissionState?> = stateFlow.asStateFlow()
 
-    fun start() {
+    override fun start() {
         if (stateFlow.value == null) stateFlow.value = UserAdmissionState.Choosing()
     }
 
-    fun cancel() {
+    override fun cancel() {
         if (stateFlow.value?.saving != true) stateFlow.value = null
     }
 
-    fun startCreate(canGeneratePassword: Boolean) {
+    override fun startCreate(canGeneratePassword: Boolean) {
         stateFlow.value = UserAdmissionState.Creating(CreateUserDraft(canGeneratePassword = canGeneratePassword))
     }
 
-    fun editDraft(transform: (CreateUserDraft) -> CreateUserDraft) =
+    override fun editDraft(transform: (CreateUserDraft) -> CreateUserDraft) =
         stateFlow.update { current ->
             val creating = current as? UserAdmissionState.Creating ?: return@update current
             if (creating.saving) creating else creating.copy(draft = transform(creating.draft))
         }
 
-    fun create() {
+    override fun create() {
         val creating = stateFlow.value as? UserAdmissionState.Creating ?: return
         val draft = creating.draft
         if (creating.saving || !draft.valid) return
@@ -84,7 +105,7 @@ class UserAdmission(
         }
     }
 
-    fun startImport(source: UserOrigin) {
+    override fun startImport(source: UserOrigin) {
         stateFlow.value = UserAdmissionState.Importing(ImportPicker(source))
         scope.launch(dispatcher) {
             val candidates =
@@ -112,7 +133,7 @@ class UserAdmission(
         }
     }
 
-    fun toggleCandidate(id: String) =
+    override fun toggleCandidate(id: String) =
         stateFlow.update { current ->
             val importing = current as? UserAdmissionState.Importing ?: return@update current
             if (importing.saving) return@update current
@@ -120,7 +141,7 @@ class UserAdmission(
             importing.copy(picker = importing.picker.copy(selected = if (id in selected) selected - id else selected + id))
         }
 
-    fun selectAllCandidates(select: Boolean) =
+    override fun selectAllCandidates(select: Boolean) =
         stateFlow.update { current ->
             val importing = current as? UserAdmissionState.Importing ?: return@update current
             if (importing.saving) return@update current
@@ -131,7 +152,7 @@ class UserAdmission(
             importing.copy(picker = importing.picker.copy(selected = if (select) all else emptySet()))
         }
 
-    fun import() {
+    override fun import() {
         val importing = stateFlow.value as? UserAdmissionState.Importing ?: return
         val ids = importing.picker.selected.toList()
         if (importing.saving || ids.isEmpty()) return

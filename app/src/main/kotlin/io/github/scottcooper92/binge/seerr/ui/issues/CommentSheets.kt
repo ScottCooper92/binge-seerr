@@ -1,31 +1,22 @@
 package io.github.scottcooper92.binge.seerr.ui.issues
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.TextEntrySurface
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.ActionRow
 import com.binge.designsystem.R as DesR
 
 /** The composer: submitting hands the draft over and closes, since the pending row is the feedback. */
@@ -98,8 +89,13 @@ internal fun CommentActionsContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
-        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onEdit)
-        ActionRow(Icons.Filled.Delete, stringResource(R.string.issue_delete_comment), onDelete, tint = MaterialTheme.colorScheme.error)
+        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onClick = onEdit)
+        ActionRow(
+            Icons.Filled.Delete,
+            stringResource(R.string.issue_delete_comment),
+            tint = MaterialTheme.colorScheme.error,
+            onClick = onDelete,
+        )
     }
 }
 
@@ -131,9 +127,14 @@ internal fun OutboxActionsContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
-        if (retryable) ActionRow(Icons.Filled.Refresh, stringResource(R.string.issue_comment_retry), onRetry)
-        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onEdit)
-        ActionRow(Icons.Filled.Delete, stringResource(R.string.issue_comment_discard), onDrop, tint = MaterialTheme.colorScheme.error)
+        if (retryable) ActionRow(Icons.Filled.Refresh, stringResource(R.string.issue_comment_retry), onClick = onRetry)
+        ActionRow(Icons.Filled.Edit, stringResource(R.string.issue_edit_comment), onClick = onEdit)
+        ActionRow(
+            Icons.Filled.Delete,
+            stringResource(R.string.issue_comment_discard),
+            tint = MaterialTheme.colorScheme.error,
+            onClick = onDrop,
+        )
     }
 }
 
@@ -150,26 +151,4 @@ internal fun DeleteCommentDialog(
         onConfirm = onConfirm,
         onDismiss = onDismiss,
     )
-}
-
-@Composable
-private fun ActionRow(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    tint: Color = MaterialTheme.colorScheme.onSurface,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .clickable(onClick = onClick)
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m), vertical = dimensionResource(DesR.dimen.padding_s)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Icon(icon, contentDescription = null, tint = tint)
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = tint)
-    }
 }

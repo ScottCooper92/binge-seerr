@@ -21,6 +21,7 @@ import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.NotificationType
 import io.github.scottcooper92.binge.seerr.ui.users.settings.choiceSettingItem
+import io.github.scottcooper92.binge.seerr.ui.users.settings.defaultFirstChoiceItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorToggle
 import io.github.scottcooper92.binge.seerr.ui.users.settings.labelRes
 import io.github.scottcooper92.binge.seerr.ui.users.settings.textSettingItem
@@ -135,15 +136,25 @@ private fun optionItem(
                 enabled = editable,
                 onSelect = actions.onSetEncryption,
             )
-        option == AgentOption.PushoverSound && extras.sounds.isNotEmpty() ->
-            choiceSettingItem(
+        option == AgentOption.PushoverSound ->
+            defaultFirstChoiceItem(
                 icon = Icons.Filled.Tune,
                 title = label,
-                choices = extras.sounds.map { it.name to it.description },
-                choiceIcon = { Icons.Filled.MusicNote },
-                selected = draft.option(option).takeIf { it.isNotEmpty() },
+                default = stringResource(R.string.user_settings_pushover_sound_default),
+                current = draft.option(option),
+                listed = extras.sounds.map { it.name to it.description },
                 enabled = editable,
+                choiceIcon = { Icons.Filled.MusicNote },
             ) { name -> actions.onSetOption(option, name) }
+        option == AgentOption.NtfyPriority ->
+            defaultFirstChoiceItem(
+                icon = Icons.Filled.Tune,
+                title = label,
+                default = stringResource(R.string.server_settings_agent_priority_unset),
+                current = draft.option(option),
+                listed = NtfyPriorityLevel.entries.map { it.value to stringResource(it.labelRes()) },
+                enabled = editable,
+            ) { level -> actions.onSetOption(option, level) }
         option.kind == OptionKind.Switch ->
             editorToggle(Icons.Filled.Tune, label, draft.switched(option), enabled) { on -> actions.onSetOption(option, on.toString()) }
         else -> textOptionItem(option, label, draft, editable, actions)

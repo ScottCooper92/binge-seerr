@@ -54,17 +54,17 @@ internal fun TvSetupScreen(
     initialFocus: TvSetupFocus? = null,
     offerHandOff: Boolean = false,
 ) {
-    // An address from a phone that needs the plain-HTTP opt-in waits on this screen's form, not the code page (#907).
-    val awaitingConsent = (state as? SetupUiState.Address)?.awaitingCleartextConsent == true
+    // An address from a phone waits on this screen's form for the user to go on, not on the code page (#907, #1084).
+    val awaitingTv = (state as? SetupUiState.Address)?.let { it.awaitingConfirm || it.awaitingCleartextConsent } == true
     // The phone does the setup; typing with the remote is the fallback, chosen on purpose and left on purpose.
-    var manual by rememberSaveable { mutableStateOf(!offerHandOff || awaitingConsent) }
+    var manual by rememberSaveable { mutableStateOf(!offerHandOff || awaitingTv) }
     val scanInstead = {
         manual = false
         actions.onStartHandOff()
     }
     // Back from the fallback goes back to the code, as "Scan a QR" does, rather than out of the app.
     val typing = manual && offerHandOff && (state is SetupUiState.Address || state is SetupUiState.SignIn && state.link == null)
-    LaunchedEffect(awaitingConsent) { if (awaitingConsent) manual = true }
+    LaunchedEffect(awaitingTv) { if (awaitingTv) manual = true }
     BackHandler(enabled = typing) {
         if (state is SetupUiState.Address) scanInstead() else manual = false
     }
@@ -165,9 +165,25 @@ private fun TvSetupSignInStep(
                 // Where the page lands: the first thing to choose is how to sign in.
                 arrival = arrival,
             )
-            TvModeFields(state.form, state.server, actions.onEditForm, initialFocus == TvSetupFocus.Credential, onDone = actions.onConnect)
+            TvModeFields(
+                form = state.form,
+                server = state.server,
+                onEdit = actions.onEditForm,
+                credentialFocused = initialFocus == TvSetupFocus.Credential,
+                onDone = actions.onConnect,
+            )
             state.error?.let { error -> TvFormNote(stringResource(error.messageRes()), tone = TvFormNoteTone.Error) }
             state.notice?.let { notice -> TvFormNote(stringResource(notice.messageRes()), tone = notice.tone) }
+            // As on the phone: the server mails the reset link, so it is offered only where it can (#1037). Below the
+            // notes, so a rejected password reads straight under the field it is about.
+            if (state.form.mode == SeerrSignInMode.Local && state.server.canResetPassword) {
+                TvButton(
+                    label = stringResource(R.string.setup_forgot_password),
+                    onClick = actions.onRequestPasswordReset,
+                    style = TvButtonStyle.Secondary,
+                    enabled = state.form.canRequestReset && !state.isConnecting,
+                )
+            }
         }
     }
 }

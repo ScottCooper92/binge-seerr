@@ -192,6 +192,20 @@ enum class EmailEncryption(
 }
 
 /**
+ * ntfy's five priority levels, by the number the server stores. Blank is not one of them: it sends at the default,
+ * which is [Default]'s number, so the page offers it as a sixth entry that leaves the setting unset.
+ */
+enum class NtfyPriorityLevel(
+    val value: String,
+) {
+    Min("1"),
+    Low("2"),
+    Default("3"),
+    High("4"),
+    Max("5"),
+}
+
+/**
  * One agent's form: on or off, the events it is sent, and its options as typed. [raw] is the
  * option object the server sent, so a key this form does not show goes back unchanged.
  */

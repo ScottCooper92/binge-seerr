@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
@@ -61,6 +62,7 @@ class TvSetupFocusTest {
     private var cancelledLink = 0
     private var startedHandOff = 0
     private var cancelledHandOff = 0
+    private var resetRequests = 0
 
     private val actions =
         SetupActions(
@@ -71,7 +73,7 @@ class TvSetupFocusTest {
             onConnect = { connected++ },
             onPlexLaunched = {},
             onCancelLink = { cancelledLink++ },
-            onRequestPasswordReset = {},
+            onRequestPasswordReset = { resetRequests++ },
             onStartHandOff = { startedHandOff++ },
             onCancelHandOff = { cancelledHandOff++ },
         )
@@ -115,6 +117,20 @@ class TvSetupFocusTest {
 
         composeTestRule.onNodeWithText(string(R.string.setup_allow_cleartext)).assertIsFocused()
         composeTestRule.onNodeWithText(string(R.string.tv_setup_status_waiting)).assertDoesNotExist()
+    }
+
+    /** #1084: any address a phone sent waits for the TV's user, so the page lands on Continue with the address in view. */
+    @Test
+    fun anAddressFromAPhoneLandsOnContinueAndOkReadsIt() {
+        val code = AddressHandOff.Listening("http://192.168.1.20:41234/a/k7m2pqx4")
+        setScreen(address("http://192.168.1.10:5055").copy(received = true, code = code), offerHandOff = true)
+
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_confirm_sent_address)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.tv_setup_status_waiting)).assertDoesNotExist()
+        continueButton().assertIsFocused()
+        pressOk()
+
+        assertEquals(1, inspected)
     }
 
     /** The typed form is a detour from the code, so Back returns to the code rather than leaving the app. */
@@ -337,6 +353,55 @@ class TvSetupFocusTest {
         assertEquals(1, connected)
     }
 
+    /** A server that can mail a reset link offers it under the password, as the phone does (#1037). */
+    @Test
+    fun aLocalSignInOffersForgotPasswordUnderThePasswordAndOkRequestsIt() {
+        setScreen(
+            signIn(
+                modes = listOf(SeerrSignInMode.Local),
+                form = SignInForm(mode = SeerrSignInMode.Local, email = "a@example.com"),
+                canResetPassword = true,
+            ),
+        )
+
+        modeRow(R.string.setup_mode_local).assertIsFocused()
+        pressDown()
+        field(R.string.setup_email).assertIsFocused()
+        pressDown()
+        field(R.string.setup_password).assertIsFocused()
+        pressDown()
+        button(R.string.setup_forgot_password).assertIsFocused()
+        pressOk()
+
+        assertEquals(1, resetRequests)
+    }
+
+    @Test
+    fun forgotPasswordWithoutAnEmailIsInert() {
+        setScreen(
+            signIn(
+                modes = listOf(SeerrSignInMode.Local),
+                form = SignInForm(mode = SeerrSignInMode.Local),
+                canResetPassword = true,
+            ),
+        )
+
+        pressDown()
+        pressDown()
+        pressDown()
+        button(R.string.setup_forgot_password).assertIsFocused()
+        pressOk()
+
+        assertEquals(0, resetRequests)
+    }
+
+    @Test
+    fun aServerThatCannotMailAResetOffersNone() {
+        setScreen(signIn(modes = listOf(SeerrSignInMode.Local)))
+
+        composeTestRule.onAllNodes(hasText(string(R.string.setup_forgot_password))).assertCountEquals(0)
+    }
+
     /** Tabs select on focus, as they do on a television: moving onto one is choosing it. */
     @Test
     fun movingAcrossTheTabsChangesTheMode() {
@@ -470,6 +535,7 @@ class TvSetupFocusTest {
         modes: List<SeerrSignInMode>,
         form: SignInForm = SignInForm(mode = modes.first()),
         link: LinkFlow? = null,
+        canResetPassword: Boolean = false,
     ) = SetupUiState.SignIn(
         server =
             SetupServer(
@@ -479,7 +545,7 @@ class TvSetupFocusTest {
                 versionLabel = "2.7.2",
                 mediaServerName = null,
                 modes = modes,
-                canResetPassword = false,
+                canResetPassword = canResetPassword,
                 backdropUrl = null,
             ),
         form = form,

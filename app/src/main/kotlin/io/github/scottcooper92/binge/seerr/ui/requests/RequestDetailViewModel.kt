@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -65,7 +66,7 @@ class RequestDetailViewModel
         private val reloadingAfterAction = MutableStateFlow(false)
 
         /** A moderation reloads the page, so the chip and the history show the server's new answer. */
-        val moderation =
+        private val moderator =
             RequestModeration(
                 scope = viewModelScope,
                 dispatcher = dispatcher,
@@ -77,10 +78,21 @@ class RequestDetailViewModel
             )
 
         /** The editor rides the page's state while it is open; it closes itself on the save landing. */
-        val editor = RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderation)
+        private val requestEditor =
+            RequestEditor(scope = viewModelScope, dispatcher = dispatcher, connection = connection, moderation = moderator)
+
+        /**
+         * What the screen may ask of the moderation and the editor: their actions only. Their flows are folded into
+         * [uiState], and the moderation's events are [events] (#1048).
+         */
+        val moderation: RequestModerationControls = moderator
+        val editor: RequestEditorControls = requestEditor
+
+        /** How a moderation or an edit went, for the screen's snackbar. */
+        val events: SharedFlow<ModerationEvent> = moderator.events
 
         val uiState: StateFlow<RequestDetailUiState> =
-            combine(state, editor.state, moderation.actingIds, reloadingAfterAction) { page, edit, acting, reloading ->
+            combine(state, requestEditor.state, moderator.actingIds, reloadingAfterAction) { page, edit, acting, reloading ->
                 (page as? RequestDetailUiState.Ready)?.copy(edit = edit, isActing = requestId in acting || reloading) ?: page
             }.stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
@@ -92,7 +104,7 @@ class RequestDetailViewModel
 
         fun startEdit() {
             val ready = state.value as? RequestDetailUiState.Ready ?: return
-            if (ready.detail.canEdit) editSource?.let(editor::start)
+            if (ready.detail.canEdit) editSource?.let(requestEditor::start)
         }
 
         fun reload() {

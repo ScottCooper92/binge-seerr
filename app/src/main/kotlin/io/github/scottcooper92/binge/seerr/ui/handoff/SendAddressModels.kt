@@ -83,8 +83,9 @@ sealed interface SignInStep {
     data object Waiting : SignInStep
 
     /**
-     * The address is plain HTTP over the internet, and the TV is asking its user whether to connect anyway. [resume] is
-     * the session that went with the address, which the TV signs in with once it is answered.
+     * The TV holds the address and is asking its user whether to go on (#1084), or whether to connect anyway when the
+     * address is plain HTTP over the internet (#907). [resume] is the session that went with the address, which the TV
+     * signs in with once it is answered.
      */
     data class ConfirmOnTv(
         val resume: Session? = null,

@@ -82,6 +82,47 @@ sealed interface ModerationEvent {
 }
 
 /**
+ * What a screen may ask of a [RequestModeration]: its actions, and none of its flows. A ViewModel that holds one keeps it
+ * private and exposes this, with the events as its own (#1048), so the one-state, one-events shape is the one a reader sees.
+ */
+interface RequestModerationControls {
+    fun approve(requestId: Int)
+
+    fun retry(requestId: Int)
+
+    fun setMediaStatus(
+        requestId: Int,
+        mediaId: Int,
+        status: MediaStatusChoice,
+        is4k: Boolean,
+        seasonNumbers: List<Int> = emptyList(),
+    )
+
+    fun clearMedia(
+        requestId: Int,
+        mediaId: Int,
+    )
+
+    fun deleteMediaFiles(
+        requestId: Int,
+        mediaId: Int,
+        is4k: Boolean,
+    )
+
+    fun decline(
+        item: RequestItem,
+        blockTitle: Boolean,
+    )
+
+    fun remove(
+        item: RequestItem,
+        blockTitle: Boolean,
+    )
+
+    fun blockTitle(item: RequestItem)
+}
+
+/**
  * The write side of a request: approve, decline, retry, remove, each optionally blocking the
  * title after a decline or removal, and [blockTitle] to block the title on its own. The server
  * keeps a request when a title is blocked, so a block on its own leaves the request as it was. Owns the per-request acting set and the feedback
@@ -96,20 +137,20 @@ class RequestModeration(
     /** The cached list rows, moved with a success so the list agrees before its refresh lands. */
     private val cache: RequestStore = NoRequestStore,
     private val onModerated: () -> Unit,
-) {
+) : RequestModerationControls {
     private val acting = MutableStateFlow<Set<Int>>(emptySet())
     val actingIds: StateFlow<Set<Int>> = acting.asStateFlow()
 
     private val eventFlow = MutableSharedFlow<ModerationEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<ModerationEvent> = eventFlow.asSharedFlow()
 
-    fun approve(requestId: Int) =
+    override fun approve(requestId: Int) =
         moderate(requestId, ModerationEvent.Approved) {
             connection.api().approveRequest(it)
             cache.updateStatus(it, SeerrRequestStatusCode.Approved.raw)
         }
 
-    fun retry(requestId: Int) = moderate(requestId, ModerationEvent.Retried) { connection.api().retryRequest(it) }
+    override fun retry(requestId: Int) = moderate(requestId, ModerationEvent.Retried) { connection.api().retryRequest(it) }
 
     fun edit(
         requestId: Int,
@@ -121,12 +162,12 @@ class RequestModeration(
      * mean here, rather than every season the show has. The server only reads it for
      * [MediaStatusChoice.Available] on a TV title, so it is sent only then.
      */
-    fun setMediaStatus(
+    override fun setMediaStatus(
         requestId: Int,
         mediaId: Int,
         status: MediaStatusChoice,
         is4k: Boolean,
-        seasonNumbers: List<Int> = emptyList(),
+        seasonNumbers: List<Int>,
     ) = moderate(requestId, ModerationEvent.MediaStatusSet) {
         val seasons =
             seasonNumbers.map { SeerrMediaStatusSeasonBody(it) }.takeIf { status == MediaStatusChoice.Available && it.isNotEmpty() }
@@ -134,18 +175,18 @@ class RequestModeration(
     }
 
     /** The server removes every request for the title along with its record, this one included. */
-    fun clearMedia(
+    override fun clearMedia(
         requestId: Int,
         mediaId: Int,
     ) = moderate(requestId, ModerationEvent.MediaCleared) { connection.api().deleteMedia(mediaId) }
 
-    fun deleteMediaFiles(
+    override fun deleteMediaFiles(
         requestId: Int,
         mediaId: Int,
         is4k: Boolean,
     ) = moderate(requestId, ModerationEvent.MediaFilesDeleted) { connection.api().deleteMediaFiles(mediaId, is4k) }
 
-    fun decline(
+    override fun decline(
         item: RequestItem,
         blockTitle: Boolean,
     ) = actThenMaybeBlock(
@@ -159,7 +200,7 @@ class RequestModeration(
         cache.updateStatus(it, SeerrRequestStatusCode.Declined.raw)
     }
 
-    fun remove(
+    override fun remove(
         item: RequestItem,
         blockTitle: Boolean,
     ) = actThenMaybeBlock(
@@ -231,7 +272,7 @@ class RequestModeration(
     }
 
     /** Blocks the title alone, leaving the request as it is; the owner refreshes what it shows on success. */
-    fun blockTitle(item: RequestItem) {
+    override fun blockTitle(item: RequestItem) {
         if (item.id in acting.value) return
         acting.update { it + item.id }
         scope.launch(dispatcher) {

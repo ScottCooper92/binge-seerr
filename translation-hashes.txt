@@ -69,7 +69,7 @@ app:field_secret_hide  ad5caeb74e49
 app:field_secret_show  ff5a856d1a08
 app:handoff_page_app_body  0b96fefd29b5
 app:handoff_page_body  b851c25a5cc6
-app:handoff_page_confirm_body  a63e49bbcc9f
+app:handoff_page_confirm_body  823d58f7f34c
 app:handoff_page_confirm_title  b50ef0d4a141
 app:handoff_page_connected_body  a9be49286e72
 app:handoff_page_connected_title  22965568d22a
@@ -413,7 +413,7 @@ app:send_pin_body  8f0be2072da3
 app:send_pin_label  b92942282245
 app:send_pin_wrong  0a80fb522a2e
 app:send_signin_address  d498da823c43
-app:send_signin_confirm  8965168bfc14
+app:send_signin_confirm  b36b97b9ea5e
 app:send_signin_connected  fa1da6d9b5d6
 app:send_signin_continue_as  8c3ac09ff743
 app:send_signin_continue_as_you  69d7ffc62e45
@@ -473,7 +473,12 @@ app:server_settings_agent_pgp_hint  7f2c4504cf67
 app:server_settings_agent_pgp_password  2fe70fd35184
 app:server_settings_agent_pgp_private_key  d48d2d0edf80
 app:server_settings_agent_priority  d60dbba07922
-app:server_settings_agent_priority_hint  aa72403203e7
+app:server_settings_agent_priority_default  bc618f612d64
+app:server_settings_agent_priority_high  d5ba108bf118
+app:server_settings_agent_priority_low  e7b8214a69ce
+app:server_settings_agent_priority_max  f09680984266
+app:server_settings_agent_priority_min  7e01954283cc
+app:server_settings_agent_priority_unset  a2fbacbb0000
 app:server_settings_agent_profile_name  d3663280e101
 app:server_settings_agent_profile_name_hint  827382aff3aa
 app:server_settings_agent_pushbullet_token_hint  038d29175b87
@@ -989,6 +994,7 @@ app:tv_settings_turn_on  5a1f096a0d8d
 app:tv_setup_checking  86d5ab0a7412
 app:tv_setup_code_body  1a8cb3b1e8d7
 app:tv_setup_code_headline  9ff2a698c5ff
+app:tv_setup_confirm_sent_address  a87882e50962
 app:tv_setup_connecting  72021eb70e91
 app:tv_setup_enter_manually  09730ed28839
 app:tv_setup_headline  ce58388b892d
@@ -1108,8 +1114,9 @@ app:users_create_submit  4759498ac2a7
 app:users_create_title  6384ffa7712c
 app:users_create_username_placeholder  dc92703611d8
 app:users_created  a0a469896eec
+app:users_edit_permission_some_have  96db4840974b
 app:users_edit_permissions  68aa23038fe4
-app:users_edit_permissions_mixed  60c15cea4e67
+app:users_edit_permissions_mixed  f067adc5a53e
 app:users_edit_permissions_save  31e392d1c037
 app:users_edit_permissions_title  8c7a912058f6
 app:users_empty  89c9757b7ee4

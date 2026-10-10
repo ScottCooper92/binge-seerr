@@ -294,7 +294,8 @@
     <string name="users_clear_selection_cd">Clear selection</string>
     <string name="users_edit_permissions">Edit permissions</string>
     <string name="users_edit_permissions_save">Apply</string>
-    <string name="users_edit_permissions_mixed">Permissions only some of these users have start unticked. Each user keeps their own unless you change it.</string>
+    <string name="users_edit_permissions_mixed">A permission only some of these users have says so, and each user keeps their own. Tap it once to turn it on for everyone, again for off, and again to leave it as it was.</string>
+    <string name="users_edit_permission_some_have">Some of these users have this</string>
     <string name="users_add_cd">Add users</string>
     <string name="users_add_create">Create a local user</string>
     <string name="users_add_create_desc">Signs in with an email and password</string>
@@ -847,6 +848,12 @@
     <string name="server_settings_agent_topic">Topic</string>
     <string name="server_settings_agent_tags">Tags</string>
     <string name="server_settings_agent_priority">Priority</string>
+    <string name="server_settings_agent_priority_unset">Not set (ntfy sends at 3)</string>
+    <string name="server_settings_agent_priority_min">Min (1)</string>
+    <string name="server_settings_agent_priority_low">Low (2)</string>
+    <string name="server_settings_agent_priority_default">Default (3)</string>
+    <string name="server_settings_agent_priority_high">High (4)</string>
+    <string name="server_settings_agent_priority_max">Max (5)</string>
     <string name="server_settings_agent_auth_by_password">Sign in with a username and password</string>
     <string name="server_settings_agent_username">Username</string>
     <string name="server_settings_agent_password">Password</string>
@@ -952,6 +959,7 @@
     <!-- The television's hand-off from a phone (#323): the plate with its code, and the page it serves. -->
     <string name="tv_setup_send_from_phone">Scan a QR</string>
     <string name="tv_handoff_body">Use the QR or URL to connect from another device on the same network, or use the Seerr mobile app to sign in with your existing details.</string>
+    <string name="tv_setup_confirm_sent_address">A phone sent this address. Check it is your server, then continue.</string>
     <string name="tv_handoff_code_description">Code to scan with your phone</string>
     <string name="tv_handoff_pin">PIN  %1$s</string>
     <string name="tv_handoff_pin_description">PIN on this TV: %1$s</string>
@@ -971,7 +979,7 @@
     <string name="handoff_page_sent_title">Sent</string>
     <string name="handoff_page_sent_body">Your TV has the address and is checking the server. This page keeps up with it.</string>
     <string name="handoff_page_confirm_title">Confirm on your TV</string>
-    <string name="handoff_page_confirm_body">That address uses plain HTTP over the internet, so your TV is asking whether to connect anyway. Answer on the TV.</string>
+    <string name="handoff_page_confirm_body">Your TV is showing the address you sent, and waits for you to check it. Answer on the TV.</string>
     <string name="handoff_page_pin_title">Enter the PIN on your TV</string>
     <string name="handoff_page_pin_body">Type the 4-digit PIN shown under the code on your TV. It shows this is the TV you are looking at.</string>
     <string name="handoff_page_pin_field">PIN</string>
@@ -1006,7 +1014,7 @@
     <string name="send_signin_continue_as_you">Continue as you</string>
     <string name="send_signin_session">Signing in the TV at %1$s…</string>
     <string name="send_signin_waiting">The TV at %1$s has the address and is checking the server…</string>
-    <string name="send_signin_confirm">That address uses plain HTTP over the internet, so the TV at %1$s is asking whether to connect anyway. Answer on the TV.</string>
+    <string name="send_signin_confirm">The TV at %1$s is showing the address, and waits for you to check it. Answer on the TV.</string>
     <string name="send_signin_form">The TV found %1$s. Sign in here, and the TV is signed in too.</string>
     <string name="send_signin_address">Signing in at %1$s</string>
     <string name="send_signin_sealed">What you type here is encrypted for the TV showing that PIN, then sent over your Wi-Fi. It is not kept on this phone.</string>
@@ -1113,7 +1121,6 @@
     <string name="server_settings_agent_application_token_hint">Register an application with Pushover and use the API token it gives you.</string>
     <string name="server_settings_agent_pushbullet_token_hint">Create a token in your Pushbullet account settings.</string>
     <string name="server_settings_agent_topic_hint">Anyone who knows the topic can read what is sent to it, so pick one that is hard to guess.</string>
-    <string name="server_settings_agent_priority_hint">1 (min) to 5 (max). Blank sends at the default, 3.</string>
     <string name="server_settings_agent_profile_name_hint">Only needed where the server does not use the default profile.</string>
     <string name="settings_group_app">This app</string>
     <string name="settings_report_bug">Report a bug</string>
