@@ -65,10 +65,12 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedAppendState
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestRow
-import io.github.scottcooper92.binge.seerr.ui.state.ActionRow
+import io.github.scottcooper92.binge.seerr.ui.state.ActionSheetGroup
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.ErrorScreen
 import io.github.scottcooper92.binge.seerr.ui.state.OverflowDetailScaffold
+import io.github.scottcooper92.binge.seerr.ui.state.actionItem
+import io.github.scottcooper92.binge.seerr.ui.state.externalItem
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -288,6 +290,26 @@ private fun ProfileHeader(
     }
 }
 
+/** What the user page's overflow offers: their settings, the user on the server, and deleting them where allowed. */
+@Composable
+internal fun UserActionsContent(
+    detail: UserDetail,
+    deleting: Boolean,
+    onOpenSettings: () -> Unit,
+    onOpenWeb: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val settings = actionItem(Icons.Filled.Settings, stringResource(R.string.user_settings_title), onClick = onOpenSettings)
+    val web = externalItem(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, detail.serverName), onOpenWeb)
+    val delete =
+        actionItem(Icons.Filled.Delete, stringResource(R.string.user_delete), destructive = true, enabled = !deleting, onClick = onDelete)
+    ActionSheetGroup(
+        rows = listOfNotNull(settings.takeIf { detail.canEditSettings }, web, delete.takeIf { detail.canDelete }),
+        modifier = modifier,
+    )
+}
+
 /** A carousel of titles; each card opens the title in Binge, or on the server where Binge is not installed. */
 @Composable
 private fun TitleCarousel(
@@ -323,28 +345,19 @@ private fun UserActionsSheet(
     val context = LocalContext.current
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     BingeBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(bottom = dimensionResource(DesR.dimen.padding_l))) {
-            if (detail.canEditSettings) {
-                ActionRow(Icons.Filled.Settings, stringResource(R.string.user_settings_title)) {
-                    onDismiss()
-                    onOpenSettings()
-                }
-            }
-            ActionRow(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_in_named, detail.serverName)) {
+        UserActionsContent(
+            detail = detail,
+            deleting = deleting,
+            onOpenSettings = {
+                onDismiss()
+                onOpenSettings()
+            },
+            onOpenWeb = {
                 onDismiss()
                 context.openInBrowser(detail.webUrl)
-            }
-            if (detail.canDelete) {
-                ActionRow(
-                    Icons.Filled.Delete,
-                    stringResource(R.string.user_delete),
-                    tint = MaterialTheme.colorScheme.error,
-                    enabled = !deleting,
-                ) {
-                    confirmingDelete = true
-                }
-            }
-        }
+            },
+            onDelete = { confirmingDelete = true },
+        )
     }
     if (confirmingDelete) {
         BingeConfirmDialog(

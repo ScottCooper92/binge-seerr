@@ -1,42 +1,57 @@
 package io.github.scottcooper92.binge.seerr.ui.state
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
 import com.binge.designsystem.R as DesR
 
-/** One tappable row of an action sheet: an icon and a label in [tint], at least a touch target tall. */
+/**
+ * A row of an action sheet that does something where it is, so it has no chevron. A [destructive] one takes the error
+ * colour, as the request actions sheet's deletes do, and a row that is not [enabled] is dimmed and inert.
+ */
 @Composable
-internal fun ActionRow(
+internal fun actionItem(
     icon: ImageVector,
     label: String,
-    tint: Color = MaterialTheme.colorScheme.onSurface,
+    destructive: Boolean = false,
     enabled: Boolean = true,
     onClick: () -> Unit,
+): ListItem =
+    ListItem(
+        icon = icon,
+        iconTint = if (destructive) MaterialTheme.colorScheme.error else null,
+        label = label,
+        destination = ListItemDestination.Action,
+        disabled = !enabled,
+        onClick = onClick,
+    )
+
+/** A row that leaves the app for a web page. The design system marks it as leaving, for a screen reader too. */
+internal fun externalItem(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+): ListItem = ListItem(icon = icon, label = label, destination = ListItemDestination.External, onClick = onClick)
+
+/** The body of an action or link sheet: its [rows] as one group, inset as the request actions sheet's are. */
+@Composable
+internal fun ActionSheetGroup(
+    rows: List<ListItem>,
+    modifier: Modifier = Modifier,
+    title: String? = null,
 ) {
-    Row(
+    ItemGroup(
+        title = title,
+        rows = rows,
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .clickable(enabled = enabled, onClick = onClick)
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m), vertical = dimensionResource(DesR.dimen.padding_s)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Icon(icon, contentDescription = null, tint = tint)
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = tint)
-    }
+            modifier
+                .padding(horizontal = dimensionResource(DesR.dimen.padding_m))
+                .padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+    )
 }

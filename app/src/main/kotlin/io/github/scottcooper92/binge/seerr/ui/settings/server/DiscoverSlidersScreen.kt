@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -44,6 +43,8 @@ import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.HintCard
 import io.github.scottcooper92.binge.seerr.R
+import io.github.scottcooper92.binge.seerr.ui.state.ActionSheetGroup
+import io.github.scottcooper92.binge.seerr.ui.state.actionItem
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorPage
@@ -154,9 +155,7 @@ fun DiscoverSlidersScreen(
 
     if (showOverflow) {
         BingeBottomSheet(onDismissRequest = { showOverflow = false }) {
-            SlidersOverflowRow(
-                onClick = { confirmingReset = true },
-            )
+            SlidersOverflowContent(onReset = { confirmingReset = true })
         }
     }
     if (confirmingReset) {
@@ -175,20 +174,22 @@ fun DiscoverSlidersScreen(
 }
 
 @Composable
-private fun SlidersOverflowRow(onClick: () -> Unit) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .clickable(onClick = onClick)
-                .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Icon(Icons.Filled.RestartAlt, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-        Text(stringResource(R.string.server_settings_sliders_reset), color = MaterialTheme.colorScheme.error)
-    }
+internal fun SlidersOverflowContent(
+    onReset: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ActionSheetGroup(
+        rows =
+            listOf(
+                actionItem(
+                    Icons.Filled.RestartAlt,
+                    stringResource(R.string.server_settings_sliders_reset),
+                    destructive = true,
+                    onClick = onReset,
+                ),
+            ),
+        modifier = modifier,
+    )
 }
 
 @Composable
