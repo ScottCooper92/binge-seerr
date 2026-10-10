@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDiscoverSliderBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDiscoverSliderDto
 import io.github.scottcooper92.binge.seerr.ui.Choice
+import kotlinx.serialization.Serializable
 
 /**
  * The server's `DiscoverSliderType`, by its number. The first twelve are the built-in rows; the
@@ -159,6 +160,7 @@ data class DiscoverSlider(
 }
 
 /** A custom slider's form: what it is called, which kind, and the ids, code or search it queries. */
+@Serializable
 data class SliderForm(
     val id: Int? = null,
     val type: SliderType = SliderType.MovieKeyword,
