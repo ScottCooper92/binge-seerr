@@ -217,7 +217,7 @@ class IssuesViewModel
 
         /**
          * Removes the report and its whole thread from the server and the cache. Nothing is sent for an issue the server
-         * would refuse to let this user delete (#1151): it would answer 401, which reads as a dead session.
+         * would refuse to let this user delete (#1151): it would answer 401, and the row would only report a failure.
          */
         fun delete(item: IssueItem) {
             val resolved = (scope.value as? ScopeState.Resolved)?.scope ?: return

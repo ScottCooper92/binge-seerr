@@ -190,7 +190,8 @@ internal fun List<NavKey>.selectedSection(defaultShowing: Boolean): HubSection? 
  * How many entries sit above [HubRoute] on the way to whatever is on screen now: 1 for a screen
  * pushed directly onto the hub, more for one stacked further above that. [HubRoute] not being on the
  * stack at all (a narrow window's own screens, or setup) counts as every entry being "above" it,
- * which is harmless: the design system's `paneShowsBack` only reads this once its own `hubBeside` is already true.
+ * which is harmless: the design system's `paneShowsBack` only reads this once its own `hubBeside`
+ * is already true.
  */
 internal fun List<NavKey>.paneDepth(): Int {
     val hubIndex = indexOfLast { it == HubRoute }
