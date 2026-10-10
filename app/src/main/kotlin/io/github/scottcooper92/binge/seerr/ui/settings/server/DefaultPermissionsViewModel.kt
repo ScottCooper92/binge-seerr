@@ -53,9 +53,5 @@ class DefaultPermissionsViewModel
             return draft.copy(selected = ManageablePermission.decode(adopted), original = adopted)
         }
 
-        fun toggle(permission: ManageablePermission) =
-            edit { draft ->
-                if (permission in draft.locked) return@edit draft
-                draft.copy(selected = if (permission in draft.selected) draft.selected - permission else draft.selected + permission)
-            }
+        fun toggle(permission: ManageablePermission) = edit { it.toggled(permission) }
     }
