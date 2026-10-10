@@ -45,12 +45,27 @@ data class BulkEdit(
     val mixed: Set<ManageablePermission> = emptySet(),
     /** What the sheet showed ticked when it opened. */
     val initial: Set<ManageablePermission> = selected,
+    /**
+     * The [mixed] permissions still left as each user has them. A tap on one cycles it: on for everyone, then off for
+     * everyone, then back here (#1100). Without the off step there would be no way to take it from everyone at once.
+     */
+    val undecided: Set<ManageablePermission> = mixed,
 ) {
     /**
-     * The permissions whose tick differs from where the sheet opened. A save writes these and nothing else (#1007), so a
-     * permission toggled and toggled back is untouched again, and each user keeps their own.
+     * The permissions a save writes, and nothing else (#1007): a tick that differs from where the sheet opened, and a
+     * mixed permission set on or off for everyone. A permission toggled back to where it started is untouched again, and
+     * each user keeps their own.
      */
-    val touched: Set<ManageablePermission> get() = (selected - initial) + (initial - selected)
+    val touched: Set<ManageablePermission> get() = (selected - initial) + (initial - selected) + (mixed - undecided)
+
+    /** [permission] toggled: a [mixed] one moves on through its cycle, any other flips. */
+    fun toggle(permission: ManageablePermission): BulkEdit =
+        when {
+            permission in undecided -> copy(selected = selected + permission, undecided = undecided - permission)
+            permission in mixed && permission !in selected -> copy(undecided = undecided + permission)
+            permission in selected -> copy(selected = selected - permission)
+            else -> copy(selected = selected + permission)
+        }
 }
 
 sealed interface UsersUiState {

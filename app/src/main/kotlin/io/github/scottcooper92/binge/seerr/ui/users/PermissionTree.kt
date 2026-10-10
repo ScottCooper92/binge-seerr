@@ -54,6 +54,8 @@ internal fun permissionRows(
     saving: Boolean,
     locked: Set<ManageablePermission>,
     onToggle: (ManageablePermission) -> Unit,
+    /** A bulk edit's permissions still left as each selected user has them: off, and saying some users have them (#1100). */
+    undecided: Set<ManageablePermission> = emptySet(),
 ): List<ListItem> =
     nodes.map { (permission, child, last) ->
         val implied = permission !in selected && ManageablePermission.isGranted(permission, selected)
@@ -63,7 +65,12 @@ internal fun permissionRows(
             stringResource(permission.labelRes()),
             !unmet && (permission in selected || implied),
             !saving && !implied && !unmet && permission !in locked,
-            detail = permission.detailRes()?.let { stringResource(it) },
+            detail =
+                if (permission in undecided) {
+                    stringResource(R.string.users_edit_permission_some_have)
+                } else {
+                    permission.detailRes()?.let { stringResource(it) }
+                },
         ) { onToggle(permission) }.copy(
             connector =
                 when {

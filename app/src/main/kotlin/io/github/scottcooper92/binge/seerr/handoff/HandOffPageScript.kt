@@ -82,7 +82,9 @@ var te=new TextEncoder();
 // What HandOffKey.seal makes: nonce, then ciphertext and tag, as URL-safe text.
 function seal(keyText,context,text,nonce){if(!nonce){nonce=u8(12);crypto.getRandomValues(nonce);}
 var k=derive(unb64u(keyText),te.encode("seerr-tv-handoff-credentials-v1"));return b64u(concat(nonce,gcm(k,nonce,te.encode(text),te.encode(context))));}
-return {seal:seal,sha256:sha256,enc:enc,expand:expand};
+// What HandOffKey.context makes: the token, then the address the TV is signing in to (#1029).
+function context(token,address){return token+"\n"+address;}
+return {seal:seal,context:context,sha256:sha256,enc:enc,expand:expand};
 })();
 (function(){
 "use strict";
@@ -112,7 +114,7 @@ busy=true;go.disabled=true;err.hidden=true;go.textContent=go.getAttribute("data-
 var md=mode(),person=md==="Jellyfin"||md==="Emby";
 var c={mode:md,apiKey:md==="ApiKey"?val("apikey"):"",email:md==="Local"?val("email"):"",
 username:person?val("username"):"",password:md==="ApiKey"?"":val("password")};
-var body="sealed="+encodeURIComponent(Seal.seal(K,T+"\n"+f.getAttribute("data-address"),JSON.stringify(c)));
+var body="sealed="+encodeURIComponent(Seal.seal(K,Seal.context(T,f.getAttribute("data-address")),JSON.stringify(c)));
 fetch("/c/"+T,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body})
 .then(function(r){return r.ok?r.json():null;})
 .then(function(j){if(j&&j.attempt){sent=j.attempt;}else{fail();}},fail);});

@@ -34,7 +34,7 @@ internal data class HandOffPageCopy(
     val storeName: String,
     val sentTitle: String,
     val sentBody: String,
-    /** The TV is asking, on its own screen, whether to connect over plain HTTP to the address sent (#907). */
+    /** The TV is asking, on its own screen, whether to go on with the address sent (#1084), or to connect over plain HTTP to it (#907). */
     val confirmTitle: String,
     val confirmBody: String,
     /** The PIN step (#909): what it asks, the field, the button, a miss, and the code locked after too many. */

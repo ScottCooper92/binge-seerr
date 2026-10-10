@@ -54,17 +54,17 @@ internal fun TvSetupScreen(
     initialFocus: TvSetupFocus? = null,
     offerHandOff: Boolean = false,
 ) {
-    // An address from a phone that needs the plain-HTTP opt-in waits on this screen's form, not the code page (#907).
-    val awaitingConsent = (state as? SetupUiState.Address)?.awaitingCleartextConsent == true
+    // An address from a phone waits on this screen's form for the user to go on, not on the code page (#907, #1084).
+    val awaitingTv = (state as? SetupUiState.Address)?.let { it.awaitingConfirm || it.awaitingCleartextConsent } == true
     // The phone does the setup; typing with the remote is the fallback, chosen on purpose and left on purpose.
-    var manual by rememberSaveable { mutableStateOf(!offerHandOff || awaitingConsent) }
+    var manual by rememberSaveable { mutableStateOf(!offerHandOff || awaitingTv) }
     val scanInstead = {
         manual = false
         actions.onStartHandOff()
     }
     // Back from the fallback goes back to the code, as "Scan a QR" does, rather than out of the app.
     val typing = manual && offerHandOff && (state is SetupUiState.Address || state is SetupUiState.SignIn && state.link == null)
-    LaunchedEffect(awaitingConsent) { if (awaitingConsent) manual = true }
+    LaunchedEffect(awaitingTv) { if (awaitingTv) manual = true }
     BackHandler(enabled = typing) {
         if (state is SetupUiState.Address) scanInstead() else manual = false
     }

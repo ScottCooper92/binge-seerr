@@ -106,6 +106,12 @@ class SetupViewModelHandOffTest {
     private suspend fun SetupViewModel.awaitAddress(match: (SetupUiState.Address) -> Boolean = { true }): SetupUiState.Address =
         uiState.first { it is SetupUiState.Address && match(it) } as SetupUiState.Address
 
+    /** The TV's user going on with an address a phone sent, once it is on screen waiting for them (#1084). */
+    private suspend fun SetupViewModel.confirmSent() {
+        awaitAddress { it.awaitingConfirm }
+        inspect()
+    }
+
     @Test
     fun `the plate carries the listener's url, and an address a phone sends is read as if typed`() =
         runTest {
@@ -122,9 +128,35 @@ class SetupViewModelHandOffTest {
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             session.address.complete(seerr.url("/"))
+            vm.confirmSent()
 
             val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
             assertEquals(seerr.url("/"), signIn.server.baseUrl)
+        }
+
+    /** #1084: anyone who saw the PIN could have sent the address, so the TV reads it only once its user goes on. */
+    @Test
+    fun `an address a phone sends waits on the TV for its user to go on, and the page says so`() =
+        runTest {
+            val session = FakeSession()
+            val vm = viewModel { HandOffOpening.Opened(session) }
+            vm.awaitAddress()
+            vm.showHandOff(true)
+            vm.awaitAddress { it.handOff != null }
+
+            session.address.complete(seerr.url("/"))
+
+            val waiting = vm.awaitAddress { it.serverUrl == seerr.url("/") }
+            assertTrue(waiting.awaitingConfirm)
+            assertEquals(HandOffProgress.ConfirmOnTv, session.progress())
+            assertEquals(0, seerr.requestCount)
+
+            seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
+            seerr.enqueue(json("[]"))
+            vm.inspect()
+
+            assertTrue(vm.uiState.first { it is SetupUiState.SignIn } is SetupUiState.SignIn)
+            assertTrue(session.progress() is HandOffProgress.SignIn)
         }
 
     /** #907: a phone's plain-HTTP public address waits for the opt-in on the TV, and agreeing goes straight on to read it. */
@@ -163,6 +195,7 @@ class SetupViewModelHandOffTest {
             seerr.enqueue(json("[]"))
 
             session.address.complete(seerr.url("/"))
+            vm.confirmSent()
             val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
 
             // The plate going when the address arrived is the page moving on: it must not close the listener.
@@ -193,6 +226,7 @@ class SetupViewModelHandOffTest {
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             sessions[0].address.complete(seerr.url("/"))
+            vm.confirmSent()
             vm.uiState.first { it is SetupUiState.SignIn && !it.isConnecting }
 
             // Back from the sign-in: the follow loop is still up, and the button must still work.
@@ -222,6 +256,7 @@ class SetupViewModelHandOffTest {
             vm.showHandOff(true)
             vm.awaitAddress { it.handOff != null }
             sessions[0].address.complete("http://")
+            vm.confirmSent()
             assertEquals(SetupError.InvalidUrl, vm.awaitAddress { it.error != null && it.handOff == null }.error)
 
             // The user takes over at the TV: the phone's follow phase ends, and the button works again.
@@ -316,6 +351,7 @@ class SetupViewModelHandOffTest {
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             sessions.single().address.complete(seerr.url("/"))
+            vm.confirmSent()
             vm.uiState.first { it is SetupUiState.SignIn && it.code?.url?.endsWith("code0") == true }
 
             sessions.single().lock.complete(Unit)
@@ -392,6 +428,7 @@ class SetupViewModelHandOffTest {
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             session.address.complete(seerr.url("/"))
+            vm.confirmSent()
             vm.uiState.first { it is SetupUiState.SignIn }
             val progress = session.progress() as HandOffProgress.SignIn
             assertEquals(listOf("Local"), progress.modes.filter { it == "Local" })
@@ -458,6 +495,7 @@ class SetupViewModelHandOffTest {
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             session.address.complete(seerr.url("/"))
+            vm.confirmSent()
             vm.uiState.first { it is SetupUiState.SignIn }
 
             // The server goes quiet: the phone told the TV would count this as attempt 1, and it must.
@@ -487,6 +525,7 @@ class SetupViewModelHandOffTest {
             seerr.enqueueProfile(json("""{"version":"3.4.0"}"""), json("""{"mediaServerType":2,"localLogin":true}"""))
             seerr.enqueue(json("[]"))
             session.address.complete(seerr.url("/"))
+            vm.confirmSent()
             val signIn = vm.uiState.first { it is SetupUiState.SignIn } as SetupUiState.SignIn
             val untouched = signIn.form
 

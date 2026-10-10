@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.seerr.ManageablePermission
 
@@ -42,6 +44,29 @@ class PermissionsEditorScreenshotTest {
                 onToggle = {},
                 onSave = {},
                 locked = setOf(ManageablePermission.ManageUsers),
+            )
+        }
+    }
+
+    /**
+     * A bulk edit over users who differ (#1100): Manage issues is still as each user has it and says so; Create issues was
+     * mixed too and has been set off for everyone, so it reads as a plain off.
+     */
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun bulkMixed() {
+        Box(Modifier.width(SHEET_WIDTH).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            PermissionsEditorContent(
+                offered = listOf(ManageablePermission.Request, ManageablePermission.CreateIssues, ManageablePermission.ManageIssues),
+                selected = setOf(ManageablePermission.Request),
+                title = "Edit 2 users",
+                saving = false,
+                onToggle = {},
+                onSave = {},
+                note = stringResource(R.string.users_edit_permissions_mixed),
+                mixed = setOf(ManageablePermission.ManageIssues, ManageablePermission.CreateIssues),
+                undecided = setOf(ManageablePermission.ManageIssues),
             )
         }
     }

@@ -77,6 +77,8 @@ private fun ColumnScope.TvSetupAddressFields(
 ) {
     // While the address waits on the local-network permission, asking for it is the way on: Continue could only fail (#1099).
     val allow = if (state.needsLocalNetwork) rememberAllowLocalNetwork(actions.onLocalNetworkChanged) else null
+    // An address a phone sent waits for the user to go on, so the page lands on the way on, not the keyboard (#1084).
+    val wayOn = if (state.awaitingConfirm && !state.awaitingCleartextConsent) Modifier.tvArrivalTarget(arrival) else Modifier
     // The way on sits beside the field, as tall as it, so the address and what to do with it read as one row.
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -94,8 +96,8 @@ private fun ColumnScope.TvSetupAddressFields(
             placeholder = stringResource(R.string.placeholder_server_url),
             initiallyFocused = initialFocus == TvSetupFocus.Address,
             // Where the page lands: the remote came here to type, and the keyboard waits for select. An address a phone sent
-            // that waits on the opt-in lands on the opt-in instead (#907).
-            arrival = arrival.takeUnless { state.awaitingCleartextConsent },
+            // lands on the way on instead, or on the opt-in when it waits on that (#907, #1084).
+            arrival = arrival.takeUnless { state.awaitingConfirm || state.awaitingCleartextConsent },
             onDone = {
                 if (allow != null) {
                     allow.run()
@@ -110,9 +112,10 @@ private fun ColumnScope.TvSetupAddressFields(
                 onClick = allow.run,
                 style = TvButtonStyle.Primary,
                 initiallyFocused = initialFocus == TvSetupFocus.Continue,
+                modifier = wayOn,
             )
         } else {
-            TvContinueButton(state, actions, initialFocus)
+            TvContinueButton(state, actions, initialFocus, wayOn)
         }
     }
     TvSetupAddressNotes(state, actions, arrival)
@@ -124,6 +127,7 @@ private fun TvContinueButton(
     state: SetupUiState.Address,
     actions: SetupActions,
     initialFocus: TvSetupFocus?,
+    modifier: Modifier,
 ) {
     TvIconButton(
         icon = Icons.AutoMirrored.Filled.ArrowForward,
@@ -134,7 +138,7 @@ private fun TvContinueButton(
         initiallyFocused = initialFocus == TvSetupFocus.Continue,
         // Disabled, it is not a stop: the remote skips it until there is an address to continue with.
         modifier =
-            Modifier
+            modifier
                 .focusProperties { canFocus = state.canContinue }
                 .height(
                     dimensionResource(R.dimen.tv_form_field_height),
@@ -153,6 +157,8 @@ private fun TvSetupAddressNotes(
         modifier = Modifier.fillMaxWidth().belowWithoutHeight(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(TvR.dimen.tv_two_pane_action_gap)),
     ) {
+        // A plain-HTTP address has the opt-in to answer instead, and ticking it is the user going on (#907).
+        if (state.awaitingConfirm && !state.insecure) TvFormNote(stringResource(R.string.tv_setup_confirm_sent_address))
         if (state.insecure) {
             // A checkbox, not an action: Continue beside the field is what goes on once it is ticked (#915). It sits right
             // under the field it qualifies, with the reason below it. An address a phone sent lands here, and ticking it goes
