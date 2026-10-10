@@ -26,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.binge.designsystem.component.BingeInitialsAvatar
-import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.component.ListRowSkeletonColumn
@@ -40,7 +39,9 @@ import io.github.scottcooper92.binge.seerr.ui.requests.PagedRefreshError
 import io.github.scottcooper92.binge.seerr.ui.state.EmptyScreen
 import io.github.scottcooper92.binge.seerr.ui.state.PagedPullToRefresh
 import io.github.scottcooper92.binge.seerr.ui.state.PullableMessage
+import io.github.scottcooper92.binge.seerr.ui.state.RoleTag
 import io.github.scottcooper92.binge.seerr.ui.state.rememberPagedPhase
+import io.github.scottcooper92.binge.seerr.ui.users.settings.UserRole
 import com.binge.designsystem.R as DesR
 
 /**
@@ -160,7 +161,7 @@ internal fun UserRow(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
                         ) {
-                            if (item.isAdmin) BingeTag(label = stringResource(R.string.hub_role_admin))
+                            if (item.role != UserRole.User) RoleTag(item.role)
                             if (selecting) {
                                 Checkbox(checked = selected, onCheckedChange = null)
                             } else {

@@ -29,24 +29,17 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
-import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.AccountProfileCard
 import com.binge.designsystem.component.DetailStat
 import com.binge.designsystem.component.DetailStatRow
 import com.binge.designsystem.component.ItemGroup
-import com.binge.designsystem.component.ItemRows
 import com.binge.designsystem.component.ListItem
 import com.binge.designsystem.resolvedContentPadding
-import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.accent
-import com.binge.designsystem.theme.fill
-import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateChip
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
+import io.github.scottcooper92.binge.seerr.ui.state.labelRes
 import com.binge.designsystem.R as DesR
 
 /** A dashboard block: a tonal surface with the pane's [sides] around it and the medium spacing inside. */
@@ -130,6 +123,10 @@ internal fun ServerCard(
 /**
  * The server's totals as the design system's stat row, the same row Binge's title pages use: an icon,
  * the count, and what it counts. The card already pads its content, so the row adds none of its own.
+ *
+ * The request figures (movies, TV, pending) are the server's, and every viewer sees them, including one who sees only
+ * their own requests (#980). The card is about the server, not about the viewer's list. What the viewer may open is
+ * gated where it opens, as the Requests badge is by `canViewRequests`.
  */
 @Composable
 private fun ServerStatStrip(overview: HubOverview) {
@@ -156,7 +153,10 @@ private fun ServerStatStrip(overview: HubOverview) {
     )
 }
 
-/** The connected user: their name, their role, and their request quota where the server sets one. */
+/**
+ * The connected user: the design system's profile card, with their photo, name and role, and under it their request
+ * quota where the server sets one. The whole card opens their page.
+ */
 @Composable
 internal fun AccountCard(
     account: HubAccount,
@@ -165,53 +165,19 @@ internal fun AccountCard(
     sides: PaddingValues = resolvedContentPadding(),
     onClick: (() -> Unit)? = null,
 ) {
-    // The card carries no padding of its own: the name row and the quota rows each bring their row padding, so none is doubled.
-    HubCard(if (onClick != null) modifier.clickable(onClick = onClick) else modifier, sides, contentPadding = PaddingValues()) {
-        val rowPadding = dimensionResource(DesR.dimen.item_group_row_padding_h)
-        Row(
-            modifier =
-                Modifier.padding(
-                    start = rowPadding,
-                    top = rowPadding,
-                    end = rowPadding,
-                    bottom =
-                        if (quota ==
-                            null
-                        ) {
-                            rowPadding
-                        } else {
-                            Dp.Hairline
-                        },
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = account.name,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(Modifier.width(dimensionResource(DesR.dimen.padding_s)))
-            val sentiment = if (account.isAdmin) BingeSentiment.Info else BingeSentiment.Neutral
-            BingeTag(
-                label = stringResource(if (account.isAdmin) R.string.hub_role_admin else R.string.hub_role_user),
-                tint = sentiment.accent(),
-                fill = sentiment.fill(),
-            )
-        }
-        quota?.let {
-            Column {
-                Text(
-                    text = stringResource(R.string.hub_quota_title).uppercaseLocalised(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = rowPadding).semantics { heading() },
-                )
-                ItemRows(quotaRows(it))
-            }
-        }
+    Column(
+        modifier = modifier.padding(sides).padding(vertical = dimensionResource(DesR.dimen.padding_s)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+    ) {
+        AccountProfileCard(
+            name = account.name,
+            secondaryLine = stringResource(account.role.labelRes()),
+            initialsName = account.name,
+            avatarUrl = account.avatarUrl,
+            modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+            onClick = onClick,
+        )
+        quota?.let { QuotaSection(it) }
     }
 }
 

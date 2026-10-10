@@ -321,6 +321,7 @@ private fun RequestItem.previewOf(summary: RequestSummary): RequestItem =
         id = summary.id,
         requestedBy = summary.requestedBy,
         requestedById = null,
+        requestedByAvatarUrl = summary.requestedByAvatarUrl,
         requestedAtMillis = summary.requestedAtMillis,
         status = summary.status,
         is4k = summary.is4k,

@@ -52,9 +52,12 @@ internal fun serviceRows(services: List<ServerService>): List<ListItem> =
         readOut(if (service.type == ServiceType.Radarr) Icons.Filled.Movie else Icons.Filled.Tv, service.label(), service.detail())
     }
 
-/** Every scheduled job with its next run; a running job says so. */
+/** Every scheduled job with its next run, worded against [now]; a running job says so. */
 @Composable
-internal fun systemRows(system: SystemInfo): List<ListItem> =
+internal fun systemRows(
+    system: SystemInfo,
+    now: Long,
+): List<ListItem> =
     system.jobs.map { job ->
         ListItem(
             icon = Icons.Filled.Cached,
@@ -64,7 +67,7 @@ internal fun systemRows(system: SystemInfo): List<ListItem> =
                 when {
                     job.running -> stringResource(R.string.settings_job_running)
                     else ->
-                        formatRelativeOrAbsolute(job.nextRunMillis)?.let { stringResource(R.string.settings_job_next_run, it) }
+                        formatRelativeOrAbsolute(job.nextRunMillis, now)?.let { stringResource(R.string.settings_job_next_run, it) }
                             ?: stringResource(R.string.settings_value_unknown)
                 },
             clickable = false,

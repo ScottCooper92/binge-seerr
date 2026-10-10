@@ -124,5 +124,7 @@ sealed interface SettingsUiState {
         val app: AppSettings? = null,
         /** The admin groups have not answered yet and the wait for them ran out: the screen holds their place. */
         val pending: Boolean = false,
+        /** What the rows' relative times are worded against, moved on each minute while the screen is showing (#989). */
+        val now: Long = System.currentTimeMillis(),
     ) : SettingsUiState
 }

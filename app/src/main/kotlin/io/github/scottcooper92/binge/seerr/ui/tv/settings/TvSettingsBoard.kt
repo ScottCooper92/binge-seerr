@@ -179,7 +179,7 @@ private fun tvSettingGroups(
         }
         config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it), readOnly)) }
         config?.system?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it), readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now), readOnly))
         }
     }.filter { it.rows.isNotEmpty() }
 }

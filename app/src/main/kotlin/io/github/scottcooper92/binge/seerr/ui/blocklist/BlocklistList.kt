@@ -181,7 +181,7 @@ private fun BlocklistRowMeta(
             Spacer(Modifier.height(gap))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 item.addedBy?.let { addedBy ->
-                    BingeInitialsAvatar(name = addedBy)
+                    BingeInitialsAvatar(name = addedBy, avatarUrl = item.addedByAvatarUrl)
                     Spacer(Modifier.width(gap))
                 }
                 Text(

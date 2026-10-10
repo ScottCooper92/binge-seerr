@@ -20,8 +20,11 @@ import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.TelemetryPrefs
+import io.github.scottcooper92.binge.seerr.ui.MinuteTicker
+import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -109,8 +112,15 @@ class SettingsViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
+        private val minuteTicker: MinuteTicker = MinuteTicker(),
     ) : ViewModel() {
         private val fetchTrigger = MutableStateFlow(0)
+
+        internal var clock: () -> Long = System::currentTimeMillis
+
+        /** What [SettingsUiState.Ready.now] reads: moved on each minute by [ticker], which runs while the screen is showing. */
+        private val now = MutableStateFlow(clock())
+        private var ticker: Job? = null
 
         /** Re-read on every arrival and after the system's notification page: what it allows is not observable. */
         private val blockedTrigger = MutableStateFlow(0)
@@ -222,13 +232,18 @@ class SettingsViewModel
             }.combine(settled) { state, settled ->
                 // One paint with the groups in it, rather than the screen built in two or three steps.
                 if (state is SettingsUiState.Ready && state.pending && !settled) SettingsUiState.Loading else state
-            }.flowOn(dispatcher)
+            }.combine(now) { state, now -> (state as? SettingsUiState.Ready)?.copy(now = now) ?: state }
+                .flowOn(dispatcher)
                 .stateIn(viewModelScope, SharingStarted.Lazily, SettingsUiState.Loading)
 
         fun setScreenVisible(visible: Boolean) {
+            ticker?.cancel()
+            ticker = null
             if (visible) {
                 fetchTrigger.value++
                 blockedTrigger.value++
+                // The jobs' and the poll's "next run in 20 minutes" count down while the screen shows them, and no longer.
+                ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
             }
         }
 
