@@ -93,6 +93,9 @@ internal class RequestSheetCallbacks(
  * The request's context heads the sheet; the decision it is waiting on sits directly under that as
  * one bar; everything else is a list item in one of two groups — the **request**, then the
  * server's **media record** — each destructive row saying what it destroys.
+ *
+ * Its "requested 2 minutes ago" is worded against the moment the sheet opened. A sheet is up for seconds, so it does
+ * not count down the way the page under it does (#1239).
  */
 @Composable
 internal fun RequestActionsContent(

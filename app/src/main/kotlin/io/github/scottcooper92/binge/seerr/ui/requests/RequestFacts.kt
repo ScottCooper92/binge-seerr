@@ -72,10 +72,11 @@ internal fun RequestStats(detail: RequestDetail) {
 @Composable
 internal fun requestPeopleFacts(
     detail: RequestDetail,
+    now: Long,
     onOpenUser: (Int) -> Unit,
 ): List<Fact> {
     val item = detail.item
-    val updatedText = detail.updatedAtMillis?.let(::formatRelativeOrAbsolute)
+    val updatedText = detail.updatedAtMillis?.let { formatRelativeOrAbsolute(it, now) }
     return listOfNotNull(
         Fact(
             icon = Icons.Filled.Person,
@@ -88,7 +89,7 @@ internal fun requestPeopleFacts(
                     detail.canManageUsers,
                     onOpenUser,
                 ),
-            secondary = formatRelativeOrAbsolute(item.requestedAtMillis),
+            secondary = formatRelativeOrAbsolute(item.requestedAtMillis, now),
             person = true,
             avatarUrl = item.requestedByAvatarUrl,
         ),

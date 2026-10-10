@@ -104,7 +104,7 @@ internal fun TvRequestDetailScreen(
             }
             is RequestDetailUiState.Error -> TvSeerrErrorPage(state.error, actions.onRetry)
             is RequestDetailUiState.Ready ->
-                TvRequestDetailContent(detail = state.detail, report = state.report, events = events, given = actions)
+                TvRequestDetailContent(detail = state.detail, report = state.report, now = state.now, events = events, given = actions)
         }
     }
 }
@@ -122,6 +122,7 @@ internal fun TvRequestDetailScreen(
 private fun TvRequestDetailContent(
     detail: RequestDetail,
     report: IssueReport,
+    now: Long,
     events: Flow<ModerationEvent>,
     given: TvRequestDetailActions,
 ) {
@@ -163,7 +164,7 @@ private fun TvRequestDetailContent(
         }
     }
     // Resolved here: the section builder below is not composable, so it cannot read resources itself.
-    val infoCards = requestInfoCards(detail)
+    val infoCards = requestInfoCards(detail, now)
     Box(modifier = Modifier.fillMaxSize()) {
         TvDetailPage(
             entryFocus = if (actionList.isEmpty()) synopsisFocus else actionRowFocus,
@@ -172,6 +173,7 @@ private fun TvRequestDetailContent(
             hero {
                 RequestHero(
                     item = item,
+                    now = now,
                     actionList = actionList,
                     actionRowFocus = actionRowFocus,
                     synopsisFocus = synopsisFocus,
@@ -207,6 +209,7 @@ private fun TvRequestDetailContent(
 @Composable
 private fun RequestHero(
     item: RequestItem,
+    now: Long,
     actionList: List<TvDetailAction>,
     actionRowFocus: FocusRequester,
     synopsisFocus: FocusRequester,
@@ -231,7 +234,7 @@ private fun RequestHero(
                         item.year,
                         stringResource(chip.labelRes),
                         item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
-                        formatRelativeOrAbsolute(item.requestedAtMillis),
+                        formatRelativeOrAbsolute(item.requestedAtMillis, now),
                     ),
                 certification = item.certification,
             ),

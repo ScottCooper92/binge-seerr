@@ -44,7 +44,10 @@ internal data class TvInfoCardItem(
 
 /** The request's facts, each dropped when the server named nothing for it. */
 @Composable
-internal fun requestInfoCards(detail: RequestDetail): List<TvInfoCardItem> {
+internal fun requestInfoCards(
+    detail: RequestDetail,
+    now: Long,
+): List<TvInfoCardItem> {
     val item = detail.item
     val separator = stringResource(R.string.hub_meta_separator)
     val destination = detail.destination
@@ -53,7 +56,10 @@ internal fun requestInfoCards(detail: RequestDetail): List<TvInfoCardItem> {
             stringResource(R.string.request_requested_by),
             item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
         ),
-        formatRelativeOrAbsolute(item.requestedAtMillis)?.let { TvInfoCardItem(stringResource(R.string.tv_detail_info_requested), it) },
+        formatRelativeOrAbsolute(
+            item.requestedAtMillis,
+            now,
+        )?.let { TvInfoCardItem(stringResource(R.string.tv_detail_info_requested), it) },
         TvInfoCardItem(stringResource(R.string.tv_detail_info_status), stringResource(item.statusChip().labelRes)),
         destination
             ?.let { listOfNotNull(it.serverName, it.profileName, it.rootFolder).joinToString(separator) }
