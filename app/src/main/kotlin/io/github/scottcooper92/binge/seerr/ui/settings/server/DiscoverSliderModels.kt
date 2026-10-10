@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.settings.server
 
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDiscoverSliderBody
 import io.github.scottcooper92.binge.seerr.seerr.SeerrDiscoverSliderDto
+import io.github.scottcooper92.binge.seerr.ui.Choice
 
 /**
  * The server's `DiscoverSliderType`, by its number. The first twelve are the built-in rows; the
@@ -41,6 +42,9 @@ enum class SliderType(
             when (this) {
                 MovieKeyword, TvKeyword -> SliderDataKind.Keywords
                 MovieGenre, TvGenre -> SliderDataKind.Genre
+                Studio -> SliderDataKind.Studio
+                Network -> SliderDataKind.Network
+                MovieStreamingServices, TvStreamingServices -> SliderDataKind.Streaming
                 else -> SliderDataKind.Text
             }
 
@@ -53,6 +57,22 @@ enum class SliderType(
                 else -> null
             }
 
+    /** The path segment of `GET watchproviders/{type}` for a streaming slider; null for any other kind. */
+    val providerSegment: String?
+        get() =
+            when (this) {
+                MovieStreamingServices -> "movies"
+                TvStreamingServices -> "tv"
+                else -> null
+            }
+
+    /**
+     * Whether data picked for this kind still means the same for [other]: the same sort of thing, and where the list it
+     * came from depends on movies or TV (genres, providers), the same one. Keyword ids are the same for both kinds.
+     */
+    fun keepsDataFor(other: SliderType): Boolean =
+        dataKind == other.dataKind && genreSegment == other.genreSegment && providerSegment == other.providerSegment
+
     companion object {
         fun fromCode(code: Int): SliderType? = entries.firstOrNull { it.code == code }
 
@@ -61,16 +81,70 @@ enum class SliderType(
 }
 
 /**
- * How a custom slider's data is chosen: TMDB keyword ids picked by search, one genre picked by name, or typed as the web
- * client takes it (a company, a network, a search, a region and its providers).
+ * How a custom slider's data is chosen: TMDB keyword ids picked by search, one genre by name, one studio by search, a
+ * network by its id (TMDB has no network search, so the id is typed and then named), a region and its streaming
+ * providers, or typed as the web client takes it (a search).
  */
-enum class SliderDataKind { Keywords, Genre, Text }
+enum class SliderDataKind { Keywords, Genre, Studio, Network, Streaming, Text }
 
-/** What the slider editor holds beside the form: the keyword search and names, and the genres of a genre slider's kind. */
+/** One TMDB company, a studio a slider can hold. */
+data class Company(
+    val id: Int,
+    val name: String,
+)
+
+/** The studio search: [names] for the ids a slider holds, and [results] for the last search, null before one. */
+data class CompanySearch(
+    val names: Map<Int, String> = emptyMap(),
+    val results: List<Company>? = null,
+    val searching: Boolean = false,
+    val failed: Boolean = false,
+)
+
+/** The streaming providers TMDB lists in the slider's region, for its kind: being read, read, or failed. */
+sealed interface ProviderChoices {
+    /** No region yet, so nothing to ask for. */
+    data object Idle : ProviderChoices
+
+    data object Loading : ProviderChoices
+
+    data class Ready(
+        val providers: List<Choice>,
+    ) : ProviderChoices
+
+    data object Failed : ProviderChoices
+}
+
+/**
+ * What the slider editor holds beside the form: the keyword and studio searches and names, the network names read for
+ * typed ids, the genres and the streaming providers of the kind, and the streaming regions.
+ */
 data class SliderExtras(
     val keywords: KeywordSearch = KeywordSearch(),
     val genres: GenreChoices = GenreChoices.Loading,
+    val studios: CompanySearch = CompanySearch(),
+    val networkNames: Map<Int, String> = emptyMap(),
+    val regions: ListChoices? = null,
+    val providers: ProviderChoices = ProviderChoices.Idle,
 )
+
+/** A streaming slider's data: the region, then the provider ids, as the web client stores it (`US,8|337`). */
+data class StreamingPick(
+    val region: String = "",
+    val providerIds: List<Int> = emptyList(),
+) {
+    /** The stored text; nothing picked is nothing stored. */
+    fun encode(): String = if (region.isBlank() && providerIds.isEmpty()) "" else "$region,${providerIds.joinToString("|")}"
+
+    fun withProviderToggled(id: Int): StreamingPick = copy(providerIds = if (id in providerIds) providerIds - id else providerIds + id)
+}
+
+/** Reads `US,8|337`: a region, then ids; anything missing is empty and anything that is not an id is skipped. */
+internal fun String.toStreamingPick(): StreamingPick =
+    StreamingPick(
+        region = substringBefore(',').trim(),
+        providerIds = substringAfter(',', "").split('|').mapNotNull { it.trim().toIntOrNull() },
+    )
 
 /** One slider as the list shows it; a built-in one has no [title] of its own. */
 data class DiscoverSlider(
@@ -91,7 +165,14 @@ data class SliderForm(
     val title: String = "",
     val data: String = "",
 ) {
-    val valid: Boolean get() = title.isNotBlank() && data.isNotBlank()
+    /** A streaming slider needs a region and at least one provider to query; every other kind needs its data. */
+    val valid: Boolean
+        get() =
+            title.isNotBlank() &&
+                when (type.dataKind) {
+                    SliderDataKind.Streaming -> data.toStreamingPick().let { it.region.isNotBlank() && it.providerIds.isNotEmpty() }
+                    else -> data.isNotBlank()
+                }
 }
 
 internal fun SeerrDiscoverSliderDto.toSlider(): DiscoverSlider? {

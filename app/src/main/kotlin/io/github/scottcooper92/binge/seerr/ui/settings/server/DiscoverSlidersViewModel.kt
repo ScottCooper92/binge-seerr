@@ -9,7 +9,7 @@ import io.github.scottcooper92.binge.seerr.notifications.ApplicationScope
 import io.github.scottcooper92.binge.seerr.seerr.attempt
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorViewModel
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -18,9 +18,9 @@ import retrofit2.HttpException
 import javax.inject.Inject
 
 /**
- * The slider list: the order and each slider's switch are the draft, saved as one batch, since
- * that is how the server takes them. A custom slider's own fields are edited on a page of its own;
- * reset asks the server for its defaults and reads the list again.
+ * The slider list: the order and each slider's switch are the draft, saved as one batch, since that is how the server
+ * takes them. The names of what its custom sliders hold are read beside it, for their captions. A custom slider's own
+ * fields are edited on a page of its own; reset asks the server for its defaults and reads the list again.
  */
 @HiltViewModel
 class DiscoverSlidersViewModel
@@ -29,11 +29,26 @@ class DiscoverSlidersViewModel
         private val connection: SeerrConnection,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @ApplicationScope appScope: CoroutineScope,
-    ) : EditorViewModel<List<DiscoverSlider>>(dispatcher) {
+    ) : ExtrasEditorViewModel<List<DiscoverSlider>, SliderNames>(SliderNames(), dispatcher) {
         /** The slider list saves as it changes (#930): order and on/off are small and easy to undo, and a drag is one write once it settles. */
         override val saveAsMadeScope: CoroutineScope = appScope
 
-        override suspend fun load(): List<DiscoverSlider> = connection.api().discoverSliders().mapNotNull { it.toSlider() }
+        private val names =
+            SliderNameLoader(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = { currentExtras() },
+                edit = { change -> editExtras { change(it) } },
+            )
+
+        /** The list, and then, in the background, the names of what its custom sliders hold, for their captions. */
+        override suspend fun load(): List<DiscoverSlider> =
+            connection
+                .api()
+                .discoverSliders()
+                .mapNotNull { it.toSlider() }
+                .also(names::name)
 
         override suspend fun write(draft: List<DiscoverSlider>): List<DiscoverSlider> =
             connection.api().updateDiscoverSliders(draft.map { it.toDto() }).mapNotNull { it.toSlider() }

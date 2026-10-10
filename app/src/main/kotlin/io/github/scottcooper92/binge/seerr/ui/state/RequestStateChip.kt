@@ -5,10 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.binge.designsystem.component.BingeTag
+import com.binge.designsystem.component.StatusChip
 import com.binge.designsystem.theme.BingeSentiment
-import com.binge.designsystem.theme.accent
-import com.binge.designsystem.theme.fill
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
@@ -82,15 +80,14 @@ fun MediaStateChip(
     RequestStateChip(label = stringResource(status.labelRes()), tone = status.tone(), modifier = modifier)
 }
 
-/** A status pill on the design system's tag: the tone's label accent over its tonal wash. */
+/** A status pill: the design system's [StatusChip], with this app's tone mapped onto its sentiment. */
 @Composable
 fun RequestStateChip(
     label: String,
     tone: RequestStateTone,
     modifier: Modifier = Modifier,
 ) {
-    val sentiment = tone.sentiment()
-    BingeTag(label = label, modifier = modifier, tint = sentiment.accent(), fill = sentiment.fill(), uppercase = false)
+    StatusChip(label = label, sentiment = tone.sentiment(), modifier = modifier)
 }
 
 private fun RequestStateTone.sentiment(): BingeSentiment =

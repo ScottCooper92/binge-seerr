@@ -560,6 +560,32 @@ interface SeerrApi {
         @Path("keywordId") keywordId: Int,
     ): SeerrKeywordDto
 
+    /** TMDB's companies matching [query], for a Discover slider's studio. */
+    @GET("api/v1/search/company")
+    suspend fun searchCompanies(
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+    ): SeerrCompanyPageDto
+
+    /** One movie studio by its TMDB id, to name the studio a Discover slider holds only as a number. */
+    @GET("api/v1/studio/{studioId}")
+    suspend fun studio(
+        @Path("studioId") studioId: Int,
+    ): SeerrCompanyDto
+
+    /** One TV network by its TMDB id, to name the network a Discover slider holds only as a number. */
+    @GET("api/v1/network/{networkId}")
+    suspend fun network(
+        @Path("networkId") networkId: Int,
+    ): SeerrCompanyDto
+
+    /** The streaming providers TMDB lists for [type] (`movies` or `tv`) in [watchRegion], for a Discover slider's providers. */
+    @GET("api/v1/watchproviders/{type}")
+    suspend fun watchProviders(
+        @Path("type") type: String,
+        @Query("watchRegion") watchRegion: String,
+    ): List<SeerrWatchProviderDto>
+
     /** Reaches the chosen providers; each one's result comes back, under a 500 when one failed. */
     @POST("api/v1/settings/metadatas/test")
     suspend fun testMetadataProviders(

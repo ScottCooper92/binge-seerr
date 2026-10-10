@@ -5,8 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestError
 import io.github.scottcooper92.binge.seerr.ui.AdvancedRequestUiState
-
-private val NoAdvancedActions = TvAdvancedRequestActions({}, {}, {}, {}, {}, {})
+import io.github.scottcooper92.binge.seerr.ui.NoAdvancedActions
 
 /**
  * Every arm of the television hand-off: the options form with the focus where a remote can put it, the

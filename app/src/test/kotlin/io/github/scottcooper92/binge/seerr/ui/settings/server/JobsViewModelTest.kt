@@ -233,6 +233,9 @@ class JobsViewModelTest {
             vm.clock = { 1_789_275_660_000L - 60 * 60_000L }
             vm.reload()
             vm.uiState.first { it is JobsUiState.Ready }
+            // The view model's own first read and the reload above: wait for both to land before counting.
+            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            testScheduler.runCurrent()
             val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
             testScheduler.advanceTimeBy(2 * 60 * 60_000L)

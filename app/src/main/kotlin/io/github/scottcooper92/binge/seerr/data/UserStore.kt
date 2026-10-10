@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.data
 
 import androidx.paging.PagingSource
-import androidx.room.withTransaction
 
 /** The user cache behind a seam, as [IssueStore] is, so the mediator and the browser are tested against a fake. */
 interface UserStore {
@@ -43,6 +42,16 @@ class RoomUserStore(
     private val users get() = db.userDao()
     private val keys get() = db.userRemoteKeyDao()
     private val sources = OpenPagingSources<Int, UserEntity>()
+    private val writes =
+        PagedWrites(
+            db = db,
+            sources = sources,
+            clearList = { users.clear(it) },
+            upsertRows = { users.upsertAll(it) },
+            setCursor = { listKey, nextSkip -> keys.upsert(UserRemoteKeyEntity(listKey, nextSkip)) },
+            clearEverything = { users.clearAll() },
+            clearCursors = { keys.clearAll() },
+        )
 
     override fun pagingSource(listKey: String): PagingSource<Int, UserEntity> = sources.track(users.pagingSource(listKey))
 
@@ -54,24 +63,13 @@ class RoomUserStore(
         listKey: String,
         users: List<UserEntity>,
         nextSkip: Int?,
-    ) = sources.afterWrite {
-        db.withTransaction {
-            this.users.clear(listKey)
-            this.users.upsertAll(users)
-            keys.upsert(UserRemoteKeyEntity(listKey, nextSkip))
-        }
-    }
+    ) = writes.refresh(listKey, users, nextSkip)
 
     override suspend fun append(
         listKey: String,
         users: List<UserEntity>,
         nextSkip: Int?,
-    ) = sources.afterWrite {
-        db.withTransaction {
-            this.users.upsertAll(users)
-            keys.upsert(UserRemoteKeyEntity(listKey, nextSkip))
-        }
-    }
+    ) = writes.append(listKey, users, nextSkip)
 
     override suspend fun updatePermissions(
         ids: List<Int>,
@@ -86,11 +84,5 @@ class RoomUserStore(
 
     override suspend fun delete(userId: Int) = sources.afterWrite { users.delete(userId) }
 
-    override suspend fun clearAll() =
-        sources.afterWrite {
-            db.withTransaction {
-                users.clearAll()
-                keys.clearAll()
-            }
-        }
+    override suspend fun clearAll() = writes.clearAll()
 }

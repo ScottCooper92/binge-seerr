@@ -1,7 +1,6 @@
 package io.github.scottcooper92.binge.seerr.data
 
 import androidx.paging.PagingSource
-import androidx.room.withTransaction
 
 /**
  * The issue cache behind a seam, so the mediator and the browser are tested against a fake rather
@@ -49,6 +48,16 @@ class RoomIssueStore(
     private val issues get() = db.issueDao()
     private val keys get() = db.issueRemoteKeyDao()
     private val sources = OpenPagingSources<Int, IssueEntity>()
+    private val writes =
+        PagedWrites(
+            db = db,
+            sources = sources,
+            clearList = { issues.clear(it) },
+            upsertRows = { issues.upsertAll(it) },
+            setCursor = { listKey, nextSkip -> keys.upsert(IssueRemoteKeyEntity(listKey, nextSkip)) },
+            clearEverything = { issues.clearAll() },
+            clearCursors = { keys.clearAll() },
+        )
 
     override fun pagingSource(
         listKey: String,
@@ -63,24 +72,13 @@ class RoomIssueStore(
         listKey: String,
         issues: List<IssueEntity>,
         nextSkip: Int?,
-    ) = sources.afterWrite {
-        db.withTransaction {
-            this.issues.clear(listKey)
-            this.issues.upsertAll(issues)
-            keys.upsert(IssueRemoteKeyEntity(listKey, nextSkip))
-        }
-    }
+    ) = writes.refresh(listKey, issues, nextSkip)
 
     override suspend fun append(
         listKey: String,
         issues: List<IssueEntity>,
         nextSkip: Int?,
-    ) = sources.afterWrite {
-        db.withTransaction {
-            this.issues.upsertAll(issues)
-            keys.upsert(IssueRemoteKeyEntity(listKey, nextSkip))
-        }
-    }
+    ) = writes.append(listKey, issues, nextSkip)
 
     override suspend fun updateStatus(
         issueId: Int,
@@ -89,11 +87,5 @@ class RoomIssueStore(
 
     override suspend fun delete(issueId: Int) = sources.afterWrite { issues.delete(issueId) }
 
-    override suspend fun clearAll() =
-        sources.afterWrite {
-            db.withTransaction {
-                issues.clearAll()
-                keys.clearAll()
-            }
-        }
+    override suspend fun clearAll() = writes.clearAll()
 }

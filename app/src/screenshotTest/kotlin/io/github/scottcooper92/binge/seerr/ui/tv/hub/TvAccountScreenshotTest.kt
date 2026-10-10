@@ -10,9 +10,9 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
+import io.github.scottcooper92.binge.seerr.ui.FixedSampleRequests
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuota
 import io.github.scottcooper92.binge.seerr.ui.hub.HubQuotaBucket
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestDownload
 import io.github.scottcooper92.binge.seerr.ui.tv.TvDestination
 import io.github.scottcooper92.binge.seerr.ui.tv.TvLoadPhase
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPagedRows
@@ -28,20 +28,8 @@ private const val JOINED_MILLIS = FIXED_NOW_MILLIS - 400L * 24 * 60 * 60 * 1000
 private const val ADMIN_PERMISSIONS = 2
 
 private val SampleRequests =
-    listOf(
-        request(1, "Heat", SeerrRequestStatusCode.Pending, now = FIXED_NOW_MILLIS),
-        request(
-            2,
-            "The Bear",
-            SeerrRequestStatusCode.Approved,
-            seasons = listOf(1, 2),
-            mediaStatus = SeerrMediaStatusCode.Processing,
-            download = RequestDownload(0.4f, 12, true),
-            now = FIXED_NOW_MILLIS,
-        ),
-        request(3, "Dune: Part Two", SeerrRequestStatusCode.Declined, now = FIXED_NOW_MILLIS),
-        request(4, "Severance", SeerrRequestStatusCode.Approved, mediaStatus = SeerrMediaStatusCode.Available, now = FIXED_NOW_MILLIS),
-    )
+    FixedSampleRequests +
+        request(4, "Severance", SeerrRequestStatusCode.Approved, mediaStatus = SeerrMediaStatusCode.Available, now = FIXED_NOW_MILLIS)
 
 private fun detail(
     quota: HubQuota?,

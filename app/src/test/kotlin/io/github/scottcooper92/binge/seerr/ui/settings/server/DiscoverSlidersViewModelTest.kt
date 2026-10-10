@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModelStore
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
-import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorUiState
+import io.github.scottcooper92.binge.seerr.ui.users.settings.ExtrasEditorUiState
 import io.github.scottcooper92.binge.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
@@ -67,8 +67,8 @@ class DiscoverSlidersViewModelTest {
         return vm
     }
 
-    private suspend fun DiscoverSlidersViewModel.awaitReady(): EditorUiState.Ready<List<DiscoverSlider>> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<List<DiscoverSlider>>
+    private suspend fun DiscoverSlidersViewModel.awaitReady(): ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames> =
+        uiState.first { it is ExtrasEditorUiState.Ready && !it.saving } as ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
 
     @Test
     fun `the list is read in the server's order, a kind this app does not know kept by its number`() =
@@ -93,7 +93,7 @@ class DiscoverSlidersViewModelTest {
             vm.toggle(2)
             // The list saves as it changes: the moves and the switch go out together, once they stop.
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { it is EditorUiState.Ready && !it.dirty }
+            vm.uiState.first { it is ExtrasEditorUiState.Ready && !it.dirty }
             assertEquals(1, seerr.count("POST", "/api/v1/settings/discover"))
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/discover")).jsonArray.map { it.jsonObject }
@@ -122,7 +122,10 @@ class DiscoverSlidersViewModelTest {
             vm.reset()
             assertEquals(EditorEvent.Notice(R.string.server_settings_sliders_reset_done), notice.await())
             assertEquals(1, seerr.count("GET", "/api/v1/settings/discover/reset"))
-            val ready = vm.uiState.first { it is EditorUiState.Ready && !it.dirty } as EditorUiState.Ready<List<DiscoverSlider>>
+            val ready =
+                vm.uiState.first {
+                    it is ExtrasEditorUiState.Ready && !it.dirty
+                } as ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
             assertEquals(listOf(1, 2, 3, 4), ready.draft.map { it.id })
             assertEquals(2, seerr.count("GET", "/api/v1/settings/discover"))
         }
@@ -150,5 +153,40 @@ class DiscoverSlidersViewModelTest {
                     .single { it.id == 2 }
                     .enabled,
             )
+        }
+
+    @Test
+    fun `what the custom sliders hold is named for their captions, an id left as a number where the server cannot say`() =
+        runTest {
+            seerr.serve(
+                "GET /api/v1/settings/discover",
+                """[{"id":4,"type":13,"title":"Kaiju","isBuiltIn":false,"enabled":true,"data":"210024,4344"},
+                    {"id":5,"type":15,"title":"Sci-fi","isBuiltIn":false,"enabled":true,"data":"878"},
+                    {"id":6,"type":17,"title":"Marvel","isBuiltIn":false,"enabled":true,"data":"420"},
+                    {"id":7,"type":18,"title":"HBO","isBuiltIn":false,"enabled":true,"data":"49"},
+                    {"id":8,"type":20,"title":"Streaming","isBuiltIn":false,"enabled":true,"data":"GB,8|337"}]""",
+            )
+            seerr.serve("GET /api/v1/keyword/210024", """{"id":210024,"name":"kaiju"}""")
+            seerr.serve("GET /api/v1/keyword/4344", "{}", code = 404)
+            seerr.serve("GET /api/v1/genres/movie", """[{"id":878,"name":"Science Fiction"}]""")
+            seerr.serve("GET /api/v1/studio/420", """{"id":420,"name":"Marvel Studios"}""")
+            seerr.serve("GET /api/v1/network/49", """{"id":49,"name":"HBO"}""")
+            seerr.serve("GET /api/v1/watchproviders/movies", """[{"id":8,"name":"Netflix"},{"id":337,"name":"Disney Plus"}]""")
+            val vm = viewModel()
+            val ready =
+                vm.uiState.first {
+                    it is ExtrasEditorUiState.Ready &&
+                        it.extras.keywords.isNotEmpty() &&
+                        it.extras.providers.isNotEmpty() &&
+                        it.extras.studios.isNotEmpty() &&
+                        it.extras.networks.isNotEmpty() &&
+                        it.extras.genres.isNotEmpty()
+                } as ExtrasEditorUiState.Ready<List<DiscoverSlider>, SliderNames>
+            val labels = ready.draft.filter { !it.builtIn }.associate { it.id to it.dataLabel(ready.extras) { code -> code } }
+            assertEquals("kaiju, 4344", labels[4])
+            assertEquals("Science Fiction", labels[5])
+            assertEquals("Marvel Studios", labels[6])
+            assertEquals("HBO", labels[7])
+            assertEquals("GB · Netflix, Disney Plus", labels[8])
         }
 }
