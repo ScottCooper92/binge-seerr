@@ -39,7 +39,6 @@ import io.github.scottcooper92.binge.seerr.ui.state.StatusChipSkeleton
 import com.binge.designsystem.R as DesR
 
 private const val HERO_TITLE_FRACTION = 0.7f
-private const val HERO_META_FRACTION = 0.35f
 private const val OVERVIEW_LINE_COUNT = 3
 private const val OVERVIEW_LAST_LINE_FRACTION = 0.6f
 
@@ -48,7 +47,7 @@ private const val CARD_ROW_TITLE_FRACTION = 0.6f
 private const val CARD_ROW_DETAIL_FRACTION = 0.4f
 
 /**
- * Loading placeholder for [RequestDetailPage]: the hero, the headline's chip row and overview, and
+ * Loading placeholder for [RequestDetailPage]: the hero with its title and meta chips, the headline's overview, and
  * a [RequestCard] stand-in: the title row with its chip, one person row and the button. Stats, the
  * info rows, the destination line, "Other requests" and Moderated by are all conditional on what the
  * server returns, so nothing is reserved for them — the scroll grows on resolve rather than
@@ -112,18 +111,22 @@ private fun HeroSkeleton(modifier: Modifier = Modifier) {
                     ),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            // The title and meta line only — RequestDetailPage passes no tagline/eyebrow, so those
+            // The title and meta row only — RequestDetailPage passes no tagline/eyebrow, so those
             // rows never render and reserving them would leave a gap the resolved hero never fills.
+            // The meta row is RequestHeroMeta's: a media type tag, then the state chip. The 4K tag is
+            // conditional, so nothing is reserved for it.
             SkeletonPlate(
                 Modifier
                     .fillMaxWidth(HERO_TITLE_FRACTION)
                     .height(lineHeightOf(MaterialTheme.typography.displaySmall)),
             )
-            SkeletonPlate(
-                Modifier
-                    .fillMaxWidth(HERO_META_FRACTION)
-                    .height(lineHeightOf(MaterialTheme.typography.bodySmall)),
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
+                StatusChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
+            }
         }
     }
 }
@@ -131,11 +134,6 @@ private fun HeroSkeleton(modifier: Modifier = Modifier) {
 @Composable
 private fun HeadlineSkeleton(modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m))) {
-        Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-            // The real headline is the request's state, then a tag (4K): a status chip and a tag.
-            StatusChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
-            ChipSkeleton(dimensionResource(R.dimen.request_skeleton_chip_width))
-        }
         repeat(OVERVIEW_LINE_COUNT) { index ->
             SkeletonPlate(
                 Modifier
