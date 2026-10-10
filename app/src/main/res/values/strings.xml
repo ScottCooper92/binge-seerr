@@ -778,7 +778,7 @@
     <string name="server_settings_slider_type">Kind</string>
     <string name="server_settings_slider_title">Title</string>
     <string name="server_settings_slider_data">Data</string>
-    <string name="server_settings_slider_data_keywords">TMDB keyword ids, separated by commas</string>
+    <string name="server_settings_slider_genre">Genre</string>
     <string name="server_settings_slider_data_genre">A TMDB genre id</string>
     <string name="server_settings_slider_data_company">A TMDB company or network id</string>
     <string name="server_settings_slider_data_search">The search the slider runs</string>

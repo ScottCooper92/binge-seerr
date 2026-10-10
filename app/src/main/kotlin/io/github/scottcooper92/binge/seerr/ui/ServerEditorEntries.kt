@@ -17,6 +17,7 @@ import io.github.scottcooper92.binge.seerr.ui.settings.server.OverrideRuleAction
 import io.github.scottcooper92.binge.seerr.ui.settings.server.OverrideRuleScreen
 import io.github.scottcooper92.binge.seerr.ui.settings.server.OverrideRuleViewModel
 import io.github.scottcooper92.binge.seerr.ui.settings.server.ServerAgent
+import io.github.scottcooper92.binge.seerr.ui.settings.server.SliderEditorActions
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.editorActions
 import kotlinx.coroutines.flow.Flow
@@ -51,7 +52,20 @@ internal fun DiscoverSliderEntry(
         hiltViewModel<DiscoverSliderViewModel, DiscoverSliderViewModel.Factory>(creationCallback = { factory -> factory.create(id) })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LeaveOnDeleted(viewModel.events, onBack)
-    DiscoverSliderScreen(state = state, events = viewModel.events, actions = viewModel.editorActions(onBack), onDelete = viewModel::delete)
+    DiscoverSliderScreen(
+        state = state,
+        events = viewModel.events,
+        actions = viewModel.editorActions(onBack),
+        sliderActions =
+            SliderEditorActions(
+                onSelectType = viewModel::selectType,
+                onToggleKeyword = viewModel::toggleKeyword,
+                onSelectGenre = viewModel::selectGenre,
+                onSearchKeywords = viewModel::searchKeywords,
+                onLoadKeywordNames = viewModel::loadKeywordNames,
+                onDelete = viewModel::delete,
+            ),
+    )
 }
 
 /** One agent's editor, with the test beside it. */

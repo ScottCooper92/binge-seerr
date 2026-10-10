@@ -276,7 +276,6 @@ internal fun SliderType.labelRes(): Int =
 @StringRes
 internal fun SliderType.dataHintRes(): Int =
     when (this) {
-        SliderType.MovieKeyword, SliderType.TvKeyword -> R.string.server_settings_slider_data_keywords
         SliderType.MovieGenre, SliderType.TvGenre -> R.string.server_settings_slider_data_genre
         SliderType.Studio, SliderType.Network -> R.string.server_settings_slider_data_company
         SliderType.Search -> R.string.server_settings_slider_data_search
