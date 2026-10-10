@@ -37,7 +37,7 @@ app:consent_decline  a0e63d7c7125
 app:consent_kicker  54a57c3147c4
 app:consent_point_change_detail  89bcc634a88a
 app:consent_point_change_title  6b4afbef99d2
-app:consent_point_never_detail  7487d6673cda
+app:consent_point_never_detail  f03b70bd8317
 app:consent_point_never_title  485ca594ccc9
 app:consent_point_shared_detail  271db93ff1bb
 app:consent_point_shared_title  6fa969fe2654
