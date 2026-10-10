@@ -429,7 +429,7 @@
     <string name="user_settings_type_issue_resolved">Incidencia resuelta</string>
     <string name="user_settings_type_issue_reopened">Incidencia reabierta</string>
     <string name="user_settings_type_media_auto_requested">Solicitado automáticamente desde la lista de seguimiento</string>
-    <string name="user_settings_permissions_lead">Solo puedes conceder lo que tú tienes; solo el propietario puede conceder Administrador.</string>
+    <string name="user_settings_permissions_lead">Solo el propietario puede conceder Administrador.</string>
     <string name="user_settings_linked_as">Vinculada como %1$s</string>
     <string name="server_settings_general_title">Ajustes generales</string>
     <string name="server_settings_application_title">Título de la aplicación</string>
@@ -446,7 +446,7 @@
     <string name="server_settings_trust_proxy">Confiar en las cabeceras del proxy</string>
     <string name="server_settings_csrf">Protección CSRF</string>
     <string name="server_settings_default_permissions">Permisos predeterminados</string>
-    <string name="server_settings_default_permissions_lead">Con lo que empieza una cuenta nueva. Solo puedes conceder de forma predeterminada lo que tú tienes.</string>
+    <string name="server_settings_default_permissions_lead">Con lo que empieza una cuenta nueva. Solo el propietario puede conceder Administrador.</string>
     <string name="server_settings_api_key">Clave de API</string>
     <string name="server_settings_api_key_copy">Copiar</string>
     <string name="server_settings_api_key_regenerate">Regenerar</string>

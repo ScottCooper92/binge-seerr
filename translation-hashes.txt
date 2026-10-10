@@ -547,7 +547,7 @@ app:server_settings_cache_stats  492cac397891
 app:server_settings_csrf  84c537ef00cf
 app:server_settings_csrf_detail  d03c70887cfc
 app:server_settings_default_permissions  43fc0abd72ea
-app:server_settings_default_permissions_lead  a02eb9e609fe
+app:server_settings_default_permissions_lead  7eb71f4eee34
 app:server_settings_delete  e2d0a54968ea
 app:server_settings_delete_message  f89487338442
 app:server_settings_delete_title  7ffe27ff18ad
@@ -1045,7 +1045,7 @@ app:user_settings_password_hint  3383529c8a7d
 app:user_settings_password_mismatch  f694aaa8da2c
 app:user_settings_password_new  3dd9df4441fb
 app:user_settings_password_none  d2e03582d927
-app:user_settings_permissions_lead  bda3e5aa61ea
+app:user_settings_permissions_lead  47985b21f369
 app:user_settings_pgp_error  414cf512c517
 app:user_settings_pushover_key_error  9b677f9b2310
 app:user_settings_pushover_sound_default  aa46c3735f07
