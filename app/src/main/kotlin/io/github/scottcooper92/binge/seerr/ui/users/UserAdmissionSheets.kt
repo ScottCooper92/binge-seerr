@@ -275,6 +275,7 @@ private fun CandidateRow(
         subtitle = candidate.email,
         enabled = enabled,
         showDivider = true,
+        // The avatar trails because CheckboxRow has no leading slot yet; binge-design-system#544 asks for one.
         trailingContent = {
             BingeInitialsAvatar(name = candidate.name, avatarUrl = candidate.avatarUrl, size = dimensionResource(DesR.dimen.avatar_size_md))
         },
