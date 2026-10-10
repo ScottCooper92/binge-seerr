@@ -1,29 +1,20 @@
 package io.github.scottcooper92.binge.seerr.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -35,89 +26,85 @@ import coil3.compose.AsyncImage
 import com.binge.designsystem.component.BingeFilledButton
 import com.binge.designsystem.component.BingeFilterChip
 import com.binge.designsystem.component.BingeTextButton
-import com.binge.designsystem.resolvedContentInset
+import com.binge.designsystem.template.StepHeading
+import com.binge.designsystem.theme.BingeShapes
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorTextField
 import com.binge.designsystem.R as DesR
 
-/** Step two: the server's name over its artwork, then only the sign-ins it accepts. */
+/** Step two's aside: the server's own artwork, where it has some. */
 @Composable
-internal fun SetupSignInStep(
+internal fun SetupServerBackdrop(server: SetupServer) {
+    server.backdropUrl?.let { url ->
+        AsyncImage(
+            model = url,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(dimensionResource(R.dimen.setup_backdrop_height))
+                    .clip(BingeShapes.Large),
+        )
+    }
+}
+
+/** Step two's heading: the server's name, and what it is. */
+@Composable
+internal fun SetupServerHeading(server: SetupServer) {
+    StepHeading(
+        title = server.title,
+        subtitle =
+            server.versionLabel
+                ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
+                ?: stringResource(R.string.setup_server_development, server.variant.displayName),
+    )
+}
+
+/** Step two: only the sign-ins the server accepts, and the fields of the one chosen. */
+@Composable
+internal fun SetupSignInContent(
     state: SetupUiState.SignIn,
     actions: SetupActions,
-    contentPadding: PaddingValues,
 ) {
-    val inset = resolvedContentInset()
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(contentPadding),
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
     ) {
-        ServerHeader(state.server, actions.onChangeServer)
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(inset),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-        ) {
-            ModeChips(state.server, state.form.mode) { mode -> actions.onEditForm { copy(mode = mode) } }
-            ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset, actions.onConnect)
-            state.error?.let { error ->
-                Text(
-                    stringResource(error.messageRes()),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            state.notice?.let { notice ->
-                Text(
-                    stringResource(notice.messageRes()),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            BingeFilledButton(
-                label = stringResource(state.form.mode.submitLabelRes()),
-                onClick = actions.onConnect,
-                enabled = state.form.canSubmit && !state.isConnecting && state.link == null,
-                loading = state.isConnecting,
-                modifier = Modifier.fillMaxWidth(),
+        ModeChips(state.server, state.form.mode) { mode -> actions.onEditForm { copy(mode = mode) } }
+        ModeFields(state, actions.onEditForm, actions.onRequestPasswordReset, actions.onConnect)
+        state.error?.let { error ->
+            Text(
+                stringResource(error.messageRes()),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
             )
-            actions.onDisconnect?.let { DisconnectButton(it) }
+        }
+        state.notice?.let { notice ->
+            Text(
+                stringResource(notice.messageRes()),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
 
+/** Step two's commit, and the way off a server that rejected the session where the app offers one (#810). */
 @Composable
-private fun ServerHeader(
-    server: SetupServer,
-    onChangeServer: () -> Unit,
+internal fun SetupSignInFooter(
+    state: SetupUiState.SignIn,
+    actions: SetupActions,
 ) {
-    val surface = MaterialTheme.colorScheme.surface
-    Box(modifier = Modifier.fillMaxWidth().height(dimensionResource(R.dimen.setup_backdrop_height))) {
-        server.backdropUrl?.let { url ->
-            AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-        }
-        Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, surface))))
-        Column(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(horizontal = resolvedContentInset()),
-        ) {
-            Text(server.title, style = MaterialTheme.typography.headlineSmall)
-            Text(
-                server.versionLabel
-                    ?.let { stringResource(R.string.setup_server_edition, server.variant.displayName, it) }
-                    ?: stringResource(R.string.setup_server_development, server.variant.displayName),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            BingeTextButton(label = stringResource(R.string.setup_change_server), onClick = onChangeServer)
-        }
-    }
+    BingeFilledButton(
+        label = stringResource(state.form.mode.submitLabelRes()),
+        onClick = actions.onConnect,
+        enabled = state.form.canSubmit && !state.isConnecting && state.link == null,
+        loading = state.isConnecting,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    actions.onDisconnect?.let { DisconnectButton(it) }
 }
 
 @Composable
