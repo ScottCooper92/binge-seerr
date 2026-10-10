@@ -178,7 +178,7 @@ internal fun RequestSummaryGroup(
 private fun Fact.toListItem(): ListItem {
     val link = primary as? InfoValue.Link
     val name = primary.plainText()
-    val requester = if (secondary != null && name.isNotBlank()) "$label $name" else label
+    val title = if (secondary != null && name.isNotBlank()) "$label $name" else label
     return ListItem(
         icon = icon,
         leadingContent =
@@ -187,7 +187,7 @@ private fun Fact.toListItem(): ListItem {
             } else {
                 null
             },
-        label = requester,
+        label = title,
         detail = (secondary ?: name).takeIf { it.isNotBlank() },
         clickable = link != null,
         onClick = { link?.onClick?.invoke() },

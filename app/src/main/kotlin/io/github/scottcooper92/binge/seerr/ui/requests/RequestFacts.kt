@@ -99,6 +99,7 @@ internal fun requestPeopleFacts(
                 primary = linkedOrPlain(it, detail.modifiedById, detail.viewerId, detail.canManageUsers, onOpenUser),
                 secondary = updatedText,
                 person = true,
+                avatarUrl = detail.modifiedByAvatarUrl,
             )
         } ?: updatedText?.let {
             Fact(

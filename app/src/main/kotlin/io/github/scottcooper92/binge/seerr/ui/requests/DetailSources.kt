@@ -99,7 +99,8 @@ internal class DetailSources(
             canEditDestination = canEditDestination,
             backdropUrl = details?.backdropPath?.toTmdbBackdropUrl(),
             overview = details?.overview?.takeIf { it.isNotBlank() },
-            modifiedBy = dto.modifiedByName(),
+            modifiedBy = dto.modifiedBy?.displayString(),
+            modifiedByAvatarUrl = dto.modifiedBy?.avatar.toAvatarUrl(),
             modifiedById = dto.modifiedBy?.id,
             viewerId = user?.id,
             canManageUsers = permissions.canManageUsers,
@@ -151,10 +152,6 @@ internal class DetailSources(
         fourK: String?,
     ): String? = (if (dto.is4k) fourK ?: standard else standard)?.takeIf { it.isWebUrl() }
 }
-
-/** The name the server shows for whoever last changed the request, preferring the display name. */
-private fun SeerrRequestDto.modifiedByName(): String? =
-    modifiedBy?.let { listOfNotNull(it.displayName, it.username).firstOrNull { name -> name.isNotBlank() } }
 
 /** The 4K instance is listed only where the server holds one, or the request itself is 4K. */
 private fun SeerrRequestDto.mediaRecord(

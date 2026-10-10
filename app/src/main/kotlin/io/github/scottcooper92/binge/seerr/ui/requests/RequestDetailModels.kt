@@ -158,6 +158,7 @@ data class RequestDetail(
     val overview: String?,
     val modifiedBy: String?,
     val modifiedById: Int?,
+    val modifiedByAvatarUrl: String? = null,
     /** The viewer's own id, and whether `MANAGE_USERS` lets them open anyone else's — what a name gates on before it links. */
     val viewerId: Int?,
     val canManageUsers: Boolean,
