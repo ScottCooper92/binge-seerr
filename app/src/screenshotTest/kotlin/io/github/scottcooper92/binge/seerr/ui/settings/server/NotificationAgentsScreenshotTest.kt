@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.PHONE_WIDTH
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrFontScalePreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
@@ -194,14 +195,13 @@ class NotificationAgentSectionsScreenshotTest {
         )
 }
 
-private val SECTION_WIDTH = 411.dp
 private val SECTION_PADDING = 16.dp
 
 @Composable
 private fun MoreSettingsFrame(
     form: AgentForm,
     extras: AgentExtras = AgentExtras(),
-) = Column(modifier = Modifier.width(SECTION_WIDTH).padding(SECTION_PADDING)) {
+) = Column(modifier = Modifier.width(PHONE_WIDTH).padding(SECTION_PADDING)) {
     OptionGroup(
         required = false,
         draft = form,

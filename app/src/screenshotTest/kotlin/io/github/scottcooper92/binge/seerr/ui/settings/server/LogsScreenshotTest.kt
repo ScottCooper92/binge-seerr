@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import com.android.tools.screenshot.PreviewTest
+import io.github.scottcooper92.binge.seerr.preview.PHONE_WIDTH
 import io.github.scottcooper92.binge.seerr.preview.SeerrComponentPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
@@ -75,7 +76,6 @@ private val LONG_MESSAGE = "Request failed after retrying: " + "the instance did
 
 private const val DATA = "{\n  \"errorMessage\": \"connect ECONNREFUSED 10.0.0.12:8989\",\n  \"status\": 503\n}"
 
-private val ROW_WIDTH = 411.dp
 private val ROW_PADDING = 16.dp
 private val ROW_SPACING = 12.dp
 
@@ -98,7 +98,7 @@ private fun entry(
 @Composable
 private fun RowsFrame(content: @Composable () -> Unit) {
     Column(
-        modifier = Modifier.width(ROW_WIDTH).padding(ROW_PADDING),
+        modifier = Modifier.width(PHONE_WIDTH).padding(ROW_PADDING),
         verticalArrangement = Arrangement.spacedBy(ROW_SPACING),
     ) {
         content()

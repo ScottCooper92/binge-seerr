@@ -1,11 +1,11 @@
 package io.github.scottcooper92.binge.seerr.ui.hub
 
 import androidx.compose.ui.test.hasText
-import androidx.test.core.app.ApplicationProvider
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,7 +18,7 @@ class HubUnverifiedCallersBannerTest {
     val rule = createSeerrComposeRule()
 
     private val banner =
-        ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.hub_unverified_callers)
+        string(R.string.hub_unverified_callers)
 
     private val ready =
         HubUiState.Ready(

@@ -37,13 +37,13 @@ import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssueDetailScreen
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesActions
 import io.github.scottcooper92.binge.seerr.ui.tv.issues.TvIssuesBoard
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardAndroidComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val SEVERANCE = "Severance"
@@ -129,7 +129,7 @@ class TvIssueDetailFocusTest {
         }
         composeTestRule.waitForIdle()
 
-        val retry = RuntimeEnvironment.getApplication().getString(R.string.hub_retry)
+        val retry = string(R.string.hub_retry)
         composeTestRule.onNode(hasText(retry) and isFocusable()).assertIsFocused()
         pressOk()
         assertEquals(1, retries)
