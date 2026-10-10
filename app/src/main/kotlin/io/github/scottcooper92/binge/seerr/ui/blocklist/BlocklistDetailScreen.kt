@@ -158,6 +158,7 @@ internal fun BlocklistDetailPage(
 /** Who blocked it, when, and the tags it fell to — the row's own facts, read as a page instead of a line. */
 @Composable
 private fun BlocklistDetailFacts(item: BlocklistItem) {
+    // The block time does not tick: it ages over days, not in the minutes a page is open (#1239).
     val rows =
         listOfNotNull(
             item.addedBy?.let {

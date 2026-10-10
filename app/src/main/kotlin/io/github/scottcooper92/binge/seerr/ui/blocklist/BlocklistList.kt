@@ -175,6 +175,7 @@ private fun BlocklistRowMeta(
                 Text(year, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
             }
         }
+        // Read against the composition's clock, not a ticking one: a block ages over days, and the list re-reads on return (#1239).
         val at = formatRelativeOrAbsolute(item.addedAtMillis)
         val by = item.addedBy?.let { stringResource(R.string.blocklist_blocked_by, it) }
         listOfNotNull(by, at).takeIf { it.isNotEmpty() }?.let { parts ->

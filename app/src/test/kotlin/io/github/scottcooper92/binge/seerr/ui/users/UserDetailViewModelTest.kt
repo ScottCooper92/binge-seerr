@@ -154,6 +154,29 @@ class UserDetailViewModelTest {
             assertEquals("20", received.first { it.url.encodedPath == "/api/v1/user/8/requests" }.url.queryParameter("take"))
         }
 
+    /** #1239: "joined" and each request's time age while the page shows, and the clock stops when it leaves. */
+    @Test
+    fun `the page's clock moves on each minute while it is showing, and stops when it leaves`() =
+        runTest {
+            server(viewerId = 1, permissions = ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            vm.setScreenVisible(true)
+            vm.uiState.first { (it as? UserDetailUiState.Ready)?.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.uiState.first { (it as? UserDetailUiState.Ready)?.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, (vm.uiState.value as UserDetailUiState.Ready).now)
+        }
+
     /** The server reads another user's quota only with both permissions, so a manager of users alone is not sent to be refused (#1093). */
     @Test
     fun `a manager of users alone is not shown another user's quota, and the server is not asked`() =

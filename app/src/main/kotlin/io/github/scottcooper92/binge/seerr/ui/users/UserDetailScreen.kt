@@ -136,7 +136,7 @@ fun UserDetailScreen(
             is UserDetailUiState.Seeded ->
                 UserDetailContent(state.item, null, state.error, requests.collectAsLazyPagingItems(), actions, inner)
             is UserDetailUiState.Ready ->
-                UserDetailContent(state.detail.item, state.detail, null, requests.collectAsLazyPagingItems(), actions, inner)
+                UserDetailContent(state.detail.item, state.detail, null, requests.collectAsLazyPagingItems(), actions, inner, state.now)
         }
     }
     if (managing && ready != null) {
@@ -158,6 +158,8 @@ private fun UserDetailContent(
     requests: LazyPagingItems<RequestItem>,
     actions: UserDetailActions,
     contentPadding: PaddingValues,
+    // A seeded page shows for the length of one load, so only the loaded one ticks.
+    now: Long = System.currentTimeMillis(),
 ) {
     val inset = resolvedContentInset()
     val sides = resolvedContentPadding()
@@ -169,6 +171,7 @@ private fun UserDetailContent(
         item {
             ProfileHeader(
                 item,
+                now = now,
                 modifier =
                     Modifier
                         .padding(
@@ -227,6 +230,7 @@ private fun UserDetailContent(
                         item = item,
                         onClick = { actions.onOpenRequest(item) },
                         modifier = Modifier.padding(sides).padding(bottom = dimensionResource(DesR.dimen.list_row_spacing)),
+                        now = now,
                     )
                 }
             }
@@ -258,6 +262,7 @@ private fun userStats(detail: UserDetail): List<DetailStat> =
 @Composable
 private fun ProfileHeader(
     item: UserItem,
+    now: Long,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -268,7 +273,7 @@ private fun ProfileHeader(
         BingeInitialsAvatar(name = item.name, avatarUrl = item.avatarUrl, size = dimensionResource(DesR.dimen.avatar_size_lg))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
             Text(item.name, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            val joined = formatRelativeOrAbsolute(item.createdAtMillis)?.let { stringResource(R.string.user_joined, it) }
+            val joined = formatRelativeOrAbsolute(item.createdAtMillis, now)?.let { stringResource(R.string.user_joined, it) }
             val username = item.handle ?: item.email
             listOfNotNull(
                 listOfNotNull(username, joined).joinToString(stringResource(R.string.hub_meta_separator)).ifEmpty {
