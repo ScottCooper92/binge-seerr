@@ -58,10 +58,11 @@ internal fun RequestCard(
     detail: RequestDetail,
     onClick: (() -> Unit)?,
     onOpenUser: (Int) -> Unit,
+    now: Long,
     modifier: Modifier = Modifier,
     isActing: Boolean = false,
 ) {
-    val people = requestPeopleFacts(detail, onOpenUser).filterNot { it.isBlank() }
+    val people = requestPeopleFacts(detail, now, onOpenUser).filterNot { it.isBlank() }
     val destination = requestDestinationFacts(detail).filterNot { it.isBlank() }
     val tags = detail.destination?.tagsLabel
     val summary = detail.summaries().first()
@@ -103,16 +104,18 @@ internal fun RequestCardSection(
     onOpenUser: (Int) -> Unit,
     modifier: Modifier = Modifier,
     isActing: Boolean = false,
+    now: Long = System.currentTimeMillis(),
 ) {
     Column(modifier = modifier.padding(resolvedContentPadding())) {
         RequestCard(
             detail = detail,
             onClick = { onOpenRequest(detail.item.id) }.takeIf { detail.hasPrimaryAction },
             onOpenUser = onOpenUser,
+            now = now,
             isActing = isActing,
         )
         if (detail.siblings.isNotEmpty()) {
-            RequestSummaryGroup(detail.siblings, onClick = onOpenRequest)
+            RequestSummaryGroup(detail.siblings, now = now, onClick = onOpenRequest)
         }
     }
 }
@@ -121,6 +124,7 @@ internal fun RequestCardSection(
 @Composable
 internal fun RequestSummaryGroup(
     summaries: List<RequestSummary>,
+    now: Long,
     onClick: (Int) -> Unit,
 ) {
     Text(
@@ -152,7 +156,7 @@ internal fun RequestSummaryGroup(
                     label = requester,
                     detail =
                         listOfNotNull(
-                            formatRelativeOrAbsolute(summary.requestedAtMillis),
+                            formatRelativeOrAbsolute(summary.requestedAtMillis, now),
                             stringResource(R.string.settings_service_4k).takeIf { summary.is4k },
                             summary.seasonNumbers
                                 .takeIf { it.isNotEmpty() }

@@ -229,6 +229,8 @@ sealed interface RequestDetailUiState {
         val edit: EditState? = null,
         /** A moderation of this request is in flight: the call itself, then the reload that shows its result. */
         val isActing: Boolean = false,
+        /** What the page's relative times are worded against: moved on each minute while the page shows (#1239). */
+        val now: Long = System.currentTimeMillis(),
     ) : RequestDetailUiState
 
     data class Error(

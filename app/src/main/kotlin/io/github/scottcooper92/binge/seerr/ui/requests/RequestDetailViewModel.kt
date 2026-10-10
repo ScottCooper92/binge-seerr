@@ -25,7 +25,10 @@ import io.github.scottcooper92.binge.seerr.telemetry.AnalyticsEvents
 import io.github.scottcooper92.binge.seerr.telemetry.CrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpAnalytics
 import io.github.scottcooper92.binge.seerr.telemetry.NoOpCrashBreadcrumbs
+import io.github.scottcooper92.binge.seerr.ui.Ticker
+import io.github.scottcooper92.binge.seerr.ui.minuteClock
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,8 +58,15 @@ class RequestDetailViewModel
         private val analytics: Analytics = NoOpAnalytics,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
         private val cache: RequestStore = NoRequestStore,
+        private val minuteTicker: Ticker = Ticker(),
     ) : ViewModel() {
         private val state = MutableStateFlow<RequestDetailUiState>(RequestDetailUiState.Loading)
+
+        internal var clock: () -> Long = System::currentTimeMillis
+
+        /** The page's "2 minutes ago" is worded against this, moved on each minute while the page shows (#1239). */
+        private val now = MutableStateFlow(clock())
+        private var ticker: Job? = null
 
         /**
          * Raised when a moderation succeeds and held until the reload it triggers has written its result.
@@ -94,12 +104,23 @@ class RequestDetailViewModel
         val uiState: StateFlow<RequestDetailUiState> =
             combine(state, requestEditor.state, moderator.actingIds, reloadingAfterAction) { page, edit, acting, reloading ->
                 (page as? RequestDetailUiState.Ready)?.copy(edit = edit, isActing = requestId in acting || reloading) ?: page
-            }.stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
+            }.combine(now) { page, now -> (page as? RequestDetailUiState.Ready)?.copy(now = now) ?: page }
+                .stateIn(viewModelScope, SharingStarted.Lazily, RequestDetailUiState.Loading)
 
         private var editSource: EditSource? = null
 
         init {
             reload()
+        }
+
+        /**
+         * The page's relative times count down while it shows, and no longer. A request's sheet opened over another
+         * page never calls this: it is up for seconds, so the time it opened with stands.
+         */
+        fun setScreenVisible(visible: Boolean) {
+            ticker?.cancel()
+            ticker = null
+            if (visible) ticker = viewModelScope.launch(dispatcher) { minuteClock(clock, minuteTicker).collect { now.value = it } }
         }
 
         fun startEdit() {

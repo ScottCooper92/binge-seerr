@@ -157,6 +157,7 @@ private fun Ready(
         onOpenUser = actions.onOpenUser,
         snackbarHostState = snackbarHostState,
         isActing = state.isActing,
+        now = state.now,
     )
     RequestManagementSheets(state = state, actions = actions, acting = acting, onDismissActing = { acting = false })
     other?.let { id ->
@@ -264,6 +265,7 @@ internal fun RequestDetailPage(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     initiallyOverflowing: Boolean = false,
     isActing: Boolean = false,
+    now: Long = System.currentTimeMillis(),
 ) {
     val item = detail.item
     val title = item.title ?: stringResource(item.mediaType.labelRes())
@@ -309,7 +311,7 @@ internal fun RequestDetailPage(
                 initiallyOverflowing,
             )
             RequestStats(detail)
-            RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser, isActing = isActing)
+            RequestCardSection(detail, onOpenRequest = onOpenRequest, onOpenUser = onOpenUser, isActing = isActing, now = now)
             RequestSections(detail)
         },
     )
