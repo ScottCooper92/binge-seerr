@@ -294,7 +294,8 @@
     <string name="users_clear_selection_cd">Clear selection</string>
     <string name="users_edit_permissions">Edit permissions</string>
     <string name="users_edit_permissions_save">Apply</string>
-    <string name="users_edit_permissions_mixed">Permissions only some of these users have start unticked. Each user keeps their own unless you change it.</string>
+    <string name="users_edit_permissions_mixed">A permission only some of these users have says so, and each user keeps their own. Tap it once to turn it on for everyone, again for off, and again to leave it as it was.</string>
+    <string name="users_edit_permission_some_have">Some of these users have this</string>
     <string name="users_add_cd">Add users</string>
     <string name="users_add_create">Create a local user</string>
     <string name="users_add_create_desc">Signs in with an email and password</string>

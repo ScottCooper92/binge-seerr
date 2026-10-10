@@ -274,7 +274,8 @@
     <string name="users_clear_selection_cd">Quitar la selección</string>
     <string name="users_edit_permissions">Editar permisos</string>
     <string name="users_edit_permissions_save">Aplicar</string>
-    <string name="users_edit_permissions_mixed">Los permisos que solo tienen algunos de estos usuarios aparecen sin marcar. Cada usuario conserva los suyos salvo que los cambies.</string>
+    <string name="users_edit_permissions_mixed">Un permiso que solo tienen algunos de estos usuarios lo indica, y cada usuario conserva el suyo. Tócalo una vez para activarlo para todos, otra para desactivarlo y otra para dejarlo como estaba.</string>
+    <string name="users_edit_permission_some_have">Algunos de estos usuarios lo tienen</string>
     <string name="users_add_cd">Añadir usuarios</string>
     <string name="users_add_create">Crear un usuario local</string>
     <string name="users_add_create_desc">Inicia sesión con correo y contraseña</string>
