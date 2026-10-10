@@ -70,6 +70,8 @@ internal fun RequestsBody(
     /** This list's latest finished network refresh; see [rememberPagedPhase]. */
     lastRefresh: ListRefresh?,
     scope: ModerationScope,
+    /** What the rows' relative times are worded against; see [RequestsUiState.Ready.now]. */
+    now: Long,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
     /** A pull, beside the list's own refresh: what else on the page it refreshes. */
@@ -96,10 +98,10 @@ internal fun RequestsBody(
                     // The failed line is pinned below the top bar and the header; the rows start below it while it shows.
                     Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                         RefreshFailedLine(R.string.requests_refresh_failed, onRetry = lazyItems::retry)
-                        RequestList(lazyItems, scope, onOpen, onManage, contentPadding.belowPinnedLine())
+                        RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding.belowPinnedLine())
                     }
                 } else {
-                    RequestList(lazyItems, scope, onOpen, onManage, contentPadding)
+                    RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding)
                 }
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
@@ -128,6 +130,7 @@ internal fun RequestsBody(
 private fun RequestList(
     lazyItems: LazyPagingItems<RequestItem>,
     scope: ModerationScope,
+    now: Long,
     onOpen: (RequestItem) -> Unit,
     onManage: (RequestItem) -> Unit,
     contentPadding: PaddingValues,
@@ -143,6 +146,7 @@ private fun RequestList(
                     item = item,
                     onClick = { onOpen(item) },
                     onManage = { onManage(item) }.takeIf { item.actions(scope).any },
+                    now = now,
                 )
             }
         }

@@ -96,7 +96,7 @@ internal fun TvRequestsRowsBoard(
                     }.takeIf { (count ?: rows.count) > TV_ROW_ITEM_CAP },
             )
         }
-    val now = System.currentTimeMillis()
+    val now = ready.now
     TvImmersiveHub(
         rows = hubRows,
         itemId = { it.id },
