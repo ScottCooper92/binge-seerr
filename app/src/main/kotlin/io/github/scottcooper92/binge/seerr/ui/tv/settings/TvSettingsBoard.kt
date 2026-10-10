@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.tv.component.TvSideSheet
+import com.binge.designsystem.tv.component.TvSideSheetConfirm
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.template.TvBoard
 import io.github.scottcooper92.binge.seerr.R
@@ -30,8 +32,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.SignInKind
 import io.github.scottcooper92.binge.seerr.ui.settings.labelRes
 import io.github.scottcooper92.binge.seerr.ui.settings.requestPolicyRows
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
 import io.github.scottcooper92.binge.seerr.ui.tv.TvListPaneBoard
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
@@ -123,13 +123,13 @@ internal fun TvSettingsBoard(
         )
         val app = ready.app
         if (showingBugReport && app != null) {
-            TvActionSheet(onDismiss = bugReportCloser::close) { entryFocus ->
+            TvSideSheet(onDismiss = bugReportCloser::close) { entryFocus ->
                 TvBugReportSheetContent(app = app, onClose = bugReportCloser::close, entryFocus = entryFocus)
             }
         }
         if (confirmingDisconnect) {
-            TvActionSheet(onDismiss = closer::close) { entryFocus ->
-                TvActionSheetConfirm(
+            TvSideSheet(onDismiss = closer::close) { entryFocus ->
+                TvSideSheetConfirm(
                     title = stringResource(R.string.hub_disconnect_confirm_title),
                     message = stringResource(R.string.hub_disconnect_confirm_message),
                     confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),

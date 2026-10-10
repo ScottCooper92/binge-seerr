@@ -15,12 +15,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.tv.component.TvQrCode
+import com.binge.designsystem.tv.component.TvSideSheetBody
+import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetStepFocus
+import com.binge.designsystem.tv.component.TvSideSheetTitle
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.AppSettings
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetBody
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetRow
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetStepFocus
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetTitle
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneOption
 import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneRow
@@ -117,8 +117,8 @@ internal fun ColumnScope.TvBugReportSheetContent(
     onClose: () -> Unit,
     entryFocus: FocusRequester,
 ) {
-    TvActionSheetTitle(stringResource(R.string.settings_report_bug))
-    TvActionSheetBody(stringResource(R.string.tv_settings_report_bug_scan))
+    TvSideSheetTitle(stringResource(R.string.settings_report_bug))
+    TvSideSheetBody(stringResource(R.string.tv_settings_report_bug_scan))
     TvQrCode(
         content = app.bugReportUrl,
         contentDescription = stringResource(R.string.tv_settings_report_bug_code_description),
@@ -127,10 +127,10 @@ internal fun ColumnScope.TvBugReportSheetContent(
                 .padding(vertical = dimensionResource(DesR.dimen.padding_s))
                 .size(dimensionResource(R.dimen.tv_bug_report_code_size)),
     )
-    TvActionSheetRow(
+    TvSideSheetRow(
         label = stringResource(R.string.tv_settings_report_bug_close),
         onClick = onClose,
         modifier = Modifier.focusRequester(entryFocus),
     )
-    TvActionSheetStepFocus(entryFocus)
+    TvSideSheetStepFocus(entryFocus)
 }

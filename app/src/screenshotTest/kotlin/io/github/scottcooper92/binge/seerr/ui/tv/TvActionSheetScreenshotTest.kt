@@ -8,6 +8,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.tv.component.TvSideSheetBody
+import com.binge.designsystem.tv.component.TvSideSheetConfirm
+import com.binge.designsystem.tv.component.TvSideSheetPanel
+import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetTitle
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 
 /**
@@ -23,11 +28,11 @@ class TvActionSheetScreenshotTest {
     @Composable
     fun FirstActionFocused() =
         SheetFrame {
-            TvActionSheetTitle("Heat")
-            TvActionSheetBody("Scott · Pending")
-            TvActionSheetRow(label = "Approve", onClick = {}, initiallyFocused = true)
-            TvActionSheetRow(label = "Decline", onClick = {})
-            TvActionSheetRow(label = "Remove", onClick = {}, destructive = true)
+            TvSideSheetTitle("Heat")
+            TvSideSheetBody("Scott · Pending")
+            TvSideSheetRow(label = "Approve", onClick = {}, initiallyFocused = true)
+            TvSideSheetRow(label = "Decline", onClick = {})
+            TvSideSheetRow(label = "Remove", onClick = {}, destructive = true)
         }
 
     /** A destructive row reached: it fills like the rest rather than keeping its error tone on the fill. */
@@ -36,11 +41,11 @@ class TvActionSheetScreenshotTest {
     @Composable
     fun DestructiveFocused() =
         SheetFrame {
-            TvActionSheetTitle("Heat")
-            TvActionSheetBody("Scott · Pending")
-            TvActionSheetRow(label = "Approve", onClick = {})
-            TvActionSheetRow(label = "Decline", onClick = {})
-            TvActionSheetRow(label = "Remove", onClick = {}, destructive = true, initiallyFocused = true)
+            TvSideSheetTitle("Heat")
+            TvSideSheetBody("Scott · Pending")
+            TvSideSheetRow(label = "Approve", onClick = {})
+            TvSideSheetRow(label = "Decline", onClick = {})
+            TvSideSheetRow(label = "Remove", onClick = {}, destructive = true, initiallyFocused = true)
         }
 
     /** A row that is only a read-out: dimmed, and out of the focus order. */
@@ -49,9 +54,9 @@ class TvActionSheetScreenshotTest {
     @Composable
     fun DisabledRow() =
         SheetFrame {
-            TvActionSheetTitle("Heat")
-            TvActionSheetRow(label = "Approve", onClick = {}, initiallyFocused = true)
-            TvActionSheetRow(label = "Already approved", onClick = {}, enabled = false)
+            TvSideSheetTitle("Heat")
+            TvSideSheetRow(label = "Approve", onClick = {}, initiallyFocused = true)
+            TvSideSheetRow(label = "Already approved", onClick = {}, enabled = false)
         }
 
     /** The confirm step with nothing focused yet: the destructive confirm above Cancel. */
@@ -70,20 +75,20 @@ class TvActionSheetScreenshotTest {
 @Composable
 private fun ConfirmFrame(cancelFocused: Boolean) =
     SheetFrame {
-        TvActionSheetConfirm(
+        TvSideSheetConfirm(
             title = "Remove this request?",
             message = "The request is deleted. The title stays available to request again.",
             confirmLabel = "Remove",
             onConfirm = {},
             onCancel = {},
             entryFocus = FocusRequester(),
-            initialCancelFocused = cancelFocused,
+            cancelInitiallyFocused = cancelFocused,
         )
     }
 
 @Composable
 private fun SheetFrame(content: @Composable ColumnScope.() -> Unit) {
     Box(Modifier.fillMaxSize()) {
-        TvActionSheetPanel(modifier = Modifier.align(Alignment.CenterEnd), content = content)
+        TvSideSheetPanel(modifier = Modifier.align(Alignment.CenterEnd), content = content)
     }
 }

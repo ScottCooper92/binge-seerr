@@ -6,6 +6,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.onNodeWithText
+import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Rule
@@ -27,7 +28,7 @@ class TvRowRolesTest {
             BingeTvTheme {
                 Column {
                     TvOptionRow(label = "Radarr", selected = true, onSelect = {})
-                    TvActionSheetRow(label = "Approve", onClick = {})
+                    TvSideSheetRow(label = "Approve", onClick = {})
                 }
             }
         }

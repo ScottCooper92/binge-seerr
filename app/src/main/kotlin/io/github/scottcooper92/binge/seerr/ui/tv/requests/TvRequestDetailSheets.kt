@@ -16,6 +16,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.tv.component.TvSideSheet
+import com.binge.designsystem.tv.component.TvSideSheetBody
+import com.binge.designsystem.tv.component.TvSideSheetConfirm
+import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvSideSheetStepFocus
+import com.binge.designsystem.tv.component.TvSideSheetTitle
 import com.binge.designsystem.tv.focus.TvOverlayCloser
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.requests.IssueReport
@@ -24,12 +30,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.MediaInstance
 import io.github.scottcooper92.binge.seerr.ui.requests.MediaRecord
 import io.github.scottcooper92.binge.seerr.ui.requests.MediaStatusChoice
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheet
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetBody
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetConfirm
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetRow
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetStepFocus
-import io.github.scottcooper92.binge.seerr.ui.tv.TvActionSheetTitle
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
 import io.github.scottcooper92.binge.seerr.ui.tv.TvOptionRow
@@ -75,10 +75,10 @@ internal fun TvRequestDetailSheet(
         if (host.step == DetailSheet.Report) actions.onDismissReport()
         closer.close()
     }
-    TvActionSheet(onDismiss = dismiss) { entryFocus ->
+    TvSideSheet(onDismiss = dismiss) { entryFocus ->
         when (host.step) {
             DetailSheet.Remove ->
-                TvActionSheetConfirm(
+                TvSideSheetConfirm(
                     title = stringResource(R.string.request_remove_confirm_title),
                     message = stringResource(R.string.request_remove_confirm_message),
                     confirmLabel = stringResource(R.string.request_remove),
@@ -90,7 +90,7 @@ internal fun TvRequestDetailSheet(
                     entryFocus = entryFocus,
                 )
             DetailSheet.Block ->
-                TvActionSheetConfirm(
+                TvSideSheetConfirm(
                     title = stringResource(R.string.request_block_confirm_title),
                     message = stringResource(R.string.request_block_confirm_message),
                     confirmLabel = stringResource(R.string.tv_detail_block),
@@ -129,18 +129,18 @@ private fun ColumnScope.TvMarkAsSteps(
 ) {
     var picked by rememberSaveable { mutableStateOf(media.instances.singleOrNull()?.is4k) }
     val instance = media.instances.firstOrNull { it.is4k == picked }
-    TvActionSheetTitle(stringResource(R.string.media_mark_as))
+    TvSideSheetTitle(stringResource(R.string.media_mark_as))
     if (instance == null) {
         media.instances.forEachIndexed { index, candidate ->
-            TvActionSheetRow(
+            TvSideSheetRow(
                 label = stringResource(candidate.labelRes()),
                 onClick = { picked = candidate.is4k },
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
             )
         }
-        TvActionSheetStepFocus(entryFocus)
+        TvSideSheetStepFocus(entryFocus)
     } else {
-        TvActionSheetBody(stringResource(instance.labelRes()) + "\n" + stringResource(R.string.media_mark_as_scope_caption))
+        TvSideSheetBody(stringResource(instance.labelRes()) + "\n" + stringResource(R.string.media_mark_as_scope_caption))
         MediaStatusChoice.entries.forEachIndexed { index, choice ->
             val current = choice.code == instance.status
             TvOptionRow(
@@ -150,7 +150,7 @@ private fun ColumnScope.TvMarkAsSteps(
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
             )
         }
-        TvActionSheetStepFocus(entryFocus)
+        TvSideSheetStepFocus(entryFocus)
     }
 }
 
@@ -168,13 +168,13 @@ private fun ColumnScope.TvReportIssueStep(
     onDone: () -> Unit,
     entryFocus: FocusRequester,
 ) {
-    TvActionSheetTitle(stringResource(R.string.issue_report_title))
+    TvSideSheetTitle(stringResource(R.string.issue_report_title))
     if (report == IssueReport.Sent) {
         // Sent: the next report starts from nothing.
         LaunchedEffect(Unit) { draft.onMessageChange("") }
-        TvActionSheetBody(stringResource(R.string.issue_report_sent))
-        TvActionSheetRow(label = stringResource(R.string.editor_done), onClick = onDone, modifier = Modifier.focusRequester(entryFocus))
-        TvActionSheetStepFocus(entryFocus)
+        TvSideSheetBody(stringResource(R.string.issue_report_sent))
+        TvSideSheetRow(label = stringResource(R.string.editor_done), onClick = onDone, modifier = Modifier.focusRequester(entryFocus))
+        TvSideSheetStepFocus(entryFocus)
         return
     }
     val sending = report == IssueReport.Sending
@@ -202,7 +202,7 @@ private fun ColumnScope.TvReportIssueStep(
             onDone = send,
         )
         if (report is IssueReport.Failed) TvFormNote(stringResource(R.string.issue_report_failed), tone = TvFormNoteTone.Error)
-        TvActionSheetRow(label = stringResource(R.string.issue_report_send), onClick = send, enabled = canSend)
+        TvSideSheetRow(label = stringResource(R.string.issue_report_send), onClick = send, enabled = canSend)
     }
-    TvActionSheetStepFocus(entryFocus)
+    TvSideSheetStepFocus(entryFocus)
 }
