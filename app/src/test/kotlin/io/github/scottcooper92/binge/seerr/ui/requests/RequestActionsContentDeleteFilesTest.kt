@@ -3,11 +3,11 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -111,11 +111,9 @@ class RequestActionsContentDeleteFilesTest {
         composeTestRule.waitForIdle()
     }
 
-    private fun deleteFilesLabel() =
-        ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.media_delete_files)
+    private fun deleteFilesLabel() = string(R.string.media_delete_files)
 
-    private fun delete4kFilesLabel() =
-        ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.media_delete_4k_files)
+    private fun delete4kFilesLabel() = string(R.string.media_delete_4k_files)
 
     /** Delete rows of either copy: the Standard row's label and the 4K row's own. */
     private fun deleteRowCount(): Int =

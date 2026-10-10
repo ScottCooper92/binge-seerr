@@ -12,10 +12,10 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -32,7 +32,7 @@ class RequestBlockTitleSwitchTest {
     val composeTestRule = createSeerrComposeRule()
 
     private val label =
-        ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.request_block_title)
+        string(R.string.request_block_title)
     private val isSwitch = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch)
     private val hasToggleState = SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)
 

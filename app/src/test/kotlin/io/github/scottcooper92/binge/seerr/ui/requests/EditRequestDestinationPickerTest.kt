@@ -2,6 +2,7 @@ package io.github.scottcooper92.binge.seerr.ui.requests
 
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
@@ -21,12 +22,12 @@ import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.ui.Choice
 import io.github.scottcooper92.binge.seerr.ui.DestinationChoices
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /**
  * The request editor swaps a picker in for its form when a server, profile or root folder field is tapped (#336). The
@@ -97,14 +98,10 @@ class EditRequestDestinationPickerTest {
             is4k = false,
         )
 
-    private fun string(
-        @androidx.annotation.StringRes id: Int,
-    ) = RuntimeEnvironment.getApplication().getString(id)
-
     private fun saveShown() = rule.onNodeWithText(string(R.string.request_edit_save))
 
     private fun open(
-        @androidx.annotation.StringRes field: Int,
+        @StringRes field: Int,
     ) = rule.onNodeWithText(string(field)).performClick()
 
     @Test
