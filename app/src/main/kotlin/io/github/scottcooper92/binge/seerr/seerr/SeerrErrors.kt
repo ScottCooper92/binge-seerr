@@ -9,8 +9,13 @@ import okhttp3.Headers
 import retrofit2.HttpException
 import java.io.IOException
 
-private const val HTTP_FORBIDDEN = 403
 private const val HTTP_SERVER_ERROR_MIN = 500
+
+/** The session is gone: Seerr answers 401 to a cookie or key it no longer knows. */
+const val HTTP_UNAUTHORIZED = 401
+
+/** A permission the user lacks, or (see [isSessionRejection]) a session the server has dropped. */
+const val HTTP_FORBIDDEN = 403
 
 /** Seerr answers 404 for a route a lineage does not serve as well as for a missing record, so callers read it directly. */
 const val HTTP_NOT_FOUND = 404

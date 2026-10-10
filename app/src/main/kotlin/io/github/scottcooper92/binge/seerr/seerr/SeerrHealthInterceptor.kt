@@ -5,7 +5,6 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import java.io.IOException
 
-private const val HTTP_FORBIDDEN = 403
 private const val HTTP_TOO_MANY_REQUESTS = 429
 private const val HTTP_SERVER_ERROR_MIN = 500
 

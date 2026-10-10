@@ -46,12 +46,11 @@ class PermissionsViewModel
                 val profile = async { connection.profile() }
                 val record = api.userPermissions(userId)
                 val viewerDto = viewer.await()
-                val held = ManageablePermission.decode(viewerDto.permissions ?: 0)
                 PermissionSettings(
                     selected = ManageablePermission.decode(record.permissions),
                     original = record.permissions,
                     offered = ManageablePermission.offered(profile.await().permissionScope()),
-                    locked = lockedFor(held, isOwner = viewerDto.id == OWNER_USER_ID),
+                    locked = lockedFor(isOwner = viewerDto.id == OWNER_USER_ID),
                 )
             }
 
@@ -74,11 +73,8 @@ class PermissionsViewModel
         }
     }
 
-/** A viewer may grant only what they hold, and only the owner may grant or revoke Admin. */
-internal fun lockedFor(
-    held: Set<ManageablePermission>,
-    isOwner: Boolean,
-): Set<ManageablePermission> =
-    ManageablePermission.entries.filterTo(mutableSetOf()) { permission ->
-        !ManageablePermission.isGranted(permission, held) || (permission == ManageablePermission.Admin && !isOwner)
-    }
+/**
+ * The toggles a viewer may not flip: Admin, for anyone but the owner. That is the server's one rule on a permissions
+ * write (`canMakePermissionsChange`), and the web client's. A manager may grant any other permission, held or not (#1016).
+ */
+internal fun lockedFor(isOwner: Boolean): Set<ManageablePermission> = if (isOwner) emptySet() else setOf(ManageablePermission.Admin)

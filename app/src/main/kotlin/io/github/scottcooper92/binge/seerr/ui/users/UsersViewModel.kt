@@ -22,6 +22,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaServer
 import io.github.scottcooper92.binge.seerr.seerr.SeerrServerProfile
 import io.github.scottcooper92.binge.seerr.seerr.SeerrUserDto
+import io.github.scottcooper92.binge.seerr.seerr.isAdminBitmask
 import io.github.scottcooper92.binge.seerr.seerr.permissionScope
 import io.github.scottcooper92.binge.seerr.seerr.toPermissions
 import io.github.scottcooper92.binge.seerr.seerr.toSeerrError
@@ -90,7 +91,7 @@ private fun usersScope(
                 SeerrMediaServer.NotConfigured, SeerrMediaServer.Unknown, null -> null
             },
         canGeneratePassword = settings?.emailEnabled == true && !settings.applicationUrl.isNullOrBlank(),
-        locked = lockedFor(ManageablePermission.decode(viewer.permissions ?: 0), isOwner = viewer.id == OWNER_USER_ID),
+        locked = lockedFor(isOwner = viewer.id == OWNER_USER_ID),
         isOwner = viewer.id == OWNER_USER_ID,
     )
 }
@@ -327,4 +328,4 @@ class UsersViewModel
 private fun mayChangeAsNonOwner(
     id: Int,
     permissions: Int,
-): Boolean = id != OWNER_USER_ID && ManageablePermission.Admin !in ManageablePermission.decode(permissions)
+): Boolean = id != OWNER_USER_ID && !isAdminBitmask(permissions)
