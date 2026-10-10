@@ -55,7 +55,8 @@ data class SeerrPermissions(
     /**
      * Jellyseerr's own bit; Overseerr's current code never sets it, so there it reads as false unless the user is an
      * admin. There is no flag for `MANAGE_SETTINGS`: the bit exists on the Jellyseerr lineage, and Overseerr up to 1.29
-     * defined it too, but no route honours it. Every `/settings` route needs `ADMIN`, so that is the settings gate (#1004).
+     * defined it too, but no route honours it. The admin settings router needs `ADMIN`, so that is the settings gate (#1004).
+     * Only `/settings/public`, `GET /settings/discover` and the Pushover sounds lookup sit outside that router.
      */
     val canViewBlocklist: Boolean = false,
 ) {
