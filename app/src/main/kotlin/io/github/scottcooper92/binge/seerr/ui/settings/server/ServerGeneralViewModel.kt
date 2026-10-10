@@ -45,19 +45,21 @@ class ServerGeneralViewModel
                 val api = connection.api()
                 val profile = async { connection.profile() }
                 val main = api.mainSettings()
-                val variant = profile.await().variant
+                val server = profile.await()
+                val variant = server.variant
                 editExtras { current ->
                     current.copy(
                         apiKey = current.apiKey.copy(key = main.apiKey.orEmpty()),
                         variant = variant,
                     )
                 }
-                main.toServerGeneral(variant)
+                main.toServerGeneral(variant, server.hasStreamingRegion)
             }
 
         override suspend fun write(draft: ServerGeneralSettings): ServerGeneralSettings {
             val answered = connection.api().updateMainSettings(draft.toBody())
-            return answered.toServerGeneral(connection.profile().variant)
+            val server = connection.profile()
+            return answered.toServerGeneral(server.variant, server.hasStreamingRegion)
         }
 
         override fun canSave(draft: ServerGeneralSettings): Boolean = draft.valid

@@ -15,7 +15,7 @@ class BlacklistNamesTest {
 
     @Test
     fun `a Jellyseerr 2 server's settings fill the same form`() {
-        val form = jellyseerr2.toServerGeneral(SeerrVariant.Jellyseerr)
+        val form = jellyseerr2.toServerGeneral(SeerrVariant.Jellyseerr, hasStreamingRegion = true)
 
         assertEquals(true, form.hideBlocklisted)
         assertEquals(BlocklistSettings(tags = "12,34", tagsLimit = "20"), form.blocklist)
@@ -24,7 +24,7 @@ class BlacklistNamesTest {
 
     @Test
     fun `a Jellyseerr 2 save goes back under the names the server keeps`() {
-        val form = jellyseerr2.toServerGeneral(SeerrVariant.Jellyseerr)
+        val form = jellyseerr2.toServerGeneral(SeerrVariant.Jellyseerr, hasStreamingRegion = true)
         val body = form.copy(blocklist = form.blocklist?.copy(tagsLimit = "30")).toBody()
 
         assertEquals(true, body.hideBlacklisted)
@@ -39,7 +39,7 @@ class BlacklistNamesTest {
     fun `a Seerr 3 server keeps the new names, even if a stale old one lingers`() {
         val dto =
             SeerrMainSettingsDto(hideBlocklisted = false, blocklistedTags = "56", blocklistedTagsLimit = 50, hideBlacklisted = true)
-        val form = dto.toServerGeneral(SeerrVariant.Seerr)
+        val form = dto.toServerGeneral(SeerrVariant.Seerr, hasStreamingRegion = true)
         val body = form.toBody()
 
         assertFalse(form.blacklistNames)
@@ -52,7 +52,7 @@ class BlacklistNamesTest {
 
     @Test
     fun `a server with neither spelling has no blocklist settings`() {
-        val form = SeerrMainSettingsDto().toServerGeneral(SeerrVariant.Jellyseerr)
+        val form = SeerrMainSettingsDto().toServerGeneral(SeerrVariant.Jellyseerr, hasStreamingRegion = true)
 
         assertNull(form.hideBlocklisted)
         assertNull(form.blocklist)
