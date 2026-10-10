@@ -32,6 +32,7 @@ import io.github.scottcooper92.binge.seerr.ui.issues.IssueItem
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueListEvent
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueStatus
 import io.github.scottcooper92.binge.seerr.ui.issues.IssuesUiState
+import io.github.scottcooper92.binge.seerr.ui.issues.canBeDeleted
 import io.github.scottcooper92.binge.seerr.ui.issues.emptyMessageRes
 import io.github.scottcooper92.binge.seerr.ui.issues.issueAffectedLabel
 import io.github.scottcooper92.binge.seerr.ui.issues.labelRes
@@ -132,6 +133,7 @@ internal fun TvIssuesBoard(
         ready?.actionItem?.takeUnless { seeAllOpen }?.let { item ->
             TvIssueActionsSheet(
                 item = item,
+                canDelete = item.canBeDeleted(ready.scope),
                 onResolve = {
                     actions.onResolve(item)
                     closer.close()
@@ -264,12 +266,14 @@ private enum class Pending { Resolve, Reopen, Delete }
 
 /**
  * An issue's actions on the end-edge sheet, for a row this viewer may act on: close or reopen it, and
- * delete it, each confirmed, then read its comment thread. Entry focus stays on the first management
+ * delete it where [canDelete] says the server would take it, each confirmed, then read its comment thread. Entry focus stays on the first management
  * row exactly as before — Read comments is appended last, an addition rather than a reordering.
  */
 @Composable
 internal fun TvIssueActionsSheet(
     item: IssueItem,
+    /** Whether the server would take this viewer's delete; see [canBeDeleted]. */
+    canDelete: Boolean,
     onResolve: () -> Unit,
     onReopen: () -> Unit,
     onDelete: () -> Unit,
@@ -319,11 +323,13 @@ internal fun TvIssueActionsSheet(
                     onClick = { pending = if (open) Pending.Resolve else Pending.Reopen },
                     modifier = Modifier.focusRequester(entryFocus),
                 )
-                TvActionSheetRow(
-                    label = stringResource(R.string.issue_delete),
-                    onClick = { pending = Pending.Delete },
-                    destructive = true,
-                )
+                if (canDelete) {
+                    TvActionSheetRow(
+                        label = stringResource(R.string.issue_delete),
+                        onClick = { pending = Pending.Delete },
+                        destructive = true,
+                    )
+                }
                 TvActionSheetRow(label = stringResource(R.string.tv_issue_read_comments), onClick = onOpenDetail)
                 TvActionSheetStepFocus(entryFocus)
             }
