@@ -194,3 +194,14 @@ annotation class SeerrTvScreenPreviews
     locale = "es",
 )
 annotation class SeerrTvSpanishScreenPreviews
+
+/** [SeerrTvScreenPreviews] at a 1.5 font scale, for a screen whose copy has to survive a user's text size without being cut. */
+@PreviewWrapper(SeerrTvScreenshotThemeOnBlackWrapper::class)
+@Preview(
+    name = "tv-font15",
+    device = "spec:width=${TV_PREVIEW_WIDTH_DP}dp,height=${TV_PREVIEW_HEIGHT_DP}dp,orientation=landscape",
+    fontScale = 1.5f,
+    uiMode = UI_MODE_NIGHT_YES,
+    locale = DEFAULT_LOCALE,
+)
+annotation class SeerrTvFontScaleScreenPreviews
