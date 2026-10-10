@@ -5,6 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
 import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.FixedSampleRequests
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestCounts
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestFilter
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestsUiState
 import io.github.scottcooper92.binge.seerr.ui.tv.NoRequestsActions
@@ -78,6 +79,18 @@ class TvRequestsScreenshotTest {
         TvRequestsRowsBoard(
             state = RequestsUiState.Error(SeerrError.Unreachable),
             rowsFor = { rows(emptyList()) },
+            actions = NoRequestsActions,
+        )
+    }
+
+    /** A filter with more than a row holds (#1053): its row ends in the See all tile, which opens the grid. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun PastTheRowCap() {
+        TvRequestsRowsBoard(
+            state = requestsReady().copy(counts = RequestCounts(total = 57, pending = 57, approved = 0, processing = 0, available = 0)),
+            rowsFor = { filter -> if (filter == RequestFilter.Pending) rows(SampleRequests) else rows(emptyList()) },
             actions = NoRequestsActions,
         )
     }

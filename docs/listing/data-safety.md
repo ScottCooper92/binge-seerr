@@ -69,7 +69,7 @@ app holds no camera permission (`ui/handoff/ScanTvCode.kt`).
 Not asked by the form, but the reader of `privacy.md` will want the list: the server address, one
 encrypted secret (API key or session), a cache of what the server showed, notification choices,
 the usage data and crash report choices, the Plex identifier, and up to three addresses per server
-that were sent to a television (removed when the server is disconnected). All of it is on the device, and
+that were sent to a television (cleared on disconnect; uninstall or clearing data removes them too). All of it is on the device, and
 Android's backup does not copy it (`allowBackup="false"`). The one exception is the connection
 (address and secret), which is also held in Play services' Block Store; see the next section.
 

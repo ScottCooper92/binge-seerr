@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenPreviews
 import io.github.scottcooper92.binge.seerr.preview.SeerrScreenStatePreview
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -29,12 +30,27 @@ class IssueDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun resolvedReadOnly() = Frame(resolvedIssueReadOnlyDetail())
+
+    /** A row a list already had, before the fetch lands (#1053): its header over the loading body. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seeded() = Frame(IssueDetailUiState.Seeded(openIssueWithActionsDetail().item))
+
+    /** The same seed after a failed refresh: the header stays, over the error and its retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seededFailed() = Frame(IssueDetailUiState.Seeded(openIssueWithActionsDetail().item, error = SeerrError.Unreachable))
 }
 
 @Composable
-private fun Frame(detail: IssueDetail) {
+private fun Frame(detail: IssueDetail) = Frame(IssueDetailUiState.Ready(detail = detail))
+
+@Composable
+private fun Frame(state: IssueDetailUiState) {
     IssueDetailScreen(
-        state = IssueDetailUiState.Ready(detail = detail),
+        state = state,
         events = emptyFlow(),
         actions =
             IssueDetailActions(
