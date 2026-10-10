@@ -178,6 +178,14 @@ internal class ScriptedSeerr(
     ): Int = received.count { it.method == method && it.url.encodedPath == path }
 
     /**
+     * Waits, on real time, until every call this server's clients made has run its callback. Under the unconfined test
+     * dispatcher a view model's work after a read (a `setJobs` and the schedule it computes) runs inside that callback on
+     * OkHttp's thread, so a test that moves a fake clock waits here first, or the view model reads the clock already
+     * moved (#1226).
+     */
+    fun awaitCallbacks() = drain.awaitIdle()
+
+    /**
      * A request a refresh triggers lands on OkHttp's threads after the call that triggered it has
      * returned, so a count read on the next line races it; this waits for it in real time.
      */
