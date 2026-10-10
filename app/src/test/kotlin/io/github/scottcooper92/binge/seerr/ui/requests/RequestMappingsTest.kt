@@ -6,6 +6,7 @@ import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrPermissions
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.state.RequestStateTone
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -21,21 +22,14 @@ class RequestMappingsTest {
         status: SeerrRequestStatusCode? = null,
         mediaStatus: SeerrMediaStatusCode? = null,
         download: RequestDownload? = null,
-    ) = RequestItem(
-        id = 1,
-        tmdbId = 1,
-        mediaType = RequestMediaType.Movie,
+    ) = requestItem(
         title = null,
-        posterUrl = null,
         year = null,
         requestedBy = null,
         requestedById = null,
-        requestedAtMillis = null,
         status = status,
         mediaStatus = mediaStatus,
         download = download,
-        seasonNumbers = emptyList(),
-        is4k = false,
     )
 
     @Test

@@ -1,35 +1,48 @@
 package io.github.scottcooper92.binge.seerr.util
 
+import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.MediaRecord
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestActions
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDestination
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDetail
+import io.github.scottcooper92.binge.seerr.ui.requests.RequestDownload
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestSummary
 
-/** One request, the Approved movie "Heat" requested by ana: a test names only what it varies. */
+/**
+ * One request, the Approved movie "Heat" (1995) requested by ana: a test names only what it varies. A TMDB id the test
+ * does not care about follows [id].
+ */
 fun requestItem(
     id: Int = 1,
     status: SeerrRequestStatusCode? = SeerrRequestStatusCode.Approved,
-    title: String = "Heat",
+    title: String? = "Heat",
+    tmdbId: Int = id,
+    mediaType: RequestMediaType = RequestMediaType.Movie,
+    year: String? = "1995",
+    requestedBy: String? = "ana",
+    requestedById: Int? = 3,
+    mediaStatus: SeerrMediaStatusCode? = null,
+    download: RequestDownload? = null,
+    is4k: Boolean = false,
 ): RequestItem =
     RequestItem(
         id = id,
-        tmdbId = id,
-        mediaType = RequestMediaType.Movie,
+        tmdbId = tmdbId,
+        mediaType = mediaType,
         title = title,
         posterUrl = null,
-        year = "1995",
-        requestedBy = "ana",
-        requestedById = 3,
+        year = year,
+        requestedBy = requestedBy,
+        requestedById = requestedById,
         requestedAtMillis = null,
         status = status,
-        mediaStatus = null,
-        download = null,
+        mediaStatus = mediaStatus,
+        download = download,
         seasonNumbers = emptyList(),
-        is4k = false,
+        is4k = is4k,
     )
 
 /**

@@ -17,13 +17,13 @@ import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailEvent
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistDetailViewModel
 import io.github.scottcooper92.binge.seerr.ui.blocklist.BlocklistItem
 import io.github.scottcooper92.binge.seerr.ui.requests.ModerationEvent
-import io.github.scottcooper92.binge.seerr.ui.requests.RequestItem
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestMediaType
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestModeration
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ADMIN
 import io.github.scottcooper92.binge.seerr.ui.users.settings.ScriptedSeerr
 import io.github.scottcooper92.binge.seerr.util.MainDispatcherRule
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -164,22 +164,7 @@ class ConsoleWritesDropStatusCacheTest {
         )
 
     private val requestItem =
-        RequestItem(
-            id = 11,
-            tmdbId = TMDB_ID,
-            mediaType = RequestMediaType.Movie,
-            title = "Heat",
-            posterUrl = null,
-            year = "1995",
-            requestedBy = "ada",
-            requestedById = 7,
-            requestedAtMillis = null,
-            status = SeerrRequestStatusCode(1),
-            mediaStatus = null,
-            download = null,
-            seasonNumbers = emptyList(),
-            is4k = false,
-        )
+        requestItem(id = 11, tmdbId = TMDB_ID, requestedBy = "ada", requestedById = 7, status = SeerrRequestStatusCode(1))
 
     /** Thread-safe, since the write hook fires from OkHttp's thread. Movies only, keyed by TMDB id. */
     private class InMemoryStatusStore : MediaStatusStore {

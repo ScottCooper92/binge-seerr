@@ -12,6 +12,7 @@ import io.github.scottcooper92.binge.seerr.util.PlainCipher
 import io.github.scottcooper92.binge.seerr.util.RecordingAnalytics
 import io.github.scottcooper92.binge.seerr.util.RecordingCrashBreadcrumbs
 import io.github.scottcooper92.binge.seerr.util.awaitEvent
+import io.github.scottcooper92.binge.seerr.util.requestItem
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -83,21 +84,14 @@ class RequestModerationTest {
     }
 
     private val item =
-        RequestItem(
+        requestItem(
             id = 11,
             tmdbId = 550,
-            mediaType = RequestMediaType.Movie,
             title = "Fight Club",
-            posterUrl = null,
             year = "1999",
             requestedBy = "scott",
             requestedById = 7,
-            requestedAtMillis = null,
             status = SeerrRequestStatusCode(1),
-            mediaStatus = null,
-            download = null,
-            seasonNumbers = emptyList(),
-            is4k = false,
         )
 
     @Test
