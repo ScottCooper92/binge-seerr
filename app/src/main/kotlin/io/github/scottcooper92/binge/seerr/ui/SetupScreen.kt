@@ -1,14 +1,8 @@
 package io.github.scottcooper92.binge.seerr.ui
 
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.binge.designsystem.template.BingeScreenScaffold
-import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.template.StepFlowScreen
 import com.binge.designsystem.template.StepHeading
 import io.github.scottcooper92.binge.seerr.R
@@ -44,9 +38,8 @@ class SetupActions(
  * The two steps to a connection, on the design system's step flow: the address, then the sign-in the server accepts.
  * Back from the sign-in, the arrow or the gesture, is changing server, so it returns to the address.
  *
- * Edit connection passes a [title] and its [onBack]: it opens as a pane of its own, and the step flow has no bar to
- * carry either, so the bar sits above the flow there. Setup and reconnect have no bar; the step's heading says
- * where the user is.
+ * Edit connection passes a [title] and its [onBack]: it opens as a pane of its own, so the flow's bar carries the title,
+ * and Back on the address leaves the pane. Setup and reconnect have neither; the step's heading says where the user is.
  */
 @Composable
 fun SetupScreen(
@@ -54,22 +47,6 @@ fun SetupScreen(
     actions: SetupActions,
     title: String? = null,
     onBack: (() -> Unit)? = null,
-) {
-    if (title == null) {
-        SetupStepFlow(state, actions)
-    } else {
-        BingeScreenScaffold(bar = ScreenBar.Small, title = title, onBack = onBack) { padding ->
-            // The bar's insets are consumed here so the step flow does not pad the status bar a second time.
-            SetupStepFlow(state, actions, Modifier.padding(padding).consumeWindowInsets(padding))
-        }
-    }
-}
-
-@Composable
-private fun SetupStepFlow(
-    state: SetupUiState,
-    actions: SetupActions,
-    modifier: Modifier = Modifier,
 ) {
     // A step keeps drawing itself while it slides out, after the state has moved on, so each draws the last state it had.
     val address = rememberLatest(state as? SetupUiState.Address)
@@ -79,9 +56,9 @@ private fun SetupStepFlow(
     StepFlowScreen(
         stepCount = SETUP_STEPS,
         currentStep = if (state is SetupUiState.Address || state is SetupUiState.Loading) ADDRESS_STEP else SIGN_IN_STEP,
-        // Both steps type into a field, so the flow, footer and all, sits above the keyboard.
-        modifier = modifier.imePadding(),
         onBack = actions.onChangeServer,
+        title = title,
+        onExit = onBack,
         // The home swaps to the hub on the credentials landing; Connected is the frame in between.
         loading = state is SetupUiState.Loading || state is SetupUiState.Connected,
         aside = { step -> if (step == SIGN_IN_STEP) signIn?.let { SetupServerBackdrop(it.server) } },
