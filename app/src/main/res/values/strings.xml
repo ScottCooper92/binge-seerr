@@ -1254,13 +1254,13 @@
         <item quantity="other">%1$d requests</item>
     </plurals>
     <string name="server_settings_permissions_none">None</string>
-    <string name="permission_admin_detail">Every permission, including the server\'s settings</string>
-    <string name="permission_manage_requests_detail">Approve, decline and edit anyone\'s requests</string>
-    <string name="permission_request_advanced_detail">Choose the server, quality and folder when requesting</string>
-    <string name="permission_view_requests_detail">See everyone\'s requests, not only their own</string>
+    <string name="permission_admin_detail">Everything, including settings</string>
+    <string name="permission_manage_requests_detail">Approve, decline, edit requests</string>
+    <string name="permission_request_advanced_detail">Pick server, quality, folder</string>
+    <string name="permission_view_requests_detail">See everyone\'s requests</string>
     <string name="permission_auto_approve_detail">Their requests skip approval</string>
     <string name="permission_auto_approve_4k_detail">Their 4K requests skip approval</string>
-    <string name="permission_view_issues_detail">See everyone\'s issues, not only their own</string>
+    <string name="permission_view_issues_detail">See everyone\'s issues</string>
     <string name="permission_auto_request_detail">Requests what is on their watchlist</string>
     <string name="permission_view_watchlists_detail">See other users\' watchlists</string>
     <string name="server_settings_media_server_settings">%1$s settings</string>
