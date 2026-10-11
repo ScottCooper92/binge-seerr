@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.seerr
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
@@ -44,7 +43,6 @@ private fun fakeApi(
         }
     } as SeerrApi
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class SeerrProfileReadTest {
     private val statusDto = SeerrStatusDto(version = "3.4.0")
     private val settingsDto = SeerrPublicSettings(mediaServerType = MEDIA_SERVER_JELLYFIN, applicationTitle = "Home")

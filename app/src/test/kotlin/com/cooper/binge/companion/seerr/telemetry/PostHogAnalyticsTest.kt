@@ -4,7 +4,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.cooper.binge.companion.seerr.util.InMemoryDataStore
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
@@ -159,7 +158,6 @@ class PostHogAnalyticsTest {
         private val inner = InMemoryDataStore()
         private val released = MutableStateFlow(false)
 
-        @OptIn(ExperimentalCoroutinesApi::class)
         override val data: Flow<Preferences> = released.filter { it }.flatMapLatest { inner.data }
 
         fun release() {
