@@ -1,7 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
@@ -27,7 +25,7 @@ internal fun NotificationTypeGroups(
                 ),
             rows =
                 offered.filter { it.issue == issues }.map { type ->
-                    editorToggle(Icons.Filled.Notifications, stringResource(type.labelRes()), types and type.bit != 0, enabled) {
+                    editorToggle(type.icon(), stringResource(type.labelRes()), types and type.bit != 0, enabled) {
                         onToggle(type.bit)
                     }
                 },

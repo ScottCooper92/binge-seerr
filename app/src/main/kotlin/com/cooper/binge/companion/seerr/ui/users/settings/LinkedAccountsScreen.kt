@@ -52,6 +52,7 @@ import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import com.cooper.binge.companion.seerr.ui.users.icon
 import com.cooper.binge.companion.seerr.ui.users.labelRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -176,7 +177,7 @@ private fun accountRow(
     onUnlink: () -> Unit,
 ): ListItem =
     ListItem(
-        icon = Icons.Filled.Link,
+        icon = account.origin.icon(),
         label = stringResource(account.origin.labelRes()),
         detail =
             when {

@@ -2,11 +2,22 @@ package com.cooper.binge.companion.seerr.ui.users.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Comment
+import androidx.compose.material.icons.filled.BookmarkAdded
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.R
 
@@ -99,4 +110,23 @@ internal fun NotificationType.labelRes(): Int =
         NotificationType.IssueResolved -> R.string.user_settings_type_issue_resolved
         NotificationType.IssueReopened -> R.string.user_settings_type_issue_reopened
         NotificationType.MediaAutoRequested -> R.string.user_settings_type_media_auto_requested
+    }
+
+/**
+ * Each event's own glyph, matching the app's for the same state elsewhere: the hourglass for pending, the thumbs for a
+ * decision, the tick for available. Auto-requested is the watchlist's bookmark, which is where those requests come from.
+ */
+internal fun NotificationType.icon(): ImageVector =
+    when (this) {
+        NotificationType.MediaPending -> Icons.Filled.HourglassEmpty
+        NotificationType.MediaApproved -> Icons.Filled.ThumbUp
+        NotificationType.MediaAvailable -> Icons.Filled.CheckCircle
+        NotificationType.MediaFailed -> Icons.Filled.ErrorOutline
+        NotificationType.MediaDeclined -> Icons.Filled.ThumbDown
+        NotificationType.MediaAutoApproved -> Icons.Filled.DoneAll
+        NotificationType.IssueCreated -> Icons.Filled.ReportProblem
+        NotificationType.IssueComment -> Icons.AutoMirrored.Filled.Comment
+        NotificationType.IssueResolved -> Icons.Filled.TaskAlt
+        NotificationType.IssueReopened -> Icons.Filled.Replay
+        NotificationType.MediaAutoRequested -> Icons.Filled.BookmarkAdded
     }
