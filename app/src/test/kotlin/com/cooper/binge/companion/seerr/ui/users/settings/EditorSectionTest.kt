@@ -1,7 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -120,5 +125,69 @@ class EditorSectionTest {
         )
 
         rule.onNodeWithText("2 fields need attention").assertIsDisplayed()
+    }
+
+    @Test
+    fun `switching to another editor starts each section from its own default`() {
+        var form by mutableStateOf(EditorFormState("user-1"))
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                CompositionLocalProvider(LocalEditorForm provides form) {
+                    EditorSection("s", "Connection", defaultExpanded = false) { Text("Body") }
+                }
+            }
+        }
+        rule.onNodeWithText("Connection").performClick()
+        rule.onNodeWithText("Body").assertIsDisplayed()
+
+        form = EditorFormState("user-2")
+        rule.waitForIdle()
+
+        rule.onNodeWithText("Body").assertDoesNotExist()
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun `each section of one editor keeps its own choice through recreation`() =
+        runComposeUiTest {
+            val restoration = StateRestorationTester(this)
+            restoration.setContent {
+                BingeExpressiveTheme(dynamicColor = false) {
+                    CompositionLocalProvider(LocalEditorForm provides remember { EditorFormState("user-1") }) {
+                        Column {
+                            EditorSection("a", "Connection", defaultExpanded = false) { Text("Connection body") }
+                            EditorSection("b", "Advanced", defaultExpanded = true) { Text("Advanced body") }
+                        }
+                    }
+                }
+            }
+            onNodeWithText("Connection").performClick()
+            onNodeWithText("Advanced").performClick()
+
+            restoration.emulateSaveAndRestore()
+
+            onNodeWithText("Connection body").assertIsDisplayed()
+            onNodeWithText("Advanced body").assertDoesNotExist()
+        }
+
+    @Test
+    fun `a section an issue held open goes back to the user's choice once the issue clears`() {
+        var issues by mutableStateOf(emptyList<EditorIssue>())
+        rule.setContent {
+            BingeExpressiveTheme(dynamicColor = false) {
+                CompositionLocalProvider(LocalEditorIssues provides issues) {
+                    EditorSection("s", "Connection", defaultExpanded = true) { Text("Body") }
+                }
+            }
+        }
+        rule.onNodeWithText("Connection").performClick()
+        issues = listOf(invalid("s", "f", R.string.editor_error_port))
+        rule.waitForIdle()
+        rule.onNodeWithText("Body").assertIsDisplayed()
+
+        issues = emptyList()
+        rule.waitForIdle()
+
+        rule.onNodeWithText("Body").assertDoesNotExist()
     }
 }
