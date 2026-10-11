@@ -23,6 +23,10 @@ import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetConfirm
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.template.TvBoard
+import com.binge.designsystem.tv.template.TvListPaneBoard
+import com.binge.designsystem.tv.template.TvPaneGroup
+import com.binge.designsystem.tv.template.TvPaneOption
+import com.binge.designsystem.tv.template.TvPaneRow
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
 import io.github.scottcooper92.binge.seerr.ui.settings.ConnectionSummary
@@ -33,10 +37,6 @@ import io.github.scottcooper92.binge.seerr.ui.settings.labelRes
 import io.github.scottcooper92.binge.seerr.ui.settings.requestPolicyRows
 import io.github.scottcooper92.binge.seerr.ui.state.messageRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvBoardPlate
-import io.github.scottcooper92.binge.seerr.ui.tv.TvListPaneBoard
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneOption
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneRow
 import io.github.scottcooper92.binge.seerr.ui.tv.rememberTvTransientEvent
 import io.github.scottcooper92.binge.seerr.ui.users.settings.EditorEvent
 import kotlinx.coroutines.flow.Flow

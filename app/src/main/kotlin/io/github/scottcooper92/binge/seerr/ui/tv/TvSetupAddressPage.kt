@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Constraints
 import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvCheckboxRow
 import com.binge.designsystem.tv.component.TvIconButton
 import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus

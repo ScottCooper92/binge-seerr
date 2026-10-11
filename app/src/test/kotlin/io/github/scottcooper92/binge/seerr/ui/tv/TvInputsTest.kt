@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
+import com.binge.designsystem.tv.component.TvCheckboxRow
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Assert.assertEquals

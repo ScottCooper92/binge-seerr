@@ -12,14 +12,14 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.tv.template.TvPaneGroup
+import com.binge.designsystem.tv.template.TvPaneOption
+import com.binge.designsystem.tv.template.TvPaneRow
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.hub.BingeStatus
 import io.github.scottcooper92.binge.seerr.ui.hub.ConnectionHealth
 import io.github.scottcooper92.binge.seerr.ui.hub.HubOverview
 import io.github.scottcooper92.binge.seerr.ui.hub.HubUiState
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneOption
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneRow
 
 internal const val KEY_STATUS = "status"
 internal const val KEY_ACTIVITY = "activity"
