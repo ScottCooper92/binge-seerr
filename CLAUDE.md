@@ -227,17 +227,18 @@ one had caught it.
 ### Screenshot frames
 
 Frames live in `app/src/screenshotTest/kotlin/…`, each a `@Composable` carrying both `@PreviewTest`
-and one of the multipreviews in `preview/SeerrPreviews.kt`; the PNGs are committed under
+and one of the multipreviews in `preview/SeerrPreviewMatrices.kt`; the PNGs are committed under
 `app/src/screenshotTestDebug/reference/…`. When a change is meant to alter a frame, re-record with
 `./gradlew updateDebugScreenshotTest`, look at the regenerated PNGs, and commit them in the same
 commit as the code. That is the only way to accept a change; there is no override flag.
 
-**The frames pin the locale, and they have to.** This app is one module, and its `debug` variant is
-both what the frames render and what carries the AAPT2 pseudolocales. `values-en-XA` is a closer
-match for a bare `en` — or for no request at all — than the untagged default folder, so an unpinned
-frame records every string accented and bracketed. Binge never meets this: it enables pseudolocales
-in its application plugin and keeps every frame in a library module. That is the whole reason
-`SeerrPreviews.kt` spells out a device matrix the design system already has.
+**The frames pin the locale, and the design system's cells do it for them.** This app is one module, and
+its `debug` variant is both what the frames render and what carries the AAPT2 pseudolocales.
+`values-en-XA` is a closer match for a bare `en` than the untagged default folder, so an unpinned frame
+records every string accented and bracketed. The design system's cells pin `SOURCE_LOCALE`, and
+`SeerrPreviewMatrices.kt` builds this app's annotations from its public device specs and that locale. They are
+local only because a multipreview binds its theme wrapper by class: the wrappers there subclass the design
+system's and set `SeerrBrand`. Keep a cell's spec the design system's own, so its baseline keeps the same name.
 
 ### detekt
 
