@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
-    alias(libs.plugins.detekt)
+    id("binge.gates.detekt")
     alias(libs.plugins.kover)
     alias(libs.plugins.screenshot)
     id("binge.gates.translation-staleness")
@@ -301,13 +301,10 @@ dependencies {
     androidTestImplementation(libs.okhttp.mockwebserver)
 }
 
-// detekt is pinned to production `src/main`: a test's shape is not the app's, and Binge pins the
-// same way. *PreviewData.kt is preview tooling rather than logic, so it is dropped too.
-detekt {
-    config.setFrom(layout.settingsDirectory.file("detekt.yml"))
-    baseline = layout.settingsDirectory.file("detekt-baseline.xml").asFile
-    buildUponDefaultConfig = true
-    parallel = true
+// detekt is binge-ci's gate: production `src/main` only, *PreviewData.kt dropped as preview tooling,
+// type resolution against the debug compilation, and this repository's baseline.
+detektGate {
+    baselineFile = layout.settingsDirectory.file("detekt-baseline.xml")
 }
 
 /**
@@ -374,32 +371,6 @@ tasks.named("check") {
     dependsOn("validateDebugScreenshotTest")
 }
 
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-    setSource(
-        fileTree("src/main") {
-            include("**/*.kt")
-            exclude("**/*PreviewData.kt")
-        },
-    )
-    jvmTarget = "17"
-    reports {
-        xml.required.set(false)
-        txt.required.set(false)
-        sarif.required.set(false)
-        md.required.set(false)
-    }
-}
-
-tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
-    setSource(
-        fileTree("src/main") {
-            include("**/*.kt")
-            exclude("**/*PreviewData.kt")
-        },
-    )
-    jvmTarget = "17"
-}
-
 /**
  * The Kotlin stdlib detekt's own compiler was built with, from detekt's own classpath. detekt 1.23 embeds an older Kotlin
  * than this build compiles with, and cannot read the 2.4 stdlib that `libraries` carries: a call into it does not
@@ -418,24 +389,13 @@ kotlin.target.compilations.configureEach {
     compileTaskProvider.configure { compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi") }
 }
 
-// UnsafeCallOnNullableType - the `!!` ban - needs type resolution, and a detekt task carries no
-// classpath by default, so without this the rule loads and silently never fires. `libraries` is the
-// compile task's already-variant-resolved classpath; resolving compileDependencyFiles directly trips
-// AGP 9 variant ambiguity. configureEach rather than a lookup, because the Android variant
-// compilations do not exist yet when the Kotlin plugin applies.
-kotlin.target.compilations.configureEach {
-    if (name != "debug") return@configureEach
-    val classpathFiles =
-        compileTaskProvider.map {
-            (it as org.jetbrains.kotlin.gradle.tasks.KotlinCompileTool).libraries
-        }
-    val outputClasses = output.classesDirs
-    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-        classpath.from(detektStdlib(detektClasspath), classpathFiles, outputClasses)
-    }
-    tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
-        classpath.from(detektStdlib(detektClasspath), classpathFiles, outputClasses)
-    }
+// The shared gate wires the compile classpath on after evaluation; this runs first, so the stdlib above is
+// ahead of it on every detekt task's classpath.
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    classpath.from(detektStdlib(detektClasspath))
+}
+tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
+    classpath.from(detektStdlib(detektClasspath))
 }
 
 /**
