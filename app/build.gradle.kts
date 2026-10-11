@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.kover)
     alias(libs.plugins.screenshot)
     id("binge.gates.translation-staleness")
+    id("binge.gates.tv-material-separation")
 }
 
 // Crash reporting needs this app's own Firebase project, whose google-services.json is never
@@ -203,6 +204,15 @@ android {
 // binge-ci's; it reads only this module's strings, since the included builds check their own.
 translationStaleness {
     includes.set(listOf("app/src/*/res/values/strings.xml", "app/src/*/res/values-*/strings.xml"))
+}
+
+// Material 3 and tv-material each ship a MaterialTheme under the same simple name, so the wrong import
+// compiles and renders subtly wrong. binge-ci's gate keeps `ui/tv` on tv-material and everything else off
+// it. SeerrTheme.kt is the one crossing: it projects this app's colour schemes into tv-material's.
+tvMaterialSeparation {
+    sources.from(fileTree("src") { include("**/*.kt") })
+    allowlist.add("app/src/main/kotlin/com/cooper/binge/companion/seerr/theme/SeerrTheme.kt")
+    themeTypeNames.addAll("SeerrDarkColorScheme", "SeerrLightColorScheme")
 }
 
 // The catalog's grpc must be what both the APK and the unit tests actually run (#702): the SDK brings
