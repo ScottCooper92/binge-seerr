@@ -217,6 +217,14 @@ touching `ci.yml`, because that job excludes tasks rather than listing them.
 - `checkBaselineStaleness` — an entry in `detekt-baseline.xml` that the code no longer produces.
   An orphaned entry reads as debt still owed and absorbs the next real finding of that rule in
   that file. Delete the entry.
+- `checkTvMaterialSeparation` — a Material 3 import under `ui/tv`, or a tv-material import anywhere
+  else. The two libraries share simple names, so the wrong import compiles. `theme/SeerrTheme.kt` is
+  the one allowed crossing: it projects the colour schemes into tv-material's.
+
+Four of these are binge-ci's shared gates rather than this repository's own code: the detekt wiring,
+`checkTranslationStaleness`, `checkBaselineStaleness` and `checkTvMaterialSeparation`. They come from
+`binge-ci/gradle-plugins`, a submodule pinned to the same binge-ci release as the workflows, and
+`app/build.gradle.kts` only configures them. Move the submodule and the workflow pins together.
 
 `build` depends on `check`, which is what pulls everything after the compile and the tests in.
 The device lane (`device-smoke.yml`) is not part of it: it runs on `main`, weekly and on request,
@@ -249,13 +257,14 @@ the custom `binge:` ruleset lives in an unpublished module there and cannot be d
 here (binge-companions#39), and the community Compose ruleset is tuned per-file to Binge's own
 composables, so adopting it is a measurement pass rather than a port.
 
-detekt runs on production `src/main` only, and **with type resolution** — the compile classpath is
-wired onto the task in `app/build.gradle.kts`. Without that classpath `UnsafeCallOnNullableType`,
-the `!!` ban, loads and silently never fires, so leave that wiring alone.
+detekt runs on production `src/main` only, and **with type resolution** — `binge.gates.detekt` wires
+the compile classpath onto the task. Without that classpath `UnsafeCallOnNullableType`, the `!!` ban,
+loads and silently never fires.
 
 `runCatching` is banned in `app/src/main` by `ForbiddenMethodCall`: `attempt` (`seerr/SeerrErrors.kt`) is the one
 idiom, because `runCatching` also catches the cancellation a cancelled scope sends. The rule only sees into the stdlib
-because `app/build.gradle.kts` puts detekt's own stdlib on its classpath; detekt 1.23 cannot read the 2.4 one.
+because `app/build.gradle.kts` puts detekt's own stdlib first on its classpath; detekt 1.23 cannot read the 2.4 one.
+The shared gate does not do this, so leave that line alone.
 
 `detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or

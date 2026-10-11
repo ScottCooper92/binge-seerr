@@ -61,7 +61,7 @@ jobs:
     uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@118a2849cba1529577e8df010210b9f0166bc2df # v1
 
   # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
-  # compile, lint, detekt and its baseline-staleness check, ktlint, the translation and gRPC gates,
+  # compile, lint, detekt and its baseline-staleness check, ktlint, the translation, tv-material and gRPC gates,
   # and the debug assemble.
   checks:
     # Skip while a PR is a draft, so a stack can be opened as drafts and promoted one at a time
