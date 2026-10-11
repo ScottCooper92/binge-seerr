@@ -261,7 +261,7 @@ internal fun DeleteGroup(onDelete: () -> Unit) {
                 confirming = false
                 onDelete()
             },
-            onDismiss = { confirming = false },
+            onDismissRequest = { confirming = false },
         )
     }
 }

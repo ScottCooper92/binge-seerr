@@ -285,7 +285,7 @@ internal fun TvIssueActionsSheet(
 ) {
     var pending by rememberSaveable { mutableStateOf(initialConfirm) }
     val open = item.status == IssueStatus.Open
-    TvSideSheet(onDismiss = onDismiss, modifier = modifier) { entryFocus ->
+    TvSideSheet(onDismissRequest = onDismiss, modifier = modifier) { entryFocus ->
         when (pending) {
             TvIssueConfirm.Resolve ->
                 TvSideSheetConfirm(

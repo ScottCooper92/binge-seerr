@@ -52,7 +52,7 @@ internal fun displayLanguageSettingItem(
             choices = BingeChoiceList.Ready(listed),
             selected = selected,
             onSelect = onSelect,
-            onDismiss = { open = false },
+            onDismissRequest = { open = false },
             suggested = remember(choices) { deviceDisplayLanguages(choices.map { it.first }) },
         )
     }

@@ -123,12 +123,12 @@ internal fun TvSettingsBoard(
         )
         val app = ready.app
         if (showingBugReport && app != null) {
-            TvSideSheet(onDismiss = bugReportCloser::close) { entryFocus ->
+            TvSideSheet(onDismissRequest = bugReportCloser::close) { entryFocus ->
                 TvBugReportSheetContent(app = app, onClose = bugReportCloser::close, entryFocus = entryFocus)
             }
         }
         if (confirmingDisconnect) {
-            TvSideSheet(onDismiss = closer::close) { entryFocus ->
+            TvSideSheet(onDismissRequest = closer::close) { entryFocus ->
                 TvSideSheetConfirm(
                     title = stringResource(R.string.hub_disconnect_confirm_title),
                     message = stringResource(R.string.hub_disconnect_confirm_message),

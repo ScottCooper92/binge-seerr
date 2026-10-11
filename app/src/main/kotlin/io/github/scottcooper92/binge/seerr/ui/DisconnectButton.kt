@@ -35,7 +35,7 @@ internal fun DisconnectButton(
                 confirming = false
                 onDisconnect()
             },
-            onDismiss = { confirming = false },
+            onDismissRequest = { confirming = false },
         )
     }
 }

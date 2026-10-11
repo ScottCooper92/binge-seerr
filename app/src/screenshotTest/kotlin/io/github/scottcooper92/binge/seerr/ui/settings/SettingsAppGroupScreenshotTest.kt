@@ -54,6 +54,6 @@ class SettingsAppGroupScreenshotTest {
             message = stringResource(R.string.shake_report_message),
             confirmLabel = stringResource(R.string.settings_report_bug),
             onConfirm = {},
-            onDismiss = {},
+            onDismissRequest = {},
         )
 }

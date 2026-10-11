@@ -243,7 +243,7 @@ private fun BlocklistPage(
                         removing = null
                         actions.onRemove(item)
                     },
-                    onDismiss = { removing = null },
+                    onDismissRequest = { removing = null },
                 )
             }
         }

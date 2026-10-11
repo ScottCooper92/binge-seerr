@@ -214,7 +214,7 @@ internal fun BingeTile(
                 actionLabel = stringResource(R.string.hub_binge_get),
                 actionIcon = Icons.AutoMirrored.Filled.OpenInNew,
                 onAction = { context.openBingeOnPlayStore() },
-                onDismiss = onDismissHint,
+                onDismissRequest = onDismissHint,
             )
         BingeStatus.NotConnected ->
             HintCard(
@@ -222,7 +222,7 @@ internal fun BingeTile(
                 actionLabel = stringResource(R.string.hub_binge_open),
                 actionIcon = Icons.AutoMirrored.Filled.OpenInNew,
                 onAction = { context.openBinge() },
-                onDismiss = onDismissHint,
+                onDismissRequest = onDismissHint,
             )
         BingeStatus.Connected ->
             HintCard(
@@ -230,7 +230,7 @@ internal fun BingeTile(
                 actionLabel = stringResource(R.string.hub_binge_open),
                 actionIcon = Icons.AutoMirrored.Filled.OpenInNew,
                 onAction = { context.openBinge() },
-                onDismiss = onDismissHint,
+                onDismissRequest = onDismissHint,
             )
     }
 }

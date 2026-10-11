@@ -79,7 +79,7 @@ internal fun regionSettingItem(
                     } ?: BingeChoiceList.Loading,
                 selected = value.trim(),
                 onSelect = pick,
-                onDismiss = { open = false },
+                onDismissRequest = { open = false },
                 // The server's default and "all regions" first, then the device's regions and popular ones.
                 suggested = listOf("", Regions.ALL) + suggestedRegions(),
             )

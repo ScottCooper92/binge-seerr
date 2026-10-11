@@ -75,7 +75,7 @@ internal fun TvRequestDetailSheet(
         if (host.step == DetailSheet.Report) actions.onDismissReport()
         closer.close()
     }
-    TvSideSheet(onDismiss = dismiss) { entryFocus ->
+    TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
         when (host.step) {
             DetailSheet.Remove ->
                 TvSideSheetConfirm(

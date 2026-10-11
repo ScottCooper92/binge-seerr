@@ -33,7 +33,7 @@ internal fun MediaStatusSheet(
         choices = statusChoices(),
         selected = instance.selectedChoice(),
         onSelect = onSelect,
-        onDismiss = onDismiss,
+        onDismissRequest = onDismiss,
     )
 }
 
