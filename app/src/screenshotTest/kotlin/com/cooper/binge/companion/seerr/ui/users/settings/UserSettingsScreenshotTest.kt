@@ -1,0 +1,459 @@
+package com.cooper.binge.companion.seerr.ui.users.settings
+
+import androidx.compose.runtime.Composable
+import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.seerr.ManageablePermission
+import com.cooper.binge.companion.seerr.seerr.PermissionScope
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.users.UserOrigin
+import kotlinx.coroutines.flow.emptyFlow
+
+/**
+ * The pages under a user's settings. Each page takes its layout across the device matrix once, then
+ * the states its draft can be in on the phone cell alone. Every page is an [EditorPage] but the
+ * index and the linked accounts, so the loading and failed arms are framed on the pages with a
+ * layout of their own rather than once for the shared frame.
+ */
+class UserSettingsIndexScreenshotTest {
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun allPagesLayout() = IndexFrame(UserSettingsUiState.Ready(UserSettingsIndex("Scott", UserSettingsPage.entries)))
+
+    /** A viewer who may open only some pages, as on someone else's account. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun somePages() =
+        IndexFrame(
+            UserSettingsUiState.Ready(UserSettingsIndex("Alex", listOf(UserSettingsPage.General, UserSettingsPage.Notifications))),
+        )
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun nothingToOpen() = IndexFrame(UserSettingsUiState.Ready(UserSettingsIndex("Alex", emptyList())))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = IndexFrame(UserSettingsUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = IndexFrame(UserSettingsUiState.Error(SeerrError.Unreachable))
+}
+
+class UserGeneralSettingsScreenshotTest {
+    /** A manager editing a user: who they are, their own filters, one quota overridden and one left to the server. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun managerLayout() = GeneralFrame(settledGeneral(managerGeneral()))
+
+    /** A user editing themselves: no quotas, the email locked, and nothing offered for the watchlist. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun ownSettings() =
+        GeneralFrame(
+            settledGeneral(
+                managerGeneral().copy(
+                    role = UserRole.User,
+                    canEditQuotas = false,
+                    canEditEmail = false,
+                    watchlistSyncMovies = null,
+                    watchlistSyncTv = null,
+                ),
+            ),
+        )
+
+    /** Left on the server's: each blank choice names the server's own setting, and the quotas say what applies. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun serverDefaults() =
+        GeneralFrame(
+            settledGeneral(
+                managerGeneral().copy(
+                    locale = "",
+                    region = "",
+                    streamingRegion = "",
+                    originalLanguage = "",
+                    movieQuotaOverride = false,
+                ),
+            ),
+            extras = UserGeneralExtras(serverDefaults = ServerDiscoverDefaults(locale = "fr", region = "FR", originalLanguage = "fr|en")),
+        )
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = GeneralFrame(settledGeneral(managerGeneral()))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = GeneralFrame(settledGeneral(managerGeneral()))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun saving() =
+        GeneralFrame(ExtrasEditorUiState.Ready(draft = managerGeneral(), saved = managerGeneral(), extras = GENERAL_EXTRAS, saving = true))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = GeneralFrame(ExtrasEditorUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = GeneralFrame(ExtrasEditorUiState.Error(SeerrError.Server))
+}
+
+class UserPasswordScreenshotTest {
+    /** An account with a password, changed by someone who must give the current one. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun changeLayout() = PasswordFrame(settled(PasswordSettings(hasPassword = true, currentRequired = true)))
+
+    /** An account with no password yet: it says so, and asks for no current one. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun noPasswordYet() = PasswordFrame(settled(PasswordSettings(hasPassword = false)))
+
+    /** The two new entries differ, so the confirm field says so. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun mismatch() =
+        PasswordFrame(
+            EditorUiState.Ready(
+                draft =
+                    PasswordSettings(
+                        hasPassword = true,
+                        currentRequired = true,
+                        current = "old-password",
+                        new = "correct-horse",
+                        confirm = "correct-hors",
+                    ),
+                saved = PasswordSettings(hasPassword = true, currentRequired = true),
+            ),
+        )
+
+    /** Everything entered and matching, so Save is live. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun readyToSave() =
+        PasswordFrame(
+            EditorUiState.Ready(
+                draft =
+                    PasswordSettings(
+                        hasPassword = true,
+                        currentRequired = true,
+                        current = "old-password",
+                        new = "correct-horse",
+                        confirm = "correct-horse",
+                    ),
+                saved = PasswordSettings(hasPassword = true, currentRequired = true),
+            ),
+        )
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = PasswordFrame(EditorUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = PasswordFrame(EditorUiState.Error(SeerrError.Unauthorized))
+}
+
+class UserPermissionsScreenshotTest {
+    /** The Jellyseerr lineage's full set, one granted, and what the viewer may not grant dimmed. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun lockedLayout() = PermissionsFrame(settled(permissions()))
+
+    /** Manage requests granted: the permissions it covers, joined beneath it, read on and can't be flipped. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun parentCoversChildren() =
+        PermissionsFrame(settled(permissions().copy(selected = setOf(ManageablePermission.ManageRequests), locked = emptySet())))
+
+    /** An admin's page as a non-owner sees it: every toggle locked, and the note says why (#1134). */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun ownerOnly() =
+        PermissionsFrame(
+            settled(
+                permissions().copy(
+                    selected = setOf(ManageablePermission.Admin),
+                    locked = ManageablePermission.entries.toSet(),
+                    ownerOnly = true,
+                ),
+            ),
+        )
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = PermissionsFrame(settled(permissions()))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = PermissionsFrame(settled(permissions()))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun saving() = PermissionsFrame(EditorUiState.Ready(draft = permissions(), saved = permissions(), saving = true))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = PermissionsFrame(EditorUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = PermissionsFrame(EditorUiState.Error(SeerrError.Unreachable))
+}
+
+class UserNotificationsScreenshotTest {
+    /** A moderator's page: every agent in the web client's order, and the events of the ones that are on, moderation ones too. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun moderatorLayout() = NotificationsFrame(settled(notifications(moderator = true)))
+
+    /** A plain user is not offered the moderation events. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun plainUser() = NotificationsFrame(settled(notifications(moderator = false)))
+
+    /** A pasted username in a Discord ID: its row says what it wants instead. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun badDiscordId() =
+        NotificationsFrame(
+            EditorUiState.Ready(
+                draft =
+                    notifications(moderator = false).copy(discordIds = listOf("123456789012345678", "scott#1234")),
+                saved = notifications(moderator = false),
+            ),
+        )
+
+    /** Nothing configured: every agent is off, so none lists its events, and the server's switches say so. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun nothingConfigured() = NotificationsFrame(settled(NotificationSettings()))
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = NotificationsFrame(settled(notifications(moderator = false)))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = NotificationsFrame(settled(notifications(moderator = false)))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = NotificationsFrame(EditorUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = NotificationsFrame(EditorUiState.Error(SeerrError.Server))
+}
+
+class UserLinkedAccountsScreenshotTest {
+    /** The Unlink and Link icon buttons at 1.5 and 2.0 font scale. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun fontScale() = LinkedFrame(linkedReady())
+
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = LinkedFrame(linkedReady())
+
+    /** Plex linked, and a Jellyfin account not yet linked. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun mixedLayout() = LinkedFrame(linkedReady())
+
+    /** A Plex-only server: the one row. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun plexOnly() = LinkedFrame(linkedReady().copy(mediaServer = null))
+
+    /** A link in flight disables the buttons. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun busy() = LinkedFrame(linkedReady().copy(busy = true))
+
+    /** Both linked, the media server as a named account. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun bothLinked() =
+        LinkedFrame(
+            linkedReady().copy(
+                plex = LinkedAccount(UserOrigin.Plex, linked = true),
+                mediaServer = LinkedAccount(UserOrigin.Jellyfin, linked = true, linkedAs = "scott"),
+            ),
+        )
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = LinkedFrame(LinkedAccountsUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = LinkedFrame(LinkedAccountsUiState.Error(SeerrError.Unreachable))
+}
+
+private fun <T> settled(form: T) = EditorUiState.Ready(draft = form, saved = form)
+
+private fun managerGeneral() =
+    GeneralSettings(
+        accountType = UserOrigin.Plex,
+        role = UserRole.Admin,
+        displayName = "Scott",
+        fallbackName = "scott.cooper",
+        email = "scott@home.lan",
+        discordId = "123456789012345678",
+        locale = "en",
+        region = "GB",
+        streamingRegion = "IE",
+        originalLanguage = "ja|ko",
+        movieQuotaOverride = true,
+        movieQuotaLimit = 5,
+        movieQuotaDays = 7,
+        watchlistSyncMovies = true,
+        watchlistSyncTv = false,
+        defaultMovieQuota = QuotaDefault(limit = 10, days = 7),
+        defaultTvQuota = QuotaDefault(limit = 0, days = 0),
+        canEditQuotas = true,
+        canEditEmail = true,
+    )
+
+private fun permissions() =
+    PermissionSettings(
+        selected = setOf(ManageablePermission.Request, ManageablePermission.ViewRequests, ManageablePermission.CreateIssues),
+        original = 0,
+        offered = ManageablePermission.offered(PermissionScope()),
+        locked = setOf(ManageablePermission.Admin, ManageablePermission.ManageSettings, ManageablePermission.ManageUsers),
+    )
+
+private fun notifications(moderator: Boolean) =
+    NotificationSettings(
+        agents =
+            mapOf(
+                NotificationAgent.Email to
+                    AgentSettings(enabled = true, types = NotificationType.MediaApproved.bit or NotificationType.MediaAvailable.bit),
+                NotificationAgent.Discord to AgentSettings(enabled = true, types = NotificationType.MediaAvailable.bit),
+                NotificationAgent.Telegram to AgentSettings(enabled = false, fields = mapOf(AgentField.TelegramChatId to "-1001234")),
+                NotificationAgent.Pushover to
+                    AgentSettings(
+                        fields =
+                            mapOf(
+                                AgentField.PushoverAppToken to "azGDORePK8gMaC0QOYAMyEEuzJnyUi",
+                                AgentField.PushoverUserKey to "uQiRzpo4DXghDmr9QzzfQu27cmVRsG",
+                            ),
+                    ),
+            ),
+        discordIds = listOf("123456789012345678"),
+        multipleDiscordIds = true,
+        telegramBotUsername = "binge_requests_bot",
+        isModerator = moderator,
+    )
+
+private fun linkedReady() =
+    LinkedAccountsUiState.Ready(
+        plex = LinkedAccount(UserOrigin.Plex, linked = true, linkedAs = "scott_plex"),
+        mediaServer = LinkedAccount(UserOrigin.Jellyfin, linked = false),
+        canQuickConnect = true,
+    )
+
+private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
+
+@Composable
+private fun IndexFrame(state: UserSettingsUiState) =
+    UserSettingsScreen(state = state, actions = UserSettingsActions(onBack = {}, onRetry = {}, onOpenPage = {}))
+
+private val GENERAL_EXTRAS = UserGeneralExtras(serverDefaults = ServerDiscoverDefaults(region = "GB"))
+
+private fun settledGeneral(form: GeneralSettings) = ExtrasEditorUiState.Ready(draft = form, saved = form, extras = GENERAL_EXTRAS)
+
+@Composable
+private fun GeneralFrame(
+    state: ExtrasEditorUiState<GeneralSettings, UserGeneralExtras>,
+    extras: UserGeneralExtras? = null,
+) = GeneralSettingsScreen(
+    state = if (extras != null && state is ExtrasEditorUiState.Ready) state.copy(extras = extras) else state,
+    events = emptyFlow(),
+    actions = noActions(),
+)
+
+@Composable
+private fun PasswordFrame(state: EditorUiState<PasswordSettings>) =
+    PasswordSettingsScreen(state = state, events = emptyFlow(), actions = noActions())
+
+@Composable
+private fun PermissionsFrame(state: EditorUiState<PermissionSettings>) =
+    PermissionsSettingsScreen(state = state, events = emptyFlow(), actions = noActions(), onToggle = {})
+
+@Composable
+private fun NotificationsFrame(state: EditorUiState<NotificationSettings>) =
+    NotificationsSettingsScreen(state = state, events = emptyFlow(), actions = noActions())
+
+@Composable
+private fun LinkedFrame(state: LinkedAccountsUiState) =
+    LinkedAccountsScreen(
+        state = state,
+        events = emptyFlow(),
+        actions =
+            LinkedAccountsActions(
+                onBack = {},
+                onRetry = {},
+                onLinkPlex = {},
+                onUnlinkPlex = {},
+                onLinkQuickConnect = {},
+                onLinkMediaServer = { _, _ -> },
+                onUnlinkMediaServer = {},
+                onPlexLaunched = {},
+                onCancelLink = {},
+            ),
+    )

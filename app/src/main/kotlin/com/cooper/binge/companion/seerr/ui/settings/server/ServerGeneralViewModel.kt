@@ -1,0 +1,149 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import androidx.lifecycle.viewModelScope
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
+import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * The server's general settings: the main form as an editor over `settings/main`, with the API key, the fork (for
+ * its display languages) and the server's region and language lists beside it, each list read only when its picker
+ * opens. The server answers a write with the whole record, which is what is adopted; the key lives in the extras
+ * rather than the draft because regenerating it is not an edit to save.
+ */
+@HiltViewModel
+class ServerGeneralViewModel
+    @Inject
+    constructor(
+        private val connection: SeerrConnection,
+        private val listCatalog: ServerListCatalog,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @ApplicationScope appScope: CoroutineScope,
+    ) : ExtrasEditorViewModel<ServerGeneralSettings, ServerGeneralExtras>(ServerGeneralExtras(), dispatcher) {
+        /** General saves as it changes (#930): every setting on it stands alone, and `settings/main` merges what it is sent. */
+        override val saveAsMadeScope: CoroutineScope = appScope
+
+        init {
+            reload()
+        }
+
+        override suspend fun load(): ServerGeneralSettings =
+            coroutineScope {
+                val api = connection.api()
+                val profile = async { connection.profile() }
+                val main = api.mainSettings()
+                val server = profile.await()
+                val variant = server.variant
+                editExtras { current ->
+                    current.copy(
+                        apiKey = current.apiKey.copy(key = main.apiKey.orEmpty()),
+                        variant = variant,
+                    )
+                }
+                main.toServerGeneral(variant, server.hasStreamingRegion)
+            }
+
+        override suspend fun write(draft: ServerGeneralSettings): ServerGeneralSettings {
+            val answered = connection.api().updateMainSettings(draft.toBody())
+            val server = connection.profile()
+            return answered.toServerGeneral(server.variant, server.hasStreamingRegion)
+        }
+
+        override fun canSave(draft: ServerGeneralSettings): Boolean = draft.valid
+
+        private val lists =
+            ListChoicesLoader(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                catalog = listCatalog,
+                held = { currentExtras().lists[it] },
+                set = { kind, choices -> editExtras { it.copy(lists = it.lists + (kind to choices)) } },
+            )
+
+        /** Reads [kind]'s list for its picker, once; a failed read can be asked for again. */
+        fun loadList(kind: ServerList) = lists.load(kind)
+
+        private val keywords =
+            KeywordLookup(
+                scope = viewModelScope,
+                dispatcher = dispatcher,
+                api = connection::api,
+                current = { currentExtras().keywords },
+                edit = { change -> editExtras { it.copy(keywords = change(it.keywords)) } },
+            )
+
+        /** Names the blocklisted tags the draft holds, once each: the server keeps them as TMDB ids. */
+        fun loadKeywordNames(ids: List<Int>) = keywords.name(ids)
+
+        /**
+         * Re-reads the blocklisted tags after the tags page has saved them, into the saved record and the draft alike, so
+         * the row shows what the server holds without disturbing an unsaved edit elsewhere on the page.
+         */
+        fun refreshBlocklistTags() {
+            if (ready() == null) return
+            viewModelScope.launch(dispatcher) {
+                val tags = attempt { connection.api().mainSettings() }.getOrNull()?.tags ?: return@launch
+                editReady { ready ->
+                    ready.copy(
+                        saved = ready.saved.copy(blocklist = ready.saved.blocklist?.copy(tags = tags)),
+                        draft = ready.draft.copy(blocklist = ready.draft.blocklist?.copy(tags = tags)),
+                    )
+                }
+            }
+        }
+
+        fun toggleReveal() = editExtras { it.copy(apiKey = it.apiKey.copy(revealed = !it.apiKey.revealed)) }
+
+        /**
+         * Replaces the key. When this app is itself signed in with it, the new one is validated and
+         * saved in the same step — the old one stopped working the moment the server answered, so
+         * leaving the connection on it would sign the app out.
+         *
+         * The regenerate call and the reconnect probe are reported separately: the regenerate call
+         * is what actually invalidates the old key, so its result is adopted into the extras
+         * regardless of whether the follow-up reconnect succeeds. Otherwise a probe failure right
+         * after a successful regenerate would discard the only copy of the new key the app ever saw.
+         */
+        fun regenerateApiKey() {
+            if (currentExtras().apiKey.regenerating) return
+            editExtras { it.copy(apiKey = it.apiKey.copy(regenerating = true)) }
+            viewModelScope.launch(dispatcher) {
+                attempt {
+                    connection
+                        .api()
+                        .regenerateApiKey()
+                        .apiKey
+                        .orEmpty()
+                }.onSuccess { key ->
+                    editExtras { it.copy(apiKey = it.apiKey.copy(key = key, regenerating = false)) }
+                    val current = connection.current()
+                    if (current.auth is SeerrAuth.ApiKey && key.isNotEmpty()) {
+                        connection.connect(current.baseUrl, SeerrAuth.ApiKey(key)).onFailure { failure ->
+                            notify(EditorEvent.Failed(failure.toSeerrError()))
+                            return@launch
+                        }
+                    }
+                    notify(EditorEvent.Notice(R.string.server_settings_api_key_regenerated))
+                }.onFailure { failure ->
+                    editExtras { it.copy(apiKey = it.apiKey.copy(regenerating = false)) }
+                    notify(EditorEvent.Failed(failure.toSeerrError()))
+                }
+            }
+        }
+    }
+
+/** How long the tags page waits after the last keystroke before it searches. */
+internal const val KEYWORD_SEARCH_DEBOUNCE_MILLIS = 300L

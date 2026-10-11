@@ -1,0 +1,225 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.QuestionAnswer
+import androidx.compose.material.icons.filled.RequestPage
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.component.ListItemDestination
+import com.binge.designsystem.resolvedContentPadding
+import com.binge.designsystem.template.BingeScreenScaffold
+import com.binge.designsystem.template.ScreenBar
+import com.binge.designsystem.template.screenInnerPadding
+import com.binge.designsystem.template.screenOuterPadding
+import com.binge.designsystem.theme.BingeSentiment
+import com.binge.designsystem.theme.fill
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.contributeUrl
+import com.cooper.binge.companion.seerr.seerr.discordUrl
+import com.cooper.binge.companion.seerr.seerr.discussionsUrl
+import com.cooper.binge.companion.seerr.seerr.docsUrl
+import com.cooper.binge.companion.seerr.seerr.releaseNotesUrl
+import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
+import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.binge.designsystem.R as DesR
+
+/** The about page: the edition and its update state, the totals, the server's own facts, and the fork's support links. */
+@Composable
+fun AboutScreen(
+    state: AboutUiState,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onOpenUrl: (String) -> Unit,
+) {
+    BingeScreenScaffold(bar = ScreenBar.Small, title = stringResource(R.string.settings_about), onBack = onBack) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding.screenOuterPadding())) {
+            val inner = padding.screenInnerPadding()
+            when (state) {
+                AboutUiState.Loading -> LoadingScreen(Modifier.padding(inner))
+                is AboutUiState.Error -> ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = onRetry)
+                is AboutUiState.Ready -> AboutContent(state.info, onOpenUrl, contentPadding = inner)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AboutContent(
+    info: AboutInfo,
+    onOpenUrl: (String) -> Unit,
+    contentPadding: PaddingValues,
+) {
+    val sides = resolvedContentPadding()
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        ItemGroup(
+            title = stringResource(R.string.server_settings_about_title, info.variant.displayName),
+            rows = versionRows(info, onOpenUrl) + serverRows(info),
+            modifier = Modifier.padding(sides),
+        )
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        ItemGroup(
+            title = stringResource(R.string.server_settings_about_support),
+            rows = supportRows(info, onOpenUrl),
+            modifier = Modifier.padding(sides),
+        )
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+        ItemGroup(
+            title = stringResource(R.string.server_settings_about_support_project, info.variant.displayName),
+            rows =
+                listOf(
+                    ListItem(
+                        icon = Icons.Filled.Favorite,
+                        iconTint = BingeSentiment.Info.fill(),
+                        label = stringResource(R.string.server_settings_about_contribute),
+                        detail = info.variant.contributeUrl(),
+                        destination = ListItemDestination.External,
+                        onClick = { onOpenUrl(info.variant.contributeUrl()) },
+                    ),
+                ),
+            modifier = Modifier.padding(sides),
+        )
+        Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))
+    }
+}
+
+@Composable
+private fun versionRows(
+    info: AboutInfo,
+    onOpenUrl: (String) -> Unit,
+): List<ListItem> =
+    listOfNotNull(
+        ListItem(
+            icon = Icons.Filled.Info,
+            iconTint = BingeSentiment.Neutral.fill(),
+            label = info.variant.displayName,
+            detail =
+                info.versionLabel?.let { stringResource(R.string.settings_about_version, it) }
+                    ?: stringResource(R.string.setup_server_development, info.variant.displayName),
+            clickable = false,
+        ),
+        ListItem(
+            icon = Icons.Filled.Public,
+            iconTint = if (info.updateAvailable) BingeSentiment.Caution.fill() else BingeSentiment.Positive.fill(),
+            label =
+                when {
+                    info.commitsBehind > 0 -> stringResource(R.string.server_settings_about_behind, info.commitsBehind)
+                    info.updateAvailable -> stringResource(R.string.server_settings_about_update)
+                    else -> stringResource(R.string.server_settings_about_up_to_date)
+                },
+            detail = stringResource(R.string.server_settings_about_release_notes),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.releaseNotesUrl()) },
+        ),
+        info.commitTag?.let { tag ->
+            ListItem(
+                icon = Icons.Filled.Code,
+                iconTint = BingeSentiment.Neutral.fill(),
+                label = stringResource(R.string.server_settings_about_commit),
+                detail = tag,
+                clickable = false,
+            )
+        },
+    )
+
+@Composable
+private fun serverRows(info: AboutInfo): List<ListItem> =
+    listOfNotNull(
+        info.totalMediaItems?.let { count ->
+            ListItem(
+                icon = Icons.Filled.Movie,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_about_total_media),
+                detail = count.toString(),
+                clickable = false,
+            )
+        },
+        info.totalRequests?.let { count ->
+            ListItem(
+                icon = Icons.Filled.RequestPage,
+                iconTint = BingeSentiment.Info.fill(),
+                label = stringResource(R.string.server_settings_about_total_requests),
+                detail = count.toString(),
+                clickable = false,
+            )
+        },
+        info.appDataPath?.let { path ->
+            ListItem(
+                icon = if (info.appDataWarning) Icons.Filled.Warning else Icons.Filled.Folder,
+                iconTint = if (info.appDataWarning) BingeSentiment.Negative.fill() else BingeSentiment.Neutral.fill(),
+                label = stringResource(R.string.server_settings_about_data_directory),
+                detail =
+                    when {
+                        info.appDataMounted == false -> stringResource(R.string.server_settings_about_data_not_mounted, path)
+                        info.appDataWritable == false -> stringResource(R.string.server_settings_about_data_not_writable, path)
+                        else -> path
+                    },
+                detailColor = if (info.appDataWarning) BingeSentiment.Negative.fill() else null,
+                clickable = false,
+            )
+        },
+        info.timezone?.let { zone ->
+            ListItem(
+                icon = Icons.Filled.Schedule,
+                iconTint = BingeSentiment.Neutral.fill(),
+                label = stringResource(R.string.server_settings_about_timezone),
+                detail = zone,
+                clickable = false,
+            )
+        },
+    )
+
+@Composable
+private fun supportRows(
+    info: AboutInfo,
+    onOpenUrl: (String) -> Unit,
+): List<ListItem> =
+    listOf(
+        ListItem(
+            icon = Icons.AutoMirrored.Filled.MenuBook,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_about_docs),
+            detail = info.variant.docsUrl(),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.docsUrl()) },
+        ),
+        ListItem(
+            icon = Icons.Filled.QuestionAnswer,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_about_discussions),
+            detail = info.variant.discussionsUrl(),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.discussionsUrl()) },
+        ),
+        ListItem(
+            icon = Icons.AutoMirrored.Filled.Chat,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.server_settings_about_discord),
+            detail = info.variant.discordUrl(),
+            destination = ListItemDestination.External,
+            onClick = { onOpenUrl(info.variant.discordUrl()) },
+        ),
+    )

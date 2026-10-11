@@ -1,0 +1,130 @@
+package com.cooper.binge.companion.seerr.ui.settings
+
+import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaServer
+import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+
+/** How the app is signed in, as the Connection group names it. */
+enum class SignInKind { ApiKey, Session }
+
+data class ConnectionSummary(
+    val baseUrl: String,
+    val signInKind: SignInKind,
+    /** The signed-in user's name; null while `auth/me` has not answered. */
+    val userName: String?,
+)
+
+data class ServerSummary(
+    val title: String,
+    val variant: SeerrVariant,
+    val versionLabel: String?,
+    val updateAvailable: Boolean,
+    val commitsBehind: Int,
+    val mediaServer: SeerrMediaServer = SeerrMediaServer.Plex,
+)
+
+enum class ServiceType { Radarr, Sonarr }
+
+/** One configured Radarr or Sonarr; [url] is the admin's external URL, else one built from host, port and base path. */
+data class ServerService(
+    val id: Int?,
+    val name: String,
+    val type: ServiceType,
+    val url: String?,
+    val qualityProfile: String?,
+    val rootFolder: String?,
+    val is4k: Boolean,
+    val isDefault: Boolean,
+)
+
+data class GeneralSettings(
+    val applicationTitle: String?,
+    val applicationUrl: String?,
+    val displayLanguage: String?,
+    val hideAvailable: Boolean?,
+    /** Whether the server has discover sliders to edit: Overseerr 1.32, and the Jellyseerr lineage from 1.4. */
+    val discoverSliders: Boolean = false,
+    /** Whether the server has a network settings page: the Jellyseerr lineage from 2.4. */
+    val network: Boolean = false,
+    /** Whether the server picks its metadata providers: Seerr 3.0+. */
+    val metadata: Boolean = false,
+)
+
+/** [count] requests per [days]-day window; the server's global default for one media type. */
+data class RequestLimit(
+    val count: Int,
+    val days: Int,
+)
+
+data class RequestPolicy(
+    val defaultAccess: SeerrDefaultAccess,
+    val movieLimit: RequestLimit?,
+    val tvLimit: RequestLimit?,
+)
+
+/** Null for an agent whose settings could not be read. */
+data class NotificationAgents(
+    val emailEnabled: Boolean?,
+    val discordEnabled: Boolean?,
+)
+
+data class ScheduledJob(
+    val id: String,
+    val name: String,
+    val running: Boolean,
+    val nextRunMillis: Long?,
+)
+
+data class SystemInfo(
+    val jobs: List<ScheduledJob>,
+)
+
+/** The admin-only reads; each section is null on its own failure so one refused endpoint drops only its rows. */
+data class ServerConfig(
+    val general: GeneralSettings? = null,
+    val requestPolicy: RequestPolicy? = null,
+    val agents: NotificationAgents? = null,
+    val system: SystemInfo? = null,
+    val services: List<ServerService>? = null,
+)
+
+/**
+ * The poll's settings: the signals this viewer may turn on, which are on, whether the system would
+ * show anything, and when the poll ran and runs next.
+ */
+data class NotificationSettings(
+    val offered: List<NotificationSignal>,
+    val enabled: Set<NotificationSignal>,
+    val blocked: Boolean,
+    val lastRunMillis: Long?,
+    val nextRunMillis: Long?,
+)
+
+/**
+ * This app's own settings, not the server's: where to report a bug in it, whether a shake offers to,
+ * and what it may report on its own.
+ */
+data class AppSettings(
+    val bugReportUrl: String,
+    val shakeToReport: Boolean,
+    val shareUsageData: Boolean = false,
+    val sendCrashReports: Boolean = true,
+)
+
+sealed interface SettingsUiState {
+    data object Loading : SettingsUiState
+
+    data class Ready(
+        val connection: ConnectionSummary,
+        val server: ServerSummary,
+        /** Null for a user who may not read the server's settings, or until they load. */
+        val config: ServerConfig?,
+        val notifications: NotificationSettings? = null,
+        val app: AppSettings? = null,
+        /** The admin groups have not answered yet and the wait for them ran out: the screen holds their place. */
+        val pending: Boolean = false,
+        /** What the rows' relative times are worded against, moved on each minute while the screen is showing (#989). */
+        val now: Long = System.currentTimeMillis(),
+    ) : SettingsUiState
+}

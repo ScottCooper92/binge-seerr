@@ -49,7 +49,7 @@ room {
 }
 
 android {
-    namespace = "io.github.scottcooper92.binge.seerr"
+    namespace = "com.cooper.binge.companion.seerr"
     compileSdk = 37
 
     // What makes AGP create the screenshotTest source set. The matching flag is in gradle.properties;
@@ -57,7 +57,7 @@ android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {
-        applicationId = "io.github.scottcooper92.binge.seerr"
+        applicationId = "com.cooper.binge.companion.seerr"
         minSdk = 26
         targetSdk = 36
         // release.yml overrides both from the tag it builds; a local build keeps the placeholders.
@@ -65,7 +65,7 @@ android {
         versionName = System.getenv("VERSION_NAME") ?: "0.1.0"
         // The device lane's tests take the object graph from Hilt, so the runner swaps in Hilt's test
         // Application; it is the only instrumentation this app runs.
-        testInstrumentationRunner = "io.github.scottcooper92.binge.seerr.SeerrHiltTestRunner"
+        testInstrumentationRunner = "com.cooper.binge.companion.seerr.SeerrHiltTestRunner"
         buildConfigField("String", "POSTHOG_API_KEY", "\"${telemetryValue("POSTHOG_API_KEY")}\"")
         buildConfigField("String", "POSTHOG_HOST", "\"${telemetryValue("POSTHOG_HOST", "https://eu.i.posthog.com")}\"")
     }
@@ -366,7 +366,7 @@ tasks.withType<Test>().configureEach {
             .withPropertyName("tvFocusSeedFrames")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs
-            .dir("src/main/kotlin/io/github/scottcooper92/binge/seerr/ui/tv")
+            .dir("src/main/kotlin/com/cooper/binge/companion/seerr/ui/tv")
             .withPropertyName("tvFocusSeedSources")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         // Where CoroutineLeakReporter writes. Under build/reports/tests so ci.yml's artifact already
@@ -528,7 +528,7 @@ kover {
                     "*_MembersInjector*",
                     "*Hilt_*",
                     "hilt_aggregated_deps.*",
-                    "io.github.scottcooper92.binge.seerr.di.*",
+                    "com.cooper.binge.companion.seerr.di.*",
                     // Room's generated DAO and database implementations, including the inner
                     // classes it emits for paging sources and open delegates - which is why this
                     // is `*_Impl*` and not `*_Impl`.
@@ -537,12 +537,12 @@ kover {
                     "*PreviewData*",
                     // The Android entry points: an Activity's onCreate and the Application class.
                     // Their content is `setContent { … }` and Hilt's own initialisation.
-                    "io.github.scottcooper92.binge.seerr.MainActivity*",
-                    "io.github.scottcooper92.binge.seerr.AdvancedRequestActivity*",
-                    "io.github.scottcooper92.binge.seerr.SendAddressActivity*",
-                    "io.github.scottcooper92.binge.seerr.ScannedSendAddressActivity*",
-                    "io.github.scottcooper92.binge.seerr.SettingsHandOffActivity*",
-                    "io.github.scottcooper92.binge.seerr.SeerrApp",
+                    "com.cooper.binge.companion.seerr.MainActivity*",
+                    "com.cooper.binge.companion.seerr.AdvancedRequestActivity*",
+                    "com.cooper.binge.companion.seerr.SendAddressActivity*",
+                    "com.cooper.binge.companion.seerr.ScannedSendAddressActivity*",
+                    "com.cooper.binge.companion.seerr.SettingsHandOffActivity*",
+                    "com.cooper.binge.companion.seerr.SeerrApp",
                 )
                 annotatedBy("androidx.compose.runtime.Composable")
             }

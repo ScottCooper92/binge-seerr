@@ -13,7 +13,7 @@ re-report anything that set decides. The audit's value is what it *doesn't* gate
 "in review or nowhere" (`CLAUDE.md` > Screens and ViewModels), the one-rule-everything-serves
 ("this repository is read as documentation"), server-gating, the exported Service, and doc drift.
 
-Scope to the whole repo or named packages under `app/src/main/kotlin/io/github/scottcooper92/binge/seerr/`
+Scope to the whole repo or named packages under `app/src/main/kotlin/com/cooper/binge/companion/seerr/`
 (`ui/`, `ui/tv/`, `seerr/`, `service/`, `auth/`, `data/`, `notifications/`, `feedback/`,
 `telemetry/`, `di/`). Skip `binge-companions/` and `design-system/` (submodules with their own
 repos and audits) and `build/`.

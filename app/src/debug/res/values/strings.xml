@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tells a debug install apart from a release one, in the launcher and in the host's list. -->
+    <!-- Tell a debug install apart from a release one: the name Binge shows, and the launcher's own. -->
     <string name="companion_label" translatable="false">Seerr Debug</string>
+    <string name="app_label" translatable="false">Seerr Companion Debug</string>
 
     <!-- The developer options screen's own UI prototypes (#467). Never shown in a release build,
          where this code does not exist at all, so not translated. -->

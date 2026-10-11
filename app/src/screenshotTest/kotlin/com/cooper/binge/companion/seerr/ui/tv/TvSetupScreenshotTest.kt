@@ -1,0 +1,259 @@
+package com.cooper.binge.companion.seerr.ui.tv
+
+import androidx.compose.runtime.Composable
+import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
+import com.cooper.binge.companion.seerr.seerr.SeerrSignInMode
+import com.cooper.binge.companion.seerr.ui.HAND_OFF_CODE
+import com.cooper.binge.companion.seerr.ui.PREVIEW_API_KEY
+import com.cooper.binge.companion.seerr.ui.SetupActions
+import com.cooper.binge.companion.seerr.ui.SetupError
+import com.cooper.binge.companion.seerr.ui.SetupNotice
+import com.cooper.binge.companion.seerr.ui.SetupUiState
+import com.cooper.binge.companion.seerr.ui.SignInForm
+
+/**
+ * The television setup's arms past the empty address step, which `TvSetupAddressStepScreenshotTest`
+ * frames: an address typed, refused and inspected, and each sign-in the remote can finish, with the
+ * focused control where the frame seeds one. The states come from `TvPreviewData.kt`'s builders, so the
+ * IDE preview and the frame cannot drift.
+ */
+class TvSetupScreenshotTest {
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressTyped() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://seerr.lan:5055"),
+            actions = NoSetupActions,
+            initialFocus = TvSetupFocus.Continue,
+        )
+
+    /** Plain http to a name that is not a private address: the warning and the opt-in under the field, Continue held. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressInsecure() =
+        TvSetupScreen(state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true), actions = NoSetupActions)
+
+    /**
+     * #907: an address a phone sent that waits on the opt-in. The page is the typed form, landed on the opt-in, and the
+     * field sits where it does with no note under it (compare [addressTyped]).
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressFromPhoneAwaitingOptIn() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true).copy(received = true),
+            actions = NoSetupActions,
+            offerHandOff = true,
+        )
+
+    /** #1084: any address a phone sent waits for the TV's user, landed on Continue, with a note saying where it came from. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressFromPhoneAwaitingConfirm() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://192.168.1.10:5055").copy(received = true),
+            actions = NoSetupActions,
+            offerHandOff = true,
+        )
+
+    /** The same in Spanish, whose warning runs longest: it has to fit above the button bar without moving the field. */
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun addressFromPhoneAwaitingOptInSpanish() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true).copy(received = true),
+            actions = NoSetupActions,
+            offerHandOff = true,
+        )
+
+    /** The opt-in ticked: Continue beside the field is what goes on now. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressInsecureAllowed() =
+        TvSetupScreen(
+            state = setupAddress(serverUrl = "http://seerr.example.com", insecure = true).copy(cleartextAllowed = true),
+            actions = NoSetupActions,
+        )
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressNotSeerr() =
+        TvSetupScreen(state = setupAddress(serverUrl = "http://nas.lan:9000", error = SetupError.NotSeerr), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun addressInspecting() =
+        TvSetupScreen(state = setupAddress(serverUrl = "http://seerr.lan:5055", isInspecting = true), actions = NoSetupActions)
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun loading() = TvSetupScreen(state = SetupUiState.Loading, actions = NoSetupActions)
+
+    /** Jellyfin sign-in with the credential field focused. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInJellyfin() = TvSetupScreen(state = setupSignIn(), actions = NoSetupActions, initialFocus = TvSetupFocus.Credential)
+
+    /** A local account on a server that mails resets: the Forgot password? toggle under the fields, off, and Sign in (#1037, #1302). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInLocal() =
+        TvSetupScreen(
+            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com")),
+            actions = NoSetupActions,
+            initialFocus = TvSetupFocus.Credential,
+        )
+
+    /** A server that cannot mail a reset: no Forgot password? toggle, and the form is the fields alone (#1302). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInLocalNoReset() =
+        TvSetupScreen(
+            state =
+                setupSignIn(
+                    form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com"),
+                    server = SampleSetupServer.copy(canResetPassword = false),
+                ),
+            actions = NoSetupActions,
+        )
+
+    /** Forgot password? ticked: the password is gone, and the commit is Send reset link (#1302). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInLocalForgot() =
+        TvSetupScreen(
+            state = setupSignIn(form = ForgotForm),
+            actions = NoSetupActions,
+        )
+
+    /** The same in Spanish, whose toggle label runs longest (#1302). */
+    @PreviewTest
+    @SeerrTvSpanishScreenPreviews
+    @Composable
+    fun signInLocalForgotSpanish() =
+        TvSetupScreen(
+            state = setupSignIn(form = ForgotForm),
+            actions = NoSetupActions,
+        )
+
+    /** An API key typed, with Connect focused. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInApiKey() =
+        TvSetupScreen(
+            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = PREVIEW_API_KEY)),
+            actions = NoSetupActions,
+            initialFocus = TvSetupFocus.Connect,
+        )
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInRejected() =
+        TvSetupScreen(
+            state =
+                setupSignIn(
+                    form = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", password = "hunter2"),
+                    error = SetupError.Rejected,
+                ),
+            actions = NoSetupActions,
+        )
+
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInConnecting() =
+        TvSetupScreen(
+            state = setupSignIn(form = SignInForm(mode = SeerrSignInMode.ApiKey, apiKey = PREVIEW_API_KEY), isConnecting = true),
+            actions = NoSetupActions,
+        )
+
+    /** A server whose only sign-ins finish elsewhere, so there is nothing to type. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInNothingTyped() =
+        TvSetupScreen(
+            state = setupSignIn(server = SampleSetupServer.copy(modes = listOf(SeerrSignInMode.Plex, SeerrSignInMode.QuickConnect))),
+            actions = NoSetupActions,
+        )
+
+    /**
+     * The server rejected the saved session (#810): the code page on the saved server, saying so, with Disconnect beside
+     * Change server for a server that is gone.
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun reconnectCode() =
+        TvSetupScreen(
+            state = setupSignIn(notice = SetupNotice.SessionRejected).copy(code = HAND_OFF_CODE),
+            actions = ReconnectActions,
+            offerHandOff = true,
+        )
+
+    /** The same, typed with the remote: the reason under the fields. Disconnect stays on the code page. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun reconnectTyped() = TvSetupScreen(state = setupSignIn(notice = SetupNotice.SessionRejected), actions = ReconnectActions)
+
+    /** An Emby server's sign-in (#1053): the same username and password as Jellyfin, under Emby's own name. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun signInEmby() =
+        TvSetupScreen(
+            state =
+                setupSignIn(
+                    form = SignInForm(mode = SeerrSignInMode.Emby, username = "scott"),
+                    server =
+                        SampleSetupServer.copy(
+                            modes = listOf(SeerrSignInMode.Emby, SeerrSignInMode.Local),
+                            mediaServerName = null,
+                        ),
+                ),
+            actions = NoSetupActions,
+            initialFocus = TvSetupFocus.Credential,
+        )
+
+    /** A reset email went out: the notice says so under the toggle, still ticked. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun resetEmailSent() =
+        TvSetupScreen(
+            state = setupSignIn(form = ForgotForm, notice = SetupNotice.ResetEmailSent),
+            actions = NoSetupActions,
+        )
+
+    /** The reset request failed: the error says why, and Send reset link is there to try again. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun resetFailed() =
+        TvSetupScreen(
+            state = setupSignIn(form = ForgotForm, error = SetupError.Unreachable),
+            actions = NoSetupActions,
+        )
+}
+
+private val ForgotForm = SignInForm(mode = SeerrSignInMode.Local, email = "scott@example.com", forgotPassword = true)
+
+private val ReconnectActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {}, onDisconnect = {})

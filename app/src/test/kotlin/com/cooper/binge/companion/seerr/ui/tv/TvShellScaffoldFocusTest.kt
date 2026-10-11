@@ -1,0 +1,155 @@
+package com.cooper.binge.companion.seerr.ui.tv
+
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
+import com.binge.designsystem.tv.nav.LocalTvContentInset
+import com.binge.designsystem.tv.nav.TV_SHELL_CONTENT_SETTLE_MILLIS
+import com.binge.designsystem.tv.theme.BingeTvTheme
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.util.createSeerrKeyboardAndroidComposeRule
+import com.cooper.binge.companion.seerr.util.string
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+private const val PAST_SETTLE_MILLIS = TV_SHELL_CONTENT_SETTLE_MILLIS + 100L
+
+/** The account sits above Home at the top of the rail, so Home is its second item. */
+private const val HOME_RAIL_INDEX = 1
+
+/**
+ * The rail beside the boards under a real D-pad: where focus starts, how it reaches the rail and comes
+ * back, that a walk down the rail changes the content only once it settles, and the Back hierarchy.
+ * Every destination is a full-bleed focusable box, the one property of a board the shell reacts to. The account is
+ * the rail's header, so a walk down from Home reaches Issues, and Settings is pinned below the walk.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
+class TvShellScaffoldFocusTest {
+    @get:Rule
+    val composeTestRule = createSeerrKeyboardAndroidComposeRule<ComponentActivity>()
+
+    private val railItem = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+
+    @Test
+    fun focusStartsInTheContentNotTheRail() {
+        setShell()
+
+        content(TvDestination.Hub).assertIsFocused()
+    }
+
+    @Test
+    fun leftFromTheContentLandsOnTheSelectedRailItem() {
+        setShell()
+
+        pressLeft()
+
+        railItemAt(HOME_RAIL_INDEX).assertIsFocused()
+    }
+
+    @Test
+    fun walkingDownTheRailSelectsAndTheContentFollowsOnceSettled() {
+        setShell()
+        pressLeft()
+
+        pressDown()
+
+        railItemAt(HOME_RAIL_INDEX + 1).assertIsFocused()
+        composeTestRule.mainClock.advanceTimeBy(PAST_SETTLE_MILLIS)
+        composeTestRule.waitForIdle()
+        content(TvDestination.Issues).assertExists()
+    }
+
+    @Test
+    fun backWithFocusInTheContentMovesItToTheRail() {
+        setShell()
+
+        pressBack()
+
+        railItemAt(HOME_RAIL_INDEX).assertIsFocused()
+    }
+
+    @Test
+    fun backOnTheRailOffHomeGoesHome() {
+        setShell()
+        pressLeft()
+        pressDown()
+        composeTestRule.mainClock.advanceTimeBy(PAST_SETTLE_MILLIS)
+        composeTestRule.waitForIdle()
+        content(TvDestination.Issues).assertExists()
+
+        pressBack()
+        composeTestRule.mainClock.advanceTimeBy(PAST_SETTLE_MILLIS)
+        composeTestRule.waitForIdle()
+
+        content(TvDestination.Hub).assertExists()
+    }
+
+    /** An account the server will not list issues for gets no Issues item on the rail (#1054). */
+    @Test
+    fun withoutIssuesTheRailHasNoIssuesItem() {
+        setShell(showIssues = false)
+
+        composeTestRule.onAllNodes(railItem).assertCountEquals(TvDestination.entries.size - 1)
+        val issues = string(R.string.hub_section_issues)
+        composeTestRule.onAllNodes(hasText(issues) or hasContentDescription(issues)).assertCountEquals(0)
+    }
+
+    private fun setShell(showIssues: Boolean = true) {
+        composeTestRule.setContent {
+            BingeTvTheme {
+                var selected by remember { mutableStateOf(TvDestination.Hub) }
+                TvShellScaffold(selected = selected, onSelect = { selected = it }, showIssues = showIssues) { destination ->
+                    // Cleared of the rail as every board is, so ← has the rail to land on.
+                    Box(modifier = Modifier.fillMaxSize().padding(start = LocalTvContentInset.current)) {
+                        Box(modifier = Modifier.fillMaxSize().testTag(tag(destination)).focusable())
+                    }
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun tag(destination: TvDestination) = "content-${destination.key}"
+
+    private fun content(destination: TvDestination) = composeTestRule.onNodeWithTag(tag(destination))
+
+    private fun railItemAt(index: Int) = composeTestRule.onAllNodes(railItem)[index]
+
+    private fun pressLeft() = press(Key.DirectionLeft)
+
+    private fun pressDown() = press(Key.DirectionDown)
+
+    private fun press(key: Key) {
+        composeTestRule.onRoot().performKeyInput { pressKey(key) }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun pressBack() {
+        composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeTestRule.waitForIdle()
+    }
+}

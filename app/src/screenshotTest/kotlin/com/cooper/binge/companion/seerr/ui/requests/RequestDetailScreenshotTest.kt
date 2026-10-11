@@ -1,0 +1,178 @@
+package com.cooper.binge.companion.seerr.ui.requests
+
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.android.tools.screenshot.PreviewTest
+import com.binge.designsystem.LocalPaneWidth
+import com.cooper.binge.companion.seerr.preview.SeerrListPanePreview
+import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import kotlinx.coroutines.flow.emptyFlow
+
+/**
+ * The request page on the shared detail shape: the hero under an overlay bar carrying Open and
+ * Report, the overview collapsed with its toggle, the watch rows under their own Stats header ahead
+ * of "This request"'s own facts and its primary action, inline in that card rather than pinned in a
+ * footer.
+ *
+ * The overview is seeded overflowing in every frame. Left alone the component only learns it
+ * overflowed from `onTextLayout`, which fires after this lane has captured, so its collapsed-with-
+ * toggle state — the only one a reader meets on a real synopsis — would never be in a baseline.
+ */
+class RequestDetailScreenshotTest {
+    /** The Loading arm (#373): the hero, the headline's chips and overview, and "This request"'s header over the one unconditional facts row. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = RequestDetailSkeleton()
+
+    /** The layout, once: pending, so the primary reads as a review. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun pending() = Frame(pendingDetail())
+
+    /** The same layout settled, which is the primary's other label and the media half of its sheet. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun settled() = Frame(settledDetail())
+
+    /** A moderation in flight (#563): the bar under the top bar, and the card's chip and action dimmed. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun acting() = Frame(pendingDetail(), isActing = true)
+
+    /** A title with a second request against it: the "Requests for this title" list, this request first. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withSiblings() = Frame(detailWithSiblings())
+
+    /**
+     * The same page scrolled to its end, so the whole list shows: this request's own row first, then a
+     * declined sibling and a completed 4K one with no requester. Page top alone can hide the last
+     * row below the fold.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun withSiblingsScrolled() = Frame(detailWithSiblings(), scrollState = rememberScrollState(initial = Int.MAX_VALUE))
+
+    /** Nothing left to do: the card has no Review or Manage button. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun noPrimaryAction() = Frame(noPrimaryActionDetail())
+
+    /** No attributed moderator: the "Updated" row stands on its own rather than the timestamp vanishing. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun autoApproved() = Frame(autoApprovedDetail())
+
+    /**
+     * Pending, in a pane narrower than the window (#343): the footer spans the pane it sits in rather
+     * than the whole window it is measured against, exactly as [com.cooper.binge.companion.seerr.ui.hub.HubScreenshotTest.readyAsListPane]
+     * proves for the hub. [LocalPaneWidth] is what `SeerrNavHost` would provide for a pane at that
+     * width (#291) — without it the hero and the info rows would still take the window's 32dp.
+     */
+    @PreviewTest
+    @SeerrListPanePreview
+    @Composable
+    fun asPane() =
+        CompositionLocalProvider(LocalPaneWidth provides 360.dp) {
+            Box(modifier = Modifier.width(360.dp)) {
+                Frame(pendingDetail())
+            }
+        }
+
+    /** Type, availability and 4K as three chips on the headline row, wrapping rather than clipping (#340). */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun partiallyAvailable4k() = Frame(partiallyAvailable4kDetail())
+
+    /**
+     * #342: the title chip and the season chip disagree — the headline caption and the season
+     * row's own shape are what make that read as coherent rather than contradictory.
+     */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun partiallyAvailablePendingSeason() = Frame(partiallyAvailablePendingSeasonDetail())
+
+    /** A row a list already had, before the fetch lands (#1053): its hero over the loading body. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seeded() = SeededFrame(RequestDetailUiState.Seeded(pendingDetail().item))
+
+    /** The same seed after a failed refresh: the hero stays, and the body is the error and its retry. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun seededFailed() = SeededFrame(RequestDetailUiState.Seeded(pendingDetail().item, error = SeerrError.Unreachable))
+}
+
+@Composable
+private fun Frame(
+    detail: RequestDetail,
+    scrollState: ScrollState = rememberScrollState(),
+    isActing: Boolean = false,
+) {
+    RequestDetailPage(
+        detail = detail,
+        scrollState = scrollState,
+        onBack = {},
+        onOpen = {},
+        onReport = {},
+        onOpenRequest = {},
+        onOpenUser = {},
+        initiallyOverflowing = true,
+        isActing = isActing,
+    )
+}
+
+/** The Seeded arm draws none of [RequestDetailActions]' sheets, so every action is a no-op. */
+@Composable
+private fun SeededFrame(state: RequestDetailUiState.Seeded) {
+    RequestDetailScreen(
+        state = state,
+        events = emptyFlow(),
+        actions =
+            RequestDetailActions(
+                onBack = {},
+                onRetry = {},
+                onReportIssue = { _, _ -> },
+                onDismissReport = {},
+                onApprove = {},
+                onRetryRequest = {},
+                onDecline = {},
+                onRemove = {},
+                onStartEdit = {},
+                siblingSheet = {},
+                onOpenUser = {},
+                edit =
+                    EditRequestActions(
+                        onToggleSeason = {},
+                        onSelectAllSeasons = {},
+                        onSelectServer = {},
+                        onSelectProfile = {},
+                        onSelectRootFolder = {},
+                        onToggleTag = {},
+                        onSave = {},
+                        onDismiss = {},
+                    ),
+                media = ManageMediaActions(onSetStatus = { _, _, _ -> }, onClearData = {}, onDeleteFiles = { _, _ -> }),
+            ),
+    )
+}

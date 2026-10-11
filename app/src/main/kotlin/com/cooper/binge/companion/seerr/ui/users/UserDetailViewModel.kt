@@ -1,0 +1,270 @@
+package com.cooper.binge.companion.seerr.ui.users
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.UserStore
+import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.seerr.ManageablePermission
+import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrPermissions
+import com.cooper.binge.companion.seerr.seerr.SeerrUserDto
+import com.cooper.binge.companion.seerr.seerr.TitleCache
+import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.toPermissions
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.binge.companion.seerr.ui.hub.toHubQuota
+import com.cooper.binge.companion.seerr.ui.minuteClock
+import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
+import com.cooper.binge.companion.seerr.ui.requests.RequestItem
+import com.cooper.binge.companion.seerr.ui.requests.toRequestMediaTypeOrNull
+import com.cooper.binge.companion.seerr.ui.users.settings.mayOpenSettings
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+/** Nothing to load and nothing more to come: how a list the viewer may not read reports itself. */
+private val FINISHED =
+    LoadStates(
+        refresh = LoadState.NotLoading(endOfPaginationReached = true),
+        prepend = LoadState.NotLoading(endOfPaginationReached = true),
+        append = LoadState.NotLoading(endOfPaginationReached = true),
+    )
+
+/** A carousel is a teaser; the server's own page has the rest. */
+private const val CAROUSEL_LIMIT = 20
+
+/**
+ * One user as a page. The profile is the page; the quota, the watch data and the watchlist are
+ * best-effort, since each is a section the server may not have or the user may not see.
+ * The user's own requests are a separate paged stream.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@HiltViewModel(assistedFactory = UserDetailViewModel.Factory::class)
+class UserDetailViewModel
+    @AssistedInject
+    constructor(
+        private val connection: SeerrConnection,
+        private val titles: TitleCache,
+        private val store: UserStore,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        @Assisted private val userId: Int,
+        private val minuteTicker: Ticker = Ticker(),
+    ) : ViewModel() {
+        private val state = MutableStateFlow<UserDetailUiState>(UserDetailUiState.Loading)
+        val uiState: StateFlow<UserDetailUiState> = state.asStateFlow()
+
+        /** The wall clock the page's relative times count from; a test pins it. */
+        internal var clock: () -> Long = System::currentTimeMillis
+
+        private val now = MutableStateFlow(clock())
+        private var ticker: Job? = null
+
+        private val eventFlow = MutableSharedFlow<UserDetailEvent>(extraBufferCapacity = 1)
+        val events: SharedFlow<UserDetailEvent> = eventFlow.asSharedFlow()
+
+        /** Empty, without asking the server, for a viewer it would refuse: see [mayReadRequests]. */
+        val requests: Flow<PagingData<RequestItem>> =
+            flow { emit(mayReadRequests()) }
+                .flatMapLatest { allowed ->
+                    if (allowed) {
+                        Pager(PagingConfig(pageSize = REQUESTS_PAGE_SIZE)) {
+                            UserRequestsPagingSource(userId = userId, api = connection::api, hydrate = titles::get)
+                        }.flow
+                    } else {
+                        flowOf(PagingData.empty<RequestItem>(sourceLoadStates = FINISHED))
+                    }
+                }.cachedIn(viewModelScope)
+
+        /**
+         * The server lists a user's requests to that user, and to a viewer who holds MANAGE_REQUESTS or REQUEST_VIEW; anyone
+         * else gets a 403 the page could only show as a Retry that fails again. A viewer that cannot be read is let through,
+         * so a failed read does not leave the list empty for good.
+         */
+        private suspend fun mayReadRequests(): Boolean {
+            val viewer = attempt { connection.authenticatedUser() }.getOrNull()
+            return viewer.mayReadRequestsOf(userId)
+        }
+
+        /** The one rule for both the pager and the screen's gate, so they cannot disagree about a viewer that cannot be read. */
+        private fun SeerrUserDto?.mayReadRequestsOf(userId: Int): Boolean = this == null || id == userId || toPermissions().canViewRequests
+
+        /**
+         * The server reads another user's quota only for a viewer with both `MANAGE_USERS` and `MANAGE_REQUESTS` (#1093), so a
+         * viewer with one of them is not sent to be refused. An unknown viewer is tried, as [mayReadRequestsOf] does.
+         */
+        private fun SeerrUserDto?.mayReadQuotaOf(userId: Int): Boolean =
+            this == null || id == userId || toPermissions().let { it.canManageUsers && it.canManageRequests }
+
+        init {
+            reload()
+        }
+
+        /** Ticks the page's clock once a minute while it shows, so "joined" and each request's time age (#1239). */
+        fun setScreenVisible(visible: Boolean) {
+            ticker?.cancel()
+            ticker = null
+            if (!visible) return
+            ticker =
+                viewModelScope.launch(dispatcher) {
+                    minuteClock(clock, minuteTicker).collect { time ->
+                        now.value = time
+                        state.update { (it as? UserDetailUiState.Ready)?.copy(now = time) ?: it }
+                    }
+                }
+        }
+
+        fun reload() {
+            state.update { current ->
+                when (current) {
+                    is UserDetailUiState.Ready -> current
+                    is UserDetailUiState.Seeded -> current.copy(error = null)
+                    else -> UserDetailUiState.Loading
+                }
+            }
+            viewModelScope.launch(dispatcher) {
+                seedFromCache()
+                attempt { load() }
+                    .onSuccess { detail -> state.value = UserDetailUiState.Ready(detail, now = now.value) }
+                    .onFailure { failure ->
+                        state.update { current ->
+                            when (current) {
+                                is UserDetailUiState.Ready -> current
+                                is UserDetailUiState.Seeded -> current.copy(error = failure.toSeerrError())
+                                else -> UserDetailUiState.Error(failure.toSeerrError())
+                            }
+                        }
+                    }
+            }
+        }
+
+        /** Shows the cached row's profile in place of the skeleton, if a list has the user and nothing has landed yet. */
+        private suspend fun seedFromCache() {
+            if (state.value !is UserDetailUiState.Loading) return
+            val item = attempt { store.byId(userId)?.toUserItem() }.getOrNull() ?: return
+            state.update { current -> if (current is UserDetailUiState.Loading) UserDetailUiState.Seeded(item) else current }
+        }
+
+        /** Removes the user; the cached row goes too, and the page pops. */
+        fun deleteUser() {
+            val ready = state.value as? UserDetailUiState.Ready ?: return
+            if (ready.deleting || !ready.detail.canDelete) return
+            state.value = ready.copy(deleting = true)
+            viewModelScope.launch(dispatcher) {
+                attempt {
+                    connection.api().deleteUser(userId)
+                    store.delete(userId)
+                }.onSuccess { eventFlow.emit(UserDetailEvent.UserDeleted) }
+                    .onFailure { failure ->
+                        state.update { current -> (current as? UserDetailUiState.Ready)?.copy(deleting = false) ?: current }
+                        eventFlow.emit(UserDetailEvent.Failed(failure.toSeerrError()))
+                    }
+            }
+        }
+
+        private suspend fun load(): UserDetail =
+            coroutineScope {
+                val api = connection.api()
+                val viewer = async { attempt { connection.authenticatedUser() }.getOrNull() }
+                val quota =
+                    async {
+                        if (viewer.await().mayReadQuotaOf(userId)) attempt { api.userQuota(userId).toHubQuota() }.getOrNull() else null
+                    }
+                val watch = async { attempt { api.userWatchData(userId) }.getOrNull() }
+                val watchlist = async { attempt { api.userWatchlist(userId) }.getOrNull() }
+                val dto = api.user(userId)
+                val item = dto.toUserItemOrFallback()
+                val recent =
+                    watch
+                        .await()
+                        ?.recentlyWatched
+                        ?.take(CAROUSEL_LIMIT)
+                        ?.map { it.mediaType to it.tmdbId }
+                        .orEmpty()
+                val listed =
+                    watchlist
+                        .await()
+                        ?.results
+                        ?.take(CAROUSEL_LIMIT)
+                        ?.map { it.mediaType to it.tmdbId }
+                        .orEmpty()
+                val cards = titled(api, recent + listed)
+                val viewerDto = viewer.await()
+                val permissions = viewerDto.toPermissions()
+                UserDetail(
+                    item = item,
+                    permissions = ManageablePermission.decode(item.permissions),
+                    quota = quota.await(),
+                    watch = watch.await()?.let { UserWatch(playCount = it.playCount, recentlyWatched = recent.mapNotNull(cards::get)) },
+                    watchlist = listed.mapNotNull(cards::get),
+                    isSelf = viewerDto?.id == userId,
+                    canViewRequests = viewerDto.mayReadRequestsOf(userId),
+                    canEditSettings = mayOpenSettings(userId, viewerDto?.id, permissions),
+                    canDelete = permissions.canDelete(target = item, viewerId = viewerDto?.id),
+                    serverUrl = connection.current().baseUrl,
+                    webUrl = connection.current().baseUrl + "users/" + userId,
+                    serverName = connection.profile().variant.displayName,
+                )
+            }
+
+        /** Every carousel entry titled through the cache at once; one that will not render is dropped. */
+        private suspend fun titled(
+            api: SeerrApi,
+            keys: List<Pair<String, Int>>,
+        ): Map<Pair<String, Int>, TitleCardItem> =
+            coroutineScope {
+                keys
+                    .distinct()
+                    .map { key -> async { key to key.toCard(api) } }
+                    .awaitAll()
+                    .mapNotNull { (key, card) -> card?.let { key to it } }
+                    .toMap()
+            }
+
+        private suspend fun Pair<String, Int>.toCard(api: SeerrApi): TitleCardItem? {
+            val mediaType = first.toRequestMediaTypeOrNull() ?: return null
+            val details = titles.get(api, first, second)
+            return TitleCardItem(tmdbId = second, mediaType = mediaType, title = details?.title, posterUrl = details?.posterUrl)
+        }
+
+        @AssistedFactory
+        interface Factory {
+            fun create(userId: Int): UserDetailViewModel
+        }
+    }
+
+/** The server's own guard: a manager, never the owner or oneself, and another admin only by the owner. */
+private fun SeerrPermissions.canDelete(
+    target: UserItem,
+    viewerId: Int?,
+): Boolean {
+    if (!canManageUsers || viewerId == null) return false
+    if (target.id == OWNER_USER_ID || target.id == viewerId) return false
+    return !target.isAdmin || viewerId == OWNER_USER_ID
+}

@@ -1,0 +1,389 @@
+package com.cooper.binge.companion.seerr.ui.requests
+
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_MOVIE
+import com.cooper.binge.companion.seerr.seerr.SEERR_MEDIA_TYPE_TV
+import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaDetailsDto
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaInfoDto
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestMediaDto
+import com.cooper.binge.companion.seerr.seerr.SeerrSeasonDto
+import com.cooper.binge.companion.seerr.seerr.SeerrSeasonStatusDto
+import com.cooper.binge.companion.seerr.ui.Choice
+import com.cooper.binge.companion.seerr.util.PlainCipher
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import mockwebserver3.Dispatcher
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
+import okhttp3.Headers.Companion.headersOf
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CopyOnWriteArrayList
+
+/** Radarr answers for a film and Sonarr for a series; the editor picks by the request's own media type. */
+private const val RADARR = "/api/v1/service/radarr"
+private const val SONARR = "/api/v1/service/sonarr"
+
+private val SERVERS =
+    """[{"id":1,"name":"Main","isDefault":true,"activeProfileId":7,"activeDirectory":"/films"},
+       {"id":2,"name":"Spare","activeProfileId":9,"activeDirectory":"/spare"},
+       {"id":3,"name":"4K","is4k":true}]"""
+
+/** What the `PUT` answers with; the editor only needs it to decode, not to read anything off it. */
+private val EDITED = """{"id":11,"media":{"tmdbId":550,"mediaType":"movie"}}"""
+
+private val SERVER_DETAILS =
+    """{"server":{"id":1,"name":"Main"},"profiles":[{"id":7,"name":"HD"},{"id":8,"name":"SD"}],
+       "rootFolders":[{"id":1,"path":"/films"},{"id":2,"path":"/other"}],
+       "tags":[{"id":4,"label":"kids"},{"id":5,"label":"archive"}]}"""
+
+/** The editor for one request, over a real connection into a path-scripted Seerr. */
+class RequestEditorTest {
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    private val seerr = MockWebServer()
+    private val received = CopyOnWriteArrayList<RecordedRequest>()
+
+    /** Paths the dispatcher should answer 500 for, so a failed load can be driven. */
+    private val failing = mutableSetOf<String>()
+
+    /** When set, the edit's `PUT` gets Seerr's 202 for an edit that leaves nothing to request. */
+    @Volatile private var nothingLeftToRequest = false
+
+    @After
+    fun tearDown() = seerr.close()
+
+    private suspend fun TestScope.editor(): RequestEditor {
+        seerr.dispatcher =
+            object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    received += request
+                    val path = request.url.encodedPath
+                    if (path in failing) return MockResponse(code = 500)
+                    if (nothingLeftToRequest && request.method == "PUT") {
+                        return MockResponse(code = 202, body = """{"message":"No seasons available to request"}""")
+                    }
+                    val body =
+                        when {
+                            path == "/api/v1/auth/me" -> """{"id":1,"permissions":2}"""
+                            path == "/api/v1/status" -> """{"version":"2.7.0"}"""
+                            path == "/api/v1/settings/public" -> """{"mediaServerType":2}"""
+                            path == RADARR || path == SONARR -> SERVERS
+                            path.startsWith("$RADARR/") || path.startsWith("$SONARR/") -> SERVER_DETAILS
+                            path.startsWith("/api/v1/request/") -> EDITED
+                            else -> "{}"
+                        }
+                    return MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+                }
+            }
+        seerr.start()
+        val connection =
+            SeerrConnection(
+                store =
+                    CredentialStore(
+                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("e.preferences_pb") },
+                        PlainCipher,
+                    ),
+                apis = SeerrApiFactory(logRequests = false),
+            )
+        connection.connect(seerr.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        val dispatcher = UnconfinedTestDispatcher(testScheduler)
+        val moderation = RequestModeration(scope = backgroundScope, dispatcher = dispatcher, connection = connection) {}
+        return RequestEditor(scope = backgroundScope, dispatcher = dispatcher, connection = connection, moderation = moderation)
+    }
+
+    private suspend fun RequestEditor.awaitLoaded(): EditState =
+        state.first { it != null && it.destination?.loadingChoices != true } as EditState
+
+    /** The editor closes on the moderation's `Edited`, so this is the save having gone through. */
+    private suspend fun RequestEditor.awaitClosed() = state.first { it == null }
+
+    private fun paths(prefix: String) = received.filter { it.url.encodedPath.startsWith(prefix) }.map { it.url.encodedPath }
+
+    private fun editBody() =
+        Json
+            .parseToJsonElement(
+                received
+                    .last { it.method == "PUT" }
+                    .body
+                    ?.utf8()
+                    .orEmpty(),
+            ).jsonObject
+
+    @Test
+    fun `a film's destination comes from Radarr, and its saved body carries no seasons`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(movieRequest(), details = null, canEditDestination = true))
+
+            val loaded = editor.awaitLoaded()
+            assertEquals(listOf(RADARR, "$RADARR/1"), paths(RADARR))
+            assertTrue(paths(SONARR).isEmpty())
+            // The 4K instance is not offered: this request is not 4K, and Seerr keeps the two apart.
+            assertEquals(listOf(1, 2), loaded.destination?.servers?.map { it.id })
+            assertFalse(loaded.seasonsUnknown)
+            assertTrue(loaded.canSave)
+
+            editor.save()
+            editor.awaitClosed()
+
+            val body = editBody()
+            assertNull(body["seasons"])
+            assertEquals(SEERR_MEDIA_TYPE_MOVIE, body.getValue("mediaType").jsonPrimitive.content)
+            assertEquals(1, body.getValue("serverId").jsonPrimitive.int)
+            assertEquals(7, body.getValue("profileId").jsonPrimitive.int)
+            assertEquals("/films", body.getValue("rootFolder").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a series' destination comes from Sonarr, and its saved body carries the ticked seasons`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = true))
+
+            val loaded = editor.awaitLoaded()
+            assertEquals(listOf(SONARR, "$SONARR/1"), paths(SONARR))
+            assertTrue(paths(RADARR).isEmpty())
+            // Season 1 is this request's own and starts ticked; season 3 is held by the server, so it is locked.
+            assertEquals(listOf(1, 2, 3), loaded.seasons.map { it.number })
+            assertEquals(listOf(true, false, false), loaded.seasons.map { it.selected })
+            assertEquals(listOf(false, false, true), loaded.seasons.map { it.locked })
+
+            editor.toggleSeason(2)
+            editor.toggleSeason(3)
+            editor.save()
+            editor.awaitClosed()
+
+            // A locked season is neither untickable nor sent: only 1 and 2 go.
+            assertEquals(listOf(1, 2), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `selecting all ticks every changeable season and leaves a held one alone`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            assertFalse(editor.awaitLoaded().allSeasonsSelected)
+
+            editor.selectAllSeasons(true)
+
+            val ticked = editor.awaitLoaded()
+            // Season 3 is held by the server: it stays as it was, not selected, and does not count against "all".
+            assertEquals(listOf(true, true, false), ticked.seasons.map { it.selected })
+            assertTrue(ticked.allSeasonsSelected)
+
+            editor.save()
+            editor.awaitClosed()
+            assertEquals(listOf(1, 2), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `clearing all unticks every changeable season, which leaves nothing to save`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.selectAllSeasons(false)
+
+            val cleared = editor.awaitLoaded()
+            assertEquals(listOf(false, false, false), cleared.seasons.map { it.selected })
+            assertFalse(cleared.allSeasonsSelected)
+            assertFalse(cleared.canSave)
+        }
+
+    @Test
+    fun `a series whose details did not load sends no seasons, and cannot be saved at all`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = null, canEditDestination = false))
+
+            val state = editor.awaitLoaded()
+            assertTrue(state.seasonsUnknown)
+            assertTrue(state.seasons.isEmpty())
+            // Saving the whole new season set is what the PUT does, so an empty one would drop every season.
+            assertFalse(state.canSave)
+
+            editor.save()
+            assertTrue(received.none { it.method == "PUT" })
+        }
+
+    @Test
+    fun `a show on a server with partial requests off offers no seasons, and its save sends back the ones it has`() =
+        runTest {
+            val editor = editor()
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 2)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = true, seasonsEditable = false))
+
+            val loaded = editor.awaitLoaded()
+            // The season list is absent by rule, not because it failed to load, so the editor can still save.
+            assertTrue(loaded.seasons.isEmpty())
+            assertFalse(loaded.seasonsUnknown)
+            assertFalse(loaded.seasonsEditable)
+            assertTrue(loaded.canSave)
+
+            editor.selectProfile(8)
+            editor.save()
+            editor.awaitClosed()
+
+            // Both lineages answer a show's PUT without seasons with a 500 (#1003), so the request's own go back.
+            val body = editBody()
+            assertEquals(listOf(1, 2), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+            assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
+        }
+
+    @Test
+    fun `choosing another server re-reads its choices and drops the tags the first one had`() =
+        runTest {
+            val editor = editor()
+            editor.start(EditSource(movieRequest(tags = listOf(4)), details = null, canEditDestination = true))
+            assertEquals(setOf(4), editor.awaitLoaded().destination?.tagIds)
+
+            editor.selectServer(2)
+            val moved = editor.awaitLoaded()
+
+            assertEquals(listOf(RADARR, "$RADARR/1", "$RADARR/2"), paths(RADARR))
+            assertEquals(2, moved.destination?.serverId)
+            assertEquals(emptySet<Int>(), moved.destination?.tagIds)
+        }
+
+    @Test
+    fun `a server list that will not load leaves the picker empty rather than waiting forever`() =
+        runTest {
+            failing += RADARR
+            val editor = editor()
+            editor.start(EditSource(movieRequest(), details = null, canEditDestination = true))
+
+            val loaded = editor.awaitLoaded()
+            assertEquals(emptyList<Choice>(), loaded.destination?.servers)
+            assertTrue(loaded.canSave)
+        }
+
+    @Test
+    fun `a season-only edit repeats the request's own destination, which the server would otherwise clear`() =
+        runTest {
+            val editor = editor()
+            val request =
+                tvRequest().copy(serverId = 2, profileId = 6, rootFolder = "/tv", tags = listOf(4))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.toggleSeason(2)
+            editor.save()
+            editor.awaitClosed()
+
+            val body = editBody()
+            assertEquals(2, body.getValue("serverId").jsonPrimitive.int)
+            assertEquals(6, body.getValue("profileId").jsonPrimitive.int)
+            assertEquals("/tv", body.getValue("rootFolder").jsonPrimitive.content)
+            assertEquals(listOf(4), body.getValue("tags").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `an edit seerr answers with nothing left to request stays open, unlocked, as a failure`() =
+        runTest {
+            nothingLeftToRequest = true
+            val editor = editor()
+            editor.start(EditSource(tvRequest(), details = showDetails(), canEditDestination = false))
+            editor.awaitLoaded()
+
+            editor.toggleSeason(2)
+            editor.save()
+
+            // The 202 is a refusal (#1001): the sheet does not close as though the edit had gone through.
+            val after = editor.state.first { it != null && !it.saving }
+            val seasons = after?.seasons.orEmpty()
+            assertTrue(seasons.single { it.number == 2 }.selected)
+        }
+
+    @Test
+    fun `a held season the request already covers stays in the body, or the server would drop it`() =
+        runTest {
+            val editor = editor()
+            // Season 3 is on the server now, so it is locked; the request still covers it.
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1), SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = false))
+            assertTrue(
+                editor
+                    .awaitLoaded()
+                    .seasons
+                    .single { it.number == 3 }
+                    .let { it.locked && it.selected },
+            )
+
+            editor.toggleSeason(2)
+            editor.save()
+            editor.awaitClosed()
+
+            assertEquals(listOf(1, 2, 3), editBody().getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+        }
+
+    @Test
+    fun `a request whose seasons are all held can still change where it goes`() =
+        runTest {
+            val editor = editor()
+            val request = tvRequest().copy(seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 3)))
+            editor.start(EditSource(request, details = showDetails(), canEditDestination = true))
+
+            assertTrue(editor.awaitLoaded().canSave)
+            editor.selectProfile(8)
+            editor.save()
+            editor.awaitClosed()
+
+            val body = editBody()
+            assertEquals(listOf(3), body.getValue("seasons").jsonArray.map { it.jsonPrimitive.int })
+            assertEquals(8, body.getValue("profileId").jsonPrimitive.int)
+        }
+
+    private fun movieRequest(tags: List<Int> = emptyList()) =
+        SeerrRequestDto(
+            id = 11,
+            media = SeerrRequestMediaDto(tmdbId = 550, mediaType = SEERR_MEDIA_TYPE_MOVIE),
+            tags = tags,
+        )
+
+    private fun tvRequest() =
+        SeerrRequestDto(
+            id = 12,
+            media = SeerrRequestMediaDto(tmdbId = 1399, mediaType = SEERR_MEDIA_TYPE_TV),
+            seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 1)),
+        )
+
+    /** Specials and a season with no episodes are left out; season 3 is already on the server. */
+    private fun showDetails() =
+        SeerrMediaDetailsDto(
+            seasons =
+                listOf(
+                    SeerrSeasonDto(seasonNumber = 0, name = "Specials", episodeCount = 2),
+                    SeerrSeasonDto(seasonNumber = 1, name = "Season 1", episodeCount = 10),
+                    SeerrSeasonDto(seasonNumber = 2, name = "Season 2", episodeCount = 10),
+                    SeerrSeasonDto(seasonNumber = 3, name = "Season 3", episodeCount = 10),
+                    SeerrSeasonDto(seasonNumber = 4, name = "Season 4", episodeCount = 0),
+                ),
+            mediaInfo =
+                SeerrMediaInfoDto(
+                    seasons = listOf(SeerrSeasonStatusDto(seasonNumber = 3, status = SeerrMediaStatusCode.Available)),
+                ),
+        )
+}

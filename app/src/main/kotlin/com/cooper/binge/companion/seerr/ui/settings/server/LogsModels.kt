@@ -1,0 +1,99 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrLogEntryDto
+import com.cooper.binge.companion.seerr.seerr.SeerrLogPageDto
+import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
+import com.cooper.binge.companion.seerr.ui.requests.OffsetPage
+import com.cooper.binge.companion.seerr.ui.requests.OffsetPagingSource
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+
+const val LOGS_PAGE_SIZE = 25
+
+/** The server's log levels, lowest first; the filter shows a level and everything above it. */
+enum class LogLevel(
+    val apiValue: String,
+) {
+    Debug("debug"),
+    Info("info"),
+    Warn("warn"),
+    Error("error"),
+    ;
+
+    companion object {
+        fun fromApi(value: String?): LogLevel = entries.firstOrNull { it.apiValue == value?.lowercase() } ?: Info
+    }
+}
+
+/** One log line; [data] is the attached object pretty-printed, shown when the line is expanded. */
+data class LogEntry(
+    val id: String,
+    val timestampMillis: Long?,
+    val timestampRaw: String,
+    val level: LogLevel,
+    val label: String?,
+    val message: String,
+    val data: String?,
+) {
+    /** What copying a line puts on the clipboard: the line as the server's log file has it. */
+    val copyText: String
+        get() = listOfNotNull(timestampRaw, "[${level.apiValue}]", label?.let { "[$it]" }, message, data).joinToString(" ")
+}
+
+/**
+ * Flat, unlike the sealed states elsewhere, because it holds only the query — the level and the
+ * search, both always editable. Loading and failure belong to the paging flow `entries`, which is
+ * where a log page is actually read.
+ */
+data class LogsUiState(
+    val level: LogLevel = LogLevel.Info,
+    val search: String = "",
+)
+
+/** What the logs page is told to do rather than shown: while following, re-read the newest lines. */
+sealed interface LogsEvent {
+    data object Refresh : LogsEvent
+}
+
+/** Pages the log; the server answers `{pageInfo, results}`, and a bare array (the spec's shape) is read as one page. */
+class LogsPagingSource(
+    private val api: suspend () -> SeerrApi,
+    private val level: LogLevel,
+    private val search: String?,
+) : OffsetPagingSource<LogEntry>(LOGS_PAGE_SIZE) {
+    override suspend fun loadPage(
+        take: Int,
+        skip: Int,
+    ): OffsetPage<LogEntry> {
+        val answer = api().logs(take = take, skip = skip, filter = level.apiValue, search = search?.takeIf { it.isNotBlank() })
+        val page = answer.toLogPage()
+        return OffsetPage(page.results.mapIndexed { index, dto -> dto.toLogEntry(skip + index) }, page.pageInfo.pages.takeIf { it > 0 })
+    }
+}
+
+private val json =
+    Json {
+        ignoreUnknownKeys = true
+        prettyPrint = true
+    }
+
+internal fun JsonElement.toLogPage(): SeerrLogPageDto =
+    when (this) {
+        is JsonObject -> json.decodeFromJsonElement(SeerrLogPageDto.serializer(), this)
+        is JsonArray -> SeerrLogPageDto(results = map { json.decodeFromJsonElement(SeerrLogEntryDto.serializer(), it) })
+        else -> SeerrLogPageDto()
+    }
+
+internal fun SeerrLogEntryDto.toLogEntry(index: Int): LogEntry =
+    LogEntry(
+        id = "$index:${timestamp.orEmpty()}",
+        timestampMillis = timestamp?.toEpochMillisOrNull(),
+        timestampRaw = timestamp.orEmpty(),
+        level = LogLevel.fromApi(level),
+        label = label?.takeIf { it.isNotBlank() },
+        message = message.orEmpty(),
+        data = data?.takeIf { it !is JsonObject || it.isNotEmpty() }?.let { json.encodeToString(JsonElement.serializer(), it) },
+    )

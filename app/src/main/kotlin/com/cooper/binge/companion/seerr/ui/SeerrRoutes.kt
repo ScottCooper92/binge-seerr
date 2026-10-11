@@ -1,0 +1,126 @@
+package com.cooper.binge.companion.seerr.ui
+
+import androidx.navigation3.runtime.NavKey
+import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
+import com.cooper.binge.companion.seerr.ui.hub.HubSection
+import com.cooper.binge.companion.seerr.ui.settings.ServiceType
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
+import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
+import com.cooper.binge.companion.seerr.ui.users.settings.UserSettingsPage
+import kotlinx.serialization.Serializable
+
+/**
+ * The app's own screens, as Navigation 3 keys. Serializable so the back stack is saved across
+ * process death. The advanced picker is not one: Binge starts it as an Activity for a result.
+ */
+sealed interface SeerrRoute : NavKey
+
+/** The start destination: the spinner while the connection is worked out, then setup if no server is saved. */
+@Serializable
+data object HomeRoute : SeerrRoute
+
+/** The hub, which replaces [HomeRoute] at the root once a server is connected. See [settleHome]. */
+@Serializable
+data object HubRoute : SeerrRoute
+
+/** The requests browser. */
+@Serializable
+data object RequestsRoute : SeerrRoute
+
+/** The issues browser. */
+@Serializable
+data object IssuesRoute : SeerrRoute
+
+/** One issue as a page: its thread. */
+@Serializable
+data class IssueDetailRoute(
+    val issueId: Int,
+) : SeerrRoute
+
+/** The blocklist browser. */
+@Serializable
+data object BlocklistRoute : SeerrRoute
+
+/**
+ * One blocked title as a page. [item] arrives whole off the row that opened it — there is no `GET`
+ * for a single blocklist entry — and [canManage] is the browser's own gate, current as of the tap.
+ */
+@Serializable
+data class BlocklistDetailRoute(
+    val item: BlocklistItem,
+    val canManage: Boolean,
+) : SeerrRoute
+
+/** The users browser. */
+@Serializable
+data object UsersRoute : SeerrRoute
+
+/** One user as a page. */
+@Serializable
+data class UserDetailRoute(
+    val userId: Int,
+) : SeerrRoute
+
+/** One user's settings: the index of the pages this viewer may open. */
+@Serializable
+data class UserSettingsRoute(
+    val userId: Int,
+) : SeerrRoute
+
+/** One of a user's settings pages. */
+@Serializable
+data class UserSettingsPageRoute(
+    val userId: Int,
+    val page: UserSettingsPage,
+) : SeerrRoute
+
+/** One of the server's own settings pages, for a user who manages settings. */
+@Serializable
+data class ServerSettingsPageRoute(
+    val page: ServerSettingsPage,
+) : SeerrRoute
+
+/** One Radarr or Sonarr instance; a null [id] is a new one. */
+@Serializable
+data class DvrInstanceRoute(
+    val type: ServiceType,
+    val id: Int?,
+) : SeerrRoute
+
+/** One custom discover slider; a null [id] is a new one. */
+@Serializable
+data class DiscoverSliderRoute(
+    val id: Int?,
+) : SeerrRoute
+
+/** One notification agent's settings page. */
+@Serializable
+data class NotificationAgentRoute(
+    val agent: ServerAgent,
+) : SeerrRoute
+
+/** One override rule; a null [id] is a new one. */
+@Serializable
+data class OverrideRuleRoute(
+    val id: Int?,
+) : SeerrRoute
+
+/** One request as a page. */
+@Serializable
+data class RequestDetailRoute(
+    val requestId: Int,
+) : SeerrRoute
+
+/** Settings: the connection and the admin's read-only view of the server. */
+@Serializable
+data object SettingsRoute : SeerrRoute
+
+/** The setup form on the live connection; pops itself once new credentials are saved. */
+@Serializable
+data object EditConnectionRoute : SeerrRoute
+
+/** One of the hub's manage sections; its screen arrives with its phase. */
+@Serializable
+data class SectionRoute(
+    val section: HubSection,
+) : SeerrRoute

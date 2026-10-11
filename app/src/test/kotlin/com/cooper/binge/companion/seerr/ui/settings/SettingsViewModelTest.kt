@@ -1,0 +1,485 @@
+package com.cooper.binge.companion.seerr.ui.settings
+
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.ViewModelStore
+import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.feedback.BugReportLinks
+import com.cooper.binge.companion.seerr.feedback.FeedbackPrefs
+import com.cooper.binge.companion.seerr.notifications.FakeNotifier
+import com.cooper.binge.companion.seerr.notifications.FakeScheduler
+import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
+import com.cooper.binge.companion.seerr.notifications.NotificationSignal
+import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
+import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
+import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
+import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
+import com.cooper.binge.companion.seerr.ui.Ticker
+import com.cooper.binge.companion.seerr.util.FakeResponse
+import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runTest
+import okhttp3.Headers.Companion.headersOf
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
+
+private const val ADMIN = 2
+private const val REQUEST = 32
+
+/** `MANAGE_SETTINGS`, which no `/settings` route honours: the admin `/settings` router needs `ADMIN` (#1004). */
+private const val MANAGE_SETTINGS = 4
+
+/** Settings over an in-memory connection into a Seerr scripted by path. */
+class SettingsViewModelTest {
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val responses = mutableMapOf<String, () -> FakeResponse>()
+    private val viewModels = ViewModelStore()
+    private lateinit var connection: SeerrConnection
+    private lateinit var prefs: NotificationPrefs
+    private lateinit var feedbackPrefs: FeedbackPrefs
+    private lateinit var telemetryPrefs: TelemetryPrefs
+    private val scheduler = FakeScheduler()
+    private val analytics = RecordingAnalytics()
+    private val notifier = FakeNotifier()
+    private val cache = SettingsReadCache()
+
+    @Before
+    fun setUp() {
+        seerr.dispatcher = { request -> responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404) }
+    }
+
+    @After
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
+
+    private fun serve(
+        path: String,
+        body: String,
+        headers: okhttp3.Headers = headersOf(),
+    ) {
+        responses[path] =
+            { FakeResponse(code = 200, headers = headers.newBuilder().add("Content-Type", "application/json").build(), body = body) }
+    }
+
+    private fun server(permissions: Int) {
+        serve("/api/v1/status", """{"version":"2.7.0","updateAvailable":true,"commitsBehind":3}""")
+        serve("/api/v1/settings/public", """{"applicationTitle":"Family","mediaServerType":2}""")
+        serve(
+            "/api/v1/auth/me",
+            """{"id":1,"displayName":"Scott","permissions":$permissions}""",
+            headersOf("Set-Cookie", "connect.sid=s; Path=/"),
+        )
+        serve(
+            "/api/v1/settings/main",
+            """{"apiKey":"never-shown","applicationTitle":"Family","applicationUrl":"https://seerr.example.com/","appLanguage":"en","hideAvailable":true,
+               "defaultPermissions":32,"defaultQuotas":{"movie":{"quotaLimit":5,"quotaDays":7},"tv":{"quotaLimit":0,"quotaDays":7}}}""",
+        )
+        serve(
+            "/api/v1/settings/jobs",
+            """[{"id":"plex-full-scan","name":"Plex Full Library Scan","running":true},{"id":"download-sync","name":"Download Sync","nextExecutionTime":"2099-01-01T00:00:00.000Z"}]""",
+        )
+        serve(
+            "/api/v1/settings/radarr",
+            """[{"id":1,"name":"Radarr","hostname":"10.0.0.4","port":7878,"activeProfileName":"HD-1080p","activeDirectory":"/movies","isDefault":true}]""",
+        )
+        serve("/api/v1/settings/sonarr", """[{"id":2,"name":"Sonarr 4K","externalUrl":"https://sonarr.example.com","is4k":true}]""")
+        serve("/api/v1/settings/notifications/email", """{"enabled":true}""")
+        serve("/api/v1/settings/notifications/discord", """{"enabled":false}""")
+        serve(
+            "/api/v1/auth/local",
+            """{"id":1,"displayName":"Scott","permissions":$permissions}""",
+            headersOf("Set-Cookie", "connect.sid=s; Path=/"),
+        )
+    }
+
+    /** The rows' clock read once and never again, so a virtual clock does not spin its minute loop (#337). */
+    private val boundedTicker =
+        object : Ticker() {
+            override suspend fun await(millis: Long) = awaitCancellation()
+        }
+
+    private suspend fun TestScope.viewModel(
+        session: Boolean = false,
+        ticker: Ticker = boundedTicker,
+    ): SettingsViewModel {
+        connection =
+            SeerrConnection(
+                store =
+                    CredentialStore(
+                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("s.preferences_pb") },
+                        PlainCipher,
+                    ),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
+            )
+        if (session) {
+            connection.logIn(seerr.url("/"), SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+        } else {
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        }
+        prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
+        telemetryPrefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") })
+        feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
+        val vm =
+            SettingsViewModel(
+                connection,
+                SettingsLoader(connection),
+                cache,
+                prefs,
+                scheduler,
+                notifier,
+                feedbackPrefs,
+                telemetryPrefs,
+                BugReportLinks(),
+                mainDispatcherRule.dispatcher,
+                analytics,
+                minuteTicker = ticker,
+            )
+        viewModels.put("settings", vm)
+        backgroundScope.launch { vm.uiState.collect {} }
+        vm.setScreenVisible(true)
+        return vm
+    }
+
+    private suspend fun SettingsViewModel.awaitReady(match: (SettingsUiState.Ready) -> Boolean): SettingsUiState.Ready =
+        uiState.first { it is SettingsUiState.Ready && match(it) } as SettingsUiState.Ready
+
+    /** #989: the jobs' and the poll's "next run in 20 minutes" count down while the screen shows them, and no longer. */
+    @Test
+    fun `the rows' clock moves on each minute while the screen is showing, and stops when it leaves`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel(ticker = Ticker())
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.awaitReady { it.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, (vm.uiState.value as SettingsUiState.Ready).now)
+            // Back on screen the clock reads at once; this test's ticker is real, so leave before the test ends.
+            vm.setScreenVisible(true)
+            vm.awaitReady { it.now == now }
+            vm.setScreenVisible(false)
+        }
+
+    @Test
+    fun `an admin sees the connection, the server, and every configuration group`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+
+            val ready = vm.awaitReady { it.config?.system != null && it.config?.services != null && it.connection.userName != null }
+
+            assertEquals(SignInKind.ApiKey, ready.connection.signInKind)
+            assertEquals("Scott", ready.connection.userName)
+            assertEquals(SeerrVariant.Jellyseerr, ready.server.variant)
+            assertEquals("2.7.0", ready.server.versionLabel)
+            assertEquals(3, ready.server.commitsBehind)
+            val config = checkNotNull(ready.config)
+            assertEquals(
+                GeneralSettings(
+                    "Family",
+                    "https://seerr.example.com",
+                    "en",
+                    true,
+                    discoverSliders = true,
+                    network = true,
+                    metadata = false,
+                ),
+                config.general,
+            )
+            assertEquals(RequestPolicy(SeerrDefaultAccess.RequestWithApproval, RequestLimit(5, 7), null), config.requestPolicy)
+            assertEquals(NotificationAgents(emailEnabled = true, discordEnabled = false), config.agents)
+            val system = checkNotNull(config.system)
+            assertEquals(listOf("Plex Full Library Scan", "Download Sync"), system.jobs.map { it.name })
+            assertTrue(system.jobs[0].running)
+            assertEquals(
+                listOf("http://10.0.0.4:7878", "https://sonarr.example.com"),
+                checkNotNull(config.services).map { it.url },
+            )
+        }
+
+    /** A connection dropped while the configuration loads has no profile to read; the page keeps its general rows (#1027). */
+    @Test
+    fun `a connection dropped while the configuration loads does not crash the page`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/settings/main"] = {
+                runBlocking { connection.disconnect() }
+                FakeResponse(
+                    code = 200,
+                    headers = headersOf("Content-Type", "application/json"),
+                    body = """{"applicationTitle":"Family","applicationUrl":"https://seerr.example.com/","appLanguage":"en"}""",
+                )
+            }
+            val vm = viewModel()
+
+            val general = checkNotNull(vm.awaitReady { it.config?.general != null }.config?.general)
+
+            assertEquals("Family", general.applicationTitle)
+            assertFalse(general.discoverSliders)
+        }
+
+    @Test
+    fun `a group that is slow to answer is held as a placeholder once the wait runs out`() =
+        runTest {
+            server(ADMIN)
+            val release = CountDownLatch(1)
+            responses["/api/v1/settings/main"] = {
+                release.await()
+                FakeResponse(code = 200, body = "{}")
+            }
+            val vm = viewModel()
+
+            advanceTimeBy(SETTLE_MILLIS + 1)
+            val ready = vm.awaitReady { true }
+            release.countDown()
+
+            assertTrue(ready.pending)
+        }
+
+    @Test
+    fun `a different account on the same server does not start on the last one's rows`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            connection.disconnect()
+            server(REQUEST)
+            connection.connect(seerr.url("/"), SeerrAuth.ApiKey("other")).getOrThrow()
+            val again =
+                SettingsViewModel(
+                    connection,
+                    SettingsLoader(connection),
+                    cache,
+                    prefs,
+                    scheduler,
+                    notifier,
+                    feedbackPrefs,
+                    telemetryPrefs,
+                    BugReportLinks(),
+                    mainDispatcherRule.dispatcher,
+                )
+
+            val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
+            assertNull(first.config)
+        }
+
+    @Test
+    fun `a second visit starts from the last answers rather than empty`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            val again =
+                SettingsViewModel(
+                    connection,
+                    SettingsLoader(connection),
+                    cache,
+                    prefs,
+                    scheduler,
+                    notifier,
+                    feedbackPrefs,
+                    telemetryPrefs,
+                    BugReportLinks(),
+                    mainDispatcherRule.dispatcher,
+                )
+
+            val first = again.uiState.first { it is SettingsUiState.Ready } as SettingsUiState.Ready
+            assertNotNull(first.config?.system)
+        }
+
+    @Test
+    fun `a refused Radarr read still yields Sonarr's rows`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/settings/radarr"] = { FakeResponse(code = 500) }
+            val vm = viewModel()
+
+            val ready = vm.awaitReady { it.config?.services != null }
+
+            assertEquals(listOf("https://sonarr.example.com"), checkNotNull(ready.config?.services).map { it.url })
+        }
+
+    @Test
+    fun `a plain user gets the connection and server but no configuration, and no settings call is made`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+
+            val ready = vm.awaitReady { it.connection.userName != null }
+
+            assertEquals(SignInKind.Session, ready.connection.signInKind)
+            assertNull(ready.config)
+            responses["/api/v1/settings/main"] = { error("A restricted user must not read the settings") }
+            vm.setScreenVisible(true)
+            assertNull(vm.awaitReady { it.connection.userName != null }.config)
+        }
+
+    @Test
+    fun `manage settings without admin reads no configuration, since the server would refuse every call`() =
+        runTest {
+            server(MANAGE_SETTINGS)
+            responses["/api/v1/settings/main"] = { error("The admin /settings router needs ADMIN") }
+            val vm = viewModel(session = true)
+
+            assertNull(vm.awaitReady { it.connection.userName != null }.config)
+        }
+
+    /**
+     * `authenticatedUser()` is cached for the life of the connection, so a permission the administrator
+     * grants in the web client is invisible until something asks again; returning to the screen is that ask.
+     */
+    @Test
+    fun `a permission granted on the server shows on the next arrival`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+            assertNull(vm.awaitReady { it.connection.userName != null }.config)
+
+            server(ADMIN)
+            vm.setScreenVisible(true)
+
+            assertTrue(vm.awaitReady { it.config?.system != null }.config != null)
+        }
+
+    @Test
+    fun `a permission revoked on the server hides its sections on the next arrival`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady { it.config?.system != null }
+
+            server(REQUEST)
+            vm.setScreenVisible(true)
+
+            assertNull(vm.awaitReady { it.config == null && it.connection.userName != null }.config)
+        }
+
+    @Test
+    fun `every user gets this app's group, and the shake toggle writes through to the prefs`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+
+            val app = checkNotNull(vm.awaitReady { it.app != null }.app)
+            assertTrue(app.shakeToReport)
+            assertTrue(app.bugReportUrl.startsWith("https://github.com/ScottCooper92/binge-seerr/issues/new?template=bug.yml"))
+
+            vm.setShakeToReport(false)
+            assertFalse(checkNotNull(vm.awaitReady { it.app?.shakeToReport == false }.app).shakeToReport)
+            assertFalse(feedbackPrefs.shakeToReport.first())
+            assertEquals(listOf("shake_to_report_changed" to mapOf("enabled" to false)), analytics.events)
+        }
+
+    @Test
+    fun `usage data is off until shared, crash reports on until stopped, and both toggles write through`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+
+            val app = checkNotNull(vm.awaitReady { it.app != null }.app)
+            assertFalse(app.shareUsageData)
+            assertTrue(app.sendCrashReports)
+
+            vm.setShareUsageData(true)
+            vm.awaitReady { it.app?.shareUsageData == true }
+            assertEquals(AnalyticsConsent.GRANTED, telemetryPrefs.analyticsConsent.first())
+
+            vm.setSendCrashReports(false)
+            vm.awaitReady { it.app?.sendCrashReports == false }
+            assertFalse(telemetryPrefs.crashReportingEnabled.first())
+        }
+
+    @Test
+    fun `the poll's toggles are offered by permission, written to the prefs, and read with the blocked state and the schedule`() =
+        runTest {
+            server(REQUEST)
+            notifier.canPost = false
+            scheduler.nextRun.value = 4_000L
+            val vm = viewModel(session = true)
+
+            val offered = checkNotNull(vm.awaitReady { it.notifications != null }.notifications)
+            assertEquals(
+                listOf(NotificationSignal.RequestAvailable, NotificationSignal.RequestApproved, NotificationSignal.RequestDeclined),
+                offered.offered,
+            )
+            assertTrue(offered.enabled.isEmpty())
+            assertTrue(offered.blocked)
+            assertEquals(4_000L, offered.nextRunMillis)
+
+            vm.setSignal(NotificationSignal.RequestApproved, true)
+            val on = checkNotNull(vm.awaitReady { it.notifications?.enabled?.isNotEmpty() == true }.notifications)
+            assertEquals(setOf(NotificationSignal.RequestApproved), on.enabled)
+            assertTrue(prefs.isEnabled(NotificationSignal.RequestApproved))
+            assertEquals(
+                listOf("notification_signal_changed" to mapOf("signal" to "RequestApproved", "enabled" to true)),
+                analytics.events,
+            )
+
+            notifier.canPost = true
+            vm.recheckNotificationAccess()
+            assertTrue(vm.awaitReady { it.notifications?.blocked == false }.notifications != null)
+        }
+
+    @Test
+    fun `a signal left enabled in prefs from before a permission downgrade is not reported as enabled`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel(session = true)
+            vm.awaitReady { it.notifications != null }
+            prefs.setEnabled(NotificationSignal.PendingRequests, true)
+
+            val ready = vm.awaitReady { it.notifications != null }
+            val notifications = checkNotNull(ready.notifications)
+
+            assertTrue(NotificationSignal.PendingRequests !in notifications.offered)
+            assertTrue(notifications.enabled.isEmpty())
+            assertTrue(notifications.enabled.none { it == NotificationSignal.PendingRequests })
+        }
+
+    @Test
+    fun `a moderator is offered the feeds too`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            assertEquals(NotificationSignal.entries, checkNotNull(vm.awaitReady { it.notifications != null }.notifications).offered)
+        }
+}

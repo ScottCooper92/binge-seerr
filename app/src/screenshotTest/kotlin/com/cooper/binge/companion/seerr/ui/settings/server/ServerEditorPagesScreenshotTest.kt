@@ -1,0 +1,185 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import androidx.compose.runtime.Composable
+import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.preview.SeerrFontScalePreviews
+import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
+import com.cooper.binge.companion.seerr.preview.SeerrSpanishPreviews
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import kotlinx.coroutines.flow.emptyFlow
+
+/**
+ * The server settings pages that edit a draft through the shared editor page: Network, Metadata and
+ * Tautulli. Each takes its layout across the device matrix once, then the states the editor page can be
+ * in on the phone cell alone: an unchanged draft, one with unsaved edits, a save in flight, one that
+ * cannot be saved, and the loading and failed arms.
+ */
+class NetworkScreenshotTest {
+    /** Seerr 3: the switches, the IPv4 preference, the proxy and the DNS cache. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun seerrLayout() = NetworkFrame(settled(seerrNetwork()))
+
+    /** Jellyseerr has only the two switches, and the form sends back no more than the server sent. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun jellyseerr() = NetworkFrame(settled(NetworkForm(csrfProtection = true)))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun unsavedEdit() = NetworkFrame(EditorUiState.Ready(draft = seerrNetwork().copy(trustProxy = true), saved = seerrNetwork()))
+
+    /** A proxy given a username and no password: the group says what it still needs, and Save stays off. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun proxyCredentialsHalf() =
+        NetworkFrame(
+            EditorUiState.Ready(
+                draft = seerrNetwork().copy(dnsCache = DnsCacheForm(), proxy = seerrNetwork().proxy?.copy(user = "seerr")),
+                saved = seerrNetwork(),
+            ),
+        )
+
+    /** A proxy and a DNS cache that are off: each is its switch alone, nothing hanging beneath it. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun proxyAndCacheOff() = NetworkFrame(settled(seerrNetwork().copy(proxy = ProxyForm(), dnsCache = DnsCacheForm())))
+
+    /** A fractional timeout reads with Spanish's decimal comma: "1,5 segundos". */
+    @PreviewTest
+    @SeerrSpanishPreviews
+    @Composable
+    fun spanish() = NetworkFrame(settled(seerrNetwork().copy(apiRequestTimeout = "1.5")))
+
+    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    @PreviewTest
+    @SeerrFontScalePreviews
+    @Composable
+    fun largeText() = NetworkFrame(settled(seerrNetwork()))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun saving() = NetworkFrame(EditorUiState.Ready(draft = seerrNetwork(), saved = seerrNetwork(), saving = true))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = NetworkFrame(EditorUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = NetworkFrame(EditorUiState.Error(SeerrError.Unreachable))
+}
+
+class MetadataScreenshotTest {
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun readyLayout() = MetadataFrame(metadataReady(MetadataForm()))
+
+    /** Series moved to TVDB and not yet saved. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun unsavedEdit() = MetadataFrame(metadataReady(MetadataForm(), draft = MetadataForm(tv = MetadataProvider.Tvdb)))
+
+    /** The provider test is running: its button shows progress. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun testing() = MetadataFrame(metadataReady(MetadataForm(), extras = MetadataExtras(testing = true)))
+
+    /** After a test: one provider works and the other does not, each tinted as the web client tints its badge. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun tested() =
+        MetadataFrame(
+            metadataReady(
+                MetadataForm(tv = MetadataProvider.Tvdb),
+                extras = MetadataExtras(tmdb = ProviderCheck.Operational, tvdb = ProviderCheck.Failed),
+            ),
+        )
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = MetadataFrame(ExtrasEditorUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = MetadataFrame(ExtrasEditorUiState.Error(SeerrError.Server))
+}
+
+class TautulliScreenshotTest {
+    /** Nothing configured: the form is empty and cannot be saved. */
+    @PreviewTest
+    @SeerrScreenPreviews
+    @Composable
+    fun emptyLayout() = TautulliFrame(settled(TautulliForm()))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun configured() = TautulliFrame(settled(tautulliForm()))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun saving() = TautulliFrame(EditorUiState.Ready(draft = tautulliForm(), saved = tautulliForm(), saving = true))
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun loading() = TautulliFrame(EditorUiState.Loading)
+
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun failed() = TautulliFrame(EditorUiState.Error(SeerrError.Unauthorized))
+}
+
+private fun <T> settled(form: T) = EditorUiState.Ready(draft = form, saved = form)
+
+private fun seerrNetwork() =
+    NetworkForm(
+        csrfProtection = false,
+        trustProxy = false,
+        forceIpv4First = true,
+        apiRequestTimeout = "30",
+        proxy = ProxyForm(enabled = true, host = "proxy.lan", port = "3128", bypassFilter = "*.lan"),
+        dnsCache = DnsCacheForm(enabled = true, minTtl = "5", maxTtl = "60"),
+    )
+
+private fun metadataReady(
+    saved: MetadataForm,
+    draft: MetadataForm = saved,
+    extras: MetadataExtras = MetadataExtras(),
+) = ExtrasEditorUiState.Ready(draft = draft, saved = saved, extras = extras)
+
+private fun tautulliForm() =
+    TautulliForm(host = "tautulli.lan", port = "8181", useSsl = false, urlBase = "/tautulli", apiKey = "a1b2c3d4e5")
+
+private fun <T> noActions() = EditorActions<T>(onBack = {}, onRetry = {}, onEdit = {}, onSave = {})
+
+@Composable
+private fun NetworkFrame(state: EditorUiState<NetworkForm>) = NetworkScreen(state = state, events = emptyFlow(), actions = noActions())
+
+@Composable
+private fun MetadataFrame(state: ExtrasEditorUiState<MetadataForm, MetadataExtras>) =
+    MetadataScreen(state = state, events = emptyFlow(), actions = noActions(), onTest = {})
+
+@Composable
+private fun TautulliFrame(state: EditorUiState<TautulliForm>) = TautulliScreen(state = state, events = emptyFlow(), actions = noActions())

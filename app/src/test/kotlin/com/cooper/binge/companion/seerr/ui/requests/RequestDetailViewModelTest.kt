@@ -1,0 +1,912 @@
+package com.cooper.binge.companion.seerr.ui.requests
+
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.ViewModelStore
+import com.cooper.binge.companion.seerr.auth.CredentialStore
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.data.FakeRequestStore
+import com.cooper.binge.companion.seerr.data.NoRequestStore
+import com.cooper.binge.companion.seerr.data.RequestEntity
+import com.cooper.binge.companion.seerr.data.RequestStore
+import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.util.FakeRequest
+import com.cooper.binge.companion.seerr.util.FakeResponse
+import com.cooper.binge.companion.seerr.util.FakeSeerrServer
+import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.RecordingAnalytics
+import com.cooper.binge.companion.seerr.util.awaitEvent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
+import okhttp3.Headers.Companion.headersOf
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.time.Instant
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+
+private const val ADMIN = 2
+private const val REQUEST = 32
+private const val REQUEST_ADVANCED = 1 shl 13
+private const val MANAGE_ISSUES = 1 shl 20
+
+/** The request page over an in-memory connection into a path-scripted Seerr. */
+class RequestDetailViewModelTest {
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val seerr = FakeSeerrServer()
+    private val received = CopyOnWriteArrayList<FakeRequest>()
+    private val responses = mutableMapOf<String, () -> FakeResponse>()
+    private val viewModels = ViewModelStore()
+    private val analytics = RecordingAnalytics()
+    private var stores = 0
+
+    @Before
+    fun setUp() {
+        seerr.dispatcher = { request ->
+            received += request
+            responses[request.url.encodedPath]?.invoke() ?: FakeResponse(code = 404)
+        }
+    }
+
+    @After
+    fun tearDown() {
+        viewModels.clear()
+        seerr.awaitIdle()
+    }
+
+    private fun serve(
+        path: String,
+        body: String,
+    ) {
+        responses[path] = { FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body) }
+    }
+
+    private fun server(permissions: Int) {
+        serve("/api/v1/auth/me", """{"id":7,"displayName":"Scott","permissions":$permissions}""")
+        serve("/api/v1/status", """{"version":"3.1.0"}""")
+        serve("/api/v1/settings/public", """{"mediaServerType":2}""")
+        serve(
+            "/api/v1/request/11",
+            """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+               "requestedBy":{"id":7,"displayName":"scott"},"modifiedBy":{"id":9,"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+               "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
+               "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"mediaUrl":"https://jellyfin.example.com/item/1",
+                 "downloadStatus":[{"title":"Severance.S02","size":1000,"sizeLeft":250,"status":"downloading","timeLeft":"00:10:00"}]}}""",
+        )
+        serve(
+            "/api/v1/tv/200",
+            """{"name":"Severance","posterPath":"/sev.jpg","backdropPath":"/sev-bd.jpg","overview":"Work-life balance.","firstAirDate":"2022-02-18",
+            "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":2,"name":"Season 2","episodeCount":10}]}""",
+        )
+        serve("/api/v1/service/sonarr", """[{"id":1,"name":"Sonarr","isDefault":true}]""")
+        serve(
+            "/api/v1/service/sonarr/1",
+            """{"server":{"id":1,"name":"Sonarr"},"profiles":[{"id":4,"name":"HD-1080p"}],"rootFolders":[],"tags":[{"id":2,"label":"family"}]}""",
+        )
+        serve("/api/v1/issue", """{"id":5}""")
+    }
+
+    private suspend fun TestScope.connection(): SeerrConnection {
+        val connection =
+            SeerrConnection(
+                store =
+                    CredentialStore(
+                        PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("d${stores++}.preferences_pb") },
+                        PlainCipher,
+                    ),
+                apis = SeerrApiFactory(logRequests = false, testTransport = seerr::interceptor, testDispatcher = seerr::newDispatcher),
+            )
+        connection.connect(seerr.url("/"), SeerrAuth.ApiKey("k3y")).getOrThrow()
+        return connection
+    }
+
+    private fun TestScope.viewModel(
+        connection: SeerrConnection,
+        requestId: Int = 11,
+        cache: RequestStore = NoRequestStore,
+    ): RequestDetailViewModel {
+        val vm = RequestDetailViewModel(connection, mainDispatcherRule.dispatcher, requestId, analytics, cache = cache)
+        viewModels.put(vm.hashCode().toString(), vm)
+        backgroundScope.launch { vm.uiState.collect {} }
+        return vm
+    }
+
+    private suspend fun TestScope.viewModel(requestId: Int = 11): RequestDetailViewModel = viewModel(connection(), requestId)
+
+    private fun cachedRequest(id: Int) =
+        RequestEntity(
+            listKey = "all:added:all",
+            id = id,
+            tmdbId = 200,
+            mediaType = "Tv",
+            title = "Cached Severance",
+            posterUrl = null,
+            year = "2022",
+            requestedBy = "scott",
+            requestedById = 7,
+            requestedAtMillis = null,
+            status = 1,
+            mediaStatus = null,
+            downloadFraction = null,
+            downloadEtaMinutes = null,
+            downloading = false,
+            seasonNumbers = "1,2",
+            is4k = true,
+            orderIndex = id,
+        )
+
+    /** #1239: the page's "2 minutes ago" ages while it shows, and the clock stops when it leaves. */
+    @Test
+    fun `the page's clock moves on each minute while it is showing, and stops when it leaves`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            var now = 1_789_275_660_000L
+            vm.clock = { now }
+            vm.setScreenVisible(true)
+            vm.uiState.first { (it as? RequestDetailUiState.Ready)?.now == now }
+
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            vm.uiState.first { (it as? RequestDetailUiState.Ready)?.now == now }
+
+            vm.setScreenVisible(false)
+            val left = now
+            now += 60_000L
+            testScheduler.advanceTimeBy(60_001L)
+            assertEquals(left, (vm.uiState.value as RequestDetailUiState.Ready).now)
+        }
+
+    @Test
+    fun `a cached row seeds the hero at once, and the fetch then fills the page in behind it`() =
+        runTest {
+            server(ADMIN)
+            val cache = FakeRequestStore()
+            cache.refresh("all:added:all", listOf(cachedRequest(11)), nextSkip = null)
+            val release = CountDownLatch(1)
+            val ok = responses.getValue("/api/v1/request/11")
+            responses["/api/v1/request/11"] = {
+                release.await()
+                ok()
+            }
+            val vm = viewModel(connection(), cache = cache)
+
+            val seeded = vm.uiState.first { it is RequestDetailUiState.Seeded } as RequestDetailUiState.Seeded
+            assertEquals("Cached Severance", seeded.item.title)
+            assertEquals("2022", seeded.item.year)
+            assertTrue(seeded.item.is4k)
+            assertNull(seeded.error)
+
+            release.countDown()
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady()
+                    .detail.item.title,
+            )
+        }
+
+    @Test
+    fun `a failed refresh keeps the seeded hero and reports the error`() =
+        runTest {
+            server(ADMIN)
+            val cache = FakeRequestStore()
+            cache.refresh("all:added:all", listOf(cachedRequest(11)), nextSkip = null)
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+            val vm = viewModel(connection(), cache = cache)
+
+            val failed = vm.uiState.first { it is RequestDetailUiState.Seeded && it.error != null } as RequestDetailUiState.Seeded
+
+            assertEquals("Cached Severance", failed.item.title)
+            assertEquals(SeerrError.Server, failed.error)
+
+            server(ADMIN)
+            vm.reload()
+            assertEquals(
+                "Severance",
+                vm
+                    .awaitReady()
+                    .detail.item.title,
+            )
+        }
+
+    @Test
+    fun `with no cached row the page still starts as loading, and a failed fetch is the error screen`() =
+        runTest {
+            server(ADMIN)
+            responses["/api/v1/request/11"] = { FakeResponse(code = 503) }
+            val vm = viewModel()
+
+            assertTrue(vm.uiState.first { it !is RequestDetailUiState.Loading } is RequestDetailUiState.Error)
+        }
+
+    private suspend fun RequestDetailViewModel.awaitReady(
+        match: (RequestDetailUiState.Ready) -> Boolean = {
+            true
+        },
+    ): RequestDetailUiState.Ready = uiState.first { it is RequestDetailUiState.Ready && match(it) } as RequestDetailUiState.Ready
+
+    @Test
+    fun `a show's request reads as its title, history, seasons, destination and downloads`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals("Severance", detail.item.title)
+            assertEquals("https://image.tmdb.org/t/p/w1280/sev-bd.jpg", detail.backdropUrl)
+            assertEquals("Work-life balance.", detail.overview)
+            assertEquals("admin", detail.modifiedBy)
+            assertEquals(9, detail.modifiedById)
+            assertEquals(7, detail.item.requestedById)
+            assertEquals(
+                listOf(
+                    SeasonState(1, "Season 1", 9, SeerrMediaStatusCode.Available),
+                    SeasonState(2, "Season 2", 10, SeerrMediaStatusCode.Processing),
+                ),
+                detail.seasons,
+            )
+            assertEquals(RequestDestination("Sonarr", "HD-1080p", "/tv", listOf("family")), detail.destination)
+            val download = detail.downloads.single()
+            assertEquals("Severance.S02", download.title)
+            assertEquals(0.75f, download.fraction)
+            assertEquals(10, download.etaMinutes)
+            assertEquals(900, detail.mediaId)
+            assertTrue(detail.canReportIssue)
+            assertEquals(seerr.url("/") + "tv/200", detail.webUrl)
+            assertEquals("https://jellyfin.example.com/item/1", detail.mediaServerUrl)
+        }
+
+    @Test
+    fun `a plain viewer who did not make the request reads their own id, but not MANAGE_USERS, off the page`() =
+        runTest {
+            server(REQUEST)
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Other","permissions":$REQUEST}""")
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            // The request was made by user 7 and moderated by user 9; this viewer, 8, is neither and
+            // has no MANAGE_USERS, so `linkedOrPlain` must not link either name to `GET /user/{id}`.
+            assertEquals(8, detail.viewerId)
+            assertFalse(detail.canManageUsers)
+        }
+
+    @Test
+    fun `sibling requests against the same title exclude this one and map their id, status, requester, date, 4K flag and seasons`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","posterPath":"/sev.jpg","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":4,
+                  "requests":[{"id":11,"status":2,"seasons":[{"seasonNumber":1},{"seasonNumber":2}]},
+                    {"id":12,"status":3,"createdAt":"2025-04-12T09:00:00.000Z","requestedBy":{"displayName":"Grace"},
+                      "seasons":[{"seasonNumber":1},{"seasonNumber":2}]},
+                    {"id":13,"status":5,"createdAt":"2026-06-12T09:00:00.000Z","is4k":true}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":2,"name":"Season 2","episodeCount":10}]}""",
+            )
+            val vm = viewModel()
+
+            val siblings = vm.awaitReady().detail.siblings
+
+            assertEquals(
+                listOf(
+                    RequestSummary(
+                        id = 12,
+                        status = SeerrRequestStatusCode.Declined,
+                        requestedBy = "Grace",
+                        requestedAtMillis = Instant.parse("2025-04-12T09:00:00.000Z").toEpochMilli(),
+                        is4k = false,
+                        seasonNumbers = listOf(1, 2),
+                    ),
+                    RequestSummary(
+                        id = 13,
+                        status = SeerrRequestStatusCode.Completed,
+                        requestedBy = null,
+                        requestedAtMillis = Instant.parse("2026-06-12T09:00:00.000Z").toEpochMilli(),
+                        is4k = true,
+                        seasonNumbers = emptyList(),
+                    ),
+                ),
+                siblings,
+            )
+        }
+
+    @Test
+    fun `the list of requests leads with this page's own request, then the siblings in the server's order`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","posterPath":"/sev.jpg","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":4,
+                  "requests":[{"id":11,"status":2},{"id":12,"status":3},{"id":13,"status":5}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9}]}""",
+            )
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(detail.item.id, detail.summaries().first().id)
+            assertEquals(detail.siblings, detail.summaries().drop(1))
+            assertEquals(1 + detail.siblings.size, detail.summaries().size)
+        }
+
+    /** A title the app has never seen with a second request still shows no siblings section: nothing to read. */
+    @Test
+    fun `a title lookup that fails to load reads as having no sibling requests`() =
+        runTest {
+            server(ADMIN)
+            responses.remove("/api/v1/tv/200")
+            val vm = viewModel()
+
+            assertEquals(emptyList<RequestSummary>(), vm.awaitReady().detail.siblings)
+        }
+
+    /** The hub reads a size with no remaining bytes as complete; the page shares its helper, so it must agree. */
+    @Test
+    fun `a download reporting a size but no remaining bytes reads as complete`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,
+                   "downloadStatus":[{"title":"Severance.S02","size":1000}]}}""",
+            )
+            val vm = viewModel()
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(1f, detail.downloads.single().fraction)
+        }
+
+    @Test
+    fun `reporting an issue posts against the server's media id, and a plain user without the permission is not offered it`() =
+        runTest {
+            server(ADMIN)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.reportIssue(IssueType.Subtitles, " Missing subs ")
+
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+            val posted = received.last { it.url.encodedPath == "/api/v1/issue" }.body
+            assertTrue(posted.contains("\"mediaId\":900"))
+            assertTrue(posted.contains("\"issueType\":3"))
+            assertTrue(posted.contains("\"message\":\"Missing subs\""))
+            assertEquals(listOf("issue_reported" to emptyMap<String, Any>()), analytics.events)
+
+            responses["/api/v1/auth/me"] =
+                {
+                    FakeResponse(
+                        code = 200,
+                        headers = headersOf("Content-Type", "application/json"),
+                        body = """{"id":8,"permissions":$REQUEST}""",
+                    )
+                }
+            val plain = viewModel()
+            assertFalse(plain.awaitReady().detail.canReportIssue)
+        }
+
+    /** `POST /issue` takes `MANAGE_ISSUES` as well as `CREATE_ISSUES`, so an issue manager may report (#1018). */
+    @Test
+    fun `an issue manager without the create bit is offered the report`() =
+        runTest {
+            server(MANAGE_ISSUES)
+
+            assertTrue(viewModel().awaitReady().detail.canReportIssue)
+        }
+
+    @Test
+    fun `a request still shows, with no actions offered, when the user lookup used for moderation fails`() =
+        runTest {
+            server(ADMIN)
+            val connection = connection()
+            responses["/api/v1/auth/me"] = { FakeResponse(code = 500) }
+            val vm = viewModel(connection)
+
+            val detail = vm.awaitReady().detail
+
+            assertEquals(RequestActions(), detail.actions)
+            assertFalse(detail.canReportIssue)
+        }
+
+    @Test
+    fun `dismissing the report sheet mid-send keeps it Sending, so a re-opened send does not duplicate the POST`() =
+        runTest {
+            server(ADMIN)
+            // The subject is the state while the POST is open, so hold the response rather than
+            // racing OkHttp's thread to assert before it lands.
+            val release = CountDownLatch(1)
+            responses["/api/v1/issue"] = {
+                release.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = """{"id":5}""")
+            }
+            val vm = viewModel()
+            vm.awaitReady()
+
+            // `uiState` is `state` combined with the editor's and re-shared, so a write reaches it
+            // on the next dispatch, not on the next line. Await it: reading `.value` here passed
+            // only while Main happened to dispatch inline.
+            vm.reportIssue(IssueType.Subtitles, "Missing subs")
+            assertEquals(IssueReport.Sending, vm.awaitReady { it.report == IssueReport.Sending }.report)
+
+            // Dismissing mid-send must leave Sending in place; if it did not, this second send
+            // would pass the re-entrancy guard and the request count below would read 2.
+            vm.dismissReport()
+            vm.reportIssue(IssueType.Subtitles, "Missing subs again")
+            release.countDown()
+
+            assertEquals(IssueReport.Sent, vm.awaitReady { it.report == IssueReport.Sent }.report)
+            assertEquals(1, received.count { it.url.encodedPath == "/api/v1/issue" })
+        }
+
+    @Test
+    fun `a request the server no longer has reads as not found, and one whose destination is gone still shows`() =
+        runTest {
+            server(ADMIN)
+            responses.remove("/api/v1/service/sonarr/1")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+            assertEquals(RequestDestination("Sonarr", null, "/tv", emptyList()), detail.destination)
+
+            val missing = viewModel(requestId = 99)
+            val error = missing.uiState.first { it is RequestDetailUiState.Error } as RequestDetailUiState.Error
+            assertEquals(SeerrError.NotFound, error.error)
+            assertNull(responses["/api/v1/request/99"])
+        }
+
+    /** The request pending, requested by user 8, and its show with two more seasons: one the server has, one another request covers. */
+    private fun editable() {
+        serve(
+            "/api/v1/request/11",
+            """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+               "serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+               "seasons":[{"seasonNumber":1,"status":2},{"seasonNumber":2,"status":2}],
+               "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":2}}""",
+        )
+        serve(
+            "/api/v1/tv/200",
+            """{"name":"Severance","firstAirDate":"2022-02-18",
+            "mediaInfo":{"id":900,"status":4,"seasons":[{"seasonNumber":3,"status":5}],
+              "requests":[{"id":11,"status":1,"seasons":[{"seasonNumber":1},{"seasonNumber":2}]},{"id":12,"status":2,"seasons":[{"seasonNumber":5}]}]},
+            "seasons":[{"seasonNumber":0,"name":"Specials","episodeCount":3},{"seasonNumber":1,"name":"Season 1","episodeCount":9},
+              {"seasonNumber":2,"name":"Season 2","episodeCount":10},{"seasonNumber":3,"name":"Season 3","episodeCount":8},
+              {"seasonNumber":4,"name":"Season 4","episodeCount":0},{"seasonNumber":5,"name":"Season 5","episodeCount":6}]}""",
+        )
+        serve(
+            "/api/v1/service/sonarr/1",
+            """{"server":{"id":1,"name":"Sonarr"},"profiles":[{"id":4,"name":"HD-1080p"},{"id":6,"name":"Any"}],
+               "rootFolders":[{"id":1,"path":"/tv"},{"id":2,"path":"/kids"}],"tags":[{"id":2,"label":"family"},{"id":3,"label":"kids"}]}""",
+        )
+    }
+
+    @Test
+    fun `the editor ticks the request's seasons, locks the ones held elsewhere, and saves the new set with the destination`() =
+        runTest {
+            server(ADMIN)
+            editable()
+            val vm = viewModel()
+            assertTrue(vm.awaitReady().detail.canEdit)
+
+            vm.startEdit()
+            val opened = vm.awaitReady { it.edit?.destination?.loadingChoices == false }
+            val edit = checkNotNull(opened.edit)
+            assertEquals(
+                listOf(
+                    SeasonChoice(1, "Season 1", 9, selected = true),
+                    SeasonChoice(2, "Season 2", 10, selected = true),
+                    SeasonChoice(3, "Season 3", 8, selected = false, heldStatus = SeerrMediaStatusCode.Available),
+                    SeasonChoice(5, "Season 5", 6, selected = false, heldStatus = SeerrMediaStatusCode.Pending),
+                ),
+                edit.seasons,
+            )
+            val destination = checkNotNull(edit.destination)
+            assertEquals(1, destination.serverId)
+            assertEquals(4, destination.profileId)
+            assertEquals("/tv", destination.rootFolder)
+            assertEquals(listOf("/tv", "/kids"), destination.rootFolders)
+            assertEquals(setOf(2), destination.tagIds)
+
+            vm.editor.toggleSeason(2)
+            vm.editor.toggleSeason(3)
+            vm.editor.toggleTag(3)
+            vm.editor.selectProfile(6)
+            vm.editor.selectRootFolder("/kids")
+            val changed =
+                checkNotNull(
+                    vm
+                        .awaitReady {
+                            it.edit
+                                ?.seasons
+                                ?.get(1)
+                                ?.selected == false
+                        }.edit,
+                )
+            assertTrue(changed.seasons[2].locked)
+            assertTrue(changed.canSave)
+
+            vm.editor.save()
+
+            vm.awaitReady { it.edit == null }
+            val put = received.last { it.method == "PUT" && it.url.encodedPath == "/api/v1/request/11" }
+            val body = put.body
+            assertTrue(body, body.contains("\"mediaType\":\"tv\""))
+            assertTrue(body, body.contains("\"seasons\":[1]"))
+            assertTrue(body, body.contains("\"serverId\":1"))
+            assertTrue(body, body.contains("\"profileId\":6"))
+            assertTrue(body, body.contains("\"rootFolder\":\"/kids\""))
+            assertTrue(body, body.contains("\"tags\":[2,3]"))
+        }
+
+    @Test
+    fun `a 4K request's season lock reads the 4K status and 4K siblings, not the SD ones`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+                   "is4k":true,"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":2}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":2}}""",
+            )
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":2,"status4k":4,
+                  "seasons":[{"seasonNumber":3,"status":5,"status4k":2},{"seasonNumber":4,"status":2,"status4k":5}],
+                  "requests":[{"id":11,"status":1,"is4k":true,"seasons":[{"seasonNumber":1}]},
+                    {"id":12,"status":2,"is4k":false,"seasons":[{"seasonNumber":3}]},
+                    {"id":13,"status":2,"is4k":true,"seasons":[{"seasonNumber":4}]}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":3,"name":"Season 3","episodeCount":8},
+                  {"seasonNumber":4,"name":"Season 4","episodeCount":7}]}""",
+            )
+            serve(
+                "/api/v1/service/sonarr/1",
+                """{"server":{"id":1,"name":"Sonarr"},"profiles":[{"id":4,"name":"HD-1080p"}],"rootFolders":[],"tags":[{"id":2,"label":"family"}]}""",
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit?.destination?.loadingChoices == false }.edit)
+
+            assertEquals(
+                listOf(
+                    SeasonChoice(1, "Season 1", 9, selected = true),
+                    // SD status4k unset for season 3, so a 4K edit does not read it as available.
+                    SeasonChoice(3, "Season 3", 8, selected = false),
+                    // 4K-available, and covered by a 4K sibling request; neither should lock it off an SD basis.
+                    SeasonChoice(4, "Season 4", 7, selected = false, heldStatus = SeerrMediaStatusCode.Available),
+                ),
+                edit.seasons,
+            )
+        }
+
+    @Test
+    fun `a season blocked only by a failed sibling request is not locked`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+                   "serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":2}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":2}}""",
+            )
+            serve(
+                "/api/v1/tv/200",
+                """{"name":"Severance","firstAirDate":"2022-02-18",
+                "mediaInfo":{"id":900,"status":2,
+                  "requests":[{"id":11,"status":1,"seasons":[{"seasonNumber":1}]},{"id":12,"status":4,"seasons":[{"seasonNumber":5}]}]},
+                "seasons":[{"seasonNumber":1,"name":"Season 1","episodeCount":9},{"seasonNumber":5,"name":"Season 5","episodeCount":6}]}""",
+            )
+            serve(
+                "/api/v1/service/sonarr/1",
+                """{"server":{"id":1,"name":"Sonarr"},"profiles":[{"id":4,"name":"HD-1080p"}],"rootFolders":[],"tags":[{"id":2,"label":"family"}]}""",
+            )
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit?.destination?.loadingChoices == false }.edit)
+
+            assertEquals(
+                listOf(
+                    SeasonChoice(1, "Season 1", 9, selected = true),
+                    SeasonChoice(5, "Season 5", 6, selected = false),
+                ),
+                edit.seasons,
+            )
+        }
+
+    @Test
+    fun `a failed show-detail fetch leaves the editor's seasons unknown, not saveable, and the save omits seasons`() =
+        runTest {
+            server(ADMIN)
+            editable()
+            responses.remove("/api/v1/tv/200")
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit != null }.edit)
+
+            assertTrue(edit.seasons.isEmpty())
+            assertTrue(edit.seasonsUnknown)
+            assertFalse(edit.canSave)
+
+            vm.editor.save()
+            assertTrue(received.none { it.method == "PUT" })
+        }
+
+    @Test
+    fun `a requester without advanced requests edits only the seasons of their own pending request`() =
+        runTest {
+            server(REQUEST)
+            editable()
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":$REQUEST}""")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+            assertTrue(detail.canEdit)
+            assertFalse(detail.canEditDestination)
+
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit != null }.edit)
+            assertNull(edit.destination)
+            vm.editor.toggleSeason(1)
+            vm.editor.toggleSeason(2)
+            assertFalse(checkNotNull(vm.awaitReady { it.edit?.seasons?.none { s -> s.selected } == true }.edit).canSave)
+            vm.editor.cancel()
+            assertNull(vm.awaitReady { it.edit == null }.edit)
+            assertTrue(received.none { it.method == "PUT" })
+
+            serve("/api/v1/auth/me", """{"id":9,"displayName":"Other","permissions":$REQUEST}""")
+            assertFalse(viewModel().awaitReady().detail.canEdit)
+        }
+
+    /** A movie has no seasons: without advanced requests there is nothing to edit, and the server refuses the save (#1013). */
+    @Test
+    fun `a requester without advanced requests is not offered an edit on their own movie request`() =
+        runTest {
+            server(REQUEST)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":1,"createdAt":"2026-06-01T10:00:00.000Z","requestedBy":{"id":8,"displayName":"scott"},
+                   "media":{"id":900,"tmdbId":300,"mediaType":"movie","status":2}}""",
+            )
+            serve("/api/v1/movie/300", """{"title":"Dune","releaseDate":"2021-10-22","mediaInfo":{"id":900,"status":4}}""")
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":$REQUEST}""")
+            assertFalse(viewModel().awaitReady().detail.canEdit)
+
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":${REQUEST or REQUEST_ADVANCED}}""")
+            val detail = viewModel().awaitReady().detail
+            assertTrue(detail.canEdit)
+            assertTrue(detail.canEditDestination)
+        }
+
+    @Test
+    fun `with partial requests off a show's seasons are not editable, but its destination still is for who may`() =
+        runTest {
+            server(REQUEST)
+            editable()
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":$REQUEST}""")
+            serve("/api/v1/settings/public", """{"mediaServerType":2,"partialRequestsEnabled":false}""")
+            assertFalse(viewModel().awaitReady().detail.canEdit)
+
+            serve("/api/v1/auth/me", """{"id":8,"displayName":"Scott","permissions":${REQUEST or REQUEST_ADVANCED}}""")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+            assertTrue(detail.canEdit)
+            assertTrue(detail.canEditDestination)
+
+            // The editor it opens is for the destination alone: no season list to tick, and none sent.
+            vm.startEdit()
+            val edit = checkNotNull(vm.awaitReady { it.edit?.destination?.loadingChoices == false }.edit)
+            assertFalse(edit.seasonsEditable)
+            assertTrue(edit.seasons.isEmpty())
+            assertFalse(edit.seasonsUnknown)
+        }
+
+    @Test
+    fun `a moderator manages the media record, with watch data where the server has it, and a plain user only reads it`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/media/900/watch_data",
+                """{"data":{"playCount":12,"playCount7Days":2,"playCount30Days":5,"users":[{"displayName":"Scott"},{"username":"ana"}]}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            serve("/api/v1/media/900/file", "{}")
+            serve("/api/v1/media/900", "{}")
+            val vm = viewModel()
+            val media = checkNotNull(vm.awaitReady().detail.media)
+
+            assertEquals(900, media.mediaId)
+            assertTrue(media.isTv)
+            assertTrue(media.canSetStatus)
+            assertTrue(media.canClearData)
+            assertTrue(media.canDeleteFiles)
+            val standard = media.instances.single()
+            assertFalse(standard.is4k)
+            assertEquals(SeerrMediaStatusCode.PartiallyAvailable, standard.status)
+            assertEquals(WatchStats(12, 2, 5, listOf("Scott", "ana")), standard.watch)
+
+            // The admin's page is idle once loaded, so a plain user's open must not add a watch-data read.
+            serve("/api/v1/auth/me", """{"id":8,"permissions":$REQUEST}""")
+            val plain = checkNotNull(viewModel().awaitReady().detail.media)
+            assertFalse(plain.canManage)
+            assertNull(plain.instances.single().watch)
+            assertEquals(1, received.count { it.url.encodedPath == "/api/v1/media/900/watch_data" })
+            serve("/api/v1/auth/me", """{"id":7,"displayName":"Scott","permissions":$ADMIN}""")
+
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = false)
+            statusSet.await()
+            val filesDeleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = false)
+            filesDeleted.await()
+            val cleared = awaitEvent(vm.events) { it == ModerationEvent.MediaCleared }
+            vm.moderation.clearMedia(11, 900)
+            cleared.await()
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("""{"is4k":false}""", status.body)
+            val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
+            assertEquals("false", files.url.queryParameter("is4k"))
+            assertTrue(received.any { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900" })
+        }
+
+    @Test
+    fun `the page reads as acting from the action through the reload that shows its result, and not after`() =
+        runTest {
+            server(REQUEST or ADMIN)
+            val vm = viewModel()
+            assertFalse(vm.awaitReady().isActing)
+
+            // The approve call holds first, then the reload that follows it, so each window is observable.
+            val approveGate = CountDownLatch(1)
+            val reloadGate = CountDownLatch(1)
+            val page = responses.getValue("/api/v1/request/11")
+            responses["/api/v1/request/11/approve"] = {
+                approveGate.await()
+                FakeResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = "{}")
+            }
+            responses["/api/v1/request/11"] = {
+                reloadGate.await()
+                page()
+            }
+            val approved = awaitEvent(vm.events) { it == ModerationEvent.Approved }
+            vm.moderation.approve(11)
+            assertTrue("during the call", vm.awaitReady { it.isActing }.isActing)
+            approveGate.countDown()
+            approved.await()
+            assertTrue("during the reload", (vm.uiState.value as RequestDetailUiState.Ready).isActing)
+            reloadGate.countDown()
+            assertFalse("after the reload", vm.awaitReady { !it.isActing }.isActing)
+        }
+
+    @Test
+    fun `a request with a 4K record lists both instances, and moderation targets the one asked for`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+                   "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4,"status4k":5,
+                     "mediaUrl":"https://jellyfin.example.com/item/1","mediaUrl4k":"https://jellyfin.example.com/item/1-4k",
+                     "serviceUrl4k":"https://sonarr.example.com/1-4k",
+                     "downloadStatus":[{"title":"Severance.S02","size":1000,"sizeLeft":250,"status":"downloading","timeLeft":"00:10:00"}]}}""",
+            )
+            serve(
+                "/api/v1/media/900/watch_data",
+                """{"data":{"playCount":12,"playCount7Days":2,"playCount30Days":5,"users":[]},
+                    "data4k":{"playCount":3,"playCount7Days":1,"playCount30Days":2,"users":[]}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            serve("/api/v1/media/900/file", "{}")
+            val vm = viewModel()
+            val media = checkNotNull(vm.awaitReady().detail.media)
+
+            val (standard, fourK) = media.instances
+            assertEquals(2, media.instances.size)
+            assertFalse(standard.is4k)
+            assertTrue(fourK.is4k)
+            assertEquals(SeerrMediaStatusCode.Available, fourK.status)
+            assertEquals("https://sonarr.example.com/1-4k", fourK.serviceUrl)
+            assertEquals("https://jellyfin.example.com/item/1-4k", fourK.mediaServerUrl)
+            assertEquals(WatchStats(3, 1, 2, emptyList()), fourK.watch)
+
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(11, 900, MediaStatusChoice.Available, is4k = true)
+            statusSet.await()
+            val filesDeleted = awaitEvent(vm.events) { it == ModerationEvent.MediaFilesDeleted }
+            vm.moderation.deleteMediaFiles(11, 900, is4k = true)
+            filesDeleted.await()
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("""{"is4k":true}""", status.body)
+            val files = received.first { it.method == "DELETE" && it.url.encodedPath == "/api/v1/media/900/file" }
+            assertEquals("true", files.url.queryParameter("is4k"))
+        }
+
+    @Test
+    fun `marking a show available also marks its own requested seasons available, not the whole show's`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+                   "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":5},{"seasonNumber":2,"status":3}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4}}""",
+            )
+            serve("/api/v1/media/900/available", "{}")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(
+                11,
+                900,
+                MediaStatusChoice.Available,
+                is4k = false,
+                seasonNumbers = detail.seasons.map { it.number },
+            )
+            statusSet.await()
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/available" }
+            assertEquals("""{"is4k":false,"seasons":[{"seasonNumber":1},{"seasonNumber":2}]}""", status.body)
+        }
+
+    @Test
+    fun `a non-available status never carries seasons, since the server only reads them for available`() =
+        runTest {
+            server(ADMIN)
+            serve(
+                "/api/v1/request/11",
+                """{"id":11,"status":2,"createdAt":"2026-06-01T10:00:00.000Z","updatedAt":"2026-06-02T10:00:00.000Z",
+                   "requestedBy":{"displayName":"scott"},"modifiedBy":{"displayName":"admin"},"serverId":1,"profileId":4,"rootFolder":"/tv","tags":[2],
+                   "seasons":[{"seasonNumber":1,"status":5}],
+                   "media":{"id":900,"tmdbId":200,"mediaType":"tv","status":4}}""",
+            )
+            serve("/api/v1/media/900/processing", "{}")
+            val vm = viewModel()
+            val detail = vm.awaitReady().detail
+
+            val statusSet = awaitEvent(vm.events) { it == ModerationEvent.MediaStatusSet }
+            vm.moderation.setMediaStatus(
+                11,
+                900,
+                MediaStatusChoice.Processing,
+                is4k = false,
+                seasonNumbers = detail.seasons.map { it.number },
+            )
+            statusSet.await()
+
+            val status = received.first { it.method == "POST" && it.url.encodedPath == "/api/v1/media/900/processing" }
+            assertEquals("""{"is4k":false}""", status.body)
+        }
+}
