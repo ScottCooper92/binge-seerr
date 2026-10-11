@@ -3,7 +3,5 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>TooManyFunctions:SeerrConnection.kt$SeerrConnection</ID>
-    <ID>UnusedPrivateMember:UserAdmission.kt$private fun SeerrJellyfinUserDto.toCandidate(): ImportCandidate</ID>
-    <ID>UnusedPrivateMember:UserAdmission.kt$private fun SeerrPlexUserDto.toCandidate(): ImportCandidate</ID>
   </CurrentIssues>
 </SmellBaseline>

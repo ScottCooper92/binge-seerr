@@ -137,7 +137,7 @@ internal fun HttpException.refusedWithLiveSession(): Boolean = isLiveSessionRefu
  * [statusCatching] uncaught rather than become the [Status] the contract expects.
  */
 internal fun HttpException.peekedBody(): String =
-    runCatching {
+    attempt {
         response()
             ?.errorBody()
             ?.source()
@@ -213,6 +213,7 @@ suspend inline fun <T> statusCatching(block: () -> T): T =
  * cancelled scope or a stopped worker sends. This lets that one back out and treats the rest as a
  * failure to classify with [toSeerrError].
  */
+@Suppress("ForbiddenMethodCall") // The one place `runCatching` is allowed: this is what it is wrapped to fix.
 internal inline fun <T> attempt(block: () -> T): Result<T> =
     runCatching(block).onFailure { failure -> if (failure is CancellationException) throw failure }
 
