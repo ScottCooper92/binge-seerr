@@ -848,7 +848,7 @@ app:settings_server  aef7de28d529
 app:settings_service_default  21b111cbfe6e
 app:settings_shake_to_report  6897cd64a477
 app:settings_share_usage_data  30b4f3d19026
-app:settings_share_usage_data_caption  4165fc1af76d
+app:settings_share_usage_data_caption  d9425f20de32
 app:settings_signal_approved  70ad8a17e448
 app:settings_signal_available  560462b1f23b
 app:settings_signal_declined  7dcf705a7dfb

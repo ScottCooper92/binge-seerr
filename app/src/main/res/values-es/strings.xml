@@ -1100,7 +1100,7 @@
     <string name="consent_accept">Compartir datos de uso</string>
     <string name="consent_decline">Ahora no</string>
     <string name="settings_share_usage_data">Compartir datos de uso</string>
-    <string name="settings_share_usage_data_caption">Envía qué pantallas usas</string>
+    <string name="settings_share_usage_data_caption">Envía qué pantallas y acciones usas</string>
     <string name="settings_send_crash_reports">Enviar informes de fallos</string>
     <string name="settings_send_crash_reports_caption">Qué hacía la aplicación cuando falló, para poder corregirlo</string>
     <string name="tv_settings_toggle_on">Activado</string>
