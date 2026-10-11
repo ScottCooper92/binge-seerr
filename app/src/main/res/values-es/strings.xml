@@ -540,8 +540,10 @@
     <string name="editor_error_web_url_no_slash">Introduce una dirección web que empiece por http:// o https://, sin barra al final.</string>
     <string name="editor_error_whole_number">Introduce un número entero o déjalo en blanco.</string>
     <string name="server_settings_dvr_default">Instancia predeterminada</string>
+    <string name="server_settings_dvr_default_detail">Destino de las peticiones nuevas</string>
     <string name="server_settings_dvr_4k">Instancia 4K</string>
     <string name="server_settings_dvr_sync">Sincronizar lo que contiene</string>
+    <string name="server_settings_dvr_sync_detail">Recoge títulos que ya tiene</string>
     <string name="server_settings_dvr_prevent_search">No buscar al solicitar</string>
     <string name="server_settings_dvr_tag_requests">Etiquetar las peticiones con el solicitante</string>
     <string name="server_settings_delete">Eliminar</string>
@@ -1163,10 +1165,10 @@
     <string name="server_settings_partial_requests_detail">Permite solicitar algunas temporadas de una serie, no todas</string>
     <string name="server_settings_special_episodes_detail">Permite solicitar también los especiales de una serie</string>
     <string name="server_settings_cache_images_detail">Guarda los pósteres en el servidor; ocupa mucho disco</string>
-    <string name="server_settings_trust_proxy_detail">Actívalo si el servidor está detrás de un proxy inverso</string>
+    <string name="server_settings_trust_proxy_detail">Toma las IP de cliente del proxy</string>
     <string name="server_settings_restart_network">El servidor aplica los cambios de esta página cuando se reinicia.</string>
     <string name="server_settings_restart_proxy_csrf">El servidor aplica los ajustes de proxy y CSRF cuando se reinicia.</string>
-    <string name="server_settings_csrf_detail">Deja la API en solo lectura para otros sitios; requiere HTTPS</string>
+    <string name="server_settings_csrf_detail">Bloquea escrituras entre sitios</string>
     <string name="server_settings_youtube_default">YouTube</string>
     <string name="server_settings_all_regions">Todas las regiones</string>
     <string name="server_settings_all_languages">Todos los idiomas</string>

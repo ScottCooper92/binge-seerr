@@ -552,7 +552,7 @@ app:server_settings_cache_images  534a952306a8
 app:server_settings_cache_images_detail  c00b9a705fab
 app:server_settings_cache_stats  492cac397891
 app:server_settings_csrf  84c537ef00cf
-app:server_settings_csrf_detail  d03c70887cfc
+app:server_settings_csrf_detail  3cc720fdc875
 app:server_settings_default_permissions  43fc0abd72ea
 app:server_settings_default_permissions_lead  7eb71f4eee34
 app:server_settings_delete  e2d0a54968ea
@@ -579,6 +579,7 @@ app:server_settings_dvr_availability_in_cinemas  c34a8470b933
 app:server_settings_dvr_availability_released  f33deea9b100
 app:server_settings_dvr_behaviour  12b98040fac5
 app:server_settings_dvr_default  79561298d086
+app:server_settings_dvr_default_detail  ab3551f67023
 app:server_settings_dvr_destination  293d404a500f
 app:server_settings_dvr_external_hint  f06ddb75d42a
 app:server_settings_dvr_language_profile  659caa449949
@@ -595,6 +596,7 @@ app:server_settings_dvr_series_daily  b36c2611dcdf
 app:server_settings_dvr_series_standard  ef6691545d2c
 app:server_settings_dvr_series_type  fd580bcfb829
 app:server_settings_dvr_sync  c68de2017083
+app:server_settings_dvr_sync_detail  1872130d9b29
 app:server_settings_dvr_tag_requests  595c102fb56d
 app:server_settings_dvr_tags_none  147e6bba4382
 app:server_settings_dvr_test  a7d3d3579ab6
@@ -788,7 +790,7 @@ app:server_settings_streaming_region  db55b6cee98e
 app:server_settings_tautulli_external_hint  e9bd48cb8d22
 app:server_settings_tautulli_open  22434ab65acf
 app:server_settings_trust_proxy  36fd2b0c678c
-app:server_settings_trust_proxy_detail  ea7932e4e933
+app:server_settings_trust_proxy_detail  ed26b037d445
 app:server_settings_tv_limit  84e0c5bab38a
 app:server_settings_url_base  f1a52d70f8c5
 app:server_settings_use_ssl  e51a45d18afd

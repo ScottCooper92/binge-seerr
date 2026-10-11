@@ -67,10 +67,17 @@ fun NetworkScreen(
                         stringResource(R.string.server_settings_trust_proxy),
                         draft.trustProxy,
                         enabled,
+                        detail = stringResource(R.string.server_settings_trust_proxy_detail),
                     ) { on ->
                         actions.onEdit { it.copy(trustProxy = on) }
                     },
-                    editorToggle(Icons.Filled.Lock, stringResource(R.string.server_settings_csrf), draft.csrfProtection, enabled) { on ->
+                    editorToggle(
+                        Icons.Filled.Lock,
+                        stringResource(R.string.server_settings_csrf),
+                        draft.csrfProtection,
+                        enabled,
+                        detail = stringResource(R.string.server_settings_csrf_detail),
+                    ) { on ->
                         actions.onEdit { it.copy(csrfProtection = on) }
                     },
                     draft.forceIpv4First?.let { prefer ->
