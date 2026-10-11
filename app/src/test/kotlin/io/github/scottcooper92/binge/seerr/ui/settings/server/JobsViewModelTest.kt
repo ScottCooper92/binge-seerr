@@ -66,6 +66,10 @@ class JobsViewModelTest {
         return vm
     }
 
+    /** A read the view model is expected to make: waited for as long as any expected call is, not the short default. */
+    private suspend fun awaitJobsRead(moreThan: Int) =
+        seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = moreThan, timeoutMillis = seerr.expectedCallWaitMillis())
+
     private suspend fun JobsViewModel.awaitReady(): JobsUiState.Ready = uiState.first { it is JobsUiState.Ready } as JobsUiState.Ready
 
     @Test
@@ -235,7 +239,7 @@ class JobsViewModelTest {
             // The view model's own first read and the reload above: wait for both to land before counting. Nothing
             // collects the state: this holder never shows the list, and a collector would make it a watcher for as long as
             // it lasted, long enough for a read landing as it leaves to schedule a due read that then survives it.
-            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            awaitJobsRead(moreThan = 1)
             seerr.awaitCallbacks()
             testScheduler.runCurrent()
             assertTrue(vm.uiState.value is JobsUiState.Ready)
@@ -259,7 +263,7 @@ class JobsViewModelTest {
             vm.awaitReady()
             testScheduler.runCurrent()
             // The view model's own first read and the reload above: wait for both to land before counting.
-            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            awaitJobsRead(moreThan = 1)
             testScheduler.runCurrent()
             collector.cancel()
             testScheduler.runCurrent()
@@ -268,7 +272,7 @@ class JobsViewModelTest {
             now += 2 * 60 * 60_000L
             val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
             testScheduler.runCurrent()
-            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = reads)
+            awaitJobsRead(moreThan = reads)
             // runTest moves virtual time on while awaitCount waits in real time, so a later run coming due can add a read.
             assertTrue(seerr.count("GET", "/api/v1/settings/jobs") > reads)
             returned.cancel()
@@ -288,7 +292,7 @@ class JobsViewModelTest {
 
             // A read that lands with nothing collecting must keep the run it found, not drop it.
             vm.reload()
-            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            awaitJobsRead(moreThan = 1)
             // As below: the read's schedule is worked out on OkHttp's thread, so let it land before the clock moves (#1226).
             seerr.awaitCallbacks()
             testScheduler.runCurrent()
@@ -297,7 +301,7 @@ class JobsViewModelTest {
             now += 2 * 60 * 60_000L
             val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
             testScheduler.runCurrent()
-            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = reads)
+            awaitJobsRead(moreThan = reads)
             assertTrue(seerr.count("GET", "/api/v1/settings/jobs") > reads)
             returned.cancel()
         }
@@ -313,7 +317,7 @@ class JobsViewModelTest {
             vm.clock = { now }
             val collector = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
             vm.awaitReady()
-            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 0)
+            awaitJobsRead(moreThan = 0)
             // The load's schedule is worked out on OkHttp's thread after Ready lands: wait for it before moving the clock (#1226).
             seerr.awaitCallbacks()
             testScheduler.runCurrent()
@@ -323,7 +327,7 @@ class JobsViewModelTest {
             now += 2 * 60 * 60_000L
             testScheduler.advanceTimeBy(2 * 60 * 60_000L)
             testScheduler.runCurrent()
-            seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = beforeDue)
+            awaitJobsRead(moreThan = beforeDue)
 
             collector.cancel()
             testScheduler.runCurrent()
