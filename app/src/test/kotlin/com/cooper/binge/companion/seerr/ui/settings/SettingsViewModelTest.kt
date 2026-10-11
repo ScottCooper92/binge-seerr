@@ -203,7 +203,7 @@ class SettingsViewModelTest {
             server(ADMIN)
             val vm = viewModel()
 
-            val ready = vm.awaitReady { it.config?.system != null && it.config?.services != null && it.connection.userName != null }
+            val ready = vm.awaitReady { it.config?.system != null && it.config.services != null && it.connection.userName != null }
 
             assertEquals(SignInKind.ApiKey, ready.connection.signInKind)
             assertEquals("Scott", ready.connection.userName)

@@ -2,11 +2,11 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -81,7 +81,7 @@ fun NotificationAgentScreen(
             rows =
                 listOf(
                     ListItem(
-                        icon = Icons.Filled.Send,
+                        icon = Icons.AutoMirrored.Filled.Send,
                         label = stringResource(R.string.server_settings_agent_test),
                         loading = extras.testing,
                         clickable = enabled && draft.valid && !extras.testing,

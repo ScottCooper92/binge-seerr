@@ -73,7 +73,7 @@ class GeneralSettingsViewModel
                     .toGeneralSettings(
                         // The server assigns the quota fields only when the target is neither the viewer nor a manager, and
                         // silently keeps the old values otherwise, so the editor is offered under the same rule.
-                        canEditQuotas = permissions.canManageUsers && viewerUser?.id != userId && !user.toPermissions().canManageUsers,
+                        canEditQuotas = permissions.canManageUsers && viewerUser.id != userId && !user.toPermissions().canManageUsers,
                         canEditEmail = permissions.canManageUsers || user.userType.toUserOrigin() == UserOrigin.Local,
                         fallbackName = user.fallbackName(),
                         // The profile's capability, not the lineage: Jellyseerr before 2.2 has one region too (#1012).

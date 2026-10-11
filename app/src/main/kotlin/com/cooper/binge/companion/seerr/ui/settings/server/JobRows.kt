@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Error
@@ -13,7 +14,6 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stop
@@ -113,7 +113,7 @@ internal fun jobRow(
 
 private fun jobIcon(id: String): ImageVector =
     when {
-        id.contains("watchlist") -> Icons.Filled.PlaylistAddCheck
+        id.contains("watchlist") -> Icons.AutoMirrored.Filled.PlaylistAddCheck
         id.contains("recently-added") -> Icons.Filled.LibraryAdd
         id.contains("full-scan") -> Icons.Filled.VideoLibrary
         id.startsWith("radarr") -> Icons.Filled.Movie

@@ -142,7 +142,6 @@ internal fun HubSection.route(): SeerrRoute =
         HubSection.Users -> UsersRoute
         HubSection.Blocklist -> BlocklistRoute
         HubSection.Settings -> SettingsRoute
-        else -> SectionRoute(this)
     }
 
 /** The hub section this route is, or null for a route that is not one of them. */
