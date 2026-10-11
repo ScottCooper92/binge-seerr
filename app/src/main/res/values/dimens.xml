@@ -19,9 +19,6 @@
     <!-- The television surface: the two-pane form page, its text fields and option rows. -->
     <dimen name="tv_form_field_width">520dp</dimen>
     <dimen name="tv_form_field_height">56dp</dimen>
-    <dimen name="tv_form_option_height">48dp</dimen>
-    <dimen name="tv_form_option_padding_horizontal">20dp</dimen>
-    <dimen name="tv_form_option_gap">8dp</dimen>
     <!-- TvCheckboxRow: the box, and its outline -->
     <!-- The television shell: boards, list rows, the action sheet and the list/pane board. -->
     <dimen name="tv_list_row_poster_width">40dp</dimen>
@@ -64,7 +61,6 @@
     <dimen name="tv_detail_download_card_width">260dp</dimen>
     <dimen name="tv_detail_info_card_width">240dp</dimen>
     <dimen name="tv_detail_card_height">112dp</dimen>
-    <dimen name="tv_tabs_inset">4dp</dimen>
     <dimen name="tv_form_top_inset">96dp</dimen>
     <dimen name="tv_form_commit_min_width">200dp</dimen>
     <dimen name="search_result_min_height">64dp</dimen>
