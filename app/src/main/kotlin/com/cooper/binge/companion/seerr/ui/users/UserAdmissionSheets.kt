@@ -12,7 +12,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GroupAdd
+import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -181,6 +183,9 @@ internal fun CreateUserSheetContent(
             // The caption is the reason the row is off, so it stays legible rather than following the label down.
             subtitle = stringResource(R.string.users_create_generate_unavailable).takeIf { !draft.canGeneratePassword },
             enabled = !saving && draft.canGeneratePassword,
+            leadingContent = {
+                Icon(Icons.Filled.Password, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            },
         )
         BingeActionFooter(
             label = stringResource(R.string.users_create_submit),
