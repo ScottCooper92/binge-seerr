@@ -675,7 +675,7 @@ app:server_settings_metadata_tested  9f602f44858f
 app:server_settings_metadata_tv  a8295e08ff7a
 app:server_settings_movie_limit  1434d0ff8755
 app:server_settings_network  1744b96470b5
-app:server_settings_network_caption  ec2deb850b97
+app:server_settings_network_caption  34907980e765
 app:server_settings_new_media_server_login  1f699e850b7e
 app:server_settings_new_media_server_login_detail  9633b4543fd4
 app:server_settings_partial_requests  c615998fdcff
@@ -777,7 +777,7 @@ app:server_settings_slider_upcoming_movies  627f6d5d31ed
 app:server_settings_slider_upcoming_tv  eb3560bc6cc1
 app:server_settings_slider_watchlist  7bd2242eb729
 app:server_settings_sliders  d3117ef238a4
-app:server_settings_sliders_caption  ed31d0458307
+app:server_settings_sliders_caption  312569c104c5
 app:server_settings_sliders_more_actions  f8d46c2570e7
 app:server_settings_sliders_reorder_hint  bcc46d0daa39
 app:server_settings_sliders_reset  e240e635ff6d
@@ -832,7 +832,7 @@ app:settings_notifications_last_run  c2fbf9a33a20
 app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3
 app:settings_report_bug  f75e0bd8ff23
-app:settings_report_bug_caption  ef1fad4d5823
+app:settings_report_bug_caption  d91cdd5edb81
 app:settings_request_limit  d05f269db0cd
 app:settings_request_limit_movie  03bd4b8cbd52
 app:settings_request_limit_tv  cfeb1bf41637
@@ -849,19 +849,13 @@ app:settings_send_crash_reports_caption  04ea533234a2
 app:settings_server  aef7de28d529
 app:settings_service_default  21b111cbfe6e
 app:settings_shake_to_report  6897cd64a477
-app:settings_shake_to_report_caption  e790e2d415e9
 app:settings_share_usage_data  30b4f3d19026
-app:settings_share_usage_data_caption  4959fdc4d725
+app:settings_share_usage_data_caption  d9425f20de32
 app:settings_signal_approved  70ad8a17e448
-app:settings_signal_approved_caption  bb1a57aa8545
 app:settings_signal_available  560462b1f23b
-app:settings_signal_available_caption  522b02215f52
 app:settings_signal_declined  7dcf705a7dfb
-app:settings_signal_declined_caption  7736395e4706
 app:settings_signal_issues  a6a0e0210e05
-app:settings_signal_issues_caption  3e5e2bf8cdfe
 app:settings_signal_pending  3b7c001f1686
-app:settings_signal_pending_caption  e6c36bbdc47e
 app:settings_signed_in_api_key  a95db85d05a7
 app:settings_signed_in_as  abc50e334be4
 app:settings_use_server_default  a769cedc7992

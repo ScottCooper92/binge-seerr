@@ -644,15 +644,10 @@
     <string name="settings_request_limit_tv">TV %1$s</string>
     <string name="settings_group_notify_me">Notify me</string>
     <string name="settings_signal_pending">New requests</string>
-    <string name="settings_signal_pending_caption">Requests waiting for approval</string>
     <string name="settings_signal_issues">New issues</string>
-    <string name="settings_signal_issues_caption">Reports from your users</string>
     <string name="settings_signal_available">My requests are available</string>
-    <string name="settings_signal_available_caption">A title you asked for is ready to watch</string>
     <string name="settings_signal_approved">My requests are approved</string>
-    <string name="settings_signal_approved_caption">A request of yours was approved</string>
     <string name="settings_signal_declined">My requests are declined</string>
-    <string name="settings_signal_declined_caption">A request of yours was declined</string>
     <string name="settings_notifications_blocked">Notifications are blocked</string>
     <string name="settings_notifications_blocked_caption">Allow them in the system settings to be told about any of this</string>
     <string name="settings_notifications_poll">Checked in the background</string>
@@ -761,7 +756,7 @@
         <item quantity="one">%1$d day</item>
         <item quantity="other">%1$d days</item>
     </plurals>
-    <string name="server_settings_network_caption">Proxy headers, CSRF, the outbound proxy and the DNS cache</string>
+    <string name="server_settings_network_caption">Proxy, CSRF and DNS cache</string>
     <string name="server_settings_force_ipv4">Prefer IPv4</string>
     <string name="server_settings_proxy">Outbound proxy</string>
     <string name="server_settings_proxy_enabled">Use a proxy</string>
@@ -784,7 +779,7 @@
     <string name="server_settings_metadata_tvdb" translatable="false">TVDB</string>
     <string name="server_settings_metadata_test">Test the providers</string>
     <string name="server_settings_metadata_tested">Providers reached</string>
-    <string name="server_settings_sliders_caption">The rows of the web client\'s Discover page, and their order</string>
+    <string name="server_settings_sliders_caption">Edit the rows on the Discover page</string>
     <string name="server_settings_slider_add">Add a slider</string>
     <string name="server_settings_slider_edit">Edit slider</string>
     <string name="server_settings_slider_built_in">Built in</string>
@@ -1139,9 +1134,8 @@
     <string name="server_settings_agent_profile_name_hint">Only needed where the server does not use the default profile.</string>
     <string name="settings_group_app">This app</string>
     <string name="settings_report_bug">Report a bug</string>
-    <string name="settings_report_bug_caption">Opens a new issue on GitHub with your app and device details filled in</string>
+    <string name="settings_report_bug_caption">Opens GitHub with your device details filled in</string>
     <string name="settings_shake_to_report">Shake to report</string>
-    <string name="settings_shake_to_report_caption">Shake your phone to report a bug in this app</string>
     <string name="shake_report_title">Report a bug?</string>
     <string name="shake_report_message">This opens a new issue on this app\'s GitHub page, with your app version and device filled in. Nothing about your server is included.</string>
     <string name="tv_settings_report_bug_body">Found something wrong with this app? Show a code and scan it with your phone to report it on GitHub.</string>
@@ -1160,7 +1154,7 @@
     <string name="consent_accept">Share usage data</string>
     <string name="consent_decline">Not now</string>
     <string name="settings_share_usage_data">Share usage data</string>
-    <string name="settings_share_usage_data_caption">Which screens and features you use. Never your server or what is on it.</string>
+    <string name="settings_share_usage_data_caption">Sends which screens and actions you use</string>
     <string name="settings_send_crash_reports">Send crash reports</string>
     <string name="settings_send_crash_reports_caption">What the app was doing when it crashed, so it can be fixed</string>
     <string name="tv_settings_toggle_on">On</string>
