@@ -5,7 +5,7 @@ import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -86,10 +86,17 @@ internal class RealNavHostRule(
     fun isShowing(
         text: String,
         exactly: Boolean = false,
-    ): Boolean = compose.onAllNodes(hasText(text, substring = !exactly)).fetchSemanticsNodes().isNotEmpty()
+    ): Boolean = settled().onAllNodes(hasText(text, substring = !exactly)).fetchSemanticsNodes().isNotEmpty()
 
     /** How many nodes read [text] now, counting a merged node whose text only includes it, as [isShowing] does. */
-    fun count(text: String): Int = compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().size
+    fun count(text: String): Int = settled().onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().size
+
+    /**
+     * The compose rule once the queued effects have run. The v2 test API runs effects on a standard test dispatcher, so a
+     * click's recomposition can still be pending when the next read happens, and a read that does not wait sees the screen
+     * from before it.
+     */
+    private fun settled(): ComposeTestRule = compose.also { it.waitForIdle() }
 
     /** System Back, as a gesture or the key delivers it: through the activity's dispatcher. */
     fun back() {
