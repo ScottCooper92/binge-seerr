@@ -56,6 +56,7 @@ import io.grpc.Status
 import io.grpc.StatusException
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -565,14 +566,20 @@ class SeerrRequestServiceTest {
             val stub = connected(analytics = analytics)
             val request = ObserveStatusRequest.newBuilder().setMedia(movie).build()
 
+            // One stream, healthy for two polls and then failing. Two streams, one cut off by take(1), raced: the cut-off
+            // stream's next poll outlived the client and took an answer queued for the second, which then failed on a dead
+            // connection, a failure that is not reported, and found no report to count.
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
-            stub.observeStatus(request).take(1).toList()
-            assertEquals(emptyList<Any>(), analytics.events)
-
             seerr.enqueue(json("""{"mediaInfo":{"status":2}}"""))
             seerr.enqueue(MockResponse(code = 500))
-            assertEquals(Status.Code.UNAVAILABLE, stub.code { stub.observeStatus(request).toList() })
+            val reportedAtEmission = mutableListOf<Int>()
+            assertEquals(
+                Status.Code.UNAVAILABLE,
+                stub.code { stub.observeStatus(request).onEach { reportedAtEmission += analytics.events.size }.toList() },
+            )
 
+            // The healthy polls reported nothing; the second repeats the first, so the stream emits once.
+            assertEquals(listOf(0), reportedAtEmission)
             assertEquals("observe_status", failedOperation(analytics)["operation"])
         }
 
