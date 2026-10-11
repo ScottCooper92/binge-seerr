@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -63,7 +66,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.PagedPhase
-import com.binge.designsystem.template.screenListPadding
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.accent
@@ -103,6 +106,10 @@ fun LogsScreen(
     FilteredListScreen(
         title = stringResource(R.string.server_settings_logs),
         onBack = actions.onBack,
+        // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.
+        bar = ScreenBar.Small,
+        headerBackground = MaterialTheme.colorScheme.background,
+        scrimFraction = 0f,
         filters = LogLevel.entries.map { FilterChipItem(label = stringResource(it.labelRes())) },
         selectedFilter = state.level.ordinal,
         onFilterChange = { actions.onLevelChange(LogLevel.entries[it]) },
@@ -164,6 +171,22 @@ private fun LogsPage(
     LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize(), contentPadding)
 }
 
+/**
+ * The page's top and bottom, which already hold the bar, the header and the content inset below, with the content inset
+ * on the sides. The template hands a page only top and bottom, so the sides are this list's own.
+ */
+@Composable
+private fun logRowPadding(page: PaddingValues): PaddingValues {
+    val sides = resolvedContentPadding()
+    val direction = LocalLayoutDirection.current
+    return PaddingValues(
+        start = sides.calculateStartPadding(direction),
+        top = page.calculateTopPadding(),
+        end = sides.calculateEndPadding(direction),
+        bottom = page.calculateBottomPadding(),
+    )
+}
+
 @Composable
 private fun LogsBody(
     lazyItems: LazyPagingItems<LogEntry>,
@@ -178,7 +201,7 @@ private fun LogsBody(
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = contentPadding.screenListPadding(),
+                contentPadding = logRowPadding(contentPadding),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
             ) {
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
