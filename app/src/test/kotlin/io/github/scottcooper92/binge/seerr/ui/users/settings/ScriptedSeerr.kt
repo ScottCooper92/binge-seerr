@@ -188,14 +188,17 @@ internal class ScriptedSeerr(
 
     /**
      * A request a refresh triggers lands on OkHttp's threads after the call that triggered it has
-     * returned, so a count read on the next line races it; this waits for it in real time.
+     * returned, so a count read on the next line races it; this waits for it in real time. A wait for a call that is
+     * expected passes [expectedCallWaitMillis]: the default is short, and on a starved machine a slow call, not a missing
+     * one, is the likelier reason to run out of it.
      */
     suspend fun awaitCount(
         method: String,
         path: String,
         moreThan: Int,
+        timeoutMillis: Long = REQUEST_WAIT_MILLIS,
     ) = withContext(Dispatchers.Default) {
-        withTimeout(REQUEST_WAIT_MILLIS) { while (count(method, path) <= moreThan) delay(POLL_MILLIS) }
+        withTimeout(timeoutMillis) { while (count(method, path) <= moreThan) delay(POLL_MILLIS) }
     }
 
     /**
