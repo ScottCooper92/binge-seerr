@@ -11,7 +11,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.DecisionCopy
 import com.binge.designsystem.template.DecisionScreen
 import com.binge.designsystem.template.ScreenAction
-import com.binge.designsystem.uppercaseLocalised
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.state.LoadingScreen
 
@@ -41,8 +40,7 @@ fun ConsentScreen(onChoice: (granted: Boolean) -> Unit) {
             DecisionCopy(
                 title = stringResource(R.string.consent_title),
                 subtitle = stringResource(R.string.consent_subtitle),
-                // Already in capitals in the screen's locale: the template's own uppercasing uses the root rules.
-                kicker = stringResource(R.string.consent_kicker).uppercaseLocalised(),
+                kicker = stringResource(R.string.consent_kicker),
             ),
         points = consentPoints(),
         accept = ScreenAction(stringResource(R.string.consent_accept), { onChoice(true) }),

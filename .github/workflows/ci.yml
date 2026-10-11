@@ -47,9 +47,22 @@ permissions:
   contents: read
 
 jobs:
+  # #421: a submodule pin can be a commit that only exists on an unmerged branch of its own repo, which
+  # is deliberate while `hold` gates the merge on it and a trap once `hold` comes off. binge-ci's shared
+  # workflow fails a PR whose pin is not an ancestor of its submodule's default branch, unless the PR
+  # carries `hold`. It does nothing outside a pull request, and `build` needs it so a red pin fails
+  # the gate rather than reporting beside it. The caller grants `pull-requests: read`, which the
+  # shared workflow reads the label with: a reusable workflow cannot hold more than its caller.
+  submodule-pins:
+    if: github.event.pull_request.draft == false
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@f7344d426f38e2dba330ed1b0483a284e0a6af9d # v1
+
   # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
   # compile, lint, detekt and its baseline-staleness check, ktlint, the translation and gRPC gates,
-  # and the debug assemble. It also runs the submodule-pin check, which fails fast.
+  # and the debug assemble.
   checks:
     # Skip while a PR is a draft, so a stack can be opened as drafts and promoted one at a time
     # without each queued run preempting the last. Push events to main always run — `pull_request`
@@ -58,58 +71,12 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Job level, not workflow level: only the submodule-pin step reads a PR label (#561).
-    permissions:
-      contents: read
-      pull-requests: read
     steps:
       # The contracts and SDK are a submodule (see settings.gradle.kts); without this the
       # included build is an empty directory and Gradle fails at settings evaluation.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-
-      # #421: a submodule pin can be a commit that only exists on an unmerged branch of its own
-      # repo — a deliberate case while `hold` gates the merge on it (#420), or one nobody remembers
-      # is unmerged once `hold` comes off. Every pinned commit has to be an ancestor of that
-      # submodule's own default branch, or this PR still needs to carry `hold`; nothing here reads
-      # `.gitmodules` for which pins are "supposed" to be held, only whether each one actually
-      # merged. Runs before the build so an unmerged pin fails fast rather than after a full Gradle
-      # run.
-      - name: Check submodule pins are merged upstream
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          # Read live, not from the event payload: adding `hold` starts no run, and a re-run
-          # replays the original payload, so the payload still says the label is absent (#561).
-          HELD=$(gh pr view "$PR_NUMBER" --json labels --jq 'any(.labels[]; .name == "hold")')
-          : > /tmp/unmerged-submodules.txt
-          git submodule foreach --quiet '
-            url=$(git config --get remote.origin.url)
-            default_branch=$(git ls-remote --symref "$url" HEAD | awk "NR==1{print \$2}" | sed "s#^refs/heads/##")
-            # actions/checkout leaves each submodule shallow, and a plain fetch of the default
-            # branch would only bring its tip in, not the history between it and $sha1 - an
-            # ancestry check against that truncated graph reports every pin "unmerged" regardless
-            # of whether it actually is. The huge depth is the standard "just unshallow" idiom.
-            git fetch --quiet --depth=2147483647 origin "$default_branch"
-            if git merge-base --is-ancestor "$sha1" "origin/$default_branch"; then
-              echo "$name: $sha1 is merged into $default_branch"
-            else
-              echo "$name: $sha1 is NOT an ancestor of $default_branch" >&2
-              echo "$name" >> /tmp/unmerged-submodules.txt
-            fi
-          '
-          if [ -s /tmp/unmerged-submodules.txt ]; then
-            unmerged=$(paste -sd, /tmp/unmerged-submodules.txt)
-            echo "::warning::Submodule pin(s) not merged upstream: $unmerged"
-            if [ "$HELD" != "true" ]; then
-              echo "::error::Unmerged submodule pin(s) without the 'hold' label: $unmerged"
-              exit 1
-            fi
-          fi
 
       # JDK 17, matching Binge rather than binge-companions' 21. The extracted code
       # targets jvmTarget 17 and the AGP in `libs.versions.toml` is what Binge builds with, so the toolchain
@@ -240,7 +207,7 @@ jobs:
   # the merge step instead of skipping this job, which would read as "not run" rather than red.
   build:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
-    needs: [checks, tests, screenshots, release]
+    needs: [submodule-pins, checks, tests, screenshots, release]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -256,11 +223,14 @@ jobs:
           retention-days: ${{ github.event_name == 'schedule' && 7 || 1 }}
         continue-on-error: true
 
+      # The pin check is skipped outside a pull request, so a skip passes for it alone.
       - name: Fail unless every job passed
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          PINS: ${{ needs.submodule-pins.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.tests.result }} ${{ needs.screenshots.result }} ${{ needs.release.result }}
         run: |
-          echo "checks, tests, screenshots, release: $RESULTS"
+          echo "submodule-pins: $PINS; checks, tests, screenshots, release: $RESULTS"
+          [ "$PINS" = success ] || [ "$PINS" = skipped ] || exit 1
           for result in $RESULTS; do
             [ "$result" = success ] || exit 1
           done
@@ -277,23 +247,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install shellcheck
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
-
-      # Same invocation as binge-ci's own CI: a pinned release verified against its published
-      # checksum. --severity=warning, not the default, because info fires SC2016 on single-quoted
-      # scripts where the quotes are correct.
-      - name: actionlint
-        env:
-          VERSION: 1.7.12
-          SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
-        run: |
-          set -euo pipefail
-          curl -sSLo actionlint.tar.gz \
-            "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz"
-          echo "${SHA256}  actionlint.tar.gz" | sha256sum -c -
-          tar xzf actionlint.tar.gz actionlint
-          ./actionlint -shellcheck 'shellcheck --severity=warning'
+      # binge-ci's shared step: a pinned release verified against its published checksum, with
+      # shellcheck at warning severity.
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@f7344d426f38e2dba330ed1b0483a284e0a6af9d # v1
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -308,43 +264,10 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          BUILD_RESULT: ${{ needs.build.result }}
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@f7344d426f38e2dba330ed1b0483a284e0a6af9d # v1
         with:
-          script: |
-            const title = 'Nightly CI is failing on main';
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const { owner, repo } = context.repo;
-            const open = (await github.paginate(github.rest.issues.listForRepo, {
-              owner, repo, state: 'open', per_page: 100,
-            })).find((i) => !i.pull_request && i.title === title);
-
-            if (process.env.BUILD_RESULT === 'success') {
-              if (!open) return;
-              await github.rest.issues.createComment({
-                owner, repo, issue_number: open.number,
-                body: `The nightly run is green again: ${runUrl}`,
-              });
-              await github.rest.issues.update({
-                owner, repo, issue_number: open.number, state: 'closed', state_reason: 'completed',
-              });
-            } else {
-              if (open) {
-                await github.rest.issues.createComment({
-                  owner, repo, issue_number: open.number,
-                  body: `Still failing: ${runUrl}`,
-                });
-                return;
-              }
-              await github.rest.issues.create({
-                owner, repo, title,
-                body: [
-                  `The scheduled run of CI failed: ${runUrl}`,
-                  '',
-                  'Nothing was pushed to cause this, so suspect the environment first: a runner image or Android SDK update, or a toolchain drift. The build-reports artifact is kept for seven days.',
-                  '',
-                  'This issue closes itself on the next green nightly run.',
-                ].join('\n'),
-              });
-            }
+          result: ${{ needs.build.result }}
+          title: Nightly CI is failing on main
+          note: >-
+            Nothing was pushed to cause this, so suspect the environment first: a runner image or
+            Android SDK update, or a toolchain drift. The build-reports artifact is kept for seven days.

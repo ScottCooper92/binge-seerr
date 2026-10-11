@@ -5,11 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 import io.github.scottcooper92.binge.seerr.theme.SeerrTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -21,8 +21,6 @@ import org.robolectric.RobolectricTestRunner
 class HubConnectionProblemTest {
     @get:Rule
     val rule = createSeerrComposeRule()
-
-    private fun text(id: Int) = ApplicationProvider.getApplicationContext<android.content.Context>().getString(id)
 
     private fun show(
         health: ConnectionHealth,
@@ -52,7 +50,7 @@ class HubConnectionProblemTest {
         var reconnects = 0
         show(ConnectionHealth.Unreachable) { reconnects++ }
 
-        rule.onNode(hasText(text(R.string.settings_edit_connection))).performClick()
+        rule.onNode(hasText(string(R.string.settings_edit_connection))).performClick()
 
         assertEquals(1, reconnects)
     }
@@ -61,7 +59,7 @@ class HubConnectionProblemTest {
     fun `a dashboard that could not load offers to edit the connection`() {
         show(ConnectionHealth.CouldNotLoad)
 
-        rule.onNode(hasText(text(R.string.settings_edit_connection))).assertExists()
+        rule.onNode(hasText(string(R.string.settings_edit_connection))).assertExists()
     }
 
     @Test
@@ -69,10 +67,10 @@ class HubConnectionProblemTest {
         var reconnects = 0
         show(ConnectionHealth.LocalNetworkDenied) { reconnects++ }
 
-        rule.onNode(hasText(text(R.string.hub_local_network_headline))).assertExists()
-        rule.onNode(hasText(text(R.string.local_network_allow))).assertExists()
-        rule.onNode(hasText(text(R.string.hub_retry))).assertDoesNotExist()
-        rule.onNode(hasText(text(R.string.settings_edit_connection))).performClick()
+        rule.onNode(hasText(string(R.string.hub_local_network_headline))).assertExists()
+        rule.onNode(hasText(string(R.string.local_network_allow))).assertExists()
+        rule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
+        rule.onNode(hasText(string(R.string.settings_edit_connection))).performClick()
 
         assertEquals(1, reconnects)
     }
@@ -99,14 +97,14 @@ class HubConnectionProblemTest {
             }
         }
 
-        rule.onNode(hasText(text(R.string.local_network_allow))).performClick()
+        rule.onNode(hasText(string(R.string.local_network_allow))).performClick()
         health = ConnectionHealth.Unreachable
         rule.waitForIdle()
         health = ConnectionHealth.LocalNetworkDenied
         rule.waitForIdle()
 
-        rule.onNode(hasText(text(R.string.local_network_open_settings))).assertExists()
-        rule.onNode(hasText(text(R.string.local_network_allow))).assertDoesNotExist()
+        rule.onNode(hasText(string(R.string.local_network_open_settings))).assertExists()
+        rule.onNode(hasText(string(R.string.local_network_allow))).assertDoesNotExist()
     }
 
     /** The app goes to sign-in for a rejected session (#810), so the hub offers no way out of its own meanwhile. */
@@ -124,7 +122,7 @@ class HubConnectionProblemTest {
                 ),
         )
 
-        rule.onNode(hasText(text(R.string.hub_retry))).assertDoesNotExist()
-        rule.onNode(hasText(text(R.string.settings_edit_connection))).assertDoesNotExist()
+        rule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
+        rule.onNode(hasText(string(R.string.settings_edit_connection))).assertDoesNotExist()
     }
 }

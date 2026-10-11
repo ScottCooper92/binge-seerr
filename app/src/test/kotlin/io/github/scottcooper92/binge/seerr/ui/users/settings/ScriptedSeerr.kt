@@ -31,6 +31,7 @@ internal const val MANAGE_REQUESTS = 1 shl 4
 internal const val REQUEST = 1 shl 5
 
 private const val REQUEST_WAIT_MILLIS = 2_000L
+private const val EXPECTED_CALL_WAIT_MILLIS = 15_000L
 private const val POLL_MILLIS = 10L
 
 /** How long a held answer waits for its release before giving up on its own, so a stuck test still ends. */
@@ -201,16 +202,29 @@ internal class ScriptedSeerr(
      * [awaitCount] without letting time pass: it blocks the test's thread, so `runTest` cannot move virtual time on while
      * it waits and a later scheduled call cannot stand in for the one awaited. Returns whether the count got past
      * [moreThan], so a test can assert that a call is made, or that none is.
+     *
+     * [pump] runs on each poll, so a test can let its scheduler run what is already due (never moving time on) while it
+     * waits: a call the view model makes first suspends on work the test's own scheduler owns, such as the credential
+     * store, and a blocked thread alone would never let that run. [timeoutMillis] is how long to wait for a call that is
+     * expected. A test asserting that none comes keeps the short default: waiting longer only slows it.
      */
     fun awaitCountHoldingTime(
         method: String,
         path: String,
         moreThan: Int,
+        timeoutMillis: Long = REQUEST_WAIT_MILLIS,
+        pump: () -> Unit = {},
     ): Boolean {
-        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(REQUEST_WAIT_MILLIS)
-        while (count(method, path) <= moreThan && System.nanoTime() < deadline) Thread.sleep(POLL_MILLIS)
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
+        while (count(method, path) <= moreThan && System.nanoTime() < deadline) {
+            pump()
+            Thread.sleep(POLL_MILLIS)
+        }
         return count(method, path) > moreThan
     }
+
+    /** How long a test waits for a call it expects, where a slow machine, not the code, is the likely reason for a miss. */
+    internal fun expectedCallWaitMillis(): Long = EXPECTED_CALL_WAIT_MILLIS
 
     suspend fun connection(
         scope: TestScope,

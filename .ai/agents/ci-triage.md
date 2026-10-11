@@ -24,7 +24,7 @@ whichever jobs failed.
 lands there. A red run whose log ends in a report you did not expect is still one of
 these jobs, not a second gate that appeared from somewhere.
 
-There is a coverage floor (`koverVerify`, 78% of `:app`'s lines) and a screenshot
+There is a coverage floor (`koverVerify`, 84% of `:app`'s lines) and a screenshot
 suite (`validateDebugScreenshotTest`), and both are real, gating checks. There is
 no `buf` here. `koverVerify` has no row below: raising coverage means writing a
 real test, which is a judgment call about what to test, not a mechanical repair, so

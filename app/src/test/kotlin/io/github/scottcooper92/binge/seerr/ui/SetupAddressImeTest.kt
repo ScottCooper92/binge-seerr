@@ -1,12 +1,11 @@
 package io.github.scottcooper92.binge.seerr.ui
 
-import android.content.Context
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performImeAction
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -19,7 +18,7 @@ class SetupAddressImeTest {
     @get:Rule
     val composeTestRule = createSeerrComposeRule()
 
-    private val label get() = ApplicationProvider.getApplicationContext<Context>().getString(R.string.setup_server_url)
+    private val label get() = string(R.string.setup_server_url)
 
     private fun doneWith(serverUrl: String): Int {
         var inspected = 0

@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -263,7 +264,7 @@ private fun TvModeFields(
                 keyboardType = KeyboardType.Password,
                 // No content type: the key is the server's, not an account credential.
                 initiallyFocused = credentialFocused,
-                onDone = { if (form.canSubmit) onDone() },
+                onImeAction = { if (form.canSubmit) onDone() },
             )
             // TvTextField has no supporting slot, and this has to stay readable while the user
             // fetches the key — so it is the note the page already uses for what it wants said.
@@ -323,7 +324,7 @@ private fun TvPasswordField(
         secret = true,
         keyboardType = KeyboardType.Password,
         contentType = ContentType.Password,
-        onDone = { if (form.canSubmit) onDone() },
+        onImeAction = { if (form.canSubmit) onDone() },
     )
 }
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Constraints
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvIconButton
+import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
@@ -98,7 +99,7 @@ private fun ColumnScope.TvSetupAddressFields(
             // Where the page lands: the remote came here to type, and the keyboard waits for select. An address a phone sent
             // lands on the way on instead, or on the opt-in when it waits on that (#907, #1084).
             arrival = arrival.takeUnless { state.awaitingConfirm || state.awaitingCleartextConsent },
-            onDone = {
+            onImeAction = {
                 if (allow != null) {
                     allow.run()
                 } else if (state.canContinue) {

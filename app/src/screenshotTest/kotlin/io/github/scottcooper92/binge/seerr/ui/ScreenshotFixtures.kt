@@ -3,7 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui
 import io.github.scottcooper92.binge.seerr.seerr.SeerrMediaStatusCode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrRequestStatusCode
 import io.github.scottcooper92.binge.seerr.ui.requests.RequestDownload
-import io.github.scottcooper92.binge.seerr.ui.tv.TvAdvancedRequestActions
 import io.github.scottcooper92.binge.seerr.ui.tv.request
 
 /**
@@ -16,9 +15,6 @@ internal const val FIXED_NOW_MILLIS = 1_770_000_000_000L
 
 /** The address hand-off code the TV setup frames show for a phone to scan. */
 internal val HAND_OFF_CODE = AddressHandOff.Listening(url = "http://192.168.86.53:41234/a/k7m2pqx4", pin = "4821")
-
-/** The television advanced-request screen's actions, none of which does anything: a frame is a still. */
-internal val NoAdvancedActions = TvAdvancedRequestActions({}, {}, {}, {}, {}, {})
 
 /**
  * The three requests the television frames share, drawn at [FIXED_NOW_MILLIS]: one pending, one approved and downloading,

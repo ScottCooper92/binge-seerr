@@ -12,10 +12,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
+import io.github.scottcooper92.binge.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -38,9 +38,7 @@ class ChoiceRowTest {
     val composeTestRule = createSeerrComposeRule()
 
     private val unknown get() =
-        ApplicationProvider.getApplicationContext<android.content.Context>().getString(
-            R.string.settings_value_unknown,
-        )
+        string(R.string.settings_value_unknown)
 
     @Test
     fun `the row names the current choice and nothing else`() {

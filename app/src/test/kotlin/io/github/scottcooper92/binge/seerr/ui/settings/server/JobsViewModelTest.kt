@@ -325,13 +325,24 @@ class JobsViewModelTest {
             collector.cancel()
             testScheduler.runCurrent()
             held.release(code = 503)
+            // The cancelled read's answer lands on OkHttp's thread: let it finish before the page comes back, or it can land
+            // beside the return and the count below is taken against a read still settling.
+            seerr.awaitCallbacks()
             testScheduler.runCurrent()
             val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
             val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
             testScheduler.runCurrent()
             // Holding time: otherwise the plex scan's run, a day ahead, comes due during the wait and reads the list too.
-            assertTrue(seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = reads))
+            assertTrue(
+                seerr.awaitCountHoldingTime(
+                    "GET",
+                    "/api/v1/settings/jobs",
+                    moreThan = reads,
+                    timeoutMillis = seerr.expectedCallWaitMillis(),
+                    pump = testScheduler::runCurrent,
+                ),
+            )
             returned.cancel()
         }
 
@@ -387,7 +398,15 @@ class JobsViewModelTest {
 
                 val returned = launch(start = CoroutineStart.UNDISPATCHED) { vm.uiState.collect {} }
                 testScheduler.runCurrent()
-                assertTrue(seerr.awaitCountHoldingTime("GET", "/api/v1/settings/jobs", moreThan = reads))
+                assertTrue(
+                    seerr.awaitCountHoldingTime(
+                        "GET",
+                        "/api/v1/settings/jobs",
+                        moreThan = reads,
+                        timeoutMillis = seerr.expectedCallWaitMillis(),
+                        pump = testScheduler::runCurrent,
+                    ),
+                )
                 returned.cancel()
             } finally {
                 viewModels.clear()

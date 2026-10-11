@@ -257,7 +257,7 @@ argued with in review. The baseline should only shrink.
 
 ### Coverage
 
-`koverVerify` holds `:app` to **78% of lines**, a number measured (the suite was at 80.3%) rather
+`koverVerify` holds `:app` to **84% of lines**, a number measured (the suite was at 86.4%) rather
 than inherited — Binge's 70 comes from its own per-module layout, and this is one module holding
 ViewModels, the Seerr client, the stores and the exported service together.
 

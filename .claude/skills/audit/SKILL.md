@@ -8,7 +8,7 @@ description: Whole-codebase (or package-scoped) sweep of binge-seerr for bugs, c
 CI runs the tasks of `./gradlew build`, split across four parallel jobs and one aggregate `build`
 job (`.github/workflows/ci.yml`): compile, `:app:test`, ktlint, detekt (type-resolved, zero new
 against `detekt-baseline.xml`), Android lint (translation checks and `UnusedResources` pinned to
-error), `checkTranslationStaleness`, `koverVerify` (78%), `validateDebugScreenshotTest` and the R8 release build. Do not
+error), `checkTranslationStaleness`, `koverVerify` (84%), `validateDebugScreenshotTest` and the R8 release build. Do not
 re-report anything that set decides. The audit's value is what it *doesn't* gate: conventions held
 "in review or nowhere" (`CLAUDE.md` > Screens and ViewModels), the one-rule-everything-serves
 ("this repository is read as documentation"), server-gating, the exported Service, and doc drift.
@@ -143,7 +143,7 @@ content; stateless `*Content` composables exist where a modal window cannot be c
 ## Dimension 7 — doc-vs-code drift
 
 Extract every checkable claim from `CLAUDE.md`, `.ai/agents/*.md`, `docs/*.md`, `README.md` and
-`.github/workflows/*.yml` comments (task names, thresholds — e.g. 78% kover, 400-line signal,
+`.github/workflows/*.yml` comments (task names, thresholds — e.g. 84% kover, 400-line signal,
 SDK/JDK/AGP versions, "pre-alpha at contract parity" status claims, capability lists, the
 list of what `build` covers (compare it to `check`'s dependencies, not to a count), workflow names, paths, issue numbers) and
 verify each against source, `libs.versions.toml`, `app/build.gradle.kts` and `buildSrc/`. Report

@@ -3,8 +3,6 @@ package io.github.scottcooper92.binge.seerr.ui
 import io.github.scottcooper92.binge.seerr.seerr.SeerrSignInMode
 import io.github.scottcooper92.binge.seerr.seerr.SeerrVariant
 
-internal val NoSetupActions = SetupActions({}, {}, {}, {}, {}, {}, {}, {})
-
 internal const val PREVIEW_API_KEY = "MTc0NDE1NzQ0MjQyMzFhYzY0"
 
 internal fun previewSetupServer(

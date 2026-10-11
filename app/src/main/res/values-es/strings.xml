@@ -60,6 +60,17 @@
     <string name="hub_quota_movies">Películas</string>
     <string name="hub_quota_tv">Series</string>
     <string name="hub_quota_unlimited">Sin límite</string>
+    <string name="hub_account_unlimited">%1$s, peticiones sin límite</string>
+    <plurals name="hub_account_movies_left">
+        <item quantity="one">%1$s, %2$d de %3$d petición de películas disponible</item>
+        <item quantity="many">%1$s, %2$d de %3$d peticiones de películas disponibles</item>
+        <item quantity="other">%1$s, %2$d de %3$d peticiones de películas disponibles</item>
+    </plurals>
+    <plurals name="hub_account_tv_left">
+        <item quantity="one">%1$s, %2$d de %3$d petición de series disponible</item>
+        <item quantity="many">%1$s, %2$d de %3$d peticiones de series disponibles</item>
+        <item quantity="other">%1$s, %2$d de %3$d peticiones de series disponibles</item>
+    </plurals>
     <plurals name="hub_quota_remaining">
         <item quantity="one">Queda %1$d de %2$d</item>
         <item quantity="many">Quedan %1$d de %2$d</item>
@@ -1235,7 +1246,6 @@
     <string name="server_settings_blocklist_tags_empty">Aún no hay etiquetas. Busca una palabra clave para bloquear lo que la tenga.</string>
     <string name="server_settings_blocklist_tags_empty_title">No hay etiquetas bloqueadas</string>
     <string name="server_settings_blocklist_tags_remove">Quitar %1$s</string>
-    <string name="server_settings_blocklist_tags_type">Escribe una palabra clave para buscarla en TMDB.</string>
     <string name="server_settings_blocklist_tags_save_failed">No se pudieron guardar las etiquetas.</string>
     <string name="server_settings_blocklist_tags_retry">Reintentar</string>
     <string name="server_settings_blocklist_tags_no_match">Ninguna palabra clave coincide.</string>
