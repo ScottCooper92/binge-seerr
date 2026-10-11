@@ -111,7 +111,7 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  *
  * A page passes [validation] to opt into the sectioned form (#549): Cancel and Save move to a bar
  * pinned at the bottom, Save stays tappable while the draft has issues, and a Save that finds one
- * shows the page's required fields and scrolls the first issue into view (see [EditorSection]).
+ * shows the page's required fields and scrolls the first issue into view.
  * Without it the page is exactly as it was.
  *
  * [footerCommit] puts the commit in that same bottom bar, Cancel beside it, for a page whose commit stays explicit

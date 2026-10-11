@@ -54,7 +54,7 @@ internal fun EditorToggleGroup(
 internal fun EditorToggleRow(toggle: ListItem) = EditorToggleRows(listOf(toggle))
 
 /**
- * Several toggles inside an [FormSection] or [EditorSection], drawn as one run of rows with the
+ * Several toggles inside a [FormSection], drawn as one run of rows with the
  * design system's dividers between them rather than as separately spaced rows. Bleeds as
  * [EditorToggleRow] does.
  */
