@@ -78,13 +78,13 @@ jobs:
         with:
           submodules: true
 
-      # JDK 17, matching Binge rather than binge-companions' 21. The extracted code
-      # targets jvmTarget 17 and the AGP in `libs.versions.toml` is what Binge builds with, so the toolchain
-      # here is the one the extraction arrives expecting.
+      # JDK 21, matching binge-ci's ci-setup. The JDK runs the build and nothing else:
+      # `jvmTarget` 17 in app/build.gradle.kts decides the bytecode, so this does not move what
+      # runs on a device.
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Unit tests and coverage
@@ -156,7 +156,7 @@ jobs:
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Validate screenshots
@@ -185,7 +185,7 @@ jobs:
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Assemble the release build
