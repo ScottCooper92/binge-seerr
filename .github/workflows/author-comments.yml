@@ -61,7 +61,7 @@ jobs:
                 github.event.review.author_association || github.event.comment.author_association)) &&
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@af5307ee00e0e0efff9b5c8ce08e45c1f0905909 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-comments.yml@118a2849cba1529577e8df010210b9f0166bc2df # v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
       maintainer_handle: ScottCooper92
@@ -71,7 +71,7 @@ jobs:
       # not run in. The Android SDK is preinstalled on the hosted runner image, which is
       # why ci.yml installs one too.
       toolchain: jvm
-      java_version: '17'
+      java_version: '21'
       verify_guidance: >
         You have a JDK, an Android SDK and Gradle, so verify what you change
         rather than reasoning about it. Scope Gradle to the module - `:app:test`,

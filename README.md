@@ -117,7 +117,7 @@ git clone --recurse-submodules https://github.com/ScottCooper92/binge-seerr
 ```
 
 That is the whole gate: the checks `CLAUDE.md` lists under Gates, from the Kotlin compile to the
-screenshot suite. JDK 17, `compileSdk` 37, `minSdk` 26 and the AGP in `libs.versions.toml`, matching Binge,
+screenshot suite. JDK 21, then a `jvmTarget` of 17, `compileSdk` 37, `minSdk` 26 and the AGP in `libs.versions.toml`, matching Binge,
 so the extraction is a code move rather than a toolchain negotiation. The object graph is Hilt's,
 through KSP, at the versions Binge pins; the wiring lives in `di/`: `SeerrModule`, `AuthModule`, `DeviceKeysModule`,
 `HandOffModule` and `TelemetryModule`, plus `ServerScopedCaches`.

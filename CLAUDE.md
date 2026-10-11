@@ -97,7 +97,8 @@ to design; the server's API is versioned by release because it is not.
 
 ## Kotlin, Gradle and Android
 
-- Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 17.
+- Kotlin via AGP's built-in support, `jvmTarget` 17, built and tested on JDK 21. The JDK runs the
+  build; `jvmTarget` decides the bytecode, so moving one does not move the other.
 - `compileSdk` 37, `minSdk` 26, `targetSdk` 36, and the AGP in `libs.versions.toml` — matching
   Binge, so the extraction is a code move rather than a toolchain negotiation.
 - The `org.jetbrains.kotlin.android` plugin is declared `apply false` in the root
@@ -115,8 +116,8 @@ to design; the server's API is versioned by release because it is not.
   pins `sdk=34` and a plain `Application` for the whole module, and `RobolectricDefaultsTest`
   asserts it. Do not pin them per class again. `@Config` is for what a test genuinely
   varies — a `qualifiers` string, say. The pin matters because the fallback is `targetSdk`
-  36, whose sandbox requires Java 21: unpinned, a test passes on a JDK 21 machine and dies
-  in CI on JDK 17 before its body runs.
+  36, whose sandbox requires Java 21: unpinned, a test passes on JDK 21 and dies on a JDK 17
+  machine before its body runs.
 
 ## Screens and ViewModels
 

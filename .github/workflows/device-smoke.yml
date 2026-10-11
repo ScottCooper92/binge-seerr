@@ -68,7 +68,7 @@ jobs:
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
@@ -97,7 +97,7 @@ jobs:
 
       # A miss is not a failure: the setup step below falls back to the full download and boot.
       - name: Restore AVD cache
-        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@af5307ee00e0e0efff9b5c8ce08e45c1f0905909 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/restore-avd-cache@118a2849cba1529577e8df010210b9f0166bc2df # v1
         with:
           device: smokeAtdApi34
           api-level: '34'
@@ -126,7 +126,7 @@ jobs:
         if: >
           !cancelled() && github.event_name == 'push' &&
           steps.setup-device.outcome == 'success'
-        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@af5307ee00e0e0efff9b5c8ce08e45c1f0905909 # v1
+        uses: ScottCooper92/binge-ci/.github/actions/save-avd-cache@118a2849cba1529577e8df010210b9f0166bc2df # v1
         with:
           device: smokeAtdApi34
           api-level: '34'
