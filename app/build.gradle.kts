@@ -419,6 +419,15 @@ tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configure
     jvmTarget = "17"
 }
 
+// The coroutines test API (runTest, advanceUntilIdle, UnconfinedTestDispatcher, Dispatchers.setMain) is
+// experimental, and nearly every test uses it. Opting the test compilations in once keeps the compiler
+// log free of that noise, so a warning that matters stands out. Main sources are not opted in: an
+// opt-in there should stay a visible, per-site decision.
+kotlin.target.compilations.configureEach {
+    if (!name.contains("Test")) return@configureEach
+    compileTaskProvider.configure { compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi") }
+}
+
 // UnsafeCallOnNullableType - the `!!` ban - needs type resolution, and a detekt task carries no
 // classpath by default, so without this the rule loads and silently never fires. `libraries` is the
 // compile task's already-variant-resolved classpath; resolving compileDependencyFiles directly trips
