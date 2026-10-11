@@ -26,6 +26,7 @@ class SettingsIconsTest {
     fun `a custom slider kind that comes in movies and TV shows which one`() {
         listOf(
             SliderType.MovieGenre to SliderType.TvGenre,
+            SliderType.MovieKeyword to SliderType.TvKeyword,
             SliderType.MovieStreamingServices to SliderType.TvStreamingServices,
             SliderType.PopularMovies to SliderType.PopularTv,
             SliderType.UpcomingMovies to SliderType.UpcomingTv,

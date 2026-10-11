@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SettingsInputAntenna
 import androidx.compose.material.icons.filled.Subscriptions
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.TheaterComedy
 import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material.icons.filled.Tv
@@ -23,7 +24,8 @@ import com.cooper.binge.companion.seerr.R
 
 /**
  * A kind's icon, in the slider list's rows and the kind picker alike: what it shows, and movies or TV where a kind comes
- * in both. A genre or a keyword picks the same icon as the editor row that chooses it.
+ * in both. The two keyword kinds differ by glyph alone, since a key and a tag say nothing of movies or TV; the kind's
+ * label says which.
  */
 internal fun SliderType.icon(): ImageVector =
     when (this) {
@@ -39,7 +41,8 @@ internal fun SliderType.icon(): ImageVector =
         SliderType.TvGenres, SliderType.TvGenre -> Icons.Filled.Category
         SliderType.Studios, SliderType.Studio -> Icons.Filled.Business
         SliderType.Networks, SliderType.Network -> Icons.Filled.SettingsInputAntenna
-        SliderType.MovieKeyword, SliderType.TvKeyword -> Icons.Filled.Key
+        SliderType.MovieKeyword -> Icons.Filled.Key
+        SliderType.TvKeyword -> Icons.Filled.Tag
         SliderType.Search -> Icons.Filled.Search
         SliderType.MovieStreamingServices -> Icons.Filled.Subscriptions
         SliderType.TvStreamingServices -> Icons.Filled.LiveTv
