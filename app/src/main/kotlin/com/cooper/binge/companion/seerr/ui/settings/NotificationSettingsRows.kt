@@ -52,7 +52,6 @@ internal fun notificationRows(
                 icon = signal.icon(),
                 iconTint = BingeSentiment.Info.fill(),
                 label = stringResource(signal.labelRes()),
-                detail = stringResource(signal.captionRes()),
                 toggled = on,
                 onClick = {
                     if (!on &&
@@ -124,14 +123,4 @@ private fun NotificationSignal.labelRes(): Int =
         NotificationSignal.RequestAvailable -> R.string.settings_signal_available
         NotificationSignal.RequestApproved -> R.string.settings_signal_approved
         NotificationSignal.RequestDeclined -> R.string.settings_signal_declined
-    }
-
-@StringRes
-private fun NotificationSignal.captionRes(): Int =
-    when (this) {
-        NotificationSignal.PendingRequests -> R.string.settings_signal_pending_caption
-        NotificationSignal.OpenIssues -> R.string.settings_signal_issues_caption
-        NotificationSignal.RequestAvailable -> R.string.settings_signal_available_caption
-        NotificationSignal.RequestApproved -> R.string.settings_signal_approved_caption
-        NotificationSignal.RequestDeclined -> R.string.settings_signal_declined_caption
     }

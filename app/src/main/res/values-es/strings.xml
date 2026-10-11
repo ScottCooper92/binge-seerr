@@ -619,15 +619,10 @@
     <string name="settings_request_limit_tv">Series %1$s</string>
     <string name="settings_group_notify_me">Avisarme de</string>
     <string name="settings_signal_pending">Peticiones nuevas</string>
-    <string name="settings_signal_pending_caption">Peticiones esperando aprobación</string>
     <string name="settings_signal_issues">Incidencias nuevas</string>
-    <string name="settings_signal_issues_caption">Avisos de tus usuarios</string>
     <string name="settings_signal_available">Mis peticiones están disponibles</string>
-    <string name="settings_signal_available_caption">Un título que pediste ya se puede ver</string>
     <string name="settings_signal_approved">Mis peticiones se aprueban</string>
-    <string name="settings_signal_approved_caption">Se aprobó una petición tuya</string>
     <string name="settings_signal_declined">Mis peticiones se rechazan</string>
-    <string name="settings_signal_declined_caption">Se rechazó una petición tuya</string>
     <string name="settings_notifications_blocked">Las notificaciones están bloqueadas</string>
     <string name="settings_notifications_blocked_caption">Permítelas en los ajustes del sistema para enterarte de todo esto</string>
     <string name="settings_notifications_poll">Se comprueba en segundo plano</string>
@@ -739,7 +734,7 @@
         <item quantity="many">%1$d días</item>
         <item quantity="other">%1$d días</item>
     </plurals>
-    <string name="server_settings_network_caption">Cabeceras del proxy, CSRF, el proxy de salida y la caché de DNS</string>
+    <string name="server_settings_network_caption">Proxy, CSRF y caché de DNS</string>
     <string name="server_settings_force_ipv4">Preferir IPv4</string>
     <string name="server_settings_proxy">Proxy de salida</string>
     <string name="server_settings_proxy_enabled">Usar un proxy</string>
@@ -760,7 +755,7 @@
     <string name="server_settings_metadata_anime">Anime</string>
     <string name="server_settings_metadata_test">Probar los proveedores</string>
     <string name="server_settings_metadata_tested">Proveedores alcanzados</string>
-    <string name="server_settings_sliders_caption">Las filas de la página Descubrir del cliente web, y su orden</string>
+    <string name="server_settings_sliders_caption">Edita las filas de la página Descubrir</string>
     <string name="server_settings_slider_add">Añadir una fila</string>
     <string name="server_settings_slider_edit">Editar la fila</string>
     <string name="server_settings_slider_built_in">Integrada</string>
@@ -1085,9 +1080,8 @@
     <string name="server_settings_agent_profile_name_hint">Solo hace falta si el servidor no usa el perfil predeterminado.</string>
     <string name="settings_group_app">Esta aplicación</string>
     <string name="settings_report_bug">Informar de un error</string>
-    <string name="settings_report_bug_caption">Abre una incidencia nueva en GitHub con los datos de la aplicación y del dispositivo ya rellenados</string>
+    <string name="settings_report_bug_caption">Abre GitHub con los datos de tu dispositivo ya rellenados</string>
     <string name="settings_shake_to_report">Agitar para informar</string>
-    <string name="settings_shake_to_report_caption">Agita el móvil para informar de un error en esta aplicación</string>
     <string name="shake_report_title">¿Informar de un error?</string>
     <string name="shake_report_message">Se abrirá una incidencia nueva en la página de GitHub de esta aplicación, con la versión de la aplicación y el dispositivo ya rellenados. No se incluye nada sobre tu servidor.</string>
     <string name="tv_settings_report_bug_body">¿Algo no funciona en esta aplicación? Muestra un código y escanéalo con el móvil para informar en GitHub.</string>
@@ -1106,7 +1100,7 @@
     <string name="consent_accept">Compartir datos de uso</string>
     <string name="consent_decline">Ahora no</string>
     <string name="settings_share_usage_data">Compartir datos de uso</string>
-    <string name="settings_share_usage_data_caption">Qué pantallas y funciones usas. Nunca tu servidor ni lo que contiene.</string>
+    <string name="settings_share_usage_data_caption">Envía qué pantallas usas</string>
     <string name="settings_send_crash_reports">Enviar informes de fallos</string>
     <string name="settings_send_crash_reports_caption">Qué hacía la aplicación cuando falló, para poder corregirlo</string>
     <string name="tv_settings_toggle_on">Activado</string>
