@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -222,9 +223,10 @@ private fun CardInfoRows(
     }
 }
 
+/** A glyph in the tinted box a list row leads with, for a row the design system's `ListItem` does not draw. */
 @Composable
-private fun FactIconBox(
-    fact: Fact,
+internal fun RowIconBox(
+    icon: ImageVector,
     contentDescription: String? = null,
 ) {
     Box(
@@ -236,7 +238,7 @@ private fun FactIconBox(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = fact.icon,
+            imageVector = icon,
             contentDescription = contentDescription,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(dimensionResource(DesR.dimen.item_group_icon_glyph)),
@@ -257,7 +259,7 @@ private fun CardDestinationLine(facts: List<Fact>) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
             ) {
-                FactIconBox(fact, contentDescription = fact.label)
+                RowIconBox(fact.icon, contentDescription = fact.label)
                 Text(
                     text = fact.primary.plainText(),
                     style = MaterialTheme.typography.bodySmall,

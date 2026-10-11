@@ -1,37 +1,26 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import com.binge.designsystem.component.ItemGroup
+import com.binge.designsystem.component.ListItem
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.SortSheet
-import com.cooper.binge.companion.seerr.ui.users.settings.rowLabelColor
-import com.binge.designsystem.R as DesR
 
 /**
  * One line naming the current choice, opening the shared choice sheet with the full list rather than stacking a
  * chip per option. A list a server supplies has no length or
  * label width this app controls, so it is the only shape whose height does not scale with the
  * connected server's config — see #336.
+ *
+ * The row is a settings row: [icon] in the tinted box, [title], the current choice as its detail. In the sheet each
+ * choice carries [choiceIcon]'s icon, or else the row's, as `choiceSettingItem`'s sheet does.
  *
  * [enabled] is what an editor page passes while it saves: off, it dims
  * the row and blocks the tap that opens the sheet. An already-open sheet closes the moment a save
@@ -40,22 +29,25 @@ import com.binge.designsystem.R as DesR
  */
 @Composable
 fun <T> ChoiceRow(
+    icon: ImageVector,
     title: String,
     choices: List<Pair<T, String>>,
     selected: T?,
     onSelect: (T) -> Unit,
     enabled: Boolean = true,
+    choiceIcon: (T) -> ImageVector? = { null },
 ) {
     if (choices.isEmpty()) return
     var open by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(enabled) { if (!enabled) open = false }
-    ChoiceField(title = title, choices = choices, selected = selected, enabled = enabled) { open = true }
+    ChoiceField(icon = icon, title = title, choices = choices, selected = selected, enabled = enabled) { open = true }
     if (open) {
         SortSheet(
             title = title,
             choices = choices.map { it.first },
             selected = selected,
             label = { id -> choices.first { it.first == id }.second },
+            icon = { choiceIcon(it) ?: icon },
             onSelect = onSelect,
             onDismiss = { open = false },
         )
@@ -70,6 +62,7 @@ fun <T> ChoiceRow(
  */
 @Composable
 internal fun <T> ChoiceField(
+    icon: ImageVector,
     title: String,
     choices: List<Pair<T, String>>,
     selected: T?,
@@ -77,27 +70,18 @@ internal fun <T> ChoiceField(
     onClick: () -> Unit,
 ) {
     if (choices.isEmpty()) return
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = dimensionResource(DesR.dimen.min_touch_target))
-                .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = rowLabelColor(enabled))
-            Text(
-                choices.firstOrNull { it.first == selected }?.second ?: stringResource(R.string.settings_value_unknown),
-                style = MaterialTheme.typography.bodyMedium,
-                color = rowLabelColor(enabled, MaterialTheme.colorScheme.onSurfaceVariant),
-            )
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = rowLabelColor(enabled, MaterialTheme.colorScheme.onSurfaceVariant),
-        )
-    }
+    ItemGroup(
+        title = null,
+        rows =
+            listOf(
+                ListItem(
+                    icon = icon,
+                    label = title,
+                    detail = choices.firstOrNull { it.first == selected }?.second ?: stringResource(R.string.settings_value_unknown),
+                    clickable = enabled,
+                    disabled = !enabled,
+                    onClick = onClick,
+                ),
+            ),
+    )
 }

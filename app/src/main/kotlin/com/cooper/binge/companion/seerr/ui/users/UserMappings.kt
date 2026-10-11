@@ -1,6 +1,12 @@
 package com.cooper.binge.companion.seerr.ui.users
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.RequestPage
+import androidx.compose.material.icons.filled.SortByAlpha
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.UserEntity
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
@@ -21,6 +27,15 @@ internal fun UserSort.labelRes(): Int =
         UserSort.Updated -> R.string.users_sort_updated
         UserSort.DisplayName -> R.string.users_sort_name
         UserSort.Requests -> R.string.users_sort_requests
+    }
+
+/** The sort's glyph in the choice sheet. */
+internal fun UserSort.icon(): ImageVector =
+    when (this) {
+        UserSort.Created -> Icons.Filled.PersonAdd
+        UserSort.Updated -> Icons.Filled.Update
+        UserSort.DisplayName -> Icons.Filled.SortByAlpha
+        UserSort.Requests -> Icons.Filled.RequestPage
     }
 
 @StringRes

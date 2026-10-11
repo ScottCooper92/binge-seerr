@@ -101,6 +101,7 @@ fun IssuesScreen(
             choices = IssueSort.entries,
             selected = ready.sort,
             label = { stringResource(it.labelRes()) },
+            icon = { it.icon() },
             onSelect = actions.onSortChange,
             onDismiss = { showSort = false },
         )

@@ -1,5 +1,10 @@
 package com.cooper.binge.companion.seerr.ui
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDetailsDto
 import com.cooper.binge.companion.seerr.seerr.SeerrServerDto
 
@@ -54,4 +59,14 @@ data class DestinationChoices(
             tagIds = tagIds.filter { id -> details.tags.any { it.id == id } }.toSet(),
             loadingChoices = false,
         )
+}
+
+/**
+ * The destination fields' glyphs, so the request-with-options page and the request editor show the same three. They
+ * match the request card's own server, quality and folder facts.
+ */
+internal object DestinationIcons {
+    val server: ImageVector = Icons.Filled.Dns
+    val profile: ImageVector = Icons.Filled.HighQuality
+    val rootFolder: ImageVector = Icons.Filled.Folder
 }

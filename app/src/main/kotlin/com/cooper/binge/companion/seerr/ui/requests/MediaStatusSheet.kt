@@ -57,7 +57,9 @@ internal fun MediaStatusSheetContent(
 
 @Composable
 private fun statusChoices(): BingeChoiceList<MediaStatusChoice> =
-    BingeChoiceList.Ready(MediaStatusChoice.entries.map { choice -> BingeChoice(choice, stringResource(choice.labelRes())) })
+    BingeChoiceList.Ready(
+        MediaStatusChoice.entries.map { choice -> BingeChoice(choice, stringResource(choice.labelRes()), icon = choice.icon()) },
+    )
 
 private fun MediaInstance.selectedChoice(): MediaStatusChoice? = MediaStatusChoice.entries.firstOrNull { it.code == status }
 
