@@ -1,6 +1,5 @@
 package io.github.scottcooper92.binge.seerr.ui.tv
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tv
@@ -87,11 +86,7 @@ internal fun TvSetupCodePage(
                 }
             },
     ) {
-        when {
-            unavailable != null -> TvHandOffContent(unavailable)
-            code != null -> TvHandOffContent(code)
-            else -> Box(Modifier.weight(1f).fillMaxWidth())
-        }
+        TvHandOffContent(handOff = unavailable ?: code, preparing = needsCode)
         val (status, isError) = codeStatus(address, signIn, hasCode = code != null)
         Text(
             text = status,
@@ -127,6 +122,7 @@ private fun codeStatus(
         address.handOff is AddressHandOff.Unavailable -> "" to false
         address.isInspecting -> stringResource(R.string.tv_setup_status_checking) to false
         address.error != null -> stringResource(address.error.messageRes()) to true
-        !hasCode -> stringResource(R.string.tv_setup_status_preparing) to false
+        // The card says it is getting a code ready, in the code's place.
+        !hasCode -> "" to false
         else -> stringResource(R.string.tv_setup_status_waiting) to false
     }
