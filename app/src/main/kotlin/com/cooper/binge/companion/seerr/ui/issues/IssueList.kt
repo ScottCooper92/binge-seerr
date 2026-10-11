@@ -34,7 +34,6 @@ import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.template.PagedPhase
-import com.binge.designsystem.template.screenListPadding
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.ListRefresh
 import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
@@ -48,6 +47,7 @@ import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
 import com.cooper.binge.companion.seerr.ui.state.belowPinnedLine
+import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import com.binge.designsystem.R as DesR
 
@@ -99,7 +99,7 @@ internal fun IssuesBody(
                 }
             PagedPhase.Skeleton ->
                 ListRowSkeletonColumn(
-                    contentPadding = contentPadding.screenListPadding(),
+                    contentPadding = contentPadding.filteredPagePadding(),
                     modifier = Modifier.fillMaxSize(),
                 )
             is PagedPhase.Failed ->
@@ -129,7 +129,7 @@ private fun IssueList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = contentPadding.screenListPadding(),
+        contentPadding = contentPadding.filteredPagePadding(),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
     ) {
         items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

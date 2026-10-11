@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -51,7 +49,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -76,6 +73,7 @@ import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -171,22 +169,6 @@ private fun LogsPage(
     LogsBody(lazyItems, listState, actions, Modifier.fillMaxSize(), contentPadding)
 }
 
-/**
- * The page's top and bottom, which already hold the bar, the header and the content inset below, with the content inset
- * on the sides. The template hands a page only top and bottom, so the sides are this list's own.
- */
-@Composable
-private fun logRowPadding(page: PaddingValues): PaddingValues {
-    val sides = resolvedContentPadding()
-    val direction = LocalLayoutDirection.current
-    return PaddingValues(
-        start = sides.calculateStartPadding(direction),
-        top = page.calculateTopPadding(),
-        end = sides.calculateEndPadding(direction),
-        bottom = page.calculateBottomPadding(),
-    )
-}
-
 @Composable
 private fun LogsBody(
     lazyItems: LazyPagingItems<LogEntry>,
@@ -201,7 +183,7 @@ private fun LogsBody(
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = logRowPadding(contentPadding),
+                contentPadding = contentPadding.filteredPagePadding(),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
             ) {
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
