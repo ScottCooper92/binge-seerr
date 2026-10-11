@@ -62,10 +62,11 @@ internal fun EditorSection(
 ) {
     val formKey = LocalEditorForm.current?.key.orEmpty()
     val issueCount = LocalEditorIssues.current.count { it.section == sectionId }
-    var userChoice by rememberSaveable(formKey, sectionId, key = "editor-section:$formKey/$sectionId") { mutableStateOf<Boolean?>(null) }
+    // Positional, and reset by its inputs: a different editor or section starts from its own default.
+    var userChoice by rememberSaveable(formKey, sectionId) { mutableStateOf<Boolean?>(null) }
     // Read once: a caller may pass a value that follows the draft, and a section the user is
     // working in must not close under their finger when it changes.
-    val openedAs = rememberSaveable(formKey, sectionId, key = "editor-section-default:$formKey/$sectionId") { defaultExpanded }
+    val openedAs = rememberSaveable(formKey, sectionId) { defaultExpanded }
     val expanded = sectionExpanded(userChoice, openedAs, issueCount)
     Column(
         modifier =
