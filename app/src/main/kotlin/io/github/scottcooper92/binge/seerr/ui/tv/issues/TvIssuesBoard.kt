@@ -295,6 +295,7 @@ internal fun TvIssueActionsSheet(
                     onConfirm = onResolve,
                     onCancel = { pending = null },
                     entryFocus = entryFocus,
+                    destructive = false,
                 )
             TvIssueConfirm.Reopen ->
                 TvSideSheetConfirm(
@@ -304,6 +305,7 @@ internal fun TvIssueActionsSheet(
                     onConfirm = onReopen,
                     onCancel = { pending = null },
                     entryFocus = entryFocus,
+                    destructive = false,
                 )
             TvIssueConfirm.Delete ->
                 TvSideSheetConfirm(
