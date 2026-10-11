@@ -523,7 +523,7 @@ class SendAddressViewModelTest {
             // The phone sent no address here, so the TV's is the only one there is: it can type for it, but not hand it the session.
             assertNull((form.step as SignInStep.Form).sessionOffer)
             // So the form names where typed credentials would go, which the server's own title does not (#1085).
-            assertEquals("http://192.168.1.66:5055/", (form.step as SignInStep.Form).address)
+            assertEquals("http://192.168.1.66:5055/", form.step.address)
             vm.sendSession()
             assertTrue(tv.sentCredentials.isEmpty())
         }
