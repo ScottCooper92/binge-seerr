@@ -612,7 +612,7 @@ app:server_settings_forgot_password_url  d5133679fac2
 app:server_settings_general_title  2a1660d99aa8
 app:server_settings_hide_available_detail  05ef8b52d631
 app:server_settings_hide_blocklisted  3f5c33aa0f2e
-app:server_settings_hide_blocklisted_detail  05ef8b52d631
+app:server_settings_hide_blocklisted_detail  cf66ec591287
 app:server_settings_hide_requested  ef9e18a6cd6c
 app:server_settings_hide_requested_detail  05ef8b52d631
 app:server_settings_host  4a823118b9ba

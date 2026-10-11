@@ -1285,7 +1285,7 @@
     <string name="server_settings_about_support_project">Support %1$s</string>
     <string name="server_settings_about_contribute">Make a contribution</string>
     <string name="server_settings_hide_blocklisted">Hide blocklisted titles</string>
-    <string name="server_settings_hide_blocklisted_detail">Removes them from Discover</string>
+    <string name="server_settings_hide_blocklisted_detail">Removes them from Discover for blocklist managers</string>
     <string name="server_settings_blocklist">Blocklist</string>
     <string name="server_settings_blocklist_region">Blocklist region</string>
     <string name="server_settings_blocklist_language">Blocklist languages</string>

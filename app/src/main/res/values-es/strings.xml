@@ -1230,7 +1230,7 @@
     <string name="server_settings_about_support_project">Apoya a %1$s</string>
     <string name="server_settings_about_contribute">Hacer una aportación</string>
     <string name="server_settings_hide_blocklisted">Ocultar títulos bloqueados</string>
-    <string name="server_settings_hide_blocklisted_detail">Los quita de Descubrir</string>
+    <string name="server_settings_hide_blocklisted_detail">Los quita de Descubrir a quien gestiona la lista de bloqueo</string>
     <string name="server_settings_blocklist">Lista de bloqueo</string>
     <string name="server_settings_blocklist_region">Región de bloqueo</string>
     <string name="server_settings_blocklist_language">Idiomas de bloqueo</string>
