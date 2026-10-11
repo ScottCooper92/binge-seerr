@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
@@ -160,10 +162,12 @@ internal fun ScheduleDialog(
         extraContent = {
             Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
                 ChoiceRow(
+                    icon = Icons.Filled.Schedule,
                     title = stringResource(R.string.server_settings_job_presets),
                     choices = presets.map { it.cron to it.label() },
                     selected = cron.takeIf { c -> presets.any { it.cron == c } },
                     onSelect = { cron = it },
+                    choiceIcon = { c -> presets.firstOrNull { it.cron == c }?.unit?.icon() },
                 )
                 EditorTextField(
                     cron,
@@ -182,4 +186,12 @@ private fun SchedulePreset.label(): String =
         ScheduleUnit.Minutes -> pluralStringResource(R.plurals.server_settings_every_minutes, every, every)
         ScheduleUnit.Hours -> pluralStringResource(R.plurals.server_settings_every_hours, every, every)
         ScheduleUnit.Days -> pluralStringResource(R.plurals.server_settings_every_days, every, every)
+    }
+
+/** A preset's glyph in the choice sheet, by the unit it repeats in: a timer for minutes, a clock for hours, a day. */
+private fun ScheduleUnit.icon(): ImageVector =
+    when (this) {
+        ScheduleUnit.Minutes -> Icons.Filled.Timer
+        ScheduleUnit.Hours -> Icons.Filled.Schedule
+        ScheduleUnit.Days -> Icons.Filled.Today
     }

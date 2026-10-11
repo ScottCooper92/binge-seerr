@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -36,9 +40,22 @@ class ChoiceRowScreenshotTest {
             modifier = Modifier.width(ROW_WIDTH).padding(dimensionResource(DesR.dimen.padding_m)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            ChoiceRow(title = "Root folder", choices = listOf("/data/media" to "/data/media"), selected = "/data/media", onSelect = {})
-            ChoiceRow(title = "Language profile", choices = QUALITY_PROFILES, selected = null, onSelect = {})
-            ChoiceRow(title = "Quality profile", choices = QUALITY_PROFILES, selected = 1, onSelect = {}, enabled = false)
+            ChoiceRow(
+                icon = Icons.Filled.Folder,
+                title = "Root folder",
+                choices = listOf("/data/media" to "/data/media"),
+                selected = "/data/media",
+                onSelect = {},
+            )
+            ChoiceRow(icon = Icons.Filled.Translate, title = "Language profile", choices = QUALITY_PROFILES, selected = null, onSelect = {})
+            ChoiceRow(
+                icon = Icons.Filled.HighQuality,
+                title = "Quality profile",
+                choices = QUALITY_PROFILES,
+                selected = 1,
+                onSelect = {},
+                enabled = false,
+            )
         }
     }
 
@@ -50,8 +67,14 @@ class ChoiceRowScreenshotTest {
             modifier = Modifier.width(ROW_WIDTH).padding(dimensionResource(DesR.dimen.padding_m)),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
         ) {
-            ChoiceRow(title = "Root folder", choices = listOf("/data/media" to "/data/media"), selected = "/data/media", onSelect = {})
-            ChoiceRow(title = "Quality profile", choices = QUALITY_PROFILES, selected = 3, onSelect = {})
+            ChoiceRow(
+                icon = Icons.Filled.Folder,
+                title = "Root folder",
+                choices = listOf("/data/media" to "/data/media"),
+                selected = "/data/media",
+                onSelect = {},
+            )
+            ChoiceRow(icon = Icons.Filled.HighQuality, title = "Quality profile", choices = QUALITY_PROFILES, selected = 3, onSelect = {})
         }
     }
 
@@ -65,6 +88,7 @@ class ChoiceRowScreenshotTest {
             choices = QUALITY_PROFILES.map { it.first },
             selected = 3,
             label = { id -> QUALITY_PROFILES.first { it.first == id }.second },
+            icon = { Icons.Filled.HighQuality },
             onSelect = {},
         )
     }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -24,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -34,6 +36,7 @@ import com.binge.designsystem.component.CheckboxRow
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.ChoiceField
 import com.cooper.binge.companion.seerr.ui.DestinationChoices
+import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.settings.server.TagChips
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.SortContent
@@ -164,18 +167,21 @@ private fun DestinationFields(
 ) {
     if (destination.loadingChoices) LinearProgressIndicator(Modifier.fillMaxWidth())
     ChoiceField(
+        icon = DestinationIcons.server,
         title = stringResource(R.string.advanced_server),
         choices = destination.servers.map { it.id to it.label },
         selected = destination.serverId,
         enabled = enabled,
     ) { onOpen(DestinationField.Server) }
     ChoiceField(
+        icon = DestinationIcons.profile,
         title = stringResource(R.string.advanced_profile),
         choices = destination.profiles.map { it.id to it.label },
         selected = destination.profileId,
         enabled = enabled,
     ) { onOpen(DestinationField.Profile) }
     ChoiceField(
+        icon = DestinationIcons.rootFolder,
         title = stringResource(R.string.advanced_root_folder),
         choices = destination.rootFolders.map { it to it },
         selected = destination.rootFolder,
@@ -198,6 +204,7 @@ private fun DestinationPickerFor(
     when (field) {
         DestinationField.Server ->
             DestinationPickerPanel(
+                icon = DestinationIcons.server,
                 title = stringResource(R.string.advanced_server),
                 choices = destination.servers.map { it.id to it.label },
                 selected = destination.serverId,
@@ -209,6 +216,7 @@ private fun DestinationPickerFor(
             )
         DestinationField.Profile ->
             DestinationPickerPanel(
+                icon = DestinationIcons.profile,
                 title = stringResource(R.string.advanced_profile),
                 choices = destination.profiles.map { it.id to it.label },
                 selected = destination.profileId,
@@ -220,6 +228,7 @@ private fun DestinationPickerFor(
             )
         DestinationField.RootFolder ->
             DestinationPickerPanel(
+                icon = DestinationIcons.rootFolder,
                 title = stringResource(R.string.advanced_root_folder),
                 choices = destination.rootFolders.map { it to it },
                 selected = destination.rootFolder,
@@ -240,6 +249,7 @@ private fun DestinationPickerFor(
  */
 @Composable
 private fun <T> DestinationPickerPanel(
+    icon: ImageVector,
     title: String,
     choices: List<Pair<T, String>>,
     selected: T?,
@@ -256,6 +266,7 @@ private fun <T> DestinationPickerPanel(
             choices = choices.map { it.first },
             selected = selected,
             label = { id -> choices.first { it.first == id }.second },
+            icon = { icon },
             onSelect = onSelect,
             modifier = Modifier.weight(1f, fill = false),
         )
@@ -276,6 +287,7 @@ private fun SeasonToggleRow(
         onToggle = { onToggle() },
         enabled = enabled && !season.locked,
         showDivider = showDivider,
+        leadingContent = { RowIconBox(Icons.Filled.Tv) },
         trailingContent = season.heldStatus?.let { status -> { MediaStateChip(status = status) } },
     )
 }

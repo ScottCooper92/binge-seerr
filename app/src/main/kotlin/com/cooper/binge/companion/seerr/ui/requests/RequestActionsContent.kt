@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -343,7 +342,7 @@ private fun mediaRows(
     val client = stringResource(if (media.isTv) R.string.media_client_sonarr else R.string.media_client_radarr)
     return buildList {
         media.instances.forEach { instance ->
-            add(instanceRow(instance, media.canSetStatus) { callbacks.onMarkStatus(instance.is4k) })
+            add(instanceRow(instance, media.isTv, media.canSetStatus) { callbacks.onMarkStatus(instance.is4k) })
             if (media.canDeleteFiles && instance.status.hasFiles()) {
                 add(
                     ListItem(
@@ -377,11 +376,12 @@ private fun mediaRows(
 @Composable
 private fun instanceRow(
     instance: MediaInstance,
+    isTv: Boolean,
     canSetStatus: Boolean,
     onMarkStatus: () -> Unit,
 ): ListItem =
     ListItem(
-        icon = Icons.Filled.Movie,
+        icon = instance.icon(isTv),
         label = stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard),
         // Where the status can be set the row is a picker, so its detail is its current value. Where it cannot, the
         // status is only information and keeps its chip.

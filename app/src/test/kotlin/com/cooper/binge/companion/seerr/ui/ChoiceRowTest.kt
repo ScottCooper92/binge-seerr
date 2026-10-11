@@ -1,6 +1,8 @@
 package com.cooper.binge.companion.seerr.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
@@ -99,7 +101,14 @@ class ChoiceRowTest {
                 var enabled by remember { mutableStateOf(true) }
                 Column {
                     Button(onClick = { enabled = false }) { Text("start saving") }
-                    ChoiceRow(title = TITLE, choices = CHOICES, selected = 3, onSelect = { picked += it }, enabled = enabled)
+                    ChoiceRow(
+                        icon = Icons.Filled.HighQuality,
+                        title = TITLE,
+                        choices = CHOICES,
+                        selected = 3,
+                        onSelect = { picked += it },
+                        enabled = enabled,
+                    )
                 }
             }
         }
@@ -118,7 +127,14 @@ class ChoiceRowTest {
     ) {
         composeTestRule.setContent {
             BingeExpressiveTheme {
-                ChoiceRow(title = TITLE, choices = CHOICES, selected = selected, onSelect = onSelect, enabled = enabled)
+                ChoiceRow(
+                    icon = Icons.Filled.HighQuality,
+                    title = TITLE,
+                    choices = CHOICES,
+                    selected = selected,
+                    onSelect = onSelect,
+                    enabled = enabled,
+                )
             }
         }
     }

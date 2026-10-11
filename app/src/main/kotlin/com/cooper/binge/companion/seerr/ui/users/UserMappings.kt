@@ -16,13 +16,16 @@ import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.RequestPage
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -47,6 +50,15 @@ internal fun UserSort.labelRes(): Int =
         UserSort.Updated -> R.string.users_sort_updated
         UserSort.DisplayName -> R.string.users_sort_name
         UserSort.Requests -> R.string.users_sort_requests
+    }
+
+/** The sort's glyph in the choice sheet. */
+internal fun UserSort.icon(): ImageVector =
+    when (this) {
+        UserSort.Created -> Icons.Filled.PersonAdd
+        UserSort.Updated -> Icons.Filled.Update
+        UserSort.DisplayName -> Icons.Filled.SortByAlpha
+        UserSort.Requests -> Icons.Filled.RequestPage
     }
 
 @StringRes

@@ -1,6 +1,18 @@
 package com.cooper.binge.companion.seerr.ui.requests
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled._4k
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.binge.designsystem.component.MediaTypeTagType
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
@@ -38,6 +50,13 @@ internal fun RequestSort.labelRes(): Int =
     when (this) {
         RequestSort.Added -> R.string.requests_sort_added
         RequestSort.Modified -> R.string.requests_sort_modified
+    }
+
+/** The sort's glyph in the choice sheet: the date a request came in, or the last time it changed. */
+internal fun RequestSort.icon(): ImageVector =
+    when (this) {
+        RequestSort.Added -> Icons.Filled.Event
+        RequestSort.Modified -> Icons.Filled.Update
     }
 
 /** Doubles as the row's title when the lookup failed. */
@@ -120,4 +139,22 @@ internal fun MediaStatusChoice.labelRes(): Int =
         MediaStatusChoice.Processing -> R.string.media_state_processing
         MediaStatusChoice.Pending -> R.string.request_state_pending
         MediaStatusChoice.Unknown -> R.string.media_state_unknown
+    }
+
+/** The availability's glyph in the Mark as sheet, the same one the TV poster chip shows for that state. */
+internal fun MediaStatusChoice.icon(): ImageVector =
+    when (this) {
+        MediaStatusChoice.Available -> Icons.Filled.CheckCircle
+        MediaStatusChoice.PartiallyAvailable -> Icons.Filled.Done
+        MediaStatusChoice.Processing -> Icons.Filled.Download
+        MediaStatusChoice.Pending -> Icons.Filled.HourglassEmpty
+        MediaStatusChoice.Unknown -> Icons.AutoMirrored.Filled.HelpOutline
+    }
+
+/** An instance's glyph in Manage media: the 4K badge for the 4K one, else the title's own kind. */
+internal fun MediaInstance.icon(isTv: Boolean): ImageVector =
+    when {
+        is4k -> Icons.Filled._4k
+        isTv -> Icons.Filled.Tv
+        else -> Icons.Filled.Movie
     }

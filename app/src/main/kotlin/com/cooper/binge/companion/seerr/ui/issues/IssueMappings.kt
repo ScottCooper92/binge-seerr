@@ -1,6 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.IssueEntity
 import com.cooper.binge.companion.seerr.seerr.HydratedTitle
@@ -45,6 +49,13 @@ internal fun IssueSort.labelRes(): Int =
     when (this) {
         IssueSort.Added -> R.string.requests_sort_added
         IssueSort.Modified -> R.string.requests_sort_modified
+    }
+
+/** The sort's glyph in the choice sheet, the same pair the requests sort shows. */
+internal fun IssueSort.icon(): ImageVector =
+    when (this) {
+        IssueSort.Added -> Icons.Filled.Event
+        IssueSort.Modified -> Icons.Filled.Update
     }
 
 @StringRes
