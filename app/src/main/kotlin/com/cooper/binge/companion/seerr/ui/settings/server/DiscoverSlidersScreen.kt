@@ -216,7 +216,9 @@ private fun SliderRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(slider.label(), style = MaterialTheme.typography.bodyLarge)
-            Text(slider.caption(names), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            slider.caption(names)?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         // null for a built-in row: the row's own toggleable above owns the tap and the semantics
         // for it, and a still-interactive switch nested inside would double both up for TalkBack.
@@ -239,10 +241,11 @@ private fun SliderRow(
 internal fun DiscoverSlider.label(): String =
     title ?: type?.let { stringResource(it.labelRes()) } ?: stringResource(R.string.server_settings_slider_unknown_type, typeCode)
 
+/** What a custom slider holds, under its title. A built-in slider has no caption: its name says what it is. */
 @Composable
-private fun DiscoverSlider.caption(names: SliderNames): String =
+private fun DiscoverSlider.caption(names: SliderNames): String? =
     if (builtIn) {
-        stringResource(R.string.server_settings_slider_built_in)
+        null
     } else {
         listOfNotNull(type?.let { stringResource(it.labelRes()) }, dataLabel(names, Regions::name))
             .joinToString(stringResource(R.string.hub_meta_separator))

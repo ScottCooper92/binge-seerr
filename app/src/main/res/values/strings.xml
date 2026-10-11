@@ -782,7 +782,6 @@
     <string name="server_settings_sliders_caption">Edit the rows on the Discover page</string>
     <string name="server_settings_slider_add">Add a slider</string>
     <string name="server_settings_slider_edit">Edit slider</string>
-    <string name="server_settings_slider_built_in">Built in</string>
     <string name="server_settings_slider_unknown_type">Slider type %1$d</string>
     <string name="server_settings_slider_type">Kind</string>
     <string name="server_settings_slider_title">Title</string>
@@ -1209,8 +1208,8 @@
     <string name="editor_done">Done</string>
     <string name="server_settings_section_advanced">Advanced</string>
     <string name="server_settings_discover_language">Discover language</string>
-    <string name="server_settings_hide_available_detail">Leaves titles already in your library out of Discover</string>
-    <string name="server_settings_hide_requested_detail">Leaves titles someone has requested out of Discover</string>
+    <string name="server_settings_hide_available_detail">Removes them from Discover</string>
+    <string name="server_settings_hide_requested_detail">Removes them from Discover</string>
     <string name="server_settings_partial_requests_detail">Lets users request some seasons of a series, not all</string>
     <string name="server_settings_special_episodes_detail">Lets a series\' specials be requested too</string>
     <string name="server_settings_cache_images_detail">Keeps posters on the server; needs a lot of disk</string>
@@ -1236,10 +1235,10 @@
     <string name="server_settings_api_key_regenerate_detail">The old key stops working at once</string>
     <string name="server_settings_sign_in">Sign-in</string>
     <string name="server_settings_local_login">Local sign-in</string>
-    <string name="server_settings_local_login_detail">Email and password accounts kept by the server</string>
+    <string name="server_settings_local_login_detail">Signs in with email and password</string>
     <string name="server_settings_media_server_login">%1$s sign-in</string>
     <string name="server_settings_new_media_server_login">New %1$s users</string>
-    <string name="server_settings_new_media_server_login_detail">Anyone on your %1$s can sign in without being imported first</string>
+    <string name="server_settings_new_media_server_login_detail">Signs them in without importing</string>
     <string name="server_settings_sign_in_required">Keep at least one way to sign in turned on.</string>
     <string name="server_settings_request_limits">Request limits</string>
     <string name="server_settings_movie_limit">Movie requests</string>
@@ -1282,7 +1281,7 @@
     <string name="server_settings_about_support_project">Support %1$s</string>
     <string name="server_settings_about_contribute">Make a contribution</string>
     <string name="server_settings_hide_blocklisted">Hide blocklisted titles</string>
-    <string name="server_settings_hide_blocklisted_detail">Leaves blocklisted titles out of Discover for those who manage the blocklist</string>
+    <string name="server_settings_hide_blocklisted_detail">Removes them from Discover for blocklist managers</string>
     <string name="server_settings_blocklist">Blocklist</string>
     <string name="server_settings_blocklist_region">Blocklist region</string>
     <string name="server_settings_blocklist_language">Blocklist languages</string>

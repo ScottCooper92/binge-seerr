@@ -760,7 +760,6 @@
     <string name="server_settings_sliders_caption">Edita las filas de la página Descubrir</string>
     <string name="server_settings_slider_add">Añadir una fila</string>
     <string name="server_settings_slider_edit">Editar la fila</string>
-    <string name="server_settings_slider_built_in">Integrada</string>
     <string name="server_settings_slider_unknown_type">Fila de tipo %1$d</string>
     <string name="server_settings_slider_type">Tipo</string>
     <string name="server_settings_slider_title">Título</string>
@@ -1154,8 +1153,8 @@
     <string name="editor_done">Hecho</string>
     <string name="server_settings_section_advanced">Avanzado</string>
     <string name="server_settings_discover_language">Idioma de Descubrir</string>
-    <string name="server_settings_hide_available_detail">Deja fuera de Descubrir lo que ya está en tu biblioteca</string>
-    <string name="server_settings_hide_requested_detail">Deja fuera de Descubrir lo que alguien ya ha solicitado</string>
+    <string name="server_settings_hide_available_detail">Los quita de Descubrir</string>
+    <string name="server_settings_hide_requested_detail">Los quita de Descubrir</string>
     <string name="server_settings_partial_requests_detail">Permite solicitar algunas temporadas de una serie, no todas</string>
     <string name="server_settings_special_episodes_detail">Permite solicitar también los especiales de una serie</string>
     <string name="server_settings_cache_images_detail">Guarda los pósteres en el servidor; ocupa mucho disco</string>
@@ -1181,10 +1180,10 @@
     <string name="server_settings_api_key_regenerate_detail">La clave anterior deja de funcionar al momento</string>
     <string name="server_settings_sign_in">Inicio de sesión</string>
     <string name="server_settings_local_login">Inicio de sesión local</string>
-    <string name="server_settings_local_login_detail">Cuentas con correo y contraseña guardadas en el servidor</string>
+    <string name="server_settings_local_login_detail">Entrada con correo y contraseña</string>
     <string name="server_settings_media_server_login">Inicio de sesión con %1$s</string>
     <string name="server_settings_new_media_server_login">Nuevos usuarios de %1$s</string>
-    <string name="server_settings_new_media_server_login_detail">Cualquiera de tu %1$s puede entrar sin importarlo antes</string>
+    <string name="server_settings_new_media_server_login_detail">Entran sin importarlos antes</string>
     <string name="server_settings_sign_in_required">Deja activada al menos una forma de iniciar sesión.</string>
     <string name="server_settings_request_limits">Límites de peticiones</string>
     <string name="server_settings_movie_limit">Peticiones de películas</string>
@@ -1227,7 +1226,7 @@
     <string name="server_settings_about_support_project">Apoya a %1$s</string>
     <string name="server_settings_about_contribute">Hacer una aportación</string>
     <string name="server_settings_hide_blocklisted">Ocultar títulos bloqueados</string>
-    <string name="server_settings_hide_blocklisted_detail">Deja fuera de Descubrir los títulos bloqueados para quien gestiona la lista de bloqueo</string>
+    <string name="server_settings_hide_blocklisted_detail">Los quita de Descubrir a quien gestiona la lista de bloqueo</string>
     <string name="server_settings_blocklist">Lista de bloqueo</string>
     <string name="server_settings_blocklist_region">Región de bloqueo</string>
     <string name="server_settings_blocklist_language">Idiomas de bloqueo</string>
