@@ -92,7 +92,11 @@ fun BlocklistTagsScreen(
         ready?.let {
             val direction = LocalLayoutDirection.current
             Column(modifier = Modifier.fillMaxSize()) {
-                SaveStatusLine(status = it.saveStatus, failed = it.saveFailed, modifier = Modifier.padding(top = inner.calculateTopPadding()))
+                SaveStatusLine(
+                    status = it.saveStatus,
+                    failed = it.saveFailed,
+                    modifier = Modifier.padding(top = inner.calculateTopPadding()),
+                )
                 TagSearchPanel(
                     chosen = it.tags,
                     search = it.search,
