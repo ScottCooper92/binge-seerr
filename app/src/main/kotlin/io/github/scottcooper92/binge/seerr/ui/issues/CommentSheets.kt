@@ -156,6 +156,6 @@ internal fun DeleteCommentDialog(
         confirmLabel = stringResource(R.string.issue_delete_comment),
         destructive = true,
         onConfirm = onConfirm,
-        onDismiss = onDismiss,
+        onDismissRequest = onDismiss,
     )
 }

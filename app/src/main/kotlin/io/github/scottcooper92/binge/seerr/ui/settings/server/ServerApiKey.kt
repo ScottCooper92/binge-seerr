@@ -66,7 +66,7 @@ internal fun apiKeyItem(
                 confirming = false
                 actions.onRegenerate()
             },
-            onDismiss = { confirming = false },
+            onDismissRequest = { confirming = false },
         )
     }
     return ListItem(

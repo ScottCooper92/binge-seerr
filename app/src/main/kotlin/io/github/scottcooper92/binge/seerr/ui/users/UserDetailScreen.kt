@@ -377,7 +377,7 @@ private fun UserActionsSheet(
                 onDismiss()
                 onDeleteUser()
             },
-            onDismiss = { confirmingDelete = false },
+            onDismissRequest = { confirmingDelete = false },
         )
     }
 }

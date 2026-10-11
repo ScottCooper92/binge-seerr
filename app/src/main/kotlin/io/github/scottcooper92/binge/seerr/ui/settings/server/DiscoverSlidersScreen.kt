@@ -165,7 +165,7 @@ fun DiscoverSlidersScreen(
                 confirmingReset = false
                 sliderActions.onReset()
             },
-            onDismiss = { confirmingReset = false },
+            onDismissRequest = { confirmingReset = false },
         )
     }
 }

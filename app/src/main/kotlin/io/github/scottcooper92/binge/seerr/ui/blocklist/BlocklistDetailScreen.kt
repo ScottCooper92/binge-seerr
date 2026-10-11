@@ -93,7 +93,7 @@ fun BlocklistDetailScreen(
                 confirming = false
                 actions.onUnblock()
             },
-            onDismiss = { confirming = false },
+            onDismissRequest = { confirming = false },
         )
     }
 }

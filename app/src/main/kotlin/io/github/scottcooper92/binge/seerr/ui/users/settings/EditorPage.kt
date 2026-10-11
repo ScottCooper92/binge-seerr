@@ -247,7 +247,7 @@ internal fun DiscardChangesDialog(
         dismissLabel = stringResource(R.string.editor_keep_editing),
         destructive = true,
         onConfirm = onDiscard,
-        onDismiss = onKeepEditing,
+        onDismissRequest = onKeepEditing,
     )
 }
 

@@ -115,7 +115,7 @@ internal fun languageSettingItem(
                 choices = listed?.let { BingeChoiceList.Ready(it) } ?: BingeChoiceList.Loading,
                 selected = chosen.toSet(),
                 onDone = { picked -> apply(pickedInOrder(listed?.map { it.value }, chosen, picked)) },
-                onDismiss = { open = false },
+                onDismissRequest = { open = false },
                 doneLabel = stringResource(R.string.editor_done),
                 clearLabel = stringResource(R.string.server_settings_list_clear),
                 suggested = remember { suggestedLanguages() },

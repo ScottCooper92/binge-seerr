@@ -162,7 +162,7 @@ private fun PendingConfirm(
                     media?.mediaId?.let { mediaActions?.onClearData?.invoke(it) }
                     onDone()
                 },
-                onDismiss = { onStep(null) },
+                onDismissRequest = { onStep(null) },
             )
         is Pending.DeleteFiles -> DeleteFilesConfirm(step, media, mediaActions, onStep, onDone)
     }
@@ -192,7 +192,7 @@ private fun RequestConfirm(
             onConfirm()
             onDone()
         },
-        onDismiss = { onStep(null) },
+        onDismissRequest = { onStep(null) },
     )
 }
 
@@ -229,7 +229,7 @@ private fun DeleteFilesConfirm(
                 onStep(step.copy(second = true))
             }
         },
-        onDismiss = { onStep(null) },
+        onDismissRequest = { onStep(null) },
     )
 }
 

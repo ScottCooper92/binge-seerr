@@ -28,7 +28,7 @@ fun <T> SortSheet(
         choices = BingeChoiceList.Ready(choices.map { BingeChoice(it, label(it)) }),
         selected = selected,
         onSelect = onSelect,
-        onDismiss = onDismiss,
+        onDismissRequest = onDismiss,
     )
 }
 

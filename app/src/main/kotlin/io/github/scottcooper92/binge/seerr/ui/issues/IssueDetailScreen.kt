@@ -153,7 +153,7 @@ fun IssueDetailScreen(
                 confirmingDelete = false
                 actions.onDeleteIssue()
             },
-            onDismiss = { confirmingDelete = false },
+            onDismissRequest = { confirmingDelete = false },
         )
     }
 }
@@ -266,7 +266,7 @@ private fun Ready(
                 modals.confirmingStatus = false
                 actions.onToggleStatus()
             },
-            onDismiss = { modals.confirmingStatus = false },
+            onDismissRequest = { modals.confirmingStatus = false },
         )
     }
     IssueModals(state, events, actions, modals)

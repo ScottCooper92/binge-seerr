@@ -146,7 +146,7 @@ private fun LinkedAccountsContent(
                 unlinking = null
                 if (origin == UserOrigin.Plex) actions.onUnlinkPlex() else actions.onUnlinkMediaServer()
             },
-            onDismiss = { unlinking = null },
+            onDismissRequest = { unlinking = null },
         )
     }
     val mediaServer = state.mediaServer

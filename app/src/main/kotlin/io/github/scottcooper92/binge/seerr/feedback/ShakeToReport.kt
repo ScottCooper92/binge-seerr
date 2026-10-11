@@ -38,7 +38,7 @@ fun ShakeToReportPrompt(
                 offering = false
                 context.openInBrowser(bugReportUrl())
             },
-            onDismiss = { offering = false },
+            onDismissRequest = { offering = false },
         )
     }
 }
