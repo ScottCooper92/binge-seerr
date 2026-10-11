@@ -4,3 +4,6 @@
 [submodule "design-system"]
 	path = design-system
 	url = https://github.com/ScottCooper92/binge-design-system.git
+[submodule "binge-ci"]
+	path = binge-ci
+	url = https://github.com/ScottCooper92/binge-ci
