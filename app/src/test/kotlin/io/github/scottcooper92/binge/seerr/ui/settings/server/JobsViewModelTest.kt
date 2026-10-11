@@ -232,10 +232,13 @@ class JobsViewModelTest {
             viewModels.put(vm.hashCode().toString(), vm)
             vm.clock = { 1_789_275_660_000L - 60 * 60_000L }
             vm.reload()
-            vm.uiState.first { it is JobsUiState.Ready }
-            // The view model's own first read and the reload above: wait for both to land before counting.
+            // The view model's own first read and the reload above: wait for both to land before counting. Nothing
+            // collects the state: this holder never shows the list, and a collector would make it a watcher for as long as
+            // it lasted, long enough for a read landing as it leaves to schedule a due read that then survives it.
             seerr.awaitCount("GET", "/api/v1/settings/jobs", moreThan = 1)
+            seerr.awaitCallbacks()
             testScheduler.runCurrent()
+            assertTrue(vm.uiState.value is JobsUiState.Ready)
             val reads = seerr.count("GET", "/api/v1/settings/jobs")
 
             testScheduler.advanceTimeBy(2 * 60 * 60_000L)
