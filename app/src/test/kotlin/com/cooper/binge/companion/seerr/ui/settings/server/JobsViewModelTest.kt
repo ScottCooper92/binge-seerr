@@ -211,6 +211,9 @@ class JobsViewModelTest {
             vm.clock = { 1_789_275_660_000L - 60 * 60_000L }
             vm.reload()
             vm.awaitReady()
+            // A request counts the moment it lands, but is answered a moment after: one still in flight here would take
+            // the body served below, and so be counted in `before` and also be the read this test waits to see.
+            seerr.awaitCallbacks()
             val before = seerr.count("GET", "/api/v1/settings/jobs")
 
             seerr.serve(
