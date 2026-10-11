@@ -152,7 +152,6 @@ internal fun NavKey.hubSection(): HubSection? =
         UsersRoute -> HubSection.Users
         BlocklistRoute -> HubSection.Blocklist
         SettingsRoute -> HubSection.Settings
-        is SectionRoute -> section
         else -> null
     }
 

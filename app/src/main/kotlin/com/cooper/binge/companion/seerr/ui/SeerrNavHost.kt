@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -18,9 +17,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.binge.designsystem.PaneContent
 import com.binge.designsystem.PaneEdge
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.hub.HubSection
-import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 
 /**
@@ -127,11 +124,6 @@ private fun EntryProviderScope<NavKey>.sectionEntries(
     entry<SettingsRoute>(
         metadata = section,
     ) { DetailPaneContent { SectionContent(HubSection.Settings, backStack, panes.showBack(), open) } }
-    entry<SectionRoute>(metadata = section) { route ->
-        DetailPaneContent {
-            EmptyScreen(title = stringResource(route.section.titleRes), message = stringResource(R.string.section_coming_soon))
-        }
-    }
 }
 
 /**
