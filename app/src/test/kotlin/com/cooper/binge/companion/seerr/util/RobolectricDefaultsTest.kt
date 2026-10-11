@@ -12,8 +12,7 @@ import org.robolectric.RobolectricTestRunner
  * Deliberately carries no `@Config`: it is the assertion that `robolectric.properties` supplies one.
  *
  * Without that file a test falls back to `targetSdk` 36, whose sandbox requires Java 21 — so it
- * passes on a JDK 21 machine and dies in CI on JDK 17, before its body runs. That is the inverse of
- * the failure a contributor expects, and it defeats running the gate locally before pushing.
+ * passes on JDK 21, which CI uses, and dies on a contributor's JDK 17 before its body runs.
  */
 @RunWith(RobolectricTestRunner::class)
 class RobolectricDefaultsTest {
