@@ -2,6 +2,7 @@ package com.cooper.binge.companion.seerr.ui.tv.settings
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrTvSpanishScreenPreviews
 import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
@@ -11,6 +12,7 @@ import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettings
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsWithApp
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 
 /**
  * The television settings board: the connection/server list, the disconnect confirmation focused,
@@ -50,6 +52,21 @@ class TvSettingsScreenshotTest {
             onDisconnect = {},
             initialFocusedKey = KEY_MEDIA_SERVER,
             initialFocusedOptionLabel = "Start library scan",
+        )
+    }
+
+    /** A scan that started: the media server row says so in place of its usual line, until the note clears (#1053). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ScanStarted() {
+        TvSettingsBoard(
+            state = SampleSettingsAdmin,
+            onEditConnection = {},
+            onDisconnect = {},
+            initialFocusedKey = KEY_MEDIA_SERVER,
+            initialFocusedOptionLabel = "Start library scan",
+            initialScanEvent = EditorEvent.Notice(R.string.tv_settings_scan_started),
         )
     }
 

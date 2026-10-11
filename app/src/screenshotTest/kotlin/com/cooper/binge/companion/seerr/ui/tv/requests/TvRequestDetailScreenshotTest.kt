@@ -9,6 +9,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
 import com.cooper.binge.companion.seerr.ui.requests.DetailDownload
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
+import com.cooper.binge.companion.seerr.ui.requests.ModerationEvent
 import com.cooper.binge.companion.seerr.ui.requests.RequestActions
 import com.cooper.binge.companion.seerr.ui.requests.RequestDestination
 import com.cooper.binge.companion.seerr.ui.requests.RequestDetail
@@ -254,6 +255,32 @@ class TvRequestDetailScreenshotTest {
             events = emptyFlow(),
             actions = actions(onOpenInBinge = {}),
             initialSheet = DetailSheet.Block,
+        )
+    }
+
+    /** An approval that landed: the note at the foot of the page, until it clears a few seconds later (#1053). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ApprovedNote() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(seriesDetail()),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialEvent = ModerationEvent.Approved,
+        )
+    }
+
+    /** A moderation the server refused: the same note, in the error tone, saying why. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun FailedNote() {
+        TvRequestDetailScreen(
+            state = RequestDetailUiState.Ready(seriesDetail()),
+            events = emptyFlow(),
+            actions = actions(onOpenInBinge = {}),
+            initialEvent = ModerationEvent.Failed(SeerrError.Unreachable),
         )
     }
 }

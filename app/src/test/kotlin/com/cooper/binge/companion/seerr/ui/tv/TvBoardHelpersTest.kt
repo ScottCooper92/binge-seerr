@@ -76,6 +76,39 @@ class TvBoardHelpersTest {
         composeTestRule.onNodeWithText("Declined").assertDoesNotExist()
     }
 
+    /** A frame's note shows from the first frame, clears like any other, and gives way to a newer event (#1053). */
+    @Test
+    fun anInitialNoteShowsAtOnceAndClearsLikeTheFirstEvent() {
+        val events = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            BingeTvTheme { rememberTvTransientEvent(events, initial = "Approved")?.let { Text(it) } }
+        }
+        composeTestRule.onNodeWithText("Approved").assertExists()
+
+        composeTestRule.mainClock.advanceTimeBy(NOTE_MILLIS + PART_OF_A_NOTE)
+        composeTestRule.onNodeWithText("Approved").assertDoesNotExist()
+
+        events.tryEmit("Declined")
+        composeTestRule.mainClock.advanceTimeBy(PART_OF_A_NOTE)
+        composeTestRule.onNodeWithText("Declined").assertExists()
+    }
+
+    @Test
+    fun aNewerEventSupersedesAnInitialNote() {
+        val events = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.setContent {
+            BingeTvTheme { rememberTvTransientEvent(events, initial = "Approved")?.let { Text(it) } }
+        }
+        composeTestRule.mainClock.advanceTimeByFrame()
+
+        events.tryEmit("Declined")
+        composeTestRule.mainClock.advanceTimeBy(PART_OF_A_NOTE)
+        composeTestRule.onNodeWithText("Approved").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Declined").assertExists()
+    }
+
     private fun setPlate(
         primary: String?,
         alternate: String?,

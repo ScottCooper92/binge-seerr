@@ -72,6 +72,8 @@ internal fun TvSettingsBoard(
     onToggleSendCrashReports: (Boolean) -> Unit = {},
     hub: HubUiState? = null,
     onOpenBingeListing: () -> Unit = {},
+    /** The scan note showing on arrival, for a frame, which never collects [libraryScanEvents]. Production passes null. */
+    initialScanEvent: EditorEvent? = null,
 ) {
     val ready = state as? SettingsUiState.Ready
     if (ready == null) {
@@ -90,7 +92,7 @@ internal fun TvSettingsBoard(
     val bugReportFocus = remember { FocusRequester() }
     val bugReportCloser = rememberTvOverlayCloser(restoreTo = bugReportFocus, onClose = { showingBugReport = false })
     // A newer notice supersedes the one still showing, same as the board's paged-list toasts.
-    val scanNote = rememberTvTransientEvent(libraryScanEvents).tvNoteOrNull()
+    val scanNote = rememberTvTransientEvent(libraryScanEvents, initialScanEvent).tvNoteOrNull()
     val groups =
         tvSettingGroups(
             ready,
