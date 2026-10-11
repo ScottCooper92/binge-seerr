@@ -610,11 +610,11 @@ app:server_settings_external_url  8a4a1117fc22
 app:server_settings_force_ipv4  8ae39c17c14d
 app:server_settings_forgot_password_url  d5133679fac2
 app:server_settings_general_title  2a1660d99aa8
-app:server_settings_hide_available_detail  62c8d862070e
+app:server_settings_hide_available_detail  05ef8b52d631
 app:server_settings_hide_blocklisted  3f5c33aa0f2e
-app:server_settings_hide_blocklisted_detail  69b5edcf18e4
+app:server_settings_hide_blocklisted_detail  05ef8b52d631
 app:server_settings_hide_requested  ef9e18a6cd6c
-app:server_settings_hide_requested_detail  5f632c073050
+app:server_settings_hide_requested_detail  05ef8b52d631
 app:server_settings_host  4a823118b9ba
 app:server_settings_image_cache_stats  6234198d07b3
 app:server_settings_image_caches  173424730985
@@ -644,7 +644,7 @@ app:server_settings_limit_window  7816b9affc62
 app:server_settings_list_clear  83b12c2216ef
 app:server_settings_list_use  c36d819e7bc6
 app:server_settings_local_login  ad8f0ce759ef
-app:server_settings_local_login_detail  57329fdcd650
+app:server_settings_local_login_detail  210015335d03
 app:server_settings_log_debug  1a03bd2fd107
 app:server_settings_log_error  54a0e8c17ebb
 app:server_settings_log_info  170322a32f3c
@@ -675,7 +675,7 @@ app:server_settings_movie_limit  1434d0ff8755
 app:server_settings_network  1744b96470b5
 app:server_settings_network_caption  ec2deb850b97
 app:server_settings_new_media_server_login  1f699e850b7e
-app:server_settings_new_media_server_login_detail  9633b4543fd4
+app:server_settings_new_media_server_login_detail  2cddca99f6dd
 app:server_settings_partial_requests  c615998fdcff
 app:server_settings_partial_requests_detail  f1138ae66f55
 app:server_settings_permissions_none  dc937b598926
@@ -730,7 +730,6 @@ app:server_settings_section_application  e7ad522ea327
 app:server_settings_sign_in  5bbbe53187ad
 app:server_settings_sign_in_required  faca130c76c0
 app:server_settings_slider_add  f8dba7cae448
-app:server_settings_slider_built_in  78a6a8fe9be5
 app:server_settings_slider_data  cec3a9b89b2e
 app:server_settings_slider_data_company  5c3c865e9e6a
 app:server_settings_slider_data_generic  3114069fcee4
