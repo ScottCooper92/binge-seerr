@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,10 +11,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -41,9 +40,8 @@ class EditorTextFieldRevealTest {
     @get:Rule
     val composeTestRule = createSeerrComposeRule()
 
-    private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val show get() = context.getString(R.string.field_secret_show)
-    private val hide get() = context.getString(R.string.field_secret_hide)
+    private val show get() = string(R.string.field_secret_show)
+    private val hide get() = string(R.string.field_secret_hide)
 
     private fun setField(
         secret: Boolean = true,

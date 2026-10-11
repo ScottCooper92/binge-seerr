@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
-import android.content.Context
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.runtime.getValue
@@ -10,12 +9,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.component.BingeChoice
 import com.binge.designsystem.component.ItemGroup
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.theme.SeerrTheme
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -36,7 +35,6 @@ class MultiChoiceSettingItemTest {
     val rule = createSeerrComposeRule()
 
     private val toggled = mutableListOf<Int>()
-    private val context = ApplicationProvider.getApplicationContext<Context>()
 
     private val users =
         listOf(BingeChoice(8, "Ana Lima", mark = "AL"), BingeChoice(9, "Bo Diaz", mark = "BD"), BingeChoice(10, "Cy Ng", mark = "CN"))
@@ -86,7 +84,7 @@ class MultiChoiceSettingItemTest {
     fun `clear toggles off every pick`() {
         show(users, initial = setOf(8, 10))
 
-        rule.onNodeWithText(context.getString(R.string.server_settings_list_clear)).performClick()
+        rule.onNodeWithText(string(R.string.server_settings_list_clear)).performClick()
         rule.waitForIdle()
 
         assertEquals(setOf(8, 10), toggled.toSet())
@@ -110,6 +108,6 @@ class MultiChoiceSettingItemTest {
     fun `a long list gets the filter`() {
         show(List(12) { BingeChoice(it, "User $it") })
 
-        rule.onNodeWithText(context.getString(R.string.settings_choices_filter)).assertExists()
+        rule.onNodeWithText(string(R.string.settings_choices_filter)).assertExists()
     }
 }

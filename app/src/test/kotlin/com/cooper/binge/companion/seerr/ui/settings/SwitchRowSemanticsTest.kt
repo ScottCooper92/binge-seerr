@@ -1,6 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.settings
 
-import android.content.Context
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.runtime.getValue
@@ -15,12 +14,12 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import com.binge.designsystem.component.ItemRows
 import com.binge.designsystem.theme.BingeExpressiveTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.editorToggle
 import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -36,7 +35,6 @@ class SwitchRowSemanticsTest {
     @get:Rule
     val composeTestRule = createSeerrComposeRule()
 
-    private val context = ApplicationProvider.getApplicationContext<Context>()
     private val isSwitch = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch)
 
     @Test
@@ -73,8 +71,8 @@ class SwitchRowSemanticsTest {
                 ItemRows(rows = appRows(app, {}, {}, {}))
             }
         }
-        composeTestRule.onNodeWithText(context.getString(R.string.settings_shake_to_report)).assert(isSwitch).assertIsOn()
-        composeTestRule.onNodeWithText(context.getString(R.string.settings_share_usage_data)).assert(isSwitch).assertIsOff()
-        composeTestRule.onNodeWithText(context.getString(R.string.settings_send_crash_reports)).assert(isSwitch).assertIsOn()
+        composeTestRule.onNodeWithText(string(R.string.settings_shake_to_report)).assert(isSwitch).assertIsOn()
+        composeTestRule.onNodeWithText(string(R.string.settings_share_usage_data)).assert(isSwitch).assertIsOff()
+        composeTestRule.onNodeWithText(string(R.string.settings_send_crash_reports)).assert(isSwitch).assertIsOn()
     }
 }
