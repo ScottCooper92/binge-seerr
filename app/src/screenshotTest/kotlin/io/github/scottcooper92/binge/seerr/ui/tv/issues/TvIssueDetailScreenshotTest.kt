@@ -3,6 +3,7 @@ package io.github.scottcooper92.binge.seerr.ui.tv.issues
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.github.scottcooper92.binge.seerr.preview.SeerrTvScreenPreviews
+import io.github.scottcooper92.binge.seerr.seerr.SeerrError
 import io.github.scottcooper92.binge.seerr.ui.FIXED_NOW_MILLIS
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueComment
 import io.github.scottcooper92.binge.seerr.ui.issues.IssueDetail
@@ -88,7 +89,7 @@ private fun actions() = TvIssueDetailActions(onBack = {}, onRetry = {})
 
 /**
  * The television issue detail page: an empty thread, a short one with an admin's and the owner's replies tagged by
- * role, and a long one that exercises the scroll the focus test drives.
+ * role, and a long one that exercises the scroll the focus test drives; and the pages before it: loading and failed.
  */
 class TvIssueDetailScreenshotTest {
     @PreviewTest
@@ -110,5 +111,24 @@ class TvIssueDetailScreenshotTest {
     @Composable
     fun LongThread() {
         TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(LongThread)), actions = actions(), now = FIXED_NOW_MILLIS)
+    }
+
+    /**
+     * The page before the issue has arrived (#1053). The tapped row standing in (`Seeded`) draws this same plate on a
+     * television, and `Seeded` with an error draws [Failed]'s, so neither has a frame of its own.
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Loading() {
+        TvIssueDetailScreen(state = IssueDetailUiState.Loading, actions = actions(), now = FIXED_NOW_MILLIS)
+    }
+
+    /** The issue could not be read: the error page, with its retry. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Failed() {
+        TvIssueDetailScreen(state = IssueDetailUiState.Error(SeerrError.Unreachable), actions = actions(), now = FIXED_NOW_MILLIS)
     }
 }

@@ -220,6 +220,17 @@ class TvRequestDetailScreenshotTest {
         )
     }
 
+    /**
+     * The page before its record has arrived (#1053): the loading plate over the overlay. The tapped row standing in
+     * (`Seeded`) draws this same plate here, and `Seeded` with an error draws [Failed]'s, so neither has a frame of its own.
+     */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun Loading() {
+        TvRequestDetailScreen(state = RequestDetailUiState.Loading, events = emptyFlow(), actions = actions(onOpenInBinge = {}))
+    }
+
     /** Remove asks first (#1053): what it does, then Remove and Cancel, over the page. */
     @PreviewTest
     @SeerrTvScreenPreviews
