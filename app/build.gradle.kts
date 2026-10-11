@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.screenshot)
+    id("binge.gates.translation-staleness")
 }
 
 // Crash reporting needs this app's own Firebase project, whose google-services.json is never
@@ -197,32 +198,11 @@ android {
 
 // A reworded English string is the one translation drift lint cannot see, so the hash of every
 // translated source string is committed at the repo root and `check` fails when one moves. Fix or
-// re-read the translation it names, then re-stamp with `updateTranslationHashes`.
-val translatedStringFiles =
-    fileTree(projectDir) {
-        include("src/*/res/values/strings.xml", "src/*/res/values-*/strings.xml")
-    }
-val translationHashes = rootProject.layout.projectDirectory.file("translation-hashes.txt")
-
-tasks.register<CheckTranslationStalenessTask>("checkTranslationStaleness") {
-    group = "verification"
-    description = "Checks that no translated source string changed without its translations being re-confirmed."
-    stringFiles.from(translatedStringFiles)
-    hashFile.set(translationHashes)
-    repoRoot.set(rootProject.layout.projectDirectory)
-    rewrite.set(false)
+// re-read the translation it names, then re-stamp with `updateTranslationHashes`. The gate is
+// binge-ci's; it reads only this module's strings, since the included builds check their own.
+translationStaleness {
+    includes.set(listOf("app/src/*/res/values/strings.xml", "app/src/*/res/values-*/strings.xml"))
 }
-
-tasks.register<CheckTranslationStalenessTask>("updateTranslationHashes") {
-    group = "verification"
-    description = "Re-stamps translation-hashes.txt after the named translations have been re-read."
-    stringFiles.from(translatedStringFiles)
-    hashFile.set(translationHashes)
-    repoRoot.set(rootProject.layout.projectDirectory)
-    rewrite.set(true)
-}
-
-tasks.named("check") { dependsOn("checkTranslationStaleness") }
 
 // The catalog's grpc must be what both the APK and the unit tests actually run (#702): the SDK brings
 // grpc-binder at binge-companions' version, so a bump here without a submodule bump moves nothing.
