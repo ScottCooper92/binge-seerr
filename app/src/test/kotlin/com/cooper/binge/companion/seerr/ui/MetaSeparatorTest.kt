@@ -1,7 +1,7 @@
 package com.cooper.binge.companion.seerr.ui
 
-import androidx.test.core.app.ApplicationProvider
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.util.string
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,8 +20,7 @@ import org.robolectric.RobolectricTestRunner
 class MetaSeparatorTest {
     @Test
     fun `the meta separator survives aapt with a space either side`() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        assertEquals(" · ", context.getString(R.string.hub_meta_separator))
+        assertEquals(" · ", string(R.string.hub_meta_separator))
     }
 
     /**
@@ -30,10 +29,9 @@ class MetaSeparatorTest {
      */
     @Test
     fun `a joined meta line reads with spaces around the glyph`() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val line =
             listOf("4.3 GB", "About 18 min left")
-                .joinToString(context.getString(R.string.hub_meta_separator))
+                .joinToString(string(R.string.hub_meta_separator))
         assertEquals("4.3 GB · About 18 min left", line)
     }
 }
