@@ -97,7 +97,13 @@ private fun ServerGroup(
         title = stringResource(R.string.settings_group_connection),
         rows =
             listOf(
-                editorToggle(Icons.Filled.Star, stringResource(R.string.server_settings_dvr_default), draft.isDefault, enabled) { on ->
+                editorToggle(
+                    Icons.Filled.Star,
+                    stringResource(R.string.server_settings_dvr_default),
+                    draft.isDefault,
+                    enabled,
+                    detail = stringResource(R.string.server_settings_dvr_default_detail),
+                ) { on ->
                     actions.onEdit { it.copy(isDefault = on) }
                 },
                 editorToggle(Icons.Filled.HighQuality, stringResource(R.string.server_settings_dvr_4k), draft.is4k, enabled) { on ->
@@ -213,7 +219,13 @@ internal fun OptionsGroup(
                     hint = stringResource(R.string.server_settings_dvr_external_hint),
                     check = { value -> urlError.takeIf { !draft.copy(externalUrl = value).externalUrlValid } },
                 ),
-                editorToggle(Icons.Filled.Sync, stringResource(R.string.server_settings_dvr_sync), draft.syncEnabled, enabled) { on ->
+                editorToggle(
+                    Icons.Filled.Sync,
+                    stringResource(R.string.server_settings_dvr_sync),
+                    draft.syncEnabled,
+                    enabled,
+                    detail = stringResource(R.string.server_settings_dvr_sync_detail),
+                ) { on ->
                     actions.onEdit { it.copy(syncEnabled = on) }
                 },
                 editorToggle(
