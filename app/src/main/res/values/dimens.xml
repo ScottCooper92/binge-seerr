@@ -23,16 +23,10 @@
     <dimen name="tv_form_option_padding_horizontal">20dp</dimen>
     <dimen name="tv_form_option_gap">8dp</dimen>
     <!-- TvCheckboxRow: the box, and its outline -->
-    <dimen name="tv_checkbox_size">28dp</dimen>
-    <dimen name="tv_checkbox_border">2dp</dimen>
     <!-- The television shell: boards, list rows, the action sheet and the list/pane board. -->
-    <dimen name="tv_list_row_padding_horizontal">16dp</dimen>
     <dimen name="tv_list_row_poster_width">40dp</dimen>
     <dimen name="tv_list_row_poster_height">60dp</dimen>
     <dimen name="tv_bug_report_code_size">240dp</dimen>
-    <dimen name="tv_pane_gap">32dp</dimen>
-    <dimen name="tv_pane_row_gap">6dp</dimen>
-    <dimen name="tv_pane_option_width">360dp</dimen>
     <dimen name="tv_account_avatar_size">80dp</dimen>
     <dimen name="tv_poster_chip_size">28dp</dimen>
     <dimen name="tv_poster_chip_icon">18dp</dimen>

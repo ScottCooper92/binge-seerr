@@ -12,6 +12,10 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
+import com.binge.designsystem.tv.template.TvListPaneBoard
+import com.binge.designsystem.tv.template.TvPaneGroup
+import com.binge.designsystem.tv.template.TvPaneOption
+import com.binge.designsystem.tv.template.TvPaneRow
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrKeyboardComposeRule
 import org.junit.Assert.assertEquals

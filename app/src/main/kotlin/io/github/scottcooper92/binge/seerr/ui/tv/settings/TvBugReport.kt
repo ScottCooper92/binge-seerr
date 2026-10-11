@@ -19,11 +19,11 @@ import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
+import com.binge.designsystem.tv.template.TvPaneGroup
+import com.binge.designsystem.tv.template.TvPaneOption
+import com.binge.designsystem.tv.template.TvPaneRow
 import io.github.scottcooper92.binge.seerr.R
 import io.github.scottcooper92.binge.seerr.ui.settings.AppSettings
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneGroup
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneOption
-import io.github.scottcooper92.binge.seerr.ui.tv.TvPaneRow
 import com.binge.designsystem.R as DesR
 
 internal const val KEY_REPORT_BUG = "report-bug"
