@@ -2,6 +2,8 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,8 +23,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.binge.designsystem.component.BingeLoadingIndicator
@@ -50,15 +54,26 @@ internal fun CompanyPickerDialog(
             FormScreen(title = title, onBack = onDismiss, scrolling = false) { inner ->
                 var query by rememberSaveable { mutableStateOf("") }
                 LaunchedEffect(query) { onSearch(query) }
-                Column(modifier = Modifier.fillMaxSize().padding(inner)) {
+                val direction = LocalLayoutDirection.current
+                // The search field is a pinned header below the top inset; the results scroll under the bottom one.
+                Column(
+                    modifier =
+                        Modifier.fillMaxSize().padding(
+                            start = inner.calculateStartPadding(direction),
+                            end = inner.calculateEndPadding(direction),
+                        ),
+                ) {
                     BingeSearchField(
                         query = query,
                         onQueryChange = { query = it },
                         onClear = { query = "" },
                         placeholder = stringResource(R.string.server_settings_slider_studio_search),
-                        modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+                        modifier =
+                            Modifier
+                                .padding(top = inner.calculateTopPadding())
+                                .padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
                     )
-                    CompanyResults(query, chosen, search, onPick, Modifier.weight(1f))
+                    CompanyResults(query, chosen, search, onPick, inner.calculateBottomPadding(), Modifier.weight(1f))
                 }
             }
         }
@@ -71,6 +86,7 @@ private fun CompanyResults(
     chosen: Int?,
     search: CompanySearch,
     onPick: (Company) -> Unit,
+    bottomInset: Dp,
     modifier: Modifier,
 ) {
     val results = search.results
@@ -86,7 +102,7 @@ private fun CompanyResults(
             }
         results.isEmpty() -> Note(stringResource(R.string.server_settings_slider_studio_no_match), modifier)
         else ->
-            Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(bottom = bottomInset)) {
                 results.forEachIndexed { index, company ->
                     SearchResultRow(
                         title = company.name,
