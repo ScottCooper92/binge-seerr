@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** Where a page that saves as it changes stands, for the inline line under its title (#930). A failure is [EditorUiState.Ready.saveFailed]. */
+enum class SaveStatus { Idle, Saving, Saved }
+
 /** A form over one server record: what was loaded, what the user has typed, and whether a save is in flight. */
 sealed interface EditorUiState<out T> {
     data object Loading : EditorUiState<Nothing>
@@ -27,6 +30,7 @@ sealed interface EditorUiState<out T> {
         val saving: Boolean = false,
         /** A page that saves as it changes could not write its last change, which is kept, unsent. */
         val saveFailed: Boolean = false,
+        val saveStatus: SaveStatus = SaveStatus.Idle,
     ) : EditorUiState<T> {
         val dirty: Boolean get() = draft != saved
     }
@@ -124,6 +128,9 @@ abstract class EditorViewModel<T>(
                 failed = { failed ->
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveFailed = failed) ?: current }
                 },
+                status = { status ->
+                    state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveStatus = status) ?: current }
+                },
             )
         }
     }
@@ -213,6 +220,7 @@ sealed interface ExtrasEditorUiState<out T, out X> {
         val extras: X,
         val saving: Boolean = false,
         val saveFailed: Boolean = false,
+        val saveStatus: SaveStatus = SaveStatus.Idle,
     ) : ExtrasEditorUiState<T, X> {
         val dirty: Boolean get() = draft != saved
     }
@@ -226,7 +234,14 @@ sealed interface ExtrasEditorUiState<out T, out X> {
 internal fun <T, X> ExtrasEditorUiState<T, X>.toEditorUiState(): EditorUiState<T> =
     when (this) {
         ExtrasEditorUiState.Loading -> EditorUiState.Loading
-        is ExtrasEditorUiState.Ready -> EditorUiState.Ready(draft = draft, saved = saved, saving = saving, saveFailed = saveFailed)
+        is ExtrasEditorUiState.Ready ->
+            EditorUiState.Ready(
+                draft = draft,
+                saved = saved,
+                saving = saving,
+                saveFailed = saveFailed,
+                saveStatus = saveStatus,
+            )
         is ExtrasEditorUiState.Error -> EditorUiState.Error(error)
     }
 
@@ -298,6 +313,9 @@ abstract class ExtrasEditorViewModel<T, X>(
                 },
                 failed = { failed ->
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveFailed = failed) ?: current }
+                },
+                status = { status ->
+                    state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveStatus = status) ?: current }
                 },
             )
         }

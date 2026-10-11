@@ -16,6 +16,8 @@ class SaveAsMadeTest {
     private val gates = mutableListOf<CompletableDeferred<Int>>()
     private var draft = 0
     private var saved = 0
+    private val failedLog = mutableListOf<Boolean>()
+    private val statusLog = mutableListOf<SaveStatus>()
 
     private fun TestScope.saveAsMade(scope: CoroutineScope = this) =
         SaveAsMade(
@@ -33,7 +35,8 @@ class SaveAsMadeTest {
                 if (draft == sentValue) draft = adopted
                 draft != adopted
             },
-            failed = {},
+            failed = { failedLog += it },
+            status = { statusLog += it },
         )
 
     @Test
@@ -165,5 +168,72 @@ class SaveAsMadeTest {
             assertEquals(listOf(1, 2), sent)
             gates[1].complete(2)
             runCurrent()
+        }
+
+    @Test
+    fun `a write says Saving while it runs and Saved when it lands`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            assertEquals(listOf(SaveStatus.Saving), statusLog)
+
+            gates[0].complete(1)
+            runCurrent()
+            assertEquals(listOf(SaveStatus.Saving, SaveStatus.Saved), statusLog)
+            assertEquals(listOf(false), failedLog)
+        }
+
+    @Test
+    fun `a failure stays reported through a later change until a write succeeds`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            gates[0].completeExceptionally(IllegalStateException("offline"))
+            runCurrent()
+            assertEquals(listOf(true), failedLog)
+            assertEquals("a failure is not a status of its own", SaveStatus.Idle, statusLog.last())
+
+            // A later change goes out; the failure is not cleared by it starting, so the snackbar does not flicker away.
+            draft = 2
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            assertEquals(listOf(1, 2), sent)
+            assertEquals(listOf(true), failedLog)
+
+            gates[1].complete(2)
+            runCurrent()
+            assertEquals("cleared by the success", listOf(true, false), failedLog)
+            assertEquals(SaveStatus.Saved, statusLog.last())
+        }
+
+    @Test
+    fun `a retry that fails again leaves the failure showing, and one that succeeds clears it`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            gates[0].completeExceptionally(IllegalStateException("offline"))
+            runCurrent()
+
+            mode.now()
+            runCurrent()
+            gates[1].completeExceptionally(IllegalStateException("still offline"))
+            runCurrent()
+            assertEquals("never cleared in between", listOf(true, true), failedLog)
+
+            mode.now()
+            runCurrent()
+            gates[2].complete(1)
+            runCurrent()
+            assertEquals(listOf(true, true, false), failedLog)
         }
 }

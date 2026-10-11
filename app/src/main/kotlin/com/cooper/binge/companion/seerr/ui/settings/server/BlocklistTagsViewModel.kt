@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrMainSettingsUpdateBody
 import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.SaveAsMade
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,7 @@ sealed interface BlocklistTagsUiState {
         val tags: List<Int>,
         val search: KeywordSearch = KeywordSearch(),
         val saveFailed: Boolean = false,
+        val saveStatus: SaveStatus = SaveStatus.Idle,
     ) : BlocklistTagsUiState
 
     data class Error(
@@ -78,6 +80,7 @@ class BlocklistTagsViewModel
                 // The server answers with the whole of settings/main, so the tags sent are what is adopted.
                 adopt = { sent, _ -> (state.value as? BlocklistTagsUiState.Ready)?.tags != sent },
                 failed = { failed -> editReady { it.copy(saveFailed = failed) } },
+                status = { status -> editReady { it.copy(saveStatus = status) } },
             )
 
         init {

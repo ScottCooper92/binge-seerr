@@ -38,6 +38,7 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
 import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -205,6 +206,7 @@ internal fun <T> EditorPage(
                 LocalEditorForm provides form.takeIf { validation != null },
                 LocalEditorIssues provides issues.visible(form.submitted),
             ) {
+                if (saveAsMade) SaveStatusLine(status = draft.saveStatus, failed = draft.saveFailed)
                 content(draft.draft, !draft.saving)
             }
         }
