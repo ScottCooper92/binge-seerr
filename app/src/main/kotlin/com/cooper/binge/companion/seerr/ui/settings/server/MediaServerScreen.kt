@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tag
-import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -238,7 +237,7 @@ private fun LibrariesGroup(
         rows =
             extras.libraries.map { library ->
                 editorToggle(
-                    Icons.Filled.VideoLibrary,
+                    library.type.icon(),
                     library.name,
                     library.enabled,
                     library.id !in extras.busyLibraryIds,

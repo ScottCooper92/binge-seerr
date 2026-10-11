@@ -2,11 +2,45 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.AlternateEmail
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.ContactMail
+import androidx.compose.material.icons.filled.DataObject
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.EnhancedEncryption
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.GppMaybe
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Http
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Password
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material.icons.filled.Token
+import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material.icons.filled.Webhook
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.R
 
@@ -79,6 +113,43 @@ internal fun AgentOption.labelRes(): Int =
         AgentOption.WebhookJsonPayload -> R.string.server_settings_agent_json_payload
     }
 
+/** The option's own icon in its row's tinted box: what the value is, a host, a port, a key, a webhook. */
+internal fun AgentOption.icon(): ImageVector =
+    when (this) {
+        AgentOption.EmailFrom -> Icons.Filled.Email
+        AgentOption.EmailSenderName -> Icons.Filled.Badge
+        AgentOption.EmailSmtpHost -> Icons.Filled.Dns
+        AgentOption.EmailSmtpPort -> Icons.Filled.Tag
+        AgentOption.EmailSecure, AgentOption.EmailIgnoreTls, AgentOption.EmailRequireTls -> Icons.Filled.Lock
+        AgentOption.EmailAllowSelfSigned -> Icons.Filled.GppMaybe
+        AgentOption.EmailAuthUser, AgentOption.NtfyUsername -> Icons.Filled.Person
+        AgentOption.EmailAuthPass, AgentOption.EmailPgpPassword, AgentOption.NtfyPassword -> Icons.Filled.Password
+        AgentOption.EmailPgpPrivateKey -> Icons.Filled.EnhancedEncryption
+        AgentOption.EmailUserEmailRequired -> Icons.Filled.ContactMail
+        AgentOption.DiscordWebhookUrl, AgentOption.SlackWebhookUrl, AgentOption.LunaSeaWebhookUrl, AgentOption.WebhookUrl ->
+            Icons.Filled.Webhook
+        AgentOption.DiscordBotUsername, AgentOption.TelegramBotUsername -> Icons.Filled.SmartToy
+        AgentOption.DiscordBotAvatarUrl -> Icons.Filled.Face
+        AgentOption.DiscordWebhookRoleId -> Icons.Filled.Groups
+        AgentOption.DiscordEnableMentions -> Icons.Filled.AlternateEmail
+        AgentOption.TelegramBotApi, AgentOption.PushoverAccessToken -> Icons.Filled.Token
+        AgentOption.PushbulletAccessToken, AgentOption.GotifyToken, AgentOption.NtfyToken -> Icons.Filled.Token
+        AgentOption.TelegramChatId -> Icons.AutoMirrored.Filled.Chat
+        AgentOption.TelegramMessageThreadId -> Icons.Filled.Forum
+        AgentOption.TelegramSendSilently -> Icons.Filled.NotificationsOff
+        AgentOption.PushoverUserToken -> Icons.Filled.Key
+        AgentOption.PushoverSound -> Icons.Filled.MusicNote
+        AgentOption.PushbulletChannelTag, AgentOption.NtfyTags -> Icons.Filled.Sell
+        AgentOption.GotifyUrl, AgentOption.NtfyUrl -> Icons.Filled.Link
+        AgentOption.NtfyTopic -> Icons.Filled.Topic
+        AgentOption.NtfyPriority -> Icons.Filled.PriorityHigh
+        AgentOption.NtfyAuthByPassword -> Icons.AutoMirrored.Filled.Login
+        AgentOption.NtfyAuthByToken -> Icons.Filled.VpnKey
+        AgentOption.LunaSeaProfileName -> Icons.Filled.AccountCircle
+        AgentOption.WebhookAuthHeader -> Icons.Filled.Key
+        AgentOption.WebhookJsonPayload -> Icons.Filled.DataObject
+    }
+
 /**
  * The hint under an option whose value an administrator cannot derive from its label: what blank
  * does, where the provider issues the value, or what the number means. Null where the label says it.
@@ -118,6 +189,26 @@ internal fun NtfyPriorityLevel.labelRes(): Int =
         NtfyPriorityLevel.High -> R.string.server_settings_agent_priority_high
         NtfyPriorityLevel.Max -> R.string.server_settings_agent_priority_max
     }
+
+/** A priority by its arrows, down for the quiet levels and up for the loud ones, a dash for ntfy's default. */
+internal fun NtfyPriorityLevel.icon(): ImageVector =
+    when (this) {
+        NtfyPriorityLevel.Min -> Icons.Filled.KeyboardDoubleArrowDown
+        NtfyPriorityLevel.Low -> Icons.Filled.KeyboardArrowDown
+        NtfyPriorityLevel.Default -> Icons.Filled.Remove
+        NtfyPriorityLevel.High -> Icons.Filled.KeyboardArrowUp
+        NtfyPriorityLevel.Max -> Icons.Filled.KeyboardDoubleArrowUp
+    }
+
+/**
+ * The icon for one of the priority sheet's values: blank, which leaves it to the server, a level by its arrows, and null
+ * for a saved number that is none of them, which takes the setting's own.
+ */
+internal fun ntfyPriorityIcon(value: String): ImageVector? =
+    if (value.isBlank()) Icons.Filled.SettingsBackupRestore else NtfyPriorityLevel.entries.firstOrNull { it.value == value }?.icon()
+
+/** Open for no encryption, closed for every kind of TLS. */
+internal fun EmailEncryption.icon(): ImageVector = if (this == EmailEncryption.None) Icons.Filled.LockOpen else Icons.Filled.Lock
 
 internal fun EmailEncryption.labelRes(): Int =
     when (this) {

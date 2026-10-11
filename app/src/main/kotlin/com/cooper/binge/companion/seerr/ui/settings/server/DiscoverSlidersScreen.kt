@@ -1,11 +1,13 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -13,6 +15,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +27,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
@@ -35,6 +41,7 @@ import com.binge.designsystem.component.BingeConfirmDialog
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ReorderableHandleRow
 import com.binge.designsystem.component.bingeSwitchColors
+import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.Regions
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
@@ -214,6 +221,7 @@ private fun SliderRow(
                 Modifier.toggleable(value = slider.enabled, enabled = enabled, role = Role.Switch) { actions.onToggle(slider.id) }
             },
     ) {
+        SliderKindIcon(slider.type?.icon() ?: Icons.Filled.ViewCarousel)
         Column(modifier = Modifier.weight(1f)) {
             Text(slider.label(), style = MaterialTheme.typography.bodyLarge)
             slider.caption(names)?.let {
@@ -236,6 +244,28 @@ private fun SliderRow(
     }
 }
 
+/**
+ * The kind's icon in the tinted box a settings row draws: the reorder row has no icon of its own, so the box is drawn
+ * here to the same tokens as the design system's list rows.
+ */
+@Composable
+private fun SliderKindIcon(icon: ImageVector) =
+    Box(
+        modifier =
+            Modifier
+                .size(dimensionResource(DesR.dimen.item_group_icon_size))
+                .clip(BingeShapes.MoreCard)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(dimensionResource(DesR.dimen.item_group_icon_glyph)),
+        )
+    }
+
 /** A built-in slider is named by its kind; a custom one by its title, with the kind beneath. */
 @Composable
 internal fun DiscoverSlider.label(): String =
@@ -249,43 +279,6 @@ private fun DiscoverSlider.caption(names: SliderNames): String? =
     } else {
         listOfNotNull(type?.let { stringResource(it.labelRes()) }, dataLabel(names, Regions::name))
             .joinToString(stringResource(R.string.hub_meta_separator))
-    }
-
-@StringRes
-internal fun SliderType.labelRes(): Int =
-    when (this) {
-        SliderType.RecentlyAdded -> R.string.server_settings_slider_recently_added
-        SliderType.RecentRequests -> R.string.server_settings_slider_recent_requests
-        SliderType.Watchlist -> R.string.server_settings_slider_watchlist
-        SliderType.Trending -> R.string.server_settings_slider_trending
-        SliderType.PopularMovies -> R.string.server_settings_slider_popular_movies
-        SliderType.MovieGenres -> R.string.server_settings_slider_movie_genres
-        SliderType.UpcomingMovies -> R.string.server_settings_slider_upcoming_movies
-        SliderType.Studios -> R.string.server_settings_slider_studios
-        SliderType.PopularTv -> R.string.server_settings_slider_popular_tv
-        SliderType.TvGenres -> R.string.server_settings_slider_tv_genres
-        SliderType.UpcomingTv -> R.string.server_settings_slider_upcoming_tv
-        SliderType.Networks -> R.string.server_settings_slider_networks
-        SliderType.MovieKeyword -> R.string.server_settings_slider_movie_keyword
-        SliderType.TvKeyword -> R.string.server_settings_slider_tv_keyword
-        SliderType.MovieGenre -> R.string.server_settings_slider_movie_genre
-        SliderType.TvGenre -> R.string.server_settings_slider_tv_genre
-        SliderType.Studio -> R.string.server_settings_slider_studio
-        SliderType.Network -> R.string.server_settings_slider_network
-        SliderType.Search -> R.string.server_settings_slider_search
-        SliderType.MovieStreamingServices -> R.string.server_settings_slider_movie_streaming
-        SliderType.TvStreamingServices -> R.string.server_settings_slider_tv_streaming
-    }
-
-/** What a custom kind's data holds, in the shape the web client stores it. */
-@StringRes
-internal fun SliderType.dataHintRes(): Int =
-    when (this) {
-        SliderType.MovieGenre, SliderType.TvGenre -> R.string.server_settings_slider_data_genre
-        SliderType.Studio, SliderType.Network -> R.string.server_settings_slider_data_company
-        SliderType.Search -> R.string.server_settings_slider_data_search
-        SliderType.MovieStreamingServices, SliderType.TvStreamingServices -> R.string.server_settings_slider_data_streaming
-        else -> R.string.server_settings_slider_data_generic
     }
 
 /**
