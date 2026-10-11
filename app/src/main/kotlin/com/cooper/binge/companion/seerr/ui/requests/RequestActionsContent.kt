@@ -42,6 +42,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
 import com.cooper.binge.companion.seerr.ui.state.MediaStateChip
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
+import com.cooper.binge.companion.seerr.ui.state.labelRes
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.binge.designsystem.R as DesR
 
@@ -382,9 +383,11 @@ private fun instanceRow(
     ListItem(
         icon = Icons.Filled.Movie,
         label = stringResource(if (instance.is4k) R.string.settings_service_4k else R.string.media_instance_standard),
-        detail = stringResource(R.string.media_mark_as).takeIf { canSetStatus },
+        // Where the status can be set the row is a picker, so its detail is its current value. Where it cannot, the
+        // status is only information and keeps its chip.
+        detail = instance.status?.takeIf { canSetStatus }?.let { stringResource(it.labelRes()) },
         clickable = canSetStatus,
-        trailingContent = instance.status?.let { status -> { MediaStateChip(status = status) } },
+        trailingContent = instance.status?.takeIf { !canSetStatus }?.let { status -> { MediaStateChip(status = status) } },
         onClick = onMarkStatus,
     )
 
