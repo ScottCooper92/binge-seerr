@@ -252,6 +252,10 @@ detekt runs on production `src/main` only, and **with type resolution** — the 
 wired onto the task in `app/build.gradle.kts`. Without that classpath `UnsafeCallOnNullableType`,
 the `!!` ban, loads and silently never fires, so leave that wiring alone.
 
+`runCatching` is banned in `app/src/main` by `ForbiddenMethodCall`: `attempt` (`seerr/SeerrErrors.kt`) is the one
+idiom, because `runCatching` also catches the cancellation a cancelled scope sends. The rule only sees into the stdlib
+because `app/build.gradle.kts` puts detekt's own stdlib on its classpath; detekt 1.23 cannot read the 2.4 one.
+
 `detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or
 argued with in review. The baseline should only shrink.

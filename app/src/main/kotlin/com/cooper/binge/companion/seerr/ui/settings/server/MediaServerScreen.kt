@@ -280,7 +280,7 @@ private fun ScanGroup(
     ItemGroup(
         title = stringResource(R.string.server_settings_scan),
         rows =
-            listOfNotNull(
+            listOf(
                 // One row: it starts the scan, and while the scan runs its trailing stop cancels it, the progress
                 // reading beneath, so there's no separate cancel row to find.
                 ListItem(

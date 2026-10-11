@@ -150,6 +150,15 @@ naming:
     active: false
 
 style:
+  # `attempt` (seerr/SeerrErrors.kt) is the only way to turn a throw into a Result here: `runCatching` also
+  # catches the CancellationException a cancelled scope sends, so a screen reads its own cancellation as a failure (#1025).
+  # Needs type resolution to see into the stdlib, which app/build.gradle.kts arranges (`detektStdlib`). It matches the
+  # plain call, `runCatching { }`; the receiver form, `x.runCatching { }`, is not matched, and nothing here uses it.
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - value: 'kotlin.runCatching'
+        reason: 'runCatching swallows cancellation. Use attempt from seerr/SeerrErrors.kt.'
   ReturnCount:
     active: true
     # excludeGuardClauses is the substantive change, not the count: a run of leading

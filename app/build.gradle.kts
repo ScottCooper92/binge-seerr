@@ -419,6 +419,15 @@ tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configure
     jvmTarget = "17"
 }
 
+/**
+ * The Kotlin stdlib detekt's own compiler was built with, from detekt's own classpath. detekt 1.23 embeds an older Kotlin
+ * than this build compiles with, and cannot read the 2.4 stdlib that `libraries` carries: a call into it does not
+ * resolve, so a rule that matches a stdlib function by name, `ForbiddenMethodCall` on `runCatching` (#1173), loads and
+ * never fires. Put first on the classpath, this one is the stdlib the rule sees. Nothing is compiled against it.
+ */
+fun detektStdlib(detektClasspath: org.gradle.api.file.FileCollection) =
+    detektClasspath.filter { Regex("""kotlin-stdlib-\d.*\.jar""").matches(it.name) }
+
 // UnsafeCallOnNullableType - the `!!` ban - needs type resolution, and a detekt task carries no
 // classpath by default, so without this the rule loads and silently never fires. `libraries` is the
 // compile task's already-variant-resolved classpath; resolving compileDependencyFiles directly trips
@@ -432,10 +441,10 @@ kotlin.target.compilations.configureEach {
         }
     val outputClasses = output.classesDirs
     tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-        classpath.from(classpathFiles, outputClasses)
+        classpath.from(detektStdlib(detektClasspath), classpathFiles, outputClasses)
     }
     tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
-        classpath.from(classpathFiles, outputClasses)
+        classpath.from(detektStdlib(detektClasspath), classpathFiles, outputClasses)
     }
 }
 
