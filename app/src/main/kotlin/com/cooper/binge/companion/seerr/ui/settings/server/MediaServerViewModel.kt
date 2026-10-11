@@ -1,0 +1,274 @@
+package com.cooper.binge.companion.seerr.ui.settings.server
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.seerr.HTTP_NOT_FOUND
+import com.cooper.binge.companion.seerr.seerr.SeerrLibraryDto
+import com.cooper.binge.companion.seerr.seerr.SeerrLibraryEnabledBody
+import com.cooper.binge.companion.seerr.seerr.SeerrScanCommandBody
+import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
+import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import retrofit2.HttpException
+import java.io.IOException
+import javax.inject.Inject
+
+/**
+ * The media-server page: the connection as an editor over `settings/plex` or `settings/jellyfin`
+ * (which the server's kind decides), with the libraries, the full scan and the Plex server picker
+ * beside it in the extras. The two library writes exist in two shapes — `develop` grew a per-library
+ * `PUT` and a `library/sync`, a released server still takes `enable=` and `sync=` on the `GET` —
+ * so each tries the newer one first and falls back on a 404, which is how a released server says
+ * the route is not there.
+ */
+@HiltViewModel
+class MediaServerViewModel
+    @Inject
+    constructor(
+        private val connection: SeerrConnection,
+        @IoDispatcher private val dispatcher: CoroutineDispatcher,
+        savedState: SavedStateHandle = SavedStateHandle(),
+    ) : ExtrasEditorViewModel<MediaServerForm, MediaServerExtras>(MediaServerExtras(), dispatcher) {
+        /**
+         * A connection form, kept across the process being killed (#1246). The API key is not kept: the record's goes back
+         * in. A draft of another media server's kind is dropped, since the server's kind is read, not chosen.
+         */
+        override val savedDraft =
+            SavedDraft(
+                savedState,
+                MediaServerForm.serializer(),
+                scrub = { it.copy(apiKey = it.apiKey?.let { "" }) },
+                restore = { kept, loaded -> if (kept.kind == loaded.kind) kept.copy(apiKey = loaded.apiKey) else loaded },
+            )
+
+        /** Test seam for the scan's poll; the constructor is Hilt's. */
+        internal var scanPollMillis: Long = SCAN_POLL_MILLIS
+
+        private var kind = MediaServerKind.Plex
+        private var scanPoll: Job? = null
+
+        /**
+         * Serializes the released-server fallback's library writes. That path sends the whole
+         * enabled set computed from local state, so two of them racing each other would each
+         * compute from a snapshot that is missing the other's change and the one that lands
+         * last on the server would silently drop it; this makes the second wait for the first
+         * to finish and fold into local state before it reads that state.
+         *
+         * A toggle and a sync are both whole-set writes on that path, so both take it.
+         */
+        private val libraryWriteMutex = Mutex()
+
+        init {
+            reload()
+        }
+
+        override suspend fun load(): MediaServerForm {
+            val api = connection.api()
+            kind = connection.profile().mediaServer.toKind() ?: throw IOException("The server's media server type could not be read")
+            val form =
+                when (kind) {
+                    MediaServerKind.Plex -> api.plexSettings().let { it.toForm().also { _ -> setLibraries(it.libraries) } }
+                    else -> api.jellyfinSettings().let { it.toForm(kind).also { _ -> setLibraries(it.libraries) } }
+                }
+            attempt { api.scanStatus(kind.apiSegment) }.getOrNull()?.let { applyScan(it.toScan()) }
+            return form
+        }
+
+        override suspend fun write(draft: MediaServerForm): MediaServerForm {
+            val api = connection.api()
+            return when (kind) {
+                MediaServerKind.Plex ->
+                    api.updatePlexSettings(draft.toPlexBody()).let {
+                        it.toForm().also { _ ->
+                            setLibraries(it.libraries)
+                        }
+                    }
+                else -> api.updateJellyfinSettings(draft.toJellyfinBody()).let { it.toForm(kind).also { _ -> setLibraries(it.libraries) } }
+            }
+        }
+
+        override fun canSave(draft: MediaServerForm): Boolean = draft.valid
+
+        /** Turns one library on or off: the per-library route where the server has it, else the whole enabled set on the `GET`. */
+        fun setLibraryEnabled(
+            id: String,
+            enabled: Boolean,
+        ) {
+            if (id in currentExtras().busyLibraryIds) return
+            editExtras { it.copy(busyLibraryIds = it.busyLibraryIds + id) }
+            viewModelScope.launch(dispatcher) {
+                val result =
+                    attempt {
+                        val api = connection.api()
+                        orOnNotFound(
+                            newer = {
+                                // A change to apply to the list as it stands when the answer lands, not a list built
+                                // from a snapshot: another toggle may have landed in between (#1024).
+                                val updated = api.setLibraryEnabled(kind.apiSegment, id, SeerrLibraryEnabledBody(enabled)).toLibrary()
+                                val change: (List<MediaLibrary>) -> List<MediaLibrary> = { libraries ->
+                                    libraries.map { if (it.id == updated.id) updated else it }
+                                }
+                                change
+                            },
+                            released = {
+                                libraryWriteMutex.withLock {
+                                    val enabledIds =
+                                        currentExtras()
+                                            .libraries
+                                            .filter { if (it.id == id) enabled else it.enabled }
+                                            .map { it.id }
+                                    val libraries = api.mediaLibraries(kind.apiSegment, enable = enabledIds.joinToString(","))
+                                    // Folded into local state before the lock is released, so the next
+                                    // waiting toggle computes its enabled set from this one's result
+                                    // rather than the snapshot from before it landed.
+                                    val fresh = libraries.map { dto -> dto.toLibrary() }
+                                    editExtras { it.copy(libraries = fresh, busyLibraryIds = it.busyLibraryIds - id) }
+                                    // Already folded in above, so the change after the lock keeps the list as it then stands.
+                                    val change: (List<MediaLibrary>) -> List<MediaLibrary> = { it }
+                                    change
+                                }
+                            },
+                        )
+                    }
+                result.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                // Libraries and busyLibraryIds must land in the same emission: a collector observing
+                // libraries updated but the id still busy (or vice versa) is an inconsistent state.
+                editExtras {
+                    it.copy(
+                        libraries = result.getOrNull()?.invoke(it.libraries) ?: it.libraries,
+                        busyLibraryIds = it.busyLibraryIds - id,
+                    )
+                }
+            }
+        }
+
+        /**
+         * Re-reads the libraries from the media server, so a newly added one appears with its toggle.
+         *
+         * The released route rewrites the whole enabled set on every call, outside its `sync` branch
+         * and unguarded, so an absent `enable` is an instruction to disable everything and it is
+         * saved. The fallback therefore sends the currently enabled ids alongside `sync`, as
+         * Overseerr's own web client does, and reads them under the same lock a toggle takes.
+         */
+        fun syncLibraries() {
+            if (currentExtras().syncingLibraries) return
+            editExtras { it.copy(syncingLibraries = true) }
+            viewModelScope.launch(dispatcher) {
+                attempt {
+                    val api = connection.api()
+                    orOnNotFound(
+                        newer = { api.syncLibraries(kind.apiSegment) },
+                        released = {
+                            libraryWriteMutex.withLock {
+                                val enabledIds =
+                                    currentExtras()
+                                        .libraries
+                                        .filter { it.enabled }
+                                        .map { it.id }
+                                // Nothing enabled needs no parameter: the route's own answer to an absent
+                                // enable is then the correct one.
+                                api
+                                    .mediaLibraries(
+                                        kind.apiSegment,
+                                        enable = enabledIds.takeIf { it.isNotEmpty() }?.joinToString(","),
+                                        sync = true,
+                                    ).also { setLibraries(it) }
+                            }
+                        },
+                    )
+                }.onSuccess { libraries ->
+                    setLibraries(libraries)
+                    notify(EditorEvent.Notice(R.string.server_settings_libraries_synced))
+                }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                editExtras { it.copy(syncingLibraries = false) }
+            }
+        }
+
+        fun startScan() = command(SeerrScanCommandBody(start = true))
+
+        fun cancelScan() = command(SeerrScanCommandBody(cancel = true))
+
+        private fun command(body: SeerrScanCommandBody) {
+            viewModelScope.launch(dispatcher) {
+                attempt { connection.api().scan(kind.apiSegment, body).toScan() }
+                    .onSuccess { applyScan(it) }
+                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+            }
+        }
+
+        /** A running scan is followed until it stops; the poll lives with the page and ends with it. */
+        private fun applyScan(scan: LibraryScan) {
+            editExtras { it.copy(scan = scan) }
+            if (!scan.running) {
+                scanPoll?.cancel()
+                scanPoll = null
+                return
+            }
+            if (scanPoll?.isActive == true) return
+            scanPoll =
+                viewModelScope.launch(dispatcher) {
+                    var running = true
+                    while (running) {
+                        delay(scanPollMillis)
+                        // A failed poll is not an answer: the last state stands and the next tick asks again.
+                        val latest = attempt { connection.api().scanStatus(kind.apiSegment).toScan() }.getOrNull()
+                        if (latest != null) {
+                            editExtras { it.copy(scan = latest) }
+                            running = latest.running
+                        }
+                    }
+                }
+        }
+
+        fun openServerPicker() {
+            editExtras { it.copy(picker = PlexServerPicker.Loading) }
+            viewModelScope.launch(dispatcher) {
+                val picker =
+                    attempt { connection.api().plexServers().toChoices() }
+                        .fold(onSuccess = { PlexServerPicker.Ready(it) }, onFailure = { PlexServerPicker.Failed(it.toSeerrError()) })
+                editExtras { current -> if (current.picker == null) current else current.copy(picker = picker) }
+            }
+        }
+
+        fun closeServerPicker() = editExtras { it.copy(picker = null) }
+
+        /** Fills the address from a picked connection; the name follows once the server reaches it on save. */
+        fun chooseConnection(
+            server: PlexServerChoice,
+            choice: PlexConnection,
+        ) {
+            edit { it.copy(serverName = server.name, host = choice.address, port = choice.port.toString(), useSsl = choice.useSsl) }
+            closeServerPicker()
+        }
+
+        private fun setLibraries(libraries: List<SeerrLibraryDto>) =
+            editExtras {
+                it.copy(libraries = libraries.map { dto -> dto.toLibrary() })
+            }
+
+        private suspend fun <T> orOnNotFound(
+            newer: suspend () -> T,
+            released: suspend () -> T,
+        ): T =
+            try {
+                newer()
+            } catch (e: HttpException) {
+                if (e.code() == HTTP_NOT_FOUND) released() else throw e
+            }
+
+        private companion object {
+            const val SCAN_POLL_MILLIS = 2_000L
+        }
+    }

@@ -1,0 +1,336 @@
+package com.cooper.binge.companion.seerr.notifications
+
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.cooper.binge.companion.seerr.seerr.TitleCache
+import com.cooper.binge.companion.seerr.ui.requests.REQUESTS_PAGE_SIZE
+import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
+import com.cooper.binge.companion.seerr.ui.users.settings.REQUEST
+import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
+import com.cooper.binge.companion.seerr.util.FakeTitleDao
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+
+private const val MANAGE_ISSUES = 1 shl 20
+private const val OWN_REQUESTS = "/api/v1/user/7/requests"
+
+private fun requestsPage(
+    ids: List<Int>,
+    pages: Int = 1,
+): String =
+    ids.joinToString(",", prefix = """{"pageInfo":{"pages":$pages,"results":${ids.size}},"results":[""", postfix = "]}") { id ->
+        """{"id":$id,"status":1,"media":{"tmdbId":${100 + id},"mediaType":"movie","status":2}}"""
+    }
+
+private fun ownRequests(
+    vararg rows: Pair<Int, String>,
+    pages: Int = 1,
+): String =
+    rows.joinToString(",", prefix = """{"pageInfo":{"pages":$pages,"results":${rows.size}},"results":[""", postfix = "]}") { (id, state) ->
+        """{"id":$id,$state,"media":{"tmdbId":${100 + id},"mediaType":"movie"${state.substringAfter("|", "")}}}"""
+            .replace("|", "")
+    }
+
+/** The poll over a scripted server and a real DataStore; the notifier is a fake that records. */
+class NotificationsCheckerTest {
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    private val seerr = ScriptedSeerr(folder)
+    private val notifier = FakeNotifier()
+    private var stores = 0
+
+    @Before
+    fun setUp() {
+        seerr.start()
+        seerr.viewer(id = 7, permissions = ADMIN)
+        seerr.serve("GET /api/v1/request", requestsPage(emptyList()))
+        seerr.serve("GET /api/v1/issue", """{"pageInfo":{"pages":1,"results":0},"results":[]}""")
+        seerr.serve("GET /api/v1/user/7/requests", requestsPage(emptyList()))
+        seerr.serve("GET /api/v1/movie/101", """{"title":"Heat"}""")
+        seerr.serve("GET /api/v1/movie/102", """{"title":"Ronin"}""")
+        seerr.serve("GET /api/v1/movie/103", """{"title":"Thief"}""")
+    }
+
+    @After
+    fun tearDown() = seerr.close()
+
+    private fun TestScope.prefs(): NotificationPrefs =
+        NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n${stores++}.preferences_pb") })
+
+    private suspend fun TestScope.checker(
+        prefs: NotificationPrefs,
+        vararg on: NotificationSignal,
+    ): NotificationsChecker {
+        on.forEach { prefs.setEnabled(it, true) }
+        val connection = seerr.connection(this)
+        return NotificationsChecker(prefs, connection, NotificationFeeds(connection, TitleCache(FakeTitleDao())), notifier)
+    }
+
+    @Test
+    fun `nothing runs while every signal is off, or while nothing could be shown`() =
+        runTest {
+            val prefs = prefs()
+            assertEquals(CheckResult.Ok, checker(prefs).check())
+            notifier.canPost = false
+            assertEquals(CheckResult.Ok, checker(prefs, NotificationSignal.PendingRequests).check())
+            assertTrue(seerr.received.none { it.url.encodedPath == "/api/v1/request" })
+        }
+
+    @Test
+    fun `a feed seeds silently, then announces what is newer than the cursor across pages, and advances`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.PendingRequests)
+            seerr.serve("GET /api/v1/request", requestsPage(listOf(3, 2, 1)))
+
+            assertEquals(CheckResult.Ok, checker.check())
+            assertTrue(notifier.newRequests.isEmpty())
+            assertEquals(3, prefs.cursor(NotificationSignal.PendingRequests))
+            // A seed announces nothing, so it titles nothing: no TMDB lookup per row.
+            assertTrue(seerr.received.none { it.url.encodedPath.startsWith("/api/v1/movie/") })
+
+            seerr.serve("GET /api/v1/request", requestsPage(listOf(5, 4, 3), pages = 2))
+            assertEquals(CheckResult.Ok, checker.check())
+            assertEquals(listOf(listOf(5, 4)), notifier.newRequests)
+            assertEquals(5, prefs.cursor(NotificationSignal.PendingRequests))
+
+            assertEquals(CheckResult.Ok, checker.check())
+            assertEquals(1, notifier.newRequests.size)
+        }
+
+    @Test
+    fun `a row titling drops still advances the cursor past it`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.PendingRequests)
+            checker.check()
+            assertEquals(0, prefs.cursor(NotificationSignal.PendingRequests))
+
+            // Row 9 is the newest and maps to neither movie nor tv, so `toRequestItem` drops it.
+            seerr.serve(
+                "GET /api/v1/request",
+                """{"pageInfo":{"pages":1,"results":2},"results":[
+                   {"id":9,"status":1,"media":{"tmdbId":900,"mediaType":"person","status":2}},
+                   {"id":8,"status":1,"media":{"tmdbId":108,"mediaType":"movie","status":2}}]}""",
+            )
+            checker.check()
+
+            assertEquals(listOf(listOf(8)), notifier.newRequests)
+            // 9, not 8: the cursor follows what the server offered, so the dropped row is not
+            // re-fetched for good, and a row arriving above 8 is not announced twice.
+            assertEquals(9, prefs.cursor(NotificationSignal.PendingRequests))
+        }
+
+    @Test
+    fun `an empty feed seeds to zero, so the first row ever is announced rather than seeding again`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.PendingRequests)
+            checker.check()
+            assertEquals(0, prefs.cursor(NotificationSignal.PendingRequests))
+
+            seerr.serve("GET /api/v1/request", requestsPage(listOf(1)))
+            checker.check()
+            assertEquals(listOf(listOf(1)), notifier.newRequests)
+        }
+
+    @Test
+    fun `the feeds follow the viewer's permissions, and a failed fetch leaves the cursor alone`() =
+        runTest {
+            seerr.viewer(id = 7, permissions = MANAGE_ISSUES)
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.PendingRequests, NotificationSignal.OpenIssues)
+            seerr.serve(
+                "GET /api/v1/issue",
+                """{"pageInfo":{"pages":1,"results":1},"results":[{"id":9,"media":{"tmdbId":101,"mediaType":"movie"}}]}""",
+            )
+
+            assertEquals(CheckResult.Ok, checker.check())
+            assertTrue(seerr.received.none { it.url.encodedPath == "/api/v1/request" })
+            assertEquals(9, prefs.cursor(NotificationSignal.OpenIssues))
+            assertNull(prefs.cursor(NotificationSignal.PendingRequests))
+
+            seerr.serve("GET /api/v1/issue", "", code = 500)
+            assertEquals(CheckResult.TransientFailure, checker.check())
+            assertEquals(9, prefs.cursor(NotificationSignal.OpenIssues))
+
+            // A dead session: auth/me refuses the same credentials, so the 401 is the session, not a refusal (#997).
+            seerr.serve("GET /api/v1/issue", "", code = 401)
+            seerr.serve("GET /api/v1/auth/me", "", code = 401)
+            assertEquals(CheckResult.AuthFailure, checker.check())
+        }
+
+    /**
+     * Every lineage answers a dead session with 403 on the feeds, the same code as a permission, so the
+     * poll asks `auth/me` which it is. Before #676 only a 401 paused it, and against a real server a dead
+     * session was a transient failure retried forever.
+     */
+    @Test
+    fun `a feed refused with 403 pauses the poll only when auth_me refuses too`() =
+        runTest {
+            seerr.viewer(id = 7, permissions = MANAGE_ISSUES)
+            val checker = checker(prefs(), NotificationSignal.OpenIssues)
+            seerr.serve("GET /api/v1/issue", """{"pageInfo":{"pages":1,"results":0},"results":[]}""")
+            assertEquals(CheckResult.Ok, checker.check())
+
+            seerr.serve("GET /api/v1/issue", """{"message":"forbidden"}""", code = 403)
+            assertEquals(CheckResult.TransientFailure, checker.check())
+
+            seerr.serve("GET /api/v1/auth/me", """{"message":"forbidden"}""", code = 403)
+            assertEquals(CheckResult.AuthFailure, checker.check())
+        }
+
+    @Test
+    fun `an own request is announced once on entering a state, and again if it leaves and comes back`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved, NotificationSignal.RequestAvailable)
+            seerr.serve("GET /api/v1/user/7/requests", ownRequests(1 to """"status":2""", 2 to """"status":1"""))
+
+            checker.check()
+            assertTrue(notifier.approved.isEmpty())
+            assertEquals(setOf(1), prefs.notifiedIds(NotificationSignal.RequestApproved))
+
+            seerr.serve(
+                "GET /api/v1/user/7/requests",
+                ownRequests(1 to """"status":2|,"status":5""", 2 to """"status":2""", 3 to """"status":3"""),
+            )
+            checker.check()
+            assertEquals(listOf(listOf(2)), notifier.approved)
+            assertEquals(listOf(listOf(1)), notifier.available)
+            assertTrue(notifier.declined.isEmpty())
+
+            seerr.serve("GET /api/v1/user/7/requests", ownRequests(2 to """"status":1"""))
+            checker.check()
+            seerr.serve("GET /api/v1/user/7/requests", ownRequests(2 to """"status":2"""))
+            checker.check()
+            assertEquals(listOf(listOf(2), listOf(2)), notifier.approved)
+        }
+
+    @Test
+    fun `an own request behind the newest page still has its approval seen`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            val newest = ownRequests(3 to """"status":1""", 2 to """"status":1""", pages = 2)
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, listOf(newest, ownRequests(1 to """"status":1""", pages = 2)))
+
+            checker.check()
+            assertEquals(emptySet<Int>(), prefs.notifiedIds(NotificationSignal.RequestApproved))
+            assertEquals(2, seerr.count("GET", OWN_REQUESTS))
+
+            // Approved where it already sits, behind the newest page: read as one page it is invisible.
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, listOf(newest, ownRequests(1 to """"status":2""", pages = 2)))
+            checker.check()
+            assertEquals(listOf(listOf(1)), notifier.approved)
+        }
+
+    @Test
+    fun `a history the server answers in one page costs one call`() =
+        runTest {
+            val checker = checker(prefs(), NotificationSignal.RequestApproved)
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(2 to """"status":1""", 1 to """"status":2"""))
+
+            checker.check()
+
+            assertEquals(1, seerr.count("GET", OWN_REQUESTS))
+        }
+
+    /** One row per page, newest first, so a page index is a depth: page 0 holds id 100, page 6 id 94. */
+    private fun ownRequestPages(
+        pages: Int,
+        oldestStatus: String,
+    ): List<String> =
+        (0 until pages).map { page ->
+            val status = if (page == pages - 1) oldestStatus else """"status":2|,"status":5"""
+            ownRequests(100 - page to status, pages = pages)
+        }
+
+    @Test
+    fun `a request still waiting on an outcome is found however deep the list has pushed it`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            val pages = 7
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, ownRequestPages(pages, """"status":1"""))
+
+            // The seed walks the whole list once, which is how a request already outstanding beyond
+            // the feed cap gets watched at all.
+            checker.check()
+            assertEquals(pages, seerr.count("GET", OWN_REQUESTS))
+            assertEquals(setOf(94), prefs.watchedRequestIds())
+
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, ownRequestPages(pages, """"status":2"""))
+            checker.check()
+
+            // Page 6, two pages past where a fixed five-page walk would have stopped.
+            assertEquals(listOf(listOf(94)), notifier.approved)
+            // Approved is not resolved: its media has not landed, so Available is still to come.
+            assertEquals(setOf(94), prefs.watchedRequestIds())
+        }
+
+    @Test
+    fun `with nothing outstanding the walk still covers the pages the deduplication sets are built from`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            seerr.servePages("GET $OWN_REQUESTS", REQUESTS_PAGE_SIZE, ownRequestPages(10, """"status":2|,"status":5"""))
+            checker.check()
+            assertEquals(emptySet<Int>(), prefs.watchedRequestIds())
+            seerr.received.clear()
+
+            checker.check()
+
+            // Five, not one: a shallower walk would prune the saved ids to its own depth and announce
+            // them all over again the next time something outstanding took it deeper.
+            assertEquals(5, seerr.count("GET", OWN_REQUESTS))
+        }
+
+    @Test
+    fun `a watched request the server no longer has stops being watched`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(2 to """"status":1""", 1 to """"status":1"""))
+            checker.check()
+            assertEquals(setOf(2, 1), prefs.watchedRequestIds())
+
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(2 to """"status":1"""))
+            checker.check()
+
+            assertEquals(setOf(2), prefs.watchedRequestIds())
+        }
+
+    @Test
+    fun `a failed poll leaves the watched set alone, so the next one walks as deep`() =
+        runTest {
+            val prefs = prefs()
+            val checker = checker(prefs, NotificationSignal.RequestApproved)
+            seerr.serve("GET $OWN_REQUESTS", ownRequests(1 to """"status":1"""))
+            checker.check()
+            assertEquals(setOf(1), prefs.watchedRequestIds())
+
+            seerr.serve("GET $OWN_REQUESTS", "", code = 500)
+            assertEquals(CheckResult.TransientFailure, checker.check())
+
+            assertEquals(setOf(1), prefs.watchedRequestIds())
+        }
+
+    @Test
+    fun `a plain user's own signals run without the moderator feeds`() =
+        runTest {
+            seerr.viewer(id = 7, permissions = REQUEST)
+            val checker = checker(prefs(), NotificationSignal.PendingRequests, NotificationSignal.RequestDeclined)
+            assertEquals(CheckResult.Ok, checker.check())
+            assertTrue(seerr.received.none { it.url.encodedPath == "/api/v1/request" })
+            assertTrue(seerr.received.any { it.url.encodedPath == "/api/v1/user/7/requests" })
+        }
+}

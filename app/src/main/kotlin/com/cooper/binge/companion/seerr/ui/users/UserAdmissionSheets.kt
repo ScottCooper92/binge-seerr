@@ -1,0 +1,285 @@
+package com.cooper.binge.companion.seerr.ui.users
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GroupAdd
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import com.binge.designsystem.component.BingeActionFooter
+import com.binge.designsystem.component.BingeBottomSheet
+import com.binge.designsystem.component.BingeInitialsAvatar
+import com.binge.designsystem.component.BingeLoadingIndicator
+import com.binge.designsystem.component.BingeTextButton
+import com.binge.designsystem.component.CheckboxRow
+import com.binge.designsystem.component.ListItem
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
+import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorTextField
+import com.cooper.binge.companion.seerr.ui.users.settings.PasswordSettings
+import com.cooper.binge.companion.seerr.ui.users.settings.imeActionIf
+import com.binge.designsystem.R as DesR
+
+class UserAdmissionActions(
+    val onStart: () -> Unit,
+    val onCancel: () -> Unit,
+    val onStartCreate: () -> Unit,
+    val onEditDraft: ((CreateUserDraft) -> CreateUserDraft) -> Unit,
+    val onCreate: () -> Unit,
+    val onStartImport: (UserOrigin) -> Unit,
+    val onToggleCandidate: (String) -> Unit,
+    val onSelectAllCandidates: (Boolean) -> Unit,
+    val onImport: () -> Unit,
+)
+
+/** The add-user flow as sheets: the choice, then the form or the picker. */
+@Composable
+internal fun UserAdmissionSheets(
+    state: UsersUiState.Ready,
+    actions: UserAdmissionActions,
+) {
+    when (val admission = state.admission) {
+        null -> Unit
+        is UserAdmissionState.Choosing ->
+            AdmissionChoiceSheet(importSource = state.importSource, actions = actions)
+        is UserAdmissionState.Creating ->
+            CreateUserSheet(draft = admission.draft, saving = admission.saving, actions = actions)
+        is UserAdmissionState.Importing ->
+            ImportUsersSheet(picker = admission.picker, saving = admission.saving, actions = actions)
+    }
+}
+
+@Composable
+private fun AdmissionChoiceSheet(
+    importSource: UserOrigin?,
+    actions: UserAdmissionActions,
+) {
+    BingeBottomSheet(onDismissRequest = actions.onCancel) {
+        AdmissionChoiceContent(importSource = importSource, actions = actions)
+    }
+}
+
+/** How to add a user: create a local one, or import from the media server where there is one. */
+@Composable
+internal fun AdmissionChoiceContent(
+    importSource: UserOrigin?,
+    actions: UserAdmissionActions,
+    modifier: Modifier = Modifier,
+) {
+    ActionSheetGroup(
+        rows =
+            listOfNotNull(
+                ListItem(
+                    icon = Icons.Filled.PersonAdd,
+                    label = stringResource(R.string.users_add_create),
+                    detail = stringResource(R.string.users_add_create_desc),
+                    onClick = actions.onStartCreate,
+                ),
+                importSource?.let { source ->
+                    ListItem(
+                        icon = Icons.Filled.GroupAdd,
+                        label = stringResource(R.string.users_add_import, stringResource(source.labelRes())),
+                        detail = stringResource(R.string.users_add_import_desc),
+                        onClick = { actions.onStartImport(source) },
+                    )
+                },
+            ),
+        modifier = modifier,
+    )
+}
+
+/** A local account: email and username, and a password unless the server is asked to email one. */
+@Composable
+private fun CreateUserSheet(
+    draft: CreateUserDraft,
+    saving: Boolean,
+    actions: UserAdmissionActions,
+) {
+    BingeBottomSheet(onDismissRequest = actions.onCancel, gesturesEnabled = !saving) {
+        CreateUserSheetContent(
+            draft = draft,
+            saving = saving,
+            onEditDraft = actions.onEditDraft,
+            onCreate = actions.onCreate,
+        )
+    }
+}
+
+/** The sheet's body, stateless so a frame can render it: the modal window itself does not capture. */
+@Composable
+internal fun CreateUserSheetContent(
+    draft: CreateUserDraft,
+    saving: Boolean,
+    onEditDraft: ((CreateUserDraft) -> CreateUserDraft) -> Unit,
+    onCreate: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(dimensionResource(DesR.dimen.screen_content_inset)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_m)),
+    ) {
+        Text(stringResource(R.string.users_create_title), style = MaterialTheme.typography.titleLarge)
+        EditorTextField(
+            draft.email,
+            stringResource(R.string.setup_email),
+            enabled = !saving,
+            keyboardType = KeyboardType.Email,
+            placeholder = stringResource(R.string.placeholder_email),
+            supporting = stringResource(R.string.user_settings_email_invalid).takeIf { draft.emailInvalid },
+            isError = draft.emailInvalid,
+        ) { value ->
+            onEditDraft { it.copy(email = value) }
+        }
+        EditorTextField(
+            draft.username,
+            stringResource(R.string.setup_username),
+            enabled = !saving,
+            autoCorrect = false,
+            placeholder = stringResource(R.string.users_create_username_placeholder),
+            imeAction = imeActionIf(last = draft.generatePassword),
+        ) { value ->
+            onEditDraft { it.copy(username = value) }
+        }
+        if (!draft.generatePassword) {
+            EditorTextField(
+                value = draft.password,
+                label = stringResource(R.string.setup_password),
+                enabled = !saving,
+                secret = true,
+                supporting = stringResource(R.string.user_settings_password_hint, PasswordSettings.MIN_PASSWORD_LENGTH),
+                isError = draft.passwordTooShort,
+                imeAction = ImeAction.Done,
+            ) { value -> onEditDraft { it.copy(password = value) } }
+        }
+        CheckboxRow(
+            label = stringResource(R.string.users_create_generate),
+            checked = draft.generatePassword,
+            onToggle = { value -> onEditDraft { it.copy(generatePassword = value) } },
+            // The caption is the reason the row is off, so it stays legible rather than following the label down.
+            subtitle = stringResource(R.string.users_create_generate_unavailable).takeIf { !draft.canGeneratePassword },
+            enabled = !saving && draft.canGeneratePassword,
+        )
+        BingeActionFooter(
+            label = stringResource(R.string.users_create_submit),
+            onClick = onCreate,
+            enabled = !saving && draft.valid,
+            loading = saving,
+        )
+    }
+}
+
+/** The media server's accounts not yet on the server, each tickable, imported together. */
+@Composable
+private fun ImportUsersSheet(
+    picker: ImportPicker,
+    saving: Boolean,
+    actions: UserAdmissionActions,
+) {
+    BingeBottomSheet(onDismissRequest = actions.onCancel, gesturesEnabled = !saving) {
+        ImportUsersContent(picker = picker, saving = saving, actions = actions)
+    }
+}
+
+@Composable
+internal fun ImportUsersContent(
+    picker: ImportPicker,
+    saving: Boolean,
+    actions: UserAdmissionActions,
+    modifier: Modifier = Modifier,
+) {
+    val candidates = picker.candidates
+    Column(
+        modifier = modifier.fillMaxWidth().padding(bottom = dimensionResource(DesR.dimen.padding_l)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(R.string.users_add_import, stringResource(picker.source.labelRes())),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            if (!candidates.isNullOrEmpty()) {
+                val all = picker.selected.size == candidates.size
+                BingeTextButton(
+                    label = stringResource(if (all) R.string.users_import_select_none else R.string.users_import_select_all),
+                    onClick = { actions.onSelectAllCandidates(!all) },
+                    enabled = !saving,
+                )
+            }
+        }
+        when {
+            picker.failed -> EmptyScreen(message = stringResource(R.string.users_import_failed))
+            candidates == null -> BingeLoadingIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            candidates.isEmpty() -> EmptyScreen(message = stringResource(R.string.users_import_empty))
+            else -> {
+                LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+                    itemsIndexed(candidates, key = { _, candidate -> candidate.id }) { index, candidate ->
+                        CandidateRow(
+                            candidate = candidate,
+                            showDivider = index != candidates.lastIndex,
+                            checked = candidate.id in picker.selected,
+                            enabled = !saving,
+                            onToggle = { actions.onToggleCandidate(candidate.id) },
+                        )
+                    }
+                }
+                val count = picker.selected.size
+                BingeActionFooter(
+                    label = pluralStringResource(R.plurals.users_import_submit, count, count),
+                    onClick = actions.onImport,
+                    enabled = !saving && count > 0,
+                    loading = saving,
+                    modifier = Modifier.padding(horizontal = dimensionResource(DesR.dimen.padding_m)),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CandidateRow(
+    candidate: ImportCandidate,
+    checked: Boolean,
+    enabled: Boolean,
+    showDivider: Boolean,
+    onToggle: () -> Unit,
+) {
+    CheckboxRow(
+        label = candidate.name,
+        checked = checked,
+        onToggle = { onToggle() },
+        subtitle = candidate.email,
+        enabled = enabled,
+        showDivider = showDivider,
+        // The avatar trails because CheckboxRow has no leading slot yet; binge-design-system#544 asks for one.
+        trailingContent = {
+            BingeInitialsAvatar(name = candidate.name, avatarUrl = candidate.avatarUrl, size = dimensionResource(DesR.dimen.avatar_size_md))
+        },
+    )
+}

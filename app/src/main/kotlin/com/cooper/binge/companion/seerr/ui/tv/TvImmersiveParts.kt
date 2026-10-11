@@ -1,0 +1,257 @@
+package com.cooper.binge.companion.seerr.ui.tv
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.tv.material3.Icon
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
+import com.binge.designsystem.theme.BingeShapes
+import com.binge.designsystem.theme.BingeTheme
+import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
+import com.binge.designsystem.tv.focus.tvClickable
+import com.binge.designsystem.tv.focus.tvFocusIndicator
+import com.binge.designsystem.tv.template.TvImmersiveGrid
+import com.binge.designsystem.tv.template.TvImmersiveHubSkeleton
+import com.binge.designsystem.tv.template.TvMessagePage
+import com.binge.designsystem.tv.template.TvPageAction
+import com.binge.designsystem.tv.template.TvPageHosting
+import com.cooper.binge.companion.seerr.R
+
+private const val POSTER_ASPECT_RATIO = 2f / 3f
+private const val CHIP_SCRIM_ALPHA = 0.7f
+
+/** A poster as a focusable card for an immersive hub or grid; the backdrop names it, so there is no caption. */
+@Composable
+internal fun TvPosterCard(
+    title: String,
+    posterUrl: String?,
+    isFocused: Boolean,
+    onFocusChanged: (Boolean) -> Unit,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    badge: (@Composable BoxScope.() -> Unit)? = null,
+) {
+    Box(
+        modifier =
+            modifier
+                .aspectRatio(POSTER_ASPECT_RATIO)
+                .tvFocusIndicator(isFocused = isFocused, shape = BingeShapes.MediaCard)
+                .clip(BingeShapes.MediaCard)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .semantics { contentDescription = title }
+                .tvClickable(onFocusChanged = onFocusChanged, enabled = enabled, onClick = onClick),
+    ) {
+        posterUrl?.let {
+            AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        }
+        badge?.invoke(this)
+    }
+}
+
+/**
+ * A small round icon chip for the corner of a poster — a state in a glyph, over a scrim so it reads on any artwork.
+ * Place it in [TvPosterCard]'s `badge` slot.
+ */
+@Composable
+internal fun BoxScope.TvPosterIconChip(
+    icon: ImageVector,
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .align(Alignment.TopEnd)
+                .padding(dimensionResource(R.dimen.tv_poster_chip_inset))
+                .size(dimensionResource(R.dimen.tv_poster_chip_size))
+                .clip(CircleShape)
+                .background(BingeTheme.colors.scrim.copy(alpha = CHIP_SCRIM_ALPHA)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(dimensionResource(R.dimen.tv_poster_chip_icon)),
+        )
+    }
+}
+
+/** The focused title's backdrop, falling back to its poster, then a flat plate. */
+@Composable
+internal fun TvBackdropArtwork(
+    backdropUrl: String?,
+    posterUrl: String?,
+) {
+    val url = backdropUrl ?: posterUrl
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        if (url != null) {
+            AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        }
+    }
+}
+
+/** The backdrop's text band: a meta line, the title, a coloured status line and an optional synopsis. */
+@Composable
+internal fun ColumnScope.TvBackdropCopy(
+    meta: String,
+    title: String,
+    status: String,
+    statusColor: Color,
+    synopsis: String?,
+) {
+    Text(
+        text = meta,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+    Text(
+        text = title,
+        style = MaterialTheme.typography.displaySmall,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+    Text(
+        text = status,
+        style = MaterialTheme.typography.titleMedium,
+        color = statusColor,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+    synopsis?.takeIf { it.isNotBlank() }?.let {
+        Text(
+            text = it,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * What an immersive board shows when no row has anything: loading, that it could not load (with a retry), or
+ * that there is nothing yet. [rows] are every row's pager, in any order. A whole-page message, so it holds focus
+ * itself: the page it hands over to, when rows arrive, is placed by the shell.
+ */
+@Composable
+internal fun TvRowsFallback(
+    rows: List<TvPagedRows<*>>,
+    emptyBody: String,
+    onRetryLoad: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val failed = rows.any { it.refresh == TvLoadPhase.Failed }
+    val loading = rows.any { it.refresh is TvLoadPhase.Loading }
+    when {
+        loading -> TvHubLoading(modifier)
+        failed ->
+            TvMessagePage(
+                body = stringResource(R.string.tv_list_load_failed),
+                modifier = modifier,
+                icon = Icons.Filled.Warning,
+                primary = TvPageAction(stringResource(R.string.hub_retry), onRetryLoad),
+            )
+        else -> TvMessagePage(body = emptyBody, modifier = modifier, icon = Icons.Filled.Inbox)
+    }
+}
+
+/**
+ * A see-all destination: every item behind a hub row, as a paged grid under the same backdrop, above the rail.
+ * Back closes it through [onBack]. [detailOpen] says a page opened from one of its cards is showing above it, so
+ * that focus returns to the card the moment that page closes.
+ */
+@Composable
+internal fun <T : Any> TvPagedGridScreen(
+    heading: String,
+    rows: TvPagedRows<T>,
+    emptyBody: String,
+    onRetryLoad: () -> Unit,
+    onBack: () -> Unit,
+    detailOpen: Boolean,
+    artwork: @Composable (T) -> Unit,
+    copy: @Composable ColumnScope.(T) -> Unit,
+    cell: @Composable (item: T, isFocused: Boolean, onFocusChanged: (Boolean) -> Unit, cellModifier: Modifier) -> Unit,
+) {
+    BackHandler(onBack = onBack)
+    val restoreFocus = remember { FocusRequester() }
+    var detailWasOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(detailOpen) {
+        if (detailOpen) {
+            detailWasOpen = true
+        } else if (detailWasOpen) {
+            detailWasOpen = false
+            restoreTvOverlayFocus(restoreFocus)
+        }
+    }
+    if (rows.count > 0) {
+        Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            TvImmersiveGrid(
+                heading = heading,
+                count = rows.count,
+                itemAt = rows.at,
+                itemKey = rows.itemKey,
+                artwork = artwork,
+                copy = copy,
+                rememberedCellModifier = Modifier.focusRequester(restoreFocus),
+                // A see-all grid is shown above the rail, so it claims focus itself and takes the full overscan margin.
+                // Said here rather than read from the shell, so the frames and the tests host it the way it is shown.
+                hosting = TvPageHosting.Overlay,
+                cell = cell,
+            )
+        }
+    } else {
+        TvRowsFallback(
+            rows = listOf(rows),
+            emptyBody = emptyBody,
+            onRetryLoad = onRetryLoad,
+        )
+    }
+}
+
+/**
+ * What every hub-shaped destination shows while it loads: the design system's hub skeleton, where the rows will be.
+ * One page for Home's whole wait, from the first read of the server to the first row, instead of a board's plate
+ * and then a message page: each swap between those replaced the node that held focus, and the rail opened and
+ * closed under it. The skeleton has nothing focusable of its own, so the shell's one focus holder stays put
+ * until the rows arrive and claim focus.
+ */
+@Composable
+internal fun TvHubLoading(modifier: Modifier = Modifier) {
+    TvImmersiveHubSkeleton(modifier = modifier, description = stringResource(R.string.tv_loading))
+}

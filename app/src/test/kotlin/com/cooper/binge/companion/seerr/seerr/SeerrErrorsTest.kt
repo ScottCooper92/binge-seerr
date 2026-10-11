@@ -1,0 +1,97 @@
+package com.cooper.binge.companion.seerr.seerr
+
+import com.cooper.binge.companion.seerr.auth.NotConnectedException
+import io.grpc.Status
+import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.SerializationException
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
+import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
+import java.io.IOException
+import java.net.SocketTimeoutException
+
+/** The contract's error model, from this side: every Seerr failure becomes one of its documented codes. */
+class SeerrErrorsTest {
+    private fun http(
+        code: Int,
+        body: String = "{}",
+    ): HttpException = HttpException(Response.error<Unit>(code, body.toResponseBody("application/json".toMediaType())))
+
+    private fun codeOf(t: Throwable): Status.Code = t.toStatusException().status.code
+
+    @Test
+    fun `a rejected session is UNAUTHENTICATED, and so is no session at all`() {
+        assertEquals(Status.Code.UNAUTHENTICATED, codeOf(http(401)))
+        assertEquals(Status.Code.UNAUTHENTICATED, codeOf(NotConnectedException()))
+    }
+
+    @Test
+    fun `a 403 is a permission refusal unless the body names a quota`() {
+        assertEquals(Status.Code.PERMISSION_DENIED, codeOf(http(403, """{"message":"You do not have permission"}""")))
+        assertEquals(Status.Code.RESOURCE_EXHAUSTED, codeOf(http(403, """{"message":"Movie Quota exceeded"}""")))
+    }
+
+    @Test
+    fun `transport failures and 5xx are UNAVAILABLE`() {
+        assertEquals(Status.Code.UNAVAILABLE, codeOf(IOException("reset")))
+        assertEquals(Status.Code.UNAVAILABLE, codeOf(SocketTimeoutException("timeout")))
+        assertEquals(Status.Code.UNAVAILABLE, codeOf(http(502)))
+    }
+
+    @Test
+    fun `other rejections are on the merits`() {
+        assertEquals(Status.Code.NOT_FOUND, codeOf(http(404)))
+        assertEquals(Status.Code.INVALID_ARGUMENT, codeOf(http(422)))
+        // A target in the wrong state for the action: the host refreshes and re-offers (#999).
+        val notPending = http(409, """{"message":"Only pending requests can be approved or declined."}""")
+        assertEquals(Status.Code.FAILED_PRECONDITION, codeOf(notPending))
+        assertEquals(Status.Code.INTERNAL, codeOf(IllegalStateException("bug")))
+    }
+
+    /** The screens' classification reads the same facts as the contract's, so the two never disagree. */
+    @Test
+    fun `the app's own classification mirrors the contract's`() {
+        assertEquals(SeerrError.NotConnected, NotConnectedException().toSeerrError())
+        assertEquals(SeerrError.Unauthorized, http(401).toSeerrError())
+        assertEquals(SeerrError.Forbidden, http(403, """{"message":"You do not have permission"}""").toSeerrError())
+        assertEquals(SeerrError.Quota, http(403, """{"message":"Movie Quota exceeded"}""").toSeerrError())
+        assertEquals(SeerrError.NotFound, http(404).toSeerrError())
+        assertEquals(SeerrError.Server, http(502).toSeerrError())
+        assertEquals(SeerrError.Rejected, http(422).toSeerrError())
+        assertEquals(SeerrError.Unreachable, SocketTimeoutException("timeout").toSeerrError())
+        assertEquals(SeerrError.Unknown, IllegalStateException("bug").toSeerrError())
+    }
+
+    /** A serialization failure's message quotes the body it choked on; none of it may reach the host (#680). */
+    @Test
+    fun `an unreadable body is UNAVAILABLE, and its contents never reach the description`() {
+        val leak = SerializationException("Unexpected JSON token at offset 2. JSON input: {\"apiKey\":\"s3cret\"}")
+
+        val status = leak.toStatusException().status
+
+        assertEquals(Status.Code.UNAVAILABLE, status.code)
+        assertFalse(status.description.orEmpty().contains("s3cret"))
+        assertFalse(status.description.orEmpty().contains("JSON input"))
+    }
+
+    @Test
+    fun `any other failure is INTERNAL with a fixed description`() {
+        val status = IllegalStateException("token=abc123").toStatusException().status
+
+        assertEquals(Status.Code.INTERNAL, status.code)
+        assertFalse(status.description.orEmpty().contains("abc123"))
+    }
+
+    /** A cancelled scope backs out of [attempt]; any other failure is a result to classify (#1025). */
+    @Test
+    fun `attempt rethrows a cancellation and keeps every other failure`() {
+        val failure = IOException("down")
+        assertEquals(failure, attempt { throw failure }.exceptionOrNull())
+        assertThrows(CancellationException::class.java) { attempt { throw CancellationException("gone") } }
+    }
+}

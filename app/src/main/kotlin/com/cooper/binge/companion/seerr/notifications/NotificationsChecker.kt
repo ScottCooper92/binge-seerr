@@ -1,0 +1,182 @@
+package com.cooper.binge.companion.seerr.notifications
+
+import com.cooper.binge.companion.seerr.auth.SeerrConnection
+import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestDto
+import com.cooper.binge.companion.seerr.seerr.SeerrRequestStatusCode
+import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.toPermissions
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
+import com.cooper.binge.companion.seerr.ui.requests.RequestItem
+import kotlinx.coroutines.flow.first
+import javax.inject.Inject
+
+/**
+ * One poll's outcome. A transient failure is retried; the server rejecting the saved credentials
+ * is not, since no retry can succeed: the user is asked to sign in again and the poll paused.
+ */
+enum class CheckResult { Ok, TransientFailure, AuthFailure }
+
+/**
+ * The poll itself, pure enough to test against a scripted server: each signal the user turned
+ * on, and the server lets them see, is diffed against its saved state and anything fresh is
+ * handed to the notifier. A failed fetch leaves that signal's state where it was, so the next
+ * run catches up. Nothing runs while not connected or while nothing could be shown.
+ */
+class NotificationsChecker
+    @Inject
+    constructor(
+        private val prefs: NotificationPrefs,
+        private val connection: SeerrConnection,
+        private val feeds: NotificationFeeds,
+        private val notifier: SeerrNotifier,
+    ) {
+        suspend fun check(): CheckResult {
+            if (!prefs.anyEnabled.first()) return CheckResult.Ok
+            if (connection.credentials.first() == null) return CheckResult.Ok
+            if (!notifier.canPost()) return CheckResult.Ok
+            val viewer = attempt { connection.authenticatedUser() }.getOrElse { return it.toResult() }
+            val permissions = viewer.toPermissions()
+            val hasIssues = attempt { connection.profile().hasIssues }.getOrDefault(false)
+            val requests =
+                if (permissions.canManageRequests && prefs.isEnabled(NotificationSignal.PendingRequests)) {
+                    checkFeed(
+                        NotificationSignal.PendingRequests,
+                        feeds::seedPendingRequests,
+                        feeds::pendingRequests,
+                        notifier::notifyNewRequests,
+                    )
+                } else {
+                    CheckResult.Ok
+                }
+            val issues =
+                if (permissions.canManageIssues && hasIssues && prefs.isEnabled(NotificationSignal.OpenIssues)) {
+                    checkFeed(NotificationSignal.OpenIssues, feeds::seedOpenIssues, feeds::openIssues, notifier::notifyNewIssues)
+                } else {
+                    CheckResult.Ok
+                }
+            return worstOf(worstOf(requests, issues), checkOwnRequests())
+        }
+
+        /**
+         * A feed: fetch what is newer than the cursor, announce it, advance. A seed run takes the
+         * separate [seed] read, which titles nothing because it announces nothing; an empty feed
+         * seeds to 0, a real cursor, so the first row to arrive is announced rather than seeding
+         * again. After that the cursor follows the newest **raw** id the server offered, not the
+         * newest announced row, so a row titling drops cannot hold it back.
+         */
+        private suspend fun <T> checkFeed(
+            signal: NotificationSignal,
+            seed: suspend () -> Int,
+            fetch: suspend (sinceId: Int) -> FeedRead<T>,
+            notify: (List<T>) -> Unit,
+        ): CheckResult {
+            val cursor = prefs.cursor(signal) ?: return seedCursor(signal, seed)
+            val read = attempt { fetch(cursor) }.getOrElse { return it.toResult() }
+            if (read.rows.isNotEmpty()) notify(read.rows)
+            if (read.newestId > cursor) prefs.setCursor(signal, read.newestId)
+            return CheckResult.Ok
+        }
+
+        /** A seed announces nothing, so it titles nothing: it reads the newest id and stores that. */
+        private suspend fun seedCursor(
+            signal: NotificationSignal,
+            seed: suspend () -> Int,
+        ): CheckResult {
+            val newest = attempt { seed() }.getOrElse { return it.toResult() }
+            prefs.setCursor(signal, newest)
+            return CheckResult.Ok
+        }
+
+        /**
+         * One read of the user's own requests, then each state signal that is on.
+         *
+         * The read is told which ids are still waiting on an outcome, so it walks far enough to find
+         * every one of them however many requests the user has made since (#181). What it finds
+         * outstanding afterwards is saved for the next poll, plus anything the walk never reached.
+         * A poll that did not finish cleanly leaves the set alone, so the next one goes as deep.
+         */
+        private suspend fun checkOwnRequests(): CheckResult {
+            val signals =
+                listOf(NotificationSignal.RequestAvailable, NotificationSignal.RequestApproved, NotificationSignal.RequestDeclined)
+            val on = signals.filter { prefs.isEnabled(it) }
+            if (on.isEmpty()) return CheckResult.Ok
+            val read = attempt { feeds.ownRequests(prefs.watchedRequestIds()) }.getOrElse { return it.toResult() }
+            val requests = read.rows
+            val result = checkOwnRequestSignals(on, requests)
+            if (result == CheckResult.Ok) {
+                prefs.setWatchedRequestIds(read.unaccountedFor + requests.filter { it.isUnresolved() }.map { it.id })
+            }
+            return result
+        }
+
+        private suspend fun checkOwnRequestSignals(
+            on: List<NotificationSignal>,
+            requests: List<SeerrRequestDto>,
+        ): CheckResult =
+            on.fold(CheckResult.Ok) { acc, signal ->
+                worstOf(
+                    acc,
+                    checkTransition(signal, requests.filter { it.isIn(signal) }) { items ->
+                        when (signal) {
+                            NotificationSignal.RequestAvailable -> notifier.notifyRequestsAvailable(items)
+                            NotificationSignal.RequestApproved -> notifier.notifyRequestsApproved(items)
+                            else -> notifier.notifyRequestsDeclined(items)
+                        }
+                    },
+                )
+            }
+
+        /**
+         * Announces the requests in the state whose id is not in the saved set, then saves the
+         * current set. Saving the current set prunes itself: a request that leaves the state drops
+         * out, so re-entering it is announced again. A null set is a seed run and announces nothing.
+         * A failed title lookup is a [CheckResult.TransientFailure], like a failed feed fetch: the
+         * set is left unsaved so the next run retries the same ids rather than this one counting as
+         * a clean poll.
+         */
+        private suspend fun checkTransition(
+            signal: NotificationSignal,
+            current: List<SeerrRequestDto>,
+            notify: suspend (List<RequestItem>) -> Unit,
+        ): CheckResult {
+            val currentIds = current.mapTo(mutableSetOf()) { it.id }
+            val seen = prefs.notifiedIds(signal)
+            if (seen == null) {
+                prefs.setNotifiedIds(signal, currentIds)
+                return CheckResult.Ok
+            }
+            val fresh = current.filter { it.id !in seen }
+            if (fresh.isNotEmpty()) {
+                val titled = attempt { feeds.titled(fresh) }.getOrElse { return it.toResult() }
+                if (titled.isNotEmpty()) notify(titled)
+            }
+            prefs.setNotifiedIds(signal, currentIds)
+            return CheckResult.Ok
+        }
+    }
+
+/**
+ * Still has an outcome to announce. Resolved needs both answers: the media has landed, and the
+ * request is no longer waiting on a moderator — a pending request whose media someone else made
+ * available can still be approved or declined.
+ */
+private fun SeerrRequestDto.isUnresolved(): Boolean =
+    media.status != SeerrMediaStatusCode.Available || status == null || status == SeerrRequestStatusCode.Pending
+
+private fun SeerrRequestDto.isIn(signal: NotificationSignal): Boolean =
+    when (signal) {
+        NotificationSignal.RequestAvailable -> media.status == SeerrMediaStatusCode.Available
+        NotificationSignal.RequestApproved -> status == SeerrRequestStatusCode.Approved
+        NotificationSignal.RequestDeclined -> status == SeerrRequestStatusCode.Declined
+        NotificationSignal.PendingRequests, NotificationSignal.OpenIssues -> false
+    }
+
+private fun Throwable.toResult(): CheckResult =
+    if (toSeerrError() == SeerrError.Unauthorized) CheckResult.AuthFailure else CheckResult.TransientFailure
+
+private fun worstOf(
+    a: CheckResult,
+    b: CheckResult,
+): CheckResult = if (a.ordinal >= b.ordinal) a else b

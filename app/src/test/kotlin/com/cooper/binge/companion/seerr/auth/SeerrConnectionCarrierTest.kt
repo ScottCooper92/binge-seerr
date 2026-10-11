@@ -1,0 +1,109 @@
+package com.cooper.binge.companion.seerr.auth
+
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrApiFactory
+import com.cooper.binge.companion.seerr.seerr.SeerrAuth
+import com.cooper.binge.companion.seerr.seerr.SeerrCredentials
+import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
+import com.cooper.binge.companion.seerr.util.InMemoryDataStore
+import com.cooper.binge.companion.seerr.util.PlainCipher
+import com.cooper.binge.companion.seerr.util.enqueueProfile
+import com.cooper.binge.companion.seerr.util.routeProfiles
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.Headers.Companion.headersOf
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.net.InetAddress
+
+/**
+ * What a connect hands the carrier. The plain-HTTP opt-in goes with it only where the saved server
+ * needs one, so a restore on a new device can reach the same server (#706).
+ */
+class SeerrConnectionCarrierTest {
+    @get:Rule
+    val folder = TemporaryFolder()
+
+    private val server = MockWebServer().apply { start() }.routeProfiles()
+    private val cleartext = DataStoreCleartextConsent(InMemoryDataStore()) { null }
+    private val carried = mutableListOf<CarriedCredentials>()
+
+    @After
+    fun tearDown() = server.close()
+
+    private fun TestScope.connection() =
+        SeerrConnection(
+            store =
+                CredentialStore(
+                    PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("c.preferences_pb") },
+                    PlainCipher,
+                ),
+            apis = SeerrApiFactory(logRequests = false, cleartext = cleartext, testDns = { listOf(InetAddress.getLoopbackAddress()) }),
+            carrier =
+                object : ConnectionCarrier {
+                    override suspend fun put(carried: CarriedCredentials) {
+                        this@SeerrConnectionCarrierTest.carried += carried
+                    }
+
+                    override suspend fun read(): CarriedCredentials? = null
+
+                    override suspend fun clear() = Unit
+                },
+            cleartext = cleartext,
+        )
+
+    private fun answerConnect() {
+        server.enqueue(json("""{"id":1,"permissions":2}"""))
+        server.enqueueProfile(json("""{"version":"3.0.0"}"""), json("""{"mediaServerType":2}"""))
+    }
+
+    @Test
+    fun `a public plain-http server the user opted in for is carried with the opt-in`() =
+        runTest {
+            cleartext.grant(PUBLIC_HOST)
+            answerConnect()
+
+            connection().connect("http://$PUBLIC_HOST:${server.port}/", SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            assertTrue(carried.single().cleartext)
+        }
+
+    @Test
+    fun `a server that needs no opt-in is carried without one`() =
+        runTest {
+            answerConnect()
+
+            val saved: SeerrCredentials = connection().connect(server.url("/").toString(), SeerrAuth.ApiKey("k3y")).getOrThrow()
+
+            assertEquals(CarriedCredentials(saved, cleartext = false), carried.single())
+            assertFalse(cleartext.allows(server.hostName))
+        }
+
+    @Test
+    fun `marking the session shared carries the mark too`() =
+        runTest {
+            val signedIn = headersOf("Content-Type", "application/json", "Set-Cookie", "connect.sid=s3ss10n; Path=/")
+            server.enqueue(MockResponse(code = 200, headers = signedIn, body = """{"id":42}"""))
+            server.enqueueProfile(json("""{"version":"3.1.0"}"""), json("""{"initialized":true}"""))
+            val sut = connection()
+            sut.logIn(server.url("/").toString(), SeerrLoginRequest.Local("s@example.com", "pw")).getOrThrow()
+
+            sut.markSessionShared()
+
+            assertEquals(false, (carried.first().credentials.auth as SeerrAuth.Session).shared)
+            assertEquals(true, (carried.last().credentials.auth as SeerrAuth.Session).shared)
+        }
+
+    private fun json(body: String) = MockResponse(code = 200, headers = headersOf("Content-Type", "application/json"), body = body)
+
+    private companion object {
+        const val PUBLIC_HOST = "seerr.example.com"
+    }
+}

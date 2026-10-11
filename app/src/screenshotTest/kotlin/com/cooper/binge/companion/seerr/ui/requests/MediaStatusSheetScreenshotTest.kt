@@ -1,0 +1,46 @@
+package com.cooper.binge.companion.seerr.ui.requests
+
+import androidx.compose.runtime.Composable
+import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SheetFrame
+import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
+
+/**
+ * The first sheet body in this suite. The modal window does not capture, so the frame renders the
+ * stateless content on the sheet's own container colour at a phone's width.
+ *
+ * Both instances are framed because the second line is the whole point of the header: on a title the
+ * server holds twice, it is the only thing saying which of the two is being marked.
+ */
+class MediaStatusSheetScreenshotTest {
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun standard() = Frame(is4k = false, status = SeerrMediaStatusCode.Available)
+
+    @PreviewTest
+    @SeerrComponentPreviews
+    @Composable
+    fun fourK() = Frame(is4k = true, status = SeerrMediaStatusCode.Processing)
+}
+
+@Composable
+private fun Frame(
+    is4k: Boolean,
+    status: SeerrMediaStatusCode,
+) {
+    SheetFrame {
+        MediaStatusSheetContent(
+            instance =
+                MediaInstance(
+                    is4k = is4k,
+                    status = status,
+                    serviceUrl = null,
+                    mediaServerUrl = null,
+                    watch = null,
+                ),
+            onSelect = {},
+        )
+    }
+}

@@ -1,0 +1,265 @@
+package com.cooper.binge.companion.seerr.ui.requests
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.ThumbsUpDown
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
+import com.binge.designsystem.component.BingeInitialsAvatar
+import com.binge.designsystem.component.ListRow
+import com.binge.designsystem.component.ListRowHeader
+import com.binge.designsystem.component.ListRowPoster
+import com.binge.designsystem.component.ListRowSkeletonColumn
+import com.binge.designsystem.component.MediaTypeTag
+import com.binge.designsystem.downloadEtaLabel
+import com.binge.designsystem.formatRanges
+import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.template.PagedPhase
+import com.binge.designsystem.template.screenListPadding
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.data.ListRefresh
+import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
+import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
+import com.cooper.binge.companion.seerr.ui.state.PullableMessage
+import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
+import com.cooper.binge.companion.seerr.ui.state.belowPinnedLine
+import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
+import com.binge.designsystem.R as DesR
+
+/**
+ * The selected filter's rows with the states the pager reports, under a pull that refreshes them. Once rows are on
+ * screen a refresh shows as the pull's spinner below the bar, or a tappable line when it failed; the full-screen
+ * states are for a cache with nothing in it.
+ *
+ * @param pullState a still frame's resting pull; null remembers M3's own. See [PagedPullToRefresh].
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun RequestsBody(
+    filter: RequestFilter,
+    lazyItems: LazyPagingItems<RequestItem>,
+    /** This list's latest finished network refresh; see [rememberPagedPhase]. */
+    lastRefresh: ListRefresh?,
+    scope: ModerationScope,
+    /** What the rows' relative times are worded against; see [RequestsUiState.Ready.now]. */
+    now: Long,
+    onOpen: (RequestItem) -> Unit,
+    onManage: (RequestItem) -> Unit,
+    /** A pull, beside the list's own refresh: what else on the page it refreshes. */
+    onPull: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    pullState: PullToRefreshState? = null,
+) {
+    val phase = lazyItems.rememberPagedPhase(lastRefresh)
+    PagedPullToRefresh(
+        phase = phase,
+        loadState = lazyItems.loadState,
+        onRefresh = {
+            lazyItems.refresh()
+            onPull()
+        },
+        contentPadding = contentPadding,
+        modifier = modifier,
+        state = pullState,
+    ) {
+        when (phase) {
+            is PagedPhase.Rows ->
+                if (phase.refreshError != null) {
+                    // The failed line is pinned below the top bar and the header; the rows start below it while it shows.
+                    Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+                        RefreshFailedLine(R.string.requests_refresh_failed, onRetry = lazyItems::retry)
+                        RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding.belowPinnedLine())
+                    }
+                } else {
+                    RequestList(lazyItems, scope, now, onOpen, onManage, contentPadding)
+                }
+            PagedPhase.Skeleton ->
+                ListRowSkeletonColumn(
+                    contentPadding = contentPadding.screenListPadding(),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            is PagedPhase.Failed ->
+                PagedRefreshError(
+                    phase.error,
+                    onRetry = lazyItems::retry,
+                    modifier = Modifier.fillMaxSize().padding(contentPadding),
+                )
+            PagedPhase.Empty ->
+                PullableMessage { fill ->
+                    EmptyScreen(
+                        message = stringResource(filter.emptyMessageRes()),
+                        modifier = fill.padding(contentPadding),
+                        icon = Icons.Filled.Inbox,
+                    )
+                }
+        }
+    }
+}
+
+@Composable
+private fun RequestList(
+    lazyItems: LazyPagingItems<RequestItem>,
+    scope: ModerationScope,
+    now: Long,
+    onOpen: (RequestItem) -> Unit,
+    onManage: (RequestItem) -> Unit,
+    contentPadding: PaddingValues,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = contentPadding.screenListPadding(),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
+    ) {
+        items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->
+            lazyItems[index]?.let { item ->
+                RequestRow(
+                    item = item,
+                    onClick = { onOpen(item) },
+                    onManage = { onManage(item) }.takeIf { item.actions(scope).any },
+                    now = now,
+                )
+            }
+        }
+        item {
+            val append = lazyItems.loadState.mediator?.append ?: lazyItems.loadState.append
+            PagedAppendState(append, onRetry = lazyItems::retry)
+        }
+    }
+}
+
+@Composable
+internal fun RequestRow(
+    item: RequestItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onManage: (() -> Unit)? = null,
+    now: Long = System.currentTimeMillis(),
+) {
+    // Only a transferring grab earns a bar; a queued one stops at its chip.
+    val download = item.download?.takeIf { it.downloading }
+    ListRow(
+        modifier = modifier,
+        onClick = onClick,
+        verticalAlignment = Alignment.CenterVertically,
+        leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null) },
+        trailing =
+            onManage?.let {
+                {
+                    IconButton(onClick = it) {
+                        Icon(Icons.Filled.ThumbsUpDown, contentDescription = stringResource(R.string.request_primary_manage))
+                    }
+                }
+            },
+        footer = download?.let { { DownloadFooter(it) } },
+    ) { contentModifier -> RequestRowMeta(item, now, contentModifier) }
+}
+
+@Composable
+private fun DownloadFooter(download: RequestDownload) {
+    Column {
+        LinearProgressIndicator(progress = { download.fraction }, modifier = Modifier.fillMaxWidth())
+        download.etaMinutes?.let { eta ->
+            Spacer(Modifier.height(dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)))
+            Text(downloadEtaLabel(eta), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun RequestRowMeta(
+    item: RequestItem,
+    now: Long,
+    modifier: Modifier,
+) {
+    val gap = dimensionResource(DesR.dimen.detail_cast_avatar_label_spacing)
+    // modifier already carries fillMaxHeight() from ListRow's content slot, so this column matches
+    // the poster's height and the trailing spacer below can push the requester line to its bottom.
+    Column(modifier = modifier.padding(top = dimensionResource(DesR.dimen.detail_meta_spacing))) {
+        val chip = item.statusChip()
+        ListRowHeader(title = item.title ?: stringResource(item.mediaType.labelRes()))
+        Spacer(Modifier.height(gap))
+        // Wraps rather than clips: the status chip carries a dot, and a long status beside the type, 4K and year
+        // would otherwise cut the year short.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(gap),
+            verticalArrangement = Arrangement.spacedBy(gap),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            RequestStateChip(label = stringResource(chip.labelRes), tone = chip.tone)
+            MediaTypeTag(type = item.mediaType.toTagType())
+            if (item.is4k) {
+                Text(
+                    stringResource(R.string.settings_service_4k),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            item.year?.let { year ->
+                Text(
+                    year,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+        }
+        if (item.seasonNumbers.isNotEmpty()) {
+            Spacer(Modifier.height(gap))
+            Text(
+                text = pluralStringResource(R.plurals.requests_seasons, item.seasonNumbers.size, item.seasonNumbers.formatRanges()),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.weight(1f).heightIn(min = gap))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            item.requestedBy?.let { requester ->
+                BingeInitialsAvatar(name = requester, avatarUrl = item.requestedByAvatarUrl)
+                Spacer(Modifier.width(gap))
+            }
+            Text(
+                text =
+                    listOfNotNull(
+                        item.requestedBy ?: stringResource(R.string.requests_requester_unknown),
+                        formatRelativeOrAbsolute(item.requestedAtMillis, now),
+                    ).joinToString(stringResource(R.string.hub_meta_separator)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}

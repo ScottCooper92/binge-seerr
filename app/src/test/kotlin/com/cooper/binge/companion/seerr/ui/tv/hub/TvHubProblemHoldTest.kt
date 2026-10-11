@@ -1,0 +1,71 @@
+package com.cooper.binge.companion.seerr.ui.tv.hub
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.hasText
+import com.binge.designsystem.tv.theme.BingeTvTheme
+import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
+import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
+import com.cooper.binge.companion.seerr.ui.hub.HubOverview
+import com.cooper.binge.companion.seerr.ui.hub.HubServer
+import com.cooper.binge.companion.seerr.ui.hub.HubUiState
+import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.binge.companion.seerr.util.string
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/**
+ * The problem page stays through a re-probe, rather than blinking to loading and dropping the remote (#796). The view
+ * model holds the problem and marks it rechecking (#873), so that is the state a re-probe reaches the board as, and the
+ * board shows it working.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w960dp-h540dp-television-xhdpi")
+class TvHubProblemHoldTest {
+    @get:Rule
+    val rule = createSeerrComposeRule()
+
+    private var state by mutableStateOf(ready(ConnectionHealth.Unreachable))
+
+    @Test
+    fun `a re-probe keeps the problem it was showing, and the next answer replaces it`() {
+        rule.setContent { BingeTvTheme { TvHubBoard(state = state, actions = TvHubActions({}, {}, {})) } }
+        rule.onNode(hasText(string(R.string.hub_unreachable_headline))).assertExists()
+
+        state = ready(ConnectionHealth.Unreachable).copy(rechecking = true)
+        rule.waitForIdle()
+        rule.onNode(hasText(string(R.string.hub_unreachable_headline))).assertExists()
+        rule.onNode(hasText(string(R.string.hub_rechecking))).assertExists()
+
+        state = ready(ConnectionHealth.CouldNotLoad)
+        rule.waitForIdle()
+        rule.onNode(hasText(string(R.string.hub_couldnt_load_headline))).assertExists()
+    }
+
+    /** A refused local network is fixed by the permission, not a retry, so the board leads with it (#1054). */
+    @Test
+    fun `a refused local network leads with the permission rather than a retry`() {
+        rule.setContent {
+            BingeTvTheme { TvHubBoard(state = HubUiState.Error(ConnectionHealth.LocalNetworkDenied), actions = TvHubActions({}, {}, {})) }
+        }
+
+        rule.onNode(hasText(string(R.string.local_network_allow_short))).assertExists()
+        rule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
+        rule.onNode(hasText(string(R.string.hub_disconnect))).assertExists()
+    }
+
+    private fun ready(health: ConnectionHealth) =
+        HubUiState.Ready(
+            server = HubServer("https://seerr.test", "Seerr", SeerrVariant.Seerr, null, false, 0),
+            health = health,
+            overview = HubOverview(loaded = true),
+            downloading = emptyList(),
+            bingeStatus = BingeStatus.Connected,
+        )
+}

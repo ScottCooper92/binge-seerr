@@ -19,7 +19,7 @@ device is cost.
    maintainer says the change is right. A compile error is the only check that runs. A round with screenshots
    and the full build takes 10–15 minutes; without them it takes 1–2.
 3. **Install, don't drive:** `adb -s <device> install -r app/build/outputs/apk/debug/app-debug.apk`. The
-   debug build has its own id (`io.github.scottcooper92.binge.seerr.debug`), so it sits beside a release
+   debug build has its own id (`com.cooper.binge.companion.seerr.debug`), so it sits beside a release
    install. The maintainer usually has the device in hand: don't launch, tap or screenshot unless asked.
 4. **Say what changed and what to look at**, in a few lines, then wait.
 5. **Shared design-system changes** go in the `design-system/` submodule checkout while prototyping; they
