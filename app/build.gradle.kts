@@ -226,7 +226,7 @@ tasks.named("check") { dependsOn("checkTranslationStaleness") }
 
 // The catalog's grpc must be what both the APK and the unit tests actually run (#702): the SDK brings
 // grpc-binder at binge-companions' version, so a bump here without a submodule bump moves nothing.
-val checkGrpcAlignment by tasks.registering(CheckGrpcAlignmentTask::class) {
+val checkGrpcAlignment = tasks.register<CheckGrpcAlignmentTask>("checkGrpcAlignment") {
     group = "verification"
     description = "Checks that every io.grpc module resolves to the catalog's grpc version."
     expectedVersion.set(libs.versions.grpc)
@@ -443,7 +443,7 @@ kotlin.target.compilations.configureEach {
  * detekt with the baseline switched off, so [checkBaselineStaleness] can see which findings the code
  * still produces. Findings are expected, so it never fails on its own.
  */
-val detektWithoutBaseline by tasks.registering(io.gitlab.arturbosch.detekt.Detekt::class) {
+val detektWithoutBaseline = tasks.register<io.gitlab.arturbosch.detekt.Detekt>("detektWithoutBaseline") {
     description = "Runs detekt with no baseline applied, for checkBaselineStaleness."
     ignoreFailures = true
     baseline.set(null as org.gradle.api.file.RegularFile?)
@@ -467,7 +467,7 @@ val detektWithoutBaseline by tasks.registering(io.gitlab.arturbosch.detekt.Detek
  * (#283). Entries are compared per rule and file rather than by their full signature, because the
  * report carries no signature; a rule with several findings in one file is therefore counted.
  */
-val checkBaselineStaleness by tasks.registering {
+val checkBaselineStaleness = tasks.register("checkBaselineStaleness") {
     description = "Fails when detekt-baseline.xml holds an entry the code no longer produces."
     group = "verification"
     val baselineFile = layout.settingsDirectory.file("detekt-baseline.xml").asFile
