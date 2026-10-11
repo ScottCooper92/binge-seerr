@@ -36,6 +36,7 @@ import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.template.FormScreen
 import com.binge.designsystem.template.MessageScreen
+import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -75,6 +76,7 @@ fun BlocklistTagsScreen(
     FormScreen(
         title = stringResource(R.string.server_settings_blocklist_tags),
         onBack = actions.onBack,
+        bar = ScreenBar.Small,
         snackbarHostState = snackbar,
         scrolling = false,
         notReady =

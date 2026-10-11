@@ -32,6 +32,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeSearchField
 import com.binge.designsystem.template.FormScreen
+import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.SearchResultRow
 import com.binge.designsystem.R as DesR
@@ -51,7 +52,7 @@ internal fun CompanyPickerDialog(
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize()) {
-            FormScreen(title = title, onBack = onDismiss, scrolling = false) { inner ->
+            FormScreen(title = title, onBack = onDismiss, scrolling = false, bar = ScreenBar.Small) { inner ->
                 var query by rememberSaveable { mutableStateOf("") }
                 LaunchedEffect(query) { onSearch(query) }
                 val direction = LocalLayoutDirection.current
