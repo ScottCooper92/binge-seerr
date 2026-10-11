@@ -136,7 +136,7 @@ a screen reads the *gate*, not the raw facts. Cross-check `docs/server-compatibi
 `validateDebugScreenshotTest` guards only what has a frame. For each screen, enumerate the
 sealed/enum cases its composables `when` over and diff against `app/src/screenshotTest` +
 `*PreviewData*`: every unrendered state or new visual branch is zero-coverage. Also check: frames
-pin the locale (unpinned frames render pseudolocale en-XA accented — see `SeerrPreviews.kt`); TV
+pin the locale (unpinned frames render pseudolocale en-XA accented — see the design system's `SOURCE_LOCALE`, applied in `SeerrPreviewMatrices.kt`); TV
 screens have `@TvPreviews`-equivalent frames and focused states; previews rendering blank/empty
 content; stateless `*Content` composables exist where a modal window cannot be captured.
 
