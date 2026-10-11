@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.tv.component.TvOptionRow
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetConfirm
@@ -33,7 +34,6 @@ import io.github.scottcooper92.binge.seerr.ui.requests.MediaStatusChoice
 import io.github.scottcooper92.binge.seerr.ui.requests.labelRes
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNote
 import io.github.scottcooper92.binge.seerr.ui.tv.TvFormNoteTone
-import io.github.scottcooper92.binge.seerr.ui.tv.TvOptionRow
 import com.binge.designsystem.R as DesR
 
 /** The sheets the page opens over itself: the two confirms, marking the title's state, and reporting an issue. */
@@ -146,7 +146,7 @@ private fun ColumnScope.TvMarkAsSteps(
             TvOptionRow(
                 label = stringResource(choice.labelRes()),
                 selected = current,
-                onSelect = { if (!current) onSelect(instance, choice) },
+                onClick = { if (!current) onSelect(instance, choice) },
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
             )
         }
@@ -188,7 +188,7 @@ private fun ColumnScope.TvReportIssueStep(
             TvOptionRow(
                 label = stringResource(type.labelRes()),
                 selected = type == draft.type,
-                onSelect = { draft.onTypeChange(type) },
+                onClick = { draft.onTypeChange(type) },
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
             )
         }

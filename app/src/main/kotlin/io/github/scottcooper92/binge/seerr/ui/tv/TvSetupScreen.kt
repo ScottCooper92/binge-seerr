@@ -22,6 +22,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.binge.designsystem.DISABLED_ALPHA
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCheckboxRow
+import com.binge.designsystem.tv.component.TvTabRow
+import com.binge.designsystem.tv.component.TvTabUi
 import com.binge.designsystem.tv.component.TvTextField
 import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
@@ -162,10 +164,12 @@ private fun TvSetupSignInStep(
                 null
             } else {
                 {
-                    TvTabs(
-                        choices = offered.map { mode -> mode to mode.label(state.server) },
-                        selected = state.form.mode,
-                        onSelect = { mode -> actions.onEditForm { copy(mode = mode) } },
+                    TvTabRow(
+                        tabs = offered.map { mode -> TvTabUi(key = mode.name, label = mode.label(state.server)) },
+                        selectedKey = state.form.mode.name,
+                        onSelect = { key ->
+                            offered.firstOrNull { it.name == key }?.let { mode -> actions.onEditForm { copy(mode = mode) } }
+                        },
                         // Where the page lands: the first thing to choose is how to sign in.
                         arrival = arrival,
                     )

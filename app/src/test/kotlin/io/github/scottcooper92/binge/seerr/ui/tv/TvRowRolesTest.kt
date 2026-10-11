@@ -6,7 +6,10 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.onNodeWithText
+import com.binge.designsystem.tv.component.TvOptionRow
 import com.binge.designsystem.tv.component.TvSideSheetRow
+import com.binge.designsystem.tv.component.TvTabRow
+import com.binge.designsystem.tv.component.TvTabUi
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import io.github.scottcooper92.binge.seerr.util.createSeerrComposeRule
 import org.junit.Rule
@@ -14,7 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** A TV option reads as a radio button and an action sheet row as a button, not as bare clickables (#1041). */
+/** A TV option reads as a radio button, a tab as a tab and an action sheet row as a button, not as bare clickables (#1041). */
 @RunWith(RobolectricTestRunner::class)
 class TvRowRolesTest {
     @get:Rule
@@ -27,7 +30,7 @@ class TvRowRolesTest {
         composeTestRule.setContent {
             BingeTvTheme {
                 Column {
-                    TvOptionRow(label = "Radarr", selected = true, onSelect = {})
+                    TvOptionRow(label = "Radarr", selected = true, onClick = {})
                     TvSideSheetRow(label = "Approve", onClick = {})
                 }
             }
@@ -35,5 +38,21 @@ class TvRowRolesTest {
 
         composeTestRule.onNodeWithText("Radarr").assert(role(Role.RadioButton))
         composeTestRule.onNodeWithText("Approve").assert(role(Role.Button))
+    }
+
+    @Test
+    fun `a sign-in tab is a tab`() {
+        composeTestRule.setContent {
+            BingeTvTheme {
+                TvTabRow(
+                    tabs = listOf(TvTabUi("local", "Local account"), TvTabUi("key", "API key")),
+                    selectedKey = "local",
+                    onSelect = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Local account").assert(role(Role.Tab))
+        composeTestRule.onNodeWithText("API key").assert(role(Role.Tab))
     }
 }
