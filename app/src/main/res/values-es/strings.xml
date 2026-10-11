@@ -1012,7 +1012,7 @@
     <string name="send_address_clear">Borrar dirección</string>
     <string name="send_address_sign_in_as">Iniciar sesión también como %1$s</string>
     <string name="send_address_sign_in_as_you">Iniciar sesión también con tu cuenta</string>
-    <string name="send_address_sign_in_shared">El televisor usa la sesión de este móvil. Si desconectas uno, el otro sigue con la sesión iniciada.</string>
+    <string name="send_address_sign_in_shared">El televisor usa tu sesión</string>
     <string name="setup_error_unreachable_not_local">No se pudo conectar con el servidor. Esa no es una dirección local, así que puede que este televisor no consiga llegar a ella. Prueba con una dirección de tu red doméstica.</string>
     <string name="tv_rail_hub">Inicio</string>
     <string name="tv_hub_health_checking">Comprobando el servidor…</string>
