@@ -94,9 +94,11 @@ internal fun TvIssuesBoard(
     openIssueId: Int? = null,
     seeAllOpen: Boolean = false,
     now: Long = System.currentTimeMillis(),
+    /** The outcome note showing on arrival, for a frame, which never collects [events]. Production passes null. */
+    initialEvent: IssueListEvent? = null,
 ) {
     val ready = state as? IssuesUiState.Ready
-    val event = rememberTvTransientEvent(events)
+    val event = rememberTvTransientEvent(events, initialEvent)
     val restore = rememberOverlayFocusRestore(overlayOpen = openIssueId != null || seeAllOpen)
     val closer = rememberTvOverlayCloser(restoreTo = restore.requester, onClose = actions.onDismissActions)
     Box(modifier = modifier.fillMaxSize()) {

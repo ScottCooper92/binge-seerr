@@ -40,6 +40,7 @@ import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onStart
 import com.binge.designsystem.R as DesR
 
 private const val TRANSIENT_MESSAGE_MILLIS = 4_000L
@@ -212,12 +213,19 @@ internal fun RequestStateTone.tvColor(): Color =
 /**
  * The latest one-shot event, held for a few seconds and then cleared — the board's answer to the phone's
  * snackbar. A newer event supersedes the one still showing.
+ *
+ * [initial] is an event already showing on arrival, for a frame: a static render runs no effect, so it never
+ * collects one. It is held and cleared like the first event of [events]. Production passes null.
  */
 @Composable
-internal fun <T> rememberTvTransientEvent(events: Flow<T>): T? {
-    var current by remember { mutableStateOf<T?>(null) }
+internal fun <T : Any> rememberTvTransientEvent(
+    events: Flow<T>,
+    initial: T? = null,
+): T? {
+    var current by remember { mutableStateOf(initial) }
     LaunchedEffect(events) {
-        events.collectLatest { event ->
+        val arriving = if (initial == null) events else events.onStart { emit(initial) }
+        arriving.collectLatest { event ->
             current = event
             delay(TRANSIENT_MESSAGE_MILLIS)
             current = null
