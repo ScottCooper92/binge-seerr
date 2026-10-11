@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -83,11 +82,12 @@ fun DiscoverSliderScreen(
             rows =
                 listOf(
                     choiceSettingItem(
-                        icon = Icons.Filled.Tune,
+                        icon = draft.type.icon(),
                         title = stringResource(R.string.server_settings_slider_type),
                         choices = SliderType.customTypes.map { it to stringResource(it.labelRes()) },
                         selected = draft.type,
                         enabled = enabled,
+                        choiceIcon = { it.icon() },
                         onSelect = sliderActions.onSelectType,
                     ),
                     textSettingItem(

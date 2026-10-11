@@ -1,5 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrJellyfinSettingsBody
 import com.cooper.binge.companion.seerr.seerr.SeerrJellyfinSettingsDto
@@ -53,6 +58,14 @@ data class MediaServerForm(
 }
 
 enum class LibraryType { Movies, Shows }
+
+/** A library's switch by what it holds, movies or shows; one the server sent no type for keeps the generic library icon. */
+internal fun LibraryType?.icon(): ImageVector =
+    when (this) {
+        LibraryType.Movies -> Icons.Filled.Movie
+        LibraryType.Shows -> Icons.Filled.Tv
+        null -> Icons.Filled.VideoLibrary
+    }
 
 data class MediaLibrary(
     val id: String,

@@ -2,10 +2,11 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
-import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ItemGroup
 import com.binge.designsystem.component.ListItem
@@ -68,6 +69,7 @@ fun MetadataScreen(
                         choices,
                         draft.tv,
                         enabled,
+                        choiceIcon = { it.icon() },
                     ) { provider ->
                         actions.onEdit { it.copy(tv = provider) }
                     },
@@ -77,6 +79,7 @@ fun MetadataScreen(
                         choices,
                         draft.anime,
                         enabled,
+                        choiceIcon = { it.icon() },
                     ) { provider -> actions.onEdit { it.copy(anime = provider) } },
                 ),
         )
@@ -90,7 +93,7 @@ private fun statusItem(
     check: ProviderCheck,
 ): ListItem =
     ListItem(
-        icon = Icons.Filled.Cloud,
+        icon = provider.icon(),
         label = stringResource(provider.labelRes()),
         trailingContent = {
             RequestStateChip(
@@ -117,4 +120,11 @@ private fun MetadataProvider.labelRes(): Int =
     when (this) {
         MetadataProvider.Tmdb -> R.string.server_settings_metadata_tmdb
         MetadataProvider.Tvdb -> R.string.server_settings_metadata_tvdb
+    }
+
+/** TMDB by the films its name is for, TVDB by its television: the two read apart at a glance on both the status and the picks. */
+private fun MetadataProvider.icon(): ImageVector =
+    when (this) {
+        MetadataProvider.Tmdb -> Icons.Filled.Movie
+        MetadataProvider.Tvdb -> Icons.Filled.Tv
     }
