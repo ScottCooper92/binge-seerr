@@ -1046,7 +1046,7 @@
     <string name="send_address_clear">Clear address</string>
     <string name="send_address_sign_in_as">Also sign in as %1$s</string>
     <string name="send_address_sign_in_as_you">Also sign in as you</string>
-    <string name="send_address_sign_in_shared">The TV uses this phone\'s sign-in. Disconnecting either one leaves the other signed in.</string>
+    <string name="send_address_sign_in_shared">The TV uses this phone\'s sign-in</string>
     <string name="setup_error_unreachable_not_local">The server could not be reached. That isn\'t a local address, so this TV may not be able to reach it. Try an address on your home network.</string>
 
     <!-- The television shell: the rail, the hub board, the lists and their action sheets. -->
