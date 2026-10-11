@@ -1196,15 +1196,15 @@
         <item quantity="other">%1$d peticiones</item>
     </plurals>
     <string name="server_settings_permissions_none">Ninguno</string>
-    <string name="permission_admin_detail">Todos los permisos, incluidos los ajustes del servidor</string>
-    <string name="permission_manage_requests_detail">Aprobar, rechazar y editar las peticiones de cualquiera</string>
-    <string name="permission_request_advanced_detail">Elegir el servidor, la calidad y la carpeta al solicitar</string>
-    <string name="permission_view_requests_detail">Ver las peticiones de todos, no solo las suyas</string>
+    <string name="permission_admin_detail">Todo, incluidos los ajustes</string>
+    <string name="permission_manage_requests_detail">Aprobar, rechazar y editar</string>
+    <string name="permission_request_advanced_detail">Elegir servidor, calidad, carpeta</string>
+    <string name="permission_view_requests_detail">Ver las peticiones de todos</string>
     <string name="permission_auto_approve_detail">Sus peticiones no necesitan aprobación</string>
     <string name="permission_auto_approve_4k_detail">Sus peticiones en 4K no necesitan aprobación</string>
-    <string name="permission_view_issues_detail">Ver las incidencias de todos, no solo las suyas</string>
+    <string name="permission_view_issues_detail">Ver las incidencias de todos</string>
     <string name="permission_auto_request_detail">Pide lo que hay en su lista de seguimiento</string>
-    <string name="permission_view_watchlists_detail">Ver las listas de seguimiento de otros usuarios</string>
+    <string name="permission_view_watchlists_detail">Ver las de otros usuarios</string>
     <string name="server_settings_media_server_settings">Ajustes de %1$s</string>
     <string name="server_settings_plex_server">Servidor</string>
     <string name="server_settings_dvr_test_first">Prueba antes la conexión</string>

@@ -266,7 +266,7 @@ app:notif_requests_available  ede6f4e6a280
 app:notif_requests_declined  0800d53535ab
 app:open_in_named  db1257f4fa5c
 app:permission_admin  c1c224b03cd9
-app:permission_admin_detail  cf664e30afc2
+app:permission_admin_detail  8044128cf051
 app:permission_auto_approve  9323d903f85b
 app:permission_auto_approve_4k  369ee35133eb
 app:permission_auto_approve_4k_detail  ff878e7fb1a9
@@ -287,7 +287,7 @@ app:permission_group_requests  ada27592c957
 app:permission_manage_blocklist  b94c1bcdb0b5
 app:permission_manage_issues  35f1b1a5eee7
 app:permission_manage_requests  674aa6f846a1
-app:permission_manage_requests_detail  17000d967b24
+app:permission_manage_requests_detail  a65717d9d9b3
 app:permission_manage_settings  f31e426f8455
 app:permission_manage_users  58606e582452
 app:permission_request  59f03d642b41
@@ -295,15 +295,15 @@ app:permission_request_4k  e6a45eed3c8f
 app:permission_request_4k_movies  48e8529a6249
 app:permission_request_4k_series  d235ee0b7c60
 app:permission_request_advanced  42ed3c314c81
-app:permission_request_advanced_detail  07a569eee3e6
+app:permission_request_advanced_detail  b5cde6072b07
 app:permission_request_movies  994e94bfc46f
 app:permission_request_series  7eb07aef248f
 app:permission_view_blocklist  5124f8650967
 app:permission_view_issues  f186073b3df2
-app:permission_view_issues_detail  04936cf03918
+app:permission_view_issues_detail  d9de6d6a269e
 app:permission_view_recent  195c13e1cc3c
 app:permission_view_requests  47b9133042ef
-app:permission_view_requests_detail  3168f442544d
+app:permission_view_requests_detail  8eb67caa268a
 app:permission_view_watchlists  8cc1d099df19
 app:permission_view_watchlists_detail  e9e7cdc52dbf
 app:request_action_failed  608e2e521eac
