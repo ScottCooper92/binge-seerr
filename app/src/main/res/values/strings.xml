@@ -563,8 +563,10 @@
     <string name="editor_error_web_url_no_slash">Enter a web address that starts with http:// or https://, with no slash at the end.</string>
     <string name="editor_error_whole_number">Enter a whole number, or leave it blank.</string>
     <string name="server_settings_dvr_default">Default instance</string>
+    <string name="server_settings_dvr_default_detail">Where new requests go</string>
     <string name="server_settings_dvr_4k">4K instance</string>
     <string name="server_settings_dvr_sync">Sync what it holds</string>
+    <string name="server_settings_dvr_sync_detail">Picks up titles it already has</string>
     <string name="server_settings_dvr_prevent_search">Do not search on request</string>
     <string name="server_settings_dvr_tag_requests">Tag requests with the requester</string>
     <string name="server_settings_delete">Delete</string>
@@ -1218,10 +1220,10 @@
     <string name="server_settings_partial_requests_detail">Lets users request some seasons of a series, not all</string>
     <string name="server_settings_special_episodes_detail">Lets a series\' specials be requested too</string>
     <string name="server_settings_cache_images_detail">Keeps posters on the server; needs a lot of disk</string>
-    <string name="server_settings_trust_proxy_detail">Turn on if the server sits behind a reverse proxy</string>
+    <string name="server_settings_trust_proxy_detail">Takes client IPs from the proxy</string>
     <string name="server_settings_restart_network">The server applies changes on this page after it restarts.</string>
     <string name="server_settings_restart_proxy_csrf">The server applies the proxy and CSRF settings after it restarts.</string>
-    <string name="server_settings_csrf_detail">Makes the API read-only to other sites; needs HTTPS</string>
+    <string name="server_settings_csrf_detail">Blocks cross-site API writes</string>
     <string name="server_settings_youtube_default">YouTube</string>
     <string name="server_settings_all_regions">All regions</string>
     <string name="server_settings_all_languages">All languages</string>

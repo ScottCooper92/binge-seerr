@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -27,10 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.template.FormScreen
@@ -85,8 +90,9 @@ fun BlocklistTagsScreen(
             },
     ) { inner ->
         ready?.let {
-            Column(modifier = Modifier.fillMaxSize().padding(inner)) {
-                SaveStatusLine(status = it.saveStatus, failed = it.saveFailed)
+            val direction = LocalLayoutDirection.current
+            Column(modifier = Modifier.fillMaxSize()) {
+                SaveStatusLine(status = it.saveStatus, failed = it.saveFailed, modifier = Modifier.padding(top = inner.calculateTopPadding()))
                 TagSearchPanel(
                     chosen = it.tags,
                     search = it.search,
@@ -95,6 +101,12 @@ fun BlocklistTagsScreen(
                     emptyTitle = stringResource(R.string.server_settings_blocklist_tags_empty_title),
                     emptyBody = stringResource(R.string.server_settings_blocklist_tags_empty),
                     modifier = Modifier.weight(1f),
+                    contentPadding =
+                        PaddingValues(
+                            start = inner.calculateStartPadding(direction),
+                            end = inner.calculateEndPadding(direction),
+                            bottom = inner.calculateBottomPadding(),
+                        ),
                 )
             }
         }
@@ -109,6 +121,7 @@ internal fun ChosenTags(
     onRemove: (Int) -> Unit,
     emptyTitle: String,
     emptyBody: String,
+    bottomInset: Dp,
     modifier: Modifier,
 ) {
     if (chosen.isEmpty()) {
@@ -116,12 +129,16 @@ internal fun ChosenTags(
             headline = emptyTitle,
             body = emptyBody,
             icon = Icons.Filled.Sell,
-            modifier = modifier,
+            modifier = modifier.padding(bottom = bottomInset),
         )
         return
     }
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()).padding(dimensionResource(DesR.dimen.padding_m)),
+        modifier =
+            modifier
+                .verticalScroll(rememberScrollState())
+                .padding(dimensionResource(DesR.dimen.padding_m))
+                .padding(bottom = bottomInset),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         Text(
@@ -146,6 +163,7 @@ internal fun SearchResults(
     chosen: List<Int>,
     search: KeywordSearch,
     onToggle: (Int) -> Unit,
+    bottomInset: Dp,
     modifier: Modifier,
 ) {
     val results = search.results
@@ -160,7 +178,7 @@ internal fun SearchResults(
             }
         results.isEmpty() -> Note(stringResource(R.string.server_settings_blocklist_tags_no_match), modifier)
         else ->
-            Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(bottom = bottomInset)) {
                 results.forEachIndexed { index, keyword ->
                     SearchResultRow(
                         title = keyword.name,

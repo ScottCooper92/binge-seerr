@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,7 +27,7 @@ internal fun KeywordPickerDialog(
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxSize()) {
             FormScreen(title = title, onBack = onDismiss, scrolling = false) { inner ->
-                Column(modifier = Modifier.fillMaxSize().padding(inner)) {
+                Column(modifier = Modifier.fillMaxSize()) {
                     TagSearchPanel(
                         chosen = chosen,
                         search = search,
@@ -37,6 +36,7 @@ internal fun KeywordPickerDialog(
                         emptyTitle = stringResource(R.string.server_settings_rule_keywords_empty_title),
                         emptyBody = stringResource(R.string.server_settings_rule_keywords_empty),
                         modifier = Modifier.weight(1f),
+                        contentPadding = inner,
                     )
                 }
             }
