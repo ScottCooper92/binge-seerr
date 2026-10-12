@@ -113,10 +113,26 @@ internal class SaveAsMade<T>(
         val kept = draft()
         val earlier = lastWrite
         return appScope.async(dispatcher) {
-            val earlierFailed = earlier?.await()?.isFailure == true
-            val left = kept?.takeIf { (owed || earlierFailed) && canSave(it) } ?: return@async null
-            left.takeIf { attempt { write(it) }.isFailure }
+            val earlierError = earlier?.await()?.exceptionOrNull()?.toSeerrError()
+            if (earlierError?.isTransient == false) {
+                // The write send() was waiting on, which this settle cancelled: its refusal is reported here, and nothing rides on it.
+                report(earlierError)
+                return@async null
+            }
+            val left = kept?.takeIf { (owed || earlierError != null) && canSave(it) } ?: return@async null
+            val error = attempt { write(left) }.exceptionOrNull()?.toSeerrError() ?: return@async null
+            if (error.isTransient) {
+                left
+            } else {
+                report(error)
+                null
+            }
         }
+    }
+
+    /** A refusal [settle] met, told on [scope] because [refused] touches the page's state, which only that thread does. */
+    private fun report(error: SeerrError) {
+        scope.launch { refused(error) }
     }
 
     /**

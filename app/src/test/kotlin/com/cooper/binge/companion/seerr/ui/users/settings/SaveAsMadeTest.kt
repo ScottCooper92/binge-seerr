@@ -71,6 +71,27 @@ class SaveAsMadeTest {
         }
 
     @Test
+    fun `settling while a write is in flight reports its refusal once and sends it no more`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            val settled = mode.settle()
+            runCurrent()
+            gates[0].completeExceptionally(HttpException(Response.error<Unit>(400, "{}".toResponseBody(null))))
+            runCurrent()
+
+            assertEquals(null, settled.await())
+            runCurrent()
+            assertEquals(listOf(1), sent)
+            assertEquals(listOf(SeerrError.Rejected), refusedLog)
+            assertEquals("never offered for retry", emptyList<Boolean>(), failedLog)
+        }
+
+    @Test
     fun `a change made during a write waits for it, then goes out from the answer`() =
         runTest {
             val mode = saveAsMade()
