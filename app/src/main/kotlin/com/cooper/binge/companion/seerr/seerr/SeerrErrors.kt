@@ -61,6 +61,14 @@ enum class SeerrError {
 val SeerrError.rejectsSession: Boolean
     get() = this == SeerrError.Unauthorized || this == SeerrError.Forbidden
 
+/**
+ * Whether sending the same thing again could succeed: the network, the server or something unexpected failed, not the
+ * server refusing it. The one rule a page reads to decide whether a failed write is kept for Retry (#1465): a refusal
+ * (a permission, a quota, a 4xx on the merits, a target gone) would only be refused again, so it is reported instead.
+ */
+val SeerrError.isTransient: Boolean
+    get() = this == SeerrError.Unreachable || this == SeerrError.Server || this == SeerrError.Unknown
+
 fun Throwable.toSeerrError(): SeerrError =
     when (this) {
         is NotConnectedException -> SeerrError.NotConnected

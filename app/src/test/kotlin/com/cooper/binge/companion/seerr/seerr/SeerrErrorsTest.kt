@@ -24,6 +24,15 @@ class SeerrErrorsTest {
 
     private fun codeOf(t: Throwable): Status.Code = t.toStatusException().status.code
 
+    /** What a page keeps for Retry (#1465): the network, the server or the unexpected, never a refusal. */
+    @Test
+    fun `only a failure that sending again could clear is transient`() {
+        val transient = SeerrError.entries.filter { it.isTransient }.toSet()
+        assertEquals(setOf(SeerrError.Unreachable, SeerrError.Server, SeerrError.Unknown), transient)
+        assertEquals(SeerrError.Rejected, http(400).toSeerrError())
+        assertFalse(http(400).toSeerrError().isTransient)
+    }
+
     @Test
     fun `a rejected session is UNAUTHENTICATED, and so is no session at all`() {
         assertEquals(Status.Code.UNAUTHENTICATED, codeOf(http(401)))

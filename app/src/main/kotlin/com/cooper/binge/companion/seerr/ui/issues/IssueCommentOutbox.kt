@@ -1,9 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
-import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueCommentBody
 import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
@@ -123,7 +123,7 @@ internal class IssueCommentOutbox(
         }.onFailure { failure ->
             // A cancellation is the page going away, not a failed send: there is nothing left to show it on.
             if (failure is CancellationException) throw failure
-            val retryable = failure.toSeerrError().let { it != SeerrError.Forbidden && it != SeerrError.Unauthorized }
+            val retryable = failure.toSeerrError().isTransient
             update(localId) { it.copy(state = SendState.Failed(retryable)) }
         }
     }
