@@ -46,9 +46,9 @@ import com.cooper.binge.companion.seerr.ui.requests.messageRes
 import com.cooper.binge.companion.seerr.ui.requests.statusChip
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.cooper.binge.companion.seerr.ui.tv.TvLoadingPlate
+import com.cooper.binge.companion.seerr.ui.tv.TvOutcomePlate
 import com.cooper.binge.companion.seerr.ui.tv.TvSeerrErrorPage
 import com.cooper.binge.companion.seerr.ui.tv.rememberTvTransientEvent
 import kotlinx.coroutines.flow.Flow
@@ -198,7 +198,7 @@ private fun TvRequestDetailContent(
             requestSections(detail, infoCards)
         }
         event?.let {
-            TvFormNote(
+            TvOutcomePlate(
                 text = stringResource(it.messageRes()),
                 tone = if (it.isError()) TvFormNoteTone.Error else TvFormNoteTone.Success,
                 modifier =

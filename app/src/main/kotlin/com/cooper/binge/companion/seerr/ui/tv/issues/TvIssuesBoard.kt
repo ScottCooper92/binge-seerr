@@ -47,9 +47,9 @@ import com.cooper.binge.companion.seerr.ui.tv.OverlayFocusRestore
 import com.cooper.binge.companion.seerr.ui.tv.TV_ROW_ITEM_CAP
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropArtwork
 import com.cooper.binge.companion.seerr.ui.tv.TvBackdropCopy
-import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
+import com.cooper.binge.companion.seerr.ui.tv.TvOutcomePlate
 import com.cooper.binge.companion.seerr.ui.tv.TvPagedRows
 import com.cooper.binge.companion.seerr.ui.tv.TvPosterCard
 import com.cooper.binge.companion.seerr.ui.tv.TvRowsFallback
@@ -122,7 +122,7 @@ internal fun TvIssuesBoard(
             )
         }
         event?.let {
-            TvFormNote(
+            TvOutcomePlate(
                 text = stringResource(it.messageRes()),
                 tone = if (it is IssueListEvent.Failed) TvFormNoteTone.Error else TvFormNoteTone.Success,
                 modifier =
