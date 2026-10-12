@@ -161,9 +161,16 @@ private fun tvSettingGroups(
     onOpenBingeListing: () -> Unit,
 ): List<TvPaneGroup> {
     val config = state.config
-    // The same hint on every read-only row says nothing the second time: the first one carries it for the page.
-    var readOnly: String? = stringResource(R.string.tv_settings_read_only_note)
-    val takeReadOnlyNote = { readOnly.also { readOnly = null } }
+    val configGroups =
+        buildList {
+            config?.general?.let { add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it))) }
+            // Admin-only, same as the phone: this is the one section that also gets an action, so it is
+            // built by hand rather than through the read-only mapping every other section shares.
+            if (config != null) add(mediaServerGroup(state.server, onStartLibraryScan, scanNote = scanNote))
+            config?.services?.let { add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it))) }
+            config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it))) }
+            config?.system?.let { add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now))) }
+        }.filter { it.rows.isNotEmpty() }
     return buildList {
         add(
             TvPaneGroup(
@@ -172,40 +179,27 @@ private fun tvSettingGroups(
             ),
         )
         hub?.let { serverStatusGroup(it, onOpenBingeListing) }?.let(::add)
-        config?.general?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it), takeReadOnlyNote))
-        }
-        // Admin-only, same as the phone: this is the one section that also gets an action, so it is
-        // built by hand rather than through the read-only mapping every other section shares.
-        if (config != null) {
-            add(
-                mediaServerGroup(state.server, onStartLibraryScan, note = scanNote ?: takeReadOnlyNote(), announceNote = scanNote != null),
-            )
-        }
-        config?.services?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it), takeReadOnlyNote))
-        }
-        config?.requestPolicy?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it), takeReadOnlyNote))
-        }
-        config?.system?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now), takeReadOnlyNote))
-        }
+        addAll(configGroups.carryingNoteOnFirst(stringResource(R.string.tv_settings_read_only_note)))
     }.filter { it.rows.isNotEmpty() }
 }
 
 /**
+ * The page's one "change this on the phone" line, on its first group. A group's note sits under its title in the list
+ * column, which shows whichever row is described, so a later read-out is never left without it (#1439).
+ */
+internal fun List<TvPaneGroup>.carryingNoteOnFirst(note: String): List<TvPaneGroup> =
+    mapIndexed { index, group -> if (index == 0) group.copy(note = note) else group }
+
+/**
  * The media server row, with one option beside its read-out: start the library scan job that the phone's Jobs & cache page's
- * job row runs, the "it downloaded but isn't showing" fix from the sofa. [note] is the scan's own
- * outcome while it is still showing, else the page's one "change this on the phone" note if no row above has
- * carried it, else none.
+ * job row runs, the "it downloaded but isn't showing" fix from the sofa. [scanNote] is the scan's own outcome while it is
+ * still showing, announced as it arrives, else none.
  */
 @Composable
 private fun mediaServerGroup(
     server: ServerSummary,
     onStartLibraryScan: () -> Unit,
-    note: String?,
-    announceNote: Boolean,
+    scanNote: String?,
 ): TvPaneGroup =
     TvPaneGroup(
         title = stringResource(R.string.server_settings_media_server),
@@ -215,8 +209,8 @@ private fun mediaServerGroup(
                     key = KEY_MEDIA_SERVER,
                     label = stringResource(server.mediaServer.labelRes()),
                     body = stringResource(R.string.server_settings_media_server_caption),
-                    note = note,
-                    announceNote = announceNote,
+                    note = scanNote,
+                    announceNote = scanNote != null,
                     options =
                         listOf(
                             TvPaneOption(
@@ -247,11 +241,8 @@ private fun EditorEvent?.tvNoteOrNull(): String? =
 internal fun readOnlyGroup(
     title: String,
     rows: List<ListItem>,
-    takeNote: () -> String?,
-): TvPaneGroup {
-    // Asked only of a group that has a row to carry it, and for its first row alone.
-    val note = if (rows.isEmpty()) null else takeNote()
-    return TvPaneGroup(
+): TvPaneGroup =
+    TvPaneGroup(
         title = title,
         rows =
             rows.mapIndexed { index, row ->
@@ -259,12 +250,10 @@ internal fun readOnlyGroup(
                     key = "$title/$index",
                     label = row.label,
                     body = row.detail.orEmpty(),
-                    note = note.takeIf { index == 0 },
                     icon = row.icon,
                 )
             },
     )
-}
 
 @Composable
 private fun connectionRows(

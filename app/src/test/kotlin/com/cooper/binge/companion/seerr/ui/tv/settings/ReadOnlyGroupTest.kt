@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.tv.settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.tv.template.TvPaneGroup
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -11,25 +12,30 @@ class ReadOnlyGroupTest {
     private fun row(label: String) = ListItem(icon = Icons.Filled.Info, label = label, detail = "value")
 
     @Test
-    fun `the page's note rides on the first read-only row and no other`() {
-        var note: String? = "Change this on the phone."
-        val take = { note.also { note = null } }
+    fun `a read-only row carries no note of its own`() {
+        val group = readOnlyGroup("General", listOf(row("A"), row("B")))
 
-        val first = readOnlyGroup("General", listOf(row("A"), row("B")), take)
-        val second = readOnlyGroup("Services", listOf(row("C")), take)
-
-        assertEquals(listOf("Change this on the phone.", null), first.rows.map { it.note })
-        assertNull(second.rows.single().note)
+        assertEquals(listOf(null, null), group.rows.map { it.note })
+        assertNull(group.note)
     }
 
     @Test
-    fun `a group with no rows leaves the note for the next group that has one`() {
-        var note: String? = "Change this on the phone."
-        val take = { note.also { note = null } }
+    fun `the page's note rides on the first group and no other`() {
+        val groups =
+            listOf(
+                readOnlyGroup("General", listOf(row("A"))),
+                readOnlyGroup("Services", listOf(row("B"))),
+                readOnlyGroup("System", listOf(row("C"))),
+            )
 
-        readOnlyGroup("General", emptyList(), take)
-        val next = readOnlyGroup("Services", listOf(row("C")), take)
+        val noted = groups.carryingNoteOnFirst("Change this on the phone.")
 
-        assertEquals("Change this on the phone.", next.rows.single().note)
+        assertEquals(listOf("Change this on the phone.", null, null), noted.map(TvPaneGroup::note))
+        assertEquals(groups.map { it.rows }, noted.map { it.rows })
+    }
+
+    @Test
+    fun `no groups leaves no note to place`() {
+        assertEquals(emptyList<TvPaneGroup>(), emptyList<TvPaneGroup>().carryingNoteOnFirst("Change this on the phone."))
     }
 }
