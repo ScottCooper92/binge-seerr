@@ -181,7 +181,12 @@ class OverrideRuleViewModel
                     .onSuccess {
                         analytics.event(AnalyticsEvents.OVERRIDE_RULE_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                         notify(EditorEvent.Deleted)
-                    }.onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    }.onFailure { failure ->
+                        // The change discarded above is gone, so the page reads the rule again rather than show a draft
+                        // that looks unsent and is not owed to anyone.
+                        reload()
+                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                    }
             }
         }
 

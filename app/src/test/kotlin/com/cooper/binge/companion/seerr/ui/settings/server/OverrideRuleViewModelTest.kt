@@ -394,6 +394,25 @@ class OverrideRuleViewModelTest {
         }
 
     @Test
+    fun `a failed delete after a failed write shows the rule as the server holds it`() =
+        runTest {
+            seerr.serve("PUT /api/v1/overrideRule/11", """{"message":"nope"}""", code = 500)
+            seerr.serve("DELETE /api/v1/overrideRule/11", """{"message":"nope"}""", code = 500)
+            val vm = viewModel(id = 11)
+            vm.awaitReady { it.extras.choices != null }
+            vm.toggleUser(5)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.awaitReady { it.saveFailed }
+
+            val failed = awaitEvent(vm.events)
+            vm.delete()
+            assertTrue(failed.await() is EditorEvent.Failed)
+            val reread = vm.awaitReady { !it.saveFailed && !it.dirty }
+            assertEquals(reread.saved.userIds, reread.draft.userIds)
+            assertEquals(setOf(3, 5), reread.draft.userIds)
+        }
+
+    @Test
     fun `an existing rule left without a condition is not written`() =
         runTest {
             seerr.serve("PUT /api/v1/overrideRule/11", RULES.trim().removePrefix("[").removeSuffix("]"))
