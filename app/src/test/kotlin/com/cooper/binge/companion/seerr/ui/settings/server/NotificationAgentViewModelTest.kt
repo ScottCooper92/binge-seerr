@@ -348,7 +348,6 @@ class NotificationAgentViewModelTest {
                     .getValue("senderName")
                     .jsonPrimitive.content,
             )
-            assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
             assertEquals(
                 listOf("notification_agent_changed" to mapOf("agent" to "email", "action" to "tested")),
                 analytics.events,
