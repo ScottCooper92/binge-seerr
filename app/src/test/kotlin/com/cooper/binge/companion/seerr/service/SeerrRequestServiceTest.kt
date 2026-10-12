@@ -219,6 +219,7 @@ class SeerrRequestServiceTest {
                     Capability.CAPABILITY_EDIT_SEASONS,
                     Capability.CAPABILITY_REPORT_ISSUE,
                     Capability.CAPABILITY_LIST_REQUESTS,
+                    Capability.CAPABILITY_LIST_MINE_RECENTLY_AVAILABLE,
                     Capability.CAPABILITY_BATCH_STATUS,
                 ),
                 response.capabilitiesList.toSet(),
@@ -1887,6 +1888,21 @@ class SeerrRequestServiceTest {
             assertEquals("available", asked.queryParameter("filter"))
             assertEquals("modified", asked.queryParameter("sort"))
             assertEquals(MAX_LIST_PAGE_SIZE.toString(), asked.queryParameter("take"))
+        }
+
+    /** What a host notifies the user from (binge-companions#193): their own titles, not everyone's. */
+    @Test
+    fun `mine recently available asks for the user's own available requests, the most recently changed first`() =
+        runTest {
+            val stub = connected(permissions = ADMIN)
+            seerr.enqueue(emptyPage())
+
+            stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_MINE_RECENTLY_AVAILABLE))
+
+            val asked = seerr.takeRequest().url
+            assertEquals("1", asked.queryParameter("requestedBy"))
+            assertEquals("available", asked.queryParameter("filter"))
+            assertEquals("modified", asked.queryParameter("sort"))
         }
 
     @Test

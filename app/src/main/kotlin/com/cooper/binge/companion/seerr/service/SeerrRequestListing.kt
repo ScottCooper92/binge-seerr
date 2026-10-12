@@ -21,9 +21,9 @@ internal const val MAX_STATUSES_PER_CALL = 50
  * One `ListRequests` filter as Seerr's `GET /request` query. Seerr narrows the list to the user's own
  * requests unless they hold `MANAGE_REQUESTS` or `REQUEST_VIEW`, so `ALL` is "every request this user
  * may see" without any check here. `MINE` asks for the user's own by id. The sort is newest first:
- * by request id, or by when the request last changed for `RECENTLY_AVAILABLE`, which is the closest
- * Seerr has to "when the title became available". How recent is left open: the host pages for as
- * long as it wants.
+ * by request id, or by when the request last changed for the two `RECENTLY_AVAILABLE` filters, which is
+ * the closest Seerr has to "when the title became available". How recent is left open: the host pages
+ * for as long as it wants. `MINE_RECENTLY_AVAILABLE` is the same query narrowed to the user's own.
  */
 internal enum class SeerrRequestQuery(
     val filter: String,
@@ -34,6 +34,7 @@ internal enum class SeerrRequestQuery(
     All(filter = "all", sort = "added"),
     AwaitingModeration(filter = "pending", sort = "added"),
     RecentlyAvailable(filter = "available", sort = "modified"),
+    MineRecentlyAvailable(filter = "available", sort = "modified", mine = true),
 }
 
 /** The query for [this] filter; an unspecified or unknown one is INVALID_ARGUMENT, as the contract says. */
@@ -43,6 +44,7 @@ internal fun RequestFilter.toSeerrQuery(): SeerrRequestQuery =
         RequestFilter.REQUEST_FILTER_ALL -> SeerrRequestQuery.All
         RequestFilter.REQUEST_FILTER_AWAITING_MODERATION -> SeerrRequestQuery.AwaitingModeration
         RequestFilter.REQUEST_FILTER_RECENTLY_AVAILABLE -> SeerrRequestQuery.RecentlyAvailable
+        RequestFilter.REQUEST_FILTER_MINE_RECENTLY_AVAILABLE -> SeerrRequestQuery.MineRecentlyAvailable
         RequestFilter.REQUEST_FILTER_UNSPECIFIED, RequestFilter.UNRECOGNIZED -> throw invalidArgument("filter must be set")
     }
 
