@@ -29,6 +29,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Matches `UserAdmission`'s `ALL_USERS_TAKE`: the "requested by" picker needs every user, not one page of them. */
 private const val USERS_PAGE = 1000
@@ -176,8 +177,9 @@ class OverrideRuleViewModel
             discardUnsent()
             crashBreadcrumbs.key("override_rule_id", existing.toString())
             crashBreadcrumbs.log("deleting override rule")
-            viewModelScope.launch(dispatcher) {
-                attempt { connection.api().deleteOverrideRule(existing) }
+            // Only the request runs on the IO dispatcher: reload() settles save-as-made, which is main-thread state.
+            viewModelScope.launch {
+                attempt { withContext(dispatcher) { connection.api().deleteOverrideRule(existing) } }
                     .onSuccess {
                         analytics.event(AnalyticsEvents.OVERRIDE_RULE_CHANGED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
                         notify(EditorEvent.Deleted)
