@@ -40,16 +40,14 @@ import org.robolectric.annotation.Config
 private val ALL_OFF = NetworkForm(forceIpv4First = false, proxy = ProxyForm(), dnsCache = DnsCacheForm())
 
 @Composable
-private fun Network(
-    draft: NetworkForm,
-    onSave: () -> Unit = {},
-) = BingeExpressiveTheme(dynamicColor = false) {
-    NetworkScreen(
-        state = EditorUiState.Ready(draft = draft, saved = ALL_OFF),
-        events = emptyFlow(),
-        actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = onSave),
-    )
-}
+private fun Network(draft: NetworkForm) =
+    BingeExpressiveTheme(dynamicColor = false) {
+        NetworkScreen(
+            state = EditorUiState.Ready(draft = draft, saved = ALL_OFF),
+            events = emptyFlow(),
+            actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = {}),
+        )
+    }
 
 @Composable
 private fun EditableNetwork(
@@ -81,9 +79,7 @@ class NetworkFormTest {
     @get:Rule
     val rule = createSeerrComposeRule()
 
-    private var saves = 0
-
-    private fun show(draft: NetworkForm) = rule.setContent { Network(draft) { saves++ } }
+    private fun show(draft: NetworkForm) = rule.setContent { Network(draft) }
 
     @Test
     fun `a proxy and cache that are off show only their switches`() {
@@ -105,10 +101,9 @@ class NetworkFormTest {
     }
 
     @Test
-    fun `a proxy that is on without a host can't be saved`() {
+    fun `a proxy that is on without a host says what it needs`() {
         show(ALL_OFF.copy(proxy = ProxyForm(enabled = true)))
 
-        rule.onNodeWithText("Save").assertIsNotEnabled()
         assertEquals(2, rule.onAllNodesWithText("Required").fetchSemanticsNodes().size)
     }
 
@@ -138,7 +133,6 @@ class NetworkFormTest {
         show(ALL_OFF.copy(proxy = ProxyForm(enabled = true, host = "p.lan", port = "3128", user = "seerr")))
 
         rule.onNodeWithText("Enter the proxy password as well").performScrollTo().assertExists()
-        rule.onNodeWithText("Save").assertIsNotEnabled()
     }
 
     @Test
@@ -175,16 +169,15 @@ class NetworkFormTest {
         show(ALL_OFF.copy(dnsCache = DnsCacheForm(enabled = true, minTtl = "60", maxTtl = "5")))
 
         assertEquals(2, rule.onAllNodesWithText("The maximum must not be below the minimum").fetchSemanticsNodes().size)
-        rule.onNodeWithText("Save").assertIsNotEnabled()
     }
 
+    /** The page saves as it changes (#930): a change has no Save to press and no Cancel to undo it with. */
     @Test
-    fun `a clean change saves`() {
+    fun `a change has no save or cancel to press`() {
         show(ALL_OFF.copy(trustProxy = true))
 
-        rule.onNodeWithText("Save").performSemanticsAction(SemanticsActions.OnClick)
-
-        assertEquals(1, saves)
+        rule.onNodeWithText("Save").assertDoesNotExist()
+        rule.onNodeWithText("Cancel").assertDoesNotExist()
     }
 }
 

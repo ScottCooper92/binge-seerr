@@ -1,31 +1,28 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.lifecycle.SavedStateHandle
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorViewModel
-import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
 
-/** The network page: the switches, and on Seerr 3 the proxy and the DNS cache, saved as one record. */
+/**
+ * The network page: the switches, and on Seerr 3 the proxy and the DNS cache, as one record. It saves as it changes
+ * (#930): each write is the saved record with the change in it, and `settings/network` merges what it is sent. A change
+ * that leaves the record invalid, a proxy switched on with no address yet, say, is held until it is valid again.
+ */
 @HiltViewModel
 class NetworkViewModel
     @Inject
     constructor(
         private val connection: SeerrConnection,
         @IoDispatcher dispatcher: CoroutineDispatcher,
-        savedState: SavedStateHandle = SavedStateHandle(),
+        @ApplicationScope appScope: CoroutineScope,
     ) : EditorViewModel<NetworkForm>(dispatcher) {
-        /** A long form, kept across the process being killed (#1026). The proxy's password is not kept: the record's goes back in. */
-        override val savedDraft =
-            SavedDraft(
-                savedState,
-                NetworkForm.serializer(),
-                scrub = { it.copy(proxy = it.proxy?.copy(password = "")) },
-                restore = { kept, loaded -> kept.copy(proxy = kept.proxy?.copy(password = loaded.proxy?.password.orEmpty())) },
-            )
+        override val saveAsMadeScope: CoroutineScope = appScope
 
         init {
             reload()

@@ -1,17 +1,17 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
-import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
-import com.cooper.binge.companion.seerr.util.afterProcessDeath
-import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -54,47 +54,89 @@ class NetworkViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(savedState: SavedStateHandle = SavedStateHandle()): NetworkViewModel {
-        val vm = NetworkViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, savedState)
+    private suspend fun TestScope.viewModel(): NetworkViewModel {
+        val vm = NetworkViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, backgroundScope)
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
 
-    private suspend fun NetworkViewModel.awaitReady(): EditorUiState.Ready<NetworkForm> =
-        uiState.first { it is EditorUiState.Ready && !it.saving } as EditorUiState.Ready<NetworkForm>
+    private suspend fun NetworkViewModel.awaitReady(
+        where: (EditorUiState.Ready<NetworkForm>) -> Boolean = { true },
+    ): EditorUiState.Ready<NetworkForm> = uiState.first { it is EditorUiState.Ready && where(it) } as EditorUiState.Ready<NetworkForm>
 
-    /** #1026: a draft outlives the process; the proxy's password is not kept, and comes back from the record. */
+    /** The page saves as it changes: the change goes out once the delay has passed, and the answer is adopted. */
+    private suspend fun TestScope.awaitWritten(vm: NetworkViewModel) {
+        advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+        vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Saved }
+    }
+
     @Test
-    fun `an unsaved draft survives the process being killed, without the proxy password`() =
+    fun `a change is written as made, as the saved record with that one change`() =
         runTest {
             seerr.viewer(id = 1, permissions = ADMIN)
             seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
             seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
-            val savedState = SavedStateHandle()
-            val vm = viewModel(savedState)
+            val vm = viewModel()
             vm.awaitReady()
-            vm.edit {
-                it.copy(
-                    trustProxy = false,
-                    proxy = it.proxy?.copy(enabled = true, host = "proxy.lan", port = "3128", user = "ana", password = "s3cret"),
-                )
-            }
+
+            vm.edit { it.copy(csrfProtection = true) }
+            runCurrent()
+            assertEquals("nothing is written before the delay", 0, seerr.count("POST", "/api/v1/settings/network"))
+            awaitWritten(vm)
+
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/network"))
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
+            assertEquals("true", sent.getValue("csrfProtection").jsonPrimitive.content)
+            assertEquals("true", sent.getValue("trustProxy").jsonPrimitive.content)
+            assertEquals("30000", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
+            assertEquals(
+                "8080",
+                sent
+                    .getValue("proxy")
+                    .jsonObject
+                    .getValue("port")
+                    .jsonPrimitive.content,
+            )
+        }
+
+    @Test
+    fun `a write that fails keeps the change, says so, and a retry sends it`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
+            seerr.serve("POST /api/v1/settings/network", """{"message":"nope"}""", code = 500)
+            val vm = viewModel()
             vm.awaitReady()
-            assertTrue(savedState.keys().none { savedState.get<Any?>(it).toString().contains("s3cret") })
 
-            val back = viewModel(savedState.afterProcessDeath()).awaitReady()
+            vm.edit { it.copy(trustProxy = false) }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            val failed = vm.awaitReady { it.saveFailed }
+            assertFalse("the change stays, unsent", failed.draft.trustProxy)
+            assertTrue(failed.dirty)
 
-            assertFalse(back.draft.trustProxy)
-            assertEquals("ana", back.draft.proxy?.user)
-            assertEquals("", back.draft.proxy?.password)
-            assertTrue(back.dirty)
-
-            // Saved, there is nothing left to keep, and the next start reads the server alone.
-            val saved = awaitEvent(vm.events)
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK.replace("\"trustProxy\":true", "\"trustProxy\":false"))
             vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
-            assertFalse(viewModel(savedState.afterProcessDeath()).awaitReady().dirty)
+            val saved = vm.awaitReady { !it.saveFailed && !it.dirty }
+            assertFalse(saved.saved.trustProxy)
+            assertEquals(2, seerr.count("POST", "/api/v1/settings/network"))
+        }
+
+    @Test
+    fun `a proxy switched on with no address is never written`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
+            seerr.serve("POST /api/v1/settings/network", SEERR_NETWORK)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.edit { it.copy(proxy = it.proxy?.copy(enabled = true)) }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            assertEquals(0, seerr.count("POST", "/api/v1/settings/network"))
+            assertEquals(SaveStatus.Idle, vm.awaitReady().saveStatus)
         }
 
     @Test
@@ -106,7 +148,7 @@ class NetworkViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
-            // Off, with a TTL the server would refuse: nothing reads it, so Save stays available.
+            // Off, with a TTL the server would refuse: nothing reads it, so nothing holds the rest of the page.
             vm.edit { it.copy(dnsCache = it.dnsCache?.copy(enabled = false, minTtl = "-1")) }
             assertTrue(vm.awaitReady().draft.valid)
 
@@ -137,9 +179,7 @@ class NetworkViewModelTest {
                     dnsCache = it.dnsCache?.copy(maxTtl = "600"),
                 )
             }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             val proxy = sent.getValue("proxy").jsonObject
@@ -167,9 +207,7 @@ class NetworkViewModelTest {
             assertNull(draft.dnsCache)
 
             vm.edit { it.copy(trustProxy = true) }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals(setOf("csrfProtection", "trustProxy"), sent.keys)
             assertEquals("true", sent.getValue("trustProxy").jsonPrimitive.content)
@@ -187,9 +225,7 @@ class NetworkViewModelTest {
             vm.edit { it.copy(apiRequestTimeout = "-1") }
             assertFalse(vm.awaitReady().draft.valid)
             vm.edit { it.copy(apiRequestTimeout = "45") }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals("45000", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
@@ -208,9 +244,7 @@ class NetworkViewModelTest {
             assertFalse(vm.awaitReady().draft.valid)
             vm.edit { it.copy(apiRequestTimeout = "2147484") }
             assertTrue(vm.awaitReady().draft.valid)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals("2147484000", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
@@ -235,9 +269,7 @@ class NetworkViewModelTest {
             assertEquals("1.5", vm.awaitReady().draft.apiRequestTimeout)
 
             vm.edit { it.copy(trustProxy = false) }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals("1500", sent.getValue("apiRequestTimeout").jsonPrimitive.content)
@@ -254,9 +286,7 @@ class NetworkViewModelTest {
 
             vm.edit { it.copy(apiRequestTimeout = "1.5") }
             assertTrue(vm.awaitReady().draft.valid)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/network")).jsonObject
             assertEquals("1500", sent.getValue("apiRequestTimeout").jsonPrimitive.content)

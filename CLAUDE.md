@@ -257,14 +257,14 @@ the custom `binge:` ruleset lives in an unpublished module there and cannot be d
 here (binge-companions#39), and the community Compose ruleset is tuned per-file to Binge's own
 composables, so adopting it is a measurement pass rather than a port.
 
-detekt runs on production `src/main` only, and **with type resolution** — `binge.gates.detekt` wires
+detekt is 2.x, the version the shared gate applies, so `detekt.yml` and the baseline use 2.x's rule and key names.
+It runs on production `src/main` only, and **with type resolution** — `binge.gates.detekt` wires
 the compile classpath onto the task. Without that classpath `UnsafeCallOnNullableType`, the `!!` ban,
 loads and silently never fires.
 
 `runCatching` is banned in `app/src/main` by `ForbiddenMethodCall`: `attempt` (`seerr/SeerrErrors.kt`) is the one
-idiom, because `runCatching` also catches the cancellation a cancelled scope sends. The rule only sees into the stdlib
-because `app/build.gradle.kts` puts detekt's own stdlib first on its classpath; detekt 1.23 cannot read the 2.4 one.
-The shared gate does not do this, so leave that line alone.
+idiom, because `runCatching` also catches the cancellation a cancelled scope sends. The rule sees into the stdlib
+through the same type resolution.
 
 `detekt-baseline.xml` grandfathers what existed when the ruleset was switched on, so the gate is
 **zero new violations** rather than zero total. Do not add to it: a new finding is either fixed or

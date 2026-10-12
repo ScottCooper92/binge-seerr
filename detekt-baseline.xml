@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>TooManyFunctions:SeerrConnection.kt$SeerrConnection</ID>
+    <ID>TooManyFunctions:SeerrConnection.kt:SeerrConnection</ID>
   </CurrentIssues>
 </SmellBaseline>

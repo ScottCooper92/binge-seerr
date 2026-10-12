@@ -41,8 +41,9 @@ import java.text.DecimalFormatSymbols
 /**
  * The network page in the web client's order, as groups of list rows: the switches every lineage has, then the DNS
  * cache, the API request timeout and the outbound proxy where the server sent them. The DNS cache and the proxy is a switch, and only while it is on do
- * its settings hang beneath it, as the web client shows them. Every value is checked in the sheet that edits it. The server
- * reads all of them only when it starts, so the page says a save waits on a restart (#868).
+ * its settings hang beneath it, as the web client shows them. Every value is checked in the sheet that edits it, and the
+ * page saves as it changes (#930). The server reads all of them only when it starts, so the page says a save waits on a
+ * restart (#868).
  */
 @Composable
 fun NetworkScreen(
@@ -56,7 +57,7 @@ fun NetworkScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
-        footerCommit = true,
+        saveAsMade = true,
     ) { draft, enabled ->
         ItemGroup(
             title = stringResource(R.string.settings_group_general),
