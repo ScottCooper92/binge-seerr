@@ -9,10 +9,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
+import androidx.compose.ui.test.isNotEnabled
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
@@ -157,6 +159,24 @@ class TvIssueDetailFocusTest {
 
         // The walk reached — and scrolled into view — the last comment in the thread.
         composeTestRule.onNode(hasText("Update 8: still checking the timing.") and isFocusable()).assertIsFocused()
+    }
+
+    @Test
+    fun anEmptyThreadLandsOnItsNoCommentsLineAndNothingIsAnnouncedDisabled() {
+        composeTestRule.setContent {
+            BingeTvTheme {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    TvIssueDetailScreen(
+                        state = IssueDetailUiState.Ready(detail(issue(11, SEVERANCE), emptyList())),
+                        actions = TvIssueDetailActions(onBack = {}, onRetry = {}),
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNode(hasText(string(R.string.issue_no_comments)) and isFocusable()).assertIsFocused()
+        composeTestRule.onAllNodes(isNotEnabled()).assertCountEquals(0)
     }
 
     private fun issue(
