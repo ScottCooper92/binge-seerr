@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -79,6 +82,7 @@ private fun TvOptionsForm(
             choices = state.destination.servers.map { it.id to it.label },
             selected = state.destination.serverId,
             onSelect = actions.onSelectServer,
+            choiceIcon = { Icons.Filled.Dns },
             initialFocusedLabel = initialFocusedLabel,
             arrival = arrival,
         )
@@ -90,6 +94,7 @@ private fun TvOptionsForm(
                 choices = state.destination.profiles.map { it.id to it.label },
                 selected = state.destination.profileId,
                 onSelect = actions.onSelectProfile,
+                choiceIcon = { Icons.Filled.Tune },
                 initialFocusedLabel = initialFocusedLabel,
             )
             TvOptionGroup(
@@ -97,6 +102,7 @@ private fun TvOptionsForm(
                 choices = state.destination.rootFolders.map { it to it },
                 selected = state.destination.rootFolder,
                 onSelect = actions.onSelectRootFolder,
+                choiceIcon = { Icons.Filled.Folder },
                 initialFocusedLabel = initialFocusedLabel,
             )
         }
