@@ -389,6 +389,7 @@ private fun RuleFrame(state: ExtrasEditorUiState<OverrideRuleForm, OverrideRuleE
         events = emptyFlow(),
         actions = noActions(),
         ruleActions = noRuleActions(),
+        saveAsMade = (state as? ExtrasEditorUiState.Ready)?.draft?.id != null,
     )
 
 private fun noRuleActions() =

@@ -50,7 +50,8 @@ class OverrideRuleActions(
  * One override rule as the web client lays it out, in groups of list rows: the instance it applies to, the conditions
  * a request must meet, and what it gets instead. All three are required, as in Seerr's web client (#733), so a group
  * that is still short says what it needs. An existing rule saves as it changes (#930), holding a change until none is
- * short; a new rule waits for Create.
+ * short; a new rule waits for Create. [saveAsMade] is fixed by the id the page was opened with, as the ViewModel's is,
+ * so a rule that has just been created keeps its footer rather than switching to a mode nothing would save in.
  */
 @Composable
 fun OverrideRuleScreen(
@@ -58,19 +59,20 @@ fun OverrideRuleScreen(
     events: Flow<EditorEvent>,
     actions: EditorActions<OverrideRuleForm>,
     ruleActions: OverrideRuleActions,
+    saveAsMade: Boolean,
 ) {
     val ready = state as? ExtrasEditorUiState.Ready<OverrideRuleForm, OverrideRuleExtras>
     val extras = ready?.extras ?: OverrideRuleExtras()
-    val existing = ready?.draft?.id != null
+    val created = ready?.draft?.id == null
     EditorPage(
         title = stringResource(R.string.server_settings_rule_title),
         state = state.toEditorUiState(),
         events = events,
         actions = actions,
         canSave = { it.valid },
-        saveAsMade = existing,
-        footerCommit = !existing,
-        commitLabel = stringResource(R.string.editor_create).takeIf { !existing },
+        saveAsMade = saveAsMade,
+        footerCommit = !saveAsMade,
+        commitLabel = stringResource(R.string.editor_create).takeIf { created },
     ) { draft, enabled ->
         RuleInstance(extras, draft, enabled, ruleActions.onSelectInstance)
         RuleConditions(extras, draft, enabled, actions, ruleActions)

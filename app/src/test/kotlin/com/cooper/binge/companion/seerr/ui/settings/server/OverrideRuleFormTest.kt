@@ -44,6 +44,7 @@ class OverrideRuleFormTest {
     private fun show(
         draft: OverrideRuleForm,
         extras: OverrideRuleExtras = RULE_EXTRAS,
+        saveAsMade: Boolean = false,
     ) = rule.setContent {
         BingeExpressiveTheme(dynamicColor = false) {
             OverrideRuleScreen(
@@ -51,6 +52,7 @@ class OverrideRuleFormTest {
                 events = emptyFlow(),
                 actions = EditorActions(onBack = {}, onRetry = {}, onEdit = {}, onSave = { saves++ }),
                 ruleActions = ruleActions(onToggleUser = { users += it }),
+                saveAsMade = saveAsMade,
             )
         }
     }
@@ -87,6 +89,15 @@ class OverrideRuleFormTest {
         show(ON_RADARR.copy(genres = "16", profileId = 4))
 
         rule.onNodeWithText("Create").assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+
+        assertEquals(1, saves)
+    }
+
+    @Test
+    fun `a rule that gained an id after Create still offers the footer Save`() {
+        show(ON_RADARR.copy(id = 7, genres = "16", profileId = 4), saveAsMade = false)
+
+        rule.onNodeWithText("Save").assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(1, saves)
     }
