@@ -117,6 +117,7 @@ internal fun OverrideRuleEntry(
         state = state,
         events = viewModel.events,
         actions = viewModel.editorActions(onBack),
+        saveAsMade = id != null,
         ruleActions =
             OverrideRuleActions(
                 onSelectInstance = viewModel::selectInstance,

@@ -21,6 +21,7 @@ import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -157,6 +158,20 @@ class OverrideRuleScreenshotTest {
             ),
         )
 
+    /** A saved rule saves as it changes (#930): a change on its way says Saving in the top bar, with no Save to press. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun existingRuleSaving() =
+        RuleFrame(
+            ExtrasEditorUiState.Ready(
+                draft = savedRule().copy(userIds = emptySet()),
+                saved = savedRule(),
+                extras = OverrideRuleExtras(instances = instances(), users = users(), choices = choices(languages = false)).named(),
+                saveStatus = SaveStatus.Saving,
+            ),
+        )
+
     /** The chosen instance's profiles and folders are being read. */
     @PreviewTest
     @SeerrScreenStatePreview
@@ -193,7 +208,7 @@ class OverrideRuleScreenshotTest {
             ),
         )
 
-    /** The saved rule at 1.5x and 2x text, where the pinned Cancel and Save bar must still fit. */
+    /** The saved rule at 1.5x and 2x text, where every row must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
@@ -374,6 +389,7 @@ private fun RuleFrame(state: ExtrasEditorUiState<OverrideRuleForm, OverrideRuleE
         events = emptyFlow(),
         actions = noActions(),
         ruleActions = noRuleActions(),
+        saveAsMade = (state as? ExtrasEditorUiState.Ready)?.draft?.id != null,
     )
 
 private fun noRuleActions() =

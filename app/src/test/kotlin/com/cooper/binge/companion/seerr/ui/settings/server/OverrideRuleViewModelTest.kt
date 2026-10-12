@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
@@ -17,6 +18,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -96,6 +99,7 @@ class OverrideRuleViewModelTest {
                     ServerListCatalog(connection),
                     mainDispatcherRule.dispatcher,
                     id,
+                    backgroundScope,
                     analytics,
                     savedState = savedState,
                 )
@@ -356,16 +360,108 @@ class OverrideRuleViewModelTest {
             assertEquals(1, seerr.count("DELETE", "/api/v1/overrideRule/12"))
         }
 
+    /** A rule created on this page has no id to read again, so a failed delete leaves it as it is (#930). */
     @Test
-    fun `an unsaved draft survives the process being killed`() =
+    fun `a failed delete of a just-created rule keeps the rule on the page`() =
+        runTest {
+            seerr.serve("POST /api/v1/overrideRule", """{"id":12,"radarrServiceId":1,"users":"3"}""")
+            seerr.serve("DELETE /api/v1/overrideRule/12", """{"message":"nope"}""", code = 500)
+            val vm = viewModel(id = null)
+            vm.awaitReady()
+            vm.selectInstance(vm.awaitReady { it.extras.instances.isNotEmpty() }.extras.instances[0])
+            vm.awaitReady { it.extras.choices != null }
+            vm.toggleUser(3)
+            vm.toggleTag(2)
+            val saved = awaitEvent(vm.events)
+            vm.save()
+            assertEquals(EditorEvent.Saved, saved.await())
+            val created = vm.awaitReady { it.saved.id == 12 }
+
+            val failed = awaitEvent(vm.events)
+            vm.delete()
+            assertTrue(failed.await() is EditorEvent.Failed)
+            val after = vm.awaitReady()
+            assertEquals(created.draft, after.draft)
+            assertEquals(12, after.draft.id)
+            assertEquals(setOf(3), after.draft.userIds)
+        }
+
+    /** An existing rule saves as it changes (#930): the saved rule with the change in it, after the delay, with no Save. */
+    @Test
+    fun `an existing rule writes a change as made, and keeps it through a failed write until a retry sends it`() =
+        runTest {
+            seerr.serve("PUT /api/v1/overrideRule/11", """{"message":"nope"}""", code = 500)
+            val vm = viewModel(id = 11)
+            vm.awaitReady { it.extras.choices != null }
+
+            vm.toggleUser(5)
+            runCurrent()
+            assertEquals("nothing is written before the delay", 0, seerr.count("PUT", "/api/v1/overrideRule/11"))
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            val failed = vm.awaitReady { it.saveFailed }
+            assertEquals(setOf(3), failed.draft.userIds)
+            assertTrue(failed.dirty)
+
+            seerr.serve(
+                "PUT /api/v1/overrideRule/11",
+                RULES
+                    .trim()
+                    .removePrefix("[")
+                    .removeSuffix("]")
+                    .replace("\"users\":\"3,5\"", "\"users\":\"3\""),
+            )
+            vm.save()
+            val saved = vm.awaitReady { !it.saveFailed && !it.dirty }
+            assertEquals(setOf(3), saved.saved.userIds)
+            val sent = Json.parseToJsonElement(seerr.body("PUT", "/api/v1/overrideRule/11")).jsonObject
+            assertEquals("3", sent.getValue("users").jsonPrimitive.content)
+            assertEquals("en|fr", sent.getValue("language").jsonPrimitive.content)
+            assertEquals("1,2", sent.getValue("tags").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `a failed delete after a failed write shows the rule as the server holds it`() =
+        runTest {
+            seerr.serve("PUT /api/v1/overrideRule/11", """{"message":"nope"}""", code = 500)
+            seerr.serve("DELETE /api/v1/overrideRule/11", """{"message":"nope"}""", code = 500)
+            val vm = viewModel(id = 11)
+            vm.awaitReady { it.extras.choices != null }
+            vm.toggleUser(5)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.awaitReady { it.saveFailed }
+
+            val failed = awaitEvent(vm.events)
+            vm.delete()
+            assertTrue(failed.await() is EditorEvent.Failed)
+            val reread = vm.awaitReady { !it.saveFailed && !it.dirty }
+            assertEquals(reread.saved.userIds, reread.draft.userIds)
+            assertEquals(setOf(3, 5), reread.draft.userIds)
+        }
+
+    @Test
+    fun `an existing rule left without a condition is not written`() =
+        runTest {
+            seerr.serve("PUT /api/v1/overrideRule/11", RULES.trim().removePrefix("[").removeSuffix("]"))
+            val vm = viewModel(id = 11)
+            vm.awaitReady { it.extras.choices != null }
+
+            vm.edit { it.copy(userIds = emptySet(), genres = "", languages = "", keywords = "") }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            assertEquals(0, seerr.count("PUT", "/api/v1/overrideRule/11"))
+        }
+
+    @Test
+    fun `a new rule's unsaved draft survives the process being killed`() =
         runTest {
             val savedState = SavedStateHandle()
-            val vm = viewModel(id = 11, savedState = savedState)
-            vm.awaitReady { it.extras.choices != null }
+            val vm = viewModel(id = null, savedState = savedState)
+            vm.awaitReady()
             vm.edit { it.copy(genres = "28", languages = "de") }
             vm.awaitReady()
 
-            val back = viewModel(id = 11, savedState = savedState.afterProcessDeath()).awaitReady()
+            val back = viewModel(id = null, savedState = savedState.afterProcessDeath()).awaitReady()
 
             assertEquals("de", back.draft.languages)
             assertEquals("28", back.draft.genres)
