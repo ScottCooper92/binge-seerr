@@ -1,10 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
+import com.cooper.binge.companion.seerr.notifications.ApplicationScope
 import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
@@ -15,26 +15,26 @@ import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorViewModel
-import com.cooper.binge.companion.seerr.ui.users.settings.SavedDraft
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonObject
 import retrofit2.HttpException
 
 private const val SOUNDS_DEBOUNCE_MILLIS = 600L
 
 /**
- * One notification agent's settings: on or off, the events it is sent, and its own options. A test
- * sends a notification through the draft as typed, so a change can be checked before it is saved.
- * For Pushover, the application token typed is asked for its sounds once it stops changing.
+ * One notification agent's settings: on or off, the events it is sent, and its own options. The page saves as it
+ * changes (#930), each write the saved record with the change in it; an agent that is on is held, unsent, while a setting
+ * it can't send without is blank. A test sends a notification through the draft as it stands, and stays a send. For
+ * Pushover, the application token typed is asked for its sounds once it stops changing.
  */
 @HiltViewModel(assistedFactory = NotificationAgentViewModel.Factory::class)
 class NotificationAgentViewModel
@@ -44,24 +44,12 @@ class NotificationAgentViewModel
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         @Assisted val agent: ServerAgent,
         private val analytics: Analytics = NoOpAnalytics,
+        @ApplicationScope appScope: CoroutineScope,
         private val crashBreadcrumbs: CrashBreadcrumbs = NoOpCrashBreadcrumbs,
-        savedState: SavedStateHandle = SavedStateHandle(),
     ) : ExtrasEditorViewModel<AgentForm, AgentExtras>(AgentExtras(), dispatcher) {
         internal var soundsDebounceMillis = SOUNDS_DEBOUNCE_MILLIS
 
-        /**
-         * A long form, kept across the process being killed (#1026). Its credentials are not kept, nor the record the server
-         * sent, which holds them too: both go back in from the record read on return.
-         */
-        override val savedDraft =
-            SavedDraft(
-                savedState,
-                AgentForm.serializer(),
-                scrub = { form -> form.copy(options = form.options.filterKeys { !it.credential }, raw = JsonObject(emptyMap())) },
-                restore = { kept, loaded ->
-                    kept.copy(options = kept.options + loaded.options.filterKeys { it.credential }, raw = loaded.raw)
-                },
-            )
+        override val saveAsMadeScope: CoroutineScope = appScope
 
         init {
             reload()

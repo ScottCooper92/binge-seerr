@@ -1,22 +1,24 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.NotificationType
+import com.cooper.binge.companion.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.RecordingAnalytics
-import com.cooper.binge.companion.seerr.util.afterProcessDeath
 import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -84,12 +86,8 @@ class NotificationAgentViewModelTest {
         seerr.close()
     }
 
-    private suspend fun TestScope.viewModel(
-        agent: ServerAgent,
-        savedState: SavedStateHandle = SavedStateHandle(),
-    ): NotificationAgentViewModel {
-        val vm =
-            NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent, analytics, savedState = savedState)
+    private suspend fun TestScope.viewModel(agent: ServerAgent): NotificationAgentViewModel {
+        val vm = NotificationAgentViewModel(seerr.connection(this), mainDispatcherRule.dispatcher, agent, analytics, backgroundScope)
         vm.soundsDebounceMillis = 10
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
@@ -103,26 +101,40 @@ class NotificationAgentViewModelTest {
             it is ExtrasEditorUiState.Ready && !it.saving && where(it)
         } as ExtrasEditorUiState.Ready<AgentForm, AgentExtras>
 
-    /** #1026: an agent's draft outlives the process; a webhook address carries its token, so it comes back from the record. */
+    /** The page saves as it changes: the change goes out once the delay has passed, and the answer is adopted. */
+    private suspend fun TestScope.awaitWritten(vm: NotificationAgentViewModel) {
+        advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+        vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Saved }
+    }
+
+    /** Lets the delay pass, so a change that may be sent would have been. */
+    private fun TestScope.letTheDelayPass() {
+        advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+        runCurrent()
+    }
+
     @Test
-    fun `an agent's draft survives the process being killed, without its credentials`() =
+    fun `a change is written as made, and a failed write keeps it until a retry sends it`() =
         runTest {
-            seerr.serve(
-                "GET /api/v1/settings/notifications/discord",
-                """{"enabled":false,"types":0,"options":{"webhookUrl":"https://discord.example/old","botUsername":""}}""",
-            )
-            val savedState = SavedStateHandle()
-            val vm = viewModel(ServerAgent.Discord, savedState)
+            seerr.serve("POST /api/v1/settings/notifications/email", """{"message":"nope"}""", code = 500)
+            val vm = viewModel(ServerAgent.Email)
             vm.awaitReady()
-            vm.setOption(AgentOption.DiscordBotUsername, "Seerr bot")
-            vm.setOption(AgentOption.DiscordWebhookUrl, "https://discord.example/t0ken")
-            vm.awaitReady { it.draft.option(AgentOption.DiscordBotUsername) == "Seerr bot" }
-            assertTrue(savedState.keys().none { savedState.get<Any?>(it).toString().contains("t0ken") })
 
-            val back = viewModel(ServerAgent.Discord, savedState.afterProcessDeath()).awaitReady()
+            vm.toggleType(NotificationType.MediaAvailable.bit)
+            runCurrent()
+            assertEquals("nothing is written before the delay", 0, seerr.count("POST", "/api/v1/settings/notifications/email"))
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            val failed = vm.awaitReady { it.saveFailed }
+            assertTrue("the change stays, unsent", failed.dirty)
 
-            assertEquals("Seerr bot", back.draft.option(AgentOption.DiscordBotUsername))
-            assertEquals("https://discord.example/old", back.draft.option(AgentOption.DiscordWebhookUrl))
+            seerr.serve(
+                "POST /api/v1/settings/notifications/email",
+                EMAIL.replace("\"types\":6", "\"types\":${6 xor NotificationType.MediaAvailable.bit}"),
+            )
+            vm.save()
+            val saved = vm.awaitReady { !it.saveFailed && !it.dirty }
+            assertEquals(6 xor NotificationType.MediaAvailable.bit, saved.saved.types)
+            assertEquals(2, seerr.count("POST", "/api/v1/settings/notifications/email"))
         }
 
     @Test
@@ -148,9 +160,7 @@ class NotificationAgentViewModelTest {
             vm.setOption(AgentOption.EmailSecure, "false")
             vm.setOption(AgentOption.EmailAuthUser, " mailer ")
             vm.toggleType(NotificationType.MediaAvailable.bit)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email")).jsonObject
             assertEquals("true", sent.getValue("enabled").jsonPrimitive.content)
@@ -175,33 +185,31 @@ class NotificationAgentViewModelTest {
         }
 
     @Test
-    fun `an agent that is on cannot be saved without what it sends through, and one that is off can`() =
+    fun `an agent that is on is not written without what it sends through, and one that is off is`() =
         runTest {
             val vm = viewModel(ServerAgent.Email)
             vm.awaitReady()
             vm.setOption(AgentOption.EmailSmtpHost, "")
             assertFalse(vm.awaitReady().draft.valid)
-            vm.save()
+            letTheDelayPass()
             assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
 
             vm.setEnabled(false)
             assertTrue(vm.awaitReady().draft.valid)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email")).jsonObject
             assertEquals("false", sent.getValue("enabled").jsonPrimitive.content)
             assertEquals("6", sent.getValue("types").jsonPrimitive.content)
         }
 
     @Test
-    fun `a required number option that does not parse blocks save the same as a blank one`() =
+    fun `a required number option that does not parse is held the same as a blank one`() =
         runTest {
             val vm = viewModel(ServerAgent.Email)
             vm.awaitReady()
             vm.setOption(AgentOption.EmailSmtpPort, "abcd")
             assertFalse(vm.awaitReady().draft.valid)
-            vm.save()
+            letTheDelayPass()
             assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
         }
 
@@ -217,9 +225,7 @@ class NotificationAgentViewModelTest {
             assertEquals("5", vm.awaitReady().draft.option(AgentOption.NtfyPriority))
 
             vm.setOption(AgentOption.NtfyPriority, "")
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/ntfy")).jsonObject
             assertEquals(JsonNull, sent.getValue("options").jsonObject.getValue("priority"))
@@ -238,9 +244,7 @@ class NotificationAgentViewModelTest {
             assertEquals(listOf("1", "2", "3", "4", "5"), NtfyPriorityLevel.entries.map { it.value })
 
             vm.setOption(AgentOption.NtfyPriority, NtfyPriorityLevel.High.value)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/ntfy")).jsonObject
             assertEquals(
@@ -265,9 +269,7 @@ class NotificationAgentViewModelTest {
             assertEquals("bike", vm.awaitReady().draft.option(AgentOption.PushoverSound))
 
             vm.setOption(AgentOption.PushoverSound, "")
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/pushover")).jsonObject
             assertEquals(
@@ -315,9 +317,7 @@ class NotificationAgentViewModelTest {
             assertEquals(EmailEncryption.StartTlsAlways, EmailEncryption.of(vm.awaitReady().draft))
 
             vm.setEncryption(EmailEncryption.None)
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
 
             val options =
                 Json
@@ -428,9 +428,7 @@ class NotificationAgentViewModelTest {
             assertEquals(template, vm.awaitReady().draft.option(AgentOption.WebhookJsonPayload))
 
             vm.setOption(AgentOption.WebhookJsonPayload, "{\"event\": \"{{event}}\"}")
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            awaitWritten(vm)
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/webhook")).jsonObject
             val payload =
                 sent
