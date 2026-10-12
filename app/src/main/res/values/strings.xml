@@ -106,7 +106,7 @@
     <string name="hub_section_issues">Issues</string>
     <string name="hub_section_issues_desc">Reports from your users</string>
     <string name="hub_section_users">Users</string>
-    <string name="hub_section_users_desc">Roles, quotas and permissions</string>
+    <string name="hub_section_users_desc">Roles and quotas</string>
     <string name="hub_section_blocklist">Blocklist</string>
     <string name="hub_section_blocklist_desc">Titles hidden from requests</string>
     <string name="blocklist_search_hint">Search the blocklist</string>
@@ -508,7 +508,7 @@
     <string name="server_settings_external_hint">Where users open the media server from their own devices; blank for the address above.</string>
     <string name="server_settings_forgot_password_url">Forgot-password URL</string>
     <string name="server_settings_libraries">Libraries</string>
-    <string name="server_settings_libraries_none">No libraries yet. Save the connection, then sync them.</string>
+    <string name="server_settings_libraries_none">No libraries yet. Sync them after saving.</string>
     <string name="server_settings_libraries_sync">Sync libraries</string>
     <string name="server_settings_libraries_synced">Libraries synced</string>
     <string name="server_settings_library_movies">Movies</string>
@@ -516,7 +516,7 @@
     <string name="server_settings_library_scanned">Scanned %1$s</string>
     <string name="server_settings_library_never_scanned">Not scanned yet</string>
     <string name="server_settings_scan">Full scan</string>
-    <string name="server_settings_scan_lead">Reads every enabled library and updates what the server knows is available.</string>
+    <string name="server_settings_scan_lead">Reads every enabled library for new media.</string>
     <string name="server_settings_scan_start">Start a full scan</string>
     <string name="server_settings_scan_cancel">Cancel the scan</string>
     <string name="server_settings_scan_running">Scanning… %1$d of %2$d</string>
@@ -531,7 +531,7 @@
     <string name="server_settings_dvr_tested">Reached the instance</string>
     <string name="server_settings_dvr_external_hint">Where the instance opens from a request; blank for the address above.</string>
     <string name="server_settings_dvr_destination">Destination</string>
-    <string name="server_settings_dvr_untested">Test the connection to see what the instance offers.</string>
+    <string name="server_settings_dvr_untested">See what the instance offers.</string>
     <string name="server_settings_dvr_minimum_availability">Minimum availability</string>
     <string name="server_settings_dvr_availability_announced">Announced</string>
     <string name="server_settings_dvr_availability_in_cinemas">In cinemas</string>
@@ -610,7 +610,7 @@
     <string name="settings_edit_connection">Edit connection</string>
     <string name="settings_edit_connection_caption">Change the server or sign in again</string>
     <string name="hub_set_up_tv">Set up a TV</string>
-    <string name="hub_set_up_tv_detail">Scan the code on your TV to connect it and sign it in</string>
+    <string name="hub_set_up_tv_detail">Scan the code on your TV to sign it in</string>
     <string name="scan_tv_not_a_tv_code">That isn\'t a TV\'s setup code. Scan the code on your TV\'s setup screen.</string>
     <string name="scan_tv_unavailable">The scanner couldn\'t open on this phone. Scan the TV\'s code with your camera instead.</string>
     <string name="settings_value_unknown">Unknown</string>
@@ -698,7 +698,7 @@
     <string name="server_settings_about_total_media">Titles</string>
     <string name="server_settings_about_timezone">Time zone</string>
     <string name="server_settings_about_data_directory">Data directory</string>
-    <string name="server_settings_about_data_not_mounted">%1$s is not a mounted volume, so the configuration is lost when the container is recreated</string>
+    <string name="server_settings_about_data_not_mounted">%1$s isn\'t mounted, so settings are lost</string>
     <string name="server_settings_about_data_not_writable">%1$s is not writable by the server</string>
     <string name="server_settings_about_support">Getting support</string>
     <string name="server_settings_about_docs">Documentation</string>
@@ -918,7 +918,7 @@
     <string name="state_error_unreachable_title">Can\'t reach the server</string>
     <string name="state_error_unreachable_message">Check the connection and try again.</string>
     <string name="state_error_server_title">Server error</string>
-    <string name="state_error_server_message">The server answered with an error. Try again in a moment.</string>
+    <string name="state_error_server_message">The server hit an error.</string>
     <string name="state_error_rejected_title">Request refused</string>
     <string name="state_error_rejected_message">The server would not accept that.</string>
     <string name="state_error_unknown_title">Something went wrong</string>
@@ -1201,9 +1201,9 @@
     <string name="server_settings_discover_language">Discover language</string>
     <string name="server_settings_hide_available_detail">Removes them from Discover</string>
     <string name="server_settings_hide_requested_detail">Removes them from Discover</string>
-    <string name="server_settings_partial_requests_detail">Lets users request some seasons of a series, not all</string>
+    <string name="server_settings_partial_requests_detail">Lets users pick some seasons</string>
     <string name="server_settings_special_episodes_detail">Lets a series\' specials be requested too</string>
-    <string name="server_settings_cache_images_detail">Keeps posters on the server; needs a lot of disk</string>
+    <string name="server_settings_cache_images_detail">Stores posters on the server</string>
     <string name="server_settings_trust_proxy_detail">Takes client IPs from the proxy</string>
     <string name="server_settings_restart_network">The server applies changes on this page after it restarts.</string>
     <string name="server_settings_restart_proxy_csrf">The server applies the proxy and CSRF settings after it restarts.</string>

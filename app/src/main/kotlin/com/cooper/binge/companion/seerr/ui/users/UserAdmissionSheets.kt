@@ -179,9 +179,10 @@ internal fun CreateUserSheetContent(
         CheckboxRow(
             label = stringResource(R.string.users_create_generate),
             checked = draft.generatePassword,
-            onToggle = { value -> onEditDraft { it.copy(generatePassword = value) } },
+            onCheckedChange = { value -> onEditDraft { it.copy(generatePassword = value) } },
             // The caption is the reason the row is off, so it stays legible rather than following the label down.
-            subtitle = stringResource(R.string.users_create_generate_unavailable).takeIf { !draft.canGeneratePassword },
+            supportingText = stringResource(R.string.users_create_generate_unavailable).takeIf { !draft.canGeneratePassword },
+            supportingMaxLines = 3,
             enabled = !saving && draft.canGeneratePassword,
             leadingContent = {
                 Icon(Icons.Filled.Password, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -278,8 +279,8 @@ private fun CandidateRow(
     CheckboxRow(
         label = candidate.name,
         checked = checked,
-        onToggle = { onToggle() },
-        subtitle = candidate.email,
+        onCheckedChange = { onToggle() },
+        supportingText = candidate.email,
         enabled = enabled,
         showDivider = showDivider,
         // The avatar sits between the checkbox and the name, in the row's leading slot.

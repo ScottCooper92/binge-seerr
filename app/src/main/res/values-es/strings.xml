@@ -89,7 +89,7 @@
     <string name="hub_section_issues">Incidencias</string>
     <string name="hub_section_issues_desc">Avisos de tus usuarios</string>
     <string name="hub_section_users">Usuarios</string>
-    <string name="hub_section_users_desc">Roles, cuotas y permisos</string>
+    <string name="hub_section_users_desc">Roles y cuotas</string>
     <string name="hub_section_blocklist">Lista de bloqueo</string>
     <string name="hub_section_blocklist_desc">Títulos ocultos a las peticiones</string>
     <string name="blocklist_search_hint">Buscar en la lista de bloqueo</string>
@@ -487,7 +487,7 @@
     <string name="server_settings_external_hint">Desde donde los usuarios abren el servidor multimedia en sus propios dispositivos; en blanco para la dirección de arriba.</string>
     <string name="server_settings_forgot_password_url">URL de contraseña olvidada</string>
     <string name="server_settings_libraries">Bibliotecas</string>
-    <string name="server_settings_libraries_none">Aún no hay bibliotecas. Guarda la conexión y después sincronízalas.</string>
+    <string name="server_settings_libraries_none">Aún no hay bibliotecas. Sincronízalas al guardar.</string>
     <string name="server_settings_libraries_sync">Sincronizar las bibliotecas</string>
     <string name="server_settings_libraries_synced">Bibliotecas sincronizadas</string>
     <string name="server_settings_library_movies">Películas</string>
@@ -495,7 +495,7 @@
     <string name="server_settings_library_scanned">Escaneada %1$s</string>
     <string name="server_settings_library_never_scanned">Aún sin escanear</string>
     <string name="server_settings_scan">Escaneo completo</string>
-    <string name="server_settings_scan_lead">Lee todas las bibliotecas activadas y actualiza lo que el servidor sabe que está disponible.</string>
+    <string name="server_settings_scan_lead">Busca novedades en las bibliotecas.</string>
     <string name="server_settings_scan_start">Iniciar un escaneo completo</string>
     <string name="server_settings_scan_cancel">Cancelar el escaneo</string>
     <string name="server_settings_scan_running">Escaneando… %1$d de %2$d</string>
@@ -509,7 +509,7 @@
     <string name="server_settings_dvr_tested">Instancia alcanzada</string>
     <string name="server_settings_dvr_external_hint">Desde donde se abre la instancia desde una petición; en blanco para la dirección de arriba.</string>
     <string name="server_settings_dvr_destination">Destino</string>
-    <string name="server_settings_dvr_untested">Prueba la conexión para ver lo que ofrece la instancia.</string>
+    <string name="server_settings_dvr_untested">Mira lo que ofrece la instancia.</string>
     <string name="server_settings_dvr_minimum_availability">Disponibilidad mínima</string>
     <string name="server_settings_dvr_availability_announced">Anunciada</string>
     <string name="server_settings_dvr_availability_in_cinemas">En cines</string>
@@ -587,7 +587,7 @@
     <string name="settings_edit_connection">Editar la conexión</string>
     <string name="settings_edit_connection_caption">Cambiar de servidor o iniciar sesión de nuevo</string>
     <string name="hub_set_up_tv">Configurar un televisor</string>
-    <string name="hub_set_up_tv_detail">Escanea el código del televisor para conectarlo e iniciar sesión</string>
+    <string name="hub_set_up_tv_detail">Escanea el código de tu televisor</string>
     <string name="scan_tv_not_a_tv_code">Ese no es un código de configuración de televisor. Escanea el código de la pantalla de configuración del televisor.</string>
     <string name="scan_tv_unavailable">El escáner no se ha podido abrir en este móvil. Escanea el código del televisor con la cámara.</string>
     <string name="settings_value_unknown">Desconocido</string>
@@ -675,7 +675,7 @@
     <string name="server_settings_about_total_media">Títulos</string>
     <string name="server_settings_about_timezone">Zona horaria</string>
     <string name="server_settings_about_data_directory">Directorio de datos</string>
-    <string name="server_settings_about_data_not_mounted">%1$s no es un volumen montado, así que la configuración se pierde al recrear el contenedor</string>
+    <string name="server_settings_about_data_not_mounted">%1$s no está montado: se pierden los datos</string>
     <string name="server_settings_about_data_not_writable">El servidor no puede escribir en %1$s</string>
     <string name="server_settings_about_support">Obtener ayuda</string>
     <string name="server_settings_about_docs">Documentación</string>
@@ -893,7 +893,7 @@
     <string name="state_error_unreachable_title">No se puede conectar con el servidor</string>
     <string name="state_error_unreachable_message">Comprueba la conexión e inténtalo de nuevo.</string>
     <string name="state_error_server_title">Error del servidor</string>
-    <string name="state_error_server_message">El servidor respondió con un error. Inténtalo de nuevo en un momento.</string>
+    <string name="state_error_server_message">El servidor devolvió un error.</string>
     <string name="state_error_rejected_title">Solicitud no aceptada</string>
     <string name="state_error_rejected_message">El servidor no aceptó eso.</string>
     <string name="state_error_unknown_title">Algo ha salido mal</string>
@@ -1145,9 +1145,9 @@
     <string name="server_settings_discover_language">Idioma de Descubrir</string>
     <string name="server_settings_hide_available_detail">Los quita de Descubrir</string>
     <string name="server_settings_hide_requested_detail">Los quita de Descubrir</string>
-    <string name="server_settings_partial_requests_detail">Permite solicitar algunas temporadas de una serie, no todas</string>
+    <string name="server_settings_partial_requests_detail">Permite elegir algunas temporadas</string>
     <string name="server_settings_special_episodes_detail">Permite solicitar también los especiales de una serie</string>
-    <string name="server_settings_cache_images_detail">Guarda los pósteres en el servidor; ocupa mucho disco</string>
+    <string name="server_settings_cache_images_detail">Guarda los pósteres en el servidor</string>
     <string name="server_settings_trust_proxy_detail">Toma las IP de cliente del proxy</string>
     <string name="server_settings_restart_network">El servidor aplica los cambios de esta página cuando se reinicia.</string>
     <string name="server_settings_restart_proxy_csrf">El servidor aplica los ajustes de proxy y CSRF cuando se reinicia.</string>
