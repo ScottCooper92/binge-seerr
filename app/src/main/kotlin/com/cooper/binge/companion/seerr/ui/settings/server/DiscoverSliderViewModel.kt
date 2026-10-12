@@ -179,7 +179,12 @@ class DiscoverSliderViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().deleteDiscoverSlider(existing) }
                     .onSuccess { notify(EditorEvent.Deleted) }
-                    .onFailure { failure -> notify(EditorEvent.Failed(failure.toSeerrError())) }
+                    .onFailure { failure ->
+                        notify(EditorEvent.Failed(failure.toSeerrError()))
+                        // The slider is still there, so the change discarded above is owed to it again: sent now, and kept for a
+                        // retry if that fails too.
+                        if (ready()?.dirty == true) save()
+                    }
             }
         }
 

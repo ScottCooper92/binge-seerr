@@ -204,6 +204,25 @@ class DiscoverSliderViewModelTest {
         }
 
     @Test
+    fun `a delete that fails puts the change it discarded back`() =
+        runTest {
+            seerr.serve("DELETE /api/v1/settings/discover/3", """{"message":"nope"}""", code = 500)
+            seerr.serve(
+                "PUT /api/v1/settings/discover/3",
+                """{"id":3,"type":13,"title":"Heists","isBuiltIn":false,"enabled":true,"data":"10051,9882"}""",
+            )
+            val vm = viewModel(id = 3)
+            vm.awaitReady()
+
+            vm.edit { it.copy(title = "Heists") }
+            vm.delete()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+
+            assertEquals("Heists", vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Saved }.saved.title)
+            assertEquals(1, seerr.count("PUT", "/api/v1/settings/discover/3"))
+        }
+
+    @Test
     fun `keywords are named, and picked into the data as the web client stores them`() =
         runTest {
             val vm = viewModel(id = 3)
