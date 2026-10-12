@@ -63,7 +63,7 @@ import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.resolvedContentPadding
 import com.binge.designsystem.template.FilteredListScreen
 import com.binge.designsystem.template.PagedPhase
-import com.binge.designsystem.template.screenListPadding
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.theme.BingeSentiment
 import com.binge.designsystem.theme.BingeShapes
 import com.binge.designsystem.theme.accent
@@ -73,6 +73,7 @@ import com.cooper.binge.companion.seerr.ui.requests.PagedAppendState
 import com.cooper.binge.companion.seerr.ui.requests.PagedRefreshError
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
+import com.cooper.binge.companion.seerr.ui.state.filteredPagePadding
 import com.cooper.binge.companion.seerr.ui.state.rememberPagedPhase
 import kotlinx.coroutines.flow.Flow
 import com.binge.designsystem.R as DesR
@@ -103,6 +104,10 @@ fun LogsScreen(
     FilteredListScreen(
         title = stringResource(R.string.server_settings_logs),
         onBack = actions.onBack,
+        // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.
+        bar = ScreenBar.Small,
+        headerBackground = MaterialTheme.colorScheme.background,
+        scrimFraction = 0f,
         filters = LogLevel.entries.map { FilterChipItem(label = stringResource(it.labelRes())) },
         selectedFilter = state.level.ordinal,
         onFilterChange = { actions.onLevelChange(LogLevel.entries[it]) },
@@ -178,7 +183,7 @@ private fun LogsBody(
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = contentPadding.screenListPadding(),
+                contentPadding = contentPadding.filteredPagePadding(),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.list_row_spacing)),
             ) {
                 items(count = lazyItems.itemCount, key = lazyItems.itemKey { it.id }) { index ->

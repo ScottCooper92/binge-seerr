@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui
 
 import androidx.navigation3.runtime.NavKey
 import com.cooper.binge.companion.seerr.ui.blocklist.BlocklistItem
-import com.cooper.binge.companion.seerr.ui.hub.HubSection
 import com.cooper.binge.companion.seerr.ui.settings.ServiceType
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerAgent
 import com.cooper.binge.companion.seerr.ui.settings.server.ServerSettingsPage
@@ -118,9 +117,3 @@ data object SettingsRoute : SeerrRoute
 /** The setup form on the live connection; pops itself once new credentials are saved. */
 @Serializable
 data object EditConnectionRoute : SeerrRoute
-
-/** One of the hub's manage sections; its screen arrives with its phase. */
-@Serializable
-data class SectionRoute(
-    val section: HubSection,
-) : SeerrRoute
