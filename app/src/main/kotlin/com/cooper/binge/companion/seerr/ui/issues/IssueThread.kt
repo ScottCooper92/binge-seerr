@@ -210,6 +210,9 @@ private fun CommentHeader(
             style = MaterialTheme.typography.titleSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            // The name takes what the role tag and the date leave, and ends in an ellipsis. Unweighted, it took the whole
+            // row at a large font and the tag and date were left no width.
+            modifier = Modifier.weight(1f, fill = false),
         )
         if (role != UserRole.User) RoleTag(role)
         dateLabel?.let {

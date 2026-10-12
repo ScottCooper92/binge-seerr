@@ -15,7 +15,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -153,9 +152,15 @@ internal fun UserRow(
                         )
                     },
                     label = item.name,
+                    // The count is on the detail line, not in the trailing slot: that slot is measured before the label,
+                    // so at a large font a long count left the name no width at all.
                     detail =
-                        listOfNotNull(item.handle ?: item.email, stringResource(item.origin.labelRes()))
-                            .joinToString(stringResource(R.string.hub_meta_separator)),
+                        listOfNotNull(
+                            item.handle ?: item.email,
+                            stringResource(item.origin.labelRes()),
+                            pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount),
+                        ).joinToString(stringResource(R.string.hub_meta_separator)),
+                    supportingMaxLines = 2,
                     trailingContent = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -165,11 +170,6 @@ internal fun UserRow(
                             if (selecting) {
                                 Checkbox(checked = selected, onCheckedChange = null)
                             } else {
-                                Text(
-                                    pluralStringResource(R.plurals.users_request_count, item.requestCount, item.requestCount),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                     contentDescription = null,
