@@ -335,7 +335,15 @@ class NotificationAgentViewModelTest {
         runTest {
             val vm = viewModel(ServerAgent.Email)
             vm.awaitReady()
+            // The page saves as it changes (#930), so the edit has a save of its own. Let it land first, so what follows
+            // measures the test alone, however the save and the test would otherwise interleave (#1454).
+            seerr.serve(
+                "POST /api/v1/settings/notifications/email",
+                EMAIL.replace("\"senderName\":\"Seerr\"", "\"senderName\":\"Test sender\""),
+            )
             vm.setOption(AgentOption.EmailSenderName, "Test sender")
+            awaitWritten(vm)
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/notifications/email"))
             val notice = awaitEvent(vm.events)
             vm.test()
             assertEquals(EditorEvent.Notice(R.string.server_settings_agent_tested), notice.await())
@@ -348,9 +356,12 @@ class NotificationAgentViewModelTest {
                     .getValue("senderName")
                     .jsonPrimitive.content,
             )
-            assertEquals(0, seerr.count("POST", "/api/v1/settings/notifications/email"))
+            assertEquals("a test is not a save", 1, seerr.count("POST", "/api/v1/settings/notifications/email"))
             assertEquals(
-                listOf("notification_agent_changed" to mapOf("agent" to "email", "action" to "tested")),
+                listOf(
+                    "notification_agent_changed" to mapOf("agent" to "email", "action" to "updated"),
+                    "notification_agent_changed" to mapOf("agent" to "email", "action" to "tested"),
+                ),
                 analytics.events,
             )
 
@@ -361,8 +372,8 @@ class NotificationAgentViewModelTest {
             // `test()` reports the outcome before it clears `testing`, so await the flag rather
             // than sampling it the moment the event lands.
             assertFalse(vm.awaitReady { !it.extras.testing }.extras.testing)
-            // The failed test above must not have added a second event.
-            assertEquals(1, analytics.events.size)
+            // The failed test above must not have added an event of its own.
+            assertEquals(2, analytics.events.size)
         }
 
     @Test
