@@ -6,9 +6,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -159,7 +161,9 @@ private fun tvSettingGroups(
     onOpenBingeListing: () -> Unit,
 ): List<TvPaneGroup> {
     val config = state.config
-    val readOnly = stringResource(R.string.tv_settings_read_only_note)
+    // The same hint on every read-only row says nothing the second time: the first one carries it for the page.
+    var readOnly: String? = stringResource(R.string.tv_settings_read_only_note)
+    val takeReadOnlyNote = { readOnly.also { readOnly = null } }
     return buildList {
         add(
             TvPaneGroup(
@@ -169,19 +173,23 @@ private fun tvSettingGroups(
         )
         hub?.let { serverStatusGroup(it, onOpenBingeListing) }?.let(::add)
         config?.general?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it), readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_general), generalRows(it), takeReadOnlyNote))
         }
         // Admin-only, same as the phone: this is the one section that also gets an action, so it is
         // built by hand rather than through the read-only mapping every other section shares.
         if (config != null) {
-            add(mediaServerGroup(state.server, onStartLibraryScan, note = scanNote ?: readOnly, announceNote = scanNote != null))
+            add(
+                mediaServerGroup(state.server, onStartLibraryScan, note = scanNote ?: takeReadOnlyNote(), announceNote = scanNote != null),
+            )
         }
         config?.services?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it), readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_services), serviceRows(it), takeReadOnlyNote))
         }
-        config?.requestPolicy?.let { add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it), readOnly)) }
+        config?.requestPolicy?.let {
+            add(readOnlyGroup(stringResource(R.string.settings_group_requests), requestPolicyRows(it), takeReadOnlyNote))
+        }
         config?.system?.let {
-            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now), readOnly))
+            add(readOnlyGroup(stringResource(R.string.settings_group_system), systemRows(it, state.now), takeReadOnlyNote))
         }
     }.filter { it.rows.isNotEmpty() }
 }
@@ -189,14 +197,14 @@ private fun tvSettingGroups(
 /**
  * The media server row, with one option beside its read-out: start the library scan job that the phone's Jobs & cache page's
  * job row runs, the "it downloaded but isn't showing" fix from the sofa. [note] is the scan's own
- * outcome while it is still showing, else the same "change this on the phone" note every other row here
- * carries.
+ * outcome while it is still showing, else the page's one "change this on the phone" note if no row above has
+ * carried it, else none.
  */
 @Composable
 private fun mediaServerGroup(
     server: ServerSummary,
     onStartLibraryScan: () -> Unit,
-    note: String,
+    note: String?,
     announceNote: Boolean,
 ): TvPaneGroup =
     TvPaneGroup(
@@ -211,7 +219,11 @@ private fun mediaServerGroup(
                     announceNote = announceNote,
                     options =
                         listOf(
-                            TvPaneOption(label = stringResource(R.string.tv_settings_start_library_scan), onSelect = onStartLibraryScan),
+                            TvPaneOption(
+                                label = stringResource(R.string.tv_settings_start_library_scan),
+                                icon = Icons.Filled.Sync,
+                                onSelect = onStartLibraryScan,
+                            ),
                         ),
                     icon = Icons.Filled.Storage,
                 ),
@@ -232,18 +244,27 @@ private fun EditorEvent?.tvNoteOrNull(): String? =
  * The phone's rows as read-outs: the label and its detail, and where to change it. Each row is keyed by place, not label:
  * Seerr doesn't make instance names unique, and two rows sharing a key share focus (#865).
  */
-private fun readOnlyGroup(
+internal fun readOnlyGroup(
     title: String,
     rows: List<ListItem>,
-    note: String,
-): TvPaneGroup =
-    TvPaneGroup(
+    takeNote: () -> String?,
+): TvPaneGroup {
+    // Asked only of a group that has a row to carry it, and for its first row alone.
+    val note = if (rows.isEmpty()) null else takeNote()
+    return TvPaneGroup(
         title = title,
         rows =
             rows.mapIndexed { index, row ->
-                TvPaneRow(key = "$title/$index", label = row.label, body = row.detail.orEmpty(), note = note, icon = row.icon)
+                TvPaneRow(
+                    key = "$title/$index",
+                    label = row.label,
+                    body = row.detail.orEmpty(),
+                    note = note.takeIf { index == 0 },
+                    icon = row.icon,
+                )
             },
     )
+}
 
 @Composable
 private fun connectionRows(
@@ -275,7 +296,14 @@ private fun connectionRows(
             key = KEY_EDIT_CONNECTION,
             label = stringResource(R.string.settings_edit_connection),
             body = stringResource(R.string.settings_edit_connection_caption),
-            options = listOf(TvPaneOption(label = stringResource(R.string.settings_edit_connection), onSelect = onEditConnection)),
+            options =
+                listOf(
+                    TvPaneOption(
+                        label = stringResource(R.string.settings_edit_connection),
+                        icon = Icons.Filled.Edit,
+                        onSelect = onEditConnection,
+                    ),
+                ),
             icon = Icons.Filled.Edit,
         ),
         TvPaneRow(
@@ -286,6 +314,7 @@ private fun connectionRows(
                 listOf(
                     TvPaneOption(
                         label = stringResource(R.string.hub_disconnect),
+                        icon = Icons.Filled.LinkOff,
                         onSelect = onDisconnect,
                         focusRequester = disconnectFocus,
                     ),

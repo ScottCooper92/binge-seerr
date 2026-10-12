@@ -17,10 +17,10 @@ junit = "4.13.2"
 robolectric = "4.16.1"
 # The version binge-design-system pins: a baseline recorded by one renderer has to validate
 # under the other, and these baselines are compared against components from that build.
-screenshot = "0.0.1-alpha15"
+screenshot = "0.0.1-alpha16"
 ktlint = "14.2.0"
 detekt = "1.23.8"
-kover = "0.9.9"
+kover = "0.9.11"
 # Must agree with binge-companions' catalog: the SDK brings grpc-binder at its version, and the
 # in-process transport the tests use has to be the same release or the two disagree on internals.
 # `checkGrpcAlignment` enforces it on the resolved classpaths.
@@ -62,7 +62,7 @@ coreSplashscreen = "1.2.0"
 # Only for the sign-in fields: it builds the saved-password request whose bundles a credential
 # provider parses, so those keys are not spelled out here.
 credentials = "1.6.0"
-paging = "3.5.1"
+paging = "3.5.2"
 room = "2.8.4"
 workManager = "2.11.2"
 # The version binge-design-system pins: its components load their artwork with it, and a consumer

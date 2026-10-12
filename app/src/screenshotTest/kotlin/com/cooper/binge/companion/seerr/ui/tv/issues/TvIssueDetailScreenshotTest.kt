@@ -99,11 +99,37 @@ class TvIssueDetailScreenshotTest {
         TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(emptyList())), actions = actions(), now = FIXED_NOW_MILLIS)
     }
 
+    /** Arrival on an issue nobody has commented on: the "no comments" line is the read-out the D-pad lands on. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun EmptyThreadFocused() {
+        TvIssueDetailScreen(
+            state = IssueDetailUiState.Ready(detail(emptyList())),
+            actions = actions(),
+            now = FIXED_NOW_MILLIS,
+            initiallyFocused = true,
+        )
+    }
+
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun ShortThread() {
         TvIssueDetailScreen(state = IssueDetailUiState.Ready(detail(ShortThread)), actions = actions(), now = FIXED_NOW_MILLIS)
+    }
+
+    /** Arrival on a thread: the first comment, the report's own entry, carries the focus fill. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ShortThreadFocused() {
+        TvIssueDetailScreen(
+            state = IssueDetailUiState.Ready(detail(ShortThread)),
+            actions = actions(),
+            now = FIXED_NOW_MILLIS,
+            initiallyFocused = true,
+        )
     }
 
     @PreviewTest

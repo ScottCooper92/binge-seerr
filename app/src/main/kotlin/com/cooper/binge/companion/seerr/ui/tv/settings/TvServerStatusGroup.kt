@@ -4,6 +4,7 @@ import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.ReportProblem
@@ -100,7 +101,13 @@ internal fun serverStatusGroup(
                         ),
                     options =
                         if (ready.bingeStatus == BingeStatus.NotInstalled) {
-                            listOf(TvPaneOption(label = stringResource(R.string.tv_settings_binge_install), onSelect = onOpenBingeListing))
+                            listOf(
+                                TvPaneOption(
+                                    label = stringResource(R.string.tv_settings_binge_install),
+                                    icon = Icons.Filled.Download,
+                                    onSelect = onOpenBingeListing,
+                                ),
+                            )
                         } else {
                             emptyList()
                         },

@@ -16,8 +16,9 @@ internal const val SAVE_AS_MADE_DELAY_MILLIS = 600L
  * The save-as-made mode both editor bases share (#930): each change writes the draft a moment after the last one, with no
  * Save to press. The write runs on [appScope], so leaving the page cannot cut it off half-sent, and a change still
  * waiting out its delay when the page goes is sent then ([cleared]). A change made while a write is in flight goes out
- * after it, from what the server answered. A write that fails keeps the change, unsent, and says so through [failed]
- * until the next one; [now] sends it again at once.
+ * after it, from what the server answered. A write that fails keeps the change, unsent, and says so through [failed],
+ * which stays true until a write succeeds (a later change does not clear it, only its success does); [now] sends it
+ * again at once. [status] follows the writes for the inline "Saving… / Saved" line.
  */
 internal class SaveAsMade<T>(
     private val scope: CoroutineScope,
@@ -29,6 +30,7 @@ internal class SaveAsMade<T>(
     /** Takes the server's answer to [sent]; true if the draft has moved on since, so it needs writing too. */
     private val adopt: (sent: T, adopted: T) -> Boolean,
     private val failed: (Boolean) -> Unit,
+    private val status: (SaveStatus) -> Unit = {},
 ) {
     // All of this is touched on [scope]'s thread only (the main thread for a ViewModel); just the write itself leaves it.
     private var pending: Job? = null
@@ -57,9 +59,10 @@ internal class SaveAsMade<T>(
     }
 
     private suspend fun send() {
-        val sent = draft()?.takeIf(canSave) ?: return
+        // Nothing it may send: the last change is held, not saved, so the line must not keep saying Saving.
+        val sent = draft()?.takeIf(canSave) ?: return status(SaveStatus.Idle)
         unsent = false
-        failed(false)
+        status(SaveStatus.Saving)
         // Caught inside the write, so a failure stays this save's and does not reach the application's scope.
         val write = appScope.async(dispatcher) { attempt { write(sent) } }
         inFlight = write
@@ -71,9 +74,13 @@ internal class SaveAsMade<T>(
                 inFlight = null
             }
         result
-            .onSuccess { adopted -> if (adopt(sent, adopted) || unsent) changed() }
-            .onFailure {
+            .onSuccess { adopted ->
+                failed(false)
+                // More to send: the line keeps saying Saving until the last write lands.
+                if (adopt(sent, adopted) || unsent) changed() else status(SaveStatus.Saved)
+            }.onFailure {
                 unsent = true
+                status(SaveStatus.Idle)
                 failed(true)
             }
     }
@@ -105,6 +112,7 @@ internal class SaveAsMade<T>(
         pending?.cancel()
         unsent = false
         lastWrite = null
+        status(SaveStatus.Idle)
         failed(false)
     }
 

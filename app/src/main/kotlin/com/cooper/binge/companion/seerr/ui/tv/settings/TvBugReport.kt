@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -60,6 +61,7 @@ internal fun tvAppGroup(
                         listOf(
                             TvPaneOption(
                                 label = stringResource(R.string.tv_settings_report_bug_show_code),
+                                icon = Icons.Filled.QrCode,
                                 onSelect = actions.onShowBugReport,
                                 focusRequester = optionFocus,
                             ),
@@ -104,6 +106,7 @@ private fun toggleRow(
             listOf(
                 TvPaneOption(
                     label = stringResource(if (on) R.string.tv_settings_turn_off else R.string.tv_settings_turn_on),
+                    icon = icon,
                     onSelect = { onToggle(!on) },
                 ),
             ),

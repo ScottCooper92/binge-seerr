@@ -525,15 +525,6 @@
     <string name="server_settings_dvr_behaviour">Comportamiento</string>
     <string name="editor_cancel">Cancelar</string>
     <string name="editor_field_required">Obligatorio</string>
-    <string name="editor_section_expanded">Desplegada</string>
-    <string name="editor_section_collapsed">Contraída</string>
-    <string name="editor_section_expand_action">Desplegar</string>
-    <string name="editor_section_collapse_action">Contraer</string>
-    <plurals name="editor_section_issues">
-        <item quantity="one">%1$d campo requiere atención</item>
-        <item quantity="many">%1$d campos requieren atención</item>
-        <item quantity="other">%1$d campos requieren atención</item>
-    </plurals>
     <string name="editor_error_port">Introduce un puerto entre 1 y 65535.</string>
     <string name="editor_error_web_url">Introduce una dirección web que empiece por http:// o https://.</string>
     <string name="editor_error_web_url_no_slash">Introduce una dirección web que empiece por http:// o https://, sin barra al final.</string>
@@ -1261,6 +1252,7 @@
     <string name="server_settings_api_timeout_fraction">%1$s segundos</string>
     <string name="server_settings_api_timeout_none">Sin límite</string>
     <string name="hub_rechecking">Comprobando el servidor…</string>
+    <string name="editor_saving">Guardando…</string>
     <string name="editor_save_failed">No se pudo guardar el cambio.</string>
     <string name="editor_discard_title">¿Descartar los cambios?</string>
     <string name="editor_discard_message">Los cambios de esta página no se han guardado.</string>

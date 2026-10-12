@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -194,9 +195,10 @@ class BlocklistTagsViewModelTest {
             }
 
             vm.retry()
-            val history = seen.first { it.size >= 3 }
+            seerr.awaitCount("POST", "/api/v1/settings/main", moreThan = 1)
+            advanceUntilIdle()
 
-            assertEquals("cleared when the retry starts, set again when it fails", listOf(true, false, true), history)
+            assertEquals("the failure stays up while the retry runs and fails", listOf(true), seen.value)
             assertEquals(2, seerr.count("POST", "/api/v1/settings/main"))
         }
 
