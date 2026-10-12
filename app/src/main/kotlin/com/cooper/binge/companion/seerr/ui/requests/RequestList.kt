@@ -39,13 +39,13 @@ import com.binge.designsystem.component.ListRowHeader
 import com.binge.designsystem.component.ListRowPoster
 import com.binge.designsystem.component.ListRowSkeletonColumn
 import com.binge.designsystem.component.MediaTypeTag
+import com.binge.designsystem.component.WrappingRow
 import com.binge.designsystem.downloadEtaLabel
 import com.binge.designsystem.formatRanges
 import com.binge.designsystem.formatRelativeOrAbsolute
 import com.binge.designsystem.template.PagedPhase
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.ListRefresh
-import com.cooper.binge.companion.seerr.ui.WrappingRow
 import com.cooper.binge.companion.seerr.ui.state.EmptyScreen
 import com.cooper.binge.companion.seerr.ui.state.PagedPullToRefresh
 import com.cooper.binge.companion.seerr.ui.state.PullableMessage
