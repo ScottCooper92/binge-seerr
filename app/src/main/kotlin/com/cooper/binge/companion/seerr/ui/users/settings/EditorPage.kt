@@ -33,6 +33,7 @@ import com.binge.designsystem.template.BingeScreenScaffold
 import com.binge.designsystem.template.FormAction
 import com.binge.designsystem.template.FormActionPlacement
 import com.binge.designsystem.template.FormScreen
+import com.binge.designsystem.template.ScreenBar
 import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
@@ -112,7 +113,7 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  *
  * A page passes [validation] to opt into the sectioned form (#549): Cancel and Save move to a bar
  * pinned at the bottom, Save stays tappable while the draft has issues, and a Save that finds one
- * shows the page's required fields and scrolls the first issue into view (see [EditorSection]).
+ * shows the page's required fields and scrolls the first issue into view.
  * Without it the page is exactly as it was.
  *
  * [footerCommit] puts the commit in that same bottom bar, Cancel beside it, for a page whose commit stays explicit
@@ -158,6 +159,7 @@ internal fun <T> EditorPage(
     FormScreen(
         title = title,
         onBack = onBack,
+        bar = ScreenBar.Small,
         snackbarHostState = snackbarHostState,
         placement = if (validation != null || footerCommit) FormActionPlacement.Footer else FormActionPlacement.TopBar,
         primaryAction =

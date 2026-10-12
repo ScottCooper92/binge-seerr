@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import com.binge.designsystem.component.FilterChipItem
 import com.binge.designsystem.component.SnackbarMessageKind
 import com.binge.designsystem.component.showSnackbar
 import com.binge.designsystem.template.FilteredListScreen
+import com.binge.designsystem.template.ScreenBar
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.LoadingScreen
@@ -80,6 +82,10 @@ fun RequestsScreen(
     FilteredListScreen(
         title = stringResource(R.string.hub_section_requests),
         onBack = actions.onBack.takeIf { showBack },
+        // The console keeps its single-line bar and an opaque header; the default is the gallery's transparent collapsing bar.
+        bar = ScreenBar.Small,
+        headerBackground = MaterialTheme.colorScheme.background,
+        scrimFraction = 0f,
         filters =
             ready
                 ?.let { loaded ->

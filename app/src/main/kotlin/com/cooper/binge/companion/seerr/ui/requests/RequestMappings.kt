@@ -3,12 +3,17 @@ package com.cooper.binge.companion.seerr.ui.requests
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled._4k
@@ -77,7 +82,25 @@ internal fun RequestMediaType.toTagType(): MediaTypeTagType =
 data class RequestRowChip(
     @param:StringRes val labelRes: Int,
     val tone: RequestStateTone,
+    val icon: ImageVector,
 )
+
+/**
+ * The one glyph for each state a request or its title can be in. The status chip, the TV poster chip and the Mark as
+ * sheet all read these, so a state is never drawn two ways.
+ */
+internal object StatusGlyphs {
+    val Declined = Icons.Filled.Close
+    val Failed = Icons.Filled.ErrorOutline
+    val Available = Icons.Filled.CheckCircle
+    val PartiallyAvailable = Icons.Filled.Done
+    val Processing = Icons.Filled.Download
+    val Queued = Icons.Filled.Schedule
+    val Approved = Icons.Filled.Check
+    val Pending = Icons.Filled.HourglassEmpty
+    val Unknown = Icons.AutoMirrored.Filled.HelpOutline
+    val Blocked = Icons.Filled.Block
+}
 
 /**
  * The row's one status pill. `mediaStatus` is the source of truth for the title's own outcome —
@@ -89,25 +112,40 @@ data class RequestRowChip(
  */
 fun RequestItem.statusChip(): RequestRowChip =
     when {
-        status == SeerrRequestStatusCode.Declined -> RequestRowChip(R.string.request_state_declined, RequestStateTone.Declined)
-        status == SeerrRequestStatusCode.Failed -> RequestRowChip(R.string.request_state_failed, RequestStateTone.Declined)
-        mediaStatus == SeerrMediaStatusCode.Available -> RequestRowChip(R.string.media_state_available, RequestStateTone.Success)
+        status == SeerrRequestStatusCode.Declined ->
+            RequestRowChip(
+                R.string.request_state_declined,
+                RequestStateTone.Declined,
+                StatusGlyphs.Declined,
+            )
+        status == SeerrRequestStatusCode.Failed ->
+            RequestRowChip(
+                R.string.request_state_failed,
+                RequestStateTone.Declined,
+                StatusGlyphs.Failed,
+            )
+        mediaStatus == SeerrMediaStatusCode.Available ->
+            RequestRowChip(
+                R.string.media_state_available,
+                RequestStateTone.Success,
+                StatusGlyphs.Available,
+            )
         mediaStatus == SeerrMediaStatusCode.PartiallyAvailable ->
-            RequestRowChip(R.string.media_state_partially_available, RequestStateTone.Success)
+            RequestRowChip(R.string.media_state_partially_available, RequestStateTone.Success, StatusGlyphs.PartiallyAvailable)
         mediaStatus == SeerrMediaStatusCode.Blocklisted ->
-            RequestRowChip(SeerrMediaStatusCode.Blocklisted.labelRes(), SeerrMediaStatusCode.Blocklisted.tone())
+            RequestRowChip(SeerrMediaStatusCode.Blocklisted.labelRes(), SeerrMediaStatusCode.Blocklisted.tone(), StatusGlyphs.Blocked)
         mediaStatus == SeerrMediaStatusCode.Deleted ->
-            RequestRowChip(SeerrMediaStatusCode.Deleted.labelRes(), SeerrMediaStatusCode.Deleted.tone())
+            RequestRowChip(SeerrMediaStatusCode.Deleted.labelRes(), SeerrMediaStatusCode.Deleted.tone(), StatusGlyphs.Blocked)
         mediaStatus == SeerrMediaStatusCode.Processing && download?.downloading == true ->
-            RequestRowChip(R.string.media_state_processing, RequestStateTone.Active)
+            RequestRowChip(R.string.media_state_processing, RequestStateTone.Active, StatusGlyphs.Processing)
         mediaStatus == SeerrMediaStatusCode.Processing && download != null ->
-            RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending)
+            RequestRowChip(R.string.request_state_queued, RequestStateTone.Pending, StatusGlyphs.Queued)
         mediaStatus == SeerrMediaStatusCode.Processing ->
-            RequestRowChip(SeerrMediaStatusCode.Processing.labelRes(), SeerrMediaStatusCode.Processing.tone())
+            RequestRowChip(SeerrMediaStatusCode.Processing.labelRes(), SeerrMediaStatusCode.Processing.tone(), StatusGlyphs.Processing)
         (status == SeerrRequestStatusCode.Approved || status == SeerrRequestStatusCode.Completed) &&
             (mediaStatus == null || mediaStatus == SeerrMediaStatusCode.Unknown) ->
-            RequestRowChip(R.string.request_state_approved, RequestStateTone.Success)
-        else -> RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending)
+            RequestRowChip(R.string.request_state_approved, RequestStateTone.Success, StatusGlyphs.Approved)
+        else -> RequestRowChip(R.string.request_state_pending, RequestStateTone.Pending, StatusGlyphs.Pending)
     }
 
 /**
@@ -141,14 +179,14 @@ internal fun MediaStatusChoice.labelRes(): Int =
         MediaStatusChoice.Unknown -> R.string.media_state_unknown
     }
 
-/** The availability's glyph in the Mark as sheet, the same one the TV poster chip shows for that state. */
+/** The availability's glyph in the Mark as sheet: the one the status chips draw for that state. */
 internal fun MediaStatusChoice.icon(): ImageVector =
     when (this) {
-        MediaStatusChoice.Available -> Icons.Filled.CheckCircle
-        MediaStatusChoice.PartiallyAvailable -> Icons.Filled.Done
-        MediaStatusChoice.Processing -> Icons.Filled.Download
-        MediaStatusChoice.Pending -> Icons.Filled.HourglassEmpty
-        MediaStatusChoice.Unknown -> Icons.AutoMirrored.Filled.HelpOutline
+        MediaStatusChoice.Available -> StatusGlyphs.Available
+        MediaStatusChoice.PartiallyAvailable -> StatusGlyphs.PartiallyAvailable
+        MediaStatusChoice.Processing -> StatusGlyphs.Processing
+        MediaStatusChoice.Pending -> StatusGlyphs.Pending
+        MediaStatusChoice.Unknown -> StatusGlyphs.Unknown
     }
 
 /** An instance's glyph in Manage media: the 4K badge for the 4K one, else the title's own kind. */

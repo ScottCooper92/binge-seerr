@@ -45,17 +45,7 @@ internal fun List<EditorIssue>.visible(submitted: Boolean): List<EditorIssue> =
         }
     }
 
-/**
- * Whether a section's body is open. The user's own choice wins over [defaultExpanded], except that a
- * section with something to fix is never closed, so an error cannot be collapsed out of sight.
- */
-internal fun sectionExpanded(
-    userChoice: Boolean?,
-    defaultExpanded: Boolean,
-    issueCount: Int,
-): Boolean = issueCount > 0 || (userChoice ?: defaultExpanded)
-
-/** A page's rules: the id its sections' saved state is keyed under, and the draft's [issues]. */
+/** A page's rules: the id its form state is keyed under, and the draft's [issues]. */
 internal class EditorValidation<T>(
     val formKey: String,
     val issues: (T) -> List<EditorIssue>,
