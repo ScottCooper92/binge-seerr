@@ -20,6 +20,7 @@ import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.AdvancedRequestError
 import com.cooper.binge.companion.seerr.ui.AdvancedRequestUiState
+import com.cooper.binge.companion.seerr.ui.DestinationIcons
 import com.cooper.binge.companion.seerr.ui.messageRes
 import com.binge.designsystem.R as DesR
 
@@ -79,6 +80,7 @@ private fun TvOptionsForm(
             choices = state.destination.servers.map { it.id to it.label },
             selected = state.destination.serverId,
             onSelect = actions.onSelectServer,
+            choiceIcon = { DestinationIcons.server },
             initialFocusedLabel = initialFocusedLabel,
             arrival = arrival,
         )
@@ -90,6 +92,7 @@ private fun TvOptionsForm(
                 choices = state.destination.profiles.map { it.id to it.label },
                 selected = state.destination.profileId,
                 onSelect = actions.onSelectProfile,
+                choiceIcon = { DestinationIcons.profile },
                 initialFocusedLabel = initialFocusedLabel,
             )
             TvOptionGroup(
@@ -97,6 +100,7 @@ private fun TvOptionsForm(
                 choices = state.destination.rootFolders.map { it to it },
                 selected = state.destination.rootFolder,
                 onSelect = actions.onSelectRootFolder,
+                choiceIcon = { DestinationIcons.rootFolder },
                 initialFocusedLabel = initialFocusedLabel,
             )
         }
