@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.afterProcessDeath
@@ -12,6 +14,8 @@ import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -46,10 +50,6 @@ class DiscoverSliderViewModelTest {
             "POST /api/v1/settings/discover/add",
             """{"id":5,"type":18,"title":"HBO","isBuiltIn":false,"enabled":true,"data":"49"}""",
         )
-        seerr.serve(
-            "PUT /api/v1/settings/discover/3",
-            """{"id":3,"type":13,"title":"Heists","isBuiltIn":false,"enabled":true,"data":"10051"}""",
-        )
         // The server answers a delete 204 with no body at all, which is why nothing is decoded from it.
         seerr.serve("DELETE /api/v1/settings/discover/3", body = "", code = 204)
         seerr.serve("GET /api/v1/keyword/10051", """{"id":10051,"name":"heist"}""")
@@ -81,7 +81,15 @@ class DiscoverSliderViewModelTest {
         savedState: SavedStateHandle = SavedStateHandle(),
     ): DiscoverSliderViewModel {
         val connection = seerr.connection(this)
-        val vm = DiscoverSliderViewModel(connection, ServerListCatalog(connection), mainDispatcherRule.dispatcher, id, savedState)
+        val vm =
+            DiscoverSliderViewModel(
+                connection,
+                ServerListCatalog(connection),
+                mainDispatcherRule.dispatcher,
+                id,
+                backgroundScope,
+                savedState,
+            )
         viewModels.put(vm.hashCode().toString(), vm)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
@@ -110,17 +118,22 @@ class DiscoverSliderViewModelTest {
         }
 
     @Test
-    fun `an existing slider is read from the list and put to its id`() =
+    fun `an existing slider is read from the list and put to its id as each change is made`() =
         runTest {
+            seerr.serve(
+                "PUT /api/v1/settings/discover/3",
+                """{"id":3,"type":13,"title":"Heists","isBuiltIn":false,"enabled":true,"data":"10051"}""",
+            )
             val vm = viewModel(id = 3)
             val draft = vm.awaitReady().draft
             assertEquals(SliderType.MovieKeyword, draft.type)
             assertEquals("10051,9882", draft.data)
 
             vm.edit { it.copy(title = "Heists", data = "10051") }
-            val saved = awaitEvent(vm.events)
-            vm.save()
-            assertEquals(EditorEvent.Saved, saved.await())
+            runCurrent()
+            assertEquals("nothing is written before the delay", 0, seerr.count("PUT", "/api/v1/settings/discover/3"))
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Saved }
             assertEquals(
                 "10051",
                 Json
@@ -130,6 +143,41 @@ class DiscoverSliderViewModelTest {
                     .jsonPrimitive.content,
             )
             assertEquals("Heists", vm.awaitReady().saved.title)
+        }
+
+    @Test
+    fun `an existing slider keeps a change through a failed write until a retry sends it`() =
+        runTest {
+            seerr.serve("PUT /api/v1/settings/discover/3", """{"message":"nope"}""", code = 500)
+            val vm = viewModel(id = 3)
+            vm.awaitReady()
+
+            vm.edit { it.copy(title = "Heists") }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            val failed = vm.awaitReady { it.saveFailed }
+            assertEquals("Heists", failed.draft.title)
+            assertTrue(failed.dirty)
+
+            seerr.serve(
+                "PUT /api/v1/settings/discover/3",
+                """{"id":3,"type":13,"title":"Heists","isBuiltIn":false,"enabled":true,"data":"10051,9882"}""",
+            )
+            vm.save()
+            assertEquals("Heists", vm.awaitReady { !it.saveFailed && !it.dirty }.saved.title)
+            assertEquals(2, seerr.count("PUT", "/api/v1/settings/discover/3"))
+        }
+
+    @Test
+    fun `an existing slider whose new kind has no data yet is not written`() =
+        runTest {
+            val vm = viewModel(id = 3)
+            vm.awaitReady()
+
+            vm.selectType(SliderType.MovieGenre)
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            assertEquals(0, seerr.count("PUT", "/api/v1/settings/discover/3"))
         }
 
     @Test

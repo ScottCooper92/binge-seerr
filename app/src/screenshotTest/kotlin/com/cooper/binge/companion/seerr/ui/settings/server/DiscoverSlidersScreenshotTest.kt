@@ -10,6 +10,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.Choice
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -143,12 +144,18 @@ class DiscoverSliderFormScreenshotTest {
     @Composable
     fun searchKind() = SliderFormFrame(readyForm(savedSlider().copy(type = SliderType.Search, data = "dune")))
 
+    /** A saved slider saves as it changes (#930): a change on its way says Saving in the top bar, with no Save to press. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun unsavedEdit() =
+    fun savingChange() =
         SliderFormFrame(
-            ExtrasEditorUiState.Ready(draft = savedSlider().copy(title = "Kaiju"), saved = savedSlider(), extras = keywordNames),
+            ExtrasEditorUiState.Ready(
+                draft = savedSlider().copy(title = "Kaiju"),
+                saved = savedSlider(),
+                extras = keywordNames,
+                saveStatus = SaveStatus.Saving,
+            ),
         )
 
     @PreviewTest
