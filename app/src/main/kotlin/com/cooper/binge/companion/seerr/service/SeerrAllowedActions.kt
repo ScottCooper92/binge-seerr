@@ -38,7 +38,9 @@ fun SeerrPermissions.toCapabilities(profile: SeerrServerProfile): Set<Capability
         if ((canRequestSeries || canManageRequests) && settings.partialRequestsEnabled) add(Capability.CAPABILITY_EDIT_SEASONS)
         // Seerr's request list is open to any signed-in user and narrows itself to their own requests,
         // and a batch of statuses is the core GetStatus many times over, so neither needs a permission.
+        // The user's own recently available requests are the same list asked by requester.
         add(Capability.CAPABILITY_LIST_REQUESTS)
+        add(Capability.CAPABILITY_LIST_MINE_RECENTLY_AVAILABLE)
         add(Capability.CAPABILITY_BATCH_STATUS)
         if (canReportIssues && profile.hasIssues) add(Capability.CAPABILITY_REPORT_ISSUE)
         if (canManageBlocklist && profile.hasBlocklist) add(Capability.CAPABILITY_BLOCK)
