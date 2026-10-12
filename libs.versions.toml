@@ -17,7 +17,7 @@ junit = "4.13.2"
 robolectric = "4.16.1"
 # The version binge-design-system pins: a baseline recorded by one renderer has to validate
 # under the other, and these baselines are compared against components from that build.
-screenshot = "0.0.1-alpha15"
+screenshot = "0.0.1-alpha16"
 ktlint = "14.2.0"
 detekt = "1.23.8"
 kover = "0.9.11"
