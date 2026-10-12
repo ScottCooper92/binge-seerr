@@ -1,22 +1,26 @@
 package com.cooper.binge.companion.seerr.ui.tv.hub
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.ErrorKind
+import com.binge.designsystem.tv.component.TvButton
+import com.binge.designsystem.tv.component.TvErrorPlate
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
+import com.binge.designsystem.tv.focus.tvArrivalObserver
 import com.binge.designsystem.tv.template.TvBoard
+import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.AllowLocalNetwork
 import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
 import com.cooper.binge.companion.seerr.ui.hub.isProblem
 import com.cooper.binge.companion.seerr.ui.rememberAllowLocalNetwork
-import com.cooper.binge.companion.seerr.ui.tv.TvBoardPlate
 import com.cooper.binge.companion.seerr.ui.tv.TvHubLoading
 
 /** Everything the problem page can ask for, in one place so the entry stays a wiring. */
@@ -70,8 +74,16 @@ private fun TvHubProblem(
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
-    TvBoardPlate(
-        headline =
+    val denied = health == ConnectionHealth.LocalNetworkDenied
+    TvErrorPlate(
+        kind =
+            when (health) {
+                ConnectionHealth.CouldNotLoad -> ErrorKind.Server
+                ConnectionHealth.LocalNetworkDenied -> ErrorKind.Forbidden
+                else -> ErrorKind.Network
+            },
+        // The hub's own words say what to do about each problem, so they stand in for the kind's copy.
+        title =
             stringResource(
                 when (health) {
                     ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_headline
@@ -79,26 +91,39 @@ private fun TvHubProblem(
                     else -> R.string.hub_unreachable_headline
                 },
             ),
-        body =
+        // A retry in flight says so where the problem was, and Try again does nothing more while it runs; focus stays on it.
+        message =
             stringResource(
-                when (health) {
-                    ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
-                    ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
+                when {
+                    rechecking -> R.string.hub_rechecking
+                    health == ConnectionHealth.CouldNotLoad -> R.string.hub_couldnt_load_body
+                    health == ConnectionHealth.LocalNetworkDenied -> R.string.hub_local_network_body
                     else -> R.string.hub_unreachable_body
                 },
             ),
-        icon = Icons.Filled.Warning,
-        primary =
-            if (health == ConnectionHealth.LocalNetworkDenied) {
-                stringResource(allow.shortLabel) to allow.run
+        // A refused local network is fixed by the permission, not a retry, so the plate leads with it instead.
+        onRetry =
+            if (denied) {
+                null
+            } else if (rechecking) {
+                ({})
             } else {
-                // While a retry is in flight the button says so and does nothing more; focus stays on it.
-                stringResource(if (rechecking) R.string.hub_rechecking else R.string.hub_retry) to
-                    if (rechecking) ({}) else actions.onRetry
+                actions.onRetry
             },
-        alternate = stringResource(R.string.settings_edit_connection) to actions.onReconnect,
-        secondary = stringResource(R.string.hub_disconnect) to actions.onDisconnect,
-        modifier = modifier,
-        arrival = arrival,
+        alignment = Alignment.Center,
+        retryFocusRequester = arrival.requester,
+        modifier = modifier.tvArrivalObserver(arrival),
+        extraActions = {
+            if (denied) {
+                TvButton(
+                    label = stringResource(allow.shortLabel),
+                    onClick = allow.run,
+                    style = TvButtonStyle.Primary,
+                    modifier = Modifier.focusRequester(arrival.requester),
+                )
+            }
+            TvButton(label = stringResource(R.string.settings_edit_connection), onClick = actions.onReconnect)
+            TvButton(label = stringResource(R.string.hub_disconnect), onClick = actions.onDisconnect)
+        },
     )
 }

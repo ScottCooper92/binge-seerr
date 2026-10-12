@@ -1,9 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -29,19 +27,14 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.tv.material3.MaterialTheme
 import coil3.compose.AsyncImage
 import com.binge.designsystem.theme.BingeShapes
-import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvMessagePlate
-import com.binge.designsystem.tv.focus.TvArrivalFocus
 import com.binge.designsystem.tv.focus.restoreTvOverlayFocus
-import com.binge.designsystem.tv.focus.tvArrivalTarget
-import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.state.RequestStateTone
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onStart
-import com.binge.designsystem.R as DesR
 
 private const val TRANSIENT_MESSAGE_MILLIS = 4_000L
 
@@ -94,17 +87,13 @@ internal fun rememberOverlayFocusRestore(overlayOpen: Boolean): OverlayFocusRest
     return restore
 }
 
-/** A board's whole-content message — the first load, its failure, or an empty list — with up to three ways out. */
+/** A board's whole-content message: the first load, or an empty list. A failure is [TvErrorPlate][com.binge.designsystem.tv.component.TvErrorPlate]'s. */
 @Composable
 internal fun TvBoardPlate(
     body: String,
     modifier: Modifier = Modifier,
     headline: String? = null,
     icon: ImageVector? = null,
-    primary: Pair<String, () -> Unit>? = null,
-    secondary: Pair<String, () -> Unit>? = null,
-    arrival: TvArrivalFocus? = null,
-    alternate: Pair<String, () -> Unit>? = null,
 ) {
     TvMessagePlate(
         body = body,
@@ -112,45 +101,6 @@ internal fun TvBoardPlate(
         icon = icon,
         alignment = Alignment.Center,
         modifier = modifier,
-        actions =
-            if (primary == null && alternate == null && secondary == null) {
-                null
-            } else {
-                {
-                    Row(horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
-                        primary?.let { (label, onClick) ->
-                            TvButton(
-                                label = label,
-                                onClick = onClick,
-                                style = TvButtonStyle.Primary,
-                                modifier = arrival?.let { Modifier.tvArrivalTarget(it) } ?: Modifier,
-                            )
-                        }
-                        alternate?.let { (label, onClick) ->
-                            TvButton(
-                                label = label,
-                                onClick = onClick,
-                                modifier = if (primary == null && arrival != null) Modifier.tvArrivalTarget(arrival) else Modifier,
-                            )
-                        }
-                        secondary?.let { (label, onClick) ->
-                            TvButton(
-                                label = label,
-                                onClick = onClick,
-                                modifier =
-                                    if (primary == null &&
-                                        alternate == null &&
-                                        arrival != null
-                                    ) {
-                                        Modifier.tvArrivalTarget(arrival)
-                                    } else {
-                                        Modifier
-                                    },
-                            )
-                        }
-                    }
-                }
-            },
     )
 }
 

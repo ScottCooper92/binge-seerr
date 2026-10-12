@@ -19,7 +19,7 @@ class TvHubScreenshotTest {
         TvHubBoard(state = HubUiState.Loading, actions = previewTvHubActions())
     }
 
-    /** The server did not answer: Retry leads, with Disconnect beside it. */
+    /** The server did not answer: Try again leads, with Edit connection and Disconnect beside it. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
@@ -27,7 +27,7 @@ class TvHubScreenshotTest {
         TvHubBoard(state = previewReady(health = ConnectionHealth.Unreachable), actions = previewTvHubActions())
     }
 
-    /** A retry in flight: the problem stays, and the lead button says it is checking (#873). */
+    /** A retry in flight: the problem stays, and the plate's message says it is checking (#873). */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable

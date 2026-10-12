@@ -3,7 +3,9 @@ package com.cooper.binge.companion.seerr.ui.tv.hub
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isFocusable
 import com.binge.designsystem.tv.theme.BingeTvTheme
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
@@ -12,13 +14,14 @@ import com.cooper.binge.companion.seerr.ui.hub.ConnectionHealth
 import com.cooper.binge.companion.seerr.ui.hub.HubOverview
 import com.cooper.binge.companion.seerr.ui.hub.HubServer
 import com.cooper.binge.companion.seerr.ui.hub.HubUiState
-import com.cooper.binge.companion.seerr.util.createSeerrComposeRule
+import com.cooper.binge.companion.seerr.util.createSeerrKeyboardComposeRule
 import com.cooper.binge.companion.seerr.util.string
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.binge.designsystem.R as DesR
 
 /**
  * The problem page stays through a re-probe, rather than blinking to loading and dropping the remote (#796). The view
@@ -29,7 +32,7 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "w960dp-h540dp-television-xhdpi")
 class TvHubProblemHoldTest {
     @get:Rule
-    val rule = createSeerrComposeRule()
+    val rule = createSeerrKeyboardComposeRule()
 
     private var state by mutableStateOf(ready(ConnectionHealth.Unreachable))
 
@@ -56,8 +59,27 @@ class TvHubProblemHoldTest {
         }
 
         rule.onNode(hasText(string(R.string.local_network_allow_short))).assertExists()
-        rule.onNode(hasText(string(R.string.hub_retry))).assertDoesNotExist()
+        rule.onNode(hasText(string(DesR.string.error_kind_retry))).assertDoesNotExist()
         rule.onNode(hasText(string(R.string.hub_disconnect))).assertExists()
+    }
+
+    /** The remote lands on Try again, so a stray OK retries and nothing else does anything. */
+    @Test
+    fun `the remote lands on Try again for a server that did not answer`() {
+        rule.setContent { BingeTvTheme { TvHubBoard(state = state, actions = TvHubActions({}, {}, {})) } }
+        rule.waitForIdle()
+
+        rule.onNode(hasText(string(DesR.string.error_kind_retry)) and isFocusable()).assertIsFocused()
+    }
+
+    @Test
+    fun `the remote lands on the permission when the local network is refused`() {
+        rule.setContent {
+            BingeTvTheme { TvHubBoard(state = HubUiState.Error(ConnectionHealth.LocalNetworkDenied), actions = TvHubActions({}, {}, {})) }
+        }
+        rule.waitForIdle()
+
+        rule.onNode(hasText(string(R.string.local_network_allow_short)) and isFocusable()).assertIsFocused()
     }
 
     private fun ready(health: ConnectionHealth) =
