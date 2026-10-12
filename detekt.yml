@@ -16,9 +16,10 @@
 # Formatting is ktlint's job. detekt's `formatting` ruleset ships in the separate detekt-formatting
 # artifact, which is deliberately not on the classpath, so it never loads. MaxLineLength and
 # WildcardImport overlap ktlint's own rules and are off so the two cannot double-report.
-
-build:
-  maxIssues: 0
+#
+# detekt 2.x, through binge-ci's shared gate. 2.x's limits are `allowed…` and report above the value, where 1.x's
+# `threshold…` reported at it, so each limit below is the 1.x threshold minus one: the same code passes and fails.
+# 2.x fails on any finding by default, so 1.x's `build: maxIssues: 0` has no counterpart.
 
 complexity:
   # Captures genuine complexity hotspots ktlint cannot see. Thresholds are tuned UP from detekt's
@@ -40,20 +41,20 @@ complexity:
     # nesting (Column/Row/Box scopes) inflates the score structurally. Raised 20 -> 25 in Binge#674 to
     # clear the dozen @Composable findings deferred from Binge#676 — Compose's structural scope nesting
     # reads as cognitive load to the rule — while still flagging the deeply-nested logic outliers.
-    threshold: 25
+    allowedComplexity: 24
   NestedBlockDepth:
     active: true
     # Above detekt's default (4): Compose composition nests scopes structurally. 5 flags genuine
     # over-nesting without tripping ordinary layout/`if`-inside-`forEach` UI code.
-    threshold: 5
+    allowedDepth: 4
   LongParameterList:
     # Well above detekt's defaults (6 / 7): a top-level screen composable threads one lambda per
     # navigation destination (MovieDetailScreen has ~12), which is idiomatic Compose, not a smell.
     # ignoreDefaultParameters drops the trailing `modifier = Modifier` / optional callbacks from
     # the count, so only required wiring is measured. 12 / 16 still caps genuine bloat — a plain
     # function or constructor past these is asking for a parameter object (Binge#674).
-    functionThreshold: 12
-    constructorThreshold: 16
+    allowedFunctionParameters: 11
+    allowedConstructorParameters: 15
     ignoreDefaultParameters: true
   LongMethod:
     # Above detekt's default (60): a screen composable's body is a flat tree of child composables
@@ -61,7 +62,7 @@ complexity:
     # 90 clears the idiomatic screen bodies while still flagging the genuinely-overgrown method
     # that should be decomposed by concern. There is no file-length gate here: Binge's `binge:` FileLength
     # was not carried across (binge-companions#39), so the 400-line signal is held in review.
-    threshold: 90
+    allowedLines: 89
   TooManyFunctions:
     # Above detekt's default (11): a feature screen file legitimately hosts the entry composable
     # plus its focused private children (content / empty / error / row builders) — many small
@@ -83,11 +84,17 @@ complexity:
     excludes:
       - '**/SeerrApi.kt'
       - '**/*Previews.kt'
-    thresholdInFiles: 16
-    thresholdInClasses: 16
-    thresholdInInterfaces: 16
-    thresholdInObjects: 16
-    thresholdInEnums: 16
+    allowedFunctionsPerFile: 15
+    allowedFunctionsPerClass: 15
+    allowedFunctionsPerInterface: 15
+    allowedFunctionsPerObject: 15
+    allowedFunctionsPerEnum: 15
+
+  LargeClass:
+    # The same API surface as TooManyFunctions above: SeerrApi is one declaration per Seerr endpoint, so its size is the
+    # size of the server's API. detekt 2.x counts it over the limit where 1.x did not.
+    excludes:
+      - '**/SeerrApi.kt'
 
 potential-bugs:
   # The `!!` ban. Requires type resolution — app/build.gradle.kts wires the compile classpath
@@ -152,7 +159,7 @@ naming:
 style:
   # `attempt` (seerr/SeerrErrors.kt) is the only way to turn a throw into a Result here: `runCatching` also
   # catches the CancellationException a cancelled scope sends, so a screen reads its own cancellation as a failure (#1025).
-  # Needs type resolution to see into the stdlib, which app/build.gradle.kts arranges (`detektStdlib`). It matches the
+  # Needs type resolution to see into the stdlib, which binge.gates.detekt wires. It matches the
   # plain call, `runCatching { }`; the receiver form, `x.runCatching { }`, is not matched, and nothing here uses it.
   ForbiddenMethodCall:
     active: true
@@ -210,12 +217,21 @@ style:
   # hygiene above. Hilt @Binds
   # modules MUST be `abstract class` (a @Binds method has to be abstract and so must its owner) —
   # that's a framework requirement, not a smell, so exempt @Module to avoid false positives.
-  UnnecessaryAbstractClass:
+  # 2.x split 1.x's UnnecessaryAbstractClass into these two, one per half of what it reported.
+  AbstractClassCanBeConcreteClass:
+    active: true
+    ignoreAnnotated: ['Module']
+  AbstractClassCanBeInterface:
     active: true
     ignoreAnnotated: ['Module']
   UseOrEmpty:
     active: false
-  UnusedPrivateMember:
+  # 1.x's UnusedPrivateMember, which 2.x split by member kind; a preview is a function.
+  # Off: in 2.0.0-alpha.6 it reports a constructor property as unused when its only reads sit inside nested lambdas or
+  # are a callable reference, `titles::get` say. All 14 of its findings here were that shape and none was real.
+  UnusedPrivateProperty:
+    active: false
+  UnusedPrivateFunction:
     # @Preview composables are invoked by the Compose tooling, not by app code, so
     # detekt sees them as unused. Exempt preview annotations (false positives), the
     # same idea as the FunctionNaming Composable exemption above.

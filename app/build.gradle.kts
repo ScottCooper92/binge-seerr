@@ -383,15 +383,6 @@ tasks.named("check") {
     dependsOn("validateDebugScreenshotTest")
 }
 
-/**
- * The Kotlin stdlib detekt's own compiler was built with, from detekt's own classpath. detekt 1.23 embeds an older Kotlin
- * than this build compiles with, and cannot read the 2.4 stdlib that `libraries` carries: a call into it does not
- * resolve, so a rule that matches a stdlib function by name, `ForbiddenMethodCall` on `runCatching` (#1173), loads and
- * never fires. Put first on the classpath, this one is the stdlib the rule sees. Nothing is compiled against it.
- */
-fun detektStdlib(detektClasspath: org.gradle.api.file.FileCollection) =
-    detektClasspath.filter { Regex("""kotlin-stdlib-\d.*\.jar""").matches(it.name) }
-
 // The coroutines test API (runTest, advanceUntilIdle, UnconfinedTestDispatcher, Dispatchers.setMain) is
 // experimental, and nearly every test uses it. Opting the test compilations in once keeps the compiler
 // log free of that noise, so a warning that matters stands out. Main sources are not opted in: an
@@ -399,15 +390,6 @@ fun detektStdlib(detektClasspath: org.gradle.api.file.FileCollection) =
 kotlin.target.compilations.configureEach {
     if (!name.contains("Test")) return@configureEach
     compileTaskProvider.configure { compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi") }
-}
-
-// The shared gate wires the compile classpath on after evaluation; this runs first, so the stdlib above is
-// ahead of it on every detekt task's classpath.
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-    classpath.from(detektStdlib(detektClasspath))
-}
-tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
-    classpath.from(detektStdlib(detektClasspath))
 }
 
 // The gate measures logic: ViewModels, the Seerr client and its error mapping, the stores, the
