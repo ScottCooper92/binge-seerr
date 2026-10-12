@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.PHONE_WIDTH
 import com.cooper.binge.companion.seerr.preview.SeerrComponentPreviews
+import com.cooper.binge.companion.seerr.preview.SeerrFontScale13ComponentPreviews
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 
 /**
@@ -34,6 +35,15 @@ class RequestListScreenshotTest {
     @SeerrComponentPreviews
     @Composable
     fun seasonList() = Frame(seasonListRow())
+
+    /**
+     * A long title, a long status, a year and a season at font scale 1.3: every line of the row at once, in the face and
+     * size that clipped the requester line off the card's bottom edge on a phone.
+     */
+    @PreviewTest
+    @SeerrFontScale13ComponentPreviews
+    @Composable
+    fun longTitleFontScale13() = Frame(longTitleTvRow())
 }
 
 @Composable
