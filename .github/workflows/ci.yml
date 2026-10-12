@@ -73,10 +73,12 @@ jobs:
     timeout-minutes: 30
     steps:
       # The contracts and SDK are a submodule (see settings.gradle.kts); without this the
-      # included build is an empty directory and Gradle fails at settings evaluation.
+      # included build is an empty directory and Gradle fails at settings evaluation. Recursive,
+      # because a submodule can carry its own: binge-companions includes binge-ci's Gradle gates
+      # from a binge-ci submodule, and this build includes binge-companions.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
 
       # JDK 21, matching binge-ci's ci-setup. The JDK runs the build and nothing else:
       # `jvmTarget` 17 in app/build.gradle.kts decides the bytecode, so this does not move what
@@ -116,7 +118,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -152,7 +154,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -181,7 +183,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
