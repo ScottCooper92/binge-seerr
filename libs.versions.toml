@@ -20,7 +20,7 @@ robolectric = "4.16.1"
 screenshot = "0.0.1-alpha15"
 ktlint = "14.2.0"
 detekt = "1.23.8"
-kover = "0.9.9"
+kover = "0.9.11"
 # Must agree with binge-companions' catalog: the SDK brings grpc-binder at its version, and the
 # in-process transport the tests use has to be the same release or the two disagree on internals.
 # `checkGrpcAlignment` enforces it on the resolved classpaths.
