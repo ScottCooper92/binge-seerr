@@ -49,7 +49,8 @@ rootProject.name = "binge-seerr"
 // The contracts and the SDK come from binge-companions as SOURCE, through a git submodule and a
 // composite build, rather than as a published artifact: nothing is published yet, and a companion
 // author reading this repository gets the exact contract this app was built against. Gradle
-// substitutes `io.github.scottcooper92:contracts` and `:sdk` with the included build's projects.
+// substitutes `io.github.scottcooper92:binge-companion-contracts` and `:binge-companion-sdk` with the included
+// build's projects.
 includeBuild("binge-companions")
 
 // The shared design system arrives the same way (Binge#2427): the theme and the components this
