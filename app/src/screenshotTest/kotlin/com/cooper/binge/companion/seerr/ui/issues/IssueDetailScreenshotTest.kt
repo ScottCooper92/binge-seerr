@@ -5,6 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.preview.SeerrScreenPreviews
 import com.cooper.binge.companion.seerr.preview.SeerrScreenStatePreview
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
@@ -42,6 +43,12 @@ class IssueDetailScreenshotTest {
     @SeerrScreenStatePreview
     @Composable
     fun seededFailed() = Frame(IssueDetailUiState.Seeded(openIssueWithActionsDetail().item, error = SeerrError.Unreachable))
+
+    /** A comment edit on its way to the server (#930): the top bar says Saving beside the page's own actions. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun savingEdit() = Frame(IssueDetailUiState.Ready(detail = openIssueWithActionsDetail(), editStatus = SaveStatus.Saving))
 }
 
 @Composable
@@ -62,6 +69,7 @@ private fun Frame(state: IssueDetailUiState) {
                 onEditOutbox = { _, _ -> },
                 onDropOutbox = {},
                 onEditComment = { _, _ -> },
+                onRetryEdit = {},
                 onDeleteComment = {},
                 onToggleStatus = {},
                 onDeleteIssue = {},

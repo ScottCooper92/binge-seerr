@@ -155,11 +155,9 @@ app:issue_affected_episode  28a528818045
 app:issue_comment_actions_cd  cf8f6677519a
 app:issue_comment_deleted  7199a134a339
 app:issue_comment_discard  eb1a70e39274
-app:issue_comment_edited  651de1d53b80
 app:issue_comment_hint  aa160b938714
 app:issue_comment_just_now  66f53417d3b7
 app:issue_comment_retry  942087cc2d41
-app:issue_comment_save  1509f561f241
 app:issue_comment_send  a5554622c655
 app:issue_comment_send_blocked  0dcaa03414ca
 app:issue_comment_send_failed  1237c53e99ab

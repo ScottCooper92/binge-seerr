@@ -38,27 +38,25 @@ internal fun CommentComposerSheet(
     }
 }
 
-/** Editing a comment: saving is enabled only for a change; a failed save keeps the sheet and its text. */
+/** Editing a comment: Done is live only for a change, and hands it over; the page saves it as it is made (#930). */
 @Composable
 internal fun EditCommentSheet(
     title: String,
     draft: String,
     original: String,
-    isSaving: Boolean,
     onDraftChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BingeBottomSheet(onDismissRequest = onDismiss, gesturesEnabled = !isSaving) {
+    BingeBottomSheet(onDismissRequest = onDismiss) {
         TextEntrySurface(
             title = title,
             value = draft,
             onValueChange = onDraftChange,
             onSubmit = onSubmit,
             onCancel = onDismiss,
-            submitLabel = stringResource(R.string.issue_comment_save),
+            submitLabel = stringResource(R.string.editor_done),
             submitEnabled = draft.isNotBlank() && draft.trim() != original.trim(),
-            isSubmitting = isSaving,
             modifier = Modifier.imePadding(),
         )
     }

@@ -1,27 +1,16 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.stringResource
 import com.cooper.binge.companion.seerr.R
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 internal fun IssueModals(
     state: IssueDetailUiState.Ready,
-    events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
     modals: IssueModalState,
 ) {
     val detail = state.detail
-    // A save only actually lands on this event, never on the draft matching the server text: that's also
-    // true the instant the sheet opens, before anything has been submitted.
-    LaunchedEffect(events) {
-        events.collectLatest { event ->
-            if (event == IssueDetailEvent.CommentEdited) modals.editingCommentId = null
-        }
-    }
     if (modals.composing) {
         CommentComposerSheet(
             draft = state.draft,
@@ -51,9 +40,12 @@ internal fun IssueModals(
             title = stringResource(if (commentId == detail.report?.id) R.string.issue_edit_report else R.string.issue_edit_comment),
             draft = modals.editDraft,
             original = original,
-            isSaving = state.commentAction == CommentAction.Editing(commentId),
             onDraftChange = { modals.editDraft = it },
-            onSubmit = { actions.onEditComment(commentId, modals.editDraft) },
+            // The edit saves as it is made (#930): the sheet closes at once, and the page says Saving, then Saved.
+            onSubmit = {
+                actions.onEditComment(commentId, modals.editDraft)
+                modals.editingCommentId = null
+            },
             onDismiss = { modals.editingCommentId = null },
         )
     }
@@ -99,7 +91,6 @@ internal fun OutboxModals(
                     .firstOrNull { it.localId == localId }
                     ?.message
                     .orEmpty(),
-            isSaving = false,
             onDraftChange = { modals.outboxEditDraft = it },
             onSubmit = {
                 actions.onEditOutbox(localId, modals.outboxEditDraft)

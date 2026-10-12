@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
@@ -409,7 +410,7 @@ class IssueDetailViewModelTest {
         }
 
     @Test
-    fun `a write that succeeds but fails to reload reports failure, not success, leaving the stale comment`() =
+    fun `an edit that saves but fails to reload keeps the saved text and reports the reload`() =
         runTest {
             server(ADMIN)
             serve("PUT /api/v1/issueComment/2", "{}")
@@ -429,12 +430,203 @@ class IssueDetailViewModelTest {
 
             assertTrue(failed.await() is IssueDetailEvent.Failed)
             val ready = vm.awaitReady { it.commentAction == CommentAction.None }
+            assertEquals(SaveStatus.Saved, ready.editStatus)
+            assertTrue(ready.unsentEdits.isEmpty())
+            assertEquals(
+                "Same here, fixed now",
+                ready.detail.comments
+                    .single()
+                    .message,
+            )
+        }
+
+    @Test
+    fun `a failed edit keeps the change on the page until a retry saves it`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(2, "Same here, fixed now")
+            val failed = vm.awaitReady { it.unsentEdits.isNotEmpty() }
+            assertEquals(listOf(CommentEdit(2, "Same here, fixed now")), failed.unsentEdits)
+            assertEquals(
+                "Same here, fixed now",
+                failed.detail.comments
+                    .single()
+                    .message,
+            )
+
+            serve("PUT /api/v1/issueComment/2", "{}")
+            serve("GET /api/v1/issue/31", issueJson().replace("\"Same here\"", "\"Same here, fixed now\""))
+            vm.editComment(2, "Same here, fixed now")
+            val saved = vm.awaitReady { it.unsentEdits.isEmpty() && it.editStatus == SaveStatus.Saved }
+            assertEquals(
+                "Same here, fixed now",
+                saved.detail.comments
+                    .single()
+                    .message,
+            )
+            assertEquals(2, received.count { it.method == "PUT" })
+        }
+
+    @Test
+    fun `a second failed edit keeps the first owed, and a retry sends each in turn`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/1", "{}", code = 500)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(1, "Audio drifts")
+            vm.awaitReady { it.unsentEdits.size == 1 }
+            vm.editComment(2, "Same here, fixed now")
+            val failed = vm.awaitReady { it.unsentEdits.size == 2 && it.commentAction == CommentAction.None }
+            assertEquals(listOf(CommentEdit(1, "Audio drifts"), CommentEdit(2, "Same here, fixed now")), failed.unsentEdits)
+            assertEquals("Audio drifts", failed.detail.report?.message)
+
+            serve("PUT /api/v1/issueComment/1", "{}")
+            serve("GET /api/v1/issue/31", issueJson().replace("Audio out of sync", "Audio drifts"))
+            vm.retryEdit()
+            val afterFirst = vm.awaitReady { it.unsentEdits.size == 1 && it.editStatus == SaveStatus.Saved }
+            assertEquals(listOf(CommentEdit(2, "Same here, fixed now")), afterFirst.unsentEdits)
+            assertEquals(
+                "Same here, fixed now",
+                afterFirst.detail.comments
+                    .single()
+                    .message,
+            )
+            assertEquals("Audio drifts", afterFirst.detail.report?.message)
+
+            serve("PUT /api/v1/issueComment/2", "{}")
+            serve(
+                "GET /api/v1/issue/31",
+                issueJson().replace("Audio out of sync", "Audio drifts").replace("\"Same here\"", "\"Same here, fixed now\""),
+            )
+            vm.retryEdit()
+            val afterSecond = vm.awaitReady { it.unsentEdits.isEmpty() && it.commentAction == CommentAction.None }
+            assertTrue(afterSecond.unsentEdits.isEmpty())
+            assertEquals(4, received.count { it.method == "PUT" })
+        }
+
+    @Test
+    fun `a retry sends the newest text of an edit that failed twice`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(2, "first try")
+            vm.awaitReady { it.unsentEdits == listOf(CommentEdit(2, "first try")) && it.commentAction == CommentAction.None }
+            vm.editComment(2, "second try")
+            val failed = vm.awaitReady { it.unsentEdits == listOf(CommentEdit(2, "second try")) && it.commentAction == CommentAction.None }
+            assertEquals(listOf(CommentEdit(2, "second try")), failed.unsentEdits)
+
+            serve("PUT /api/v1/issueComment/2", "{}")
+            serve("GET /api/v1/issue/31", issueJson().replace("\"Same here\"", "\"second try\""))
+            vm.retryEdit()
+            val saved = vm.awaitReady { it.unsentEdits.isEmpty() && it.editStatus == SaveStatus.Saved }
+            assertEquals(
+                "second try",
+                saved.detail.comments
+                    .single()
+                    .message,
+            )
+        }
+
+    @Test
+    fun `a refused edit is reported, not kept for retry, and the thread returns to the server's text`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 404)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val failed = awaitEvent(vm.events)
+            vm.editComment(2, "Same here, fixed now")
+            assertEquals(IssueDetailEvent.Failed(SeerrError.NotFound), failed.await())
+            val ready = vm.awaitReady { it.commentAction == CommentAction.None && it.editStatus == SaveStatus.Idle }
+            assertTrue(ready.unsentEdits.isEmpty())
             assertEquals(
                 "Same here",
                 ready.detail.comments
                     .single()
                     .message,
             )
+        }
+
+    @Test
+    fun `a refused edit whose reload also fails leaves the thread on the text it had`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 403)
+            val vm = viewModel()
+            vm.awaitReady()
+            serve("GET /api/v1/issue/31", "{}", code = 500)
+
+            vm.editComment(2, "Same here, fixed now")
+            val ready = vm.awaitReady { it.commentAction == CommentAction.None && it.editStatus == SaveStatus.Idle }
+            assertTrue(ready.unsentEdits.isEmpty())
+            assertEquals(
+                "Same here",
+                ready.detail.comments
+                    .single()
+                    .message,
+            )
+        }
+
+    /** A refused retry puts back the server's text, not the owed text the page was showing, even when the reload fails. */
+    @Test
+    fun `a retry refused after a failed edit, with a failed reload, ends on the server's text with nothing owed`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.editComment(2, "Same here, fixed now")
+            val owed = vm.awaitReady { it.unsentEdits.isNotEmpty() }
+            assertEquals(
+                "Same here, fixed now",
+                owed.detail.comments
+                    .single()
+                    .message,
+            )
+
+            serve("PUT /api/v1/issueComment/2", "{}", code = 401)
+            serve("GET /api/v1/issue/31", "{}", code = 500)
+            val failed = awaitEvent(vm.events)
+            vm.retryEdit()
+
+            assertTrue(failed.await() is IssueDetailEvent.Failed)
+            val ready = vm.awaitReady { it.commentAction == CommentAction.None && it.editStatus == SaveStatus.Idle }
+            assertTrue(ready.unsentEdits.isEmpty())
+            assertEquals(
+                "Same here",
+                ready.detail.comments
+                    .single()
+                    .message,
+            )
+        }
+
+    @Test
+    fun `deleting a comment whose edit failed drops the edit that was owed to it`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            serve("DELETE /api/v1/issueComment/2", "{}")
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(2, "Same here, fixed now")
+            vm.awaitReady { it.unsentEdits.isNotEmpty() }
+
+            val commentDeleted = awaitEvent(vm.events)
+            vm.deleteComment(2)
+            assertEquals(IssueDetailEvent.CommentDeleted, commentDeleted.await())
+            assertTrue(vm.awaitReady { it.commentAction == CommentAction.None }.unsentEdits.isEmpty())
         }
 
     @Test
@@ -446,9 +638,8 @@ class IssueDetailViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
-            val commentEdited = awaitEvent(vm.events)
             vm.editComment(2, "Same here, fixed now")
-            assertEquals(IssueDetailEvent.CommentEdited, commentEdited.await())
+            vm.awaitReady { it.editStatus == SaveStatus.Saved }
             assertTrue(received.any { it.method == "PUT" && it.body.contains("fixed now") })
 
             val commentDeleted = awaitEvent(vm.events)

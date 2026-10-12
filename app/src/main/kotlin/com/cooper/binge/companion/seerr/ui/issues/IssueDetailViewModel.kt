@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.data.IssueStore
 import com.cooper.binge.companion.seerr.di.IoDispatcher
-import com.cooper.binge.companion.seerr.seerr.SeerrIssueCommentBody
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
@@ -69,6 +68,19 @@ class IssueDetailViewModel
         private val outbox =
             IssueCommentOutbox(issueId, connection, viewModelScope, dispatcher, state, analytics, crashBreadcrumbs)
 
+        private val edits =
+            IssueCommentEdits(
+                issueId,
+                connection,
+                viewModelScope,
+                dispatcher,
+                state,
+                analytics,
+                crashBreadcrumbs,
+                reloadAfterWrite = ::reloadAfterWrite,
+                report = eventFlow::emit,
+            )
+
         init {
             reload()
         }
@@ -97,7 +109,7 @@ class IssueDetailViewModel
             }
             viewModelScope.launch(dispatcher) {
                 seedFromCache()
-                attempt { load() }
+                attempt { connection.issueDetail(issueId, titles) }
                     .onSuccess { detail ->
                         state.update { current ->
                             val ready = current as? IssueDetailUiState.Ready
@@ -149,33 +161,13 @@ class IssueDetailViewModel
 
         fun dropOutbox(localId: Long) = outbox.drop(localId)
 
+        /** Saves an edit to a comment as it is made (#930); see [IssueCommentEdits]. */
         fun editComment(
             commentId: Int,
             message: String,
-        ) {
-            val ready = ready() ?: return
-            val trimmed = message.trim()
-            if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
-            state.value = ready.copy(commentAction = CommentAction.Editing(commentId))
-            crashBreadcrumbs.key("issue_id", issueId.toString())
-            crashBreadcrumbs.key("comment_id", commentId.toString())
-            crashBreadcrumbs.log("editing comment on issue")
-            viewModelScope.launch(dispatcher) {
-                attempt { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
-                    .onSuccess {
-                        val reloadFailure = reloadAfterWrite()
-                        if (reloadFailure == null) {
-                            analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "edited"))
-                        }
-                        eventFlow.emit(
-                            reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentEdited,
-                        )
-                    }.onFailure { failure ->
-                        state.updateReady { it.copy(commentAction = CommentAction.None) }
-                        eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
-                    }
-            }
-        }
+        ) = edits.edit(commentId, message)
+
+        fun retryEdit() = edits.retry()
 
         /** Resolves an open issue or reopens a resolved one; the cached row moves with it, so the browser agrees at once. */
         fun toggleStatus() {
@@ -237,6 +229,8 @@ class IssueDetailViewModel
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {
+                        // The comment is gone, so an edit still owed to it can never land.
+                        state.updateReady { it.copy(unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId }) }
                         val reloadFailure = reloadAfterWrite()
                         if (reloadFailure == null) {
                             analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
@@ -256,24 +250,17 @@ class IssueDetailViewModel
          * itself failed, so a caller never announces success on a page still showing the stale comment.
          */
         private suspend fun reloadAfterWrite(): Throwable? {
-            val result = attempt { load() }
+            val result = attempt { connection.issueDetail(issueId, titles) }
             state.updateReady { ready ->
                 result
                     .getOrNull()
+                    // An edit not yet on the server stays on the page over what was read.
+                    ?.let { detail -> ready.unsentEdits.fold(detail) { shown, edit -> shown.withEdit(edit) } }
                     ?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None, action = IssueAction.None) }
                     ?: ready.copy(commentAction = CommentAction.None, action = IssueAction.None)
             }
             return result.exceptionOrNull()
         }
-
-        private suspend fun load(): IssueDetail =
-            coroutineScope {
-                val api = connection.api()
-                val user = async { attempt { connection.authenticatedUser() }.getOrNull() }
-                val dto = api.issue(issueId)
-                val item = checkNotNull(dto.toIssueItem(api, titles::get)) { "Unrenderable media type" }
-                dto.toDetail(item, user.await(), connection.current().baseUrl, connection.profile())
-            }
 
         private fun ready(): IssueDetailUiState.Ready? = state.value as? IssueDetailUiState.Ready
 
@@ -285,4 +272,20 @@ class IssueDetailViewModel
         private companion object {
             const val COMMENT_DRAFT_KEY = "issue.comment.draft"
         }
+    }
+
+/**
+ * The issue as the page shows it, read fresh: the issue, its title, the viewer and where the server lives. It reads nothing
+ * of the page's own state, so it sits outside the view model.
+ */
+private suspend fun SeerrConnection.issueDetail(
+    issueId: Int,
+    titles: TitleCache,
+): IssueDetail =
+    coroutineScope {
+        val api = api()
+        val user = async { attempt { authenticatedUser() }.getOrNull() }
+        val dto = api.issue(issueId)
+        val item = checkNotNull(dto.toIssueItem(api, titles::get)) { "Unrenderable media type" }
+        dto.toDetail(item, user.await(), current().baseUrl, profile())
     }

@@ -52,6 +52,8 @@ import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
+import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -66,6 +68,7 @@ class IssueDetailActions(
     val onEditOutbox: (Long, String) -> Unit,
     val onDropOutbox: (Long) -> Unit,
     val onEditComment: (Int, String) -> Unit,
+    val onRetryEdit: () -> Unit,
     val onDeleteComment: (Int) -> Unit,
     val onToggleStatus: () -> Unit,
     val onDeleteIssue: () -> Unit,
@@ -98,7 +101,6 @@ fun IssueDetailScreen(
             snackbarHostState.showSnackbar(
                 message =
                     when (event) {
-                        IssueDetailEvent.CommentEdited -> resources.getString(R.string.issue_comment_edited)
                         IssueDetailEvent.CommentDeleted -> resources.getString(R.string.issue_comment_deleted)
                         IssueDetailEvent.IssueResolved -> resources.getString(R.string.issue_resolved)
                         IssueDetailEvent.IssueReopened -> resources.getString(R.string.issue_reopened)
@@ -113,6 +115,13 @@ fun IssueDetailScreen(
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssueDetailUiState.Ready
     val seeded = state as? IssueDetailUiState.Seeded
+    SaveFailedSnackbar(
+        failed = ready?.unsentEdits?.isNotEmpty() == true,
+        snackbarHostState = snackbarHostState,
+        message = stringResource(R.string.editor_save_failed),
+        retryLabel = stringResource(R.string.action_try_again),
+        onRetry = actions.onRetryEdit,
+    )
     OverflowDetailScaffold(
         title = ready?.detail?.item?.title ?: seeded?.item?.title ?: stringResource(R.string.issue_detail_title),
         onBack = actions.onBack.takeIf { showBack },
@@ -122,6 +131,7 @@ fun IssueDetailScreen(
         onOverflowClick = { managing = true },
         overflowIcon = Icons.AutoMirrored.Filled.OpenInNew,
         leadingActions = {
+            ready?.let { SaveStatusLine(status = it.editStatus, failed = it.unsentEdits.isNotEmpty()) }
             if (ready?.detail?.canDelete == true) {
                 IconButton(onClick = { confirmingDelete = true }) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.issue_delete))
@@ -134,7 +144,7 @@ fun IssueDetailScreen(
             is IssueDetailUiState.Seeded -> Seeded(state, actions, contentPadding = inner)
             is IssueDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-            is IssueDetailUiState.Ready -> Ready(state, events, actions, contentPadding = inner)
+            is IssueDetailUiState.Ready -> Ready(state, actions, contentPadding = inner)
         }
     }
     if (managing && ready != null) {
@@ -185,7 +195,6 @@ private fun Seeded(
 @Composable
 private fun Ready(
     state: IssueDetailUiState.Ready,
-    events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
     contentPadding: PaddingValues,
 ) {
@@ -196,6 +205,8 @@ private fun Ready(
     val sides = resolvedContentPadding()
     // The thread scrolls under the top bar. The navigation bar's inset goes under the pinned bar where there is one, and into
     // the thread's scroll where there is not.
+    // A write in flight refuses a second one, so nothing opens an editor then.
+    val writeIdle = state.commentAction == CommentAction.None && state.action == IssueAction.None
     val pinnedBar = detail.canComment || detail.canResolve
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -221,7 +232,7 @@ private fun Ready(
                             Modifier
                                 .fillMaxWidth()
                                 .then(
-                                    if (detail.canActOn(report)) {
+                                    if (detail.canActOn(report) && writeIdle) {
                                         Modifier.combinedClickable(
                                             onClick = { modals.openEdit(report) },
                                             onLongClick = { modals.actingOnCommentId = report.id },
@@ -239,6 +250,7 @@ private fun Ready(
                 thread = state.thread,
                 detail = detail,
                 commentAction = state.commentAction,
+                issueActionRunning = state.action != IssueAction.None,
                 now = state.now,
                 onActOn = { comment -> modals.actingOnCommentId = comment.id },
                 onTapOutbox = { entry -> modals.outboxActionId = entry.localId },
@@ -269,7 +281,7 @@ private fun Ready(
             onDismissRequest = { modals.confirmingStatus = false },
         )
     }
-    IssueModals(state, events, actions, modals)
+    IssueModals(state, actions, modals)
 }
 
 /** The title it is about: poster, title, what it affects, and the type and state; tapping opens the server's page. */
