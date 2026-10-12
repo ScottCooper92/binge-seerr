@@ -1,12 +1,15 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
+import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.SAVE_AS_MADE_DELAY_MILLIS
 import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
+import com.cooper.binge.companion.seerr.util.awaitEvent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -120,6 +123,27 @@ class NetworkViewModelTest {
             val saved = vm.awaitReady { !it.saveFailed && !it.dirty }
             assertFalse(saved.saved.trustProxy)
             assertEquals(2, seerr.count("POST", "/api/v1/settings/network"))
+        }
+
+    /** A refusal is reported with its reason and the page goes back to what the server holds, with no Retry (#1475). */
+    @Test
+    fun `a write the server refuses is reported, not kept for retry, and the page shows the saved record`() =
+        runTest {
+            seerr.viewer(id = 1, permissions = ADMIN)
+            seerr.serve("GET /api/v1/settings/network", SEERR_NETWORK)
+            seerr.serve("POST /api/v1/settings/network", """{"message":"bad value"}""", code = 400)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val refused = awaitEvent(vm.events)
+            vm.edit { it.copy(trustProxy = false) }
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+
+            assertEquals(EditorEvent.Failed(SeerrError.Rejected), refused.await())
+            val ready = vm.awaitReady { !it.dirty && it.saveStatus == SaveStatus.Idle }
+            assertFalse(ready.saveFailed)
+            assertTrue("back to the saved record", ready.draft.trustProxy)
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/network"))
         }
 
     @Test
