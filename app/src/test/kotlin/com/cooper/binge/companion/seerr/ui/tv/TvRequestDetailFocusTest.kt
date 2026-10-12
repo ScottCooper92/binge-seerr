@@ -16,9 +16,10 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocusable
 import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
@@ -48,6 +49,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.binge.designsystem.R as DesR
 
 private const val HEAT = "Heat"
 
@@ -125,7 +127,7 @@ class TvRequestDetailFocusTest {
         pressOk()
         composeTestRule.onNodeWithText(string(R.string.request_remove_confirm_title)).assertIsDisplayed()
         assertEquals(emptyList<Boolean>(), removed)
-        pressBack()
+        pressCancel()
         settleFocusRestore()
 
         assertEquals(emptyList<Boolean>(), removed)
@@ -143,7 +145,7 @@ class TvRequestDetailFocusTest {
         pressOk()
         composeTestRule.onNodeWithText(string(R.string.request_block_confirm_title)).assertIsDisplayed()
         assertEquals(0, blocked)
-        // The sheet's confirm row shares its label with the button beneath it; it is the later of the two.
+        // The dialog's confirm button shares its label with the button beneath it; it is the later of the two.
         composeTestRule.onAllNodes(hasText(string(R.string.tv_detail_block)) and isFocusable()).onLast().requestFocus()
         composeTestRule.waitForIdle()
         pressOk()
@@ -395,6 +397,12 @@ class TvRequestDetailFocusTest {
 
     private fun pressRight() = press(Key.DirectionRight)
 
+    /** Cancel in the confirm dialog, which is a window of its own: the dialog hands focus back to the button beneath it. */
+    private fun pressCancel() {
+        composeTestRule.onNodeWithText(string(DesR.string.action_cancel)).performClick()
+        composeTestRule.waitForIdle()
+    }
+
     private fun pressBack() {
         composeTestRule.runOnUiThread { composeTestRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeTestRule.waitForIdle()
@@ -407,7 +415,8 @@ class TvRequestDetailFocusTest {
     }
 
     private fun press(key: Key) {
-        composeTestRule.onRoot().performKeyInput { pressKey(key) }
+        // A confirm dialog is a second root, drawn over the page; keys go to the topmost.
+        composeTestRule.onAllNodes(isRoot()).onLast().performKeyInput { pressKey(key) }
         composeTestRule.waitForIdle()
     }
 }

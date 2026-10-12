@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.tv.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
@@ -9,6 +10,7 @@ import com.cooper.binge.companion.seerr.ui.hub.BingeStatus
 import com.cooper.binge.companion.seerr.ui.hub.previewAdminOverview
 import com.cooper.binge.companion.seerr.ui.hub.previewReady
 import com.cooper.binge.companion.seerr.ui.settings.SettingsUiState
+import com.cooper.binge.companion.seerr.ui.tv.ConfirmDialogFrame
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettings
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsAdmin
 import com.cooper.binge.companion.seerr.ui.tv.SampleSettingsWithApp
@@ -38,6 +40,18 @@ class TvSettingsScreenshotTest {
             onDisconnect = {},
             initialFocusedKey = KEY_DISCONNECT,
             initialFocusedOptionLabel = "Disconnect",
+        )
+    }
+
+    /** Disconnect asks first: what it does, then Disconnect and Cancel, in a dialog. */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun DisconnectConfirm() {
+        ConfirmDialogFrame(
+            title = stringResource(R.string.hub_disconnect_confirm_title),
+            message = stringResource(R.string.hub_disconnect_confirm_message),
+            confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),
         )
     }
 
