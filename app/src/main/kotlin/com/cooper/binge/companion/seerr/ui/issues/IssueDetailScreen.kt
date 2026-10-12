@@ -115,11 +115,11 @@ fun IssueDetailScreen(
     val ready = state as? IssueDetailUiState.Ready
     val seeded = state as? IssueDetailUiState.Seeded
     SaveFailedSnackbar(
-        failed = ready?.unsentEdit != null,
+        failed = ready?.unsentEdits?.isNotEmpty() == true,
         snackbarHostState = snackbarHostState,
         message = stringResource(R.string.editor_save_failed),
         retryLabel = stringResource(R.string.action_try_again),
-        onRetry = { ready?.unsentEdit?.let { actions.onEditComment(it.commentId, it.message) } },
+        onRetry = { ready?.unsentEdits?.firstOrNull()?.let { actions.onEditComment(it.commentId, it.message) } },
     )
     OverflowDetailScaffold(
         title = ready?.detail?.item?.title ?: seeded?.item?.title ?: stringResource(R.string.issue_detail_title),
@@ -130,7 +130,7 @@ fun IssueDetailScreen(
         onOverflowClick = { managing = true },
         overflowIcon = Icons.AutoMirrored.Filled.OpenInNew,
         leadingActions = {
-            ready?.let { SaveStatusLine(status = it.editStatus, failed = it.unsentEdit != null) }
+            ready?.let { SaveStatusLine(status = it.editStatus, failed = it.unsentEdits.isNotEmpty()) }
             if (ready?.detail?.canDelete == true) {
                 IconButton(onClick = { confirmingDelete = true }) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.issue_delete))

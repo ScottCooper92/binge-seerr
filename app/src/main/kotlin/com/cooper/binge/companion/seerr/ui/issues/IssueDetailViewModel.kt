@@ -152,8 +152,8 @@ class IssueDetailViewModel
 
         /**
          * Saves an edit to a comment as it is made (#930): the thread shows the new text at once, and the page says Saving,
-         * then Saved. A write that fails keeps the text as the unsent edit, which the page's Retry sends here again; it
-         * stays until that comment's edit lands. A failed reload after a write that landed is still reported.
+         * then Saved. A write that fails keeps the text as an unsent edit, one per comment, which the page's Retry sends here
+         * again; each stays until that comment's edit lands. A failed reload after a write that landed is still reported.
          */
         fun editComment(
             commentId: Int,
@@ -176,7 +176,7 @@ class IssueDetailViewModel
                 attempt { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                     .onSuccess {
                         // Landed, so it is no longer owed; an unsent edit to another comment still is.
-                        state.updateReady { it.copy(unsentEdit = it.unsentEdit?.takeIf { unsent -> unsent.commentId != commentId }) }
+                        state.updateReady { it.copy(unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId }) }
                         val reloadFailure = reloadAfterWrite()
                         if (reloadFailure == null) {
                             analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "edited"))
@@ -184,7 +184,14 @@ class IssueDetailViewModel
                         state.updateReady { it.copy(editStatus = SaveStatus.Saved) }
                         reloadFailure?.let { eventFlow.emit(IssueDetailEvent.Failed(it.toSeerrError())) }
                     }.onFailure {
-                        state.updateReady { it.copy(commentAction = CommentAction.None, editStatus = SaveStatus.Idle, unsentEdit = edit) }
+                        // One owed edit per comment: a second failure adds to the first rather than replacing it.
+                        state.updateReady {
+                            it.copy(
+                                commentAction = CommentAction.None,
+                                editStatus = SaveStatus.Idle,
+                                unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId } + edit,
+                            )
+                        }
                     }
             }
         }
@@ -250,7 +257,7 @@ class IssueDetailViewModel
                 attempt { connection.api().deleteIssueComment(commentId) }
                     .onSuccess {
                         // The comment is gone, so an edit still owed to it can never land.
-                        state.updateReady { it.copy(unsentEdit = it.unsentEdit?.takeIf { unsent -> unsent.commentId != commentId }) }
+                        state.updateReady { it.copy(unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId }) }
                         val reloadFailure = reloadAfterWrite()
                         if (reloadFailure == null) {
                             analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "deleted"))
@@ -275,7 +282,7 @@ class IssueDetailViewModel
                 result
                     .getOrNull()
                     // An edit not yet on the server stays on the page over what was read.
-                    ?.let { detail -> ready.unsentEdit?.let(detail::withEdit) ?: detail }
+                    ?.let { detail -> ready.unsentEdits.fold(detail) { shown, edit -> shown.withEdit(edit) } }
                     ?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None, action = IssueAction.None) }
                     ?: ready.copy(commentAction = CommentAction.None, action = IssueAction.None)
             }

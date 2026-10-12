@@ -415,7 +415,7 @@ class IssueDetailViewModelTest {
             assertTrue(failed.await() is IssueDetailEvent.Failed)
             val ready = vm.awaitReady { it.commentAction == CommentAction.None }
             assertEquals(SaveStatus.Saved, ready.editStatus)
-            assertNull(ready.unsentEdit)
+            assertTrue(ready.unsentEdits.isEmpty())
             assertEquals(
                 "Same here, fixed now",
                 ready.detail.comments
@@ -433,8 +433,8 @@ class IssueDetailViewModelTest {
             vm.awaitReady()
 
             vm.editComment(2, "Same here, fixed now")
-            val failed = vm.awaitReady { it.unsentEdit != null }
-            assertEquals(CommentEdit(2, "Same here, fixed now"), failed.unsentEdit)
+            val failed = vm.awaitReady { it.unsentEdits.isNotEmpty() }
+            assertEquals(listOf(CommentEdit(2, "Same here, fixed now")), failed.unsentEdits)
             assertEquals(
                 "Same here, fixed now",
                 failed.detail.comments
@@ -445,7 +445,7 @@ class IssueDetailViewModelTest {
             serve("PUT /api/v1/issueComment/2", "{}")
             serve("GET /api/v1/issue/31", issueJson().replace("\"Same here\"", "\"Same here, fixed now\""))
             vm.editComment(2, "Same here, fixed now")
-            val saved = vm.awaitReady { it.unsentEdit == null && it.editStatus == SaveStatus.Saved }
+            val saved = vm.awaitReady { it.unsentEdits.isEmpty() && it.editStatus == SaveStatus.Saved }
             assertEquals(
                 "Same here, fixed now",
                 saved.detail.comments
@@ -453,6 +453,36 @@ class IssueDetailViewModelTest {
                     .message,
             )
             assertEquals(2, received.count { it.method == "PUT" })
+        }
+
+    @Test
+    fun `a second failed edit keeps the first owed, and a retry sends each in turn`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/1", "{}", code = 500)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(1, "Audio drifts")
+            vm.awaitReady { it.unsentEdits.size == 1 }
+            vm.editComment(2, "Same here, fixed now")
+            val failed = vm.awaitReady { it.unsentEdits.size == 2 && it.commentAction == CommentAction.None }
+            assertEquals(listOf(CommentEdit(1, "Audio drifts"), CommentEdit(2, "Same here, fixed now")), failed.unsentEdits)
+            assertEquals("Audio drifts", failed.detail.report?.message)
+
+            serve("PUT /api/v1/issueComment/1", "{}")
+            serve("GET /api/v1/issue/31", issueJson().replace("Audio out of sync", "Audio drifts"))
+            vm.editComment(1, "Audio drifts")
+            val afterFirst = vm.awaitReady { it.unsentEdits.size == 1 && it.editStatus == SaveStatus.Saved }
+            assertEquals(listOf(CommentEdit(2, "Same here, fixed now")), afterFirst.unsentEdits)
+            assertEquals(
+                "Same here, fixed now",
+                afterFirst.detail.comments
+                    .single()
+                    .message,
+            )
+            assertEquals("Audio drifts", afterFirst.detail.report?.message)
         }
 
     @Test
@@ -465,12 +495,12 @@ class IssueDetailViewModelTest {
             vm.awaitReady()
 
             vm.editComment(2, "Same here, fixed now")
-            vm.awaitReady { it.unsentEdit != null }
+            vm.awaitReady { it.unsentEdits.isNotEmpty() }
 
             val commentDeleted = awaitEvent(vm.events)
             vm.deleteComment(2)
             assertEquals(IssueDetailEvent.CommentDeleted, commentDeleted.await())
-            assertNull(vm.awaitReady { it.commentAction == CommentAction.None }.unsentEdit)
+            assertTrue(vm.awaitReady { it.commentAction == CommentAction.None }.unsentEdits.isEmpty())
         }
 
     @Test

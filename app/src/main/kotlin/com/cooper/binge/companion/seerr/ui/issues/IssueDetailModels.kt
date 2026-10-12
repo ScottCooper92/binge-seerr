@@ -125,8 +125,8 @@ sealed interface IssueDetailUiState {
         val now: Long = System.currentTimeMillis(),
         /** An edit to a comment saves as it is made (#930): the page's Saving and Saved. */
         val editStatus: SaveStatus = SaveStatus.Idle,
-        /** An edit whose write failed, kept on the page and sent again by Retry until it lands. */
-        val unsentEdit: CommentEdit? = null,
+        /** Edits whose write failed, one per comment, kept on the page and sent again by Retry, in turn, until each lands. */
+        val unsentEdits: List<CommentEdit> = emptyList(),
     ) : IssueDetailUiState {
         val thread: List<ThreadEntry>
             get() = detail.comments.map { ThreadEntry.Server(it) } + outbox.map { ThreadEntry.Pending(it) }
