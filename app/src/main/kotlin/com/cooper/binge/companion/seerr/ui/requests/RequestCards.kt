@@ -28,10 +28,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.binge.designsystem.component.BingeIconPlate
 import com.binge.designsystem.component.BingeInitialsAvatar
 import com.binge.designsystem.component.BingeTextButton
 import com.binge.designsystem.component.InfoValue
@@ -223,27 +225,16 @@ private fun CardInfoRows(
     }
 }
 
-/** A glyph in the tinted box a list row leads with, for a row the design system's `ListItem` does not draw. */
+/** A glyph on the design system's icon plate, for a row its `ListItem` does not draw; [contentDescription] names it where it stands alone. */
 @Composable
 internal fun RowIconBox(
     icon: ImageVector,
     contentDescription: String? = null,
 ) {
-    Box(
-        modifier =
-            Modifier
-                .size(dimensionResource(DesR.dimen.item_group_icon_size))
-                .clip(BingeShapes.MoreCard)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(dimensionResource(DesR.dimen.item_group_icon_glyph)),
-        )
-    }
+    BingeIconPlate(
+        icon = icon,
+        modifier = if (contentDescription == null) Modifier else Modifier.semantics { this.contentDescription = contentDescription },
+    )
 }
 
 /** Server, quality and folder side by side: each an icon over its value alone, the icon standing in for the label. */

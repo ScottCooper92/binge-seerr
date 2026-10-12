@@ -1,13 +1,10 @@
 package com.cooper.binge.companion.seerr.ui.settings.server
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -27,10 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
@@ -38,10 +32,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.binge.designsystem.component.BingeBottomSheet
 import com.binge.designsystem.component.BingeConfirmDialog
+import com.binge.designsystem.component.BingeIconPlate
 import com.binge.designsystem.component.HintCard
 import com.binge.designsystem.component.ReorderableHandleRow
 import com.binge.designsystem.component.bingeSwitchColors
-import com.binge.designsystem.theme.BingeShapes
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.settings.Regions
 import com.cooper.binge.companion.seerr.ui.state.ActionSheetGroup
@@ -221,7 +215,7 @@ private fun SliderRow(
                 Modifier.toggleable(value = slider.enabled, enabled = enabled, role = Role.Switch) { actions.onToggle(slider.id) }
             },
     ) {
-        SliderKindIcon(slider.type?.icon() ?: Icons.Filled.ViewCarousel)
+        BingeIconPlate(slider.type?.icon() ?: Icons.Filled.ViewCarousel)
         Column(modifier = Modifier.weight(1f)) {
             Text(slider.label(), style = MaterialTheme.typography.bodyLarge)
             slider.caption(names)?.let {
@@ -243,28 +237,6 @@ private fun SliderRow(
         )
     }
 }
-
-/**
- * The kind's icon in the tinted box a settings row draws: the reorder row has no icon of its own, so the box is drawn
- * here to the same tokens as the design system's list rows.
- */
-@Composable
-private fun SliderKindIcon(icon: ImageVector) =
-    Box(
-        modifier =
-            Modifier
-                .size(dimensionResource(DesR.dimen.item_group_icon_size))
-                .clip(BingeShapes.MoreCard)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(dimensionResource(DesR.dimen.item_group_icon_glyph)),
-        )
-    }
 
 /** A built-in slider is named by its kind; a custom one by its title, with the kind beneath. */
 @Composable
