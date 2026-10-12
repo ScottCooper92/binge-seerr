@@ -14,6 +14,7 @@ internal fun noIssueDetailActions(): IssueDetailActions =
         onEditOutbox = { _, _ -> },
         onDropOutbox = {},
         onEditComment = { _, _ -> },
+        onRetryEdit = {},
         onDeleteComment = {},
         onToggleStatus = {},
         onDeleteIssue = {},

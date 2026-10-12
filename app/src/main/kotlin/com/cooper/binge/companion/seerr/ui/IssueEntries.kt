@@ -75,6 +75,7 @@ internal fun IssueDetailEntry(
                 onEditOutbox = viewModel::editOutbox,
                 onDropOutbox = viewModel::dropOutbox,
                 onEditComment = viewModel::editComment,
+                onRetryEdit = viewModel::retryEdit,
                 onDeleteComment = viewModel::deleteComment,
                 onToggleStatus = viewModel::toggleStatus,
                 onDeleteIssue = viewModel::deleteIssue,

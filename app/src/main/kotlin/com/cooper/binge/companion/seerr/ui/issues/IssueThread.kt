@@ -49,6 +49,7 @@ internal fun IssueThread(
     thread: List<ThreadEntry>,
     detail: IssueDetail,
     commentAction: CommentAction,
+    issueActionRunning: Boolean,
     now: Long,
     onActOn: (IssueComment) -> Unit,
     onTapOutbox: (OutboxComment) -> Unit,
@@ -68,7 +69,7 @@ internal fun IssueThread(
                     CommentRow(
                         comment = entry.comment,
                         now = now,
-                        canAct = detail.canActOn(entry.comment) && commentAction == CommentAction.None,
+                        canAct = detail.canActOn(entry.comment) && commentAction == CommentAction.None && !issueActionRunning,
                         dimmed = commentAction.commentId == entry.comment.id,
                         onAct = { onActOn(entry.comment) },
                     )
