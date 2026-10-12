@@ -10,6 +10,11 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.BingeActionFooter
@@ -128,4 +134,13 @@ internal fun IssueType.labelRes(): Int =
         IssueType.Audio -> R.string.issue_type_audio
         IssueType.Subtitles -> R.string.issue_type_subtitles
         IssueType.Other -> R.string.issue_type_other
+    }
+
+/** What an issue is about, as its row's glyph where the kinds are listed as rows. */
+internal fun IssueType.icon(): ImageVector =
+    when (this) {
+        IssueType.Video -> Icons.Filled.Videocam
+        IssueType.Audio -> Icons.AutoMirrored.Filled.VolumeUp
+        IssueType.Subtitles -> Icons.Filled.Subtitles
+        IssueType.Other -> Icons.Filled.MoreHoriz
     }
