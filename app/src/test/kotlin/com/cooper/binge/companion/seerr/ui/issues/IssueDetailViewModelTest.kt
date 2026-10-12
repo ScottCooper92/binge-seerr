@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.TitleCache
 import com.cooper.binge.companion.seerr.ui.requests.IssueType
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.util.FakeRequest
 import com.cooper.binge.companion.seerr.util.FakeResponse
 import com.cooper.binge.companion.seerr.util.FakeSeerrServer
@@ -393,7 +394,7 @@ class IssueDetailViewModelTest {
         }
 
     @Test
-    fun `a write that succeeds but fails to reload reports failure, not success, leaving the stale comment`() =
+    fun `an edit that saves but fails to reload keeps the saved text and reports the reload`() =
         runTest {
             server(ADMIN)
             serve("PUT /api/v1/issueComment/2", "{}")
@@ -413,12 +414,45 @@ class IssueDetailViewModelTest {
 
             assertTrue(failed.await() is IssueDetailEvent.Failed)
             val ready = vm.awaitReady { it.commentAction == CommentAction.None }
+            assertEquals(SaveStatus.Saved, ready.editStatus)
+            assertNull(ready.unsentEdit)
             assertEquals(
-                "Same here",
+                "Same here, fixed now",
                 ready.detail.comments
                     .single()
                     .message,
             )
+        }
+
+    @Test
+    fun `a failed edit keeps the change on the page until a retry saves it`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(2, "Same here, fixed now")
+            val failed = vm.awaitReady { it.unsentEdit != null }
+            assertEquals(CommentEdit(2, "Same here, fixed now"), failed.unsentEdit)
+            assertEquals(
+                "Same here, fixed now",
+                failed.detail.comments
+                    .single()
+                    .message,
+            )
+
+            serve("PUT /api/v1/issueComment/2", "{}")
+            serve("GET /api/v1/issue/31", issueJson().replace("\"Same here\"", "\"Same here, fixed now\""))
+            vm.editComment(2, "Same here, fixed now")
+            val saved = vm.awaitReady { it.unsentEdit == null && it.editStatus == SaveStatus.Saved }
+            assertEquals(
+                "Same here, fixed now",
+                saved.detail.comments
+                    .single()
+                    .message,
+            )
+            assertEquals(2, received.count { it.method == "PUT" })
         }
 
     @Test
@@ -430,9 +464,8 @@ class IssueDetailViewModelTest {
             val vm = viewModel()
             vm.awaitReady()
 
-            val commentEdited = awaitEvent(vm.events)
             vm.editComment(2, "Same here, fixed now")
-            assertEquals(IssueDetailEvent.CommentEdited, commentEdited.await())
+            vm.awaitReady { it.editStatus == SaveStatus.Saved }
             assertTrue(received.any { it.method == "PUT" && it.body.contains("fixed now") })
 
             val commentDeleted = awaitEvent(vm.events)

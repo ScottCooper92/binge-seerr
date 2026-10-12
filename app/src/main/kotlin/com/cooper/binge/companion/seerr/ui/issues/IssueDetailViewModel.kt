@@ -17,6 +17,7 @@ import com.cooper.binge.companion.seerr.telemetry.NoOpAnalytics
 import com.cooper.binge.companion.seerr.telemetry.NoOpCrashBreadcrumbs
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.minuteClock
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -149,6 +150,11 @@ class IssueDetailViewModel
 
         fun dropOutbox(localId: Long) = outbox.drop(localId)
 
+        /**
+         * Saves an edit to a comment as it is made (#930): the thread shows the new text at once, and the page says Saving,
+         * then Saved. A write that fails keeps the text as the unsent edit, which the page's Retry sends here again; it
+         * stays until that comment's edit lands. A failed reload after a write that landed is still reported.
+         */
         fun editComment(
             commentId: Int,
             message: String,
@@ -156,23 +162,29 @@ class IssueDetailViewModel
             val ready = ready() ?: return
             val trimmed = message.trim()
             if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
-            state.value = ready.copy(commentAction = CommentAction.Editing(commentId))
+            val edit = CommentEdit(commentId, trimmed)
+            state.value =
+                ready.copy(
+                    detail = ready.detail.withEdit(edit),
+                    commentAction = CommentAction.Editing(commentId),
+                    editStatus = SaveStatus.Saving,
+                )
             crashBreadcrumbs.key("issue_id", issueId.toString())
             crashBreadcrumbs.key("comment_id", commentId.toString())
             crashBreadcrumbs.log("editing comment on issue")
             viewModelScope.launch(dispatcher) {
                 attempt { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                     .onSuccess {
+                        // Landed, so it is no longer owed; an unsent edit to another comment still is.
+                        state.updateReady { it.copy(unsentEdit = it.unsentEdit?.takeIf { unsent -> unsent.commentId != commentId }) }
                         val reloadFailure = reloadAfterWrite()
                         if (reloadFailure == null) {
                             analytics.event(AnalyticsEvents.ISSUE_COMMENTED, mapOf(AnalyticsEvents.PARAM_ACTION to "edited"))
                         }
-                        eventFlow.emit(
-                            reloadFailure?.let { IssueDetailEvent.Failed(it.toSeerrError()) } ?: IssueDetailEvent.CommentEdited,
-                        )
-                    }.onFailure { failure ->
-                        state.updateReady { it.copy(commentAction = CommentAction.None) }
-                        eventFlow.emit(IssueDetailEvent.Failed(failure.toSeerrError()))
+                        state.updateReady { it.copy(editStatus = SaveStatus.Saved) }
+                        reloadFailure?.let { eventFlow.emit(IssueDetailEvent.Failed(it.toSeerrError())) }
+                    }.onFailure {
+                        state.updateReady { it.copy(commentAction = CommentAction.None, editStatus = SaveStatus.Idle, unsentEdit = edit) }
                     }
             }
         }
@@ -260,6 +272,8 @@ class IssueDetailViewModel
             state.updateReady { ready ->
                 result
                     .getOrNull()
+                    // An edit not yet on the server stays on the page over what was read.
+                    ?.let { detail -> ready.unsentEdit?.let(detail::withEdit) ?: detail }
                     ?.let { detail -> ready.copy(detail = detail, commentAction = CommentAction.None, action = IssueAction.None) }
                     ?: ready.copy(commentAction = CommentAction.None, action = IssueAction.None)
             }

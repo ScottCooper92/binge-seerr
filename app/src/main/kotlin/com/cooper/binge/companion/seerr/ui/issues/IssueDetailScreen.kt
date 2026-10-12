@@ -52,6 +52,8 @@ import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.state.ErrorScreen
 import com.cooper.binge.companion.seerr.ui.state.OverflowDetailScaffold
 import com.cooper.binge.companion.seerr.ui.state.RequestStateChip
+import com.cooper.binge.companion.seerr.ui.state.SaveFailedSnackbar
+import com.cooper.binge.companion.seerr.ui.state.SaveStatusLine
 import com.cooper.binge.companion.seerr.ui.state.messageRes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -98,7 +100,6 @@ fun IssueDetailScreen(
             snackbarHostState.showSnackbar(
                 message =
                     when (event) {
-                        IssueDetailEvent.CommentEdited -> resources.getString(R.string.issue_comment_edited)
                         IssueDetailEvent.CommentDeleted -> resources.getString(R.string.issue_comment_deleted)
                         IssueDetailEvent.IssueResolved -> resources.getString(R.string.issue_resolved)
                         IssueDetailEvent.IssueReopened -> resources.getString(R.string.issue_reopened)
@@ -113,6 +114,13 @@ fun IssueDetailScreen(
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val ready = state as? IssueDetailUiState.Ready
     val seeded = state as? IssueDetailUiState.Seeded
+    SaveFailedSnackbar(
+        failed = ready?.unsentEdit != null,
+        snackbarHostState = snackbarHostState,
+        message = stringResource(R.string.editor_save_failed),
+        retryLabel = stringResource(R.string.action_try_again),
+        onRetry = { ready?.unsentEdit?.let { actions.onEditComment(it.commentId, it.message) } },
+    )
     OverflowDetailScaffold(
         title = ready?.detail?.item?.title ?: seeded?.item?.title ?: stringResource(R.string.issue_detail_title),
         onBack = actions.onBack.takeIf { showBack },
@@ -122,6 +130,7 @@ fun IssueDetailScreen(
         onOverflowClick = { managing = true },
         overflowIcon = Icons.AutoMirrored.Filled.OpenInNew,
         leadingActions = {
+            ready?.let { SaveStatusLine(status = it.editStatus, failed = it.unsentEdit != null) }
             if (ready?.detail?.canDelete == true) {
                 IconButton(onClick = { confirmingDelete = true }) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.issue_delete))
@@ -134,7 +143,7 @@ fun IssueDetailScreen(
             is IssueDetailUiState.Seeded -> Seeded(state, actions, contentPadding = inner)
             is IssueDetailUiState.Error ->
                 ErrorScreen(error = state.error, modifier = Modifier.padding(inner), onRetry = actions.onRetry)
-            is IssueDetailUiState.Ready -> Ready(state, events, actions, contentPadding = inner)
+            is IssueDetailUiState.Ready -> Ready(state, actions, contentPadding = inner)
         }
     }
     if (managing && ready != null) {
@@ -185,7 +194,6 @@ private fun Seeded(
 @Composable
 private fun Ready(
     state: IssueDetailUiState.Ready,
-    events: Flow<IssueDetailEvent>,
     actions: IssueDetailActions,
     contentPadding: PaddingValues,
 ) {
@@ -269,7 +277,7 @@ private fun Ready(
             onDismissRequest = { modals.confirmingStatus = false },
         )
     }
-    IssueModals(state, events, actions, modals)
+    IssueModals(state, actions, modals)
 }
 
 /** The title it is about: poster, title, what it affects, and the type and state; tapping opens the server's page. */

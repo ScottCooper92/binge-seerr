@@ -248,7 +248,6 @@
     <string name="issue_comment_hint">Añade un comentario…</string>
     <string name="issue_comment_title">Añadir un comentario</string>
     <string name="issue_comment_send">Publicar</string>
-    <string name="issue_comment_save">Guardar</string>
     <string name="issue_edit_comment">Editar el comentario</string>
     <string name="issue_edit_report">Editar el aviso</string>
     <string name="issue_delete_comment">Eliminar el comentario</string>
@@ -261,7 +260,6 @@
     <string name="issue_comment_sending">Enviando…</string>
     <string name="issue_comment_send_failed">No se pudo enviar. Toca para ver las opciones.</string>
     <string name="issue_comment_send_blocked">El servidor rechazó este comentario.</string>
-    <string name="issue_comment_edited">Comentario actualizado</string>
     <string name="issue_comment_deleted">Comentario eliminado</string>
     <string name="issue_manage_cd">Acciones de la incidencia</string>
     <string name="issue_action_resolve">Resolver</string>

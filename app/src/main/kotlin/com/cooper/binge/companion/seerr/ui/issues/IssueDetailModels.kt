@@ -1,6 +1,7 @@
 package com.cooper.binge.companion.seerr.ui.issues
 
 import com.cooper.binge.companion.seerr.seerr.SeerrError
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.UserRole
 import com.cooper.binge.companion.seerr.ui.users.userRole
 
@@ -122,6 +123,10 @@ sealed interface IssueDetailUiState {
         val action: IssueAction = IssueAction.None,
         /** What the thread's relative times are worded against: moved on each minute while the page shows (#1239). */
         val now: Long = System.currentTimeMillis(),
+        /** An edit to a comment saves as it is made (#930): the page's Saving and Saved. */
+        val editStatus: SaveStatus = SaveStatus.Idle,
+        /** An edit whose write failed, kept on the page and sent again by Retry until it lands. */
+        val unsentEdit: CommentEdit? = null,
     ) : IssueDetailUiState {
         val thread: List<ThreadEntry>
             get() = detail.comments.map { ThreadEntry.Server(it) } + outbox.map { ThreadEntry.Pending(it) }
@@ -132,10 +137,23 @@ sealed interface IssueDetailUiState {
     ) : IssueDetailUiState
 }
 
-/** A write's outcome, for the snackbar; posting is silent, since the pending row is its own feedback. */
-sealed interface IssueDetailEvent {
-    data object CommentEdited : IssueDetailEvent
+/** A comment's new text, as an edit sends it. */
+data class CommentEdit(
+    val commentId: Int,
+    val message: String,
+)
 
+/** [edit]'s text in place of the comment it names, the report included. */
+internal fun IssueDetail.withEdit(edit: CommentEdit): IssueDetail {
+    fun IssueComment.edited() = if (id == edit.commentId) copy(message = edit.message) else this
+    return copy(report = report?.edited(), comments = comments.map { it.edited() })
+}
+
+/**
+ * A write's outcome, for the snackbar. Posting is silent, since the pending row is its own feedback, and so is an edit,
+ * which the page's Saving and Saved report (#930).
+ */
+sealed interface IssueDetailEvent {
     data object CommentDeleted : IssueDetailEvent
 
     data object IssueResolved : IssueDetailEvent
