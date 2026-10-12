@@ -67,6 +67,36 @@ class SaveAsMadeTest {
             assertEquals(2, gates.size)
         }
 
+    /**
+     * A discard while a write is running drops that write's answer too: adopting it would queue the discarded change again,
+     * and the page's read after the discard would send it over the record the discard was for (#1460). It holds because the
+     * send waiting on the write is the one the discard cancels.
+     */
+    @Test
+    fun `a write that lands after a discard queues nothing it discarded`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+            draft = 2
+            mode.changed()
+
+            mode.discard()
+            gates[0].complete(1)
+            runCurrent()
+            val settled = mode.settle()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 3)
+            runCurrent()
+            mode.cleared()
+            runCurrent()
+
+            assertEquals("only the write sent before the discard", listOf(1), sent)
+            assertEquals(null, settled.await())
+            assertEquals("its answer is not adopted", 0, saved)
+        }
+
     @Test
     fun `settling sends a change still waiting out its delay at once, and only once`() =
         runTest {
