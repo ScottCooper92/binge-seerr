@@ -3,11 +3,8 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -129,17 +126,17 @@ private fun optionItem(
     return when {
         option == AgentOption.EmailSecure ->
             choiceSettingItem(
-                icon = Icons.Filled.Tune,
+                icon = option.icon(),
                 title = label,
                 choices = EmailEncryption.entries.map { it to stringResource(it.labelRes()) },
-                choiceIcon = { if (it == EmailEncryption.None) Icons.Filled.LockOpen else Icons.Filled.Lock },
+                choiceIcon = { it.icon() },
                 selected = EmailEncryption.of(draft),
                 enabled = editable,
                 onSelect = actions.onSetEncryption,
             )
         option == AgentOption.PushoverSound ->
             defaultFirstChoiceItem(
-                icon = Icons.Filled.Tune,
+                icon = option.icon(),
                 title = label,
                 default = stringResource(R.string.user_settings_pushover_sound_default),
                 current = draft.option(option),
@@ -149,15 +146,16 @@ private fun optionItem(
             ) { name -> actions.onSetOption(option, name) }
         option == AgentOption.NtfyPriority ->
             defaultFirstChoiceItem(
-                icon = Icons.Filled.Tune,
+                icon = option.icon(),
                 title = label,
                 default = stringResource(R.string.server_settings_agent_priority_unset),
                 current = draft.option(option),
                 listed = NtfyPriorityLevel.entries.map { it.value to stringResource(it.labelRes()) },
                 enabled = editable,
+                choiceIcon = ::ntfyPriorityIcon,
             ) { level -> actions.onSetOption(option, level) }
         option.kind == OptionKind.Switch ->
-            editorToggle(Icons.Filled.Tune, label, draft.switched(option), enabled) { on -> actions.onSetOption(option, on.toString()) }
+            editorToggle(option.icon(), label, draft.switched(option), enabled) { on -> actions.onSetOption(option, on.toString()) }
         else -> textOptionItem(option, label, draft, editable, actions)
     }
 }
@@ -173,7 +171,7 @@ private fun textOptionItem(
     val value = draft.option(option)
     val wrongShape = stringResource(if (option.port) R.string.editor_error_port else R.string.editor_error_whole_number)
     return textSettingItem(
-        icon = Icons.Filled.Tune,
+        icon = option.icon(),
         label = label,
         value = value,
         enabled = editable,

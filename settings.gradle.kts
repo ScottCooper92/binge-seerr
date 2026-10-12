@@ -1,4 +1,8 @@
 pluginManagement {
+    // The shared Gradle gates come from binge-ci as source, through a submodule pinned to the release
+    // the workflows also pin (#1082). Its plugins are applied by id with no version.
+    includeBuild("binge-ci/gradle-plugins")
+
     repositories {
         google {
             content {

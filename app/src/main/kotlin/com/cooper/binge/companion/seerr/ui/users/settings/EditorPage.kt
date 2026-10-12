@@ -187,7 +187,10 @@ internal fun <T> EditorPage(
                 FormAction(label = stringResource(R.string.editor_cancel), onClick = onBack, enabled = !draft.saving)
             },
         scrolling = scrolling,
-        extraActions = extraActions,
+        extraActions = {
+            if (saveAsMade) ready?.let { SaveStatusLine(status = it.saveStatus, failed = it.saveFailed) }
+            extraActions()
+        },
         bottomBar = bottomBar,
         notReady =
             when (state) {
@@ -206,7 +209,6 @@ internal fun <T> EditorPage(
                 LocalEditorForm provides form.takeIf { validation != null },
                 LocalEditorIssues provides issues.visible(form.submitted),
             ) {
-                if (saveAsMade) SaveStatusLine(status = draft.saveStatus, failed = draft.saveFailed)
                 content(draft.draft, !draft.saving)
             }
         }

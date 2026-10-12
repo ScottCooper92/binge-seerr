@@ -10,14 +10,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.binge.designsystem.resolvedContentInset
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.binge.designsystem.R as DesR
 
 /**
- * The quiet "Saving…" then "Saved" line a page that saves as it changes shows (#930). It keeps its line when there is
- * nothing to say, so the form under it does not jump as the status comes and goes. A failed save says nothing here:
+ * The quiet "Saving…" then "Saved" text a page that saves as it changes shows in its top bar (#930), through the form's
+ * `extraActions`, so it takes no room from the form and says nothing when idle. A failed save says nothing here:
  * [SaveFailedSnackbar] owns that, with Retry.
  */
 @Composable
@@ -28,10 +27,10 @@ fun SaveStatusLine(
 ) {
     val text =
         when {
-            failed -> ""
+            failed -> return
             status == SaveStatus.Saving -> stringResource(R.string.editor_saving)
             status == SaveStatus.Saved -> stringResource(R.string.user_settings_saved)
-            else -> ""
+            else -> return
         }
     Text(
         text = text,
@@ -39,7 +38,7 @@ fun SaveStatusLine(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier =
             modifier
-                .padding(horizontal = resolvedContentInset(), vertical = dimensionResource(DesR.dimen.padding_xs))
+                .padding(horizontal = dimensionResource(DesR.dimen.padding_s))
                 .semantics { liveRegion = LiveRegionMode.Polite },
     )
 }

@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.FIXED_NOW_MILLIS
 import com.cooper.binge.companion.seerr.ui.issues.IssueFilter
 import com.cooper.binge.companion.seerr.ui.issues.IssueItem
+import com.cooper.binge.companion.seerr.ui.issues.IssueListEvent
 import com.cooper.binge.companion.seerr.ui.issues.IssueStatus
 import com.cooper.binge.companion.seerr.ui.issues.IssuesUiState
 import com.cooper.binge.companion.seerr.ui.tv.NoIssuesActions
@@ -45,6 +46,27 @@ class TvIssuesScreenshotTest {
             events = emptyFlow(),
             actions = NoIssuesActions,
             now = FIXED_NOW_MILLIS,
+        )
+    }
+
+    /** A resolve that landed: the note at the foot of the board, until it clears a few seconds later (#1053). */
+    @PreviewTest
+    @SeerrTvScreenPreviews
+    @Composable
+    fun ResolvedNote() {
+        TvIssuesBoard(
+            state = issuesReady(),
+            rowsFor = { filter ->
+                when (filter) {
+                    IssueFilter.Open -> rows(listOf(FixedSampleIssues[0]))
+                    IssueFilter.Resolved -> rows(listOf(FixedSampleIssues[1]))
+                    else -> rows(emptyList())
+                }
+            },
+            events = emptyFlow(),
+            actions = NoIssuesActions,
+            now = FIXED_NOW_MILLIS,
+            initialEvent = IssueListEvent.Resolved,
         )
     }
 

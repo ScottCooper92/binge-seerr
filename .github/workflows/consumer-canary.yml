@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
@@ -79,7 +79,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@af5307ee00e0e0efff9b5c8ce08e45c1f0905909 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@118a2849cba1529577e8df010210b9f0166bc2df # v1
         with:
           result: ${{ needs.canary.result }}
           title: 'Consumer canary: main no longer builds against upstream heads'

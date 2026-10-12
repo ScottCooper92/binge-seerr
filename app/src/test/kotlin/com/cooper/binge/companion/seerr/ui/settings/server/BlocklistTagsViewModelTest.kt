@@ -100,7 +100,9 @@ class BlocklistTagsViewModelTest {
             vm.toggle(9951)
             assertEquals(listOf(4344, 210024), vm.awaitReady().tags)
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { seerr.count("POST", "/api/v1/settings/main") == 1 }
+            // In real time: nothing emits after the save lands, so a wait on the state checks the count once and can miss it.
+            seerr.awaitCount("POST", "/api/v1/settings/main", moreThan = 0, timeoutMillis = seerr.expectedCallWaitMillis())
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/main"))
 
             assertEquals(mapOf("blocklistedTags" to "4344,210024"), sent())
         }
@@ -131,7 +133,9 @@ class BlocklistTagsViewModelTest {
 
             vm.toggle(4344)
             advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
-            vm.uiState.first { seerr.count("POST", "/api/v1/settings/main") == 1 }
+            // In real time: nothing emits after the save lands, so a wait on the state checks the count once and can miss it.
+            seerr.awaitCount("POST", "/api/v1/settings/main", moreThan = 0, timeoutMillis = seerr.expectedCallWaitMillis())
+            assertEquals(1, seerr.count("POST", "/api/v1/settings/main"))
 
             assertEquals(mapOf("blacklistedTags" to "9951,4344"), sent())
         }

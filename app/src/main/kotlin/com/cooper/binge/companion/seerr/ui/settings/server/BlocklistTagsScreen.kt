@@ -31,6 +31,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import com.binge.designsystem.component.BingeLoadingIndicator
 import com.binge.designsystem.component.BingeTag
 import com.binge.designsystem.template.FormScreen
@@ -77,6 +78,7 @@ fun BlocklistTagsScreen(
         onBack = actions.onBack,
         snackbarHostState = snackbar,
         scrolling = false,
+        extraActions = { ready?.let { SaveStatusLine(status = it.saveStatus, failed = it.saveFailed) } },
         notReady =
             when (state) {
                 BlocklistTagsUiState.Loading -> { inner -> LoadingScreen(Modifier.padding(inner)) }
@@ -85,8 +87,7 @@ fun BlocklistTagsScreen(
             },
     ) { inner ->
         ready?.let {
-            Column(modifier = Modifier.fillMaxSize().padding(inner)) {
-                SaveStatusLine(status = it.saveStatus, failed = it.saveFailed)
+            Column(modifier = Modifier.fillMaxSize()) {
                 TagSearchPanel(
                     chosen = it.tags,
                     search = it.search,
@@ -95,6 +96,7 @@ fun BlocklistTagsScreen(
                     emptyTitle = stringResource(R.string.server_settings_blocklist_tags_empty_title),
                     emptyBody = stringResource(R.string.server_settings_blocklist_tags_empty),
                     modifier = Modifier.weight(1f),
+                    contentPadding = inner,
                 )
             }
         }
@@ -109,6 +111,7 @@ internal fun ChosenTags(
     onRemove: (Int) -> Unit,
     emptyTitle: String,
     emptyBody: String,
+    bottomInset: Dp,
     modifier: Modifier,
 ) {
     if (chosen.isEmpty()) {
@@ -116,12 +119,16 @@ internal fun ChosenTags(
             headline = emptyTitle,
             body = emptyBody,
             icon = Icons.Filled.Sell,
-            modifier = modifier,
+            modifier = modifier.padding(bottom = bottomInset),
         )
         return
     }
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()).padding(dimensionResource(DesR.dimen.padding_m)),
+        modifier =
+            modifier
+                .verticalScroll(rememberScrollState())
+                .padding(dimensionResource(DesR.dimen.padding_m))
+                .padding(bottom = bottomInset),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s)),
     ) {
         Text(
@@ -146,6 +153,7 @@ internal fun SearchResults(
     chosen: List<Int>,
     search: KeywordSearch,
     onToggle: (Int) -> Unit,
+    bottomInset: Dp,
     modifier: Modifier,
 ) {
     val results = search.results
@@ -160,7 +168,7 @@ internal fun SearchResults(
             }
         results.isEmpty() -> Note(stringResource(R.string.server_settings_blocklist_tags_no_match), modifier)
         else ->
-            Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(bottom = bottomInset)) {
                 results.forEachIndexed { index, keyword ->
                     SearchResultRow(
                         title = keyword.name,

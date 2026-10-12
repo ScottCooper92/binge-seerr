@@ -91,6 +91,7 @@ private fun OptionsForm(
     ) {
         HintCard(text = stringResource(R.string.advanced_intro))
         ChoiceRow(
+            icon = DestinationIcons.server,
             title = stringResource(R.string.advanced_server),
             choices = state.destination.servers.map { it.id to it.label },
             selected = state.destination.serverId,
@@ -101,6 +102,7 @@ private fun OptionsForm(
             BingeLoadingIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             ChoiceRow(
+                icon = DestinationIcons.profile,
                 title = stringResource(R.string.advanced_profile),
                 choices = state.destination.profiles.map { it.id to it.label },
                 selected = state.destination.profileId,
@@ -108,6 +110,7 @@ private fun OptionsForm(
                 enabled = !state.isSubmitting,
             )
             ChoiceRow(
+                icon = DestinationIcons.rootFolder,
                 title = stringResource(R.string.advanced_root_folder),
                 choices = state.destination.rootFolders.map { it to it },
                 selected = state.destination.rootFolder,

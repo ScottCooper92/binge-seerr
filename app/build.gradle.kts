@@ -8,9 +8,12 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
     alias(libs.plugins.ktlint)
-    alias(libs.plugins.detekt)
+    id("binge.gates.detekt")
+    id("binge.gates.baseline-staleness")
     alias(libs.plugins.kover)
     alias(libs.plugins.screenshot)
+    id("binge.gates.translation-staleness")
+    id("binge.gates.tv-material-separation")
 }
 
 // Crash reporting needs this app's own Firebase project, whose google-services.json is never
@@ -197,32 +200,20 @@ android {
 
 // A reworded English string is the one translation drift lint cannot see, so the hash of every
 // translated source string is committed at the repo root and `check` fails when one moves. Fix or
-// re-read the translation it names, then re-stamp with `updateTranslationHashes`.
-val translatedStringFiles =
-    fileTree(projectDir) {
-        include("src/*/res/values/strings.xml", "src/*/res/values-*/strings.xml")
-    }
-val translationHashes = rootProject.layout.projectDirectory.file("translation-hashes.txt")
-
-tasks.register<CheckTranslationStalenessTask>("checkTranslationStaleness") {
-    group = "verification"
-    description = "Checks that no translated source string changed without its translations being re-confirmed."
-    stringFiles.from(translatedStringFiles)
-    hashFile.set(translationHashes)
-    repoRoot.set(rootProject.layout.projectDirectory)
-    rewrite.set(false)
+// re-read the translation it names, then re-stamp with `updateTranslationHashes`. The gate is
+// binge-ci's; it reads only this module's strings, since the included builds check their own.
+translationStaleness {
+    includes.set(listOf("app/src/*/res/values/strings.xml", "app/src/*/res/values-*/strings.xml"))
 }
 
-tasks.register<CheckTranslationStalenessTask>("updateTranslationHashes") {
-    group = "verification"
-    description = "Re-stamps translation-hashes.txt after the named translations have been re-read."
-    stringFiles.from(translatedStringFiles)
-    hashFile.set(translationHashes)
-    repoRoot.set(rootProject.layout.projectDirectory)
-    rewrite.set(true)
+// Material 3 and tv-material each ship a MaterialTheme under the same simple name, so the wrong import
+// compiles and renders subtly wrong. binge-ci's gate keeps `ui/tv` on tv-material and everything else off
+// it. SeerrTheme.kt is the one crossing: it projects this app's colour schemes into tv-material's.
+tvMaterialSeparation {
+    sources.from(fileTree("src") { include("**/*.kt") })
+    allowlist.add("app/src/main/kotlin/com/cooper/binge/companion/seerr/theme/SeerrTheme.kt")
+    themeTypeNames.addAll("SeerrDarkColorScheme", "SeerrLightColorScheme")
 }
-
-tasks.named("check") { dependsOn("checkTranslationStaleness") }
 
 // The catalog's grpc must be what both the APK and the unit tests actually run (#702): the SDK brings
 // grpc-binder at binge-companions' version, so a bump here without a submodule bump moves nothing.
@@ -321,13 +312,11 @@ dependencies {
     androidTestImplementation(libs.okhttp.mockwebserver)
 }
 
-// detekt is pinned to production `src/main`: a test's shape is not the app's, and Binge pins the
-// same way. *PreviewData.kt is preview tooling rather than logic, so it is dropped too.
-detekt {
-    config.setFrom(layout.settingsDirectory.file("detekt.yml"))
-    baseline = layout.settingsDirectory.file("detekt-baseline.xml").asFile
-    buildUponDefaultConfig = true
-    parallel = true
+// detekt is binge-ci's gate: production `src/main` only, *PreviewData.kt dropped as preview tooling,
+// type resolution against the debug compilation, and this repository's baseline. Its companion,
+// binge.gates.baseline-staleness, fails `check` on a baseline entry the code no longer produces (#283).
+detektGate {
+    baselineFile = layout.settingsDirectory.file("detekt-baseline.xml")
 }
 
 /**
@@ -394,32 +383,6 @@ tasks.named("check") {
     dependsOn("validateDebugScreenshotTest")
 }
 
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-    setSource(
-        fileTree("src/main") {
-            include("**/*.kt")
-            exclude("**/*PreviewData.kt")
-        },
-    )
-    jvmTarget = "17"
-    reports {
-        xml.required.set(false)
-        txt.required.set(false)
-        sarif.required.set(false)
-        md.required.set(false)
-    }
-}
-
-tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
-    setSource(
-        fileTree("src/main") {
-            include("**/*.kt")
-            exclude("**/*PreviewData.kt")
-        },
-    )
-    jvmTarget = "17"
-}
-
 /**
  * The Kotlin stdlib detekt's own compiler was built with, from detekt's own classpath. detekt 1.23 embeds an older Kotlin
  * than this build compiles with, and cannot read the 2.4 stdlib that `libraries` carries: a call into it does not
@@ -438,99 +401,14 @@ kotlin.target.compilations.configureEach {
     compileTaskProvider.configure { compilerOptions.optIn.add("kotlinx.coroutines.ExperimentalCoroutinesApi") }
 }
 
-// UnsafeCallOnNullableType - the `!!` ban - needs type resolution, and a detekt task carries no
-// classpath by default, so without this the rule loads and silently never fires. `libraries` is the
-// compile task's already-variant-resolved classpath; resolving compileDependencyFiles directly trips
-// AGP 9 variant ambiguity. configureEach rather than a lookup, because the Android variant
-// compilations do not exist yet when the Kotlin plugin applies.
-kotlin.target.compilations.configureEach {
-    if (name != "debug") return@configureEach
-    val classpathFiles =
-        compileTaskProvider.map {
-            (it as org.jetbrains.kotlin.gradle.tasks.KotlinCompileTool).libraries
-        }
-    val outputClasses = output.classesDirs
-    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-        classpath.from(detektStdlib(detektClasspath), classpathFiles, outputClasses)
-    }
-    tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
-        classpath.from(detektStdlib(detektClasspath), classpathFiles, outputClasses)
-    }
+// The shared gate wires the compile classpath on after evaluation; this runs first, so the stdlib above is
+// ahead of it on every detekt task's classpath.
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    classpath.from(detektStdlib(detektClasspath))
 }
-
-/**
- * detekt with the baseline switched off, so [checkBaselineStaleness] can see which findings the code
- * still produces. Findings are expected, so it never fails on its own.
- */
-val detektWithoutBaseline =
-    tasks.register<io.gitlab.arturbosch.detekt.Detekt>("detektWithoutBaseline") {
-        description = "Runs detekt with no baseline applied, for checkBaselineStaleness."
-        ignoreFailures = true
-        baseline.set(null as org.gradle.api.file.RegularFile?)
-        // The extension's config reaches only the tasks the plugin creates. Without these two a
-        // hand-registered task runs detekt's defaults, where half this repository's rules are inactive
-        // and every baselined finding of one reads as fixed.
-        config.setFrom(layout.settingsDirectory.file("detekt.yml"))
-        buildUponDefaultConfig = true
-        reports {
-            xml.required.set(true)
-            xml.outputLocation.set(layout.buildDirectory.file("reports/detekt/no-baseline.xml"))
-        }
-    }
-
-/**
- * Fails when `detekt-baseline.xml` holds an entry the code no longer produces.
- *
- * An orphaned entry is worse than clutter: it reads as debt still owed, and it silently absorbs the
- * next real finding of that rule in that file. Nothing else can see one — detekt passes on an entry
- * that matches nothing — which is how a bad merge resolution reverted a paydown and stayed green
- * (#283). Entries are compared per rule and file rather than by their full signature, because the
- * report carries no signature; a rule with several findings in one file is therefore counted.
- */
-val checkBaselineStaleness =
-    tasks.register("checkBaselineStaleness") {
-        description = "Fails when detekt-baseline.xml holds an entry the code no longer produces."
-        group = "verification"
-        val baselineFile = layout.settingsDirectory.file("detekt-baseline.xml").asFile
-        val reportFile =
-            layout.buildDirectory
-                .file("reports/detekt/no-baseline.xml")
-                .get()
-                .asFile
-        dependsOn(detektWithoutBaseline)
-        inputs.file(baselineFile)
-        inputs.file(reportFile)
-        outputs.upToDateWhen { true }
-        doLast {
-            val baselined = mutableMapOf<String, Int>()
-            Regex("<ID>([^<]+)</ID>").findAll(baselineFile.readText()).forEach { match ->
-                val id = match.groupValues[1]
-                val rule = id.substringBefore(':')
-                val file = id.substringAfter(':').substringBefore('$')
-                baselined.merge("$rule in $file", 1, Int::plus)
-            }
-            val reported = mutableMapOf<String, Int>()
-            var currentFile = ""
-            reportFile.readLines().forEach { line ->
-                Regex("""<file name="([^"]+)"""").find(line)?.let { currentFile = it.groupValues[1].substringAfterLast('/') }
-                Regex("""source="detekt\.([^"]+)"""").find(line)?.let {
-                    reported.merge("${it.groupValues[1]} in $currentFile", 1, Int::plus)
-                }
-            }
-            val stale =
-                baselined
-                    .filter { (key, count) -> count > (reported[key] ?: 0) }
-                    .map { (key, count) -> "  $key — baselined $count, reported ${reported[key] ?: 0}" }
-            if (stale.isNotEmpty()) {
-                error(
-                    "detekt-baseline.xml holds ${stale.size} entr${if (stale.size == 1) "y" else "ies"} " +
-                        "the code no longer produces:\n" + stale.sorted().joinToString("\n") +
-                        "\n\nDelete them. An entry that matches nothing absorbs the next real finding of " +
-                        "that rule in that file.",
-                )
-            }
-        }
-    }
+tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
+    classpath.from(detektStdlib(detektClasspath))
+}
 
 // The gate measures logic: ViewModels, the Seerr client and its error mapping, the stores, the
 // mappers and the exported service. Everything excluded below is either generated or an Android
@@ -581,7 +459,3 @@ kover {
         }
     }
 }
-
-// `build` depends on `check`, so the staleness gate runs where every other one does rather than
-// needing a line of its own in CI.
-tasks.named("check") { dependsOn(checkBaselineStaleness) }

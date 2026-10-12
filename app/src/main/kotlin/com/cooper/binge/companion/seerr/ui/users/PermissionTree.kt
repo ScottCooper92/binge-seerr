@@ -1,7 +1,5 @@
 package com.cooper.binge.companion.seerr.ui.users
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
@@ -61,7 +59,7 @@ internal fun permissionRows(
         val implied = permission !in selected && ManageablePermission.isGranted(permission, selected)
         val unmet = !ManageablePermission.requirementsMet(permission, selected)
         editorToggle(
-            Icons.Filled.Security,
+            permission.icon(),
             stringResource(permission.labelRes()),
             !unmet && (permission in selected || implied),
             !saving && !implied && !unmet && permission !in locked,

@@ -43,7 +43,7 @@ jobs:
       (github.event.workflow_run.event != 'schedule') &&
       (!github.event.pull_request || github.event.pull_request.head.repo.full_name == github.repository) &&
       (!github.event.workflow_run || github.event.workflow_run.head_repository.full_name == github.repository)
-    uses: ScottCooper92/binge-ci/.github/workflows/author-ci-fix.yml@af5307ee00e0e0efff9b5c8ce08e45c1f0905909 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/author-ci-fix.yml@118a2849cba1529577e8df010210b9f0166bc2df # v1
     with:
       author_bot_id: ${{ vars.AUTHOR_BOT_ID }}
       # jvm, not android: this repo's ci.yml is setup-java + setup-gradle and nothing
@@ -52,7 +52,7 @@ jobs:
       # not run in. The Android SDK is preinstalled on the hosted runner image, which is
       # why ci.yml installs one too.
       toolchain: jvm
-      java_version: '17'
+      java_version: '21'
       verify_guidance: >
         Scope Gradle to the module rather than running the whole tree when you
         are checking one thing — `./gradlew :app:test`, or `:app:ktlintCheck`.

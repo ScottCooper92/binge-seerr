@@ -1,6 +1,35 @@
 package com.cooper.binge.companion.seerr.ui.users
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkAdded
+import androidx.compose.material.icons.filled.ChangeHistory
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Hexagon
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.LibraryAdd
+import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Report
+import androidx.compose.material.icons.filled.ReportProblem
+import androidx.compose.material.icons.filled.RequestPage
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SortByAlpha
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.data.UserEntity
 import com.cooper.binge.companion.seerr.seerr.ManageablePermission
@@ -23,6 +52,15 @@ internal fun UserSort.labelRes(): Int =
         UserSort.Requests -> R.string.users_sort_requests
     }
 
+/** The sort's glyph in the choice sheet. */
+internal fun UserSort.icon(): ImageVector =
+    when (this) {
+        UserSort.Created -> Icons.Filled.PersonAdd
+        UserSort.Updated -> Icons.Filled.Update
+        UserSort.DisplayName -> Icons.Filled.SortByAlpha
+        UserSort.Requests -> Icons.Filled.RequestPage
+    }
+
 @StringRes
 internal fun UserOrigin.labelRes(): Int =
     when (this) {
@@ -30,6 +68,18 @@ internal fun UserOrigin.labelRes(): Int =
         UserOrigin.Jellyfin -> R.string.user_origin_jellyfin
         UserOrigin.Emby -> R.string.user_origin_emby
         UserOrigin.Local -> R.string.user_origin_local
+    }
+
+/**
+ * A mark for each kind of account, with no brand glyphs to hand: Plex's play, Jellyfin's triangle, Emby's hexagon,
+ * and the person for a local account.
+ */
+internal fun UserOrigin.icon(): ImageVector =
+    when (this) {
+        UserOrigin.Plex -> Icons.Filled.PlayCircle
+        UserOrigin.Jellyfin -> Icons.Filled.ChangeHistory
+        UserOrigin.Emby -> Icons.Filled.Hexagon
+        UserOrigin.Local -> Icons.Filled.Person
     }
 
 @StringRes
@@ -72,6 +122,44 @@ internal fun ManageablePermission.labelRes(): Int =
         ManageablePermission.Request4kSeries -> R.string.permission_request_4k_series
         ManageablePermission.AutoApprove4kMovies -> R.string.permission_auto_approve_4k_movies
         ManageablePermission.AutoApprove4kSeries -> R.string.permission_auto_approve_4k_series
+    }
+
+/**
+ * Each permission's glyph. A root says what it grants; a movie or series child takes the app's movie and TV glyphs, so
+ * the tree reads by media type under its parent. 4K is the app's high-quality glyph, as on the 4K server toggles.
+ */
+internal fun ManageablePermission.icon(): ImageVector =
+    when (this) {
+        ManageablePermission.Admin -> Icons.Filled.AdminPanelSettings
+        ManageablePermission.ManageSettings -> Icons.Filled.Settings
+        ManageablePermission.ManageUsers -> Icons.Filled.ManageAccounts
+        ManageablePermission.ManageRequests -> Icons.AutoMirrored.Filled.PlaylistAddCheck
+        ManageablePermission.RequestAdvanced -> Icons.Filled.Tune
+        ManageablePermission.ViewRequests -> Icons.Filled.Inbox
+        ManageablePermission.ViewRecent -> Icons.Filled.LibraryAdd
+        ManageablePermission.ViewWatchlists -> Icons.Filled.Bookmark
+        ManageablePermission.Request -> Icons.Filled.RequestPage
+        ManageablePermission.AutoApprove -> Icons.Filled.DoneAll
+        ManageablePermission.AutoRequest -> Icons.Filled.BookmarkAdded
+        ManageablePermission.Request4k -> Icons.Filled.HighQuality
+        ManageablePermission.AutoApprove4k -> Icons.Filled.Verified
+        ManageablePermission.RequestMovies,
+        ManageablePermission.AutoApproveMovies,
+        ManageablePermission.AutoRequestMovies,
+        ManageablePermission.Request4kMovies,
+        ManageablePermission.AutoApprove4kMovies,
+        -> Icons.Filled.Movie
+        ManageablePermission.RequestSeries,
+        ManageablePermission.AutoApproveSeries,
+        ManageablePermission.AutoRequestSeries,
+        ManageablePermission.Request4kSeries,
+        ManageablePermission.AutoApprove4kSeries,
+        -> Icons.Filled.Tv
+        ManageablePermission.ManageIssues -> Icons.Filled.ReportProblem
+        ManageablePermission.CreateIssues -> Icons.Filled.Report
+        ManageablePermission.ViewIssues -> Icons.Filled.Visibility
+        ManageablePermission.ManageBlocklist -> Icons.Filled.Block
+        ManageablePermission.ViewBlocklist -> Icons.Filled.VisibilityOff
     }
 
 /** An unknown `userType` reads as local, the only kind without a server behind it. */

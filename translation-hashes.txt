@@ -1,4 +1,4 @@
-# The hash of every source string a locale translates, so an edit to the English cannot
+# The hash of every source string a locale translates, so an edit to the source cannot
 # pass silently while a translation still carries the old wording. Generated -
 # run ./gradlew updateTranslationHashes after re-reading the translations it names.
 app:action_try_again  d8b8392e2c54
@@ -222,13 +222,13 @@ app:local_network_open_settings  ca381c1e76e6
 app:media_clear_confirm_message  a64b36050151
 app:media_clear_confirm_title  9ff8d543b40a
 app:media_clear_data  a45086979c4a
-app:media_clear_detail  641ae64d1c57
+app:media_clear_detail  82875927b817
 app:media_cleared  e7884daadd4a
 app:media_delete_4k_files  c5f534674352
 app:media_delete_files  d3146291f128
 app:media_delete_files_confirm_message  69ff418b0c08
 app:media_delete_files_confirm_title  5c024d2120d2
-app:media_delete_files_detail  1aaf96029eeb
+app:media_delete_files_detail  42b344e85112
 app:media_delete_files_second_message  ee49c02e3821
 app:media_delete_files_second_title  22d3e0dbdfd6
 app:media_files_deleted  dad1dd4af3f4
@@ -267,7 +267,7 @@ app:notif_requests_available  ede6f4e6a280
 app:notif_requests_declined  0800d53535ab
 app:open_in_named  db1257f4fa5c
 app:permission_admin  c1c224b03cd9
-app:permission_admin_detail  cf664e30afc2
+app:permission_admin_detail  8044128cf051
 app:permission_auto_approve  9323d903f85b
 app:permission_auto_approve_4k  369ee35133eb
 app:permission_auto_approve_4k_detail  ff878e7fb1a9
@@ -288,7 +288,7 @@ app:permission_group_requests  ada27592c957
 app:permission_manage_blocklist  b94c1bcdb0b5
 app:permission_manage_issues  35f1b1a5eee7
 app:permission_manage_requests  674aa6f846a1
-app:permission_manage_requests_detail  17000d967b24
+app:permission_manage_requests_detail  a65717d9d9b3
 app:permission_manage_settings  f31e426f8455
 app:permission_manage_users  58606e582452
 app:permission_request  59f03d642b41
@@ -296,15 +296,15 @@ app:permission_request_4k  e6a45eed3c8f
 app:permission_request_4k_movies  48e8529a6249
 app:permission_request_4k_series  d235ee0b7c60
 app:permission_request_advanced  42ed3c314c81
-app:permission_request_advanced_detail  07a569eee3e6
+app:permission_request_advanced_detail  b5cde6072b07
 app:permission_request_movies  994e94bfc46f
 app:permission_request_series  7eb07aef248f
 app:permission_view_blocklist  5124f8650967
 app:permission_view_issues  f186073b3df2
-app:permission_view_issues_detail  04936cf03918
+app:permission_view_issues_detail  d9de6d6a269e
 app:permission_view_recent  195c13e1cc3c
 app:permission_view_requests  47b9133042ef
-app:permission_view_requests_detail  3168f442544d
+app:permission_view_requests_detail  8eb67caa268a
 app:permission_view_watchlists  8cc1d099df19
 app:permission_view_watchlists_detail  e9e7cdc52dbf
 app:request_action_failed  608e2e521eac
@@ -341,10 +341,10 @@ app:request_profile  ad759e52e8aa
 app:request_remove  2d678b75b796
 app:request_remove_and_block  baf4455e5b3b
 app:request_remove_block_confirm_message  c390473667ba
-app:request_remove_block_detail  f0922d72b445
+app:request_remove_block_detail  6eb8a3b8216e
 app:request_remove_confirm_message  dea4e31b115f
 app:request_remove_confirm_title  745b69be78ea
-app:request_remove_detail  fd954bd99cb4
+app:request_remove_detail  6731e1ce71ae
 app:request_removed  1f55775c6ffc
 app:request_removed_and_blocked  efcbe6fcadf9
 app:request_removed_block_failed  b6a4ec9720bd
@@ -395,7 +395,6 @@ app:requests_sort_cd  7e817324a953
 app:requests_sort_modified  474b2a869ac1
 app:scan_tv_not_a_tv_code  94c66b11adf6
 app:scan_tv_unavailable  9dd3832a3a2f
-app:section_coming_soon  fd8fd19bfe08
 app:send_address_clear  8b6db0f3f59e
 app:send_address_close  7d9eb7acb13e
 app:send_address_done  11a6767d5674
@@ -408,7 +407,7 @@ app:send_address_sending  b8ed5279e897
 app:send_address_sent  0b5a446351de
 app:send_address_sign_in_as  58475092472a
 app:send_address_sign_in_as_you  858a252b7e80
-app:send_address_sign_in_shared  df1a5f9a7115
+app:send_address_sign_in_shared  81946dae1f8a
 app:send_address_tag_sent_before  0ba607067400
 app:send_address_tag_server_url  22f5ebc3ad3f
 app:send_address_tag_this_phone  154bf57eb258
@@ -553,7 +552,7 @@ app:server_settings_cache_images  534a952306a8
 app:server_settings_cache_images_detail  c00b9a705fab
 app:server_settings_cache_stats  492cac397891
 app:server_settings_csrf  84c537ef00cf
-app:server_settings_csrf_detail  d03c70887cfc
+app:server_settings_csrf_detail  3cc720fdc875
 app:server_settings_default_permissions  43fc0abd72ea
 app:server_settings_default_permissions_lead  7eb71f4eee34
 app:server_settings_delete  e2d0a54968ea
@@ -580,6 +579,7 @@ app:server_settings_dvr_availability_in_cinemas  c34a8470b933
 app:server_settings_dvr_availability_released  f33deea9b100
 app:server_settings_dvr_behaviour  12b98040fac5
 app:server_settings_dvr_default  79561298d086
+app:server_settings_dvr_default_detail  ab3551f67023
 app:server_settings_dvr_destination  293d404a500f
 app:server_settings_dvr_external_hint  f06ddb75d42a
 app:server_settings_dvr_language_profile  659caa449949
@@ -596,6 +596,7 @@ app:server_settings_dvr_series_daily  b36c2611dcdf
 app:server_settings_dvr_series_standard  ef6691545d2c
 app:server_settings_dvr_series_type  fd580bcfb829
 app:server_settings_dvr_sync  c68de2017083
+app:server_settings_dvr_sync_detail  1872130d9b29
 app:server_settings_dvr_tag_requests  595c102fb56d
 app:server_settings_dvr_tags_none  147e6bba4382
 app:server_settings_dvr_test  a7d3d3579ab6
@@ -611,11 +612,11 @@ app:server_settings_external_url  8a4a1117fc22
 app:server_settings_force_ipv4  8ae39c17c14d
 app:server_settings_forgot_password_url  d5133679fac2
 app:server_settings_general_title  2a1660d99aa8
-app:server_settings_hide_available_detail  62c8d862070e
+app:server_settings_hide_available_detail  05ef8b52d631
 app:server_settings_hide_blocklisted  3f5c33aa0f2e
-app:server_settings_hide_blocklisted_detail  69b5edcf18e4
+app:server_settings_hide_blocklisted_detail  cf66ec591287
 app:server_settings_hide_requested  ef9e18a6cd6c
-app:server_settings_hide_requested_detail  5f632c073050
+app:server_settings_hide_requested_detail  05ef8b52d631
 app:server_settings_host  4a823118b9ba
 app:server_settings_image_cache_stats  6234198d07b3
 app:server_settings_image_caches  173424730985
@@ -645,7 +646,7 @@ app:server_settings_limit_window  7816b9affc62
 app:server_settings_list_clear  83b12c2216ef
 app:server_settings_list_use  c36d819e7bc6
 app:server_settings_local_login  ad8f0ce759ef
-app:server_settings_local_login_detail  57329fdcd650
+app:server_settings_local_login_detail  210015335d03
 app:server_settings_log_debug  1a03bd2fd107
 app:server_settings_log_error  54a0e8c17ebb
 app:server_settings_log_info  170322a32f3c
@@ -674,9 +675,9 @@ app:server_settings_metadata_tested  9f602f44858f
 app:server_settings_metadata_tv  a8295e08ff7a
 app:server_settings_movie_limit  1434d0ff8755
 app:server_settings_network  1744b96470b5
-app:server_settings_network_caption  ec2deb850b97
+app:server_settings_network_caption  34907980e765
 app:server_settings_new_media_server_login  1f699e850b7e
-app:server_settings_new_media_server_login_detail  9633b4543fd4
+app:server_settings_new_media_server_login_detail  2cddca99f6dd
 app:server_settings_partial_requests  c615998fdcff
 app:server_settings_partial_requests_detail  f1138ae66f55
 app:server_settings_permissions_none  dc937b598926
@@ -731,7 +732,6 @@ app:server_settings_section_application  e7ad522ea327
 app:server_settings_sign_in  5bbbe53187ad
 app:server_settings_sign_in_required  faca130c76c0
 app:server_settings_slider_add  f8dba7cae448
-app:server_settings_slider_built_in  78a6a8fe9be5
 app:server_settings_slider_data  cec3a9b89b2e
 app:server_settings_slider_data_company  5c3c865e9e6a
 app:server_settings_slider_data_generic  3114069fcee4
@@ -776,7 +776,7 @@ app:server_settings_slider_upcoming_movies  627f6d5d31ed
 app:server_settings_slider_upcoming_tv  eb3560bc6cc1
 app:server_settings_slider_watchlist  7bd2242eb729
 app:server_settings_sliders  d3117ef238a4
-app:server_settings_sliders_caption  ed31d0458307
+app:server_settings_sliders_caption  312569c104c5
 app:server_settings_sliders_more_actions  f8d46c2570e7
 app:server_settings_sliders_reorder_hint  bcc46d0daa39
 app:server_settings_sliders_reset  e240e635ff6d
@@ -789,7 +789,7 @@ app:server_settings_streaming_region  db55b6cee98e
 app:server_settings_tautulli_external_hint  e9bd48cb8d22
 app:server_settings_tautulli_open  22434ab65acf
 app:server_settings_trust_proxy  36fd2b0c678c
-app:server_settings_trust_proxy_detail  ea7932e4e933
+app:server_settings_trust_proxy_detail  ed26b037d445
 app:server_settings_tv_limit  84e0c5bab38a
 app:server_settings_url_base  f1a52d70f8c5
 app:server_settings_use_ssl  e51a45d18afd
@@ -831,7 +831,7 @@ app:settings_notifications_last_run  c2fbf9a33a20
 app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3
 app:settings_report_bug  f75e0bd8ff23
-app:settings_report_bug_caption  ef1fad4d5823
+app:settings_report_bug_caption  d91cdd5edb81
 app:settings_request_limit  d05f269db0cd
 app:settings_request_limit_movie  03bd4b8cbd52
 app:settings_request_limit_tv  cfeb1bf41637
@@ -848,19 +848,13 @@ app:settings_send_crash_reports_caption  04ea533234a2
 app:settings_server  aef7de28d529
 app:settings_service_default  21b111cbfe6e
 app:settings_shake_to_report  6897cd64a477
-app:settings_shake_to_report_caption  e790e2d415e9
 app:settings_share_usage_data  30b4f3d19026
-app:settings_share_usage_data_caption  4959fdc4d725
+app:settings_share_usage_data_caption  d9425f20de32
 app:settings_signal_approved  70ad8a17e448
-app:settings_signal_approved_caption  bb1a57aa8545
 app:settings_signal_available  560462b1f23b
-app:settings_signal_available_caption  522b02215f52
 app:settings_signal_declined  7dcf705a7dfb
-app:settings_signal_declined_caption  7736395e4706
 app:settings_signal_issues  a6a0e0210e05
-app:settings_signal_issues_caption  3e5e2bf8cdfe
 app:settings_signal_pending  3b7c001f1686
-app:settings_signal_pending_caption  e6c36bbdc47e
 app:settings_signed_in_api_key  a95db85d05a7
 app:settings_signed_in_as  abc50e334be4
 app:settings_use_server_default  a769cedc7992

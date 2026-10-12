@@ -87,6 +87,8 @@ internal fun TvRequestDetailScreen(
     modifier: Modifier = Modifier,
     /** The sheet open on arrival, for a frame: a static render cannot press the button that opens one. Production passes null. */
     initialSheet: DetailSheet? = null,
+    /** The outcome note showing on arrival, for a frame, which never collects [events]. Production passes null. */
+    initialEvent: ModerationEvent? = null,
 ) {
     BackHandler(onBack = actions.onBack)
     // A removed request has no page to stay on.
@@ -113,6 +115,7 @@ internal fun TvRequestDetailScreen(
                     events = events,
                     given = actions,
                     initialSheet = initialSheet,
+                    initialEvent = initialEvent,
                 )
         }
     }
@@ -135,6 +138,7 @@ private fun TvRequestDetailContent(
     events: Flow<ModerationEvent>,
     given: TvRequestDetailActions,
     initialSheet: DetailSheet?,
+    initialEvent: ModerationEvent?,
 ) {
     // An approve, a decline, a retry or a block that lands reloads the page without its own button, and the focus that
     // button held would go with it to nowhere the D-pad can reach. Each marks the row to be focused again when the page's
@@ -153,7 +157,7 @@ private fun TvRequestDetailContent(
             )
         }
     val draft = rememberTvReportDraft()
-    val event = rememberTvTransientEvent(events)
+    val event = rememberTvTransientEvent(events, initialEvent)
     val actionRowFocus = remember { FocusRequester() }
     val synopsisFocus = remember { FocusRequester() }
     var synopsisFocused by remember { mutableStateOf(false) }
