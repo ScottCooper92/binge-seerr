@@ -196,6 +196,12 @@ class IssueDetailViewModel
             }
         }
 
+        /** Sends the first unsent edit, read when this is called so a Retry never sends text that has since changed. */
+        fun retryEdit() {
+            val edit = ready()?.unsentEdits?.firstOrNull() ?: return
+            editComment(edit.commentId, edit.message)
+        }
+
         /** Resolves an open issue or reopens a resolved one; the cached row moves with it, so the browser agrees at once. */
         fun toggleStatus() {
             val ready = ready() ?: return

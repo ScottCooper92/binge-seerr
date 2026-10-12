@@ -69,6 +69,7 @@ private fun Frame(state: IssueDetailUiState) {
                 onEditOutbox = { _, _ -> },
                 onDropOutbox = {},
                 onEditComment = { _, _ -> },
+                onRetryEdit = {},
                 onDeleteComment = {},
                 onToggleStatus = {},
                 onDeleteIssue = {},

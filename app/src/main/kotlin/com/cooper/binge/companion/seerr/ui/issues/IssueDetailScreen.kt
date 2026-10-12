@@ -68,6 +68,7 @@ class IssueDetailActions(
     val onEditOutbox: (Long, String) -> Unit,
     val onDropOutbox: (Long) -> Unit,
     val onEditComment: (Int, String) -> Unit,
+    val onRetryEdit: () -> Unit,
     val onDeleteComment: (Int) -> Unit,
     val onToggleStatus: () -> Unit,
     val onDeleteIssue: () -> Unit,
@@ -119,7 +120,7 @@ fun IssueDetailScreen(
         snackbarHostState = snackbarHostState,
         message = stringResource(R.string.editor_save_failed),
         retryLabel = stringResource(R.string.action_try_again),
-        onRetry = { ready?.unsentEdits?.firstOrNull()?.let { actions.onEditComment(it.commentId, it.message) } },
+        onRetry = actions.onRetryEdit,
     )
     OverflowDetailScaffold(
         title = ready?.detail?.item?.title ?: seeded?.item?.title ?: stringResource(R.string.issue_detail_title),

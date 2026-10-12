@@ -473,7 +473,7 @@ class IssueDetailViewModelTest {
 
             serve("PUT /api/v1/issueComment/1", "{}")
             serve("GET /api/v1/issue/31", issueJson().replace("Audio out of sync", "Audio drifts"))
-            vm.editComment(1, "Audio drifts")
+            vm.retryEdit()
             val afterFirst = vm.awaitReady { it.unsentEdits.size == 1 && it.editStatus == SaveStatus.Saved }
             assertEquals(listOf(CommentEdit(2, "Same here, fixed now")), afterFirst.unsentEdits)
             assertEquals(
@@ -483,6 +483,42 @@ class IssueDetailViewModelTest {
                     .message,
             )
             assertEquals("Audio drifts", afterFirst.detail.report?.message)
+
+            serve("PUT /api/v1/issueComment/2", "{}")
+            serve(
+                "GET /api/v1/issue/31",
+                issueJson().replace("Audio out of sync", "Audio drifts").replace("\"Same here\"", "\"Same here, fixed now\""),
+            )
+            vm.retryEdit()
+            val afterSecond = vm.awaitReady { it.unsentEdits.isEmpty() && it.commentAction == CommentAction.None }
+            assertTrue(afterSecond.unsentEdits.isEmpty())
+            assertEquals(4, received.count { it.method == "PUT" })
+        }
+
+    @Test
+    fun `a retry sends the newest text of an edit that failed twice`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            vm.editComment(2, "first try")
+            vm.awaitReady { it.unsentEdits == listOf(CommentEdit(2, "first try")) && it.commentAction == CommentAction.None }
+            vm.editComment(2, "second try")
+            val failed = vm.awaitReady { it.unsentEdits == listOf(CommentEdit(2, "second try")) && it.commentAction == CommentAction.None }
+            assertEquals(listOf(CommentEdit(2, "second try")), failed.unsentEdits)
+
+            serve("PUT /api/v1/issueComment/2", "{}")
+            serve("GET /api/v1/issue/31", issueJson().replace("\"Same here\"", "\"second try\""))
+            vm.retryEdit()
+            val saved = vm.awaitReady { it.unsentEdits.isEmpty() && it.editStatus == SaveStatus.Saved }
+            assertEquals(
+                "second try",
+                saved.detail.comments
+                    .single()
+                    .message,
+            )
         }
 
     @Test
