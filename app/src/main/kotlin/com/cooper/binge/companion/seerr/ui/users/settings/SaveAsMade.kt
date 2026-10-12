@@ -106,7 +106,9 @@ internal class SaveAsMade<T>(
 
     /**
      * The record on the server was replaced from elsewhere, as the sliders' Reset replaces the list (#1019): a change still
-     * waiting, or one whose write failed, is dropped rather than written over it. A write already running is left to finish.
+     * waiting, or one whose write failed, is dropped rather than written over it. A write already running is left to finish,
+     * but its answer is not taken: [pending] is the send waiting on it, so cancelling it drops the answer, and nothing it
+     * would have adopted or queued again reaches the page (#1460).
      */
     fun discard() {
         pending?.cancel()

@@ -116,7 +116,9 @@ fun <T, X> ExtrasEditorViewModel<T, X>.editorActions(onBack: () -> Unit): Editor
  * it where Save is not the word: Create for something new, Change password.
  *
  * Leaving a page with a change still unsaved, by the top bar's Back, the system Back or Cancel, asks first
- * ([DiscardChangesDialog]). A page that saves as it changes has nothing to lose, so it never asks.
+ * ([DiscardChangesDialog]). A page that saves as it changes asks only while its change is held: one that leaves a valid
+ * record failing [canSave] is not sent (#957), so leaving would drop it (#1447). A record the server sent already failing
+ * [canSave] goes back as it came, so it holds nothing.
  */
 @Composable
 internal fun <T> EditorPage(
@@ -146,7 +148,13 @@ internal fun <T> EditorPage(
             onRetry = actions.onSave,
         )
     }
-    val onBack = rememberDiscardGuard(guarded = !saveAsMade && ready?.dirty == true && !ready.saving, onLeave = actions.onBack)
+    val guarded =
+        when {
+            ready == null || !ready.dirty -> false
+            saveAsMade -> !canSave(ready.draft) && canSave(ready.saved)
+            else -> !ready.saving
+        }
+    val onBack = rememberDiscardGuard(guarded = guarded, onLeave = actions.onBack)
     FormScreen(
         title = title,
         onBack = onBack,

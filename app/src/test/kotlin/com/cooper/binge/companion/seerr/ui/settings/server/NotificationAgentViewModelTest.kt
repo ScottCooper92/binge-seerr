@@ -330,6 +330,41 @@ class NotificationAgentViewModelTest {
             assertEquals("false", options.getValue("secure").jsonPrimitive.content)
         }
 
+    /**
+     * Inside the save's delay the draft is ahead of the saved form, and a test sends the draft (#1457). Waiting with the
+     * thread blocked holds virtual time, so the save cannot go out first however the two would otherwise interleave (#1454).
+     */
+    @Test
+    fun `a test inside the save's delay sends the unsaved draft, not the saved form`() =
+        runTest {
+            val vm = viewModel(ServerAgent.Email)
+            vm.awaitReady()
+            vm.setOption(AgentOption.EmailSenderName, "Test sender")
+            runCurrent()
+
+            vm.test()
+
+            assertTrue(
+                seerr.awaitCountHoldingTime(
+                    "POST",
+                    "/api/v1/settings/notifications/email/test",
+                    moreThan = 0,
+                    timeoutMillis = seerr.expectedCallWaitMillis(),
+                    pump = ::runCurrent,
+                ),
+            )
+            assertEquals("no save has gone out yet", 0, seerr.count("POST", "/api/v1/settings/notifications/email"))
+            val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/notifications/email/test")).jsonObject
+            assertEquals(
+                "Test sender",
+                sent
+                    .getValue("options")
+                    .jsonObject
+                    .getValue("senderName")
+                    .jsonPrimitive.content,
+            )
+        }
+
     @Test
     fun `a test sends the draft as typed and reports either way`() =
         runTest {

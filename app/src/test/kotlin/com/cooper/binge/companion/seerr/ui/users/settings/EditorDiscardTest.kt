@@ -16,7 +16,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Leaving an explicit-save page with a change unsaved asks first; a clean page, or one that saves as it changes, does not. */
+/**
+ * Leaving an explicit-save page with a change unsaved asks first, and so does a page that saves as it changes while its change
+ * is held as invalid. A clean page, or a save-as-made one with nothing held, does not.
+ */
 @RunWith(RobolectricTestRunner::class)
 class EditorDiscardTest {
     @get:Rule
@@ -27,6 +30,8 @@ class EditorDiscardTest {
 
     private fun show(
         draft: String,
+        saved: String = "saved",
+        canSave: (String) -> Boolean = { true },
         saveAsMade: Boolean = false,
         footerCommit: Boolean = false,
     ) = rule.setContent {
@@ -34,9 +39,10 @@ class EditorDiscardTest {
         BingeExpressiveTheme(dynamicColor = false) {
             EditorPage(
                 title = "Network",
-                state = EditorUiState.Ready(draft = draft, saved = "saved"),
+                state = EditorUiState.Ready(draft = draft, saved = saved),
                 events = emptyFlow(),
                 actions = EditorActions(onBack = { left++ }, onRetry = {}, onEdit = {}, onSave = {}),
+                canSave = canSave,
                 saveAsMade = saveAsMade,
                 footerCommit = footerCommit,
                 commitLabel = "Change password".takeIf { footerCommit },
@@ -90,8 +96,29 @@ class EditorDiscardTest {
     }
 
     @Test
-    fun `a page that saves as it changes never asks`() {
+    fun `a page that saves as it changes does not ask while its change can be sent`() {
         show("edited", saveAsMade = true)
+
+        back()
+
+        assertEquals(1, left)
+    }
+
+    /** A change that leaves the record invalid is held, not sent, so leaving would drop it without a word (#1447). */
+    @Test
+    fun `a page that saves as it changes asks while its change is held as invalid`() {
+        show("", canSave = { it.isNotEmpty() }, saveAsMade = true)
+
+        back()
+
+        rule.onNodeWithText("Discard changes?").assertExists()
+        assertEquals(0, left)
+    }
+
+    /** A record the server sent already invalid goes back as it came, so nothing is held and nothing is lost (#957). */
+    @Test
+    fun `a page that saves as it changes does not ask over a record that came invalid`() {
+        show("edited", saved = "", canSave = { it.length > 6 }, saveAsMade = true)
 
         back()
 
