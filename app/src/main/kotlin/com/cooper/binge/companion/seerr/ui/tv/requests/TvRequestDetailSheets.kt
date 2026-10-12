@@ -31,6 +31,7 @@ import com.cooper.binge.companion.seerr.ui.requests.IssueType
 import com.cooper.binge.companion.seerr.ui.requests.MediaInstance
 import com.cooper.binge.companion.seerr.ui.requests.MediaRecord
 import com.cooper.binge.companion.seerr.ui.requests.MediaStatusChoice
+import com.cooper.binge.companion.seerr.ui.requests.icon
 import com.cooper.binge.companion.seerr.ui.requests.labelRes
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
@@ -122,7 +123,7 @@ internal fun TvRequestDetailSheet(
  * title twice, then the states, the current one ticked. A pick applies and closes.
  */
 @Composable
-private fun ColumnScope.TvMarkAsSteps(
+internal fun ColumnScope.TvMarkAsSteps(
     media: MediaRecord,
     onSelect: (MediaInstance, MediaStatusChoice) -> Unit,
     entryFocus: FocusRequester,
@@ -134,6 +135,7 @@ private fun ColumnScope.TvMarkAsSteps(
         media.instances.forEachIndexed { index, candidate ->
             TvSideSheetRow(
                 label = stringResource(candidate.labelRes()),
+                icon = candidate.icon(media.isTv),
                 onClick = { picked = candidate.is4k },
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
             )
@@ -145,6 +147,7 @@ private fun ColumnScope.TvMarkAsSteps(
             val current = choice.code == instance.status
             TvOptionRow(
                 label = stringResource(choice.labelRes()),
+                icon = choice.icon(),
                 selected = current,
                 onClick = { if (!current) onSelect(instance, choice) },
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
@@ -161,7 +164,7 @@ private fun MediaInstance.labelRes(): Int = if (is4k) R.string.settings_service_
  * outgrow the panel on a short screen. Once the server has it, the sheet says so and Done closes it.
  */
 @Composable
-private fun ColumnScope.TvReportIssueStep(
+internal fun ColumnScope.TvReportIssueStep(
     report: IssueReport,
     draft: TvReportDraft,
     actions: TvRequestDetailActions,
@@ -187,6 +190,7 @@ private fun ColumnScope.TvReportIssueStep(
         IssueType.entries.forEachIndexed { index, type ->
             TvOptionRow(
                 label = stringResource(type.labelRes()),
+                icon = type.icon(),
                 selected = type == draft.type,
                 onClick = { draft.onTypeChange(type) },
                 modifier = if (index == 0) Modifier.focusRequester(entryFocus) else Modifier,
