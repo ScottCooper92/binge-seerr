@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Where a page that saves as it changes stands, for the inline line under its title (#930). A failure is [EditorUiState.Ready.saveFailed]. */
+/** Where a page that saves as it changes stands, for the status line in its top bar (#930). A failure is [EditorUiState.Ready.saveFailed]. */
 enum class SaveStatus { Idle, Saving, Saved }
 
 /** A form over one server record: what was loaded, what the user has typed, and whether a save is in flight. */

@@ -16,6 +16,7 @@ class SaveAsMadeTest {
     private val gates = mutableListOf<CompletableDeferred<Int>>()
     private var draft = 0
     private var saved = 0
+    private var savable = true
     private val failedLog = mutableListOf<Boolean>()
     private val statusLog = mutableListOf<SaveStatus>()
 
@@ -25,7 +26,7 @@ class SaveAsMadeTest {
             appScope = this,
             dispatcher = StandardTestDispatcher(testScheduler),
             draft = { draft },
-            canSave = { true },
+            canSave = { savable },
             write = { value ->
                 sent += value
                 CompletableDeferred<Int>().also { gates += it }.await()
@@ -184,6 +185,27 @@ class SaveAsMadeTest {
             runCurrent()
             assertEquals(listOf(SaveStatus.Saving, SaveStatus.Saved), statusLog)
             assertEquals(listOf(false), failedLog)
+        }
+
+    @Test
+    fun `a change the page may not send does not leave the line saying Saving`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            draft = 2
+            savable = false
+            mode.changed()
+            gates[0].complete(1)
+            runCurrent()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            assertEquals(listOf(1), sent)
+            assertEquals(SaveStatus.Idle, statusLog.last())
         }
 
     @Test

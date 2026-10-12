@@ -59,7 +59,8 @@ internal class SaveAsMade<T>(
     }
 
     private suspend fun send() {
-        val sent = draft()?.takeIf(canSave) ?: return
+        // Nothing it may send: the last change is held, not saved, so the line must not keep saying Saving.
+        val sent = draft()?.takeIf(canSave) ?: return status(SaveStatus.Idle)
         unsent = false
         status(SaveStatus.Saving)
         // Caught inside the write, so a failure stays this save's and does not reach the application's scope.
