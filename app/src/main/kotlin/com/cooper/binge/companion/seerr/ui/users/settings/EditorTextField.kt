@@ -49,9 +49,7 @@ import com.cooper.binge.companion.seerr.R
  *
  * Any other editable field shows a clear button while it is focused and non-empty.
  *
- * [fieldId] ties the field to its page's validation (#549): the issue the page shows for that id
- * becomes the field's error and its message, and a failed Save can scroll here. [required] marks the
- * label, and is only a mark - a missing value is reported by the issue, not by this flag.
+ * [required] marks the label, and is only a mark: the page reports a missing value through [isError] and [supporting].
  *
  * [imeAction] is Next, which moves focus on, so the last field of a form passes Done. Done drops the
  * keyboard and then runs [onDone], where submitting is the sensible next step. A multi-line field
@@ -73,7 +71,6 @@ internal fun EditorTextField(
     placeholder: String? = null,
     supporting: String? = null,
     isError: Boolean = false,
-    fieldId: String? = null,
     required: Boolean = false,
     contentType: ContentType? = null,
     icon: ImageVector? = null,
@@ -86,8 +83,6 @@ internal fun EditorTextField(
     onValueChange: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    val issue = fieldId?.let { editorFieldIssue(it) }
-    val shownSupporting = issue?.let { stringResource(it.messageRes) } ?: supporting
     var focused by remember { mutableStateOf(false) }
     // remember rather than rememberSaveable: a field left revealed comes back masked after the app
     // is backgrounded, which is a small leak closed for no loss.
@@ -112,8 +107,8 @@ internal fun EditorTextField(
         readOnly = readOnly,
         singleLine = singleLine,
         minLines = minLines,
-        isError = isError || issue != null,
-        supportingText = shownSupporting?.let { { Text(it) } },
+        isError = isError,
+        supportingText = supporting?.let { { Text(it) } },
         leadingIcon =
             icon?.let {
                 {
@@ -138,7 +133,6 @@ internal fun EditorTextField(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(if (fieldId != null) Modifier.editorField(fieldId) else Modifier)
                 .onFocusChanged { focused = it.isFocused }
                 .then(contentType?.let { type -> Modifier.semantics { this.contentType = type } } ?: Modifier),
     )
