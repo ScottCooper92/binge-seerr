@@ -49,6 +49,7 @@ class SettingsActions(
     val onToggleShakeToReport: (Boolean) -> Unit,
     val onToggleShareUsageData: (Boolean) -> Unit,
     val onToggleSendCrashReports: (Boolean) -> Unit,
+    val onToggleNotifyInBinge: (Boolean) -> Unit,
     val onDisconnect: () -> Unit,
 )
 
@@ -117,7 +118,13 @@ private fun SettingsContent(
         state.app?.let {
             Group(
                 stringResource(R.string.settings_group_app),
-                appRows(it, actions.onToggleShakeToReport, actions.onToggleShareUsageData, actions.onToggleSendCrashReports),
+                appRows(
+                    it,
+                    actions.onToggleShakeToReport,
+                    actions.onToggleShareUsageData,
+                    actions.onToggleSendCrashReports,
+                    actions.onToggleNotifyInBinge,
+                ),
             )
         }
         Spacer(Modifier.height(dimensionResource(DesR.dimen.padding_m)))

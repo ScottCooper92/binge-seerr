@@ -12,6 +12,7 @@ import com.cooper.binge.companion.seerr.notifications.NotificationSignal
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.service.HostPrefs
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
@@ -108,6 +109,7 @@ class SettingsViewModel
         private val notifier: SeerrNotifier,
         private val feedbackPrefs: FeedbackPrefs,
         private val telemetryPrefs: TelemetryPrefs,
+        private val hostPrefs: HostPrefs,
         bugReportLinks: BugReportLinks,
         @IoDispatcher private val dispatcher: CoroutineDispatcher,
         private val analytics: Analytics = NoOpAnalytics,
@@ -198,12 +200,14 @@ class SettingsViewModel
                 feedbackPrefs.shakeToReport,
                 telemetryPrefs.analyticsConsent,
                 telemetryPrefs.crashReportingEnabled,
-            ) { shake, consent, crashes ->
+                hostPrefs.availableNotifications,
+            ) { shake, consent, crashes, notifyInBinge ->
                 AppSettings(
                     bugReportUrl = bugReportLinks.url(),
                     shakeToReport = shake,
                     shareUsageData = consent == AnalyticsConsent.GRANTED,
                     sendCrashReports = crashes,
+                    notifyInBinge = notifyInBinge,
                 )
             }
 
@@ -270,6 +274,10 @@ class SettingsViewModel
 
         fun setShareUsageData(enabled: Boolean) {
             viewModelScope.launch(dispatcher) { telemetryPrefs.setAnalyticsGranted(enabled) }
+        }
+
+        fun setNotifyInBinge(enabled: Boolean) {
+            viewModelScope.launch(dispatcher) { hostPrefs.setAvailableNotifications(enabled) }
         }
 
         fun setSendCrashReports(enabled: Boolean) {

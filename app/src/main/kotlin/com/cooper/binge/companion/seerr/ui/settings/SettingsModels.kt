@@ -103,13 +103,15 @@ data class NotificationSettings(
 
 /**
  * This app's own settings, not the server's: where to report a bug in it, whether a shake offers to,
- * and what it may report on its own.
+ * and what it may report on its own, and whether Binge notifies when a request is available.
  */
 data class AppSettings(
     val bugReportUrl: String,
     val shakeToReport: Boolean,
     val shareUsageData: Boolean = false,
     val sendCrashReports: Boolean = true,
+    /** Whether Binge announces a requested title when it becomes available; off until turned on. */
+    val notifyInBinge: Boolean = false,
 )
 
 sealed interface SettingsUiState {

@@ -22,6 +22,7 @@ import com.cooper.binge.companion.seerr.notifications.NotificationPrefs
 import com.cooper.binge.companion.seerr.notifications.NotificationScheduler
 import com.cooper.binge.companion.seerr.notifications.SeerrNotifier
 import com.cooper.binge.companion.seerr.notifications.WorkManagerNotificationScheduler
+import com.cooper.binge.companion.seerr.service.HostPrefs
 import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.hub.BingeInstallCheck
 import com.cooper.binge.companion.seerr.ui.hub.PackageManagerBingeInstallCheck
@@ -53,6 +54,8 @@ private val Context.notificationsDataStore: DataStore<Preferences> by preference
 private val Context.telemetryDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_telemetry")
 
 private val Context.feedbackDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_feedback")
+
+private val Context.hostDataStore: DataStore<Preferences> by preferencesDataStore(name = "seerr_host")
 
 /**
  * The wiring that is not the connection's: the cache, the notification plumbing, the reporting
@@ -119,6 +122,12 @@ object SeerrModule {
     fun feedbackPrefs(
         @ApplicationContext context: Context,
     ): FeedbackPrefs = FeedbackPrefs(context.feedbackDataStore)
+
+    @Provides
+    @Singleton
+    fun hostPrefs(
+        @ApplicationContext context: Context,
+    ): HostPrefs = HostPrefs(context.hostDataStore)
 
     @Provides
     @Singleton

@@ -68,11 +68,12 @@ class SwitchRowSemanticsTest {
         composeTestRule.setContent {
             BingeExpressiveTheme(dynamicColor = false) {
                 val app = AppSettings(bugReportUrl = "", shakeToReport = true, shareUsageData = false, sendCrashReports = true)
-                ItemRows(rows = appRows(app, {}, {}, {}))
+                ItemRows(rows = appRows(app, {}, {}, {}, {}))
             }
         }
         composeTestRule.onNodeWithText(string(R.string.settings_shake_to_report)).assert(isSwitch).assertIsOn()
         composeTestRule.onNodeWithText(string(R.string.settings_share_usage_data)).assert(isSwitch).assertIsOff()
         composeTestRule.onNodeWithText(string(R.string.settings_send_crash_reports)).assert(isSwitch).assertIsOn()
+        composeTestRule.onNodeWithText(string(R.string.settings_notify_in_binge)).assert(isSwitch).assertIsOff()
     }
 }

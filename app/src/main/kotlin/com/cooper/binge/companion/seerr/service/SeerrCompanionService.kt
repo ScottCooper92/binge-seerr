@@ -40,6 +40,9 @@ class SeerrCompanionService : IntegrationService() {
     @Inject
     lateinit var analytics: Analytics
 
+    @Inject
+    lateinit var hostPrefs: HostPrefs
+
     override fun services(): List<BindableService> =
         listOf(
             SeerrRequestService(
@@ -50,6 +53,7 @@ class SeerrCompanionService : IntegrationService() {
                 analytics = analytics,
                 requestCache = requests,
                 userMessages = AndroidUserMessages(this),
+                availableNotificationsEnabled = hostPrefs::isAvailableNotificationsEnabled,
             ),
         )
 

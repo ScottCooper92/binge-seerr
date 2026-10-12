@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -16,8 +17,8 @@ import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.openInBrowser
 
 /**
- * This app's own group: report a bug in it on GitHub, whether a shake offers to, and the two things
- * it may report on its own. Unlike every other group it is about the app, not the server, so it shows
+ * This app's own group: report a bug in it on GitHub, whether a shake offers to, whether Binge notifies
+ * when a request is available, and the two things it may report on its own. Unlike every other group it is about the app, not the server, so it shows
  * for every user.
  */
 @Composable
@@ -26,6 +27,7 @@ internal fun appRows(
     onToggleShakeToReport: (Boolean) -> Unit,
     onToggleShareUsageData: (Boolean) -> Unit,
     onToggleSendCrashReports: (Boolean) -> Unit,
+    onToggleNotifyInBinge: (Boolean) -> Unit,
 ): List<ListItem> {
     val context = LocalContext.current
     return listOf(
@@ -43,6 +45,14 @@ internal fun appRows(
             label = stringResource(R.string.settings_shake_to_report),
             toggled = app.shakeToReport,
             onClick = { onToggleShakeToReport(!app.shakeToReport) },
+        ),
+        ListItem(
+            icon = Icons.Filled.NotificationsActive,
+            iconTint = BingeSentiment.Info.fill(),
+            label = stringResource(R.string.settings_notify_in_binge),
+            detail = stringResource(R.string.settings_notify_in_binge_caption),
+            toggled = app.notifyInBinge,
+            onClick = { onToggleNotifyInBinge(!app.notifyInBinge) },
         ),
         ListItem(
             icon = Icons.Filled.Insights,

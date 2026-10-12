@@ -1143,6 +1143,8 @@
     <string name="consent_point_change_detail">Change your mind any time in Settings, under This app.</string>
     <string name="consent_accept">Share usage data</string>
     <string name="consent_decline">Not now</string>
+    <string name="settings_notify_in_binge">Notify me in Binge</string>
+    <string name="settings_notify_in_binge_caption">Alerts you when a requested title is ready</string>
     <string name="settings_share_usage_data">Share usage data</string>
     <string name="settings_share_usage_data_caption">Sends which screens and actions you use</string>
     <string name="settings_send_crash_reports">Send crash reports</string>

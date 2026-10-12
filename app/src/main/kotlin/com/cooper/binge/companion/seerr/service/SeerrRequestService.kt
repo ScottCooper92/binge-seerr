@@ -135,6 +135,8 @@ class SeerrRequestService(
     private val analytics: Analytics = NoOpAnalytics,
     private val requestCache: RequestStore = NoRequestStore,
     private val userMessages: UserMessages = UserMessages.None,
+    /** Whether the user has asked the host to announce available titles; read on every [listRequests], never cached. */
+    private val availableNotificationsEnabled: suspend () -> Boolean = { false },
 ) : RequestServiceGrpcKt.RequestServiceCoroutineImplBase() {
     private val freshness = MediaStatusFreshness(observeIntervalMillis)
 
@@ -483,6 +485,9 @@ class SeerrRequestService(
      *
      * AWAITING_MODERATION is empty for a user who may not moderate, without asking Seerr: the server
      * would answer with that user's own pending requests, which are not waiting on them.
+     *
+     * Every page, empty or not, carries `available_notifications_enabled` from the user's switch ([HostPrefs]),
+     * read now, so a change reaches the host on its next poll.
      */
     override suspend fun listRequests(request: ListRequestsRequest): ListRequestsResponse =
         gatedRead("list_requests", Capability.CAPABILITY_LIST_REQUESTS) {
@@ -491,8 +496,9 @@ class SeerrRequestService(
             val skip = ListRequestsPageToken.skipOf(request)
             val user = connection.authenticatedUser()
             val permissions = user.toPermissions()
+            val notify = availableNotificationsEnabled()
             if (query == SeerrRequestQuery.AwaitingModeration && !permissions.canManageRequests) {
-                ListRequestsResponse.getDefaultInstance()
+                ListRequestsResponse.newBuilder().setAvailableNotificationsEnabled(notify).build()
             } else {
                 val page =
                     connection.api().requests(
@@ -505,7 +511,7 @@ class SeerrRequestService(
                 val listed = page.results.mapNotNull { dto -> dto.media.toMediaId()?.let { it to dto } }
                 val statuses = statusesOf(listed.map { it.first })
                 val profile = connection.profile()
-                val response = ListRequestsResponse.newBuilder()
+                val response = ListRequestsResponse.newBuilder().setAvailableNotificationsEnabled(notify)
                 listed.forEach { (media, dto) ->
                     val info = permissions.withAllowedActions(dto.toRequestInfo(), own = dto.requestedBy?.id == user.id, profile = profile)
                     response.addEntries(

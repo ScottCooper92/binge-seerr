@@ -270,6 +270,7 @@ private fun noActions() =
         onToggleShakeToReport = {},
         onToggleShareUsageData = {},
         onToggleSendCrashReports = {},
+        onToggleNotifyInBinge = {},
         onDisconnect = {},
     )
 

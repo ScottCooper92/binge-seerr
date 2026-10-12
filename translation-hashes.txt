@@ -824,6 +824,8 @@ app:settings_notifications_blocked_caption  1d84fd334ac3
 app:settings_notifications_last_run  c2fbf9a33a20
 app:settings_notifications_not_yet  881d23f6ba57
 app:settings_notifications_poll  6dddca73fef3
+app:settings_notify_in_binge  5cd9f4a2eb58
+app:settings_notify_in_binge_caption  cc1a3f0aa70a
 app:settings_report_bug  f75e0bd8ff23
 app:settings_report_bug_caption  d91cdd5edb81
 app:settings_request_limit  d05f269db0cd

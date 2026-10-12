@@ -81,6 +81,7 @@ internal fun SettingsEntry(
             onToggleShakeToReport = viewModel::setShakeToReport,
             onToggleShareUsageData = viewModel::setShareUsageData,
             onToggleSendCrashReports = viewModel::setSendCrashReports,
+            onToggleNotifyInBinge = viewModel::setNotifyInBinge,
             // The home swaps to setup on the credentials clearing; leaving Settings is what lets it show.
             onDisconnect = {
                 viewModel.disconnect()

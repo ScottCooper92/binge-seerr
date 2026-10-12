@@ -15,6 +15,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrAuth
 import com.cooper.binge.companion.seerr.seerr.SeerrDefaultAccess
 import com.cooper.binge.companion.seerr.seerr.SeerrLoginRequest
 import com.cooper.binge.companion.seerr.seerr.SeerrVariant
+import com.cooper.binge.companion.seerr.service.HostPrefs
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsConsent
 import com.cooper.binge.companion.seerr.telemetry.TelemetryPrefs
 import com.cooper.binge.companion.seerr.ui.Ticker
@@ -63,6 +64,7 @@ class SettingsViewModelTest {
     private lateinit var connection: SeerrConnection
     private lateinit var prefs: NotificationPrefs
     private lateinit var feedbackPrefs: FeedbackPrefs
+    private lateinit var hostPrefs: HostPrefs
     private lateinit var telemetryPrefs: TelemetryPrefs
     private val scheduler = FakeScheduler()
     private val analytics = RecordingAnalytics()
@@ -147,6 +149,7 @@ class SettingsViewModelTest {
         prefs = NotificationPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("n.preferences_pb") })
         telemetryPrefs = TelemetryPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("t.preferences_pb") })
         feedbackPrefs = FeedbackPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("f.preferences_pb") })
+        hostPrefs = HostPrefs(PreferenceDataStoreFactory.create(scope = backgroundScope) { folder.newFile("h.preferences_pb") })
         val vm =
             SettingsViewModel(
                 connection,
@@ -157,6 +160,7 @@ class SettingsViewModelTest {
                 notifier,
                 feedbackPrefs,
                 telemetryPrefs,
+                hostPrefs,
                 BugReportLinks(),
                 mainDispatcherRule.dispatcher,
                 analytics,
@@ -293,6 +297,7 @@ class SettingsViewModelTest {
                     notifier,
                     feedbackPrefs,
                     telemetryPrefs,
+                    hostPrefs,
                     BugReportLinks(),
                     mainDispatcherRule.dispatcher,
                 )
@@ -318,6 +323,7 @@ class SettingsViewModelTest {
                     notifier,
                     feedbackPrefs,
                     telemetryPrefs,
+                    hostPrefs,
                     BugReportLinks(),
                     mainDispatcherRule.dispatcher,
                 )
@@ -481,5 +487,21 @@ class SettingsViewModelTest {
             server(ADMIN)
             val vm = viewModel()
             assertEquals(NotificationSignal.entries, checkNotNull(vm.awaitReady { it.notifications != null }.notifications).offered)
+        }
+
+    @Test
+    fun `notifying in Binge is off until the user turns it on, and the switch sets it`() =
+        runTest {
+            server(REQUEST)
+            val vm = viewModel()
+            assertFalse(vm.awaitReady { true }.app?.notifyInBinge == true)
+
+            vm.setNotifyInBinge(true)
+            assertTrue(vm.awaitReady { it.app?.notifyInBinge == true }.app?.notifyInBinge == true)
+            assertTrue(hostPrefs.isAvailableNotificationsEnabled())
+
+            vm.setNotifyInBinge(false)
+            vm.awaitReady { it.app?.notifyInBinge == false }
+            assertFalse(hostPrefs.isAvailableNotificationsEnabled())
         }
 }

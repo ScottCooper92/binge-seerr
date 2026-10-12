@@ -1090,6 +1090,8 @@
     <string name="consent_point_change_detail">Cambia de opinión cuando quieras en Ajustes, en Esta aplicación.</string>
     <string name="consent_accept">Compartir datos de uso</string>
     <string name="consent_decline">Ahora no</string>
+    <string name="settings_notify_in_binge">Avisarme en Binge</string>
+    <string name="settings_notify_in_binge_caption">Te avisa cuando un título pedido está listo</string>
     <string name="settings_share_usage_data">Compartir datos de uso</string>
     <string name="settings_share_usage_data_caption">Envía qué pantallas y acciones usas</string>
     <string name="settings_send_crash_reports">Enviar informes de fallos</string>

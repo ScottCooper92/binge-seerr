@@ -27,7 +27,7 @@ class SettingsAppGroupScreenshotTest {
             title = stringResource(R.string.settings_group_app),
             rows =
                 appRows(SampleApp, onToggleShakeToReport = {
-                }, onToggleShareUsageData = {}, onToggleSendCrashReports = {}),
+                }, onToggleShareUsageData = {}, onToggleSendCrashReports = {}, onToggleNotifyInBinge = {}),
         )
 
     @PreviewTest
@@ -38,10 +38,11 @@ class SettingsAppGroupScreenshotTest {
             title = stringResource(R.string.settings_group_app),
             rows =
                 appRows(
-                    SampleApp.copy(shakeToReport = false, shareUsageData = true, sendCrashReports = false),
+                    SampleApp.copy(shakeToReport = false, shareUsageData = true, sendCrashReports = false, notifyInBinge = true),
                     onToggleShakeToReport = {},
                     onToggleShareUsageData = {},
                     onToggleSendCrashReports = {},
+                    onToggleNotifyInBinge = {},
                 ),
         )
 

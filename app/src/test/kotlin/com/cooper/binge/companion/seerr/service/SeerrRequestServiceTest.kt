@@ -133,6 +133,7 @@ class SeerrRequestServiceTest {
         now: () -> Long = { 0L },
         bingeConnection: BingeConnectionStore = NoBingeConnectionStore,
         analytics: Analytics = NoOpAnalytics,
+        notifyWhenAvailable: Boolean = false,
         warm: Boolean = true,
         publicSettings: String = """{"initialized":true}""",
         userMessages: UserMessages = UserMessages.None,
@@ -160,6 +161,7 @@ class SeerrRequestServiceTest {
                     bingeConnection = bingeConnection,
                     analytics = analytics,
                     userMessages = userMessages,
+                    availableNotificationsEnabled = { notifyWhenAvailable },
                 ),
             )
         // One handshake up front consumes the profile's two answers and `auth/me` and caches all
@@ -1873,6 +1875,36 @@ class SeerrRequestServiceTest {
             assertEquals(DEFAULT_LIST_PAGE_SIZE.toString(), asked.queryParameter("take"))
             assertEquals(0, response.entriesCount)
             assertEquals("", response.nextPageToken)
+        }
+
+    /** The user's opt-in for the host's availability notifications rides on every page (binge-companions#133). */
+    @Test
+    fun `a page says availability notifications are off until the user turns them on`() =
+        runTest {
+            val stub = connected()
+            seerr.enqueue(emptyPage())
+
+            assertFalse(stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_RECENTLY_AVAILABLE)).availableNotificationsEnabled)
+        }
+
+    @Test
+    fun `a page says so when the user turned availability notifications on`() =
+        runTest {
+            val stub = connected(notifyWhenAvailable = true)
+            seerr.enqueue(emptyPage())
+
+            assertTrue(stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_RECENTLY_AVAILABLE)).availableNotificationsEnabled)
+        }
+
+    @Test
+    fun `an empty moderation page for a user who may not moderate still carries the opt-in`() =
+        runTest {
+            val stub = connected(permissions = REQUEST, notifyWhenAvailable = true)
+
+            val nothing = stub.listRequests(listRequest(RequestFilter.REQUEST_FILTER_AWAITING_MODERATION))
+
+            assertEquals(0, nothing.entriesCount)
+            assertTrue(nothing.availableNotificationsEnabled)
         }
 
     @Test
