@@ -177,7 +177,7 @@ How each gate is applied is in [`server-compatibility.md`](server-compatibility.
 | `PUT /settings/metadatas` | Update Metadata settings | — | v3.0.0 | yes | Save on the metadata page. |
 | `POST /settings/metadatas/test` | Test Provider configuration | — | v3.0.0 | yes | The test button on the metadata page, reaching the providers the draft would use. |
 | `GET /settings/network` | Get network settings | — | v2.4.0 | yes | The network page. |
-| `POST /settings/network` | Update network settings | — | v2.4.0 | yes | Save on the network page. |
+| `POST /settings/network` | Update network settings | — | v2.4.0 | yes | The network page. |
 | `POST /settings/notifications/discord` | Update Discord notification settings | v1.0.0 | v1.0.0 | yes | The agent's page. |
 | `POST /settings/notifications/discord/test` | Test Discord settings | v1.12.0 | v1.0.0 | yes | The test button on the agent's page, sent through the draft as typed. |
 | `POST /settings/notifications/email` | Update email notification settings | v1.0.0 | v1.0.0 | yes | The agent's page. |
