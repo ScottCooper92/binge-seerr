@@ -192,7 +192,6 @@ private fun languageDetail(
             stringResource(
                 R.string.settings_value_server_default,
                 serverDefault
-                    .orEmpty()
                     .languageCodes()
                     .ifEmpty { null }
                     ?.let(names) ?: all,

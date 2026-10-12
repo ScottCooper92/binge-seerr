@@ -58,7 +58,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@ab385f7b9be823b925831cc5da6b399f2eeb7173 # v1
+    uses: ScottCooper92/binge-ci/.github/workflows/submodule-pins.yml@054eb2eca82fcfc048767d0e26dbbcd5667b67ff # v1
 
   # `build` minus what the three jobs below own. Everything else `check` pulls in lands here:
   # compile, lint, detekt and its baseline-staleness check, ktlint, the translation, tv-material and gRPC gates,
@@ -73,10 +73,12 @@ jobs:
     timeout-minutes: 30
     steps:
       # The contracts and SDK are a submodule (see settings.gradle.kts); without this the
-      # included build is an empty directory and Gradle fails at settings evaluation.
+      # included build is an empty directory and Gradle fails at settings evaluation. Recursive,
+      # because a submodule can carry its own: binge-companions includes binge-ci's Gradle gates
+      # from a binge-ci submodule, and this build includes binge-companions.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
 
       # JDK 21, matching binge-ci's ci-setup. The JDK runs the build and nothing else:
       # `jvmTarget` 17 in app/build.gradle.kts decides the bytecode, so this does not move what
@@ -116,7 +118,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -152,7 +154,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -181,7 +183,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -249,7 +251,7 @@ jobs:
 
       # binge-ci's shared step: a pinned release verified against its published checksum, with
       # shellcheck at warning severity.
-      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@ab385f7b9be823b925831cc5da6b399f2eeb7173 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/actionlint@054eb2eca82fcfc048767d0e26dbbcd5667b67ff # v1
 
   # A red nightly has no PR or push to carry it, so without this it is a red mark in the
   # Actions tab that nothing points at. One issue stays open while the canary is red and
@@ -264,7 +266,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@ab385f7b9be823b925831cc5da6b399f2eeb7173 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@054eb2eca82fcfc048767d0e26dbbcd5667b67ff # v1
         with:
           result: ${{ needs.build.result }}
           title: Nightly CI is failing on main

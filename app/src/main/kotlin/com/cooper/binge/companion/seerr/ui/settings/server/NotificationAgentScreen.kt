@@ -37,8 +37,9 @@ class AgentActions(
 
 /**
  * One agent's page as the web client lays it out, in groups of list rows: its switch, the settings it can't send
- * without, the rest, the events it's sent, and a row that sends a test through the draft as typed. A required setting
- * left blank while the agent is on says so in its row, and Save stays off until none is.
+ * without, the rest, the events it's sent, and a row that sends a test through the draft as typed. The page saves as it
+ * changes (#930). A required setting left blank while the agent is on says so in its row, and the change waits until
+ * none is.
  */
 @Composable
 fun NotificationAgentScreen(
@@ -55,7 +56,7 @@ fun NotificationAgentScreen(
         events = events,
         actions = actions,
         canSave = { it.valid },
-        footerCommit = true,
+        saveAsMade = true,
     ) { draft, enabled ->
         ItemGroup(
             title = null,

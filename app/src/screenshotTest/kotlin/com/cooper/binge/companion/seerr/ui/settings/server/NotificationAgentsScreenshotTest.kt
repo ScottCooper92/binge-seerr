@@ -18,6 +18,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.NotificationType
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 private val TYPES_REQUESTS = listOf(NotificationType.MediaApproved, NotificationType.MediaAvailable, NotificationType.MediaDeclined).bits()
@@ -55,7 +56,7 @@ class NotificationAgentScreenshotTest {
     @Composable
     fun emailLayout() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
 
-    /** A Discord agent that is on with its webhook blank: the row says it is required, and Save stays off. */
+    /** A Discord agent that is on with its webhook blank: the row says it is required, and the change is held, unsent. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -79,11 +80,26 @@ class NotificationAgentScreenshotTest {
     @Composable
     fun emailSpanish() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
 
-    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    /** At 1.5x and 2x text every row must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
     fun emailLargeText() = AgentFrame(agentReady(emailForm()), ServerAgent.Email)
+
+    /** The page saves as it changes (#930): a change on its way says Saving in the top bar, with no Save to press. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun savingChange() =
+        AgentFrame(
+            ExtrasEditorUiState.Ready(
+                draft = emailForm().copy(enabled = false),
+                saved = emailForm(),
+                extras = AgentExtras(),
+                saveStatus = SaveStatus.Saving,
+            ),
+            ServerAgent.Email,
+        )
 
     @PreviewTest
     @SeerrScreenStatePreview
