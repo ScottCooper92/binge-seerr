@@ -562,6 +562,39 @@ class IssueDetailViewModelTest {
             )
         }
 
+    /** A refused retry puts back the server's text, not the owed text the page was showing, even when the reload fails. */
+    @Test
+    fun `a retry refused after a failed edit, with a failed reload, ends on the server's text with nothing owed`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+            vm.editComment(2, "Same here, fixed now")
+            val owed = vm.awaitReady { it.unsentEdits.isNotEmpty() }
+            assertEquals(
+                "Same here, fixed now",
+                owed.detail.comments
+                    .single()
+                    .message,
+            )
+
+            serve("PUT /api/v1/issueComment/2", "{}", code = 401)
+            serve("GET /api/v1/issue/31", "{}", code = 500)
+            val failed = awaitEvent(vm.events)
+            vm.retryEdit()
+
+            assertTrue(failed.await() is IssueDetailEvent.Failed)
+            val ready = vm.awaitReady { it.commentAction == CommentAction.None && it.editStatus == SaveStatus.Idle }
+            assertTrue(ready.unsentEdits.isEmpty())
+            assertEquals(
+                "Same here",
+                ready.detail.comments
+                    .single()
+                    .message,
+            )
+        }
+
     @Test
     fun `deleting a comment whose edit failed drops the edit that was owed to it`() =
         runTest {

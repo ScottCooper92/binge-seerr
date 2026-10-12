@@ -143,6 +143,9 @@ data class CommentEdit(
     val message: String,
 )
 
+/** The text of comment [id], the report included; null if the thread has no such comment. */
+internal fun IssueDetail.messageOf(id: Int): String? = (listOfNotNull(report) + comments).firstOrNull { it.id == id }?.message
+
 /** [edit]'s text in place of the comment it names, the report included. */
 internal fun IssueDetail.withEdit(edit: CommentEdit): IssueDetail {
     fun IssueComment.edited() = if (id == edit.commentId) copy(message = edit.message) else this

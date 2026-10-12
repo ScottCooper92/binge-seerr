@@ -32,6 +32,12 @@ internal class IssueCommentEdits(
     private val reloadAfterWrite: suspend () -> Throwable?,
     private val report: suspend (IssueDetailEvent) -> Unit,
 ) {
+    /**
+     * Each comment's text as the server last confirmed it, kept from when its first unsent edit began. Once an edit is owed,
+     * the page shows that edit, so this is the only place a refused retry can put the server's text back from.
+     */
+    private val confirmed = mutableMapOf<Int, String>()
+
     fun edit(
         commentId: Int,
         message: String,
@@ -40,7 +46,9 @@ internal class IssueCommentEdits(
         val trimmed = message.trim()
         if (trimmed.isEmpty() || ready.commentAction != CommentAction.None || ready.action != IssueAction.None) return
         val edit = CommentEdit(commentId, trimmed)
-        val before = ready.detail
+        if (ready.unsentEdits.none { it.commentId == commentId }) {
+            ready.detail.messageOf(commentId)?.let { confirmed[commentId] = it }
+        }
         state.value =
             ready.copy(
                 detail = ready.detail.withEdit(edit),
@@ -54,6 +62,7 @@ internal class IssueCommentEdits(
             attempt { connection.api().editIssueComment(commentId, SeerrIssueCommentBody(trimmed)) }
                 .onSuccess {
                     // Landed, so it is no longer owed; an unsent edit to another comment still is.
+                    confirmed.remove(commentId)
                     state.updateReady { it.copy(unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId }) }
                     val reloadFailure = reloadAfterWrite()
                     if (reloadFailure == null) {
@@ -74,14 +83,19 @@ internal class IssueCommentEdits(
                         }
                     } else {
                         // A refusal would only be refused again: take the text off the page and say why, once. The
-                        // text goes back before the reload, so a reload that fails cannot leave the refused text shown.
-                        // An earlier owed edit to this comment, with other text, is still owed and still shown.
+                        // comment shows an earlier owed edit with other text if there is one, else the server's text, and
+                        // goes back before the reload, so a reload that fails cannot leave refused or unowed text shown.
                         state.updateReady {
+                            val owed = it.unsentEdits.filter { unsent -> unsent != edit }
+                            val shown =
+                                owed.firstOrNull { unsent -> unsent.commentId == commentId }
+                                    ?: confirmed[commentId]?.let { text -> CommentEdit(commentId, text) }
+                            if (owed.none { unsent -> unsent.commentId == commentId }) confirmed.remove(commentId)
                             it.copy(
-                                detail = before,
+                                detail = shown?.let(it.detail::withEdit) ?: it.detail,
                                 commentAction = CommentAction.None,
                                 editStatus = SaveStatus.Idle,
-                                unsentEdits = it.unsentEdits.filter { unsent -> unsent != edit },
+                                unsentEdits = owed,
                             )
                         }
                         reloadAfterWrite()
