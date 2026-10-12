@@ -1,5 +1,6 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -8,8 +9,11 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 
 class SaveAsMadeTest {
     private val sent = mutableListOf<Int>()
@@ -19,6 +23,7 @@ class SaveAsMadeTest {
     private var savable = true
     private val failedLog = mutableListOf<Boolean>()
     private val statusLog = mutableListOf<SaveStatus>()
+    private val refusedLog = mutableListOf<SeerrError>()
 
     private fun TestScope.saveAsMade(scope: CoroutineScope = this) =
         SaveAsMade(
@@ -38,7 +43,53 @@ class SaveAsMadeTest {
             },
             failed = { failedLog += it },
             status = { statusLog += it },
+            refused = { refusedLog += it },
         )
+
+    /** A refusal would only be refused again: it is reported once and owed nothing, so no Retry and no resend (#1475). */
+    @Test
+    fun `a write the server refuses is reported once and never kept for retry`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            gates[0].completeExceptionally(HttpException(Response.error<Unit>(400, "{}".toResponseBody(null))))
+            runCurrent()
+            val settled = mode.settle()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS * 3)
+            runCurrent()
+            mode.cleared()
+            runCurrent()
+
+            assertEquals(listOf(SeerrError.Rejected), refusedLog)
+            assertEquals("never offered for retry", listOf(false), failedLog)
+            assertEquals("nothing sends it again", listOf(1), sent)
+            assertEquals(null, settled.await())
+        }
+
+    @Test
+    fun `settling while a write is in flight reports its refusal once and sends it no more`() =
+        runTest {
+            val mode = saveAsMade()
+            draft = 1
+            mode.changed()
+            advanceTimeBy(SAVE_AS_MADE_DELAY_MILLIS + 1)
+            runCurrent()
+
+            val settled = mode.settle()
+            runCurrent()
+            gates[0].completeExceptionally(HttpException(Response.error<Unit>(400, "{}".toResponseBody(null))))
+            runCurrent()
+
+            assertEquals(null, settled.await())
+            runCurrent()
+            assertEquals(listOf(1), sent)
+            assertEquals(listOf(SeerrError.Rejected), refusedLog)
+            assertEquals("never offered for retry", emptyList<Boolean>(), failedLog)
+        }
 
     @Test
     fun `a change made during a write waits for it, then goes out from the answer`() =

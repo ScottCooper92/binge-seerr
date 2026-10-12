@@ -80,6 +80,16 @@ class OverrideRuleViewModelTest {
         seerr.serve("POST /api/v1/settings/radarr/test", TEST_RESULT)
         seerr.serve("GET /api/v1/overrideRule", RULES)
         seerr.serve("GET /api/v1/user", USERS)
+        // An existing rule saves as it changes (#930): the server answers with what it was sent, under the rule's id. A save
+        // left unanswered would be refused and put the saved rule back (#1475), under the edits a test is checking.
+        seerr.serveFrom("PUT /api/v1/overrideRule/11") { request ->
+            val sent =
+                request.body
+                    ?.utf8()
+                    .orEmpty()
+                    .removePrefix("{")
+            if (sent.startsWith("}")) """{"id":11}""" else """{"id":11,$sent"""
+        }
     }
 
     @After
