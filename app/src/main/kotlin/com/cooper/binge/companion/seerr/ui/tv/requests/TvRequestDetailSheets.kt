@@ -16,10 +16,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.tv.component.TvConfirmDialog
 import com.binge.designsystem.tv.component.TvOptionRow
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
-import com.binge.designsystem.tv.component.TvSideSheetConfirm
 import com.binge.designsystem.tv.component.TvSideSheetRow
 import com.binge.designsystem.tv.component.TvSideSheetStepFocus
 import com.binge.designsystem.tv.component.TvSideSheetTitle
@@ -37,7 +37,7 @@ import com.cooper.binge.companion.seerr.ui.tv.TvFormNote
 import com.cooper.binge.companion.seerr.ui.tv.TvFormNoteTone
 import com.binge.designsystem.R as DesR
 
-/** The sheets the page opens over itself: the two confirms, marking the title's state, and reporting an issue. */
+/** What the page opens over itself: the two confirm dialogs, and the sheets for marking the title's state and reporting an issue. */
 internal enum class DetailSheet { Remove, Block, MarkAs, Report }
 
 /** The issue being written, kept by the page so a sheet closed before sending opens again on the same words. */
@@ -76,33 +76,35 @@ internal fun TvRequestDetailSheet(
         if (host.step == DetailSheet.Report) actions.onDismissReport()
         closer.close()
     }
-    TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
-        when (host.step) {
-            DetailSheet.Remove ->
-                TvSideSheetConfirm(
-                    title = stringResource(R.string.request_remove_confirm_title),
-                    message = stringResource(R.string.request_remove_confirm_message),
-                    confirmLabel = stringResource(R.string.request_remove),
-                    onConfirm = {
-                        actions.onRemove(false)
-                        closer.close()
-                    },
-                    onCancel = closer::close,
-                    entryFocus = entryFocus,
-                )
-            DetailSheet.Block ->
-                TvSideSheetConfirm(
-                    title = stringResource(R.string.request_block_confirm_title),
-                    message = stringResource(R.string.request_block_confirm_message),
-                    confirmLabel = stringResource(R.string.tv_detail_block),
-                    onConfirm = {
-                        actions.onBlock()
-                        closer.close()
-                    },
-                    onCancel = closer::close,
-                    entryFocus = entryFocus,
-                )
-            DetailSheet.MarkAs ->
+    // The two confirms are a question and nothing else, so each is a dialog; Mark as and Report carry a list and a form, so
+    // they stay sheets.
+    when (host.step) {
+        DetailSheet.Remove ->
+            TvConfirmDialog(
+                title = stringResource(R.string.request_remove_confirm_title),
+                message = stringResource(R.string.request_remove_confirm_message),
+                confirmLabel = stringResource(R.string.request_remove),
+                onConfirm = {
+                    actions.onRemove(false)
+                    closer.close()
+                },
+                onDismissRequest = closer::close,
+                destructive = true,
+            )
+        DetailSheet.Block ->
+            TvConfirmDialog(
+                title = stringResource(R.string.request_block_confirm_title),
+                message = stringResource(R.string.request_block_confirm_message),
+                confirmLabel = stringResource(R.string.tv_detail_block),
+                onConfirm = {
+                    actions.onBlock()
+                    closer.close()
+                },
+                onDismissRequest = closer::close,
+                destructive = true,
+            )
+        DetailSheet.MarkAs ->
+            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
                 media?.let {
                     TvMarkAsSteps(
                         media = it,
@@ -113,8 +115,11 @@ internal fun TvRequestDetailSheet(
                         entryFocus = entryFocus,
                     )
                 }
-            DetailSheet.Report -> TvReportIssueStep(report, draft, actions, onDone = dismiss, entryFocus = entryFocus)
-        }
+            }
+        DetailSheet.Report ->
+            TvSideSheet(onDismissRequest = dismiss) { entryFocus ->
+                TvReportIssueStep(report, draft, actions, onDone = dismiss, entryFocus = entryFocus)
+            }
     }
 }
 

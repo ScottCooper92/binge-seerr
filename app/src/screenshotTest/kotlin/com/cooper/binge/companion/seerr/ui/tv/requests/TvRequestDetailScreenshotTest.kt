@@ -1,7 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.tv.requests
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
+import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.preview.SeerrTvScreenPreviews
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrMediaStatusCode
@@ -17,6 +19,7 @@ import com.cooper.binge.companion.seerr.ui.requests.RequestDetailUiState
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
 import com.cooper.binge.companion.seerr.ui.requests.RequestMediaType
 import com.cooper.binge.companion.seerr.ui.requests.SeasonState
+import com.cooper.binge.companion.seerr.ui.tv.ConfirmDialogFrame
 import kotlinx.coroutines.flow.emptyFlow
 
 private const val TMDB_ID = 1396
@@ -232,16 +235,15 @@ class TvRequestDetailScreenshotTest {
         TvRequestDetailScreen(state = RequestDetailUiState.Loading, events = emptyFlow(), actions = actions(onOpenInBinge = {}))
     }
 
-    /** Remove asks first (#1053): what it does, then Remove and Cancel, over the page. */
+    /** Remove asks first (#1053): what it does, then Remove and Cancel, in a dialog. Cancel has focus, so a stray OK does nothing. */
     @PreviewTest
     @SeerrTvScreenPreviews
     @Composable
     fun RemoveConfirm() {
-        TvRequestDetailScreen(
-            state = RequestDetailUiState.Ready(filmDetail().copy(actions = RequestActions(canRemove = true, canBlock = true))),
-            events = emptyFlow(),
-            actions = actions(onOpenInBinge = {}),
-            initialSheet = DetailSheet.Remove,
+        ConfirmDialogFrame(
+            title = stringResource(R.string.request_remove_confirm_title),
+            message = stringResource(R.string.request_remove_confirm_message),
+            confirmLabel = stringResource(R.string.request_remove),
         )
     }
 
@@ -250,11 +252,10 @@ class TvRequestDetailScreenshotTest {
     @SeerrTvScreenPreviews
     @Composable
     fun BlockConfirm() {
-        TvRequestDetailScreen(
-            state = RequestDetailUiState.Ready(filmDetail().copy(actions = RequestActions(canRemove = true, canBlock = true))),
-            events = emptyFlow(),
-            actions = actions(onOpenInBinge = {}),
-            initialSheet = DetailSheet.Block,
+        ConfirmDialogFrame(
+            title = stringResource(R.string.request_block_confirm_title),
+            message = stringResource(R.string.request_block_confirm_message),
+            confirmLabel = stringResource(R.string.tv_detail_block),
         )
     }
 

@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.component.ListItem
+import com.binge.designsystem.tv.component.TvConfirmDialog
 import com.binge.designsystem.tv.component.TvSideSheet
-import com.binge.designsystem.tv.component.TvSideSheetConfirm
 import com.binge.designsystem.tv.focus.rememberTvOverlayCloser
 import com.binge.designsystem.tv.template.TvBoard
 import com.binge.designsystem.tv.template.TvListPaneBoard
@@ -88,7 +88,7 @@ internal fun TvSettingsBoard(
     var showingBugReport by rememberSaveable { mutableStateOf(initialShowingBugReport) }
     // Saved so a return to Settings resumes where the user was rather than snapping back to the top.
     var focusedKey by rememberSaveable { mutableStateOf(initialFocusedKey) }
-    // The Disconnect option that opened the confirm sheet, so the closer has somewhere to hand focus back to.
+    // The Disconnect option that opened the confirm dialog, so the closer has somewhere to hand focus back to.
     val disconnectFocus = remember { FocusRequester() }
     val closer = rememberTvOverlayCloser(restoreTo = disconnectFocus, onClose = { confirmingDisconnect = false })
     val bugReportFocus = remember { FocusRequester() }
@@ -132,19 +132,17 @@ internal fun TvSettingsBoard(
             }
         }
         if (confirmingDisconnect) {
-            TvSideSheet(onDismissRequest = closer::close) { entryFocus ->
-                TvSideSheetConfirm(
-                    title = stringResource(R.string.hub_disconnect_confirm_title),
-                    message = stringResource(R.string.hub_disconnect_confirm_message),
-                    confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),
-                    onConfirm = {
-                        onDisconnect()
-                        closer.close()
-                    },
-                    onCancel = closer::close,
-                    entryFocus = entryFocus,
-                )
-            }
+            TvConfirmDialog(
+                title = stringResource(R.string.hub_disconnect_confirm_title),
+                message = stringResource(R.string.hub_disconnect_confirm_message),
+                confirmLabel = stringResource(R.string.tv_settings_disconnect_confirm),
+                onConfirm = {
+                    onDisconnect()
+                    closer.close()
+                },
+                onDismissRequest = closer::close,
+                destructive = true,
+            )
         }
     }
 }
