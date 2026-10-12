@@ -131,6 +131,10 @@ abstract class EditorViewModel<T>(
                 status = { status ->
                     state.update { current -> (current as? EditorUiState.Ready<T>)?.copy(saveStatus = status) ?: current }
                 },
+                refused = { error ->
+                    state.update { current -> (current as? EditorUiState.Ready<T>)?.let { it.copy(draft = it.saved) } ?: current }
+                    eventFlow.emit(EditorEvent.Failed(error))
+                },
             )
         }
     }
@@ -316,6 +320,10 @@ abstract class ExtrasEditorViewModel<T, X>(
                 },
                 status = { status ->
                     state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.copy(saveStatus = status) ?: current }
+                },
+                refused = { error ->
+                    state.update { current -> (current as? ExtrasEditorUiState.Ready<T, X>)?.let { it.copy(draft = it.saved) } ?: current }
+                    eventFlow.emit(EditorEvent.Failed(error))
                 },
             )
         }

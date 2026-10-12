@@ -1,6 +1,9 @@
 package com.cooper.binge.companion.seerr.ui.users.settings
 
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.isTransient
+import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -16,9 +19,10 @@ internal const val SAVE_AS_MADE_DELAY_MILLIS = 600L
  * The save-as-made mode both editor bases share (#930): each change writes the draft a moment after the last one, with no
  * Save to press. The write runs on [appScope], so leaving the page cannot cut it off half-sent, and a change still
  * waiting out its delay when the page goes is sent then ([cleared]). A change made while a write is in flight goes out
- * after it, from what the server answered. A write that fails keeps the change, unsent, and says so through [failed],
- * which stays true until a write succeeds (a later change does not clear it, only its success does); [now] sends it
- * again at once. [status] follows the writes for the inline "Saving… / Saved" line.
+ * after it, from what the server answered. A write that fails [transiently][isTransient] keeps the change, unsent, and says
+ * so through [failed], which stays true until a write succeeds (a later change does not clear it, only its success does);
+ * [now] sends it again at once. A write the server refuses would only be refused again, so it is not kept: [refused]
+ * takes the reason, once (#1475). [status] follows the writes for the inline "Saving… / Saved" line.
  */
 internal class SaveAsMade<T>(
     private val scope: CoroutineScope,
@@ -31,6 +35,8 @@ internal class SaveAsMade<T>(
     private val adopt: (sent: T, adopted: T) -> Boolean,
     private val failed: (Boolean) -> Unit,
     private val status: (SaveStatus) -> Unit = {},
+    /** A write the server refused: nothing is owed, and the page puts its saved record back and says why. */
+    private val refused: suspend (SeerrError) -> Unit = {},
 ) {
     // All of this is touched on [scope]'s thread only (the main thread for a ViewModel); just the write itself leaves it.
     private var pending: Job? = null
@@ -78,10 +84,19 @@ internal class SaveAsMade<T>(
                 failed(false)
                 // More to send: the line keeps saying Saving until the last write lands.
                 if (adopt(sent, adopted) || unsent) changed() else status(SaveStatus.Saved)
-            }.onFailure {
-                unsent = true
+            }.onFailure { failure ->
+                val error = failure.toSeerrError()
                 status(SaveStatus.Idle)
-                failed(true)
+                if (error.isTransient) {
+                    unsent = true
+                    failed(true)
+                } else {
+                    // Nothing owed: a later change rode on the refused record, and settle() must not send it again.
+                    unsent = false
+                    lastWrite = null
+                    failed(false)
+                    refused(error)
+                }
             }
     }
 

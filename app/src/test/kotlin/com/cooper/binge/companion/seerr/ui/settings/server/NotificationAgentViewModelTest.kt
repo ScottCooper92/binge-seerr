@@ -76,6 +76,9 @@ class NotificationAgentViewModelTest {
         seerr.serve("GET /api/v1/settings/notifications/ntfy", NTFY)
         seerr.serve("POST /api/v1/settings/notifications/ntfy", NTFY)
         seerr.serve("GET /api/v1/settings/notifications/pushover", PUSHOVER)
+        // Saved as typed (#930): the server answers with what it was sent. A save left unanswered would be refused and
+        // put the saved record back (#1475), taking the typed token with it.
+        seerr.serveFrom("POST /api/v1/settings/notifications/pushover") { it.body?.utf8().orEmpty() }
         seerr.serve("GET /api/v1/settings/notifications/pushover/sounds", SOUNDS)
         seerr.serve("GET /api/v1/settings/notifications/telegram", TELEGRAM)
     }
