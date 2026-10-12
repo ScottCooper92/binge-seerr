@@ -522,6 +522,27 @@ class IssueDetailViewModelTest {
         }
 
     @Test
+    fun `a refused edit is reported, not kept for retry, and the thread returns to the server's text`() =
+        runTest {
+            server(ADMIN)
+            serve("PUT /api/v1/issueComment/2", "{}", code = 404)
+            val vm = viewModel()
+            vm.awaitReady()
+
+            val failed = awaitEvent(vm.events)
+            vm.editComment(2, "Same here, fixed now")
+            assertEquals(IssueDetailEvent.Failed(SeerrError.NotFound), failed.await())
+            val ready = vm.awaitReady { it.commentAction == CommentAction.None && it.editStatus == SaveStatus.Idle }
+            assertTrue(ready.unsentEdits.isEmpty())
+            assertEquals(
+                "Same here",
+                ready.detail.comments
+                    .single()
+                    .message,
+            )
+        }
+
+    @Test
     fun `deleting a comment whose edit failed drops the edit that was owed to it`() =
         runTest {
             server(ADMIN)

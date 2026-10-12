@@ -3,6 +3,7 @@ package com.cooper.binge.companion.seerr.ui.issues
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.seerr.SeerrIssueCommentBody
 import com.cooper.binge.companion.seerr.seerr.attempt
+import com.cooper.binge.companion.seerr.seerr.isTransient
 import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.telemetry.Analytics
 import com.cooper.binge.companion.seerr.telemetry.AnalyticsEvents
@@ -16,7 +17,8 @@ import kotlinx.coroutines.launch
 /**
  * The comment edits of one issue page, saved as they are made (#930): the thread shows the new text at once, and the page
  * says Saving, then Saved. A write that fails keeps the text as an unsent edit, one per comment, which the page's Retry
- * sends again; each stays until that comment's edit lands. A failed reload after a write that landed is still reported.
+ * sends again; each stays until that comment's edit lands. A refusal is not kept: the page re-reads the server and reports
+ * the error. Leaving the page drops an unsent edit. A failed reload after a write that landed is still reported.
  * It writes to the page's [state], and reloads and reports through the page's own [reloadAfterWrite] and [report].
  */
 internal class IssueCommentEdits(
@@ -58,14 +60,28 @@ internal class IssueCommentEdits(
                     }
                     state.updateReady { it.copy(editStatus = SaveStatus.Saved) }
                     reloadFailure?.let { report(IssueDetailEvent.Failed(it.toSeerrError())) }
-                }.onFailure {
-                    // One owed edit per comment: a second failure adds to the first rather than replacing it.
-                    state.updateReady {
-                        it.copy(
-                            commentAction = CommentAction.None,
-                            editStatus = SaveStatus.Idle,
-                            unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId } + edit,
-                        )
+                }.onFailure { failure ->
+                    val error = failure.toSeerrError()
+                    if (error.isTransient) {
+                        // One owed edit per comment: a second failure adds to the first rather than replacing it.
+                        state.updateReady {
+                            it.copy(
+                                commentAction = CommentAction.None,
+                                editStatus = SaveStatus.Idle,
+                                unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId } + edit,
+                            )
+                        }
+                    } else {
+                        // A refusal would only be refused again: take the text off the page and say why, once.
+                        state.updateReady {
+                            it.copy(
+                                commentAction = CommentAction.None,
+                                editStatus = SaveStatus.Idle,
+                                unsentEdits = it.unsentEdits.filter { unsent -> unsent.commentId != commentId },
+                            )
+                        }
+                        reloadAfterWrite()
+                        report(IssueDetailEvent.Failed(error))
                     }
                 }
         }
