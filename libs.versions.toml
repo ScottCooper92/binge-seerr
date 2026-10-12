@@ -62,7 +62,7 @@ coreSplashscreen = "1.2.0"
 # Only for the sign-in fields: it builds the saved-password request whose bundles a credential
 # provider parses, so those keys are not spelled out here.
 credentials = "1.6.0"
-paging = "3.5.1"
+paging = "3.5.2"
 room = "2.8.4"
 workManager = "2.11.2"
 # The version binge-design-system pins: its components load their artwork with it, and a consumer
