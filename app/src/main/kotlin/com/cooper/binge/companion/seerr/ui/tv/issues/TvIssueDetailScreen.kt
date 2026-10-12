@@ -2,7 +2,6 @@ package com.cooper.binge.companion.seerr.ui.tv.issues
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,9 +33,9 @@ import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.focus.tvArrivalTarget
-import com.binge.designsystem.tv.focus.tvClickable
 import com.binge.designsystem.tv.focus.tvFocusContentColor
 import com.binge.designsystem.tv.focus.tvFocusFill
+import com.binge.designsystem.tv.focus.tvFocusTarget
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.uppercaseLocalised
 import com.cooper.binge.companion.seerr.R
@@ -79,6 +78,7 @@ internal fun TvIssueDetailScreen(
     actions: TvIssueDetailActions,
     modifier: Modifier = Modifier,
     now: Long = System.currentTimeMillis(),
+    initiallyFocused: Boolean = false,
 ) {
     BackHandler(onBack = actions.onBack)
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -93,7 +93,7 @@ internal fun TvIssueDetailScreen(
                 }
             }
             is IssueDetailUiState.Error -> TvSeerrErrorPage(state.error, actions.onRetry)
-            is IssueDetailUiState.Ready -> TvIssueDetailContent(detail = state.detail, now = now)
+            is IssueDetailUiState.Ready -> TvIssueDetailContent(detail = state.detail, now = now, initiallyFocused = initiallyFocused)
         }
     }
 }
@@ -102,13 +102,14 @@ internal fun TvIssueDetailScreen(
  * The loaded page's content: a fixed-width reading column so a title's meta line does not stretch
  * across a ten-foot screen. Arrival focus lands on the first comment — the report itself is the
  * thread's first entry — so the D-pad can walk straight into reading; an issue with no comments at
- * all sends arrival to the reading column instead, so the page is never left with nowhere for the
- * D-pad to land.
+ * all lands on the "no comments" line instead, drawn as a read-out row, so the page is never left
+ * with nowhere for the D-pad to land. [initiallyFocused] seeds that arrival row as focused, for a frame.
  */
 @Composable
 private fun TvIssueDetailContent(
     detail: IssueDetail,
     now: Long,
+    initiallyFocused: Boolean,
 ) {
     val arrival = rememberTvArrivalFocus()
     TvArrivalFocusEffect(arrival)
@@ -123,7 +124,7 @@ private fun TvIssueDetailContent(
                     .padding(
                         horizontal = dimensionResource(TvR.dimen.tv_overscan_horizontal),
                         vertical = dimensionResource(TvR.dimen.tv_overscan_vertical),
-                    ).let { if (comments.isEmpty()) it.tvArrivalTarget(arrival).focusable() else it },
+                    ),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.tv_detail_section_gap)),
         ) {
             TvIssueDetailHeader(detail.item)
@@ -133,14 +134,24 @@ private fun TvIssueDetailContent(
             }
             TvDetailSectionHeader(stringResource(R.string.issue_comments_title))
             if (comments.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.issue_no_comments),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                TvReadOutRow(
+                    modifier = Modifier.tvArrivalTarget(arrival),
+                    initiallyFocused = initiallyFocused,
+                ) { focused ->
+                    Text(
+                        text = stringResource(R.string.issue_no_comments),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = tvFocusContentColor(isFocused = focused, resting = MaterialTheme.colorScheme.onSurfaceVariant),
+                    )
+                }
             } else {
                 comments.forEachIndexed { index, comment ->
-                    TvCommentRow(comment, now = now, modifier = if (index == 0) Modifier.tvArrivalTarget(arrival) else Modifier)
+                    TvCommentRow(
+                        comment,
+                        now = now,
+                        modifier = if (index == 0) Modifier.tvArrivalTarget(arrival) else Modifier,
+                        initiallyFocused = initiallyFocused && index == 0,
+                    )
                 }
             }
         }
@@ -194,49 +205,66 @@ private fun TvIssueDetailHeader(item: IssueItem) {
     }
 }
 
-/** A read-out, never a press: focusable purely so the D-pad can walk (and scroll) past it to reach what follows. */
+/**
+ * A read-out, never a press: focusable purely so the D-pad can walk (and scroll) past it to reach what follows.
+ * It is a focus target and not a disabled button, so a screen reader does not announce it as one.
+ */
 @Composable
-private fun TvCommentRow(
-    comment: IssueComment,
-    now: Long,
+private fun TvReadOutRow(
     modifier: Modifier = Modifier,
+    initiallyFocused: Boolean = false,
+    content: @Composable (focused: Boolean) -> Unit,
 ) {
-    var focused by remember { mutableStateOf(false) }
-    val content = tvFocusContentColor(isFocused = focused, resting = MaterialTheme.colorScheme.onSurface)
-    val muted = tvFocusContentColor(isFocused = focused, resting = MaterialTheme.colorScheme.onSurfaceVariant)
+    var focused by remember { mutableStateOf(initiallyFocused) }
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .clip(BingeShapes.TvListItem)
                 .tvFocusFill(isFocused = focused, shape = BingeShapes.TvListItem)
-                .tvClickable(enabled = false, onFocusChanged = { focused = it }, onClick = {})
+                .tvFocusTarget { focused = it }
                 // Merged so the node that carries focus is the one that reads.
                 .semantics(mergeDescendants = true) {}
                 .padding(horizontal = dimensionResource(DesR.dimen.padding_m), vertical = dimensionResource(DesR.dimen.padding_s)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
-        ) {
-            Text(
-                text = comment.author ?: stringResource(R.string.requests_requester_unknown),
-                style = MaterialTheme.typography.titleSmall,
-                color = content,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (comment.role != UserRole.User) TvTag(stringResource(comment.role.roleLabelRes()))
-            formatRelativeOrAbsolute(comment.createdAtMillis, now)?.let {
-                Text(text = it, style = MaterialTheme.typography.bodySmall, color = muted, maxLines = 1)
+        content(focused)
+    }
+}
+
+/** One comment in the thread, drawn as a [TvReadOutRow]. */
+@Composable
+private fun TvCommentRow(
+    comment: IssueComment,
+    now: Long,
+    modifier: Modifier = Modifier,
+    initiallyFocused: Boolean = false,
+) {
+    TvReadOutRow(modifier = modifier, initiallyFocused = initiallyFocused) { focused ->
+        val content = tvFocusContentColor(isFocused = focused, resting = MaterialTheme.colorScheme.onSurface)
+        val muted = tvFocusContentColor(isFocused = focused, resting = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs))) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_xs)),
+            ) {
+                Text(
+                    text = comment.author ?: stringResource(R.string.requests_requester_unknown),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = content,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (comment.role != UserRole.User) TvTag(stringResource(comment.role.roleLabelRes()))
+                formatRelativeOrAbsolute(comment.createdAtMillis, now)?.let {
+                    Text(text = it, style = MaterialTheme.typography.bodySmall, color = muted, maxLines = 1)
+                }
             }
+            Text(
+                text = comment.message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (focused) content else MaterialTheme.colorScheme.onSurface,
+            )
         }
-        Text(
-            text = comment.message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (focused) content else MaterialTheme.colorScheme.onSurface,
-        )
     }
 }
 
