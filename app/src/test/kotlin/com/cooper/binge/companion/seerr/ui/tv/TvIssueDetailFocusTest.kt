@@ -47,6 +47,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.binge.designsystem.R as DesR
 
 private const val SEVERANCE = "Severance"
 
@@ -131,7 +132,7 @@ class TvIssueDetailFocusTest {
         }
         composeTestRule.waitForIdle()
 
-        val retry = string(R.string.hub_retry)
+        val retry = string(DesR.string.error_kind_retry)
         composeTestRule.onNode(hasText(retry) and isFocusable()).assertIsFocused()
         pressOk()
         assertEquals(1, retries)
