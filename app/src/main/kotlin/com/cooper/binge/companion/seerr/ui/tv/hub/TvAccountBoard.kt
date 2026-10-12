@@ -14,15 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,7 +23,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -336,7 +326,7 @@ private fun TvAccountRequestCard(
             enabled = true,
             onClick = onClick,
             modifier = cellModifier,
-            badge = { TvPosterIconChip(icon = chip.labelRes.statusIcon(), tint = tint) },
+            badge = { TvPosterIconChip(icon = chip.icon, tint = tint) },
         )
         Text(
             text = title,
@@ -350,17 +340,3 @@ private fun TvAccountRequestCard(
         )
     }
 }
-
-/** A request state's glyph for the poster chip, from the label the status chip carries. */
-private fun Int.statusIcon(): ImageVector =
-    when (this) {
-        R.string.request_state_declined -> Icons.Filled.Close
-        R.string.request_state_failed -> Icons.Filled.ErrorOutline
-        R.string.media_state_available -> Icons.Filled.CheckCircle
-        R.string.media_state_partially_available -> Icons.Filled.Done
-        R.string.media_state_processing -> Icons.Filled.Download
-        R.string.request_state_queued -> Icons.Filled.Schedule
-        R.string.request_state_approved -> Icons.Filled.Check
-        R.string.request_state_pending -> Icons.Filled.HourglassEmpty
-        else -> Icons.Filled.Block
-    }
