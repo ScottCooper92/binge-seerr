@@ -7,6 +7,7 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.attempt
 import com.cooper.binge.companion.seerr.seerr.toEpochMillisOrNull
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -69,15 +70,26 @@ sealed interface JobsUiState {
 
     /**
      * [busyIds] are the jobs with a run, cancel or schedule in flight; [outcomes] each job's last run, shown briefly.
-     * [now] is the instant the rows word their times against, moved on each minute while the list is showing.
+     * [now] is the instant the rows word their times against, moved on each minute while the list is showing. A schedule
+     * saves as it is picked (#930): [scheduleStatus] is the page's Saving and Saved, and [unsentSchedule] the one whose
+     * write failed for the network or the server, kept for Retry until a schedule write succeeds. A refused schedule is
+     * reported, not kept.
      */
     data class Ready(
         val jobs: List<ServerJob>,
         val busyIds: Set<String> = emptySet(),
         val outcomes: Map<String, JobOutcome> = emptyMap(),
         val now: Long = System.currentTimeMillis(),
+        val scheduleStatus: SaveStatus = SaveStatus.Idle,
+        val unsentSchedule: UnsentSchedule? = null,
     ) : JobsUiState
 }
+
+/** A schedule whose write failed, kept so Retry can send it again. */
+data class UnsentSchedule(
+    val jobId: String,
+    val cron: String,
+)
 
 data class ApiCache(
     val id: String,

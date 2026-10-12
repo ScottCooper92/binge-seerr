@@ -144,7 +144,10 @@ private fun OutcomeIcon(outcome: JobOutcome) {
     }
 }
 
-/** A preset, or a cron of the admin's own; the field shows whichever was picked last. */
+/**
+ * A preset, or a cron of the admin's own. A schedule saves as it is made (#930): a preset applies the moment it is picked,
+ * and a typed cron on Done, from the keyboard or the dialog. Either closes the dialog; the page says Saving, then Saved.
+ */
 @Composable
 internal fun ScheduleDialog(
     job: ServerJob,
@@ -153,11 +156,12 @@ internal fun ScheduleDialog(
 ) {
     var cron by rememberSaveable { mutableStateOf("") }
     val presets = job.presets()
+    val applyTyped = { cron.trim().takeIf { it.isNotBlank() }?.let(onConfirm) }
     BingeConfirmDialog(
         title = stringResource(R.string.server_settings_job_schedule_title, job.name),
         message = stringResource(R.string.server_settings_job_schedule_message),
-        confirmLabel = stringResource(R.string.user_settings_save),
-        onConfirm = { cron.trim().takeIf { it.isNotBlank() }?.let(onConfirm) },
+        confirmLabel = stringResource(R.string.editor_done),
+        onConfirm = { applyTyped() },
         onDismissRequest = onDismiss,
         extraContent = {
             Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(DesR.dimen.padding_s))) {
@@ -166,7 +170,7 @@ internal fun ScheduleDialog(
                     title = stringResource(R.string.server_settings_job_presets),
                     choices = presets.map { it.cron to it.label() },
                     selected = cron.takeIf { c -> presets.any { it.cron == c } },
-                    onSelect = { cron = it },
+                    onSelect = onConfirm,
                     choiceIcon = { c -> presets.firstOrNull { it.cron == c }?.unit?.icon() },
                 )
                 EditorTextField(
@@ -174,6 +178,7 @@ internal fun ScheduleDialog(
                     stringResource(R.string.server_settings_job_cron),
                     supporting = stringResource(R.string.server_settings_job_cron_hint),
                     imeAction = ImeAction.Done,
+                    onDone = { applyTyped() },
                 ) { cron = it }
             }
         },

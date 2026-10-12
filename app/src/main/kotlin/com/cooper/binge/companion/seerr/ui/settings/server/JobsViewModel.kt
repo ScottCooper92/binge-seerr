@@ -2,10 +2,10 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.auth.SeerrConnection
 import com.cooper.binge.companion.seerr.di.IoDispatcher
 import com.cooper.binge.companion.seerr.seerr.SeerrApi
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.seerr.SeerrJobDto
 import com.cooper.binge.companion.seerr.seerr.SeerrJobScheduleBody
 import com.cooper.binge.companion.seerr.seerr.attempt
@@ -13,6 +13,7 @@ import com.cooper.binge.companion.seerr.seerr.toSeerrError
 import com.cooper.binge.companion.seerr.ui.Ticker
 import com.cooper.binge.companion.seerr.ui.minuteClock
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -155,10 +156,45 @@ class JobsViewModel
             act(id) { api -> api.cancelJob(id) }
         }
 
+        /**
+         * Writes [cron] as [id]'s schedule as soon as it is picked (#930): the page says Saving, then Saved. A write that
+         * fails because of the network or the server (`Unreachable`, `Server`, `Unknown`) is kept as the unsent schedule,
+         * which the page's Retry sends here again, and stays until a schedule write succeeds. A write the server refuses
+         * (a cron it rejects, or a permission it withholds) is not kept, since sending it again cannot succeed: it is
+         * reported once, with its reason, as an [EditorEvent.Failed]. One status and one unsent slot serve every job, so
+         * two schedules in flight at once share them; the dialog makes that hard to reach, and it is deliberate.
+         */
         fun schedule(
             id: String,
             cron: String,
-        ) = act(id, R.string.server_settings_job_scheduled) { api -> api.scheduleJob(id, SeerrJobScheduleBody(cron.trim())) }
+        ) {
+            var claimed = false
+            state.update { current ->
+                val ready = current as? JobsUiState.Ready
+                claimed = ready != null && id !in ready.busyIds
+                if (ready != null && claimed) ready.copy(busyIds = ready.busyIds + id, scheduleStatus = SaveStatus.Saving) else current
+            }
+            if (!claimed) return
+            viewModelScope.launch(dispatcher) {
+                val outcome = attempt { connection.api().scheduleJob(id, SeerrJobScheduleBody(cron.trim())).toServerJob() }
+                outcome.onSuccess { updated -> setJobs(jobs().map { if (it.id == updated.id) updated else it }) }
+                val error = outcome.exceptionOrNull()?.toSeerrError()
+                val retryable = error == SeerrError.Unreachable || error == SeerrError.Server || error == SeerrError.Unknown
+                state.update { current ->
+                    (current as? JobsUiState.Ready)?.copy(
+                        busyIds = current.busyIds - id,
+                        scheduleStatus = if (outcome.isSuccess) SaveStatus.Saved else SaveStatus.Idle,
+                        unsentSchedule =
+                            when {
+                                outcome.isSuccess -> null
+                                retryable -> UnsentSchedule(id, cron)
+                                else -> current.unsentSchedule
+                            },
+                    ) ?: current
+                }
+                if (error != null && !retryable) eventFlow.emit(EditorEvent.Failed(error))
+            }
+        }
 
         private fun act(
             id: String,
@@ -202,11 +238,14 @@ class JobsViewModel
 
         private fun setJobs(jobs: List<ServerJob>) {
             state.update { current ->
+                val ready = current as? JobsUiState.Ready
                 JobsUiState.Ready(
                     jobs,
-                    busyIds = (current as? JobsUiState.Ready)?.busyIds.orEmpty(),
-                    outcomes = (current as? JobsUiState.Ready)?.outcomes.orEmpty(),
+                    busyIds = ready?.busyIds.orEmpty(),
+                    outcomes = ready?.outcomes.orEmpty(),
                     now = clock(),
+                    scheduleStatus = ready?.scheduleStatus ?: SaveStatus.Idle,
+                    unsentSchedule = ready?.unsentSchedule,
                 )
             }
             if (jobs.any { it.running }) {

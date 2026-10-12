@@ -2,8 +2,10 @@ package com.cooper.binge.companion.seerr.ui.settings.server
 
 import androidx.lifecycle.ViewModelStore
 import com.cooper.binge.companion.seerr.R
+import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.ADMIN
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorEvent
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import com.cooper.binge.companion.seerr.ui.users.settings.ScriptedSeerr
 import com.cooper.binge.companion.seerr.util.MainDispatcherRule
 import com.cooper.binge.companion.seerr.util.awaitEvent
@@ -435,14 +437,13 @@ class JobsViewModelTest {
         }
 
     @Test
-    fun `a preset encodes as the six-field cron the server takes, and a failure is reported`() =
+    fun `a preset encodes as the six-field cron the server takes, saved as it is picked, and a failure is reported`() =
         runTest {
             seerr.serve("POST /api/v1/settings/jobs/download-sync/schedule", job("download-sync", running = false))
             val vm = viewModel()
             vm.awaitReady()
-            val scheduled = awaitEvent(vm.events)
             vm.schedule("download-sync", MINUTE_PRESETS.first { it.every == 15 }.cron)
-            assertEquals(EditorEvent.Notice(R.string.server_settings_job_scheduled), scheduled.await())
+            vm.uiState.first { it is JobsUiState.Ready && it.scheduleStatus == SaveStatus.Saved && it.busyIds.isEmpty() }
             val sent = Json.parseToJsonElement(seerr.body("POST", "/api/v1/settings/jobs/download-sync/schedule")).jsonObject
             assertEquals("0 */15 * * * *", sent.getValue("schedule").jsonPrimitive.content)
             assertEquals("0 0 0 */7 * *", HOUR_PRESETS.last().cron)
@@ -455,5 +456,44 @@ class JobsViewModelTest {
             // happens to be at this line, which passes or fails on scheduling rather than on the
             // behaviour. The ViewModel releases the job before emitting, so this settles.
             vm.uiState.first { it is JobsUiState.Ready && it.busyIds.isEmpty() }
+        }
+
+    /** A schedule saves as it is picked (#930): one that fails is kept for Retry, and only a schedule that lands clears it. */
+    @Test
+    fun `a schedule that fails to save is kept until a retry saves it`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/download-sync/schedule", """{"message":"nope"}""", code = 500)
+            val vm = viewModel()
+            vm.awaitReady()
+            val cron = MINUTE_PRESETS.first { it.every == 15 }.cron
+
+            vm.schedule("download-sync", cron)
+            val failed = vm.uiState.first { it is JobsUiState.Ready && it.unsentSchedule != null } as JobsUiState.Ready
+            assertEquals(UnsentSchedule("download-sync", cron), failed.unsentSchedule)
+            assertEquals(SaveStatus.Idle, failed.scheduleStatus)
+
+            seerr.serve("POST /api/v1/settings/jobs/download-sync/schedule", job("download-sync", running = false))
+            // The page's Retry sends the kept schedule again.
+            val unsent = checkNotNull(failed.unsentSchedule)
+            vm.schedule(unsent.jobId, unsent.cron)
+            vm.uiState.first { it is JobsUiState.Ready && it.unsentSchedule == null && it.scheduleStatus == SaveStatus.Saved }
+            assertEquals(2, seerr.count("POST", "/api/v1/settings/jobs/download-sync/schedule"))
+        }
+
+    /** A cron the server rejects cannot succeed on a retry: it is reported with its reason and not kept. */
+    @Test
+    fun `a schedule the server rejects is reported and not kept`() =
+        runTest {
+            seerr.serve("POST /api/v1/settings/jobs/download-sync/schedule", """{"message":"Invalid job schedule."}""", code = 400)
+            val vm = viewModel()
+            vm.awaitReady()
+            val event = awaitEvent(vm.events)
+
+            vm.schedule("download-sync", "0 */15 * *")
+
+            assertEquals(EditorEvent.Failed(SeerrError.Rejected), event.await())
+            val settled = vm.uiState.first { it is JobsUiState.Ready && it.busyIds.isEmpty() } as JobsUiState.Ready
+            assertEquals(null, settled.unsentSchedule)
+            assertEquals(SaveStatus.Idle, settled.scheduleStatus)
         }
 }

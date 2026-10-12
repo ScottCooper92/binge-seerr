@@ -66,7 +66,22 @@ fun CacheScreen(
     jobs: JobsUiState,
     jobActions: JobsActions,
 ) {
-    ServerActionPage(title = stringResource(R.string.server_settings_cache), events = events, onBack = actions.onBack) { contentPadding ->
+    val readyJobs = jobs as? JobsUiState.Ready
+    ServerActionPage(
+        title = stringResource(R.string.server_settings_cache),
+        events = events,
+        onBack = actions.onBack,
+        // A job's schedule saves as it is picked (#930).
+        saveAsMade =
+            readyJobs?.let { ready ->
+                val unsent = ready.unsentSchedule
+                SaveAsMadeState(
+                    status = ready.scheduleStatus,
+                    failed = unsent != null,
+                    onRetry = { unsent?.let { jobActions.onSchedule(it.jobId, it.cron) } },
+                )
+            },
+    ) { contentPadding ->
         val sides = resolvedContentPadding()
         var scheduling by rememberSaveable { mutableStateOf<String?>(null) }
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding)) {

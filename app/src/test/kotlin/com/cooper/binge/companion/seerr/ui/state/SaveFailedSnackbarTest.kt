@@ -23,6 +23,8 @@ class SaveFailedSnackbarTest {
 
     private var failed by mutableStateOf(false)
     private var retries = 0
+    private var unsent by mutableStateOf("X")
+    private val sent = mutableListOf<String>()
 
     private fun show() =
         rule.setContent {
@@ -49,5 +51,25 @@ class SaveFailedSnackbarTest {
         failed = false
         rule.waitForIdle()
         rule.onNodeWithText("Couldn't save").assertDoesNotExist()
+    }
+
+    @Test
+    fun `retry sends what failed last, not what failed when the snackbar appeared`() {
+        rule.setContent {
+            val host = remember { SnackbarHostState() }
+            val latest = unsent
+            SaveFailedSnackbar(failed, host, message = "Couldn't save", retryLabel = "Retry", onRetry = { sent += latest })
+            SnackbarHost(host)
+        }
+        failed = true
+        rule.waitForIdle()
+
+        // A second failed save changes what Retry must send while `failed` stays true.
+        unsent = "Y"
+        rule.waitForIdle()
+        rule.onNodeWithText("Retry").performClick()
+        rule.waitForIdle()
+
+        assertEquals(listOf("Y"), sent)
     }
 }
