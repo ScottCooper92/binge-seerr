@@ -137,8 +137,7 @@ internal fun textSettingItem(
         label = label,
         detail = rowProblem ?: shown,
         detailColor = if (rowProblem != null) MaterialTheme.colorScheme.error else null,
-        clickable = enabled,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = { open = true },
     )
 }

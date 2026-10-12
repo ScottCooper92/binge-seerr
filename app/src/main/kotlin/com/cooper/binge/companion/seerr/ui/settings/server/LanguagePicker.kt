@@ -139,8 +139,7 @@ internal fun languageSettingItem(
         icon = icon,
         label = title,
         detail = languageDetail(value, chosen, serverDefault),
-        clickable = enabled,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = {
             open = true
             onOpen()

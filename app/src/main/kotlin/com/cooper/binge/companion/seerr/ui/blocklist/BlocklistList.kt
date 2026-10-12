@@ -144,7 +144,7 @@ internal fun BlocklistRow(
         onClick = onClick,
         enabled = !isActing,
         leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null, dimmed = true) },
-        trailing =
+        trailingContent =
             onRemove?.let { remove ->
                 {
                     ExpressiveIconButton(

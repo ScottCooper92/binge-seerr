@@ -103,7 +103,7 @@ private fun SignInFormContent(
                                     ?: stringResource(R.string.send_signin_continue_as_you),
                             detail = stringResource(R.string.send_address_sign_in_shared),
                             loading = step.isSending && step.sendingSession,
-                            disabled = step.isSending && !step.sendingSession,
+                            enabled = !step.isSending || step.sendingSession,
                             destination = ListItemDestination.Action,
                             onClick = actions.onSendSession,
                         ),

@@ -96,8 +96,7 @@ internal fun regionSettingItem(
                 Regions.ALL -> allRegions
                 else -> Regions.name(code)
             },
-        clickable = enabled,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = {
             open = true
             onOpen()

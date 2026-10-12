@@ -8,6 +8,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.binge.designsystem.DecisionCopy
 import com.binge.designsystem.DecisionPoint
+import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.tv.template.TvDecisionPage
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
@@ -52,10 +53,8 @@ internal fun TvConsentScreen(
                 note = stringResource(R.string.tv_consent_reassurance),
             ),
         points = tvConsentPoints(),
-        acceptLabel = stringResource(R.string.consent_accept),
-        declineLabel = stringResource(R.string.consent_decline),
-        onAccept = { onChoice(true) },
-        onDecline = { onChoice(false) },
+        accept = ScreenAction(stringResource(R.string.consent_accept), onClick = { onChoice(true) }),
+        decline = ScreenAction(stringResource(R.string.consent_decline), onClick = { onChoice(false) }),
         modifier = modifier,
         // A gate before setup and the rail, so the page places its own first focus on Share usage data.
         hosting = TvPageHosting.PreShell,

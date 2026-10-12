@@ -172,7 +172,7 @@ internal fun RequestRow(
         onClick = onClick,
         verticalAlignment = Alignment.CenterVertically,
         leading = { ListRowPoster(imageUrl = item.posterUrl, contentDescription = null) },
-        trailing =
+        trailingContent =
             onManage?.let {
                 {
                     IconButton(onClick = it) {

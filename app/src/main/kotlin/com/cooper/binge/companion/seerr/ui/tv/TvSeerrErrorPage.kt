@@ -2,8 +2,8 @@ package com.cooper.binge.companion.seerr.ui.tv
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.tv.template.TvMessagePage
-import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
@@ -28,6 +28,6 @@ internal fun TvSeerrErrorPage(
         body = stringResource(error.messageRes()),
         hosting = TvPageHosting.Overlay,
         icon = error.toErrorKind().icon,
-        primary = TvPageAction(stringResource(R.string.hub_retry), onRetry),
+        primary = ScreenAction(stringResource(R.string.hub_retry), onRetry),
     )
 }

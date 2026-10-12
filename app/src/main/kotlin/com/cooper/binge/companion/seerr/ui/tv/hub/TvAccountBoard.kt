@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvCardRow
 import com.binge.designsystem.tv.component.TvSeeAllTile
@@ -35,7 +36,6 @@ import com.binge.designsystem.tv.focus.TvStableFocusScroll
 import com.binge.designsystem.tv.focus.tvFocusGroup
 import com.binge.designsystem.tv.nav.LocalTvContentInset
 import com.binge.designsystem.tv.template.TvMessagePage
-import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvScreenHeading
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.ui.requests.RequestItem
@@ -180,7 +180,7 @@ private fun TvAccountUnresolved(
             body = stringResource(R.string.tv_list_load_failed),
             modifier = modifier,
             icon = Icons.Filled.Warning,
-            primary = TvPageAction(stringResource(R.string.hub_retry), onRetry),
+            primary = ScreenAction(stringResource(R.string.hub_retry), onRetry),
         )
     } else {
         TvMessagePage(body = stringResource(R.string.tv_loading), modifier = modifier, loading = true)
@@ -275,7 +275,7 @@ private fun TvAccountRequestsRow(
         heading = stringResource(R.string.tv_filter_with_count, heading, requestCount),
         onCellFocused = { onFocused() },
         // The row stops at the cap; the heading's count is the whole of it, so past the cap the tile opens the rest.
-        trailing =
+        trailingContent =
             if (requestCount > TV_ROW_ITEM_CAP) {
                 { isFocused, onFocusChanged, cellModifier ->
                     TvSeeAllTile(

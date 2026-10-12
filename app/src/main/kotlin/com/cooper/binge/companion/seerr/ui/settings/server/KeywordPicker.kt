@@ -39,8 +39,7 @@ internal fun keywordSettingItem(
                 named.size == chosen.size -> named.joinToString(", ")
                 else -> pluralStringResource(R.plurals.server_settings_blocklist_tags_count, chosen.size, chosen.size)
             },
-        clickable = enabled,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = onOpen,
     )
 }

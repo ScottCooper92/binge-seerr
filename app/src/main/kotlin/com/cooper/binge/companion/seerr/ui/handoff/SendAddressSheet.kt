@@ -125,7 +125,7 @@ private fun ReadyContent(
                                 ?: stringResource(R.string.send_address_sign_in_as_you),
                         detail = stringResource(R.string.send_address_sign_in_shared),
                         toggled = state.signInChosen,
-                        disabled = state.isSending,
+                        enabled = !state.isSending,
                         onClick = { actions.onChooseSignIn(!state.signInChosen) },
                     ),
                 ),

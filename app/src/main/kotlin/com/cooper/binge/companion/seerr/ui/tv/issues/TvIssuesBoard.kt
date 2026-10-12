@@ -18,6 +18,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.binge.designsystem.formatRelativeOrAbsolute
+import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.tv.component.TvSideSheet
 import com.binge.designsystem.tv.component.TvSideSheetBody
 import com.binge.designsystem.tv.component.TvSideSheetConfirm
@@ -29,7 +30,6 @@ import com.binge.designsystem.tv.nav.tvContentGutterStart
 import com.binge.designsystem.tv.template.TvHubRow
 import com.binge.designsystem.tv.template.TvImmersiveHub
 import com.binge.designsystem.tv.template.TvMessagePage
-import com.binge.designsystem.tv.template.TvPageAction
 import com.cooper.binge.companion.seerr.R
 import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.issues.IssueCounts
@@ -175,7 +175,7 @@ private fun TvIssuesUnresolved(
     TvMessagePage(
         body = stringResource(R.string.tv_list_load_failed),
         icon = Icons.Filled.Warning,
-        primary = TvPageAction(stringResource(R.string.hub_retry), actions.onRetryScope),
+        primary = ScreenAction(stringResource(R.string.hub_retry), actions.onRetryScope),
     )
 }
 

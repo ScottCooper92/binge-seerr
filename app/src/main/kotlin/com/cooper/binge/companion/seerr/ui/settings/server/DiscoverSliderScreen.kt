@@ -177,8 +177,7 @@ private fun studioItem(
         icon = Icons.Filled.Business,
         label = title,
         detail = id?.let { studios.names[it] ?: it.toString() } ?: draft.data.ifBlank { stringResource(R.string.settings_value_not_set) },
-        clickable = enabled,
-        disabled = !enabled,
+        enabled = enabled,
         onClick = { open = true },
     )
 }

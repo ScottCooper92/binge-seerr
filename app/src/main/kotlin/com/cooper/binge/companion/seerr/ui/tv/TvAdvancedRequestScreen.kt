@@ -9,12 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import com.binge.designsystem.template.ScreenAction
 import com.binge.designsystem.tv.component.TvButton
 import com.binge.designsystem.tv.component.TvOptionGroup
 import com.binge.designsystem.tv.focus.TvArrivalFocusEffect
 import com.binge.designsystem.tv.focus.rememberTvArrivalFocus
 import com.binge.designsystem.tv.template.TvMessagePage
-import com.binge.designsystem.tv.template.TvPageAction
 import com.binge.designsystem.tv.template.TvPageHosting
 import com.binge.designsystem.tv.theme.TvButtonStyle
 import com.cooper.binge.companion.seerr.R
@@ -123,14 +123,14 @@ private fun TvFailurePlate(
     actions: TvAdvancedRequestActions,
     modifier: Modifier,
 ) {
-    val close = TvPageAction(stringResource(R.string.advanced_close), actions.onClose)
+    val close = ScreenAction(stringResource(R.string.advanced_close), actions.onClose)
     val notConnected = error == AdvancedRequestError.NotConnected
     TvMessagePage(
         headline = stringResource(R.string.advanced_title),
         body = stringResource(error.messageRes()),
         icon = Icons.Filled.Warning,
         hosting = TvPageHosting.Overlay,
-        primary = if (notConnected) TvPageAction(stringResource(R.string.advanced_open_setup), actions.onOpenSetup) else close,
+        primary = if (notConnected) ScreenAction(stringResource(R.string.advanced_open_setup), actions.onOpenSetup) else close,
         secondary = if (notConnected) close else null,
         modifier = modifier,
     )
