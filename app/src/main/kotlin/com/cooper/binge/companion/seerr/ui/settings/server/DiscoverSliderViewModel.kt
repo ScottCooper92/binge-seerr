@@ -17,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * One custom slider, new ([id] null) or existing: its title, its kind, and what it queries. Keywords are picked by
@@ -176,8 +177,9 @@ class DiscoverSliderViewModel
             val existing = id ?: return
             // A change still waiting would otherwise be written to the slider as it goes.
             discardUnsent()
-            viewModelScope.launch(dispatcher) {
-                attempt { connection.api().deleteDiscoverSlider(existing) }
+            // On the main thread, as save-as-made needs: only the request hops to the dispatcher.
+            viewModelScope.launch {
+                withContext(dispatcher) { attempt { connection.api().deleteDiscoverSlider(existing) } }
                     .onSuccess { notify(EditorEvent.Deleted) }
                     .onFailure { failure ->
                         notify(EditorEvent.Failed(failure.toSeerrError()))
