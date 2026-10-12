@@ -12,8 +12,8 @@ device is cost.
 ## The loop
 
 1. **Work in a worktree**, never by switching the main clone's branch: `git worktree add ../<topic>-proto
-   origin/main`, then `git submodule update --init` (the design system and companions are submodules) and copy
-   `local.properties` from the main clone.
+   origin/main`, then `git submodule update --init --recursive` (the design system and companions are
+   submodules, and companions has its own) and copy `local.properties` from the main clone.
 2. **Build the APK and nothing else:** `./gradlew -q :app:assembleDebug`. No unit tests, no screenshot
    re-records or validation, no ktlint/detekt/lint, no `./gradlew build`, no commits — not until the
    maintainer says the change is right. A compile error is the only check that runs. A round with screenshots

@@ -28,14 +28,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
+          submodules: recursive
 
       # Moves each submodule to the tip of its remote's default branch in the working tree only.
       - name: Move the submodules to their upstream heads
         run: |
           set -euo pipefail
           git submodule update --init --remote design-system binge-companions
-          git submodule status
+          # Their own submodules at the pins those heads carry, not at their remotes' heads: the
+          # canary asks whether this app builds against the latest of each, as each is shipped.
+          git submodule foreach --quiet 'git submodule update --init --recursive'
+          git submodule status --recursive
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
@@ -79,7 +82,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@ab385f7b9be823b925831cc5da6b399f2eeb7173 # v1
+      - uses: ScottCooper92/binge-ci/.github/actions/nightly-report@054eb2eca82fcfc048767d0e26dbbcd5667b67ff # v1
         with:
           result: ${{ needs.canary.result }}
           title: 'Consumer canary: main no longer builds against upstream heads'

@@ -10,13 +10,14 @@ import com.cooper.binge.companion.seerr.seerr.SeerrError
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorActions
 import com.cooper.binge.companion.seerr.ui.users.settings.EditorUiState
 import com.cooper.binge.companion.seerr.ui.users.settings.ExtrasEditorUiState
+import com.cooper.binge.companion.seerr.ui.users.settings.SaveStatus
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * The server settings pages that edit a draft through the shared editor page: Network, Metadata and
  * Tautulli. Each takes its layout across the device matrix once, then the states the editor page can be
- * in on the phone cell alone: an unchanged draft, one with unsaved edits, a save in flight, one that
- * cannot be saved, and the loading and failed arms.
+ * in on the phone cell alone: an unchanged draft, a change saving (Network and Metadata save as they
+ * change) or a save in flight, one that cannot be saved, and the loading and failed arms.
  */
 class NetworkScreenshotTest {
     /** Seerr 3: the switches, the IPv4 preference, the proxy and the DNS cache. */
@@ -31,12 +32,26 @@ class NetworkScreenshotTest {
     @Composable
     fun jellyseerr() = NetworkFrame(settled(NetworkForm(csrfProtection = true)))
 
+    /** The page saves as it changes (#930): a change on its way says Saving in the top bar, with no Save to press. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
-    fun unsavedEdit() = NetworkFrame(EditorUiState.Ready(draft = seerrNetwork().copy(trustProxy = true), saved = seerrNetwork()))
+    fun savingChange() =
+        NetworkFrame(
+            EditorUiState.Ready(
+                draft = seerrNetwork().copy(trustProxy = true),
+                saved = seerrNetwork(),
+                saveStatus = SaveStatus.Saving,
+            ),
+        )
 
-    /** A proxy given a username and no password: the group says what it still needs, and Save stays off. */
+    /** The change has landed: the top bar says Saved. */
+    @PreviewTest
+    @SeerrScreenStatePreview
+    @Composable
+    fun savedChange() = NetworkFrame(EditorUiState.Ready(draft = seerrNetwork(), saved = seerrNetwork(), saveStatus = SaveStatus.Saved))
+
+    /** A proxy given a username and no password: the group says what it still needs, and the change is held, not sent. */
     @PreviewTest
     @SeerrScreenStatePreview
     @Composable
@@ -60,16 +75,11 @@ class NetworkScreenshotTest {
     @Composable
     fun spanish() = NetworkFrame(settled(seerrNetwork().copy(apiRequestTimeout = "1.5")))
 
-    /** At 1.5x and 2x text the pinned Cancel and Save bar must still fit. */
+    /** At 1.5x and 2x text every row must still fit. */
     @PreviewTest
     @SeerrFontScalePreviews
     @Composable
     fun largeText() = NetworkFrame(settled(seerrNetwork()))
-
-    @PreviewTest
-    @SeerrScreenStatePreview
-    @Composable
-    fun saving() = NetworkFrame(EditorUiState.Ready(draft = seerrNetwork(), saved = seerrNetwork(), saving = true))
 
     @PreviewTest
     @SeerrScreenStatePreview
